@@ -4,7 +4,11 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { AMCS, amfiNameToSlug, getAMC } from "@/data/amcs";
 import { monthlyForAmc, quarterlyForAmc } from "@/data/generator";
-import { amcMasterSnapshot, dataMode } from "@/data/source";
+import {
+  amcMasterSnapshot,
+  dataMode,
+  latestOtherSchemesByAmc,
+} from "@/data/source";
 import { formatINR } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
@@ -19,11 +23,19 @@ interface Row {
   equityShare?: number;
   sipFlow?: number;
   quarterlyPat?: number;
+  otherSchemesAum?: number;
+  otherSchemesMonth?: string;
   hasProfile: boolean;
 }
 
-function buildRows(): { rows: Row[]; mode: "live" | "demo" } {
+function buildRows(): {
+  rows: Row[];
+  mode: "live" | "demo";
+  otherSchemesLive: boolean;
+} {
   const mode = dataMode().amcMaster;
+  const otherSchemesLive = dataMode().otherSchemes === "live";
+  const otherByName = latestOtherSchemesByAmc();
 
   if (mode === "live") {
     const rows: Row[] = amcMasterSnapshot.amcs.map((a) => {
@@ -33,6 +45,7 @@ function buildRows(): { rows: Row[]; mode: "live" | "demo" } {
       const quarterly = slug ? quarterlyForAmc(slug) : [];
       const latest = monthly[monthly.length - 1];
       const latestQ = quarterly[quarterly.length - 1];
+      const other = otherByName.get(a.name);
       return {
         name: a.name,
         slug,
@@ -44,10 +57,12 @@ function buildRows(): { rows: Row[]; mode: "live" | "demo" } {
         equityShare: latest ? (latest.equityAum / latest.aum) * 100 : undefined,
         sipFlow: latest?.sipFlow,
         quarterlyPat: latestQ?.pat,
+        otherSchemesAum: other?.totalAum,
+        otherSchemesMonth: other?.month,
         hasProfile: Boolean(profile),
       };
     });
-    return { rows, mode };
+    return { rows, mode, otherSchemesLive };
   }
 
   const rows: Row[] = AMCS.map((profile) => {
@@ -68,11 +83,11 @@ function buildRows(): { rows: Row[]; mode: "live" | "demo" } {
       hasProfile: true,
     };
   });
-  return { rows, mode };
+  return { rows, mode, otherSchemesLive };
 }
 
 export default function AmcListPage() {
-  const { rows, mode } = buildRows();
+  const { rows, mode, otherSchemesLive } = buildRows();
   const totalAum = rows.reduce((s, r) => s + (r.aum ?? 0), 0);
 
   const subtitle =
@@ -98,6 +113,11 @@ export default function AmcListPage() {
                 <th className="py-2 pr-4 text-right font-medium tabular">Equity %</th>
                 <th className="py-2 pr-4 text-right font-medium tabular">SIP</th>
                 <th className="py-2 pr-4 text-right font-medium tabular">PAT (Q)</th>
+                {otherSchemesLive && (
+                  <th className="py-2 pr-4 text-right font-medium tabular text-positive">
+                    Other Sch AUM
+                  </th>
+                )}
                 <th className="py-2 font-medium" />
               </tr>
             </thead>
@@ -171,6 +191,24 @@ export default function AmcListPage() {
                         ? formatINR(r.quarterlyPat, { compact: true })
                         : "—"}
                     </td>
+                    {otherSchemesLive && (
+                      <td className="py-3 pr-4 text-right tabular">
+                        {r.otherSchemesAum ? (
+                          <span
+                            className="text-positive"
+                            title={
+                              r.otherSchemesMonth
+                                ? `As of ${r.otherSchemesMonth}`
+                                : undefined
+                            }
+                          >
+                            {formatINR(r.otherSchemesAum, { compact: true })}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                    )}
                     <td className="py-3 text-right">
                       {clickable && (
                         <Link
@@ -192,9 +230,12 @@ export default function AmcListPage() {
 
       {mode === "live" && (
         <p className="text-xs text-muted-foreground">
-          AMC list is live from AMFI. Operating and financial metrics are
-          modelled (demo) until the per-AMC monthly and quarterly scrapers
-          land.
+          AMC list is live from AMFI.{" "}
+          {otherSchemesLive
+            ? "Other Schemes AUM column is live (SEBI 'Other' category — Index funds, ETFs, FoFs, solution-oriented). "
+            : ""}
+          AUM, equity %, SIP and PAT remain modelled until the broader
+          per-AMC scrapers land.
         </p>
       )}
     </div>

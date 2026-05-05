@@ -98,3 +98,21 @@ export const EMPTY_AMC_QUARTERLY: AmcQuarterlySnapshot = {
   meta: { generatedAt: "", source: "" },
   rows: [],
 };
+
+export interface OtherSchemesAmcRow {
+  amcName: string;
+  month: string;
+  totalAum: number;
+  schemes: number;
+  folios?: number;
+}
+
+export interface OtherSchemesMonthlySnapshot {
+  meta: SnapshotMeta;
+  rows: OtherSchemesAmcRow[];
+}
+
+export const EMPTY_OTHER_SCHEMES_MONTHLY: OtherSchemesMonthlySnapshot = {
+  meta: { generatedAt: "", source: "" },
+  rows: [],
+};
