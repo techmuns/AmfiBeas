@@ -2,7 +2,10 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { KpiCard } from "@/components/ui/KpiCard";
-import { ChartPlaceholder } from "@/components/ui/ChartPlaceholder";
+import { AreaTrend } from "@/components/charts/AreaTrend";
+import { BarSeries } from "@/components/charts/BarSeries";
+import { GroupedBars } from "@/components/charts/GroupedBars";
+import { MultiLine } from "@/components/charts/MultiLine";
 import { AMCS, getAMC } from "@/data/amcs";
 import { monthlyForAmc, quarterlyForAmc } from "@/data/generator";
 import {
@@ -42,6 +45,21 @@ export default async function AmcPage({
   const industryLatest = industry[industry.length - 1];
   const aumShare = (latest.aum / industryLatest.aum) * 100;
   const sipShare = (latest.sipFlow / industryLatest.sipFlow) * 100;
+
+  const aumSeries = monthly.map((m) => ({ month: m.month, value: m.aum }));
+  const sipSeries = monthly.map((m) => ({ label: m.month, value: m.sipFlow }));
+  const pnlData = quarterly.map((q) => ({
+    quarter: q.quarter,
+    revenue: q.revenue,
+    op: q.operatingProfit,
+    pat: q.pat,
+  }));
+  const yieldData = yields.map((y) => ({
+    quarter: y.quarter,
+    revenue: Number(y.revenueYieldBps.toFixed(1)),
+    op: Number(y.operatingYieldBps.toFixed(1)),
+    profit: Number(y.profitYieldBps.toFixed(1)),
+  }));
 
   const trend = (n: number) =>
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
@@ -100,16 +118,34 @@ export default async function AmcPage({
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Card title="AUM Trend" subtitle="24-month series">
-          <ChartPlaceholder />
+          <AreaTrend data={aumSeries} name="AUM" />
         </Card>
         <Card title="SIP Flow" subtitle="Monthly inflows">
-          <ChartPlaceholder />
+          <BarSeries data={sipSeries} name="SIP" />
         </Card>
-        <Card title="Quarterly P&L" subtitle="Revenue / OpProfit / PAT">
-          <ChartPlaceholder />
+        <Card title="Quarterly P&L" subtitle="Revenue / Op / PAT">
+          <GroupedBars
+            data={pnlData}
+            xKey="quarter"
+            bars={[
+              { key: "revenue", name: "Revenue", color: "hsl(var(--chart-1))" },
+              { key: "op", name: "Op Profit", color: "hsl(var(--chart-2))" },
+              { key: "pat", name: "PAT", color: "hsl(var(--chart-3))" },
+            ]}
+          />
         </Card>
-        <Card title="Yields (bps)" subtitle="Revenue / Operating / Profit">
-          <ChartPlaceholder />
+        <Card title="Yields (bps)" subtitle="Annualised">
+          <MultiLine
+            data={yieldData}
+            xKey="quarter"
+            valueFormat="bps"
+            axisFormat="bps"
+            lines={[
+              { key: "revenue", name: "Revenue yield", color: "hsl(var(--chart-1))" },
+              { key: "op", name: "Operating", color: "hsl(var(--chart-2))" },
+              { key: "profit", name: "Profit", color: "hsl(var(--chart-3))" },
+            ]}
+          />
         </Card>
       </section>
     </div>

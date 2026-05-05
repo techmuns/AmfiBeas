@@ -110,6 +110,41 @@ export function industryQuarterly(): QuarterlyFinancial[] {
   });
 }
 
+export interface ShareSeriesPoint {
+  month: string;
+  [amcSlug: string]: string | number;
+}
+
+export function shareSeries(
+  metric: "aum" | "equityAum" | "sipFlow",
+  topN = 6
+): { rows: ShareSeriesPoint[]; keys: string[] } {
+  const latest = MONTHS_LIST[MONTHS_LIST.length - 1];
+  const latestRows = MONTHLY.filter((r) => r.month === latest && r.amcSlug !== "others");
+  const ranked = [...latestRows]
+    .sort((a, b) => b[metric] - a[metric])
+    .map((r) => r.amcSlug);
+  const top = ranked.slice(0, topN);
+  const keys = [...top, "others"];
+
+  const rows = MONTHS_LIST.map((month) => {
+    const all = MONTHLY.filter((r) => r.month === month);
+    const total = all.reduce((s, r) => s + r[metric], 0) || 1;
+    const point: ShareSeriesPoint = { month };
+    let topSum = 0;
+    for (const slug of top) {
+      const r = all.find((x) => x.amcSlug === slug);
+      const v = r ? (r[metric] / total) * 100 : 0;
+      point[slug] = Number(v.toFixed(2));
+      topSum += v;
+    }
+    point["others"] = Number(Math.max(0, 100 - topSum).toFixed(2));
+    return point;
+  });
+
+  return { rows, keys };
+}
+
 export function pickMonthly(
   slug: string,
   field: keyof Pick<

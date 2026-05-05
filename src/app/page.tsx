@@ -1,7 +1,8 @@
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
-import { ChartPlaceholder } from "@/components/ui/ChartPlaceholder";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AreaTrend } from "@/components/charts/AreaTrend";
+import { BarSeries } from "@/components/charts/BarSeries";
 import {
   industryByMonth,
   industryQuarterly,
@@ -24,6 +25,9 @@ export default function HomePage() {
   const sipMom = momChange(monthly.map((m) => m.sipFlow));
   const investorsMom = momChange(monthly.map((m) => m.newInvestors));
   const patYoy = yoyChangeQuarterly(quarterly.map((q) => q.pat));
+
+  const aumSeries = monthly.map((m) => ({ month: m.month, value: m.aum }));
+  const sipSeries = monthly.map((m) => ({ label: m.month, value: m.sipFlow }));
 
   const trend = (n: number) =>
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
@@ -84,11 +88,11 @@ export default function HomePage() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card title="AUM Trend" subtitle="Industry, last 24 months">
-          <ChartPlaceholder />
+        <Card title="AUM Trend" subtitle="Industry total · 24 months">
+          <AreaTrend data={aumSeries} name="AUM" />
         </Card>
-        <Card title="SIP Flows" subtitle="Monthly inflows">
-          <ChartPlaceholder />
+        <Card title="SIP Flows" subtitle="Monthly inflows · industry">
+          <BarSeries data={sipSeries} name="SIP" />
         </Card>
       </section>
     </div>
