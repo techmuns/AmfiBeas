@@ -24,11 +24,3 @@ export interface QuarterlyFinancial {
   pat: number;
   avgAum: number;
 }
-
-export interface IndustryMonthly {
-  month: string;
-  totalAum: number;
-  totalEquityAum: number;
-  totalSipFlow: number;
-  totalNewInvestors: number;
-}

@@ -116,9 +116,22 @@ export default async function QuarterlyPage({
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard label="Operating Margin" value={opMargin.toFixed(1) + "%"} />
-        <KpiCard label="Revenue Yield" value={revenueYieldBps.toFixed(1) + " bps"} />
-        <KpiCard label="Operating Yield" value={opYieldBps.toFixed(1) + " bps"} />
-        <KpiCard label="Profit Yield" value={profitYieldBps.toFixed(1) + " bps"} />
+        <KpiCard
+          label="Revenue Yield"
+          value={
+            latest.avgAum > 0 ? revenueYieldBps.toFixed(1) + " bps" : "—"
+          }
+        />
+        <KpiCard
+          label="Operating Yield"
+          value={latest.avgAum > 0 ? opYieldBps.toFixed(1) + " bps" : "—"}
+        />
+        <KpiCard
+          label="Profit Yield"
+          value={
+            latest.avgAum > 0 ? profitYieldBps.toFixed(1) + " bps" : "—"
+          }
+        />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">

@@ -189,13 +189,6 @@ export default function AmcListPage() {
           </table>
         </div>
       </Card>
-
-      {mode === "live" && (
-        <p className="text-xs text-muted-foreground">
-          AMC list is live from AMFI. AUM, equity %, SIP and PAT remain
-          modelled until the broader per-AMC scrapers land.
-        </p>
-      )}
     </div>
   );
 }

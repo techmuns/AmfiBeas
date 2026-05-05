@@ -86,7 +86,7 @@ export function FilterBar({ showRange = "monthly" }: FilterBarProps) {
       )}
     >
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="mr-1 text-muted-foreground">AMCs</span>
+        <span className="mr-1 text-muted-foreground">Peers</span>
         <button
           type="button"
           onClick={() =>

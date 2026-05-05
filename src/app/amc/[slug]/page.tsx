@@ -62,6 +62,9 @@ export default async function AmcPage({
     op: Number(y.operatingYieldBps.toFixed(1)),
     profit: Number(y.profitYieldBps.toFixed(1)),
   }));
+  const yieldsAvailable = yieldData.some(
+    (y) => y.revenue > 0 || y.op > 0 || y.profit > 0
+  );
 
   const trend = (n: number) =>
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
@@ -146,18 +149,27 @@ export default async function AmcPage({
             ]}
           />
         </Card>
-        <Card title="Yields (bps)" subtitle="Annualised">
-          <MultiLine
-            data={yieldData}
-            xKey="quarter"
-            valueFormat="bps"
-            axisFormat="bps"
-            lines={[
-              { key: "revenue", name: "Revenue yield", color: "hsl(var(--chart-1))" },
-              { key: "op", name: "Operating", color: "hsl(var(--chart-2))" },
-              { key: "profit", name: "Profit", color: "hsl(var(--chart-3))" },
-            ]}
-          />
+        <Card
+          title="Yields (bps)"
+          subtitle={yieldsAvailable ? "Annualised" : "AAUM not in source"}
+        >
+          {yieldsAvailable ? (
+            <MultiLine
+              data={yieldData}
+              xKey="quarter"
+              valueFormat="bps"
+              axisFormat="bps"
+              lines={[
+                { key: "revenue", name: "Revenue yield", color: "hsl(var(--chart-1))" },
+                { key: "op", name: "Operating", color: "hsl(var(--chart-2))" },
+                { key: "profit", name: "Profit", color: "hsl(var(--chart-3))" },
+              ]}
+            />
+          ) : (
+            <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+              —
+            </div>
+          )}
         </Card>
       </section>
     </div>

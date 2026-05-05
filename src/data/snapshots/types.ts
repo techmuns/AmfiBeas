@@ -74,31 +74,6 @@ export interface AmcQuarterlySnapshot {
   rows: AmcQuarterlyRow[];
 }
 
-export const EMPTY_AMC_MASTER: AmcMasterSnapshot = {
-  meta: { generatedAt: "", source: "" },
-  amcs: [],
-};
-
-export const EMPTY_SCHEME_NAVS: SchemeNavsSnapshot = {
-  meta: { generatedAt: "", source: "" },
-  navs: [],
-};
-
-export const EMPTY_INDUSTRY_MONTHLY: IndustryMonthlySnapshot = {
-  meta: { generatedAt: "", source: "" },
-  rows: [],
-};
-
-export const EMPTY_AMC_MONTHLY: AmcMonthlySnapshot = {
-  meta: { generatedAt: "", source: "" },
-  rows: [],
-};
-
-export const EMPTY_AMC_QUARTERLY: AmcQuarterlySnapshot = {
-  meta: { generatedAt: "", source: "" },
-  rows: [],
-};
-
 export interface OtherSchemesMonthlyRow {
   month: string;
   category: string;
@@ -114,8 +89,3 @@ export interface OtherSchemesMonthlySnapshot {
   meta: SnapshotMeta;
   rows: OtherSchemesMonthlyRow[];
 }
-
-export const EMPTY_OTHER_SCHEMES_MONTHLY: OtherSchemesMonthlySnapshot = {
-  meta: { generatedAt: "", source: "" },
-  rows: [],
-};

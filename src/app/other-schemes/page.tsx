@@ -7,7 +7,6 @@ import {
   dataMode,
   latestOtherSchemesCategoryBreakdown,
   otherSchemesByMonth,
-  otherSchemesMonthlySnapshot,
 } from "@/data/source";
 import { formatINR, formatDelta, formatMonthLabel } from "@/lib/format";
 import { momChange, yoyChange } from "@/data/aggregate";
@@ -22,17 +21,10 @@ export default function OtherSchemesPage() {
   if (!isLive || !latest || !breakdown) {
     return (
       <div className="space-y-6">
-        <PageHeader
-          title="Other Schemes"
-          subtitle="Live AMFI data — pending first ingest"
-        />
+        <PageHeader title="Other Schemes" subtitle="No data yet" />
         <Card>
           <p className="text-sm text-muted-foreground">
-            No data yet. The ingest workflow populates this view from
-            <code className="mx-1 rounded bg-muted px-1.5 py-0.5 text-xs">
-              portal.amfiindia.com/spages/Sub-classification-*.xlsx
-            </code>
-            on a monthly schedule.
+            Awaiting first ingest.
           </p>
         </Card>
       </div>
@@ -170,21 +162,6 @@ export default function OtherSchemesPage() {
           </table>
         </div>
       </Card>
-
-      <p className="text-xs text-muted-foreground">
-        Source:{" "}
-        <a
-          href={otherSchemesMonthlySnapshot.meta.source}
-          className="underline hover:text-foreground"
-          target="_blank"
-          rel="noreferrer"
-        >
-          AMFI Sub-classification of Other Schemes
-        </a>
-        . Group V covers Index Funds, ETFs, Fund-of-Funds and similar passive
-        products — a subset of total industry AUM (Equity / Debt / Hybrid /
-        Solution-oriented are separate).
-      </p>
     </div>
   );
 }
