@@ -1,5 +1,7 @@
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
+import { ChartPlaceholder } from "@/components/ui/ChartPlaceholder";
+import { PageHeader } from "@/components/layout/PageHeader";
 import {
   industryByMonth,
   industryQuarterly,
@@ -28,15 +30,10 @@ export default function HomePage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
-          <p className="text-sm text-muted-foreground">
-            Industry snapshot · {latestMonth()} (operating) ·{" "}
-            {latestQuarter()} (financial)
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        title="Overview"
+        subtitle={`Industry snapshot · ${latestMonth()} (operating) · ${latestQuarter()} (financial)`}
+      />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
@@ -88,14 +85,10 @@ export default function HomePage() {
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Card title="AUM Trend" subtitle="Industry, last 24 months">
-          <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-            Chart placeholder
-          </div>
+          <ChartPlaceholder />
         </Card>
         <Card title="SIP Flows" subtitle="Monthly inflows">
-          <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-            Chart placeholder
-          </div>
+          <ChartPlaceholder />
         </Card>
       </section>
     </div>
