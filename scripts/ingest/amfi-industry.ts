@@ -13,14 +13,15 @@ import {
   writeSnapshot,
 } from "./utils";
 
-const RESEARCH_INDEX_URLS = [
-  "https://www.amfiindia.com/research-information/aum-data",
-  "https://www.amfiindia.com/research-information/aum-data/aum-and-historical-data",
-  "https://www.amfiindia.com/research-information/aum-data/categorisation-of-mutual-fund-schemes",
-  "https://www.amfiindia.com/research-information/aum-data/disclosure-of-average-aum",
-  "https://www.amfiindia.com/research-information/other-data",
-  "https://www.amfiindia.com/research-information/other-data/mf-industry-trend",
+const SEED_URLS = [
+  "https://www.amfiindia.com/",
+  "https://www.amfiindia.com/research-information",
+  "https://www.amfiindia.com/data",
+  "https://portal.amfiindia.com/",
 ];
+
+const FOLLOW_KEYWORDS =
+  /(aum|data|research|sip|industry|trend|monthly|asset|disclosure|category)/i;
 
 const DOWNLOAD_EXT_RE = /\.(xlsx|xls|csv|pdf)(\?.*)?$/i;
 
@@ -83,39 +84,103 @@ function absolutize(href: string, base: string): string {
   }
 }
 
-async function discoverFromPage(pageUrl: string): Promise<Candidate[]> {
+interface PageScan {
+  downloads: Candidate[];
+  follow: string[];
+  title: string;
+}
+
+function isAmfiHost(u: string): boolean {
+  try {
+    const url = new URL(u);
+    return /(^|\.)amfiindia\.com$/.test(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+async function scanPage(pageUrl: string): Promise<PageScan | null> {
   try {
     const html = await fetchText(pageUrl);
     const $ = cheerio.load(html);
-    const out: Candidate[] = [];
+    const title = $("title").first().text().trim().slice(0, 120);
+    const downloads: Candidate[] = [];
+    const follow: string[] = [];
+    const seenFollow = new Set<string>();
+
     $("a[href]").each((_, el) => {
-      const href = String($(el).attr("href") ?? "");
-      if (!href || !DOWNLOAD_EXT_RE.test(href)) return;
+      const href = String($(el).attr("href") ?? "").trim();
+      if (!href || href.startsWith("#") || href.startsWith("mailto:"))
+        return;
       const abs = absolutize(href, pageUrl);
       const text = $(el).text().trim().replace(/\s+/g, " ");
-      out.push({ url: abs, text, page: pageUrl });
+
+      if (DOWNLOAD_EXT_RE.test(abs)) {
+        downloads.push({ url: abs, text, page: pageUrl });
+        return;
+      }
+
+      if (!isAmfiHost(abs)) return;
+      const matches =
+        FOLLOW_KEYWORDS.test(abs) || FOLLOW_KEYWORDS.test(text);
+      if (!matches) return;
+      if (seenFollow.has(abs)) return;
+      seenFollow.add(abs);
+      follow.push(abs);
     });
-    return out;
+
+    return { downloads, follow, title };
   } catch (err) {
     warn(`discovery: ${pageUrl} → ${(err as Error).message}`);
-    return [];
+    return null;
   }
 }
 
 export async function discoverDownloads(): Promise<Candidate[]> {
-  const all: Candidate[] = [];
-  const seen = new Set<string>();
-  for (const page of RESEARCH_INDEX_URLS) {
-    info(`discovery: scanning ${page}`);
-    const found = await discoverFromPage(page);
-    for (const c of found) {
-      if (seen.has(c.url)) continue;
-      seen.add(c.url);
-      all.push(c);
+  const downloads: Candidate[] = [];
+  const seenDownload = new Set<string>();
+  const visited = new Set<string>();
+  const queue: { url: string; depth: number }[] = SEED_URLS.map((u) => ({
+    url: u,
+    depth: 0,
+  }));
+  const MAX_PAGES = 30;
+
+  while (queue.length && visited.size < MAX_PAGES) {
+    const { url, depth } = queue.shift()!;
+    if (visited.has(url)) continue;
+    visited.add(url);
+
+    info(`discovery: scanning ${url} (depth ${depth})`);
+    const scan = await scanPage(url);
+    if (!scan) continue;
+    info(
+      `discovery: ${url} → "${scan.title}" · ${scan.downloads.length} files · ${scan.follow.length} follow`
+    );
+    if (scan.follow.length && depth === 0) {
+      const sample = scan.follow.slice(0, 8).map((u) => `    ${u}`).join("\n");
+      info(`  first follow links from ${url}:\n${sample}`);
     }
-    info(`discovery: ${page} → ${found.length} download links`);
+
+    for (const d of scan.downloads) {
+      if (seenDownload.has(d.url)) continue;
+      seenDownload.add(d.url);
+      downloads.push(d);
+    }
+
+    if (depth < 1) {
+      for (const f of scan.follow) {
+        if (visited.has(f)) continue;
+        if (queue.some((q) => q.url === f)) continue;
+        queue.push({ url: f, depth: depth + 1 });
+      }
+    }
   }
-  return all;
+
+  info(
+    `discovery: visited ${visited.size} pages, queued was ${queue.length} more (cap ${MAX_PAGES})`
+  );
+  return downloads;
 }
 
 function isAumCandidate(c: Candidate): boolean {
