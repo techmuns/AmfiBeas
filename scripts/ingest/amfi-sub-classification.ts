@@ -8,7 +8,7 @@ import {
   writeSnapshot,
 } from "./utils";
 import type {
-  OtherSchemesAmcRow,
+  OtherSchemesMonthlyRow,
   OtherSchemesMonthlySnapshot,
 } from "../../src/data/snapshots/types";
 
@@ -44,9 +44,13 @@ function urlsForMonth(mon: string, yy: string): string[] {
 }
 
 interface ParsedRow {
-  amcName: string;
-  totalAum: number;
+  category: string;
   schemes: number;
+  folios: number;
+  fundsMobilized: number;
+  redemption: number;
+  netFlow: number;
+  aum: number;
 }
 
 interface ParseResult {
@@ -79,14 +83,11 @@ function parseSubClassification(buffer: ArrayBuffer): ParseResult {
     }
 
     let headerIdx = -1;
-    for (let i = 0; i < Math.min(rows.length, 30); i++) {
+    for (let i = 0; i < Math.min(rows.length, 10); i++) {
       const r = rows[i].map((c) => String(c ?? "").toLowerCase());
-      const hasAmcCol = r.some((c) =>
-        /amc|fund\s*house|mutual\s*fund/.test(c)
-      );
-      const hasAumCol = r.some((c) => /aum|asset/.test(c));
-      const hasSchemeCol = r.some((c) => /scheme/.test(c));
-      if (hasAmcCol && (hasAumCol || hasSchemeCol)) {
+      const hasName = r.some((c) => /scheme\s*name/.test(c));
+      const hasAum = r.some((c) => /asset|aum/.test(c));
+      if (hasName && hasAum) {
         headerIdx = i;
         break;
       }
@@ -94,31 +95,43 @@ function parseSubClassification(buffer: ArrayBuffer): ParseResult {
     if (headerIdx === -1) continue;
 
     const headers = rows[headerIdx].map((c) => String(c ?? "").toLowerCase());
-    const amcIdx = headers.findIndex((c) =>
-      /amc|fund\s*house|mutual\s*fund/.test(c)
+    const nameIdx = headers.findIndex((c) => /scheme\s*name/.test(c));
+    const schemesIdx = headers.findIndex((c) =>
+      /no\.?\s*of\s*scheme|number\s*of\s*scheme/.test(c)
     );
-    let aumIdx = headers.findIndex((c) =>
-      /(total.*aum|aum.*total|grand\s*total|total\s*\(?(rs|inr|₹))/.test(c)
+    const foliosIdx = headers.findIndex((c) =>
+      /no\.?\s*of\s*folio|number\s*of\s*folio/.test(c)
     );
-    if (aumIdx === -1) aumIdx = headers.findIndex((c) => /aum|asset/.test(c));
-    const schemeIdx = headers.findIndex((c) =>
-      /(no.*scheme|scheme.*count|total.*scheme)/.test(c)
+    const mobilizedIdx = headers.findIndex((c) => /funds?\s*mobil/.test(c));
+    const redemptionIdx = headers.findIndex((c) =>
+      /repurchase|redemption/.test(c)
     );
+    const netIdx = headers.findIndex((c) =>
+      /net\s*inflow|net\s*outflow/.test(c)
+    );
+    const aumIdx = headers.findIndex((c) => /assets?\s*under|aum/.test(c));
 
     structure.push(
-      `  → header at row ${headerIdx}: AMC col ${amcIdx}, AUM col ${aumIdx}, Schemes col ${schemeIdx}`
+      `  → header at row ${headerIdx}: name=${nameIdx} schemes=${schemesIdx} folios=${foliosIdx} mobilized=${mobilizedIdx} redemption=${redemptionIdx} net=${netIdx} aum=${aumIdx}`
     );
-    if (amcIdx === -1 || aumIdx === -1) continue;
+    if (nameIdx === -1 || aumIdx === -1) continue;
 
     for (let i = headerIdx + 1; i < rows.length; i++) {
-      const amcName = String(rows[i][amcIdx] ?? "").trim();
-      if (!amcName) continue;
-      if (/^(total|grand\s*total|sub\s*total)\b/i.test(amcName)) continue;
+      const name = String(rows[i][nameIdx] ?? "").trim();
+      if (!name) continue;
+      if (/^(other\s*scheme|total|grand\s*total|sub\s*total)\b/i.test(name))
+        continue;
       const aum = parseNumberLoose(rows[i][aumIdx]);
       if (aum === null || aum <= 0) continue;
-      const schemes =
-        schemeIdx !== -1 ? parseNumberLoose(rows[i][schemeIdx]) ?? 0 : 0;
-      out.push({ amcName, totalAum: aum, schemes });
+      out.push({
+        category: name,
+        schemes: parseNumberLoose(rows[i][schemesIdx]) ?? 0,
+        folios: parseNumberLoose(rows[i][foliosIdx]) ?? 0,
+        fundsMobilized: parseNumberLoose(rows[i][mobilizedIdx]) ?? 0,
+        redemption: parseNumberLoose(rows[i][redemptionIdx]) ?? 0,
+        netFlow: parseNumberLoose(rows[i][netIdx]) ?? 0,
+        aum,
+      });
     }
     if (out.length) break;
   }
@@ -128,7 +141,7 @@ function parseSubClassification(buffer: ArrayBuffer): ParseResult {
 
 export async function ingestAmfiSubClassification(): Promise<void> {
   const months = recentMonths(12);
-  const snapshotRows: OtherSchemesAmcRow[] = [];
+  const snapshotRows: OtherSchemesMonthlyRow[] = [];
   let firstStructureLogged = false;
 
   for (const m of months) {
@@ -139,17 +152,25 @@ export async function ingestAmfiSubClassification(): Promise<void> {
         info(`sub-classification: ${url}`);
         const buf = await fetchBuffer(url);
         const { rows, structure } = parseSubClassification(buf);
-        info(`  → parsed ${rows.length} AMC rows for ${m.key}`);
+        info(`  → parsed ${rows.length} category rows for ${m.key}`);
         if (!firstStructureLogged) {
-          info(`  file structure (first month):\n${structure.map((s) => `    ${s}`).join("\n")}`);
+          info(
+            `  file structure (first month):\n${structure
+              .map((s) => `    ${s}`)
+              .join("\n")}`
+          );
           firstStructureLogged = true;
         }
         for (const r of rows) {
           snapshotRows.push({
-            amcName: r.amcName,
             month: m.key,
-            totalAum: r.totalAum,
+            category: r.category,
             schemes: r.schemes,
+            folios: r.folios,
+            fundsMobilized: r.fundsMobilized,
+            redemption: r.redemption,
+            netFlow: r.netFlow,
+            aum: r.aum,
           });
         }
         success = true;
@@ -171,9 +192,9 @@ export async function ingestAmfiSubClassification(): Promise<void> {
   const monthsCovered = Array.from(
     new Set(snapshotRows.map((r) => r.month))
   ).sort();
-  const amcsCovered = new Set(snapshotRows.map((r) => r.amcName)).size;
+  const categoriesCovered = new Set(snapshotRows.map((r) => r.category)).size;
   info(
-    `sub-classification: ${snapshotRows.length} rows · ${monthsCovered.length} months · ${amcsCovered} AMCs · range ${monthsCovered[0]}…${monthsCovered[monthsCovered.length - 1]}`
+    `sub-classification: ${snapshotRows.length} rows · ${monthsCovered.length} months · ${categoriesCovered} categories · range ${monthsCovered[0]}…${monthsCovered[monthsCovered.length - 1]}`
   );
 
   const snapshot: OtherSchemesMonthlySnapshot = {
@@ -182,7 +203,7 @@ export async function ingestAmfiSubClassification(): Promise<void> {
       source:
         "https://portal.amfiindia.com/spages/Sub-classification-{Mon}{YY}.xlsx",
       notes:
-        "Per-AMC AUM for the SEBI 'Other Schemes' category (Index Funds, ETFs, FoFs, Solution-oriented). Subset of total industry AUM.",
+        "Per-category data for the SEBI 'Other Schemes' group V (Index Funds, ETFs, FoFs). AUM, funds mobilised, redemption, net flow in ₹ Cr.",
     },
     rows: snapshotRows,
   };

@@ -47,23 +47,58 @@ export function isAnyLive(): boolean {
   return Object.values(m).some((v) => v === "live");
 }
 
-export function latestOtherSchemesByAmc(): Map<
-  string,
-  { totalAum: number; schemes: number; month: string }
-> {
-  const map = new Map<
-    string,
-    { totalAum: number; schemes: number; month: string }
-  >();
+export interface OtherSchemesMonthTotal {
+  month: string;
+  totalAum: number;
+  totalFolios: number;
+  netFlow: number;
+  fundsMobilized: number;
+  redemption: number;
+  categories: number;
+}
+
+export function otherSchemesByMonth(): OtherSchemesMonthTotal[] {
+  const byMonth = new Map<string, OtherSchemesMonthTotal>();
   for (const r of otherSchemesMonthlySnapshot.rows) {
-    const existing = map.get(r.amcName);
-    if (!existing || r.month > existing.month) {
-      map.set(r.amcName, {
-        totalAum: r.totalAum,
-        schemes: r.schemes,
-        month: r.month,
-      });
-    }
+    const existing = byMonth.get(r.month) ?? {
+      month: r.month,
+      totalAum: 0,
+      totalFolios: 0,
+      netFlow: 0,
+      fundsMobilized: 0,
+      redemption: 0,
+      categories: 0,
+    };
+    existing.totalAum += r.aum;
+    existing.totalFolios += r.folios;
+    existing.netFlow += r.netFlow;
+    existing.fundsMobilized += r.fundsMobilized;
+    existing.redemption += r.redemption;
+    existing.categories += 1;
+    byMonth.set(r.month, existing);
   }
-  return map;
+  return Array.from(byMonth.values()).sort((a, b) =>
+    a.month.localeCompare(b.month)
+  );
+}
+
+export function latestOtherSchemesCategoryBreakdown(): {
+  month: string;
+  rows: { category: string; aum: number; netFlow: number; folios: number }[];
+} | null {
+  if (otherSchemesMonthlySnapshot.rows.length === 0) return null;
+  const months = Array.from(
+    new Set(otherSchemesMonthlySnapshot.rows.map((r) => r.month))
+  ).sort();
+  const latest = months[months.length - 1];
+  const rows = otherSchemesMonthlySnapshot.rows
+    .filter((r) => r.month === latest)
+    .map((r) => ({
+      category: r.category,
+      aum: r.aum,
+      netFlow: r.netFlow,
+      folios: r.folios,
+    }))
+    .sort((a, b) => b.aum - a.aum);
+  return { month: latest, rows };
 }
