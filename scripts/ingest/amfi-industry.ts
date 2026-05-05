@@ -13,16 +13,22 @@ import {
   writeSnapshot,
 } from "./utils";
 
-const AUM_EXCEL_URLS = [
-  "https://www.amfiindia.com/Themes/Theme1/downloads/MF-Industry-Performance-since-Inception.xlsx",
-  "https://www.amfiindia.com/Themes/Theme1/downloads/Mutual%20Fund%20Industry%20Performance%20since%20Inception.xlsx",
-  "https://www.amfiindia.com/Themes/Theme1/downloads/aum-since-inception.xlsx",
+const RESEARCH_INDEX_URLS = [
+  "https://www.amfiindia.com/research-information/aum-data",
+  "https://www.amfiindia.com/research-information/aum-data/aum-and-historical-data",
+  "https://www.amfiindia.com/research-information/aum-data/categorisation-of-mutual-fund-schemes",
+  "https://www.amfiindia.com/research-information/aum-data/disclosure-of-average-aum",
+  "https://www.amfiindia.com/research-information/other-data",
+  "https://www.amfiindia.com/research-information/other-data/mf-industry-trend",
 ];
 
-const SIP_HTML_URLS = [
-  "https://www.amfiindia.com/research-information/aum-data/sip",
-  "https://www.amfiindia.com/research-information/other-data/mf-sip-data",
-];
+const DOWNLOAD_EXT_RE = /\.(xlsx|xls|csv|pdf)(\?.*)?$/i;
+
+interface Candidate {
+  url: string;
+  text: string;
+  page: string;
+}
 
 const MONTHS_LOOKUP: Record<string, number> = {
   jan: 1, january: 1,
@@ -63,10 +69,67 @@ function parseMonth(s: string): string | null {
 function parseNumberLoose(s: unknown): number | null {
   if (typeof s === "number" && Number.isFinite(s)) return s;
   if (typeof s !== "string") return null;
-  const cleaned = s.replace(/[,₹\s]/g, "").replace(/[ ]/g, "");
+  const cleaned = s.replace(/[,₹\s]/g, "");
   if (!cleaned) return null;
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : null;
+}
+
+function absolutize(href: string, base: string): string {
+  try {
+    return new URL(href, base).toString();
+  } catch {
+    return href;
+  }
+}
+
+async function discoverFromPage(pageUrl: string): Promise<Candidate[]> {
+  try {
+    const html = await fetchText(pageUrl);
+    const $ = cheerio.load(html);
+    const out: Candidate[] = [];
+    $("a[href]").each((_, el) => {
+      const href = String($(el).attr("href") ?? "");
+      if (!href || !DOWNLOAD_EXT_RE.test(href)) return;
+      const abs = absolutize(href, pageUrl);
+      const text = $(el).text().trim().replace(/\s+/g, " ");
+      out.push({ url: abs, text, page: pageUrl });
+    });
+    return out;
+  } catch (err) {
+    warn(`discovery: ${pageUrl} → ${(err as Error).message}`);
+    return [];
+  }
+}
+
+export async function discoverDownloads(): Promise<Candidate[]> {
+  const all: Candidate[] = [];
+  const seen = new Set<string>();
+  for (const page of RESEARCH_INDEX_URLS) {
+    info(`discovery: scanning ${page}`);
+    const found = await discoverFromPage(page);
+    for (const c of found) {
+      if (seen.has(c.url)) continue;
+      seen.add(c.url);
+      all.push(c);
+    }
+    info(`discovery: ${page} → ${found.length} download links`);
+  }
+  return all;
+}
+
+function isAumCandidate(c: Candidate): boolean {
+  const t = (c.text + " " + c.url).toLowerCase();
+  return (
+    /\.xlsx?$/i.test(c.url) &&
+    (/(industry|aaum|aum|asset)/.test(t) ||
+      /(monthly|trend|since\s*inception|categorywise)/.test(t))
+  );
+}
+
+function isSipCandidate(c: Candidate): boolean {
+  const t = (c.text + " " + c.url).toLowerCase();
+  return /sip/.test(t);
 }
 
 interface AumRow {
@@ -75,7 +138,7 @@ interface AumRow {
   equityAum?: number;
 }
 
-function findColumns(headers: string[]): {
+function findAumColumns(headers: string[]): {
   monthIdx: number;
   totalIdx: number;
   equityIdx: number;
@@ -85,10 +148,10 @@ function findColumns(headers: string[]): {
     (h) => /month|period|date/.test(h) && !/year/.test(h)
   );
   let totalIdx = norm.findIndex((h) =>
-    /(total|industry|all\s*scheme|aum)/.test(h)
+    /(total|industry|grand\s*total|all\s*scheme)/.test(h)
   );
   if (totalIdx === -1)
-    totalIdx = norm.findIndex((h) => /aum|asset/i.test(h));
+    totalIdx = norm.findIndex((h) => /aum|asset/.test(h));
   const equityIdx = norm.findIndex((h) => /equity/.test(h));
   return { monthIdx, totalIdx, equityIdx };
 }
@@ -106,11 +169,11 @@ export function parseAumExcel(buffer: ArrayBuffer): AumRow[] {
     if (!rows.length) continue;
 
     let headerIdx = -1;
-    for (let i = 0; i < Math.min(rows.length, 25); i++) {
+    for (let i = 0; i < Math.min(rows.length, 30); i++) {
       const r = rows[i].map((c) => String(c ?? "").toLowerCase());
       if (
         r.some((c) => /month|period/.test(c)) &&
-        r.some((c) => /aum|asset/.test(c))
+        r.some((c) => /aum|asset|total/.test(c))
       ) {
         headerIdx = i;
         break;
@@ -119,7 +182,7 @@ export function parseAumExcel(buffer: ArrayBuffer): AumRow[] {
     if (headerIdx === -1) continue;
 
     const headers = rows[headerIdx].map((c) => String(c ?? ""));
-    const { monthIdx, totalIdx, equityIdx } = findColumns(headers);
+    const { monthIdx, totalIdx, equityIdx } = findAumColumns(headers);
     if (monthIdx === -1 || totalIdx === -1) continue;
 
     for (let i = headerIdx + 1; i < rows.length; i++) {
@@ -164,7 +227,7 @@ export function parseSipHtml(html: string): SipRow[] {
     $(tbl)
       .find("tbody tr, tr")
       .each((i, row) => {
-        if (i === 0 && monthIdx >= 0) {
+        if (i === 0) {
           const first = $(row).find("th, td").first().text().trim();
           if (/month|period/i.test(first)) return;
         }
@@ -182,31 +245,77 @@ export function parseSipHtml(html: string): SipRow[] {
   return out;
 }
 
-async function tryFetchAumExcel(): Promise<AumRow[]> {
-  for (const url of AUM_EXCEL_URLS) {
+function parseSipExcel(buffer: ArrayBuffer): SipRow[] {
+  const wb = XLSX.read(buffer, { type: "array" });
+  const out: SipRow[] = [];
+  for (const sheetName of wb.SheetNames) {
+    const sheet = wb.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+      header: 1,
+      defval: "",
+      raw: false,
+    }) as unknown[][];
+    let headerIdx = -1;
+    for (let i = 0; i < Math.min(rows.length, 30); i++) {
+      const r = rows[i].map((c) => String(c ?? "").toLowerCase());
+      if (
+        r.some((c) => /month|period/.test(c)) &&
+        r.some((c) => /sip|amount|total/.test(c))
+      ) {
+        headerIdx = i;
+        break;
+      }
+    }
+    if (headerIdx === -1) continue;
+    const headers = rows[headerIdx].map((c) => String(c ?? "").toLowerCase());
+    const monthIdx = headers.findIndex((h) => /month|period/.test(h));
+    const sipIdx = headers.findIndex((h) =>
+      /sip\s*contribution|sip\s*amount|sip|amount|total/.test(h)
+    );
+    if (monthIdx === -1 || sipIdx === -1) continue;
+    for (let i = headerIdx + 1; i < rows.length; i++) {
+      const month = parseMonth(String(rows[i][monthIdx] ?? ""));
+      const sip = parseNumberLoose(rows[i][sipIdx]);
+      if (!month || sip === null) continue;
+      out.push({ month, sipFlow: sip });
+    }
+    if (out.length) break;
+  }
+  return out;
+}
+
+async function tryAumCandidates(candidates: Candidate[]): Promise<AumRow[]> {
+  for (const c of candidates) {
     try {
-      info(`AUM: trying ${url}`);
-      const buf = await fetchBuffer(url);
+      info(`AUM: trying ${c.url} ("${c.text}")`);
+      const buf = await fetchBuffer(c.url);
       const rows = parseAumExcel(buf);
-      info(`AUM: parsed ${rows.length} rows from ${url}`);
+      info(`AUM: parsed ${rows.length} rows from ${c.url}`);
       if (rows.length > 0) return rows;
     } catch (err) {
-      warn(`AUM: ${url} → ${(err as Error).message}`);
+      warn(`AUM: ${c.url} → ${(err as Error).message}`);
     }
   }
   return [];
 }
 
-async function tryFetchSip(): Promise<SipRow[]> {
-  for (const url of SIP_HTML_URLS) {
+async function trySipCandidates(candidates: Candidate[]): Promise<SipRow[]> {
+  for (const c of candidates) {
     try {
-      info(`SIP: trying ${url}`);
-      const html = await fetchText(url);
-      const rows = parseSipHtml(html);
-      info(`SIP: parsed ${rows.length} rows from ${url}`);
+      info(`SIP: trying ${c.url} ("${c.text}")`);
+      const isExcel = /\.xlsx?(\?|$)/i.test(c.url);
+      let rows: SipRow[];
+      if (isExcel) {
+        const buf = await fetchBuffer(c.url);
+        rows = parseSipExcel(buf);
+      } else {
+        const html = await fetchText(c.url);
+        rows = parseSipHtml(html);
+      }
+      info(`SIP: parsed ${rows.length} rows from ${c.url}`);
       if (rows.length > 0) return rows;
     } catch (err) {
-      warn(`SIP: ${url} → ${(err as Error).message}`);
+      warn(`SIP: ${c.url} → ${(err as Error).message}`);
     }
   }
   return [];
@@ -242,18 +351,31 @@ function mergeRows(
     a.month.localeCompare(b.month)
   );
   const sources: string[] = [];
-  if (aum.length) sources.push("AMFI industry AUM Excel");
-  if (sip.length) sources.push("AMFI SIP page");
+  if (aum.length) sources.push("AMFI industry AUM");
+  if (sip.length) sources.push("AMFI SIP");
   return { rows, sources };
 }
 
 export async function ingestAmfiIndustryMonthly(): Promise<void> {
-  const aum = await tryFetchAumExcel();
-  const sip = await tryFetchSip();
+  const all = await discoverDownloads();
+  info(`discovery: found ${all.length} unique download links overall`);
+  const sample = all.slice(0, 25).map((c) => `  - ${c.url}  «${c.text}»`);
+  if (sample.length) {
+    info(`discovery sample (up to 25):\n${sample.join("\n")}`);
+  }
+
+  const aumCandidates = all.filter(isAumCandidate);
+  const sipCandidates = all.filter(isSipCandidate);
+  info(
+    `candidates: ${aumCandidates.length} AUM, ${sipCandidates.length} SIP`
+  );
+
+  const aum = await tryAumCandidates(aumCandidates);
+  const sip = await trySipCandidates(sipCandidates);
 
   if (aum.length === 0 && sip.length === 0) {
     warn(
-      "no industry data could be fetched from any candidate URL — keeping previous snapshot"
+      "no industry data could be extracted from any discovered link — keeping previous snapshot"
     );
     return;
   }
@@ -270,7 +392,7 @@ export async function ingestAmfiIndustryMonthly(): Promise<void> {
       generatedAt: nowIso(),
       source: sources.join(" + "),
       notes:
-        "AUM in ₹ Cr (industry total + equity where available). SIP in ₹ Cr. Folios are not yet populated.",
+        "AUM in ₹ Cr (industry total + equity where available). SIP in ₹ Cr. Folios not yet populated.",
     },
     rows,
   };
