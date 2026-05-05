@@ -8,6 +8,15 @@ export const metadata: Metadata = {
     "Live operating and financial dashboard for Indian Asset Management Companies.",
 };
 
+const themeInitScript = `
+(function(){try{
+  var t=localStorage.getItem('theme');
+  if(t==='dark'||(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)){
+    document.documentElement.classList.add('dark');
+  }
+}catch(e){}})();
+`;
+
 export default function RootLayout({
   children,
 }: {
@@ -15,6 +24,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-screen antialiased">
         <Shell>{children}</Shell>
       </body>

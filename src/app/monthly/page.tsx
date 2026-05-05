@@ -1,6 +1,7 @@
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { FilterBar } from "@/components/filters/FilterBar";
 import { AreaTrend } from "@/components/charts/AreaTrend";
 import { BarSeries } from "@/components/charts/BarSeries";
 import { StackedArea } from "@/components/charts/StackedArea";
@@ -16,16 +17,36 @@ import { AMCS } from "@/data/amcs";
 import { monthlyForAmc, MONTHS_LIST } from "@/data/generator";
 import { formatINR, formatDelta } from "@/lib/format";
 import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
+import { parseFilters, selectedSlugs, trimMonths } from "@/lib/filter";
 
-export default function MonthlyPage() {
-  const series = industryByMonth();
-  const latest = series[series.length - 1];
+export default async function MonthlyPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const filters = parseFilters(sp);
+  const slugs = selectedSlugs(filters);
 
-  const aumMom = momChange(series.map((m) => m.aum));
-  const equityYoy = yoyChange(series.map((m) => m.equityAum));
-  const sipYoy = yoyChange(series.map((m) => m.sipFlow));
-  const investorsYoy = yoyChange(series.map((m) => m.newInvestors));
-  const nfoMom = momChange(series.map((m) => m.nfoCount));
+  const fullSeries = industryByMonth(slugs);
+  const fullShareAum = shareSeries("aum", 6, slugs);
+  const fullShareSip = shareSeries("sipFlow", 6, slugs);
+
+  const trimmedMonths = new Set(trimMonths(MONTHS_LIST, filters.range));
+  const series = fullSeries.filter((r) => trimmedMonths.has(r.month));
+  const aumShareRows = fullShareAum.rows.filter((r) =>
+    trimmedMonths.has(r.month as string)
+  );
+  const sipShareRows = fullShareSip.rows.filter((r) =>
+    trimmedMonths.has(r.month as string)
+  );
+
+  const latest = fullSeries[fullSeries.length - 1];
+  const aumMom = momChange(fullSeries.map((m) => m.aum));
+  const equityYoy = yoyChange(fullSeries.map((m) => m.equityAum));
+  const sipYoy = yoyChange(fullSeries.map((m) => m.sipFlow));
+  const investorsYoy = yoyChange(fullSeries.map((m) => m.newInvestors));
+  const nfoMom = momChange(fullSeries.map((m) => m.nfoCount));
 
   const aumSeries = series.map((m) => ({ month: m.month, value: m.aum }));
   const sipSeries = series.map((m) => ({ label: m.month, value: m.sipFlow }));
@@ -35,23 +56,26 @@ export default function MonthlyPage() {
   }));
   const nfoSeries = series.map((m) => ({ label: m.month, value: m.nfoCount }));
 
-  const aumShare = shareSeries("aum", 6);
-  const sipShare = shareSeries("sipFlow", 6);
-
-  const heatmapRows: HeatmapRow[] = AMCS.map((a) => ({
+  const heatmapAmcs = slugs ? AMCS.filter((a) => slugs.includes(a.slug)) : AMCS;
+  const heatmapRows: HeatmapRow[] = heatmapAmcs.map((a) => ({
     label: a.ticker ?? a.name.split(" ")[0],
-    values: monthlyForAmc(a.slug).map((r) => r.schemePerformance ?? null),
+    values: monthlyForAmc(a.slug)
+      .filter((r) => trimmedMonths.has(r.month))
+      .map((r) => r.schemePerformance ?? null),
   }));
+  const heatmapColumns = MONTHS_LIST.filter((m) => trimmedMonths.has(m));
 
   const trend = (n: number) =>
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
 
+  const subtitle = slugs
+    ? `${slugs.length} AMC${slugs.length > 1 ? "s" : ""} · ${latestMonth()}`
+    : `Industry-wide · ${latestMonth()}`;
+
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Monthly Operating"
-        subtitle={`Industry-wide operating metrics · ${latestMonth()}`}
-      />
+      <PageHeader title="Monthly Operating" subtitle={subtitle} />
+      <FilterBar showRange="monthly" />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <KpiCard
@@ -87,14 +111,17 @@ export default function MonthlyPage() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card title="AUM Trend" subtitle="Total industry AUM, 24M">
+        <Card title="AUM Trend" subtitle="Total AUM">
           <AreaTrend data={aumSeries} name="AUM" />
         </Card>
-        <Card title="AUM Market Share" subtitle="Top 6 AMCs + Others">
+        <Card
+          title="AUM Market Share"
+          subtitle={slugs ? "Within selected AMCs" : "Top 6 + Others"}
+        >
           <StackedArea
-            data={aumShare.rows}
+            data={aumShareRows}
             xKey="month"
-            series={aumShare.keys.map((k) => ({
+            series={fullShareAum.keys.map((k) => ({
               key: k,
               name: amcLabel(k),
               color: AMC_COLORS[k] ?? "hsl(var(--muted-foreground))",
@@ -104,11 +131,14 @@ export default function MonthlyPage() {
         <Card title="SIP Flows" subtitle="Monthly inflows">
           <BarSeries data={sipSeries} name="SIP" />
         </Card>
-        <Card title="SIP Market Share" subtitle="Share of monthly SIP">
+        <Card
+          title="SIP Market Share"
+          subtitle={slugs ? "Within selected AMCs" : "Top 6 + Others"}
+        >
           <StackedArea
-            data={sipShare.rows}
+            data={sipShareRows}
             xKey="month"
-            series={sipShare.keys.map((k) => ({
+            series={fullShareSip.keys.map((k) => ({
               key: k,
               name: amcLabel(k),
               color: AMC_COLORS[k] ?? "hsl(var(--muted-foreground))",
@@ -138,7 +168,7 @@ export default function MonthlyPage() {
           subtitle="AMC × month · excess return %"
           className="lg:col-span-2"
         >
-          <Heatmap rows={heatmapRows} columns={MONTHS_LIST} />
+          <Heatmap rows={heatmapRows} columns={heatmapColumns} />
         </Card>
       </section>
     </div>
