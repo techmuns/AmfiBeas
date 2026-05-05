@@ -15,6 +15,8 @@ export function DataModeBadge() {
         ? "Industry"
         : k === "amcMonthly"
         ? "AMC monthly"
+        : k === "otherSchemes"
+        ? "Other Schemes"
         : "AMC quarterly"
     );
 

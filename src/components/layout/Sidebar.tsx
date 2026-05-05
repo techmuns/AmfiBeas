@@ -2,13 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, CalendarDays, FileBarChart, Building2 } from "lucide-react";
+import {
+  LayoutDashboard,
+  CalendarDays,
+  FileBarChart,
+  Building2,
+  Layers,
+} from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const nav = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
   { href: "/monthly", label: "Monthly", icon: CalendarDays },
   { href: "/quarterly", label: "Quarterly", icon: FileBarChart },
+  { href: "/other-schemes", label: "Other Schemes", icon: Layers },
   { href: "/amc", label: "AMCs", icon: Building2 },
 ];
 
