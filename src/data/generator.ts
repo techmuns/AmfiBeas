@@ -94,6 +94,18 @@ export function quarterMonths(quarter: string): string[] {
 const MONTHS = lastNMonths(MONTHS_BACK);
 const QUARTERS = lastNQuarters(QUARTERS_BACK);
 
+/**
+ * Demo split factors used to derive AUM-by-category from totalAum and equityPct.
+ * Active equity is roughly 80% of equity, with the rest in passive (index/ETFs).
+ * The non-equity remainder is split into debt / liquid / hybrid / other-schemes
+ * roughly in proportion to industry-wide SEBI category mix as of 2026.
+ */
+const ACTIVE_OF_EQUITY = 0.82;
+const DEBT_OF_NONEQUITY = 0.5;
+const LIQUID_OF_NONEQUITY = 0.2;
+const HYBRID_OF_NONEQUITY = 0.22;
+const OTHER_OF_NONEQUITY = 0.08;
+
 function buildAmcMonthly(
   profile: (typeof AMCS)[number]
 ): MonthlyOperating[] {
@@ -104,36 +116,75 @@ function buildAmcMonthly(
   return MONTHS.map((month, i) => {
     const trendFactor = Math.pow(1 + monthlyGrowth, i);
     const aumNoise = 1 + gaussian(rand, 0, 0.018);
-    const aum = profile.baseAum * trendFactor * aumNoise;
+    const totalAum = profile.baseAum * trendFactor * aumNoise;
 
     const equityNoise = 1 + gaussian(rand, 0, 0.012);
-    const equityAum = aum * profile.equityPct * equityNoise;
+    const equityAum = totalAum * profile.equityPct * equityNoise;
+    const activeEquityAum = equityAum * ACTIVE_OF_EQUITY;
+    const passiveEquityAum = equityAum * (1 - ACTIVE_OF_EQUITY);
+
+    const nonEquityAum = Math.max(0, totalAum - equityAum);
+    const debtAum = nonEquityAum * DEBT_OF_NONEQUITY;
+    const liquidAum = nonEquityAum * LIQUID_OF_NONEQUITY;
+    const hybridAum = nonEquityAum * HYBRID_OF_NONEQUITY;
+    const otherSchemesAum = nonEquityAum * OTHER_OF_NONEQUITY;
+    const passiveAum = passiveEquityAum;
 
     const sipBase =
       INDUSTRY_BASE_SIP * profile.sipShare * Math.pow(1 + sipMonthlyGrowth, i);
     const sipNoise = 1 + gaussian(rand, 0, 0.04);
-    const sipFlow = sipBase * sipNoise;
+    const sipContribution = sipBase * sipNoise;
 
     const newInvestorsBase = 18_00_000 * profile.newInvestorShare;
     const investorGrowth = Math.pow(1.014, i);
-    const newInvestors = Math.max(
+    const investorAdditions = Math.max(
       0,
-      Math.round(newInvestorsBase * investorGrowth * (1 + gaussian(rand, 0, 0.06)))
+      Math.round(
+        newInvestorsBase * investorGrowth * (1 + gaussian(rand, 0, 0.06))
+      )
     );
+    const baseFolios =
+      profile.newInvestorShare * 22_000_000 * (0.85 + (profile.seed % 10) * 0.02);
+    const folios = Math.round(baseFolios * Math.pow(1.012, i));
 
     const nfoCount = poisson(rand, profile.nfoLambda);
+    const nfoAumCollected =
+      nfoCount > 0
+        ? Math.round(nfoCount * (300 + Math.abs(gaussian(rand, 0, 200))))
+        : 0;
 
-    const schemePerformance = gaussian(rand, 1.4, 0.9);
+    const schemeOutperformanceRatio = Math.max(
+      0,
+      Math.min(100, 50 + gaussian(rand, 0, 12))
+    );
+
+    const q1Pct = Math.max(10, Math.min(60, 30 + gaussian(rand, 0, 8)));
+    const q2Pct = Math.max(10, Math.min(40, 25 + gaussian(rand, 0, 5)));
+    const q3Pct = Math.max(5, Math.min(35, 25 + gaussian(rand, 0, 5)));
+    const q4Pct = Math.max(0, 100 - q1Pct - q2Pct - q3Pct);
 
     return {
       amcSlug: profile.slug,
       month,
-      aum: Math.round(aum),
-      equityAum: Math.round(equityAum),
-      sipFlow: Math.round(sipFlow),
-      newInvestors,
+      totalAum: Math.round(totalAum),
+      activeEquityAum: Math.round(activeEquityAum),
+      passiveAum: Math.round(passiveAum),
+      debtAum: Math.round(debtAum),
+      liquidAum: Math.round(liquidAum),
+      hybridAum: Math.round(hybridAum),
+      otherSchemesAum: Math.round(otherSchemesAum),
+      sipContribution: Math.round(sipContribution),
+      investorAdditions,
+      folios,
       nfoCount,
-      schemePerformance: Number(schemePerformance.toFixed(2)),
+      nfoAumCollected,
+      schemeOutperformanceRatio: Number(schemeOutperformanceRatio.toFixed(1)),
+      quartileRankSummary: {
+        q1: Number(q1Pct.toFixed(1)),
+        q2: Number(q2Pct.toFixed(1)),
+        q3: Number(q3Pct.toFixed(1)),
+        q4: Number(q4Pct.toFixed(1)),
+      },
     };
   });
 }
@@ -145,27 +196,41 @@ function buildOthersMonthly(): MonthlyOperating[] {
 
   return MONTHS.map((month, i) => {
     const trend = Math.pow(1 + monthlyGrowth, i);
-    const aum = OTHERS_BASE_AUM * trend * (1 + gaussian(rand, 0, 0.012));
-    const equityAum = aum * 0.45 * (1 + gaussian(rand, 0, 0.01));
-    const sipFlow =
+    const totalAum = OTHERS_BASE_AUM * trend * (1 + gaussian(rand, 0, 0.012));
+    const equityAum = totalAum * 0.45 * (1 + gaussian(rand, 0, 0.01));
+    const activeEquityAum = equityAum * ACTIVE_OF_EQUITY;
+    const passiveAum = equityAum * (1 - ACTIVE_OF_EQUITY);
+    const nonEquityAum = Math.max(0, totalAum - equityAum);
+
+    const sipContribution =
       INDUSTRY_BASE_SIP *
       OTHERS_SIP_SHARE *
       Math.pow(1 + sipMonthlyGrowth, i) *
       (1 + gaussian(rand, 0, 0.04));
-    const newInvestors = Math.round(
+    const investorAdditions = Math.round(
       18_00_000 *
         OTHERS_INVESTOR_SHARE *
         Math.pow(1.014, i) *
         (1 + gaussian(rand, 0, 0.06))
     );
+    const folios = Math.round(8_000_000 * Math.pow(1.012, i));
+    const nfoCount = poisson(rand, 3.5);
+
     return {
       amcSlug: "others",
       month,
-      aum: Math.round(aum),
-      equityAum: Math.round(equityAum),
-      sipFlow: Math.round(sipFlow),
-      newInvestors,
-      nfoCount: poisson(rand, 3.5),
+      totalAum: Math.round(totalAum),
+      activeEquityAum: Math.round(activeEquityAum),
+      passiveAum: Math.round(passiveAum),
+      debtAum: Math.round(nonEquityAum * DEBT_OF_NONEQUITY),
+      liquidAum: Math.round(nonEquityAum * LIQUID_OF_NONEQUITY),
+      hybridAum: Math.round(nonEquityAum * HYBRID_OF_NONEQUITY),
+      otherSchemesAum: Math.round(nonEquityAum * OTHER_OF_NONEQUITY),
+      sipContribution: Math.round(sipContribution),
+      investorAdditions,
+      folios,
+      nfoCount,
+      nfoAumCollected: nfoCount > 0 ? Math.round(nfoCount * 250) : 0,
     };
   });
 }
@@ -179,7 +244,7 @@ function buildAmcQuarterly(
     const months = quarterMonths(quarter);
     const slice = monthly.filter((m) => months.includes(m.month));
     const avgAum =
-      slice.reduce((s, m) => s + m.aum, 0) / Math.max(slice.length, 1);
+      slice.reduce((s, m) => s + m.totalAum, 0) / Math.max(slice.length, 1);
     const yieldNoise = 1 + gaussian(rand, 0, 0.03);
     const revenue =
       (avgAum * profile.revenueYieldBps * yieldNoise) / 10_000 / 4;

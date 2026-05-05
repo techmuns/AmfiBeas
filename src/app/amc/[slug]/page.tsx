@@ -17,7 +17,11 @@ import {
   yoyChange,
   yoyChangeQuarterly,
 } from "@/data/aggregate";
-import { formatINR, formatDelta } from "@/lib/format";
+import {
+  formatCompactCrSafe,
+  formatDelta,
+  formatPctSafe,
+} from "@/lib/format";
 
 export function generateStaticParams() {
   return AMCS.map((a) => ({ slug: a.slug }));
@@ -37,19 +41,34 @@ export default async function AmcPage({
   const yields = yieldsForAmc(slug);
   const latest = monthly[monthly.length - 1];
   const latestQ = quarterly[quarterly.length - 1];
-  const latestYield = yields[yields.length - 1];
 
-  const aumYoy = yoyChange(monthly.map((m) => m.aum));
-  const sipMom = momChange(monthly.map((m) => m.sipFlow));
+  const aumYoy = yoyChange(monthly.map((m) => m.totalAum));
+  const sipMom = momChange(monthly.map((m) => m.sipContribution));
   const patYoy = yoyChangeQuarterly(quarterly.map((q) => q.pat));
 
   const industry = industryByMonth();
   const industryLatest = industry[industry.length - 1];
-  const aumShare = (latest.aum / industryLatest.aum) * 100;
-  const sipShare = (latest.sipFlow / industryLatest.sipFlow) * 100;
+  const aumShare =
+    industryLatest.totalAum > 0
+      ? (latest.totalAum / industryLatest.totalAum) * 100
+      : null;
+  const sipShare =
+    industryLatest.sipContribution > 0
+      ? (latest.sipContribution / industryLatest.sipContribution) * 100
+      : null;
+  const activeEquityShare =
+    industryLatest.activeEquityAum > 0
+      ? (latest.activeEquityAum / industryLatest.activeEquityAum) * 100
+      : null;
 
-  const aumSeries = monthly.map((m) => ({ month: m.month, value: m.aum }));
-  const sipSeries = monthly.map((m) => ({ label: m.month, value: m.sipFlow }));
+  const aumSeries = monthly.map((m) => ({
+    month: m.month,
+    value: m.totalAum,
+  }));
+  const sipSeries = monthly.map((m) => ({
+    label: m.month,
+    value: m.sipContribution,
+  }));
   const pnlData = quarterly.map((q) => ({
     quarter: q.quarter,
     revenue: q.revenue,
@@ -96,38 +115,38 @@ export default async function AmcPage({
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label="AUM"
-          value={formatINR(latest.aum, { compact: true })}
+          value={formatCompactCrSafe(latest.totalAum)}
           delta={`${formatDelta(aumYoy)} YoY`}
           trend={trend(aumYoy)}
         />
-        <KpiCard label="AUM Share" value={aumShare.toFixed(2) + "%"} />
+        <KpiCard label="AUM Share" value={formatPctSafe(aumShare, 2)} />
         <KpiCard
-          label="Equity AUM"
-          value={formatINR(latest.equityAum, { compact: true })}
+          label="Active Equity AUM"
+          value={formatCompactCrSafe(latest.activeEquityAum)}
         />
         <KpiCard
-          label="SIP Flow"
-          value={formatINR(latest.sipFlow, { compact: true })}
+          label="SIP Contribution"
+          value={formatCompactCrSafe(latest.sipContribution)}
           delta={`${formatDelta(sipMom)} MoM`}
           trend={trend(sipMom)}
         />
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="SIP Share" value={sipShare.toFixed(2) + "%"} />
+        <KpiCard
+          label="Active Equity Share"
+          value={formatPctSafe(activeEquityShare, 2)}
+        />
+        <KpiCard label="SIP Share" value={formatPctSafe(sipShare, 2)} />
         <KpiCard
           label="Quarterly Revenue"
-          value={formatINR(latestQ.revenue, { compact: true })}
+          value={formatCompactCrSafe(latestQ.revenue)}
         />
         <KpiCard
           label="PAT"
-          value={formatINR(latestQ.pat, { compact: true })}
+          value={formatCompactCrSafe(latestQ.pat)}
           delta={`${formatDelta(patYoy)} YoY`}
           trend={trend(patYoy)}
-        />
-        <KpiCard
-          label="PAT Margin"
-          value={latestYield.patMargin.toFixed(1) + "%"}
         />
       </section>
 

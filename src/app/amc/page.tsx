@@ -5,7 +5,11 @@ import { Card } from "@/components/ui/Card";
 import { AMCS, amfiNameToSlug, getAMC } from "@/data/amcs";
 import { monthlyForAmc, quarterlyForAmc } from "@/data/generator";
 import { amcMasterSnapshot, dataMode } from "@/data/source";
-import { formatINR } from "@/lib/format";
+import {
+  formatCompactCrSafe,
+  formatIntSafe,
+  formatPctSafe,
+} from "@/lib/format";
 import { cn } from "@/lib/cn";
 
 interface Row {
@@ -15,9 +19,9 @@ interface Row {
   listed?: boolean;
   amcCode?: number;
   schemeCount?: number;
-  aum?: number;
-  equityShare?: number;
-  sipFlow?: number;
+  totalAum?: number;
+  activeEquityShare?: number;
+  sipContribution?: number;
   quarterlyPat?: number;
   hasProfile: boolean;
 }
@@ -40,9 +44,12 @@ function buildRows(): { rows: Row[]; mode: "live" | "demo" } {
         listed: profile?.listed,
         amcCode: a.amcCode,
         schemeCount: a.schemeCount,
-        aum: latest?.aum,
-        equityShare: latest ? (latest.equityAum / latest.aum) * 100 : undefined,
-        sipFlow: latest?.sipFlow,
+        totalAum: latest?.totalAum,
+        activeEquityShare:
+          latest && latest.totalAum > 0
+            ? (latest.activeEquityAum / latest.totalAum) * 100
+            : undefined,
+        sipContribution: latest?.sipContribution,
         quarterlyPat: latestQ?.pat,
         hasProfile: Boolean(profile),
       };
@@ -61,9 +68,12 @@ function buildRows(): { rows: Row[]; mode: "live" | "demo" } {
       ticker: profile.ticker,
       listed: profile.listed,
       schemeCount: undefined,
-      aum: latest.aum,
-      equityShare: (latest.equityAum / latest.aum) * 100,
-      sipFlow: latest.sipFlow,
+      totalAum: latest.totalAum,
+      activeEquityShare:
+        latest.totalAum > 0
+          ? (latest.activeEquityAum / latest.totalAum) * 100
+          : undefined,
+      sipContribution: latest.sipContribution,
       quarterlyPat: latestQ.pat,
       hasProfile: true,
     };
@@ -73,7 +83,7 @@ function buildRows(): { rows: Row[]; mode: "live" | "demo" } {
 
 export default function AmcListPage() {
   const { rows, mode } = buildRows();
-  const totalAum = rows.reduce((s, r) => s + (r.aum ?? 0), 0);
+  const totalAum = rows.reduce((s, r) => s + (r.totalAum ?? 0), 0);
 
   const subtitle =
     mode === "live"
@@ -95,7 +105,7 @@ export default function AmcListPage() {
                 </th>
                 <th className="py-2 pr-4 text-right font-medium tabular">AUM</th>
                 <th className="py-2 pr-4 text-right font-medium tabular">Share</th>
-                <th className="py-2 pr-4 text-right font-medium tabular">Equity %</th>
+                <th className="py-2 pr-4 text-right font-medium tabular">Active Eq %</th>
                 <th className="py-2 pr-4 text-right font-medium tabular">SIP</th>
                 <th className="py-2 pr-4 text-right font-medium tabular">PAT (Q)</th>
                 <th className="py-2 font-medium" />
@@ -141,35 +151,29 @@ export default function AmcListPage() {
                     </td>
                     <td className="py-3 pr-4 text-right tabular">
                       {mode === "live"
-                        ? r.schemeCount?.toLocaleString("en-IN") ?? "—"
+                        ? formatIntSafe(r.schemeCount)
                         : r.listed
                         ? "Yes"
                         : "—"}
                     </td>
                     <td className="py-3 pr-4 text-right tabular text-muted-foreground">
-                      {r.aum
-                        ? formatINR(r.aum, { compact: true })
-                        : "—"}
+                      {formatCompactCrSafe(r.totalAum)}
                     </td>
                     <td className="py-3 pr-4 text-right tabular text-muted-foreground">
-                      {r.aum && totalAum
-                        ? ((r.aum / totalAum) * 100).toFixed(1) + "%"
-                        : "—"}
+                      {formatPctSafe(
+                        r.totalAum && totalAum
+                          ? (r.totalAum / totalAum) * 100
+                          : null
+                      )}
                     </td>
                     <td className="py-3 pr-4 text-right tabular text-muted-foreground">
-                      {r.equityShare !== undefined
-                        ? r.equityShare.toFixed(1) + "%"
-                        : "—"}
+                      {formatPctSafe(r.activeEquityShare)}
                     </td>
                     <td className="py-3 pr-4 text-right tabular text-muted-foreground">
-                      {r.sipFlow
-                        ? formatINR(r.sipFlow, { compact: true })
-                        : "—"}
+                      {formatCompactCrSafe(r.sipContribution)}
                     </td>
                     <td className="py-3 pr-4 text-right tabular text-muted-foreground">
-                      {r.quarterlyPat
-                        ? formatINR(r.quarterlyPat, { compact: true })
-                        : "—"}
+                      {formatCompactCrSafe(r.quarterlyPat)}
                     </td>
                     <td className="py-3 text-right">
                       {clickable && (

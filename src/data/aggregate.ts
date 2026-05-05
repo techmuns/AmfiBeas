@@ -37,11 +37,18 @@ export function quarterlyForAmc(slug: string): QuarterlyFinancial[] {
 
 export interface IndustryMonthRow {
   month: string;
-  aum: number;
-  equityAum: number;
-  sipFlow: number;
-  newInvestors: number;
+  totalAum: number;
+  activeEquityAum: number;
+  passiveAum: number;
+  debtAum: number;
+  liquidAum: number;
+  hybridAum: number;
+  otherSchemesAum: number;
+  sipContribution: number;
+  investorAdditions: number;
+  folios: number;
   nfoCount: number;
+  nfoAumCollected: number;
 }
 
 export function industryByMonth(slugs?: string[] | null): IndustryMonthRow[] {
@@ -59,35 +66,140 @@ export function industryByMonth(slugs?: string[] | null): IndustryMonthRow[] {
     );
     const generated: IndustryMonthRow = {
       month,
-      aum: rows.reduce((s, r) => s + r.aum, 0),
-      equityAum: rows.reduce((s, r) => s + r.equityAum, 0),
-      sipFlow: rows.reduce((s, r) => s + r.sipFlow, 0),
-      newInvestors: rows.reduce((s, r) => s + r.newInvestors, 0),
+      totalAum: rows.reduce((s, r) => s + r.totalAum, 0),
+      activeEquityAum: rows.reduce((s, r) => s + r.activeEquityAum, 0),
+      passiveAum: rows.reduce((s, r) => s + r.passiveAum, 0),
+      debtAum: rows.reduce((s, r) => s + r.debtAum, 0),
+      liquidAum: rows.reduce((s, r) => s + r.liquidAum, 0),
+      hybridAum: rows.reduce((s, r) => s + r.hybridAum, 0),
+      otherSchemesAum: rows.reduce((s, r) => s + r.otherSchemesAum, 0),
+      sipContribution: rows.reduce((s, r) => s + r.sipContribution, 0),
+      investorAdditions: rows.reduce((s, r) => s + r.investorAdditions, 0),
+      folios: rows.reduce((s, r) => s + r.folios, 0),
       nfoCount: rows.reduce((s, r) => s + r.nfoCount, 0),
+      nfoAumCollected: rows.reduce((s, r) => s + r.nfoAumCollected, 0),
     };
 
     const live = liveByMonth.get(month);
     if (!live) return generated;
     return {
-      month,
-      aum: live.totalAum || generated.aum,
-      equityAum: live.equityAum || generated.equityAum,
-      sipFlow: live.sipFlow || generated.sipFlow,
-      newInvestors: live.folios || generated.newInvestors,
+      ...generated,
+      totalAum: live.totalAum || generated.totalAum,
+      sipContribution: live.sipFlow || generated.sipContribution,
+      folios: live.folios || generated.folios,
       nfoCount: live.nfoCount ?? generated.nfoCount,
     };
   });
 }
 
+/**
+ * Deterministic market share calculation.
+ * Returns a percentage (0–100). Returns 0 if total is missing/non-positive,
+ * never NaN/Infinity. Use this for any AUM/SIP/folio share derivation.
+ */
+export function marketShare(value: number, total: number): number {
+  if (!Number.isFinite(value) || !Number.isFinite(total)) return 0;
+  if (total <= 0) return 0;
+  return (value / total) * 100;
+}
+
+/**
+ * AUM mix breakdown for a single month.
+ * Categories are kept in fixed order; "Other Schemes" is always the residual bucket
+ * and never folded into equity/debt/etc.
+ */
+export interface AumMixSlice {
+  key:
+    | "activeEquity"
+    | "passive"
+    | "debt"
+    | "liquid"
+    | "hybrid"
+    | "otherSchemes";
+  label: string;
+  aum: number;
+  pct: number;
+}
+
+export function aumMixForMonth(
+  month: string,
+  slugs?: string[] | null
+): AumMixSlice[] {
+  const rows = MONTHLY.filter(
+    (r) => r.month === month && (!slugs || slugs.includes(r.amcSlug))
+  );
+  const totals = {
+    activeEquity: rows.reduce((s, r) => s + r.activeEquityAum, 0),
+    passive: rows.reduce((s, r) => s + r.passiveAum, 0),
+    debt: rows.reduce((s, r) => s + r.debtAum, 0),
+    liquid: rows.reduce((s, r) => s + r.liquidAum, 0),
+    hybrid: rows.reduce((s, r) => s + r.hybridAum, 0),
+    otherSchemes: rows.reduce((s, r) => s + r.otherSchemesAum, 0),
+  };
+  const total = Object.values(totals).reduce((s, v) => s + v, 0);
+  const order: AumMixSlice["key"][] = [
+    "activeEquity",
+    "passive",
+    "debt",
+    "liquid",
+    "hybrid",
+    "otherSchemes",
+  ];
+  const labelMap: Record<AumMixSlice["key"], string> = {
+    activeEquity: "Active Equity",
+    passive: "Passive (Index/ETF)",
+    debt: "Debt",
+    liquid: "Liquid",
+    hybrid: "Hybrid",
+    otherSchemes: "Other Schemes",
+  };
+  return order.map((key) => ({
+    key,
+    label: labelMap[key],
+    aum: totals[key],
+    pct: marketShare(totals[key], total),
+  }));
+}
+
+/**
+ * Active equity market share for a single AMC in a given month.
+ * Definition:
+ *   active_equity_market_share =
+ *     amc.activeEquityAum / industry.activeEquityAum
+ * Industry total is computed across ALL AMCs (not the peer set).
+ */
+export function activeEquityMarketShareFor(
+  amcSlug: string,
+  month: string
+): number {
+  const amcRow = MONTHLY.find(
+    (r) => r.amcSlug === amcSlug && r.month === month
+  );
+  const industryTotal = MONTHLY.filter((r) => r.month === month).reduce(
+    (s, r) => s + r.activeEquityAum,
+    0
+  );
+  return marketShare(amcRow?.activeEquityAum ?? 0, industryTotal);
+}
+
 export function marketShareByMonth(
-  metric: "aum" | "equityAum" | "sipFlow"
+  metric:
+    | "totalAum"
+    | "activeEquityAum"
+    | "passiveAum"
+    | "debtAum"
+    | "liquidAum"
+    | "hybridAum"
+    | "otherSchemesAum"
+    | "sipContribution"
+    | "folios"
 ): { month: string; shares: Record<string, number> }[] {
   return MONTHS_LIST.map((month) => {
     const rows = MONTHLY.filter((r) => r.month === month);
     const total = rows.reduce((s, r) => s + r[metric], 0);
     const shares: Record<string, number> = {};
     for (const r of rows) {
-      shares[r.amcSlug] = total === 0 ? 0 : (r[metric] / total) * 100;
+      shares[r.amcSlug] = marketShare(r[metric], total);
     }
     return { month, shares };
   });
@@ -101,19 +213,27 @@ export function latestQuarter(): string {
   return QUARTERS_LIST[QUARTERS_LIST.length - 1];
 }
 
+/**
+ * Month-over-month change (%) — uses the last two values in the series.
+ * Returns 0 if the series has fewer than 2 points or the previous value is 0.
+ */
 export function momChange(values: number[]): number {
   if (values.length < 2) return 0;
   const cur = values[values.length - 1];
   const prev = values[values.length - 2];
-  if (prev === 0) return 0;
+  if (!Number.isFinite(cur) || !Number.isFinite(prev) || prev === 0) return 0;
   return ((cur - prev) / prev) * 100;
 }
 
+/**
+ * Year-over-year change (%) for monthly series — compares last value to value 12 months prior.
+ * Returns 0 if the series has fewer than 13 points or the year-ago value is 0.
+ */
 export function yoyChange(values: number[]): number {
   if (values.length < 13) return 0;
   const cur = values[values.length - 1];
   const prev = values[values.length - 13];
-  if (prev === 0) return 0;
+  if (!Number.isFinite(cur) || !Number.isFinite(prev) || prev === 0) return 0;
   return ((cur - prev) / prev) * 100;
 }
 
@@ -125,7 +245,7 @@ export function yoyChangeQuarterly(values: number[]): number {
   if (values.length < 5) return 0;
   const cur = values[values.length - 1];
   const prev = values[values.length - 5];
-  if (prev === 0) return 0;
+  if (!Number.isFinite(cur) || !Number.isFinite(prev) || prev === 0) return 0;
   return ((cur - prev) / prev) * 100;
 }
 
@@ -151,7 +271,9 @@ export function yieldsForAmc(slug: string): QuarterlyYields[] {
   }));
 }
 
-export function industryQuarterly(slugs?: string[] | null): QuarterlyFinancial[] {
+export function industryQuarterly(
+  slugs?: string[] | null
+): QuarterlyFinancial[] {
   return QUARTERS_LIST.map((quarter) => {
     const generatedRows = QUARTERLY.filter(
       (q) => q.quarter === quarter && (!slugs || slugs.includes(q.amcSlug))
@@ -179,7 +301,12 @@ export interface ShareSeriesPoint {
 }
 
 export function shareSeries(
-  metric: "aum" | "equityAum" | "sipFlow",
+  metric:
+    | "totalAum"
+    | "activeEquityAum"
+    | "passiveAum"
+    | "sipContribution"
+    | "folios",
   topN = 6,
   slugs?: string[] | null
 ): { rows: ShareSeriesPoint[]; keys: string[] } {
@@ -221,7 +348,18 @@ export function pickMonthly(
   slug: string,
   field: keyof Pick<
     MonthlyOperating,
-    "aum" | "equityAum" | "sipFlow" | "newInvestors" | "nfoCount"
+    | "totalAum"
+    | "activeEquityAum"
+    | "passiveAum"
+    | "debtAum"
+    | "liquidAum"
+    | "hybridAum"
+    | "otherSchemesAum"
+    | "sipContribution"
+    | "investorAdditions"
+    | "folios"
+    | "nfoCount"
+    | "nfoAumCollected"
   >
 ): number[] {
   return MONTHLY.filter((r) => r.amcSlug === slug).map((r) => r[field]);

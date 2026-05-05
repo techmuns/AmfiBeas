@@ -48,11 +48,18 @@ export interface IndustryMonthlySnapshot {
 export interface AmcMonthlyRow {
   amcSlug: string;
   month: string;
-  aum: number;
-  equityAum: number;
-  sipFlow: number;
-  newInvestors: number;
+  totalAum: number;
+  activeEquityAum: number;
+  passiveAum: number;
+  debtAum: number;
+  liquidAum: number;
+  hybridAum: number;
+  otherSchemesAum: number;
+  sipContribution: number;
+  investorAdditions: number;
+  folios: number;
   nfoCount: number;
+  nfoAumCollected: number;
 }
 
 export interface AmcMonthlySnapshot {
