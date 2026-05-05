@@ -1,5 +1,6 @@
 import type { MonthlyOperating, QuarterlyFinancial } from "./types";
 import { MONTHLY, QUARTERLY, MONTHS_LIST, QUARTERS_LIST } from "./generator";
+import { industryMonthlySnapshot } from "./source";
 
 export interface IndustryMonthRow {
   month: string;
@@ -11,17 +12,36 @@ export interface IndustryMonthRow {
 }
 
 export function industryByMonth(slugs?: string[] | null): IndustryMonthRow[] {
+  const liveByMonth = new Map<
+    string,
+    (typeof industryMonthlySnapshot.rows)[number]
+  >();
+  if (!slugs && industryMonthlySnapshot.rows.length > 0) {
+    for (const r of industryMonthlySnapshot.rows) liveByMonth.set(r.month, r);
+  }
+
   return MONTHS_LIST.map((month) => {
     const rows = MONTHLY.filter(
       (r) => r.month === month && (!slugs || slugs.includes(r.amcSlug))
     );
-    return {
+    const generated: IndustryMonthRow = {
       month,
       aum: rows.reduce((s, r) => s + r.aum, 0),
       equityAum: rows.reduce((s, r) => s + r.equityAum, 0),
       sipFlow: rows.reduce((s, r) => s + r.sipFlow, 0),
       newInvestors: rows.reduce((s, r) => s + r.newInvestors, 0),
       nfoCount: rows.reduce((s, r) => s + r.nfoCount, 0),
+    };
+
+    const live = liveByMonth.get(month);
+    if (!live) return generated;
+    return {
+      month,
+      aum: live.totalAum || generated.aum,
+      equityAum: live.equityAum || generated.equityAum,
+      sipFlow: live.sipFlow || generated.sipFlow,
+      newInvestors: live.folios || generated.newInvestors,
+      nfoCount: live.nfoCount ?? generated.nfoCount,
     };
   });
 }

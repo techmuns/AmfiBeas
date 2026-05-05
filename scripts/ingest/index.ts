@@ -1,4 +1,5 @@
 import { ingestAmfiAmcMaster } from "./amfi-nav";
+import { ingestAmfiIndustryMonthly } from "./amfi-industry";
 
 interface Step {
   name: string;
@@ -8,6 +9,7 @@ interface Step {
 
 const STEPS: Step[] = [
   { name: "amfi-amc-master", run: ingestAmfiAmcMaster },
+  { name: "amfi-industry-monthly", run: ingestAmfiIndustryMonthly, optional: true },
 ];
 
 async function main() {

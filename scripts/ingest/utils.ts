@@ -7,6 +7,17 @@ export const SNAPSHOT_DIR = path.resolve(
 );
 
 export async function fetchText(url: string, timeoutMs = 60_000): Promise<string> {
+  return (await fetchResponse(url, timeoutMs)).text();
+}
+
+export async function fetchBuffer(
+  url: string,
+  timeoutMs = 60_000
+): Promise<ArrayBuffer> {
+  return (await fetchResponse(url, timeoutMs)).arrayBuffer();
+}
+
+async function fetchResponse(url: string, timeoutMs: number): Promise<Response> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
@@ -21,7 +32,7 @@ export async function fetchText(url: string, timeoutMs = 60_000): Promise<string
       },
     });
     if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-    return await res.text();
+    return res;
   } finally {
     clearTimeout(t);
   }
