@@ -178,3 +178,20 @@ export const OTHERS_INVESTOR_SHARE = 0.14;
 export function getAMC(slug: string): AMCProfile | undefined {
   return AMCS.find((a) => a.slug === slug);
 }
+
+const AMFI_NAME_TO_SLUG: Record<string, string> = {
+  "ICICI Prudential Mutual Fund": "icici-pru",
+  "Nippon India Mutual Fund": "nippon",
+  "UTI Mutual Fund": "uti",
+  "Kotak Mahindra Mutual Fund": "kotak",
+  "HDFC Mutual Fund": "hdfc",
+  "SBI Mutual Fund": "sbi",
+  "Aditya Birla Sun Life Mutual Fund": "absl",
+  "Axis Mutual Fund": "axis",
+  "Mirae Asset Mutual Fund": "mirae",
+  "DSP Mutual Fund": "dsp",
+};
+
+export function amfiNameToSlug(name: string): string | undefined {
+  return AMFI_NAME_TO_SLUG[name];
+}
