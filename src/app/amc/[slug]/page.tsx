@@ -7,13 +7,15 @@ import { BarSeries } from "@/components/charts/BarSeries";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { AMCS, getAMC } from "@/data/amcs";
-import { monthlyForAmc, quarterlyForAmc } from "@/data/generator";
+import { monthlyForAmc } from "@/data/generator";
 import {
+  industryByMonth,
+  isLiveQuarterly,
   momChange,
+  quarterlyForAmc,
+  yieldsForAmc,
   yoyChange,
   yoyChangeQuarterly,
-  yieldsForAmc,
-  industryByMonth,
 } from "@/data/aggregate";
 import { formatINR, formatDelta } from "@/lib/format";
 
@@ -64,6 +66,8 @@ export default async function AmcPage({
   const trend = (n: number) =>
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
 
+  const quarterlyLive = isLiveQuarterly(slug);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -75,6 +79,14 @@ export default async function AmcPage({
           ]
             .filter(Boolean)
             .join(" · ") + ` · ${latest.month}`
+        }
+        action={
+          quarterlyLive ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-positive/40 bg-positive/10 px-2 py-0.5 text-[10px] tabular text-positive">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-positive" />
+              Live financials
+            </span>
+          ) : undefined
         }
       />
 

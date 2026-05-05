@@ -1,6 +1,39 @@
 import type { MonthlyOperating, QuarterlyFinancial } from "./types";
-import { MONTHLY, QUARTERLY, MONTHS_LIST, QUARTERS_LIST } from "./generator";
-import { industryMonthlySnapshot } from "./source";
+import {
+  MONTHLY,
+  QUARTERLY,
+  MONTHS_LIST,
+  QUARTERS_LIST,
+  quarterlyForAmc as generatedQuarterlyForAmc,
+} from "./generator";
+import { amcQuarterlySnapshot, industryMonthlySnapshot } from "./source";
+
+const liveQuarterlyBySlug = (() => {
+  const m = new Map<string, QuarterlyFinancial[]>();
+  for (const r of amcQuarterlySnapshot.rows) {
+    const arr = m.get(r.amcSlug) ?? [];
+    arr.push({
+      amcSlug: r.amcSlug,
+      quarter: r.quarter,
+      revenue: r.revenue,
+      operatingProfit: r.operatingProfit,
+      pat: r.pat,
+      avgAum: r.avgAum,
+    });
+    m.set(r.amcSlug, arr);
+  }
+  for (const arr of m.values())
+    arr.sort((a, b) => a.quarter.localeCompare(b.quarter));
+  return m;
+})();
+
+export function isLiveQuarterly(slug: string): boolean {
+  return liveQuarterlyBySlug.has(slug);
+}
+
+export function quarterlyForAmc(slug: string): QuarterlyFinancial[] {
+  return liveQuarterlyBySlug.get(slug) ?? generatedQuarterlyForAmc(slug);
+}
 
 export interface IndustryMonthRow {
   month: string;
@@ -106,7 +139,7 @@ export interface QuarterlyYields {
 }
 
 export function yieldsForAmc(slug: string): QuarterlyYields[] {
-  const rows = QUARTERLY.filter((q) => q.amcSlug === slug);
+  const rows = quarterlyForAmc(slug);
   return rows.map((q) => ({
     quarter: q.quarter,
     revenueYieldBps: q.avgAum === 0 ? 0 : (q.revenue * 4 * 10_000) / q.avgAum,
@@ -120,16 +153,22 @@ export function yieldsForAmc(slug: string): QuarterlyYields[] {
 
 export function industryQuarterly(slugs?: string[] | null): QuarterlyFinancial[] {
   return QUARTERS_LIST.map((quarter) => {
-    const rows = QUARTERLY.filter(
+    const generatedRows = QUARTERLY.filter(
       (q) => q.quarter === quarter && (!slugs || slugs.includes(q.amcSlug))
     );
+    const merged = generatedRows.map((q) => {
+      const live = liveQuarterlyBySlug
+        .get(q.amcSlug)
+        ?.find((r) => r.quarter === quarter);
+      return live ?? q;
+    });
     return {
       amcSlug: "industry",
       quarter,
-      revenue: rows.reduce((s, r) => s + r.revenue, 0),
-      operatingProfit: rows.reduce((s, r) => s + r.operatingProfit, 0),
-      pat: rows.reduce((s, r) => s + r.pat, 0),
-      avgAum: rows.reduce((s, r) => s + r.avgAum, 0),
+      revenue: merged.reduce((s, r) => s + r.revenue, 0),
+      operatingProfit: merged.reduce((s, r) => s + r.operatingProfit, 0),
+      pat: merged.reduce((s, r) => s + r.pat, 0),
+      avgAum: merged.reduce((s, r) => s + r.avgAum, 0),
     };
   });
 }
