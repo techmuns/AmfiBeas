@@ -21,7 +21,55 @@ const SEED_URLS = [
 ];
 
 const FOLLOW_KEYWORDS =
-  /(aum|data|research|sip|industry|trend|monthly|asset|disclosure|category)/i;
+  /(aum|data|research|sip|industry|trend|monthly|asset|disclosure|category|aaum|fund|scheme|spages|other)/i;
+
+const MONTH_ABBR = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+function recentMonths(n: number): { mon: string; yy: string }[] {
+  const out: { mon: string; yy: string }[] = [];
+  const now = new Date();
+  for (let i = 1; i <= n; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    out.push({
+      mon: MONTH_ABBR[d.getMonth()],
+      yy: String(d.getFullYear()).slice(-2),
+    });
+  }
+  return out;
+}
+
+function probePortalUrls(): Candidate[] {
+  const months = recentMonths(6);
+  const stems = [
+    "Industry-AUM",
+    "MF-Industry-AUM",
+    "AAUM",
+    "MF-AAUM",
+    "MF-Industry",
+    "MF-SIP",
+    "SIP-Data",
+    "MF-Categorywise-Avg-Mthly-Assets-and-Investors-Folios",
+  ];
+  const candidates: Candidate[] = [];
+  for (const stem of stems) {
+    for (const { mon, yy } of months) {
+      candidates.push({
+        url: `https://portal.amfiindia.com/spages/${stem}-${mon}${yy}.xlsx`,
+        text: `probe ${stem} ${mon}${yy}`,
+        page: "probe",
+      });
+      candidates.push({
+        url: `https://portal.amfiindia.com/spages/${stem}-${mon.toLowerCase()}${yy}.xlsx`,
+        text: `probe ${stem} ${mon.toLowerCase()}${yy}`,
+        page: "probe",
+      });
+    }
+  }
+  return candidates;
+}
 
 const DOWNLOAD_EXT_RE = /\.(xlsx|xls|csv|pdf)(\?.*)?$/i;
 
@@ -144,7 +192,8 @@ export async function discoverDownloads(): Promise<Candidate[]> {
     url: u,
     depth: 0,
   }));
-  const MAX_PAGES = 30;
+  const MAX_PAGES = 60;
+  const MAX_DEPTH = 2;
 
   while (queue.length && visited.size < MAX_PAGES) {
     const { url, depth } = queue.shift()!;
@@ -157,9 +206,9 @@ export async function discoverDownloads(): Promise<Candidate[]> {
     info(
       `discovery: ${url} → "${scan.title}" · ${scan.downloads.length} files · ${scan.follow.length} follow`
     );
-    if (scan.follow.length && depth === 0) {
+    if (scan.follow.length) {
       const sample = scan.follow.slice(0, 8).map((u) => `    ${u}`).join("\n");
-      info(`  first follow links from ${url}:\n${sample}`);
+      info(`  follow links from ${url} (depth ${depth}):\n${sample}`);
     }
 
     for (const d of scan.downloads) {
@@ -168,7 +217,7 @@ export async function discoverDownloads(): Promise<Candidate[]> {
       downloads.push(d);
     }
 
-    if (depth < 1) {
+    if (depth < MAX_DEPTH) {
       for (const f of scan.follow) {
         if (visited.has(f)) continue;
         if (queue.some((q) => q.url === f)) continue;
@@ -422,17 +471,23 @@ function mergeRows(
 }
 
 export async function ingestAmfiIndustryMonthly(): Promise<void> {
-  const all = await discoverDownloads();
-  info(`discovery: found ${all.length} unique download links overall`);
-  const sample = all.slice(0, 25).map((c) => `  - ${c.url}  «${c.text}»`);
+  const discovered = await discoverDownloads();
+  info(`discovery: found ${discovered.length} unique download links overall`);
+  const sample = discovered
+    .slice(0, 25)
+    .map((c) => `  - ${c.url}  «${c.text.slice(0, 60)}»`);
   if (sample.length) {
     info(`discovery sample (up to 25):\n${sample.join("\n")}`);
   }
 
+  const probes = probePortalUrls();
+  info(`probes: ${probes.length} URL guesses on portal.amfiindia.com`);
+  const all = [...discovered, ...probes];
+
   const aumCandidates = all.filter(isAumCandidate);
   const sipCandidates = all.filter(isSipCandidate);
   info(
-    `candidates: ${aumCandidates.length} AUM, ${sipCandidates.length} SIP`
+    `candidates: ${aumCandidates.length} AUM, ${sipCandidates.length} SIP (incl. probes)`
   );
 
   const aum = await tryAumCandidates(aumCandidates);
