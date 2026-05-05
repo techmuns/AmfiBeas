@@ -10,9 +10,11 @@ export interface IndustryMonthRow {
   nfoCount: number;
 }
 
-export function industryByMonth(): IndustryMonthRow[] {
+export function industryByMonth(slugs?: string[] | null): IndustryMonthRow[] {
   return MONTHS_LIST.map((month) => {
-    const rows = MONTHLY.filter((r) => r.month === month);
+    const rows = MONTHLY.filter(
+      (r) => r.month === month && (!slugs || slugs.includes(r.amcSlug))
+    );
     return {
       month,
       aum: rows.reduce((s, r) => s + r.aum, 0),
@@ -96,9 +98,11 @@ export function yieldsForAmc(slug: string): QuarterlyYields[] {
   }));
 }
 
-export function industryQuarterly(): QuarterlyFinancial[] {
+export function industryQuarterly(slugs?: string[] | null): QuarterlyFinancial[] {
   return QUARTERS_LIST.map((quarter) => {
-    const rows = QUARTERLY.filter((q) => q.quarter === quarter);
+    const rows = QUARTERLY.filter(
+      (q) => q.quarter === quarter && (!slugs || slugs.includes(q.amcSlug))
+    );
     return {
       amcSlug: "industry",
       quarter,
@@ -108,6 +112,50 @@ export function industryQuarterly(): QuarterlyFinancial[] {
       avgAum: rows.reduce((s, r) => s + r.avgAum, 0),
     };
   });
+}
+
+export interface ShareSeriesPoint {
+  month: string;
+  [amcSlug: string]: string | number;
+}
+
+export function shareSeries(
+  metric: "aum" | "equityAum" | "sipFlow",
+  topN = 6,
+  slugs?: string[] | null
+): { rows: ShareSeriesPoint[]; keys: string[] } {
+  const universe = MONTHLY.filter(
+    (r) => r.amcSlug !== "others" && (!slugs || slugs.includes(r.amcSlug))
+  );
+  const latest = MONTHS_LIST[MONTHS_LIST.length - 1];
+  const latestRows = universe.filter((r) => r.month === latest);
+  const ranked = [...latestRows]
+    .sort((a, b) => b[metric] - a[metric])
+    .map((r) => r.amcSlug);
+  const top = ranked.slice(0, topN);
+  const includeOthers = !slugs;
+  const keys = includeOthers ? [...top, "others"] : top;
+
+  const rows = MONTHS_LIST.map((month) => {
+    const all = slugs
+      ? universe.filter((r) => r.month === month)
+      : MONTHLY.filter((r) => r.month === month);
+    const total = all.reduce((s, r) => s + r[metric], 0) || 1;
+    const point: ShareSeriesPoint = { month };
+    let topSum = 0;
+    for (const slug of top) {
+      const r = all.find((x) => x.amcSlug === slug);
+      const v = r ? (r[metric] / total) * 100 : 0;
+      point[slug] = Number(v.toFixed(2));
+      topSum += v;
+    }
+    if (includeOthers) {
+      point["others"] = Number(Math.max(0, 100 - topSum).toFixed(2));
+    }
+    return point;
+  });
+
+  return { rows, keys };
 }
 
 export function pickMonthly(

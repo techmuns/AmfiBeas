@@ -1,5 +1,8 @@
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { AreaTrend } from "@/components/charts/AreaTrend";
+import { BarSeries } from "@/components/charts/BarSeries";
 import {
   industryByMonth,
   industryQuarterly,
@@ -23,20 +26,18 @@ export default function HomePage() {
   const investorsMom = momChange(monthly.map((m) => m.newInvestors));
   const patYoy = yoyChangeQuarterly(quarterly.map((q) => q.pat));
 
+  const aumSeries = monthly.map((m) => ({ month: m.month, value: m.aum }));
+  const sipSeries = monthly.map((m) => ({ label: m.month, value: m.sipFlow }));
+
   const trend = (n: number) =>
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
 
   return (
     <div className="space-y-6">
-      <header className="flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
-          <p className="text-sm text-muted-foreground">
-            Industry snapshot · {latestMonth()} (operating) ·{" "}
-            {latestQuarter()} (financial)
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        title="Overview"
+        subtitle={`Industry snapshot · ${latestMonth()} (operating) · ${latestQuarter()} (financial)`}
+      />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
@@ -87,15 +88,11 @@ export default function HomePage() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card title="AUM Trend" subtitle="Industry, last 24 months">
-          <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-            Chart placeholder
-          </div>
+        <Card title="AUM Trend" subtitle="Industry total · 24 months">
+          <AreaTrend data={aumSeries} name="AUM" />
         </Card>
-        <Card title="SIP Flows" subtitle="Monthly inflows">
-          <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-            Chart placeholder
-          </div>
+        <Card title="SIP Flows" subtitle="Monthly inflows · industry">
+          <BarSeries data={sipSeries} name="SIP" />
         </Card>
       </section>
     </div>
