@@ -1,23 +1,89 @@
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
+import {
+  industryByMonth,
+  industryQuarterly,
+  latestMonth,
+  latestQuarter,
+  momChange,
+  yoyChange,
+  yoyChangeQuarterly,
+} from "@/data/aggregate";
+import { formatINR, formatDelta } from "@/lib/format";
 
 export default function HomePage() {
+  const monthly = industryByMonth();
+  const quarterly = industryQuarterly();
+  const latest = monthly[monthly.length - 1];
+  const latestQ = quarterly[quarterly.length - 1];
+
+  const aumYoy = yoyChange(monthly.map((m) => m.aum));
+  const equityMom = momChange(monthly.map((m) => m.equityAum));
+  const sipMom = momChange(monthly.map((m) => m.sipFlow));
+  const investorsMom = momChange(monthly.map((m) => m.newInvestors));
+  const patYoy = yoyChangeQuarterly(quarterly.map((q) => q.pat));
+
+  const trend = (n: number) =>
+    n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
+
   return (
     <div className="space-y-6">
       <header className="flex items-end justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
           <p className="text-sm text-muted-foreground">
-            Industry snapshot — placeholder data, charts wire up next.
+            Industry snapshot · {latestMonth()} (operating) ·{" "}
+            {latestQuarter()} (financial)
           </p>
         </div>
       </header>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Industry AUM" value="₹68.4 L Cr" delta="+1.2%" trend="up" />
-        <KpiCard label="Equity AUM" value="₹32.1 L Cr" delta="+1.8%" trend="up" />
-        <KpiCard label="Monthly SIP" value="₹26,459 Cr" delta="+0.6%" trend="up" />
-        <KpiCard label="Investor Folios" value="22.4 Cr" delta="+0.4%" trend="up" />
+        <KpiCard
+          label="Industry AUM"
+          value={formatINR(latest.aum, { compact: true })}
+          delta={`${formatDelta(aumYoy)} YoY`}
+          trend={trend(aumYoy)}
+        />
+        <KpiCard
+          label="Equity AUM"
+          value={formatINR(latest.equityAum, { compact: true })}
+          delta={`${formatDelta(equityMom)} MoM`}
+          trend={trend(equityMom)}
+        />
+        <KpiCard
+          label="Monthly SIP"
+          value={formatINR(latest.sipFlow, { compact: true })}
+          delta={`${formatDelta(sipMom)} MoM`}
+          trend={trend(sipMom)}
+        />
+        <KpiCard
+          label="New Investors"
+          value={(latest.newInvestors / 1e5).toFixed(1) + " L"}
+          delta={`${formatDelta(investorsMom)} MoM`}
+          trend={trend(investorsMom)}
+        />
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          label="Industry Revenue"
+          value={formatINR(latestQ.revenue, { compact: true })}
+        />
+        <KpiCard
+          label="Operating Profit"
+          value={formatINR(latestQ.operatingProfit, { compact: true })}
+        />
+        <KpiCard
+          label="PAT"
+          value={formatINR(latestQ.pat, { compact: true })}
+          delta={`${formatDelta(patYoy)} YoY`}
+          trend={trend(patYoy)}
+        />
+        <KpiCard
+          label="PAT Margin"
+          value={((latestQ.pat / latestQ.revenue) * 100).toFixed(1) + "%"}
+        />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
