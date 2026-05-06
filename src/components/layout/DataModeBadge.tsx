@@ -5,7 +5,7 @@ export function DataModeBadge() {
   const mode = dataMode();
   const anyLive = isAnyLive();
 
-  const label = anyLive ? "Mixed data" : "Demo data";
+  const label = anyLive ? "Partially Live" : "Demo data";
   const liveDomains = Object.entries(mode)
     .filter(([, v]) => v === "live")
     .map(([k]) =>

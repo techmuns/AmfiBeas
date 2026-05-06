@@ -26,6 +26,12 @@ import {
   formatDelta,
   formatPctSafe,
 } from "@/lib/format";
+import {
+  demoNote,
+  liveScreenerNote,
+  pendingFinancialsNote,
+  unlistedFinancialsNote,
+} from "@/lib/provenance";
 
 export function generateStaticParams() {
   return AMCS.map((a) => ({ slug: a.slug }));
@@ -134,6 +140,17 @@ export default async function AmcPage({
     ? `Source: AMFI AAUM · ${aaumGeneratedAt}`
     : undefined;
 
+  // Per-AMC financials provenance: live screener.in for sourced AMCs,
+  // pending for listed but un-ingested (ICICI Pru), unavailable for unlisted.
+  const financialsNote = quarterlyLive
+    ? liveScreenerNote()
+    : profile.listed
+      ? pendingFinancialsNote()
+      : unlistedFinancialsNote();
+  const operatingDemoNote = demoNote("operating data not yet sourced");
+  const sipDemoNote = demoNote("SIP not yet sourced");
+  const shareDemoNote = demoNote("share not yet sourced");
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -169,19 +186,19 @@ export default async function AmcPage({
         <KpiCard
           label="AUM Share"
           value={formatPctSafe(aumShare, 2)}
-          note="Demo · operating share not yet sourced"
+          note={shareDemoNote}
         />
         <KpiCard
           label="Active Equity AUM"
           value={formatCompactCrSafe(latest.activeEquityAum)}
-          note="Demo · operating data not yet sourced"
+          note={operatingDemoNote}
         />
         <KpiCard
           label="SIP Contribution"
           value={formatCompactCrSafe(latest.sipContribution)}
           delta={`${formatDelta(sipMom)} MoM`}
           trend={trend(sipMom)}
-          note="Demo · SIP not yet sourced"
+          note={sipDemoNote}
         />
       </section>
 
@@ -189,12 +206,12 @@ export default async function AmcPage({
         <KpiCard
           label="Active Equity Share"
           value={formatPctSafe(activeEquityShare, 2)}
-          note="Demo · share not yet sourced"
+          note={shareDemoNote}
         />
         <KpiCard
           label="SIP Share"
           value={formatPctSafe(sipShare, 2)}
-          note="Demo · share not yet sourced"
+          note={shareDemoNote}
         />
         <KpiCard
           label="Quarterly Revenue"
@@ -203,6 +220,7 @@ export default async function AmcPage({
               ? formatCompactCrSafe(latestQ.revenue)
               : "—"
           }
+          note={financialsNote}
         />
         <KpiCard
           label="PAT"
@@ -211,6 +229,7 @@ export default async function AmcPage({
           }
           delta={quarterlyLive ? `${formatDelta(patYoy)} YoY` : undefined}
           trend={quarterlyLive ? trend(patYoy) : undefined}
+          note={financialsNote}
         />
       </section>
 

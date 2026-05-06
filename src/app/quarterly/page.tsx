@@ -18,6 +18,7 @@ import {
   formatDelta,
   formatQuarterLabelLong,
 } from "@/lib/format";
+import { liveScreenerNote, liveYieldNote } from "@/lib/provenance";
 import { parseFilters, trimQuarters } from "@/lib/filter";
 import { QUARTERS_LIST } from "@/data/generator";
 
@@ -164,6 +165,8 @@ export default async function QuarterlyPage({
     .toISOString()
     .slice(0, 10);
   const provenanceLine = `P&L: ${pnlSourceHost} · ${pnlSourceDate} · AAUM: AMFI · ${aaumSourceDate}`;
+  const pnlNote = liveScreenerNote();
+  const yieldNote = liveYieldNote();
 
   return (
     <div className="space-y-6">
@@ -184,44 +187,55 @@ export default async function QuarterlyPage({
           value={formatCompactCrSafe(latest.revenue)}
           delta={`${formatDelta(revenueYoy)} YoY`}
           trend={trend(revenueYoy)}
+          note={pnlNote}
         />
         <KpiCard
           label="Operating Profit"
           value={formatCompactCrSafe(latest.operatingProfit)}
           delta={`${formatDelta(opYoy)} YoY`}
           trend={trend(opYoy)}
+          note={pnlNote}
         />
         <KpiCard
           label="PAT"
           value={formatCompactCrSafe(latest.pat)}
           delta={`${formatDelta(patYoy)} YoY`}
           trend={trend(patYoy)}
+          note={pnlNote}
         />
         <KpiCard
           label="PAT Margin"
           value={patMargin.toFixed(1) + "%"}
           delta={`${formatDelta(patMarginQoq)} QoQ`}
           trend={trend(patMarginQoq)}
+          note={pnlNote}
         />
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Operating Margin" value={opMargin.toFixed(1) + "%"} />
+        <KpiCard
+          label="Operating Margin"
+          value={opMargin.toFixed(1) + "%"}
+          note={pnlNote}
+        />
         <KpiCard
           label="Revenue Yield"
           value={
             latest.avgAum > 0 ? revenueYieldBps.toFixed(1) + " bps" : "—"
           }
+          note={yieldNote}
         />
         <KpiCard
           label="Operating Yield"
           value={latest.avgAum > 0 ? opYieldBps.toFixed(1) + " bps" : "—"}
+          note={yieldNote}
         />
         <KpiCard
           label="Profit Yield"
           value={
             latest.avgAum > 0 ? profitYieldBps.toFixed(1) + " bps" : "—"
           }
+          note={yieldNote}
         />
       </section>
 

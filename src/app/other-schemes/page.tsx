@@ -10,6 +10,7 @@ import {
 } from "@/data/source";
 import { formatINR, formatDelta, formatMonthLabel } from "@/lib/format";
 import { momChange, yoyChange } from "@/data/aggregate";
+import { liveOtherSchemesNote } from "@/lib/provenance";
 import { cn } from "@/lib/cn";
 
 export default function OtherSchemesPage() {
@@ -55,6 +56,7 @@ export default function OtherSchemesPage() {
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
 
   const totalAum = breakdown.rows.reduce((s, r) => s + r.aum, 0);
+  const otherSchemesNote = liveOtherSchemesNote();
 
   return (
     <div className="space-y-6">
@@ -75,22 +77,26 @@ export default function OtherSchemesPage() {
           value={formatINR(latest.totalAum, { compact: true })}
           delta={`${formatDelta(aumYoy)} YoY`}
           trend={trend(aumYoy)}
+          note={otherSchemesNote}
         />
         <KpiCard
           label="Net Flow"
           value={formatINR(latest.netFlow, { compact: true })}
           delta={`${formatDelta(flowMom)} MoM`}
           trend={trend(flowMom)}
+          note={otherSchemesNote}
         />
         <KpiCard
           label="Funds Mobilised"
           value={formatINR(latest.fundsMobilized, { compact: true })}
+          note={otherSchemesNote}
         />
         <KpiCard
           label="Folios"
           value={(latest.totalFolios / 1e7).toFixed(2) + " Cr"}
           delta={`${formatDelta(aumMom)} MoM AUM`}
           trend={trend(aumMom)}
+          note={otherSchemesNote}
         />
       </section>
 
