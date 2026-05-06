@@ -6,9 +6,17 @@ interface KpiCardProps {
   value: string;
   delta?: string;
   trend?: "up" | "down" | "flat";
+  /** Optional small caption rendered below the value (e.g. source / date). */
+  note?: string;
 }
 
-export function KpiCard({ label, value, delta, trend = "flat" }: KpiCardProps) {
+export function KpiCard({
+  label,
+  value,
+  delta,
+  trend = "flat",
+  note,
+}: KpiCardProps) {
   const Icon =
     trend === "up" ? ArrowUpRight : trend === "down" ? ArrowDownRight : null;
 
@@ -31,6 +39,11 @@ export function KpiCard({ label, value, delta, trend = "flat" }: KpiCardProps) {
         >
           {Icon && <Icon className="h-3.5 w-3.5" />}
           {delta}
+        </div>
+      )}
+      {note && (
+        <div className="mt-1 text-[10px] tabular text-muted-foreground/80">
+          {note}
         </div>
       )}
     </div>

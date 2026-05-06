@@ -14,10 +14,13 @@ import {
   momChange,
   quarterlyForAmc,
   yieldsForAmc,
-  yoyChange,
   yoyChangeQuarterly,
 } from "@/data/aggregate";
-import { aaumProvenance, amcAaumQuarterlySnapshot } from "@/data/source";
+import {
+  aaumFor,
+  aaumProvenance,
+  amcAaumQuarterlySnapshot,
+} from "@/data/source";
 import {
   formatCompactCrSafe,
   formatDelta,
@@ -46,7 +49,6 @@ export default async function AmcPage({
     ? quarterly[quarterly.length - 1]
     : undefined;
 
-  const aumYoy = yoyChange(monthly.map((m) => m.totalAum));
   const sipMom = momChange(monthly.map((m) => m.sipContribution));
   const patYoy = quarterlyLive
     ? yoyChangeQuarterly(quarterly.map((q) => q.pat))
@@ -106,6 +108,32 @@ export default async function AmcPage({
     ? "Listed · financials pending source"
     : "Unlisted · no standalone quarterly financials";
 
+  // Live AMFI AAUM for this AMC's most recent quarter. This is the same
+  // denominator the yield cards use, so the displayed AUM and the yield
+  // calculation can never disagree.
+  const aaumQuarters = amcAaumQuarterlySnapshot.rows
+    .filter((r) => r.amcSlug === slug && r.status === "ok")
+    .map((r) => r.quarter)
+    .sort();
+  const latestAaumQuarter = aaumQuarters[aaumQuarters.length - 1] ?? null;
+  const prevAaumQuarter = aaumQuarters[aaumQuarters.length - 2] ?? null;
+  const latestAaum = latestAaumQuarter
+    ? aaumFor(slug, latestAaumQuarter)
+    : null;
+  const prevAaum = prevAaumQuarter ? aaumFor(slug, prevAaumQuarter) : null;
+  const aaumQoq =
+    latestAaum && prevAaum && prevAaum > 0
+      ? ((latestAaum - prevAaum) / prevAaum) * 100
+      : null;
+  const aaumGeneratedAt = new Date(
+    amcAaumQuarterlySnapshot.meta.generatedAt
+  )
+    .toISOString()
+    .slice(0, 10);
+  const aaumNote = latestAaumQuarter
+    ? `Source: AMFI AAUM · ${aaumGeneratedAt}`
+    : undefined;
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -130,21 +158,30 @@ export default async function AmcPage({
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="AUM"
-          value={formatCompactCrSafe(latest.totalAum)}
-          delta={`${formatDelta(aumYoy)} YoY`}
-          trend={trend(aumYoy)}
+          label="Average AUM"
+          value={formatCompactCrSafe(latestAaum)}
+          delta={
+            aaumQoq !== null ? `${formatDelta(aaumQoq)} QoQ` : undefined
+          }
+          trend={aaumQoq !== null ? trend(aaumQoq / 100) : undefined}
+          note={aaumNote}
         />
-        <KpiCard label="AUM Share" value={formatPctSafe(aumShare, 2)} />
+        <KpiCard
+          label="AUM Share"
+          value={formatPctSafe(aumShare, 2)}
+          note="Demo · operating share not yet sourced"
+        />
         <KpiCard
           label="Active Equity AUM"
           value={formatCompactCrSafe(latest.activeEquityAum)}
+          note="Demo · operating data not yet sourced"
         />
         <KpiCard
           label="SIP Contribution"
           value={formatCompactCrSafe(latest.sipContribution)}
           delta={`${formatDelta(sipMom)} MoM`}
           trend={trend(sipMom)}
+          note="Demo · SIP not yet sourced"
         />
       </section>
 
@@ -152,8 +189,13 @@ export default async function AmcPage({
         <KpiCard
           label="Active Equity Share"
           value={formatPctSafe(activeEquityShare, 2)}
+          note="Demo · share not yet sourced"
         />
-        <KpiCard label="SIP Share" value={formatPctSafe(sipShare, 2)} />
+        <KpiCard
+          label="SIP Share"
+          value={formatPctSafe(sipShare, 2)}
+          note="Demo · share not yet sourced"
+        />
         <KpiCard
           label="Quarterly Revenue"
           value={
@@ -173,10 +215,10 @@ export default async function AmcPage({
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card title="AUM Trend" subtitle="24-month series">
+        <Card title="AUM Trend" subtitle="Demo · 24-month series · operating AUM not yet sourced">
           <AreaTrend data={aumSeries} name="AUM" />
         </Card>
-        <Card title="SIP Flow" subtitle="Monthly inflows">
+        <Card title="SIP Flow" subtitle="Demo · monthly inflows · SIP not yet sourced">
           <BarSeries data={sipSeries} name="SIP" />
         </Card>
         <Card
