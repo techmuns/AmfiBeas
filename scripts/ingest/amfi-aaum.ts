@@ -26,6 +26,7 @@ const T = {
   totalKill: 90_000,
   pageGoto: 25_000,
   waitForFormReady: 12_000,
+  waitForDependentFields: 8_000,
   waitForOptionsListbox: 2_500,
   clickInput: 3_000,
   clickOption: 1_500,
@@ -108,6 +109,71 @@ interface XhrCapture {
 
 function sleep(ms: number) {
   return new Promise<void>((r) => setTimeout(r, ms));
+}
+
+async function logVisiblePlaceholders(
+  page: Page,
+  quarter: string,
+  label: string
+) {
+  const data = await page
+    .evaluate(() => {
+      return Array.from(document.querySelectorAll("input[placeholder]"))
+        .filter((el) => (el as HTMLElement).offsetParent !== null)
+        .map((el) => {
+          const e = el as HTMLInputElement;
+          return {
+            placeholder: e.placeholder,
+            value: e.value,
+            disabled: e.disabled,
+          };
+        });
+    })
+    .catch(() => []);
+  info(
+    `AAUM[${quarter}]: visible placeholders [${label}]: ${JSON.stringify(data)}`
+  );
+}
+
+async function logGoButtonState(page: Page, quarter: string) {
+  const state = await page
+    .evaluate(() => {
+      const all = Array.from(
+        document.querySelectorAll(
+          'button, [role="button"], input[type="submit"], input[type="button"]'
+        )
+      );
+      const go = all.find(
+        (el) =>
+          /^go$/i.test(
+            (
+              (el as HTMLElement).textContent ||
+              (el as HTMLInputElement).value ||
+              ""
+            ).trim()
+          )
+      );
+      if (!go)
+        return {
+          found: false,
+          tag: null,
+          disabled: null,
+          ariaDisabled: null,
+          classes: null,
+        };
+      const e = go as HTMLButtonElement;
+      return {
+        found: true,
+        tag: go.tagName,
+        disabled: e.disabled,
+        ariaDisabled: go.getAttribute("aria-disabled"),
+        classes: ((go as HTMLElement).className || "")
+          .toString()
+          .slice(0, 120),
+      };
+    })
+    .catch(() => null);
+  info(`AAUM[${quarter}]: Go button state: ${JSON.stringify(state)}`);
 }
 
 async function setMuiAutocompleteByPlaceholder(
@@ -360,45 +426,76 @@ async function fetchQuarter(
     }
     info(`AAUM[${q.calendarQ}]: page loaded, waiting for form ready`);
     try {
-      await page.waitForSelector(
-        'input[placeholder="Select Financial Year"], input[placeholder="Select Period"], input[placeholder="Select Data"]',
-        { timeout: T.waitForFormReady }
-      );
+      await page.waitForSelector('input[placeholder="Select Data"]', {
+        timeout: T.waitForFormReady,
+      });
     } catch {
-      warn(`AAUM[${q.calendarQ}]: form placeholders never appeared`);
+      warn(`AAUM[${q.calendarQ}]: Select Data placeholder never appeared`);
     }
     await sleep(T.midSleep);
+    await logVisiblePlaceholders(page, q.calendarQ, "after page load");
 
-    info(`AAUM[${q.calendarQ}]: setting Select Data`);
-    const fData = await setMuiAutocompleteByPlaceholder(
-      page,
-      "Select Data",
-      ["Average AUM", "AAUM", "AUM"]
-    );
+    // Step 1: Select Data → Fundwise (gates the rest of the form)
+    info(`AAUM[${q.calendarQ}]: setting Select Data → Fundwise`);
+    const fData = await setMuiAutocompleteByPlaceholder(page, "Select Data", [
+      "Fundwise",
+      "Fund wise",
+      "Fund-wise",
+    ]);
     info(
       `AAUM[${q.calendarQ}]:   Data found=${fData.found} chosen=${fData.chosen ?? "—"} options=[${fData.options.slice(0, 8).join(" | ")}]`
     );
+    if (!fData.chosen) {
+      warn(`AAUM[${q.calendarQ}]: Fundwise not selected — cannot proceed`);
+      return null;
+    }
 
-    info(`AAUM[${q.calendarQ}]: setting Select Type`);
-    const fType = await setMuiAutocompleteByPlaceholder(
-      page,
-      "Select Type",
-      [
-        "AMC-wise",
-        "AMC wise",
-        "Mutual Fund-wise",
-        "Mutual Fund wise",
-        "Fund House",
-        "Fund House Wise",
-        "Average AUM",
-      ]
-    );
+    // Wait for dependent fields to render after Fundwise is selected.
     info(
-      `AAUM[${q.calendarQ}]:   Type found=${fType.found} chosen=${fType.chosen ?? "—"} options=[${fType.options.slice(0, 8).join(" | ")}]`
+      `AAUM[${q.calendarQ}]: waiting up to ${T.waitForDependentFields}ms for dependent fields`
+    );
+    let dependentReady = false;
+    try {
+      await page.waitForSelector(
+        'input[placeholder="Select Financial Year"], input[placeholder="Select Mutual Fund"]',
+        { timeout: T.waitForDependentFields }
+      );
+      dependentReady = true;
+    } catch {
+      warn(
+        `AAUM[${q.calendarQ}]: dependent fields (FY/MF) did not appear within ${T.waitForDependentFields}ms`
+      );
+    }
+    await sleep(T.midSleep);
+    await logVisiblePlaceholders(
+      page,
+      q.calendarQ,
+      `after Fundwise (dependentReady=${dependentReady})`
     );
 
+    // Step 2: Select Type — optional. Don't fail if it isn't present.
+    info(`AAUM[${q.calendarQ}]: setting Select Type (optional)`);
+    const fType = await setMuiAutocompleteByPlaceholder(page, "Select Type", [
+      "AMC-wise",
+      "AMC wise",
+      "Mutual Fund-wise",
+      "Mutual Fund wise",
+      "Fund House",
+      "Fund House Wise",
+      "Average AUM",
+    ]);
+    if (fType.found) {
+      info(
+        `AAUM[${q.calendarQ}]:   Type found=true chosen=${fType.chosen ?? "—"} options=[${fType.options.slice(0, 8).join(" | ")}]`
+      );
+    } else {
+      info(`AAUM[${q.calendarQ}]:   Type not present — skipping`);
+    }
+    if (fType.found) await sleep(T.midSleep);
+
+    // Step 3: Select Mutual Fund
     info(`AAUM[${q.calendarQ}]: setting Select Mutual Fund`);
-    const fMf = await setMuiAutocompleteByPlaceholder(
+    let fMf = await setMuiAutocompleteByPlaceholder(
       page,
       "Select Mutual Fund",
       ["All Mutual Funds", "Select All", "All"]
@@ -406,7 +503,23 @@ async function fetchQuarter(
     info(
       `AAUM[${q.calendarQ}]:   MF found=${fMf.found} chosen=${fMf.chosen ?? "—"} options=[${fMf.options.slice(0, 8).join(" | ")}]`
     );
+    // Debug fallback: if no "All" option exists, just pick HDFC for now.
+    if (fMf.found && !fMf.chosen && fMf.options.length > 0) {
+      info(
+        `AAUM[${q.calendarQ}]:   MF: no "All" option present — falling back to HDFC Mutual Fund (debug)`
+      );
+      fMf = await setMuiAutocompleteByPlaceholder(
+        page,
+        "Select Mutual Fund",
+        ["HDFC Mutual Fund"]
+      );
+      info(
+        `AAUM[${q.calendarQ}]:   MF (HDFC fallback) chosen=${fMf.chosen ?? "—"}`
+      );
+    }
+    await sleep(T.midSleep);
 
+    // Step 4: Financial Year
     info(`AAUM[${q.calendarQ}]: setting Select Financial Year`);
     const fFy = await setMuiAutocompleteByPlaceholder(
       page,
@@ -416,7 +529,9 @@ async function fetchQuarter(
     info(
       `AAUM[${q.calendarQ}]:   FY found=${fFy.found} chosen=${fFy.chosen ?? "—"} options=[${fFy.options.slice(0, 8).join(" | ")}]`
     );
+    await sleep(T.midSleep);
 
+    // Step 5: Period
     info(`AAUM[${q.calendarQ}]: setting Select Period`);
     const fPeriod = await setMuiAutocompleteByPlaceholder(
       page,
@@ -427,10 +542,29 @@ async function fetchQuarter(
       `AAUM[${q.calendarQ}]:   Period found=${fPeriod.found} chosen=${fPeriod.chosen ?? "—"} options=[${fPeriod.options.slice(0, 8).join(" | ")}]`
     );
 
+    // Required fields for Go: Data + FY + Period.
+    const canSubmit =
+      Boolean(fData.chosen) &&
+      Boolean(fFy.chosen) &&
+      Boolean(fPeriod.chosen);
+    if (!canSubmit) {
+      info(
+        `AAUM[${q.calendarQ}]: skipping Go — Data=${fData.chosen ?? "—"} FY=${fFy.chosen ?? "—"} Period=${fPeriod.chosen ?? "—"}`
+      );
+      await logGoButtonState(page, q.calendarQ);
+      await logVisiblePlaceholders(page, q.calendarQ, "before-Go (skipped)");
+      return null;
+    }
+
+    // Log the Go button state right before clicking it.
+    await logGoButtonState(page, q.calendarQ);
     info(`AAUM[${q.calendarQ}]: clicking Go`);
     const goClicked = await clickGoButton(page);
     info(`AAUM[${q.calendarQ}]:   Go clicked=${goClicked}`);
-    if (!goClicked) return null;
+    if (!goClicked) {
+      await logVisiblePlaceholders(page, q.calendarQ, "after Go-click failed");
+      return null;
+    }
 
     info(`AAUM[${q.calendarQ}]: waiting for results (max ${T.postGoNetworkIdle}ms)`);
     try {
