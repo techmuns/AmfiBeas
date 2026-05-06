@@ -238,50 +238,6 @@ async function readGoButtonState(page: Page): Promise<GoButtonState> {
   return state as GoButtonState;
 }
 
-/**
- * Read placeholder→value pairs from VISIBLE inputs only.
- * MUI sometimes mounts a hidden / stale duplicate of an autocomplete input
- * (e.g. the inner <input> vs an outer hidden form input). querySelector
- * returned the first match which could be the empty hidden one, even though
- * the populated one was visible. This helper filters by offsetParent and is
- * the single source of truth used by both logVisiblePlaceholders and the
- * Go-click gate.
- */
-async function readVisibleFormValues(page: Page): Promise<{
-  data: string;
-  fy: string;
-  period: string;
-  type: string;
-  mf: string;
-}> {
-  return await page
-    .evaluate(() => {
-      const inputs = Array.from(
-        document.querySelectorAll("input[placeholder]")
-      ).filter((el) => {
-        const e = el as HTMLInputElement;
-        if (e.type === "hidden") return false;
-        if (e.offsetParent !== null) return true;
-        const r = e.getBoundingClientRect();
-        return r.width > 0 && r.height > 0;
-      }) as HTMLInputElement[];
-      const get = (placeholder: string) => {
-        // Prefer a non-empty value when multiple visible matches exist.
-        const matches = inputs.filter((e) => e.placeholder === placeholder);
-        const populated = matches.find((e) => e.value && e.value.trim().length > 0);
-        return (populated ?? matches[0])?.value ?? "";
-      };
-      return {
-        data: get("Select Data"),
-        type: get("Select Type"),
-        mf: get("Select Mutual Fund"),
-        fy: get("Select Financial Year"),
-        period: get("Select Period"),
-      };
-    })
-    .catch(() => ({ data: "", type: "", mf: "", fy: "", period: "" }));
-}
-
 async function setMuiAutocompleteByPlaceholder(
   page: Page,
   placeholder: string,
@@ -658,18 +614,19 @@ async function fetchQuarter(
       `AAUM[${q.calendarQ}]:   Period found=${fPeriod.found} chosen=${fPeriod.chosen ?? "—"} value="${fPeriod.visibleValue}" options=[${fPeriod.options.slice(0, 8).join(" | ")}]`
     );
 
-    // Read the visible values directly from the DOM right before deciding
-    // to click Go. Don't trust the helper-returned `chosen`; trust the
-    // actual <input value> the user can see.
-    const visible = await readVisibleFormValues(page);
+    // Trust the per-field FieldOutcome values (already verified by reading
+    // input.value back inside the helper). The earlier `readVisibleFormValues`
+    // helper kept returning empty strings for inputs that logVisiblePlaceholders
+    // showed as populated — likely an MUI dual-mount + race quirk we can't
+    // reliably work around. The field outcomes match the visible inputs.
     const goState = await readGoButtonState(page);
     info(
-      `AAUM[${q.calendarQ}]: pre-Go visible values: Data="${visible.data}" FY="${visible.fy}" Period="${visible.period}"   Go: ${JSON.stringify(goState)}`
+      `AAUM[${q.calendarQ}]: pre-Go field outcomes: Data="${fData.visibleValue}" FY="${fFy.visibleValue}" Period="${fPeriod.visibleValue}"   Go: ${JSON.stringify(goState)}`
     );
 
-    const dataOk = /fund\s*wise/i.test(visible.data);
-    const fyOk = visible.fy.trim().length > 0;
-    const periodOk = visible.period.trim().length > 0;
+    const dataOk = /fund\s*wise/i.test(fData.visibleValue);
+    const fyOk = (fFy.visibleValue || "").trim().length > 0;
+    const periodOk = (fPeriod.visibleValue || "").trim().length > 0;
     const goEnabled =
       goState.found &&
       goState.disabled === false &&
