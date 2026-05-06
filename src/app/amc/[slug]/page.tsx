@@ -181,7 +181,11 @@ export default async function AmcPage({
         </Card>
         <Card
           title="Quarterly P&L"
-          subtitle={quarterlyLive ? "Revenue / Op / PAT" : financialsUnavailableMessage}
+          subtitle={
+            quarterlyLive
+              ? "Revenue / Op / PAT · ₹ Cr"
+              : financialsUnavailableMessage
+          }
         >
           {quarterlyLive ? (
             <GroupedBars

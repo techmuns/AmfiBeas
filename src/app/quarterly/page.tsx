@@ -13,7 +13,7 @@ import {
 } from "@/data/aggregate";
 import { aaumProvenance, amcAaumQuarterlySnapshot } from "@/data/source";
 import { AMCS, getAMC } from "@/data/amcs";
-import { formatINR, formatDelta } from "@/lib/format";
+import { formatCompactCrSafe, formatDelta } from "@/lib/format";
 import { parseFilters, trimQuarters } from "@/lib/filter";
 import { QUARTERS_LIST } from "@/data/generator";
 
@@ -152,19 +152,19 @@ export default async function QuarterlyPage({
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label="Revenue"
-          value={formatINR(latest.revenue, { compact: true })}
+          value={formatCompactCrSafe(latest.revenue)}
           delta={`${formatDelta(revenueYoy)} YoY`}
           trend={trend(revenueYoy)}
         />
         <KpiCard
           label="Operating Profit"
-          value={formatINR(latest.operatingProfit, { compact: true })}
+          value={formatCompactCrSafe(latest.operatingProfit)}
           delta={`${formatDelta(opYoy)} YoY`}
           trend={trend(opYoy)}
         />
         <KpiCard
           label="PAT"
-          value={formatINR(latest.pat, { compact: true })}
+          value={formatCompactCrSafe(latest.pat)}
           delta={`${formatDelta(patYoy)} YoY`}
           trend={trend(patYoy)}
         />
@@ -197,7 +197,7 @@ export default async function QuarterlyPage({
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card title="Revenue / Op Profit / PAT" subtitle="Quarterly">
+        <Card title="Revenue / Op Profit / PAT" subtitle="Quarterly · ₹ Cr">
           <GroupedBars
             data={pnlData}
             xKey="quarter"
@@ -208,7 +208,7 @@ export default async function QuarterlyPage({
             ]}
           />
         </Card>
-        <Card title="Margin Trend" subtitle="PAT & Operating margin">
+        <Card title="Margin Trend" subtitle="PAT & Operating margin · %">
           <MultiLine
             data={marginData}
             xKey="quarter"
