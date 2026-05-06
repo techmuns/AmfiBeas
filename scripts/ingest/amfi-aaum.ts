@@ -42,6 +42,7 @@ const DEBUG_ONE_QUARTER = process.env.AAUM_DEBUG_ONE_QUARTER === "1";
 
 interface QuarterToFetch {
   calendarQ: string;
+  fyEndYear: number;
   fyCandidates: string[];
   periodCandidates: string[];
 }
@@ -61,8 +62,15 @@ function recentQuartersFY(n: number): QuarterToFetch[] {
   for (let i = 0; i < n; i++) {
     const calendarQ = `${yr}-Q${Math.ceil(mo / 3)}`;
     const fyEndYear = mo <= 3 ? yr : yr + 1;
-    const fyLabelLong = `${fyEndYear - 1}-${fyEndYear}`;
-    const fyLabelShort = `${fyEndYear - 1}-${String(fyEndYear).slice(-2)}`;
+    // AMFI displays FY as "April YYYY - March YYYY+1". Put that first;
+    // keep the older "YYYY-YYYY" / "YYYY-YY" forms as fallback aliases.
+    const fyCandidates = [
+      `April ${fyEndYear - 1} - March ${fyEndYear}`,
+      `April ${fyEndYear - 1}-March ${fyEndYear}`,
+      `Apr ${fyEndYear - 1} - Mar ${fyEndYear}`,
+      `${fyEndYear - 1}-${fyEndYear}`,
+      `${fyEndYear - 1}-${String(fyEndYear).slice(-2)}`,
+    ];
     const periodCandidates =
       mo === 3
         ? ["January - March", "January-March", "Jan-Mar", "Q4"]
@@ -71,11 +79,7 @@ function recentQuartersFY(n: number): QuarterToFetch[] {
         : mo === 9
         ? ["July - September", "July-September", "Jul-Sep", "Q2"]
         : ["October - December", "October-December", "Oct-Dec", "Q3"];
-    out.push({
-      calendarQ,
-      fyCandidates: [fyLabelLong, fyLabelShort],
-      periodCandidates,
-    });
+    out.push({ calendarQ, fyEndYear, fyCandidates, periodCandidates });
     mo -= 3;
     if (mo <= 0) {
       mo += 12;
@@ -95,9 +99,15 @@ interface FieldOutcome {
   found: boolean;
   options: string[];
   chosen: string | null;
+  visibleValue: string;
 }
 
-const EMPTY_FIELD: FieldOutcome = { found: false, options: [], chosen: null };
+const EMPTY_FIELD: FieldOutcome = {
+  found: false,
+  options: [],
+  chosen: null,
+  visibleValue: "",
+};
 
 interface XhrCapture {
   method: string;
@@ -135,7 +145,15 @@ async function logVisiblePlaceholders(
   );
 }
 
-async function logGoButtonState(page: Page, quarter: string) {
+interface GoButtonState {
+  found: boolean;
+  tag: string | null;
+  disabled: boolean | null;
+  ariaDisabled: string | null;
+  classes: string | null;
+}
+
+async function readGoButtonState(page: Page): Promise<GoButtonState> {
   const state = await page
     .evaluate(() => {
       const all = Array.from(
@@ -153,7 +171,7 @@ async function logGoButtonState(page: Page, quarter: string) {
             ).trim()
           )
       );
-      if (!go)
+      if (!go) {
         return {
           found: false,
           tag: null,
@@ -161,6 +179,7 @@ async function logGoButtonState(page: Page, quarter: string) {
           ariaDisabled: null,
           classes: null,
         };
+      }
       const e = go as HTMLButtonElement;
       return {
         found: true,
@@ -172,8 +191,42 @@ async function logGoButtonState(page: Page, quarter: string) {
           .slice(0, 120),
       };
     })
-    .catch(() => null);
-  info(`AAUM[${quarter}]: Go button state: ${JSON.stringify(state)}`);
+    .catch(
+      (): GoButtonState => ({
+        found: false,
+        tag: null,
+        disabled: null,
+        ariaDisabled: null,
+        classes: null,
+      })
+    );
+  return state as GoButtonState;
+}
+
+async function readVisibleFormValues(page: Page): Promise<{
+  data: string;
+  fy: string;
+  period: string;
+  type: string;
+  mf: string;
+}> {
+  return await page
+    .evaluate(() => {
+      const get = (placeholder: string) => {
+        const el = document.querySelector(
+          `input[placeholder="${placeholder}"]`
+        ) as HTMLInputElement | null;
+        return el ? el.value : "";
+      };
+      return {
+        data: get("Select Data"),
+        type: get("Select Type"),
+        mf: get("Select Mutual Fund"),
+        fy: get("Select Financial Year"),
+        period: get("Select Period"),
+      };
+    })
+    .catch(() => ({ data: "", type: "", mf: "", fy: "", period: "" }));
 }
 
 async function setMuiAutocompleteByPlaceholder(
@@ -192,7 +245,7 @@ async function setMuiAutocompleteByPlaceholder(
     await input.click({ timeout: T.clickInput });
   } catch (err) {
     warn(`  click input[placeholder="${placeholder}"] failed: ${(err as Error).message}`);
-    return { found: true, options: [], chosen: null };
+    return { found: true, options: [], chosen: null, visibleValue: "" };
   }
   await sleep(T.shortSleep);
 
@@ -247,6 +300,12 @@ async function setMuiAutocompleteByPlaceholder(
 
   const chosen = tryMatch("exact") ?? tryMatch("ci") ?? tryMatch("partial");
 
+  // Helper: read the visible value back from the placeholder input.
+  const readVisible = async (): Promise<string> => {
+    await sleep(T.shortSleep);
+    return (await input.inputValue().catch(() => "")) ?? "";
+  };
+
   if (chosen) {
     const safeChosen = chosen.replace(/"/g, '\\"');
     const optLocators = [
@@ -258,7 +317,11 @@ async function setMuiAutocompleteByPlaceholder(
       try {
         if ((await opt.count()) === 0) continue;
         await opt.click({ timeout: T.clickOption });
-        return { found: true, options, chosen };
+        const visibleValue = await readVisible();
+        if (visibleValue && visibleValue.trim().length > 0) {
+          return { found: true, options, chosen, visibleValue };
+        }
+        // Click registered but the input value didn't change — try the next selector.
       } catch {}
     }
   }
@@ -271,19 +334,14 @@ async function setMuiAutocompleteByPlaceholder(
       await sleep(T.shortSleep);
       await input.press("ArrowDown", { timeout: T.shortSleep });
       await input.press("Enter", { timeout: T.shortSleep });
-      const setVal = await input.inputValue().catch(() => "");
-      if (
-        setVal &&
-        candidates.some((c) =>
-          setVal.toLowerCase().includes(c.toLowerCase().slice(0, 4))
-        )
-      ) {
-        return { found: true, options, chosen: setVal };
+      const visibleValue = await readVisible();
+      if (visibleValue && visibleValue.trim().length > 0) {
+        return { found: true, options, chosen: visibleValue, visibleValue };
       }
     } catch {}
   }
 
-  return { found: true, options, chosen: null };
+  return { found: true, options, chosen: null, visibleValue: "" };
 }
 
 async function clickGoButton(page: Page): Promise<boolean> {
@@ -443,10 +501,10 @@ async function fetchQuarter(
       "Fund-wise",
     ]);
     info(
-      `AAUM[${q.calendarQ}]:   Data found=${fData.found} chosen=${fData.chosen ?? "—"} options=[${fData.options.slice(0, 8).join(" | ")}]`
+      `AAUM[${q.calendarQ}]:   Data found=${fData.found} chosen=${fData.chosen ?? "—"} value="${fData.visibleValue}" options=[${fData.options.slice(0, 8).join(" | ")}]`
     );
-    if (!fData.chosen) {
-      warn(`AAUM[${q.calendarQ}]: Fundwise not selected — cannot proceed`);
+    if (!fData.visibleValue || !/fund\s*wise/i.test(fData.visibleValue)) {
+      warn(`AAUM[${q.calendarQ}]: Fundwise not visible in input — cannot proceed`);
       return null;
     }
 
@@ -486,7 +544,7 @@ async function fetchQuarter(
     ]);
     if (fType.found) {
       info(
-        `AAUM[${q.calendarQ}]:   Type found=true chosen=${fType.chosen ?? "—"} options=[${fType.options.slice(0, 8).join(" | ")}]`
+        `AAUM[${q.calendarQ}]:   Type found=true chosen=${fType.chosen ?? "—"} value="${fType.visibleValue}" options=[${fType.options.slice(0, 8).join(" | ")}]`
       );
     } else {
       info(`AAUM[${q.calendarQ}]:   Type not present — skipping`);
@@ -501,12 +559,12 @@ async function fetchQuarter(
       ["All Mutual Funds", "Select All", "All"]
     );
     info(
-      `AAUM[${q.calendarQ}]:   MF found=${fMf.found} chosen=${fMf.chosen ?? "—"} options=[${fMf.options.slice(0, 8).join(" | ")}]`
+      `AAUM[${q.calendarQ}]:   MF found=${fMf.found} chosen=${fMf.chosen ?? "—"} value="${fMf.visibleValue}" options=[${fMf.options.slice(0, 8).join(" | ")}]`
     );
-    // Debug fallback: if no "All" option exists, just pick HDFC for now.
-    if (fMf.found && !fMf.chosen && fMf.options.length > 0) {
+    // Debug fallback: if no "All" option exists or click didn't take, pick HDFC.
+    if (fMf.found && !fMf.visibleValue && fMf.options.length > 0) {
       info(
-        `AAUM[${q.calendarQ}]:   MF: no "All" option present — falling back to HDFC Mutual Fund (debug)`
+        `AAUM[${q.calendarQ}]:   MF: no "All" option visible — falling back to HDFC Mutual Fund (debug)`
       );
       fMf = await setMuiAutocompleteByPlaceholder(
         page,
@@ -514,7 +572,7 @@ async function fetchQuarter(
         ["HDFC Mutual Fund"]
       );
       info(
-        `AAUM[${q.calendarQ}]:   MF (HDFC fallback) chosen=${fMf.chosen ?? "—"}`
+        `AAUM[${q.calendarQ}]:   MF (HDFC fallback) chosen=${fMf.chosen ?? "—"} value="${fMf.visibleValue}"`
       );
     }
     await sleep(T.midSleep);
@@ -527,7 +585,7 @@ async function fetchQuarter(
       q.fyCandidates
     );
     info(
-      `AAUM[${q.calendarQ}]:   FY found=${fFy.found} chosen=${fFy.chosen ?? "—"} options=[${fFy.options.slice(0, 8).join(" | ")}]`
+      `AAUM[${q.calendarQ}]:   FY found=${fFy.found} chosen=${fFy.chosen ?? "—"} value="${fFy.visibleValue}" options=[${fFy.options.slice(0, 8).join(" | ")}]`
     );
     await sleep(T.midSleep);
 
@@ -539,25 +597,40 @@ async function fetchQuarter(
       q.periodCandidates
     );
     info(
-      `AAUM[${q.calendarQ}]:   Period found=${fPeriod.found} chosen=${fPeriod.chosen ?? "—"} options=[${fPeriod.options.slice(0, 8).join(" | ")}]`
+      `AAUM[${q.calendarQ}]:   Period found=${fPeriod.found} chosen=${fPeriod.chosen ?? "—"} value="${fPeriod.visibleValue}" options=[${fPeriod.options.slice(0, 8).join(" | ")}]`
     );
 
-    // Required fields for Go: Data + FY + Period.
-    const canSubmit =
-      Boolean(fData.chosen) &&
-      Boolean(fFy.chosen) &&
-      Boolean(fPeriod.chosen);
-    if (!canSubmit) {
+    // Read the visible values directly from the DOM right before deciding
+    // to click Go. Don't trust the helper-returned `chosen`; trust the
+    // actual <input value> the user can see.
+    const visible = await readVisibleFormValues(page);
+    const goState = await readGoButtonState(page);
+    info(
+      `AAUM[${q.calendarQ}]: pre-Go visible values: Data="${visible.data}" FY="${visible.fy}" Period="${visible.period}"   Go: ${JSON.stringify(goState)}`
+    );
+
+    const dataOk = /fund\s*wise/i.test(visible.data);
+    const fyOk = visible.fy.trim().length > 0;
+    const periodOk = visible.period.trim().length > 0;
+    const goEnabled =
+      goState.found &&
+      goState.disabled === false &&
+      goState.ariaDisabled !== "true";
+
+    if (!dataOk || !fyOk || !periodOk || !goEnabled) {
       info(
-        `AAUM[${q.calendarQ}]: skipping Go — Data=${fData.chosen ?? "—"} FY=${fFy.chosen ?? "—"} Period=${fPeriod.chosen ?? "—"}`
+        `AAUM[${q.calendarQ}]: NOT clicking Go — dataOk=${dataOk} fyOk=${fyOk} periodOk=${periodOk} goEnabled=${goEnabled}`
       );
-      await logGoButtonState(page, q.calendarQ);
+      info(
+        `AAUM[${q.calendarQ}]:   FY options at fail: [${fFy.options.slice(0, 12).join(" | ")}]`
+      );
+      info(
+        `AAUM[${q.calendarQ}]:   Period options at fail: [${fPeriod.options.slice(0, 12).join(" | ")}]`
+      );
       await logVisiblePlaceholders(page, q.calendarQ, "before-Go (skipped)");
       return null;
     }
 
-    // Log the Go button state right before clicking it.
-    await logGoButtonState(page, q.calendarQ);
     info(`AAUM[${q.calendarQ}]: clicking Go`);
     const goClicked = await clickGoButton(page);
     info(`AAUM[${q.calendarQ}]:   Go clicked=${goClicked}`);
