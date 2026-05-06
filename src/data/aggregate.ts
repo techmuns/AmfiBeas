@@ -295,10 +295,15 @@ export function yieldsForAmc(slug: string): QuarterlyYields[] {
   const rows = quarterlyForAmc(slug);
   return rows.map((q) => ({
     quarter: q.quarter,
-    revenueYieldBps: q.avgAum === 0 ? 0 : (q.revenue * 4 * 10_000) / q.avgAum,
+    // Quarterly bps yields: same-quarter P&L numerator over same-quarter
+    // AAUM denominator. NOT annualised — values express the share of AAUM
+    // earned/extracted in this single 3-month window.
+    revenueYieldBps:
+      q.avgAum === 0 ? 0 : (q.revenue * 10_000) / q.avgAum,
     operatingYieldBps:
-      q.avgAum === 0 ? 0 : (q.operatingProfit * 4 * 10_000) / q.avgAum,
-    profitYieldBps: q.avgAum === 0 ? 0 : (q.pat * 4 * 10_000) / q.avgAum,
+      q.avgAum === 0 ? 0 : (q.operatingProfit * 10_000) / q.avgAum,
+    profitYieldBps:
+      q.avgAum === 0 ? 0 : (q.pat * 10_000) / q.avgAum,
     patMargin: q.revenue === 0 ? 0 : (q.pat / q.revenue) * 100,
     opMargin: q.revenue === 0 ? 0 : (q.operatingProfit / q.revenue) * 100,
   }));
