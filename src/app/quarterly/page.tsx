@@ -57,7 +57,7 @@ export default async function QuarterlyPage({
   const yieldsSubtitle =
     amcAaumQuarterlySnapshot.rows.length > 0
       ? `Source: AMFI AAUM · ${new Date(aaumMeta.generatedAt).toISOString().slice(0, 10)}`
-      : "Annualised revenue / operating / profit yield";
+      : "Quarterly revenue / operating / profit yield (bps)";
 
   const trend = (n: number) =>
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
@@ -94,14 +94,16 @@ export default async function QuarterlyPage({
   const patYoy = yoyChangeQuarterly(fullSeries.map((q) => q.pat));
   const patMargin = (latest.pat / latest.revenue) * 100;
   const opMargin = (latest.operatingProfit / latest.revenue) * 100;
+  // Quarterly bps yields: NOT annualised. Same-quarter P&L over
+  // same-quarter AAUM, expressed in basis points.
   const revenueYieldBps = latest.avgAum
-    ? (latest.revenue * 4 * 10_000) / latest.avgAum
+    ? (latest.revenue * 10_000) / latest.avgAum
     : 0;
   const opYieldBps = latest.avgAum
-    ? (latest.operatingProfit * 4 * 10_000) / latest.avgAum
+    ? (latest.operatingProfit * 10_000) / latest.avgAum
     : 0;
   const profitYieldBps = latest.avgAum
-    ? (latest.pat * 4 * 10_000) / latest.avgAum
+    ? (latest.pat * 10_000) / latest.avgAum
     : 0;
 
   const prevPatMargin =
@@ -130,13 +132,13 @@ export default async function QuarterlyPage({
     return {
       quarter: q.quarter,
       revenue: hasAaum
-        ? Number(((q.revenue * 4 * 10_000) / q.avgAum).toFixed(1))
+        ? Number(((q.revenue * 10_000) / q.avgAum).toFixed(1))
         : null,
       op: hasAaum
-        ? Number(((q.operatingProfit * 4 * 10_000) / q.avgAum).toFixed(1))
+        ? Number(((q.operatingProfit * 10_000) / q.avgAum).toFixed(1))
         : null,
       profit: hasAaum
-        ? Number(((q.pat * 4 * 10_000) / q.avgAum).toFixed(1))
+        ? Number(((q.pat * 10_000) / q.avgAum).toFixed(1))
         : null,
     };
   });
