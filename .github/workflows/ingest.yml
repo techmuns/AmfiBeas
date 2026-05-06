@@ -41,6 +41,10 @@ jobs:
       - name: Run ingest
         env:
           AAUM_DEBUG_ONE_QUARTER: "1"
+          # Morningstar India is opt-in. Set to "1" to enable the public-pages
+          # fetch. Leave empty / unset to skip cleanly. Uses public surfaces
+          # only; never bypasses login, captchas, paywalls, or bot protection.
+          MORNINGSTAR_FETCH_ENABLED: ""
         run: npm run ingest
       - name: Show diff
         run: |

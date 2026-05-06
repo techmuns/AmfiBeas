@@ -2,6 +2,7 @@ import { ingestAmfiAmcMaster } from "./amfi-nav";
 import { ingestAmfiSubClassification } from "./amfi-sub-classification";
 import { ingestListedAmcQuarterly } from "./listed-amc-quarterly";
 import { ingestAmfiAaum } from "./amfi-aaum";
+import { ingestMorningstar } from "./morningstar";
 
 interface Step {
   name: string;
@@ -22,6 +23,10 @@ const STEPS: Step[] = [
     optional: true,
   },
   { name: "amfi-aaum", run: ingestAmfiAaum, optional: true },
+  // Morningstar is opt-in via MORNINGSTAR_FETCH_ENABLED=1; the step itself
+  // returns immediately when the flag is unset, so registering unconditionally
+  // is safe.
+  { name: "morningstar", run: ingestMorningstar, optional: true },
 ];
 
 async function main() {

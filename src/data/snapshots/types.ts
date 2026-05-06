@@ -102,6 +102,35 @@ export interface AmcAaumQuarterlySnapshot {
   rows: AmcAaumQuarterlyRow[];
 }
 
+/**
+ * Morningstar India fallback / comparison snapshot for AMC-wise Average AUM.
+ * Always treated as a SECONDARY source — never replaces the AMFI snapshot.
+ * `status` distinguishes a clean fetch from blocked / failed / empty so the
+ * dashboard can decide whether to surface the data at all.
+ */
+export type MorningstarStatus = "ok" | "blocked" | "failed" | "empty";
+
+export interface MorningstarAumRow {
+  date: string;          // YYYY-MM-DD (month-end the AUM corresponds to)
+  quarter: string;       // calendar quarter, YYYY-Qx
+  amcId: string;         // dashboard slug (HDFC → "hdfc" etc.)
+  originalName: string;  // verbatim AMC name from Morningstar
+  averageAum: number;    // ₹ Cr
+  sourceUrl: string;
+  confidence: "high" | "medium" | "low";
+}
+
+export interface MorningstarAumSnapshot {
+  meta: {
+    source: "Morningstar India";
+    sourceUrl: string;
+    fetchedAt: string;
+    status: MorningstarStatus;
+    notes?: string;
+  };
+  rows: MorningstarAumRow[];
+}
+
 export interface OtherSchemesMonthlyRow {
   month: string;
   category: string;
