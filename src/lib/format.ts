@@ -42,9 +42,61 @@ export function formatMonthLabel(month: string) {
   return `${MONTH_NAMES[idx]} '${y}`;
 }
 
+/**
+ * Maps a calendar-quarter id (e.g. "2026-Q1") to the calendar month range
+ * for that quarter. Quarters are Jan–Mar / Apr–Jun / Jul–Sep / Oct–Dec.
+ */
+function quarterMonthRange(q: string): { start: string; end: string } {
+  switch (q) {
+    case "Q1":
+      return { start: "Jan", end: "Mar" };
+    case "Q2":
+      return { start: "Apr", end: "Jun" };
+    case "Q3":
+      return { start: "Jul", end: "Sep" };
+    default:
+      return { start: "Oct", end: "Dec" };
+  }
+}
+
+/**
+ * Indian fiscal year runs Apr–Mar. Calendar Q1 (Jan–Mar) of year N falls in
+ * FY{N} Q4; Q2 of year N is FY{N+1} Q1, and so on.
+ */
+function fyQuarter(year: number, q: string): { fyYear: number; fyQ: number } {
+  switch (q) {
+    case "Q1":
+      return { fyYear: year, fyQ: 4 };
+    case "Q2":
+      return { fyYear: year + 1, fyQ: 1 };
+    case "Q3":
+      return { fyYear: year + 1, fyQ: 2 };
+    default:
+      return { fyYear: year + 1, fyQ: 3 };
+  }
+}
+
+/**
+ * Compact label for chart axis ticks (e.g. "Jan–Mar '26"). Tight enough for
+ * 13 quarter ticks on a single axis but unambiguous about the period.
+ */
 export function formatQuarterLabel(quarter: string) {
-  const [y, q] = quarter.split("-");
-  return `${q} '${y.slice(2)}`;
+  const [yStr, q] = quarter.split("-");
+  const { start, end } = quarterMonthRange(q);
+  return `${start}–${end} '${yStr.slice(2)}`;
+}
+
+/**
+ * Long-form label for subtitles and tooltips (e.g.
+ * "FY26 Q4 · Jan–Mar 2026"). Pairs the Indian fiscal-year label with the
+ * calendar month range so the period is unambiguous.
+ */
+export function formatQuarterLabelLong(quarter: string) {
+  const [yStr, q] = quarter.split("-");
+  const year = Number(yStr);
+  const { start, end } = quarterMonthRange(q);
+  const { fyYear, fyQ } = fyQuarter(year, q);
+  return `FY${String(fyYear).slice(2)} Q${fyQ} · ${start}–${end} ${year}`;
 }
 
 export function formatCompactCr(value: number) {

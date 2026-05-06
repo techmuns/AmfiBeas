@@ -88,13 +88,13 @@ export function FilterBar({
   const rangeOptions: { value: DateRange; label: string }[] =
     showRange === "quarterly"
       ? [
-          { value: "4q", label: "4Q" },
-          { value: "8q", label: "8Q" },
+          { value: "4q", label: "Last 4Q" },
+          { value: "8q", label: "Last 8Q" },
           { value: "all", label: "All" },
         ]
       : [
-          { value: "12m", label: "12M" },
-          { value: "24m", label: "24M" },
+          { value: "12m", label: "Last 12M" },
+          { value: "24m", label: "Last 24M" },
           { value: "all", label: "All" },
         ];
 

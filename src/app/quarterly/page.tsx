@@ -13,7 +13,11 @@ import {
 } from "@/data/aggregate";
 import { aaumProvenance, amcAaumQuarterlySnapshot } from "@/data/source";
 import { AMCS, getAMC } from "@/data/amcs";
-import { formatCompactCrSafe, formatDelta } from "@/lib/format";
+import {
+  formatCompactCrSafe,
+  formatDelta,
+  formatQuarterLabelLong,
+} from "@/lib/format";
 import { parseFilters, trimQuarters } from "@/lib/filter";
 import { QUARTERS_LIST } from "@/data/generator";
 
@@ -137,7 +141,7 @@ export default async function QuarterlyPage({
     };
   });
 
-  const subtitle = `${profile.name}${profile.ticker ? ` (${profile.ticker})` : ""} · ${latest.quarter}`;
+  const subtitle = `${profile.name}${profile.ticker ? ` (${profile.ticker})` : ""} · ${formatQuarterLabelLong(latest.quarter)}`;
 
   return (
     <div className="space-y-6">
@@ -197,7 +201,10 @@ export default async function QuarterlyPage({
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card title="Revenue / Op Profit / PAT" subtitle="Quarterly · ₹ Cr">
+        <Card
+          title="Revenue / Op Profit / PAT"
+          subtitle="Quarterly financials · 3-month reporting periods · ₹ Cr"
+        >
           <GroupedBars
             data={pnlData}
             xKey="quarter"

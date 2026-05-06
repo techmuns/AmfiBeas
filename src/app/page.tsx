@@ -21,6 +21,7 @@ import {
   formatDelta,
   formatLakhSafe,
   formatPctSafe,
+  formatQuarterLabelLong,
 } from "@/lib/format";
 
 export default function HomePage() {
@@ -56,7 +57,7 @@ export default function HomePage() {
     <div className="space-y-6">
       <PageHeader
         title="Overview"
-        subtitle={`Industry snapshot · ${latestMonth()} (operating) · ${latestQuarter()} (financial)`}
+        subtitle={`Industry snapshot · ${latestMonth()} (operating) · ${formatQuarterLabelLong(latestQuarter())} (financial)`}
       />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
