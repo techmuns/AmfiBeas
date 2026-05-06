@@ -11,7 +11,7 @@ import {
   quarterlyForAmc,
   yoyChangeQuarterly,
 } from "@/data/aggregate";
-import { aaumProvenance, amcAaumQuarterlySnapshot } from "@/data/source";
+import { aaumProvenance, amcAaumQuarterlySnapshot, amcQuarterlySnapshot } from "@/data/source";
 import { AMCS, getAMC } from "@/data/amcs";
 import {
   formatCompactCrSafe,
@@ -143,6 +143,26 @@ export default async function QuarterlyPage({
 
   const subtitle = `${profile.name}${profile.ticker ? ` (${profile.ticker})` : ""} · ${formatQuarterLabelLong(latest.quarter)}`;
 
+  // Compact source / provenance line. Hostname only — keeps the line tight
+  // while making the source unambiguous (screener.in for P&L, AMFI for AAUM).
+  const pnlSourceHost = (() => {
+    try {
+      return new URL(amcQuarterlySnapshot.meta.source).hostname.replace(
+        /^www\./,
+        ""
+      );
+    } catch {
+      return amcQuarterlySnapshot.meta.source;
+    }
+  })();
+  const pnlSourceDate = new Date(amcQuarterlySnapshot.meta.generatedAt)
+    .toISOString()
+    .slice(0, 10);
+  const aaumSourceDate = new Date(amcAaumQuarterlySnapshot.meta.generatedAt)
+    .toISOString()
+    .slice(0, 10);
+  const provenanceLine = `P&L: ${pnlSourceHost} · ${pnlSourceDate} · AAUM: AMFI · ${aaumSourceDate}`;
+
   return (
     <div className="space-y-6">
       <PageHeader title="Quarterly Financials" subtitle={subtitle} />
@@ -152,6 +172,9 @@ export default async function QuarterlyPage({
         amcStatus={status}
         defaultSlug={DEFAULT_SLUG}
       />
+      <p className="-mt-2 text-[11px] tabular text-muted-foreground">
+        {provenanceLine}
+      </p>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
