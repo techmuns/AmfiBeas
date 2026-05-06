@@ -23,6 +23,10 @@ import {
   formatPctSafe,
   formatQuarterLabelLong,
 } from "@/lib/format";
+import {
+  industryMonthlyNote,
+  liveScreenerNote,
+} from "@/lib/provenance";
 
 export default function HomePage() {
   const monthly = industryByMonth();
@@ -53,6 +57,9 @@ export default function HomePage() {
   const patMargin =
     latestQ.revenue > 0 ? (latestQ.pat / latestQ.revenue) * 100 : null;
 
+  const industryDemoNote = industryMonthlyNote();
+  const pnlNote = liveScreenerNote();
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -66,24 +73,28 @@ export default function HomePage() {
           value={formatCompactCrSafe(latest.totalAum)}
           delta={`${formatDelta(aumYoy)} YoY`}
           trend={trend(aumYoy)}
+          note={industryDemoNote}
         />
         <KpiCard
           label="Active Equity AUM"
           value={formatCompactCrSafe(latest.activeEquityAum)}
           delta={`${formatDelta(activeEquityMom)} MoM`}
           trend={trend(activeEquityMom)}
+          note={industryDemoNote}
         />
         <KpiCard
           label="Monthly SIP"
           value={formatCompactCrSafe(latest.sipContribution)}
           delta={`${formatDelta(sipMom)} MoM`}
           trend={trend(sipMom)}
+          note={industryDemoNote}
         />
         <KpiCard
           label="Investor Additions"
           value={formatLakhSafe(latest.investorAdditions)}
           delta={`${formatDelta(investorsMom)} MoM`}
           trend={trend(investorsMom)}
+          note={industryDemoNote}
         />
       </section>
 
@@ -91,25 +102,35 @@ export default function HomePage() {
         <KpiCard
           label="Listed AMC Revenue"
           value={formatCompactCrSafe(latestQ.revenue)}
+          note={pnlNote}
         />
         <KpiCard
           label="Listed AMC Op Profit"
           value={formatCompactCrSafe(latestQ.operatingProfit)}
+          note={pnlNote}
         />
         <KpiCard
           label="Listed AMC PAT"
           value={formatCompactCrSafe(latestQ.pat)}
           delta={`${formatDelta(patYoy)} YoY`}
           trend={trend(patYoy)}
+          note={pnlNote}
         />
-        <KpiCard label="Listed AMC PAT Margin" value={formatPctSafe(patMargin)} />
+        <KpiCard
+          label="Listed AMC PAT Margin"
+          value={formatPctSafe(patMargin)}
+          note={pnlNote}
+        />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card title="AUM Trend" subtitle="Industry total · 24 months">
+        <Card
+          title="AUM Trend"
+          subtitle={`Industry total · 24 months · ${industryDemoNote}`}
+        >
           <AreaTrend data={aumSeries} name="AUM" />
         </Card>
-        <Card title="SIP Flows" subtitle="Monthly inflows · industry">
+        <Card title="SIP Flows" subtitle={`Monthly inflows · industry · ${industryDemoNote}`}>
           <BarSeries data={sipSeries} name="SIP" />
         </Card>
       </section>

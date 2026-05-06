@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { industryMonthlyNote } from "@/lib/provenance";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -159,6 +160,7 @@ export default async function MonthlyPage({
   const subtitle = slugs
     ? `${slugs.length} peer${slugs.length > 1 ? "s" : ""} · ${latestMonth()}`
     : `Industry-wide · ${latestMonth()}`;
+  const demoIndustryNote = industryMonthlyNote();
 
   return (
     <div className="space-y-6">
@@ -171,6 +173,7 @@ export default async function MonthlyPage({
           value={formatCompactCrSafe(latest.totalAum)}
           delta={`${formatDelta(aumMom)} MoM`}
           trend={trend(aumMom)}
+          note={demoIndustryNote}
         />
         <KpiCard
           label={slugs ? "AUM Share" : "Active Equity AUM"}
@@ -183,6 +186,7 @@ export default async function MonthlyPage({
             slugs ? undefined : `${formatDelta(activeEquityYoy)} YoY`
           }
           trend={slugs ? "flat" : trend(activeEquityYoy)}
+          note={demoIndustryNote}
         />
         <KpiCard
           label={
@@ -195,6 +199,7 @@ export default async function MonthlyPage({
           }
           delta={slugs ? undefined : `${formatDelta(sipYoy)} YoY`}
           trend={slugs ? "flat" : trend(sipYoy)}
+          note={demoIndustryNote}
         />
         <KpiCard
           label={slugs ? "SIP Share" : "Investor Additions"}
@@ -205,6 +210,7 @@ export default async function MonthlyPage({
           }
           delta={slugs ? undefined : `${formatDelta(investorsYoy)} YoY`}
           trend={slugs ? "flat" : trend(investorsYoy)}
+          note={demoIndustryNote}
         />
       </section>
 
@@ -215,6 +221,7 @@ export default async function MonthlyPage({
             value={formatCompactCrSafe(latest.activeEquityAum)}
             delta={`${formatDelta(activeEquityYoy)} YoY`}
             trend={trend(activeEquityYoy)}
+            note={demoIndustryNote}
           />
         )}
         {slugs && (
@@ -223,6 +230,7 @@ export default async function MonthlyPage({
             value={formatCompactCrSafe(latest.sipContribution)}
             delta={`${formatDelta(sipYoy)} YoY`}
             trend={trend(sipYoy)}
+            note={demoIndustryNote}
           />
         )}
         <KpiCard
@@ -230,28 +238,31 @@ export default async function MonthlyPage({
           value={formatCroreCountSafe(latest.folios)}
           delta={`${formatDelta(foliosYoy)} YoY`}
           trend={trend(foliosYoy)}
+          note={demoIndustryNote}
         />
         <KpiCard
           label="NFO Launches"
           value={formatIntSafe(latest.nfoCount)}
           delta={`${formatDelta(nfoMom)} MoM`}
           trend={trend(nfoMom)}
+          note={demoIndustryNote}
         />
         {!slugs && (
           <KpiCard
             label="NFO AUM Collected"
             value={formatCompactCrSafe(latest.nfoAumCollected)}
+            note={demoIndustryNote}
           />
         )}
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card title="AUM Trend" subtitle="Total AUM">
+        <Card title="AUM Trend" subtitle={`Total AUM · ${demoIndustryNote}`}>
           <AreaTrend data={aumChartSeries} name="AUM" />
         </Card>
         <Card
           title="AUM Market Share"
-          subtitle={slugs ? "Within selected peers" : "Top 6 + Others"}
+          subtitle={`${slugs ? "Within selected peers" : "Top 6 + Others"} · ${demoIndustryNote}`}
         >
           <StackedArea
             data={aumShareRows}
