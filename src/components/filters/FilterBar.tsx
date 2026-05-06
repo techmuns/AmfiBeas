@@ -107,6 +107,22 @@ export function FilterBar({
     return defaultSlug ?? null;
   }, [amcMode, selected, amcStatus, defaultSlug]);
 
+  // Single-mode rendering order: live first, then pending, then unavailable.
+  // Multi-mode keeps the original AMCS order untouched.
+  const orderedAmcs = useMemo(() => {
+    if (amcMode !== "single") return AMCS;
+    const rank: Record<AmcStatus, number> = {
+      live: 0,
+      pending: 1,
+      unavailable: 2,
+    };
+    return [...AMCS].sort((a, b) => {
+      const sa: AmcStatus = amcStatus?.[a.slug] ?? "live";
+      const sb: AmcStatus = amcStatus?.[b.slug] ?? "live";
+      return rank[sa] - rank[sb];
+    });
+  }, [amcMode, amcStatus]);
+
   const allSelected = selected.size === 0;
   const isDirty =
     amcMode === "single"
@@ -142,7 +158,7 @@ export function FilterBar({
             All
           </button>
         )}
-        {AMCS.map((a) => {
+        {orderedAmcs.map((a) => {
           const status: AmcStatus = amcStatus?.[a.slug] ?? "live";
           const disabled = amcMode === "single" && status !== "live";
           const active =
