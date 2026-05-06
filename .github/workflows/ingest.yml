@@ -39,6 +39,8 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
       - name: Run ingest
+        env:
+          AAUM_DEBUG_ONE_QUARTER: "1"
         run: npm run ingest
       - name: Show diff
         run: |

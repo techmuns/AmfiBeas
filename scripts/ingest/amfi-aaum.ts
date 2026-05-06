@@ -20,6 +20,25 @@ const TARGET_AMCS = [
   "UTI Mutual Fund",
 ];
 
+// All timing budgets in milliseconds. Sized so a single quarter run finishes
+// well inside the overall 90 s kill timer even when most steps fail soft.
+const T = {
+  totalKill: 90_000,
+  pageGoto: 25_000,
+  waitForFormReady: 12_000,
+  waitForOptionsListbox: 2_500,
+  clickInput: 3_000,
+  clickOption: 1_500,
+  fillInput: 1_500,
+  goButton: 4_000,
+  postGoNetworkIdle: 15_000,
+  postGoSettle: 2_500,
+  shortSleep: 250,
+  midSleep: 500,
+};
+
+const DEBUG_ONE_QUARTER = process.env.AAUM_DEBUG_ONE_QUARTER === "1";
+
 interface QuarterToFetch {
   calendarQ: string;
   fyCandidates: string[];
@@ -33,7 +52,10 @@ function recentQuartersFY(n: number): QuarterToFetch[] {
   let mo = now.getMonth() + 1;
   while (![3, 6, 9, 12].includes(mo)) {
     mo -= 1;
-    if (mo <= 0) { mo = 12; yr -= 1; }
+    if (mo <= 0) {
+      mo = 12;
+      yr -= 1;
+    }
   }
   for (let i = 0; i < n; i++) {
     const calendarQ = `${yr}-Q${Math.ceil(mo / 3)}`;
@@ -41,17 +63,23 @@ function recentQuartersFY(n: number): QuarterToFetch[] {
     const fyLabelLong = `${fyEndYear - 1}-${fyEndYear}`;
     const fyLabelShort = `${fyEndYear - 1}-${String(fyEndYear).slice(-2)}`;
     const periodCandidates =
-      mo === 3 ? ["January - March", "January-March", "Jan-Mar", "Q4"] :
-      mo === 6 ? ["April - June", "April-June", "Apr-Jun", "Q1"] :
-      mo === 9 ? ["July - September", "July-September", "Jul-Sep", "Q2"] :
-                 ["October - December", "October-December", "Oct-Dec", "Q3"];
+      mo === 3
+        ? ["January - March", "January-March", "Jan-Mar", "Q4"]
+        : mo === 6
+        ? ["April - June", "April-June", "Apr-Jun", "Q1"]
+        : mo === 9
+        ? ["July - September", "July-September", "Jul-Sep", "Q2"]
+        : ["October - December", "October-December", "Oct-Dec", "Q3"];
     out.push({
       calendarQ,
       fyCandidates: [fyLabelLong, fyLabelShort],
       periodCandidates,
     });
     mo -= 3;
-    if (mo <= 0) { mo += 12; yr -= 1; }
+    if (mo <= 0) {
+      mo += 12;
+      yr -= 1;
+    }
   }
   return out;
 }
@@ -68,19 +96,6 @@ interface FieldOutcome {
   chosen: string | null;
 }
 
-interface QuarterStatus {
-  data: FieldOutcome;
-  type: FieldOutcome;
-  mutualFund: FieldOutcome;
-  financialYear: FieldOutcome;
-  period: FieldOutcome;
-  goClicked: boolean;
-  resultTableAppeared: boolean;
-  downloadLinks: string[];
-  amcCellsSeen: string[];
-  url: string;
-}
-
 const EMPTY_FIELD: FieldOutcome = { found: false, options: [], chosen: null };
 
 interface XhrCapture {
@@ -91,51 +106,48 @@ interface XhrCapture {
   bodyPreview?: string;
 }
 
-/**
- * Drive a MUI Autocomplete input by its visible placeholder.
- *
- *  1. Find the input[placeholder="..."]
- *  2. Click it to open the option popup (rendered in a portal)
- *  3. Read all visible options and try to match a candidate
- *     (exact → case-insensitive normalized → partial substring)
- *  4. Click the matched option
- *  5. If no candidate matches, fall back to typing the first candidate
- *     and pressing ArrowDown + Enter.
- *
- * Returns the option list seen and the chosen option (if any).
- */
+function sleep(ms: number) {
+  return new Promise<void>((r) => setTimeout(r, ms));
+}
+
 async function setMuiAutocompleteByPlaceholder(
   page: Page,
   placeholder: string,
   candidates: string[]
 ): Promise<FieldOutcome> {
-  const input = page
-    .locator(`input[placeholder="${placeholder}"]`)
-    .first();
+  const input = page.locator(`input[placeholder="${placeholder}"]`).first();
   if ((await input.count()) === 0) return { ...EMPTY_FIELD };
 
   try {
-    await input.scrollIntoViewIfNeeded();
+    await input.scrollIntoViewIfNeeded({ timeout: T.clickInput });
   } catch {}
+
   try {
-    await input.click({ timeout: 5000 });
+    await input.click({ timeout: T.clickInput });
   } catch (err) {
     warn(`  click input[placeholder="${placeholder}"] failed: ${(err as Error).message}`);
     return { found: true, options: [], chosen: null };
   }
-  await page.waitForTimeout(300);
+  await sleep(T.shortSleep);
 
-  // Wait for any of the common MUI popup containers
+  // Wait briefly for popup; if none, send ArrowDown once and look again.
+  let popped = false;
   try {
     await page.waitForSelector(
-      'ul[role="listbox"], [role="listbox"], .MuiAutocomplete-listbox, .MuiAutocomplete-popper [role="listbox"]',
-      { timeout: 4000 }
+      'ul[role="listbox"], [role="listbox"], .MuiAutocomplete-listbox, .MuiAutocomplete-popper',
+      { timeout: T.waitForOptionsListbox }
     );
-  } catch {
-    // No popup. Some MUI Autocompletes need an extra keystroke to open.
+    popped = true;
+  } catch {}
+  if (!popped) {
     try {
-      await input.press("ArrowDown");
-      await page.waitForTimeout(300);
+      await input.press("ArrowDown", { timeout: T.shortSleep });
+    } catch {}
+    try {
+      await page.waitForSelector(
+        'ul[role="listbox"], [role="listbox"], .MuiAutocomplete-listbox, .MuiAutocomplete-popper',
+        { timeout: T.waitForOptionsListbox }
+      );
     } catch {}
   }
 
@@ -170,35 +182,29 @@ async function setMuiAutocompleteByPlaceholder(
   const chosen = tryMatch("exact") ?? tryMatch("ci") ?? tryMatch("partial");
 
   if (chosen) {
+    const safeChosen = chosen.replace(/"/g, '\\"');
     const optLocators = [
-      page.locator(`[role="option"]:text-is("${chosen}")`).first(),
-      page
-        .locator(`[role="option"]:has-text("${chosen.replace(/"/g, '\\"')}")`)
-        .first(),
-      page
-        .locator(`.MuiAutocomplete-option:has-text("${chosen.replace(/"/g, '\\"')}")`)
-        .first(),
-      page
-        .locator(`li[role="option"]:has-text("${chosen.replace(/"/g, '\\"')}")`)
-        .first(),
+      page.locator(`[role="option"]:has-text("${safeChosen}")`).first(),
+      page.locator(`.MuiAutocomplete-option:has-text("${safeChosen}")`).first(),
+      page.locator(`li[role="option"]:has-text("${safeChosen}")`).first(),
     ];
     for (const opt of optLocators) {
       try {
         if ((await opt.count()) === 0) continue;
-        await opt.click({ timeout: 3000 });
+        await opt.click({ timeout: T.clickOption });
         return { found: true, options, chosen };
       } catch {}
     }
   }
 
-  // Fallback: type to filter, then ArrowDown + Enter
+  // Fallback: type filter + ArrowDown + Enter (single attempt)
   if (candidates.length > 0) {
     try {
-      await input.fill("");
-      await input.fill(candidates[0]);
-      await page.waitForTimeout(400);
-      await input.press("ArrowDown");
-      await input.press("Enter");
+      await input.fill("", { timeout: T.fillInput });
+      await input.fill(candidates[0], { timeout: T.fillInput });
+      await sleep(T.shortSleep);
+      await input.press("ArrowDown", { timeout: T.shortSleep });
+      await input.press("Enter", { timeout: T.shortSleep });
       const setVal = await input.inputValue().catch(() => "");
       if (
         setVal &&
@@ -224,30 +230,18 @@ async function clickGoButton(page: Page): Promise<boolean> {
   for (const c of candidates) {
     try {
       if ((await c.count()) === 0) continue;
-      await c.first().click({ timeout: 4000 });
+      await c.first().click({ timeout: T.goButton });
       return true;
     } catch {}
   }
   return false;
 }
 
-async function captureResult(
-  page: Page,
-  targets: string[]
-): Promise<{
-  tables: { headers: string[]; rows: string[][] }[];
-  downloadLinks: { href: string; text: string }[];
-  amcCellsSeen: string[];
-  bodyText: string;
-  url: string;
-  visibleButtons: { tag: string; text: string }[];
-}> {
+async function captureResult(page: Page, targets: string[]) {
   return await page.evaluate((amcTargets: string[]) => {
     const tables = Array.from(document.querySelectorAll("table")).map((tbl) => {
       const headers = Array.from(
-        tbl.querySelectorAll(
-          "thead tr th, tr:first-child th, tr:first-child td"
-        )
+        tbl.querySelectorAll("thead tr th, tr:first-child th, tr:first-child td")
       ).map((c) => (c.textContent || "").trim());
       const rows = Array.from(tbl.querySelectorAll("tr"))
         .map((r) =>
@@ -282,24 +276,12 @@ async function captureResult(
         }
       }
     }
-    const visibleButtons = Array.from(
-      document.querySelectorAll('button, a, [role="button"]')
-    )
-      .filter((el) => (el as HTMLElement).offsetParent !== null)
-      .slice(0, 30)
-      .map((el) => ({
-        tag: el.tagName,
-        text: ((el as HTMLElement).textContent || "")
-          .trim()
-          .slice(0, 60),
-      }));
     return {
       tables,
       downloadLinks,
       amcCellsSeen,
       bodyText: (document.body.innerText || "").slice(0, 3000),
       url: location.href,
-      visibleButtons,
     };
   }, targets);
 }
@@ -337,9 +319,8 @@ function parseAmcRowsFromTable(table: {
 
 async function fetchQuarter(
   browser: Browser,
-  q: QuarterToFetch,
-  diagnostics: { firstQuarterLogged: boolean }
-): Promise<{ rows: ParsedAmcRow[]; sourceUrl: string; status: QuarterStatus } | null> {
+  q: QuarterToFetch
+): Promise<{ rows: ParsedAmcRow[]; sourceUrl: string } | null> {
   const ctx = await browser.newContext({
     userAgent:
       "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
@@ -367,132 +348,102 @@ async function fetchQuarter(
     });
   });
 
-  const status: QuarterStatus = {
-    data: { ...EMPTY_FIELD },
-    type: { ...EMPTY_FIELD },
-    mutualFund: { ...EMPTY_FIELD },
-    financialYear: { ...EMPTY_FIELD },
-    period: { ...EMPTY_FIELD },
-    goClicked: false,
-    resultTableAppeared: false,
-    downloadLinks: [],
-    amcCellsSeen: [],
-    url: "",
-  };
-
   try {
-    info(`AAUM: GET ${FORM_URL}  [${q.calendarQ}]`);
+    info(`AAUM[${q.calendarQ}]: opening page ${FORM_URL}`);
     const resp = await page.goto(FORM_URL, {
-      waitUntil: "networkidle",
-      timeout: 45_000,
+      waitUntil: "domcontentloaded",
+      timeout: T.pageGoto,
     });
     if (!resp || !resp.ok()) {
       warn(`  HTTP ${resp?.status() ?? "no-response"}`);
       return null;
     }
-
-    // Wait until at least one of the autocompletes is rendered.
+    info(`AAUM[${q.calendarQ}]: page loaded, waiting for form ready`);
     try {
       await page.waitForSelector(
-        'input[placeholder="Select Financial Year"], input[placeholder="Select Period"]',
-        { timeout: 15_000 }
+        'input[placeholder="Select Financial Year"], input[placeholder="Select Period"], input[placeholder="Select Data"]',
+        { timeout: T.waitForFormReady }
       );
     } catch {
-      warn(`  expected MUI placeholders never appeared`);
+      warn(`AAUM[${q.calendarQ}]: form placeholders never appeared`);
     }
-    await page.waitForTimeout(500);
+    await sleep(T.midSleep);
 
-    // 1. Select Data
-    status.data = await setMuiAutocompleteByPlaceholder(page, "Select Data", [
-      "Average AUM",
-      "AAUM",
-      "AUM",
-    ]);
-    info(
-      `AAUM:   Data found=${status.data.found} chosen=${status.data.chosen ?? "—"} options=[${status.data.options.slice(0, 8).join(" | ")}]`
+    info(`AAUM[${q.calendarQ}]: setting Select Data`);
+    const fData = await setMuiAutocompleteByPlaceholder(
+      page,
+      "Select Data",
+      ["Average AUM", "AAUM", "AUM"]
     );
-    await page.waitForTimeout(500);
-
-    // 2. Select Type
-    status.type = await setMuiAutocompleteByPlaceholder(page, "Select Type", [
-      "AMC-wise",
-      "AMC wise",
-      "Mutual Fund-wise",
-      "Mutual Fund wise",
-      "Fund House",
-      "Fund House Wise",
-      "Average AUM",
-    ]);
     info(
-      `AAUM:   Type found=${status.type.found} chosen=${status.type.chosen ?? "—"} options=[${status.type.options.slice(0, 8).join(" | ")}]`
+      `AAUM[${q.calendarQ}]:   Data found=${fData.found} chosen=${fData.chosen ?? "—"} options=[${fData.options.slice(0, 8).join(" | ")}]`
     );
-    await page.waitForTimeout(500);
 
-    // 3. Select Mutual Fund
-    status.mutualFund = await setMuiAutocompleteByPlaceholder(
+    info(`AAUM[${q.calendarQ}]: setting Select Type`);
+    const fType = await setMuiAutocompleteByPlaceholder(
+      page,
+      "Select Type",
+      [
+        "AMC-wise",
+        "AMC wise",
+        "Mutual Fund-wise",
+        "Mutual Fund wise",
+        "Fund House",
+        "Fund House Wise",
+        "Average AUM",
+      ]
+    );
+    info(
+      `AAUM[${q.calendarQ}]:   Type found=${fType.found} chosen=${fType.chosen ?? "—"} options=[${fType.options.slice(0, 8).join(" | ")}]`
+    );
+
+    info(`AAUM[${q.calendarQ}]: setting Select Mutual Fund`);
+    const fMf = await setMuiAutocompleteByPlaceholder(
       page,
       "Select Mutual Fund",
       ["All Mutual Funds", "Select All", "All"]
     );
     info(
-      `AAUM:   MF found=${status.mutualFund.found} chosen=${status.mutualFund.chosen ?? "—"} options=[${status.mutualFund.options.slice(0, 8).join(" | ")}]`
+      `AAUM[${q.calendarQ}]:   MF found=${fMf.found} chosen=${fMf.chosen ?? "—"} options=[${fMf.options.slice(0, 8).join(" | ")}]`
     );
-    await page.waitForTimeout(500);
 
-    // 4. Select Financial Year
-    status.financialYear = await setMuiAutocompleteByPlaceholder(
+    info(`AAUM[${q.calendarQ}]: setting Select Financial Year`);
+    const fFy = await setMuiAutocompleteByPlaceholder(
       page,
       "Select Financial Year",
       q.fyCandidates
     );
     info(
-      `AAUM:   FY found=${status.financialYear.found} chosen=${status.financialYear.chosen ?? "—"} options=[${status.financialYear.options.slice(0, 8).join(" | ")}]`
+      `AAUM[${q.calendarQ}]:   FY found=${fFy.found} chosen=${fFy.chosen ?? "—"} options=[${fFy.options.slice(0, 8).join(" | ")}]`
     );
-    await page.waitForTimeout(500);
 
-    // 5. Select Period
-    status.period = await setMuiAutocompleteByPlaceholder(
+    info(`AAUM[${q.calendarQ}]: setting Select Period`);
+    const fPeriod = await setMuiAutocompleteByPlaceholder(
       page,
       "Select Period",
       q.periodCandidates
     );
     info(
-      `AAUM:   Period found=${status.period.found} chosen=${status.period.chosen ?? "—"} options=[${status.period.options.slice(0, 8).join(" | ")}]`
+      `AAUM[${q.calendarQ}]:   Period found=${fPeriod.found} chosen=${fPeriod.chosen ?? "—"} options=[${fPeriod.options.slice(0, 8).join(" | ")}]`
     );
-    await page.waitForTimeout(500);
 
-    // Click Go
-    status.goClicked = await clickGoButton(page);
-    info(`AAUM:   Go clicked=${status.goClicked}`);
-    if (!status.goClicked) {
-      // Diagnostics for missing Go
-      const buttonsVisible = await page.evaluate(() =>
-        Array.from(
-          document.querySelectorAll('button, [role="button"], input[type="submit"]')
-        )
-          .filter((el) => (el as HTMLElement).offsetParent !== null)
-          .slice(0, 30)
-          .map((el) => ({
-            tag: el.tagName,
-            text: ((el as HTMLElement).textContent || "")
-              .trim()
-              .slice(0, 60),
-          }))
-      );
-      info(
-        `AAUM:   visible buttons: ${JSON.stringify(buttonsVisible).slice(0, 1000)}`
-      );
-      return { rows: [], sourceUrl: page.url(), status };
-    }
+    info(`AAUM[${q.calendarQ}]: clicking Go`);
+    const goClicked = await clickGoButton(page);
+    info(`AAUM[${q.calendarQ}]:   Go clicked=${goClicked}`);
+    if (!goClicked) return null;
 
+    info(`AAUM[${q.calendarQ}]: waiting for results (max ${T.postGoNetworkIdle}ms)`);
     try {
-      await page.waitForLoadState("networkidle", { timeout: 30_000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: T.postGoNetworkIdle,
+      });
     } catch {}
-    await page.waitForTimeout(2500);
+    await sleep(T.postGoSettle);
 
+    info(`AAUM[${q.calendarQ}]: inspecting results`);
     const recent = xhrCapture.slice(-25);
     info(
-      `AAUM network capture (${recent.length} of ${xhrCapture.length}):\n${recent
+      `AAUM[${q.calendarQ}] network capture (${recent.length} of ${xhrCapture.length}):\n${recent
         .map(
           (c) =>
             `    ${c.method.padEnd(4)} ${c.status} ${c.contentType.split(";")[0].padEnd(28)} ${c.url}`
@@ -501,13 +452,8 @@ async function fetchQuarter(
     );
 
     const extract = await captureResult(page, TARGET_AMCS);
-    status.url = extract.url;
-    status.resultTableAppeared = extract.tables.some((t) => t.rows.length > 1);
-    status.downloadLinks = extract.downloadLinks.map((l) => l.href);
-    status.amcCellsSeen = extract.amcCellsSeen;
-
     info(
-      `AAUM result: ${extract.tables.length} table(s), AMC cells=${extract.amcCellsSeen.length}, downloads=${extract.downloadLinks.length}, url=${extract.url}`
+      `AAUM[${q.calendarQ}] result: ${extract.tables.length} table(s), AMC cells=${extract.amcCellsSeen.length}, downloads=${extract.downloadLinks.length}, url=${extract.url}`
     );
     extract.tables.forEach((t, i) => {
       info(
@@ -533,34 +479,25 @@ async function fetchQuarter(
 
     if (parsed.length === 0) {
       info(
-        `AAUM:   no AMC rows parsed for ${q.calendarQ}. Field outcomes:\n` +
-          `    Data: chosen="${status.data.chosen ?? "—"}" options=[${status.data.options.slice(0, 12).join(" | ")}]\n` +
-          `    Type: chosen="${status.type.chosen ?? "—"}" options=[${status.type.options.slice(0, 12).join(" | ")}]\n` +
-          `    MF:   chosen="${status.mutualFund.chosen ?? "—"}" options=[${status.mutualFund.options.slice(0, 12).join(" | ")}]\n` +
-          `    FY:   chosen="${status.financialYear.chosen ?? "—"}" options=[${status.financialYear.options.slice(0, 12).join(" | ")}]\n` +
-          `    Period: chosen="${status.period.chosen ?? "—"}" options=[${status.period.options.slice(0, 12).join(" | ")}]\n` +
-          `    Go: ${status.goClicked}\n` +
-          `    Result table appeared: ${status.resultTableAppeared}\n` +
-          `    Download links: ${status.downloadLinks.length > 0 ? status.downloadLinks.slice(0, 6).join(", ") : "none"}\n` +
-          `    AMC cells seen: [${status.amcCellsSeen.slice(0, 6).join(" | ")}]\n` +
-          `    URL after Go: ${status.url}\n` +
-          (diagnostics.firstQuarterLogged
-            ? ""
-            : `    Body text head:\n      ${extract.bodyText
-                .split("\n")
-                .slice(0, 60)
-                .map((l) => l.trim())
-                .filter(Boolean)
-                .join("\n      ")}`)
+        `AAUM[${q.calendarQ}]: no AMC rows parsed. Field outcomes:\n` +
+          `    Data:   chosen="${fData.chosen ?? "—"}" options=[${fData.options.slice(0, 12).join(" | ")}]\n` +
+          `    Type:   chosen="${fType.chosen ?? "—"}" options=[${fType.options.slice(0, 12).join(" | ")}]\n` +
+          `    MF:     chosen="${fMf.chosen ?? "—"}" options=[${fMf.options.slice(0, 12).join(" | ")}]\n` +
+          `    FY:     chosen="${fFy.chosen ?? "—"}" options=[${fFy.options.slice(0, 12).join(" | ")}]\n` +
+          `    Period: chosen="${fPeriod.chosen ?? "—"}" options=[${fPeriod.options.slice(0, 12).join(" | ")}]\n` +
+          `    Go: ${goClicked}\n` +
+          `    Tables visible: ${extract.tables.length} (rows>1: ${extract.tables.filter((t) => t.rows.length > 1).length})\n` +
+          `    Download links: ${extract.downloadLinks.length}\n` +
+          `    AMC cells seen: [${extract.amcCellsSeen.slice(0, 6).join(" | ")}]\n` +
+          `    URL after Go: ${extract.url}`
       );
-      diagnostics.firstQuarterLogged = true;
-      return { rows: [], sourceUrl: extract.url, status };
+      return null;
     }
 
-    info(`AAUM:   parsed ${parsed.length} AMC rows for ${q.calendarQ}`);
-    return { rows: parsed, sourceUrl: extract.url, status };
+    info(`AAUM[${q.calendarQ}]: parsed ${parsed.length} AMC rows`);
+    return { rows: parsed, sourceUrl: extract.url };
   } finally {
-    await ctx.close();
+    await ctx.close().catch(() => {});
   }
 }
 
@@ -572,19 +509,40 @@ export async function ingestAmfiAaum(): Promise<void> {
     warn(`playwright not available: ${(err as Error).message}`);
     return;
   }
-  const browser = await chromium.launch({ headless: true });
+
+  const fetchedAt = nowIso();
+  let browser: Browser | null = null;
+  let killed = false;
+  const killTimer = setTimeout(() => {
+    killed = true;
+    warn(
+      `AAUM: total timeout (${T.totalKill}ms) — force-closing browser. Keeping previous snapshot.`
+    );
+    if (browser) browser.close().catch(() => {});
+  }, T.totalKill);
 
   try {
-    const quarters = recentQuartersFY(8);
-    const outRows: AmcAaumQuarterlyRow[] = [];
-    const fetchedAt = nowIso();
-    const diagnostics = { firstQuarterLogged: false };
+    info(
+      `AAUM: starting (debug-one-quarter=${DEBUG_ONE_QUARTER ? "on" : "off"}, total budget=${T.totalKill}ms)`
+    );
+    browser = await chromium.launch({ headless: true });
 
+    const allQuarters = recentQuartersFY(8);
+    const quarters = DEBUG_ONE_QUARTER ? allQuarters.slice(0, 1) : allQuarters;
+    info(`AAUM: will attempt ${quarters.length} quarter(s)`);
+
+    const outRows: AmcAaumQuarterlyRow[] = [];
     for (const q of quarters) {
+      if (killed) break;
       info(
-        `AAUM: quarter ${q.calendarQ}  (FY ${q.fyCandidates[0]}, period ${q.periodCandidates[0]})`
+        `AAUM: quarter ${q.calendarQ} (FY ${q.fyCandidates[0]}, period ${q.periodCandidates[0]})`
       );
-      const outcome = await fetchQuarter(browser, q, diagnostics);
+      let outcome: { rows: ParsedAmcRow[]; sourceUrl: string } | null = null;
+      try {
+        outcome = await fetchQuarter(browser, q);
+      } catch (err) {
+        warn(`AAUM[${q.calendarQ}]: ${(err as Error).message}`);
+      }
       if (!outcome || outcome.rows.length === 0) continue;
       for (const r of outcome.rows) {
         if (!Number.isFinite(r.avgAum) || r.avgAum <= 0) continue;
@@ -603,7 +561,7 @@ export async function ingestAmfiAaum(): Promise<void> {
 
     if (outRows.length === 0) {
       warn(
-        "AAUM: no rows extracted from any quarter — keeping previous snapshot. See diagnostics above."
+        "AAUM: no rows extracted — keeping previous snapshot. See diagnostics above."
       );
       return;
     }
@@ -621,13 +579,20 @@ export async function ingestAmfiAaum(): Promise<void> {
         generatedAt: fetchedAt,
         source: FORM_URL,
         notes:
-          "Per-AMC quarterly AAUM extracted via the AMFI Average AUM disclosure form (MUI Autocomplete UI: Data / Type / Mutual Fund / Financial Year / Period). Each row carries source + fetchedAt provenance.",
+          "Per-AMC quarterly AAUM extracted via the AMFI Average AUM disclosure form (MUI Autocomplete UI). Each row carries source + fetchedAt provenance.",
       },
       rows: outRows,
     };
     await writeSnapshot("amc-aaum-quarterly.json", snapshot);
-    info("wrote amc-aaum-quarterly.json");
+    info("AAUM: wrote amc-aaum-quarterly.json");
+  } catch (err) {
+    warn(`AAUM: aborted — ${(err as Error).message}`);
   } finally {
-    await browser.close();
+    clearTimeout(killTimer);
+    if (browser && !killed) {
+      try {
+        await browser.close();
+      } catch {}
+    }
   }
 }
