@@ -71,14 +71,49 @@ function recentQuartersFY(n: number): QuarterToFetch[] {
       `${fyEndYear - 1}-${fyEndYear}`,
       `${fyEndYear - 1}-${String(fyEndYear).slice(-2)}`,
     ];
+    // AMFI displays period as "January - March 2026" etc. (year suffix
+    // matches the period END calendar year). Lead with that form; keep
+    // older year-less forms as fallbacks.
     const periodCandidates =
       mo === 3
-        ? ["January - March", "January-March", "Jan-Mar", "Q4"]
+        ? [
+            `January - March ${yr}`,
+            `January-March ${yr}`,
+            `Jan - Mar ${yr}`,
+            "January - March",
+            "January-March",
+            "Jan-Mar",
+            "Q4",
+          ]
         : mo === 6
-        ? ["April - June", "April-June", "Apr-Jun", "Q1"]
+        ? [
+            `April - June ${yr}`,
+            `April-June ${yr}`,
+            `Apr - Jun ${yr}`,
+            "April - June",
+            "April-June",
+            "Apr-Jun",
+            "Q1",
+          ]
         : mo === 9
-        ? ["July - September", "July-September", "Jul-Sep", "Q2"]
-        : ["October - December", "October-December", "Oct-Dec", "Q3"];
+        ? [
+            `July - September ${yr}`,
+            `July-September ${yr}`,
+            `Jul - Sep ${yr}`,
+            "July - September",
+            "July-September",
+            "Jul-Sep",
+            "Q2",
+          ]
+        : [
+            `October - December ${yr}`,
+            `October-December ${yr}`,
+            `Oct - Dec ${yr}`,
+            "October - December",
+            "October-December",
+            "Oct-Dec",
+            "Q3",
+          ];
     out.push({ calendarQ, fyEndYear, fyCandidates, periodCandidates });
     mo -= 3;
     if (mo <= 0) {
@@ -203,6 +238,15 @@ async function readGoButtonState(page: Page): Promise<GoButtonState> {
   return state as GoButtonState;
 }
 
+/**
+ * Read placeholder→value pairs from VISIBLE inputs only.
+ * MUI sometimes mounts a hidden / stale duplicate of an autocomplete input
+ * (e.g. the inner <input> vs an outer hidden form input). querySelector
+ * returned the first match which could be the empty hidden one, even though
+ * the populated one was visible. This helper filters by offsetParent and is
+ * the single source of truth used by both logVisiblePlaceholders and the
+ * Go-click gate.
+ */
 async function readVisibleFormValues(page: Page): Promise<{
   data: string;
   fy: string;
@@ -212,11 +256,20 @@ async function readVisibleFormValues(page: Page): Promise<{
 }> {
   return await page
     .evaluate(() => {
+      const inputs = Array.from(
+        document.querySelectorAll("input[placeholder]")
+      ).filter((el) => {
+        const e = el as HTMLInputElement;
+        if (e.type === "hidden") return false;
+        if (e.offsetParent !== null) return true;
+        const r = e.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+      }) as HTMLInputElement[];
       const get = (placeholder: string) => {
-        const el = document.querySelector(
-          `input[placeholder="${placeholder}"]`
-        ) as HTMLInputElement | null;
-        return el ? el.value : "";
+        // Prefer a non-empty value when multiple visible matches exist.
+        const matches = inputs.filter((e) => e.placeholder === placeholder);
+        const populated = matches.find((e) => e.value && e.value.trim().length > 0);
+        return (populated ?? matches[0])?.value ?? "";
       };
       return {
         data: get("Select Data"),
@@ -234,7 +287,12 @@ async function setMuiAutocompleteByPlaceholder(
   placeholder: string,
   candidates: string[]
 ): Promise<FieldOutcome> {
-  const input = page.locator(`input[placeholder="${placeholder}"]`).first();
+  // Prefer a visible input. MUI sometimes mounts a hidden duplicate that
+  // .first() would pick up otherwise. :visible is a Playwright pseudo.
+  let input = page.locator(`input[placeholder="${placeholder}"]:visible`).first();
+  if ((await input.count()) === 0) {
+    input = page.locator(`input[placeholder="${placeholder}"]`).first();
+  }
   if ((await input.count()) === 0) return { ...EMPTY_FIELD };
 
   try {
