@@ -103,7 +103,7 @@ export default async function AmcPage({
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
 
   const financialsUnavailableMessage = profile.listed
-    ? "Financials unavailable"
+    ? "Listed · financials pending source"
     : "Unlisted · no standalone quarterly financials";
 
   return (
