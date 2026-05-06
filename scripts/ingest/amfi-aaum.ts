@@ -1,6 +1,4 @@
-import * as XLSX from "xlsx";
 import {
-  fetchBuffer,
   info,
   nowIso,
   parseNumberLoose,
@@ -13,296 +11,424 @@ import type {
   AmcAaumQuarterlySnapshot,
 } from "../../src/data/snapshots/types";
 
-const MONTH_ABBR = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
+const FORM_URL = "https://www.amfiindia.com/aum-data/average-aum";
 
-interface QuarterSpec {
-  quarter: string; // calendar YYYY-Qx (e.g., 2026-Q1)
-  endMon: string;  // last month of the quarter, e.g., "Mar"
-  endYY: string;   // last 2 digits of year
-  endYear: number;
-  fyQ: number;     // Indian FY quarter (1=Apr-Jun, 2=Jul-Sep, 3=Oct-Dec, 4=Jan-Mar)
-  fyEndYY: string; // last 2 digits of Indian FY end year
+interface QuarterToFetch {
+  calendarQ: string;       // e.g., "2026-Q1"
+  fyLabelLong: string;     // e.g., "2025-2026"
+  fyLabelShort: string;    // e.g., "2025-26"
+  periodLabels: string[];  // candidate texts in the period <select>
 }
 
-function recentQuarters(n: number): QuarterSpec[] {
-  const out: QuarterSpec[] = [];
+function recentQuartersFY(n: number): QuarterToFetch[] {
+  const out: QuarterToFetch[] = [];
   const now = new Date();
-  // Walk backwards from "current calendar quarter - 1" (the most recent COMPLETE quarter)
-  const curMonth = now.getMonth();
-  let curYear = now.getFullYear();
-  let endMonthIdx = Math.floor(curMonth / 3) * 3 - 1; // last month of the previous quarter
-  if (endMonthIdx < 0) {
-    endMonthIdx = 11;
-    curYear -= 1;
+  let yr = now.getFullYear();
+  let mo = now.getMonth() + 1; // 1..12
+  // Walk back to the most recently completed quarter end (Mar/Jun/Sep/Dec).
+  while (![3, 6, 9, 12].includes(mo)) {
+    mo -= 1;
+    if (mo <= 0) {
+      mo = 12;
+      yr -= 1;
+    }
   }
   for (let i = 0; i < n; i++) {
-    const monthIdx = endMonthIdx; // 0-based
-    const year = curYear;
-    const calQ = Math.floor(monthIdx / 3) + 1; // 1..4
-    const fyQ = monthIdx <= 2 ? 4 : monthIdx <= 5 ? 1 : monthIdx <= 8 ? 2 : 3;
-    const fyEndYear = monthIdx <= 2 ? year : year + 1;
-    out.push({
-      quarter: `${year}-Q${calQ}`,
-      endMon: MONTH_ABBR[monthIdx],
-      endYY: String(year).slice(-2),
-      endYear: year,
-      fyQ,
-      fyEndYY: String(fyEndYear).slice(-2),
-    });
-    endMonthIdx -= 3;
-    if (endMonthIdx < 0) {
-      endMonthIdx = 11;
-      curYear -= 1;
+    const calendarQ = `${yr}-Q${Math.ceil(mo / 3)}`;
+    const fyEndYear = mo <= 3 ? yr : yr + 1;
+    const fyLabelLong = `${fyEndYear - 1}-${fyEndYear}`;
+    const fyLabelShort = `${fyEndYear - 1}-${String(fyEndYear).slice(-2)}`;
+    const periodLabels =
+      mo === 3
+        ? ["January - March", "January-March", "Jan-Mar", "Q4"]
+        : mo === 6
+        ? ["April - June", "April-June", "Apr-Jun", "Q1"]
+        : mo === 9
+        ? ["July - September", "July-September", "Jul-Sep", "Q2"]
+        : ["October - December", "October-December", "Oct-Dec", "Q3"];
+    out.push({ calendarQ, fyLabelLong, fyLabelShort, periodLabels });
+    mo -= 3;
+    if (mo <= 0) {
+      mo += 12;
+      yr -= 1;
     }
   }
   return out;
 }
 
-function buildUrlCandidates(q: QuarterSpec): string[] {
-  const m = q.endMon;
-  const ml = m.toLowerCase();
-  const yy = q.endYY;
-  const fy = q.fyEndYY;
-  const fyQ = q.fyQ;
-  return [
-    // Single-file naming variants seen on AMFI portal
-    `https://portal.amfiindia.com/spages/AAUM-${m}${yy}.xlsx`,
-    `https://portal.amfiindia.com/spages/AAUM-${ml}${yy}.xlsx`,
-    `https://portal.amfiindia.com/spages/AAUM-${m}-${yy}.xlsx`,
-    `https://portal.amfiindia.com/spages/AAUM-${m}-${q.endYear}.xlsx`,
-    `https://portal.amfiindia.com/spages/AAUM-Q${fyQ}-FY${fy}.xlsx`,
-    `https://portal.amfiindia.com/spages/AAUM-${m}-Q${fyQ}-FY${fy}.xlsx`,
-    `https://portal.amfiindia.com/spages/Disclosure-AAUM-${m}${yy}.xlsx`,
-    `https://portal.amfiindia.com/spages/Disclosure-of-AAUM-${m}${yy}.xlsx`,
-    `https://portal.amfiindia.com/spages/Average-AUM-${m}${yy}.xlsx`,
-    `https://portal.amfiindia.com/spages/Avg-AUM-${m}${yy}.xlsx`,
-    `https://portal.amfiindia.com/spages/MF-AAUM-${m}${yy}.xlsx`,
-  ];
-}
-
-interface ParsedAaumRow {
-  amcNameAsReported: string;
+interface ParsedAmcRow {
   amcSlug: string;
+  amcNameAsReported: string;
   avgAum: number;
 }
 
-interface ParseResult {
-  rows: ParsedAaumRow[];
-  structure: string[];
+interface QuarterOutcome {
+  rows: ParsedAmcRow[];
+  sourceUrl: string;
 }
 
-/**
- * Parse an AMFI Disclosure of AAUM Excel. The file format is non-trivial — AMFI
- * publishes a multi-sheet workbook (one sheet per AMC, plus an index). We fall
- * back to scanning every sheet for a "total AAUM" row keyed off the AMC name
- * found in the sheet header.
- *
- * Returns parsed rows + a debug structure log so the first run can tell us
- * exactly what AMFI is shipping today.
- */
-function parseAaumExcel(buffer: ArrayBuffer): ParseResult {
-  const wb = XLSX.read(buffer, { type: "array" });
-  const structure: string[] = [`sheets: ${wb.SheetNames.join(" | ")}`];
-  const out: ParsedAaumRow[] = [];
-  const seen = new Set<string>();
+const FOUR_LISTED_AMC_NAMES = [
+  "HDFC Mutual Fund",
+  "Nippon India Mutual Fund",
+  "Aditya Birla Sun Life Mutual Fund",
+  "UTI Mutual Fund",
+];
 
-  // Strategy A: an index sheet with all AMCs in a single table.
-  for (const sheetName of wb.SheetNames) {
-    const sheet = wb.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
-      header: 1,
-      defval: "",
-      raw: false,
-    }) as unknown[][];
-    if (sheetName === wb.SheetNames[0]) {
-      for (let i = 0; i < Math.min(8, rows.length); i++) {
-        const preview = rows[i]
-          .slice(0, 8)
-          .map((c) => String(c ?? "").slice(0, 28))
-          .join(" | ");
-        structure.push(`  [${sheetName}] row ${i}: ${preview}`);
-      }
-    }
-    let headerIdx = -1;
-    for (let i = 0; i < Math.min(rows.length, 30); i++) {
-      const lc = rows[i].map((c) => String(c ?? "").toLowerCase());
-      const hasAmc = lc.some((c) =>
-        /(amc|fund\s*house|mutual\s*fund\s*name|name\s*of\s*the\s*amc)/.test(c)
-      );
-      const hasAaum = lc.some((c) => /(aaum|average\s*aum|avg\.\s*aum)/.test(c));
-      if (hasAmc && hasAaum) {
-        headerIdx = i;
-        break;
-      }
-    }
-    if (headerIdx === -1) continue;
-
-    const headers = rows[headerIdx].map((c) => String(c ?? "").toLowerCase());
-    const nameIdx = headers.findIndex((c) =>
-      /amc|fund\s*house|mutual\s*fund/.test(c)
-    );
-    // Prefer "total aaum" or "grand total"; fall back to any aaum/avg column.
-    let aaumIdx = headers.findIndex((c) =>
-      /(grand\s*total|total\s*aaum|total\s*average\s*aum)/.test(c)
-    );
-    if (aaumIdx === -1)
-      aaumIdx = headers.findIndex((c) =>
-        /(aaum|average\s*aum|avg\.\s*aum|avg\s*aum)/.test(c)
-      );
-    structure.push(
-      `  → [${sheetName}] header at row ${headerIdx}: name=${nameIdx} aaum=${aaumIdx}`
-    );
-    if (nameIdx === -1 || aaumIdx === -1) continue;
-
-    for (let i = headerIdx + 1; i < rows.length; i++) {
-      const name = String(rows[i][nameIdx] ?? "").trim();
-      if (!name) continue;
-      if (
-        /^(total|grand\s*total|sub\s*total|industry|note|\*)/i.test(name)
-      )
-        continue;
-      const aaum = parseNumberLoose(rows[i][aaumIdx]);
-      if (aaum === null || aaum <= 0) continue;
-      const slug = amfiNameToSlug(name);
-      if (!slug) continue; // only retain mapped slugs (the 4 listed for now)
-      const key = `${slug}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push({ amcNameAsReported: name, amcSlug: slug, avgAum: aaum });
-    }
-
-    if (out.length > 0) break; // single sheet sufficient
-  }
-
-  return { rows: out, structure };
-}
-
-interface DiscoveredUrl {
-  url: string;
-  text: string;
-}
-
-/**
- * Last-resort discovery via Playwright on the AMFI Disclosure of Average AUM
- * landing page (which we already know is JS-rendered). Returns any .xls / .xlsx
- * URL whose text or href looks AAUM-related.
- */
-async function discoverViaPlaywright(): Promise<DiscoveredUrl[]> {
+async function fetchQuarterViaPlaywright(
+  q: QuarterToFetch,
+  diagnostics: { loggedForm: boolean; loggedNetwork: boolean }
+): Promise<QuarterOutcome | null> {
   let chromium;
   try {
     ({ chromium } = await import("playwright"));
   } catch (err) {
     warn(`playwright not available: ${(err as Error).message}`);
-    return [];
+    return null;
   }
+
   const browser = await chromium.launch({ headless: true });
-  const ctx = await browser.newContext({
-    userAgent:
-      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-  });
-  const page = await ctx.newPage();
-  const seedPages = [
-    "https://www.amfiindia.com/research-information/aum-data/disclosure-of-average-aum",
-    "https://www.amfiindia.com/research-information/aum-data",
-    "https://www.amfiindia.com/research-information",
-  ];
-  const found = new Map<string, DiscoveredUrl>();
-  for (const seed of seedPages) {
-    try {
-      info(`playwright: ${seed}`);
-      const resp = await page.goto(seed, {
-        waitUntil: "networkidle",
-        timeout: 30_000,
-      });
-      if (!resp || !resp.ok()) {
-        warn(`  HTTP ${resp?.status() ?? "no-response"}`);
-        continue;
-      }
-      await page.waitForTimeout(1500);
-      const links = await page.$$eval("a[href]", (els) =>
-        els.map((el) => {
-          const a = el as HTMLAnchorElement;
-          return { href: a.href, text: (a.textContent ?? "").trim() };
-        })
-      );
-      for (const { href, text } of links) {
-        if (!/\.(xlsx|xls)(\?.*)?$/i.test(href)) continue;
-        const blob = (text + " " + href).toLowerCase();
-        if (
-          /(aaum|average\s*aum|avg\s*aum|disclosure\s*of\s*aum)/.test(blob)
-        ) {
-          if (!found.has(href)) found.set(href, { url: href, text });
-        }
-      }
-    } catch (err) {
-      warn(`  ${seed} → ${(err as Error).message}`);
-    }
-  }
-  await browser.close();
-  return Array.from(found.values());
-}
-
-interface FetchOutcome {
-  url: string;
-  rows: ParsedAaumRow[];
-}
-
-async function tryUrl(
-  url: string,
-  loggedStructure: { logged: boolean }
-): Promise<FetchOutcome | null> {
   try {
-    info(`AAUM: ${url}`);
-    const buf = await fetchBuffer(url);
-    const { rows, structure } = parseAaumExcel(buf);
-    info(`  → parsed ${rows.length} mapped AMC rows`);
-    if (!loggedStructure.logged && structure.length > 0) {
+    const ctx = await browser.newContext({
+      userAgent:
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+    });
+    const page = await ctx.newPage();
+
+    // Capture network requests so we can identify any backend XHR endpoint.
+    const xhrCalls: { method: string; url: string; status: number; type: string }[] = [];
+    page.on("response", (resp) => {
+      const url = resp.url();
+      // Filter to AMFI hosts and skip static asset noise
+      if (!/amfiindia\.com/i.test(url)) return;
+      if (/\.(css|js|png|jpe?g|gif|svg|ico|woff2?|ttf)(\?|$)/i.test(url))
+        return;
+      xhrCalls.push({
+        method: resp.request().method(),
+        url,
+        status: resp.status(),
+        type: resp.headers()["content-type"] ?? "",
+      });
+    });
+
+    info(`AAUM: GET ${FORM_URL}  [${q.calendarQ}]`);
+    const resp = await page.goto(FORM_URL, {
+      waitUntil: "networkidle",
+      timeout: 45_000,
+    });
+    if (!resp || !resp.ok()) {
+      warn(`  HTTP ${resp?.status() ?? "no-response"}`);
+      return null;
+    }
+    await page.waitForTimeout(1500);
+
+    // First run: dump form structure so we know what we're dealing with.
+    if (!diagnostics.loggedForm) {
+      const formInfo = await page.evaluate(() => {
+        const selects = Array.from(document.querySelectorAll("select")).map(
+          (s) => ({
+            id: s.id || "",
+            name: s.name || "",
+            optionCount: s.options.length,
+            optionsSample: Array.from(s.options)
+              .slice(0, 25)
+              .map((o) => ({ value: o.value, text: o.text.trim() })),
+          })
+        );
+        const buttons = Array.from(
+          document.querySelectorAll(
+            'button, input[type="submit"], input[type="button"]'
+          )
+        ).map((b) => {
+          const el = b as HTMLElement;
+          const ip = b as HTMLInputElement;
+          return {
+            tag: el.tagName,
+            id: el.id || "",
+            name: ip.name || "",
+            text: (el.textContent || ip.value || "").trim().slice(0, 60),
+          };
+        });
+        return { selects, buttons };
+      });
       info(
-        `  file structure (first hit):\n${structure
-          .map((s) => `    ${s}`)
+        `AAUM form structure:\n${JSON.stringify(formInfo, null, 2)
+          .split("\n")
+          .map((l) => "    " + l)
           .join("\n")}`
       );
-      loggedStructure.logged = true;
+      diagnostics.loggedForm = true;
     }
-    if (rows.length === 0) return null;
-    return { url, rows };
-  } catch (err) {
-    warn(`  ${url} → ${(err as Error).message}`);
-    return null;
+
+    // Set Financial Year — match by visible option text (long/short variants).
+    const fy = await page.evaluate((labels: string[]) => {
+      const selects = Array.from(document.querySelectorAll("select"));
+      for (const s of selects) {
+        for (const lbl of labels) {
+          const opt = Array.from(s.options).find(
+            (o) => o.text.trim() === lbl || o.value === lbl
+          );
+          if (opt) {
+            s.value = opt.value;
+            s.dispatchEvent(new Event("change", { bubbles: true }));
+            return {
+              selectId: s.id || s.name,
+              value: opt.value,
+              text: opt.text.trim(),
+            };
+          }
+        }
+      }
+      return null;
+    }, [q.fyLabelLong, q.fyLabelShort]);
+    if (!fy) {
+      warn(
+        `  could not set FinancialYear (looked for "${q.fyLabelLong}" / "${q.fyLabelShort}")`
+      );
+      return null;
+    }
+    info(`  FY set: ${fy.selectId}=${fy.value} ("${fy.text}")`);
+    await page.waitForTimeout(1500);
+
+    // Set Period (quarter).
+    const period = await page.evaluate((labels: string[]) => {
+      const selects = Array.from(document.querySelectorAll("select"));
+      for (const s of selects) {
+        for (const lbl of labels) {
+          const opt = Array.from(s.options).find(
+            (o) => o.text.trim() === lbl || o.value === lbl
+          );
+          if (opt) {
+            s.value = opt.value;
+            s.dispatchEvent(new Event("change", { bubbles: true }));
+            return {
+              selectId: s.id || s.name,
+              value: opt.value,
+              text: opt.text.trim(),
+            };
+          }
+        }
+      }
+      return null;
+    }, q.periodLabels);
+    if (!period) {
+      warn(
+        `  could not set Period (looked for ${q.periodLabels
+          .map((l) => `"${l}"`)
+          .join(" / ")})`
+      );
+      return null;
+    }
+    info(`  Period set: ${period.selectId}=${period.value} ("${period.text}")`);
+    await page.waitForTimeout(1500);
+
+    // Try to set "Select All" / "All Mutual Funds" on any remaining select.
+    const mf = await page.evaluate(() => {
+      const selects = Array.from(document.querySelectorAll("select"));
+      for (const s of selects) {
+        const allOpt = Array.from(s.options).find((o) =>
+          /select\s*all|all\s*mutual\s*fund|all\s*funds?/i.test(o.text)
+        );
+        if (allOpt) {
+          s.value = allOpt.value;
+          s.dispatchEvent(new Event("change", { bubbles: true }));
+          return {
+            selectId: s.id || s.name,
+            value: allOpt.value,
+            text: allOpt.text.trim(),
+          };
+        }
+      }
+      return null;
+    });
+    if (mf) {
+      info(`  MF set: ${mf.selectId}=${mf.value} ("${mf.text}")`);
+    } else {
+      info(`  no "Select All" option found — submitting with default MF`);
+    }
+
+    // Click submit / Go button.
+    const submitted = await page.evaluate(() => {
+      const candidates = Array.from(
+        document.querySelectorAll<HTMLElement>(
+          'button, input[type="submit"], input[type="button"]'
+        )
+      );
+      const btn = candidates.find((el) => {
+        const text = (
+          el.textContent ||
+          (el as HTMLInputElement).value ||
+          ""
+        )
+          .trim()
+          .toLowerCase();
+        return /^(go|view|submit|show|fetch|search|generate)$/.test(text);
+      });
+      if (btn) {
+        (btn as HTMLElement).click();
+        return {
+          tag: btn.tagName,
+          text: (btn.textContent || (btn as HTMLInputElement).value || "")
+            .trim()
+            .slice(0, 30),
+        };
+      }
+      return null;
+    });
+    if (!submitted) {
+      warn("  no submit button found");
+      return null;
+    }
+    info(`  submit clicked: ${submitted.tag} "${submitted.text}"`);
+
+    await page.waitForTimeout(6000);
+
+    // After submission: log any AMFI XHR/POST captured during this flow.
+    if (!diagnostics.loggedNetwork && xhrCalls.length > 0) {
+      const dataCalls = xhrCalls.slice(-25);
+      info(
+        `AAUM network capture (last ${dataCalls.length} of ${xhrCalls.length}):\n${dataCalls
+          .map(
+            (c) =>
+              `    ${c.method.padEnd(4)} ${c.status} ${c.type.split(";")[0].padEnd(28)} ${c.url}`
+          )
+          .join("\n")}`
+      );
+      diagnostics.loggedNetwork = true;
+    }
+
+    // Inspect tables on the result page.
+    const tableSummaries = await page.$$eval("table", (els) =>
+      els.map((tbl) => {
+        const headers = Array.from(
+          tbl.querySelectorAll("thead tr th, tr:first-child th, tr:first-child td")
+        ).map((c) => (c.textContent || "").trim());
+        const rowCount = tbl.querySelectorAll("tbody tr, tr").length;
+        return { headers, rowCount };
+      })
+    );
+    info(
+      `AAUM result page: ${tableSummaries.length} table(s)\n${tableSummaries
+        .map(
+          (t, i) =>
+            `    table[${i}] rows=${t.rowCount} headers=[${t.headers
+              .slice(0, 8)
+              .join(" | ")}]`
+        )
+        .join("\n")}`
+    );
+
+    // Find the AMC-wise table: header row should contain something
+    // that looks like AMC + AAUM/Average AUM + (typically) Total/Grand Total.
+    const parsed: ParsedAmcRow[] = [];
+    const sourceUrl = page.url();
+    const tableRowsAll = await page.$$eval("table", (els) =>
+      els.map((tbl) =>
+        Array.from(tbl.querySelectorAll("tr")).map((r) =>
+          Array.from(r.querySelectorAll("th, td")).map((c) =>
+            (c.textContent || "").trim()
+          )
+        )
+      )
+    );
+
+    for (let i = 0; i < tableSummaries.length; i++) {
+      const tbl = tableRowsAll[i];
+      const summary = tableSummaries[i];
+      const lcHeaders = summary.headers.map((h) => h.toLowerCase());
+      const hasAmcCol = lcHeaders.some((h) =>
+        /amc|fund\s*house|mutual\s*fund/.test(h)
+      );
+      const hasAaumCol = lcHeaders.some((h) =>
+        /aaum|average\s*aum|avg\.?\s*aum/.test(h)
+      );
+      if (!hasAmcCol || !hasAaumCol) continue;
+
+      const amcIdx = lcHeaders.findIndex((h) =>
+        /amc|fund\s*house|mutual\s*fund/.test(h)
+      );
+      let aaumIdx = lcHeaders.findIndex((h) =>
+        /(grand\s*total|total\s*aaum|total\s*average\s*aum)/.test(h)
+      );
+      if (aaumIdx === -1)
+        aaumIdx = lcHeaders.findIndex((h) =>
+          /aaum|average\s*aum|avg\.?\s*aum/.test(h)
+        );
+      info(
+        `  using table[${i}] amcIdx=${amcIdx} aaumIdx=${aaumIdx} headers=[${lcHeaders
+          .slice(0, 8)
+          .join(" | ")}]`
+      );
+
+      for (const row of tbl) {
+        const name = (row[amcIdx] ?? "").trim();
+        if (!name) continue;
+        if (/^(total|grand|sub|industry|note|\*)/i.test(name)) continue;
+        const aaum = parseNumberLoose(row[aaumIdx]);
+        if (aaum === null || aaum <= 0) continue;
+        const slug = amfiNameToSlug(name);
+        if (!slug) continue;
+        parsed.push({ amcSlug: slug, amcNameAsReported: name, avgAum: aaum });
+      }
+      if (parsed.length > 0) break;
+    }
+
+    if (parsed.length === 0) {
+      // Diagnostics: list which AMC names AMFI returned (any) so we can
+      // spot a name-mapping mismatch vs an outright missing source.
+      const amcNamesSeen = new Set<string>();
+      for (const tbl of tableRowsAll) {
+        for (const row of tbl) {
+          for (const cell of row) {
+            for (const name of FOUR_LISTED_AMC_NAMES) {
+              if (cell && cell.toLowerCase().includes(name.toLowerCase().slice(0, 12))) {
+                amcNamesSeen.add(cell);
+              }
+            }
+          }
+        }
+      }
+      if (amcNamesSeen.size > 0) {
+        info(
+          `  AMC-like cells seen but no AAUM column matched:\n    ${[
+            ...amcNamesSeen,
+          ]
+            .slice(0, 10)
+            .join("\n    ")}`
+        );
+      } else {
+        info(`  no AMC-like cells detected on result page`);
+      }
+      return null;
+    }
+
+    info(`  parsed ${parsed.length} AMC rows for ${q.calendarQ}`);
+    return { rows: parsed, sourceUrl };
+  } finally {
+    await browser.close();
   }
 }
 
 export async function ingestAmfiAaum(): Promise<void> {
-  const quarters = recentQuarters(8);
+  const quarters = recentQuartersFY(8);
   const outRows: AmcAaumQuarterlyRow[] = [];
   const fetchedAt = nowIso();
-  const loggedStructure = { logged: false };
+  const diagnostics = { loggedForm: false, loggedNetwork: false };
 
   for (const q of quarters) {
-    info(`AAUM: probing quarter ${q.quarter} (${q.endMon} ${q.endYear})`);
-    const candidates = buildUrlCandidates(q);
-    let outcome: FetchOutcome | null = null;
-    for (const url of candidates) {
-      outcome = await tryUrl(url, loggedStructure);
-      if (outcome) break;
-    }
-    if (!outcome) {
-      info(`AAUM: no direct URL hit for ${q.quarter}`);
-      continue;
-    }
+    info(
+      `AAUM: quarter ${q.calendarQ}  (FY ${q.fyLabelLong}, period ${q.periodLabels[0]})`
+    );
+    const outcome = await fetchQuarterViaPlaywright(q, diagnostics);
+    if (!outcome) continue;
     for (const r of outcome.rows) {
-      // Validation: AAUM > 0, slug mapping known, quarter known
       if (!Number.isFinite(r.avgAum) || r.avgAum <= 0) continue;
       if (!r.amcSlug) continue;
       outRows.push({
         amcSlug: r.amcSlug,
         amcNameAsReported: r.amcNameAsReported,
-        quarter: q.quarter,
+        quarter: q.calendarQ,
         avgAum: r.avgAum,
-        source: outcome.url,
+        source: outcome.sourceUrl,
         fetchedAt,
         status: "ok",
       });
@@ -310,44 +436,8 @@ export async function ingestAmfiAaum(): Promise<void> {
   }
 
   if (outRows.length === 0) {
-    info("AAUM: direct probing yielded nothing — running playwright discovery");
-    const discovered = await discoverViaPlaywright();
-    if (discovered.length === 0) {
-      warn(
-        "AAUM: playwright found no candidate URLs — keeping previous snapshot"
-      );
-      return;
-    }
-    info(
-      `AAUM: discovered ${discovered.length} candidate URL(s) via playwright`
-    );
-    discovered
-      .slice(0, 25)
-      .forEach((d) => info(`  - ${d.url}  «${d.text.slice(0, 60)}»`));
-    // Best-effort: try the first candidate against each quarter (the file name
-    // typically encodes quarter, so we associate one file → one quarter).
-    for (const d of discovered) {
-      const outcome = await tryUrl(d.url, loggedStructure);
-      if (!outcome) continue;
-      // Heuristic: detect quarter from URL/filename; default to most recent.
-      const q = inferQuarterFromUrl(d.url) ?? quarters[0];
-      for (const r of outcome.rows) {
-        outRows.push({
-          amcSlug: r.amcSlug,
-          amcNameAsReported: r.amcNameAsReported,
-          quarter: q.quarter,
-          avgAum: r.avgAum,
-          source: d.url,
-          fetchedAt,
-          status: "ok",
-        });
-      }
-    }
-  }
-
-  if (outRows.length === 0) {
     warn(
-      "AAUM: no rows extracted from any source — keeping previous snapshot"
+      "AAUM: no rows extracted — keeping previous snapshot. See diagnostics above for next step."
     );
     return;
   }
@@ -363,37 +453,12 @@ export async function ingestAmfiAaum(): Promise<void> {
   const snapshot: AmcAaumQuarterlySnapshot = {
     meta: {
       generatedAt: fetchedAt,
-      source:
-        "AMFI Disclosure of Average AUM (per-AMC quarterly AAUM, ₹ Cr)",
+      source: FORM_URL,
       notes:
-        "Per-row provenance carried in source/fetchedAt fields. Only AMCs with an explicit slug mapping (AMFI_NAME_TO_SLUG) are retained.",
+        "Per-AMC quarterly AAUM extracted via the AMFI Average AUM disclosure form. Each row carries source + fetchedAt provenance. Only AMCs with explicit AMFI_NAME_TO_SLUG mapping are retained.",
     },
     rows: outRows,
   };
   await writeSnapshot("amc-aaum-quarterly.json", snapshot);
   info("wrote amc-aaum-quarterly.json");
-}
-
-function inferQuarterFromUrl(url: string): QuarterSpec | null {
-  // Match patterns like Mar26 / Mar-26 / mar26 / Mar2026
-  const m = url.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[-_]?(\d{2,4})/i);
-  if (!m) return null;
-  const monAbbr = m[1].slice(0, 3);
-  const monIdx = MONTH_ABBR.findIndex(
-    (x) => x.toLowerCase() === monAbbr.toLowerCase()
-  );
-  if (monIdx === -1) return null;
-  let year = Number(m[2]);
-  if (year < 100) year += year < 50 ? 2000 : 1900;
-  const calQ = Math.floor(monIdx / 3) + 1;
-  const fyQ = monIdx <= 2 ? 4 : monIdx <= 5 ? 1 : monIdx <= 8 ? 2 : 3;
-  const fyEndYear = monIdx <= 2 ? year : year + 1;
-  return {
-    quarter: `${year}-Q${calQ}`,
-    endMon: MONTH_ABBR[monIdx],
-    endYY: String(year).slice(-2),
-    endYear: year,
-    fyQ,
-    fyEndYY: String(fyEndYear).slice(-2),
-  };
 }
