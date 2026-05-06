@@ -81,6 +81,27 @@ export interface AmcQuarterlySnapshot {
   rows: AmcQuarterlyRow[];
 }
 
+/**
+ * Per-AMC quarterly Average AUM (AAUM) row.
+ * Sourced from AMFI's quarterly "Disclosure of Average AUM" file.
+ * Each row carries its own provenance fields so we never lose source
+ * traceability for a single value.
+ */
+export interface AmcAaumQuarterlyRow {
+  amcSlug: string;            // mapped via AMFI_NAME_TO_SLUG
+  amcNameAsReported: string;  // verbatim AMC name from source file
+  quarter: string;            // calendar quarter, YYYY-Qx
+  avgAum: number;             // ₹ Cr
+  source: string;             // exact URL fetched
+  fetchedAt: string;          // ISO timestamp of the fetch
+  status: "ok" | "approximate" | "stale";
+}
+
+export interface AmcAaumQuarterlySnapshot {
+  meta: SnapshotMeta;
+  rows: AmcAaumQuarterlyRow[];
+}
+
 export interface OtherSchemesMonthlyRow {
   month: string;
   category: string;

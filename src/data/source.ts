@@ -4,7 +4,10 @@ import industryMonthlyRaw from "./snapshots/industry-monthly.json";
 import amcMonthlyRaw from "./snapshots/amc-monthly.json";
 import amcQuarterlyRaw from "./snapshots/amc-quarterly.json";
 import otherSchemesRaw from "./snapshots/other-schemes-monthly.json";
+import amcAaumRaw from "./snapshots/amc-aaum-quarterly.json";
 import type {
+  AmcAaumQuarterlyRow,
+  AmcAaumQuarterlySnapshot,
   AmcMasterSnapshot,
   AmcMonthlySnapshot,
   AmcQuarterlySnapshot,
@@ -21,6 +24,8 @@ export const amcMonthlySnapshot = amcMonthlyRaw as AmcMonthlySnapshot;
 export const amcQuarterlySnapshot = amcQuarterlyRaw as AmcQuarterlySnapshot;
 export const otherSchemesMonthlySnapshot =
   otherSchemesRaw as OtherSchemesMonthlySnapshot;
+export const amcAaumQuarterlySnapshot =
+  amcAaumRaw as AmcAaumQuarterlySnapshot;
 
 export interface DataMode {
   industryMonthly: "live" | "demo";
@@ -28,6 +33,7 @@ export interface DataMode {
   amcQuarterly: "live" | "demo";
   amcMaster: "live" | "demo";
   otherSchemes: "live" | "demo";
+  amcAaum: "live" | "demo";
 }
 
 export function dataMode(): DataMode {
@@ -39,7 +45,35 @@ export function dataMode(): DataMode {
     amcMaster: amcMasterSnapshot.amcs.length > 0 ? "live" : "demo",
     otherSchemes:
       otherSchemesMonthlySnapshot.rows.length > 0 ? "live" : "demo",
+    amcAaum:
+      amcAaumQuarterlySnapshot.rows.length > 0 ? "live" : "demo",
   };
+}
+
+/**
+ * Look up a live AAUM value (₹ Cr) for a single AMC + calendar quarter.
+ * Returns null if the value is not in the snapshot, or if it fails the
+ * deterministic validation (must be a positive finite number with status === "ok").
+ */
+export function aaumFor(slug: string, quarter: string): number | null {
+  const row = amcAaumQuarterlySnapshot.rows.find(
+    (r) => r.amcSlug === slug && r.quarter === quarter
+  );
+  if (!row) return null;
+  if (row.status !== "ok") return null;
+  if (!Number.isFinite(row.avgAum) || row.avgAum <= 0) return null;
+  return row.avgAum;
+}
+
+export function aaumProvenance(
+  slug: string,
+  quarter: string
+): AmcAaumQuarterlyRow | null {
+  return (
+    amcAaumQuarterlySnapshot.rows.find(
+      (r) => r.amcSlug === slug && r.quarter === quarter
+    ) ?? null
+  );
 }
 
 export function isAnyLive(): boolean {

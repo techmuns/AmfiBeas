@@ -1,6 +1,7 @@
 import { ingestAmfiAmcMaster } from "./amfi-nav";
 import { ingestAmfiSubClassification } from "./amfi-sub-classification";
 import { ingestListedAmcQuarterly } from "./listed-amc-quarterly";
+import { ingestAmfiAaum } from "./amfi-aaum";
 
 interface Step {
   name: string;
@@ -20,6 +21,7 @@ const STEPS: Step[] = [
     run: ingestListedAmcQuarterly,
     optional: true,
   },
+  { name: "amfi-aaum", run: ingestAmfiAaum, optional: true },
 ];
 
 async function main() {
