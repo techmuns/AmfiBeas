@@ -1,8 +1,12 @@
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AreaTrend } from "@/components/charts/AreaTrend";
 import { BarSeries } from "@/components/charts/BarSeries";
+import { LockedKpiList } from "@/components/data/LockedKpiList";
+import { PAID_LOCKED_KPIS } from "@/config/morningstar-kpis";
 import {
   industryByMonth,
   industryQuarterly,
@@ -108,6 +112,22 @@ export default function HomePage() {
           <BarSeries data={sipSeries} name="SIP" />
         </Card>
       </section>
+
+      <Card
+        title="Locked Morningstar KPIs"
+        subtitle="Requires Morningstar License"
+        action={
+          <Link
+            href="/data-sources"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          >
+            View all sources
+            <ArrowUpRight className="h-3 w-3" />
+          </Link>
+        }
+      >
+        <LockedKpiList items={PAID_LOCKED_KPIS} compact />
+      </Card>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import amcMonthlyRaw from "./snapshots/amc-monthly.json";
 import amcQuarterlyRaw from "./snapshots/amc-quarterly.json";
 import otherSchemesRaw from "./snapshots/other-schemes-monthly.json";
 import amcAaumRaw from "./snapshots/amc-aaum-quarterly.json";
+import morningstarRaw from "./snapshots/morningstar-amc-aum.json";
 import type {
   AmcAaumQuarterlyRow,
   AmcAaumQuarterlySnapshot,
@@ -12,6 +13,7 @@ import type {
   AmcMonthlySnapshot,
   AmcQuarterlySnapshot,
   IndustryMonthlySnapshot,
+  MorningstarAumSnapshot,
   OtherSchemesMonthlySnapshot,
   SchemeNavsSnapshot,
 } from "./snapshots/types";
@@ -26,6 +28,8 @@ export const otherSchemesMonthlySnapshot =
   otherSchemesRaw as OtherSchemesMonthlySnapshot;
 export const amcAaumQuarterlySnapshot =
   amcAaumRaw as AmcAaumQuarterlySnapshot;
+export const morningstarAumSnapshot =
+  morningstarRaw as MorningstarAumSnapshot;
 
 export interface DataMode {
   industryMonthly: "live" | "demo";
@@ -74,6 +78,33 @@ export function aaumProvenance(
       (r) => r.amcSlug === slug && r.quarter === quarter
     ) ?? null
   );
+}
+
+/**
+ * Source-priority AAUM lookup.
+ *   1. AMFI primary (aaumFor — only when row.status === "ok")
+ *   2. Morningstar public fallback (only when snapshot meta.status === "ok"
+ *      AND the matching row has averageAum > 0)
+ *   3. null
+ *
+ * Morningstar never overrides AMFI. Used by the quarterly aggregation
+ * helper as a non-replacing supplement to live AAUM.
+ */
+export function aaumWithFallback(
+  slug: string,
+  quarter: string
+): { value: number | null; source: "AMFI" | "Morningstar" | null } {
+  const amfi = aaumFor(slug, quarter);
+  if (amfi !== null) return { value: amfi, source: "AMFI" };
+  if (morningstarAumSnapshot.meta.status === "ok") {
+    const ms = morningstarAumSnapshot.rows.find(
+      (r) => r.amcId === slug && r.quarter === quarter
+    );
+    if (ms && Number.isFinite(ms.averageAum) && ms.averageAum > 0) {
+      return { value: ms.averageAum, source: "Morningstar" };
+    }
+  }
+  return { value: null, source: null };
 }
 
 export function isAnyLive(): boolean {

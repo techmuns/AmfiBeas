@@ -7,7 +7,7 @@ import {
   quarterlyForAmc as generatedQuarterlyForAmc,
 } from "./generator";
 import {
-  aaumFor,
+  aaumWithFallback,
   amcQuarterlySnapshot,
   industryMonthlySnapshot,
 } from "./source";
@@ -16,16 +16,16 @@ const liveQuarterlyBySlug = (() => {
   const m = new Map<string, QuarterlyFinancial[]>();
   for (const r of amcQuarterlySnapshot.rows) {
     const arr = m.get(r.amcSlug) ?? [];
-    // Prefer the AAUM snapshot's deterministic value over whatever the
-    // quarterly P&L source provided (screener doesn't carry AAUM today).
-    const liveAaum = aaumFor(r.amcSlug, r.quarter);
+    // Source priority: AMFI primary → Morningstar public fallback → fall back
+    // to whatever the P&L source provided. Morningstar never overrides AMFI.
+    const fallback = aaumWithFallback(r.amcSlug, r.quarter);
     arr.push({
       amcSlug: r.amcSlug,
       quarter: r.quarter,
       revenue: r.revenue,
       operatingProfit: r.operatingProfit,
       pat: r.pat,
-      avgAum: liveAaum ?? r.avgAum,
+      avgAum: fallback.value ?? r.avgAum,
     });
     m.set(r.amcSlug, arr);
   }
