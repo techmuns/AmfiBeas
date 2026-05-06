@@ -7,11 +7,28 @@ import { AMCS } from "@/data/amcs";
 import { cn } from "@/lib/cn";
 import type { DateRange } from "@/lib/filter";
 
+export type AmcStatus = "live" | "pending" | "unavailable";
+
 interface FilterBarProps {
   showRange?: "monthly" | "quarterly" | false;
+  /**
+   * "multi" — toggle pills, any subset selectable (default).
+   * "single" — radio behaviour, exactly one slug selected at a time, no
+   *    "All" option. Selecting a different slug deselects the previous.
+   */
+  amcMode?: "multi" | "single";
+  /** Per-slug selectability + badge label. Defaults to all live. */
+  amcStatus?: Record<string, AmcStatus>;
+  /** Single-mode default slug used when the URL has no valid selection. */
+  defaultSlug?: string;
 }
 
-export function FilterBar({ showRange = "monthly" }: FilterBarProps) {
+export function FilterBar({
+  showRange = "monthly",
+  amcMode = "multi",
+  amcStatus,
+  defaultSlug,
+}: FilterBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -35,6 +52,12 @@ export function FilterBar({ showRange = "monthly" }: FilterBarProps) {
     },
     [params, pathname, router]
   );
+
+  const setSingleAmc = (slug: string) => {
+    setParams((next) => {
+      next.set("amcs", slug);
+    });
+  };
 
   const toggleAmc = (slug: string) => {
     setParams((next) => {
@@ -75,8 +98,22 @@ export function FilterBar({ showRange = "monthly" }: FilterBarProps) {
           { value: "all", label: "All" },
         ];
 
+  // Single-mode active slug = first valid selection or the configured default.
+  const singleActive = useMemo(() => {
+    if (amcMode !== "single") return null;
+    for (const s of selected) {
+      if (!amcStatus || amcStatus[s] === "live") return s;
+    }
+    return defaultSlug ?? null;
+  }, [amcMode, selected, amcStatus, defaultSlug]);
+
   const allSelected = selected.size === 0;
-  const isDirty = selected.size > 0 || range !== "all";
+  const isDirty =
+    amcMode === "single"
+      ? (singleActive ?? "") !== (defaultSlug ?? "") || range !== "all"
+      : selected.size > 0 || range !== "all";
+
+  const peersLabel = amcMode === "single" ? "AMC" : "Peers";
 
   return (
     <div
@@ -86,40 +123,64 @@ export function FilterBar({ showRange = "monthly" }: FilterBarProps) {
       )}
     >
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="mr-1 text-muted-foreground">Peers</span>
-        <button
-          type="button"
-          onClick={() =>
-            setParams((next) => {
-              next.delete("amcs");
-            })
-          }
-          className={cn(
-            "rounded-full border px-2.5 py-1 text-xs transition-colors",
-            allSelected
-              ? "border-foreground bg-foreground text-background"
-              : "border-border text-muted-foreground hover:bg-accent"
-          )}
-        >
-          All
-        </button>
+        <span className="mr-1 text-muted-foreground">{peersLabel}</span>
+        {amcMode === "multi" && (
+          <button
+            type="button"
+            onClick={() =>
+              setParams((next) => {
+                next.delete("amcs");
+              })
+            }
+            className={cn(
+              "rounded-full border px-2.5 py-1 text-xs transition-colors",
+              allSelected
+                ? "border-foreground bg-foreground text-background"
+                : "border-border text-muted-foreground hover:bg-accent"
+            )}
+          >
+            All
+          </button>
+        )}
         {AMCS.map((a) => {
-          const active = selected.has(a.slug);
+          const status: AmcStatus = amcStatus?.[a.slug] ?? "live";
+          const disabled = amcMode === "single" && status !== "live";
+          const active =
+            amcMode === "single"
+              ? singleActive === a.slug
+              : selected.has(a.slug);
+          const titleSuffix =
+            status === "pending"
+              ? " — listed · financials pending source"
+              : status === "unavailable"
+                ? " — no sourced quarterly financials"
+                : "";
           return (
             <button
               key={a.slug}
               type="button"
-              onClick={() => toggleAmc(a.slug)}
+              disabled={disabled}
+              onClick={() =>
+                amcMode === "single" ? setSingleAmc(a.slug) : toggleAmc(a.slug)
+              }
               aria-pressed={active}
+              title={(a.ticker ?? a.name) + titleSuffix}
               className={cn(
                 "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors",
                 active
                   ? "border-foreground bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:bg-accent"
+                  : disabled
+                    ? "cursor-not-allowed border-dashed border-border text-muted-foreground/60"
+                    : "border-border text-muted-foreground hover:bg-accent"
               )}
             >
               {active && <Check className="h-3 w-3" />}
               {a.ticker ?? a.name.split(" ")[0]}
+              {status === "pending" && (
+                <span className="ml-0.5 text-[9px] uppercase tracking-wide text-muted-foreground/70">
+                  pending
+                </span>
+              )}
             </button>
           );
         })}

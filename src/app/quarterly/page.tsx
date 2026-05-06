@@ -2,19 +2,32 @@ import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FilterBar } from "@/components/filters/FilterBar";
+import type { AmcStatus } from "@/components/filters/FilterBar";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
 import {
   SOURCED_FINANCIALS_SLUGS,
-  industryQuarterly,
-  latestQuarter,
   qoqChange,
+  quarterlyForAmc,
   yoyChangeQuarterly,
 } from "@/data/aggregate";
-import { amcAaumQuarterlySnapshot } from "@/data/source";
+import { aaumProvenance, amcAaumQuarterlySnapshot } from "@/data/source";
+import { AMCS, getAMC } from "@/data/amcs";
 import { formatINR, formatDelta } from "@/lib/format";
-import { parseFilters, selectedSlugs, trimQuarters } from "@/lib/filter";
+import { parseFilters, trimQuarters } from "@/lib/filter";
 import { QUARTERS_LIST } from "@/data/generator";
+
+const DEFAULT_SLUG = "hdfc";
+
+function buildAmcStatus(): Record<string, AmcStatus> {
+  const out: Record<string, AmcStatus> = {};
+  for (const a of AMCS) {
+    if (SOURCED_FINANCIALS_SLUGS.has(a.slug)) out[a.slug] = "live";
+    else if (a.listed) out[a.slug] = "pending";
+    else out[a.slug] = "unavailable";
+  }
+  return out;
+}
 
 export default async function QuarterlyPage({
   searchParams,
@@ -23,23 +36,55 @@ export default async function QuarterlyPage({
 }) {
   const sp = await searchParams;
   const filters = parseFilters(sp);
-  const requestedSlugs = selectedSlugs(filters);
-  // Only AMCs with sourced P&L can be summed. Drop unlisted slugs from the
-  // selection so we never accidentally aggregate demo data.
-  const slugs = requestedSlugs
-    ? requestedSlugs.filter((s) => SOURCED_FINANCIALS_SLUGS.has(s))
-    : null;
-  const droppedUnsourced =
-    requestedSlugs &&
-    requestedSlugs.length !== (slugs?.length ?? 0);
-  const noSourcedSelection =
-    requestedSlugs !== null && (slugs?.length ?? 0) === 0;
+  const status = buildAmcStatus();
 
-  const fullSeries = industryQuarterly(slugs);
+  // Single-select: pick the first sourced AMC from the URL, else fall back to
+  // hdfc. Unlisted / pending slugs in the URL are ignored.
+  const requested = filters.amcs.find((s) => status[s] === "live");
+  const slug = requested ?? DEFAULT_SLUG;
+  const profile = getAMC(slug);
+
+  const fullSeries = quarterlyForAmc(slug);
   const trimmedSet = new Set(trimQuarters(QUARTERS_LIST, filters.range));
   const series = fullSeries.filter((q) => trimmedSet.has(q.quarter));
-
   const latest = fullSeries[fullSeries.length - 1];
+
+  const aaumMeta = amcAaumQuarterlySnapshot.meta;
+  const yieldsSubtitle =
+    amcAaumQuarterlySnapshot.rows.length > 0
+      ? `Source: AMFI AAUM · ${new Date(aaumMeta.generatedAt).toISOString().slice(0, 10)}`
+      : "Annualised revenue / operating / profit yield";
+
+  const trend = (n: number) =>
+    n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
+
+  // No data → render empty state. Reaches this branch only if the default
+  // slug somehow has no rows (defensive — hdfc is always sourced today).
+  if (!latest || !profile) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Quarterly Financials"
+          subtitle="Single-AMC view · sourced quarterly P&L"
+        />
+        <FilterBar
+          showRange="quarterly"
+          amcMode="single"
+          amcStatus={status}
+          defaultSlug={DEFAULT_SLUG}
+        />
+        <Card
+          title="Financials unavailable"
+          subtitle="No sourced quarterly P&L for the selected AMC."
+        >
+          <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+            —
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   const revenueYoy = yoyChangeQuarterly(fullSeries.map((q) => q.revenue));
   const opYoy = yoyChangeQuarterly(fullSeries.map((q) => q.operatingProfit));
   const patYoy = yoyChangeQuarterly(fullSeries.map((q) => q.pat));
@@ -76,69 +121,33 @@ export default async function QuarterlyPage({
   }));
   // null (not 0) for quarters where AAUM is missing, so the line renders as
   // a gap rather than a misleading drop-to-zero.
-  const yieldData = series.map((q) => ({
-    quarter: q.quarter,
-    revenue: q.avgAum
-      ? Number(((q.revenue * 4 * 10_000) / q.avgAum).toFixed(1))
-      : null,
-    op: q.avgAum
-      ? Number(((q.operatingProfit * 4 * 10_000) / q.avgAum).toFixed(1))
-      : null,
-    profit: q.avgAum
-      ? Number(((q.pat * 4 * 10_000) / q.avgAum).toFixed(1))
-      : null,
-  }));
+  const yieldData = series.map((q) => {
+    const hasAaum = aaumProvenance(slug, q.quarter)?.status === "ok";
+    return {
+      quarter: q.quarter,
+      revenue: hasAaum
+        ? Number(((q.revenue * 4 * 10_000) / q.avgAum).toFixed(1))
+        : null,
+      op: hasAaum
+        ? Number(((q.operatingProfit * 4 * 10_000) / q.avgAum).toFixed(1))
+        : null,
+      profit: hasAaum
+        ? Number(((q.pat * 4 * 10_000) / q.avgAum).toFixed(1))
+        : null,
+    };
+  });
 
-  const aaumMeta = amcAaumQuarterlySnapshot.meta;
-  const aaumLive = amcAaumQuarterlySnapshot.rows.length > 0;
-  const yieldsSubtitle = aaumLive
-    ? `Source: AMFI AAUM · ${new Date(aaumMeta.generatedAt).toISOString().slice(0, 10)}`
-    : "Annualised revenue / operating / profit yield";
-
-  const trend = (n: number) =>
-    n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
-
-  const sourcedCount = SOURCED_FINANCIALS_SLUGS.size;
-  const subtitle = slugs
-    ? `${slugs.length} listed AMC${slugs.length > 1 ? "s" : ""} · ${latestQuarter()}`
-    : `Listed AMC P&L · ${sourcedCount} AMCs · ${latestQuarter()}`;
-
-  if (noSourcedSelection) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Quarterly Financials"
-          subtitle="Selection contains no listed AMCs — financials unavailable"
-        />
-        <FilterBar showRange="quarterly" />
-        <Card
-          title="Financials unavailable"
-          subtitle="Quarterly P&L is sourced only for the 4 listed AMCs (HDFC AMC, Nippon, ABSL, UTI). Unlisted AMCs have no standalone quarterly disclosures."
-        >
-          <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
-            —
-          </div>
-        </Card>
-      </div>
-    );
-  }
+  const subtitle = `${profile.name}${profile.ticker ? ` (${profile.ticker})` : ""} · ${latest.quarter}`;
 
   return (
     <div className="space-y-6">
       <PageHeader title="Quarterly Financials" subtitle={subtitle} />
-      <FilterBar showRange="quarterly" />
-
-      {droppedUnsourced && (
-        <Card
-          title="Filter scope reduced"
-          subtitle="Some selected AMCs have no sourced quarterly financials and were excluded from the aggregate."
-        >
-          <div className="text-sm text-muted-foreground">
-            Showing {slugs?.length ?? 0} of {requestedSlugs?.length ?? 0}{" "}
-            selected AMCs.
-          </div>
-        </Card>
-      )}
+      <FilterBar
+        showRange="quarterly"
+        amcMode="single"
+        amcStatus={status}
+        defaultSlug={DEFAULT_SLUG}
+      />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
