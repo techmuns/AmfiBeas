@@ -17,6 +17,7 @@ import {
   yoyChange,
   yoyChangeQuarterly,
 } from "@/data/aggregate";
+import { aaumProvenance, amcAaumQuarterlySnapshot } from "@/data/source";
 import {
   formatCompactCrSafe,
   formatDelta,
@@ -75,15 +76,23 @@ export default async function AmcPage({
     op: q.operatingProfit,
     pat: q.pat,
   }));
-  const yieldData = yields.map((y) => ({
-    quarter: y.quarter,
-    revenue: Number(y.revenueYieldBps.toFixed(1)),
-    op: Number(y.operatingYieldBps.toFixed(1)),
-    profit: Number(y.profitYieldBps.toFixed(1)),
-  }));
+  // null (not 0) for quarters where AAUM is missing, so the line renders as
+  // a gap rather than a misleading drop-to-zero.
+  const yieldData = yields.map((y) => {
+    const hasAaum = aaumProvenance(slug, y.quarter)?.status === "ok";
+    return {
+      quarter: y.quarter,
+      revenue: hasAaum ? Number(y.revenueYieldBps.toFixed(1)) : null,
+      op: hasAaum ? Number(y.operatingYieldBps.toFixed(1)) : null,
+      profit: hasAaum ? Number(y.profitYieldBps.toFixed(1)) : null,
+    };
+  });
   const yieldsAvailable = yieldData.some(
-    (y) => y.revenue > 0 || y.op > 0 || y.profit > 0
+    (y) => (y.revenue ?? 0) > 0 || (y.op ?? 0) > 0 || (y.profit ?? 0) > 0
   );
+  const yieldsSubtitle = yieldsAvailable
+    ? `Source: AMFI AAUM · ${new Date(amcAaumQuarterlySnapshot.meta.generatedAt).toISOString().slice(0, 10)}`
+    : "AAUM not in source";
 
   const trend = (n: number) =>
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
@@ -168,10 +177,7 @@ export default async function AmcPage({
             ]}
           />
         </Card>
-        <Card
-          title="Yields (bps)"
-          subtitle={yieldsAvailable ? "Annualised" : "AAUM not in source"}
-        >
+        <Card title="Yields (bps)" subtitle={yieldsSubtitle}>
           {yieldsAvailable ? (
             <MultiLine
               data={yieldData}
