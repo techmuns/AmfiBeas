@@ -36,10 +36,11 @@ const TARGET_AMCS = [
   "UTI Mutual Fund",
 ];
 
-// All timing budgets in milliseconds. Sized so a single quarter run finishes
-// well inside the overall 90 s kill timer even when most steps fail soft.
+// All timing budgets in milliseconds. Sized so a single quarter finishes in
+// ~60s worst case, leaving the overall kill timer comfortably above 8×60s
+// while staying under the 20-minute workflow timeout.
 const T = {
-  totalKill: 120_000,
+  totalKill: 900_000,
   pageGoto: 25_000,
   waitForFormReady: 12_000,
   waitForDependentFields: 8_000,
@@ -56,6 +57,12 @@ const T = {
 };
 
 const DEBUG_ONE_QUARTER = process.env.AAUM_DEBUG_ONE_QUARTER === "1";
+
+// Verbose log: emits only in debug mode. Use for chatty per-step traces that
+// are valuable when triaging a single quarter but spam logs across 8 quarters.
+function vinfo(msg: string) {
+  if (DEBUG_ONE_QUARTER) info(msg);
+}
 
 interface QuarterToFetch {
   calendarQ: string;
@@ -196,7 +203,7 @@ async function waitForLoadingDone(
       })
       .catch(() => false);
     if (!stillLoading) {
-      info(
+      vinfo(
         `AAUM[${quarter}]: loading settled [${label}] in ${Math.round(
           timeoutMs - (deadline - Date.now())
         )}ms`
@@ -205,7 +212,7 @@ async function waitForLoadingDone(
     }
     await sleep(400);
   }
-  info(
+  warn(
     `AAUM[${quarter}]: loading TIMED OUT [${label}] after ${timeoutMs}ms (Loading... still present)`
   );
   return false;
@@ -244,7 +251,7 @@ async function logVisiblePlaceholders(
         });
     })
     .catch(() => []);
-  info(
+  vinfo(
     `AAUM[${quarter}]: visible placeholders [${label}]: ${JSON.stringify(data)}`
   );
 }
@@ -678,7 +685,7 @@ async function fetchQuarter(
   });
 
   try {
-    info(`AAUM[${q.calendarQ}]: opening page ${FORM_URL}`);
+    vinfo(`AAUM[${q.calendarQ}]: opening page ${FORM_URL}`);
     const resp = await page.goto(FORM_URL, {
       waitUntil: "domcontentloaded",
       timeout: T.pageGoto,
@@ -687,7 +694,7 @@ async function fetchQuarter(
       warn(`  HTTP ${resp?.status() ?? "no-response"}`);
       return null;
     }
-    info(`AAUM[${q.calendarQ}]: page loaded, waiting for form ready`);
+    vinfo(`AAUM[${q.calendarQ}]: page loaded, waiting for form ready`);
     try {
       await page.waitForSelector('input[placeholder="Select Data"]', {
         timeout: T.waitForFormReady,
@@ -699,13 +706,13 @@ async function fetchQuarter(
     await logVisiblePlaceholders(page, q.calendarQ, "after page load");
 
     // Step 1: Select Data → Fundwise (gates the rest of the form)
-    info(`AAUM[${q.calendarQ}]: setting Select Data → Fundwise`);
+    vinfo(`AAUM[${q.calendarQ}]: setting Select Data → Fundwise`);
     const fData = await setMuiAutocompleteByPlaceholder(page, "Select Data", [
       "Fundwise",
       "Fund wise",
       "Fund-wise",
     ]);
-    info(
+    vinfo(
       `AAUM[${q.calendarQ}]:   Data found=${fData.found} chosen=${fData.chosen ?? "—"} value="${fData.visibleValue}" options=[${fData.options.slice(0, 8).join(" | ")}]`
     );
     if (!fData.visibleValue || !/fund\s*wise/i.test(fData.visibleValue)) {
@@ -714,7 +721,7 @@ async function fetchQuarter(
     }
 
     // Wait for dependent fields to render after Fundwise is selected.
-    info(
+    vinfo(
       `AAUM[${q.calendarQ}]: waiting up to ${T.waitForDependentFields}ms for dependent fields`
     );
     let dependentReady = false;
@@ -737,7 +744,7 @@ async function fetchQuarter(
     );
 
     // Step 2: Select Type — optional. Don't fail if it isn't present.
-    info(`AAUM[${q.calendarQ}]: setting Select Type (optional)`);
+    vinfo(`AAUM[${q.calendarQ}]: setting Select Type (optional)`);
     const fType = await setMuiAutocompleteByPlaceholder(page, "Select Type", [
       "AMC-wise",
       "AMC wise",
@@ -748,11 +755,11 @@ async function fetchQuarter(
       "Average AUM",
     ]);
     if (fType.found) {
-      info(
+      vinfo(
         `AAUM[${q.calendarQ}]:   Type found=true chosen=${fType.chosen ?? "—"} value="${fType.visibleValue}" options=[${fType.options.slice(0, 8).join(" | ")}]`
       );
     } else {
-      info(`AAUM[${q.calendarQ}]:   Type not present — skipping`);
+      vinfo(`AAUM[${q.calendarQ}]:   Type not present — skipping`);
     }
     if (fType.found) await sleep(T.midSleep);
 
@@ -760,13 +767,13 @@ async function fetchQuarter(
     // into a disabled "Loading..." input the moment FY is set, which means
     // FY triggers the async load that produces Period (and possibly MF)
     // options. We must drive FY before Period.
-    info(`AAUM[${q.calendarQ}]: setting Select Financial Year`);
+    vinfo(`AAUM[${q.calendarQ}]: setting Select Financial Year`);
     const fFy = await setMuiAutocompleteByPlaceholder(
       page,
       "Select Financial Year",
       q.fyCandidates
     );
-    info(
+    vinfo(
       `AAUM[${q.calendarQ}]:   FY found=${fFy.found} chosen=${fFy.chosen ?? "—"} value="${fFy.visibleValue}" options=[${fFy.options.slice(0, 8).join(" | ")}]`
     );
 
@@ -785,18 +792,18 @@ async function fetchQuarter(
     let fMf = { ...EMPTY_FIELD };
     const mfPresent = await isPlaceholderVisible(page, "Select Mutual Fund");
     if (mfPresent) {
-      info(`AAUM[${q.calendarQ}]: setting Select Mutual Fund`);
+      vinfo(`AAUM[${q.calendarQ}]: setting Select Mutual Fund`);
       fMf = await setMuiAutocompleteByPlaceholder(
         page,
         "Select Mutual Fund",
         ["All Mutual Funds", "Select All", "All"]
       );
-      info(
+      vinfo(
         `AAUM[${q.calendarQ}]:   MF found=${fMf.found} chosen=${fMf.chosen ?? "—"} value="${fMf.visibleValue}" options=[${fMf.options.slice(0, 8).join(" | ")}]`
       );
       // Debug fallback: if no "All" option, pick HDFC.
       if (fMf.found && !fMf.visibleValue && fMf.options.length > 0) {
-        info(
+        vinfo(
           `AAUM[${q.calendarQ}]:   MF: no "All" option visible — falling back to HDFC Mutual Fund (debug)`
         );
         fMf = await setMuiAutocompleteByPlaceholder(
@@ -804,7 +811,7 @@ async function fetchQuarter(
           "Select Mutual Fund",
           ["HDFC Mutual Fund"]
         );
-        info(
+        vinfo(
           `AAUM[${q.calendarQ}]:   MF (HDFC fallback) chosen=${fMf.chosen ?? "—"} value="${fMf.visibleValue}"`
         );
       }
@@ -817,19 +824,19 @@ async function fetchQuarter(
       );
       await logVisiblePlaceholders(page, q.calendarQ, "post-MF-load");
     } else {
-      info(
+      vinfo(
         `AAUM[${q.calendarQ}]:   MF not present after FY load — proceeding directly to Period`
       );
     }
 
     // Step 5: Period
-    info(`AAUM[${q.calendarQ}]: setting Select Period`);
+    vinfo(`AAUM[${q.calendarQ}]: setting Select Period`);
     const fPeriod = await setMuiAutocompleteByPlaceholder(
       page,
       "Select Period",
       q.periodCandidates
     );
-    info(
+    vinfo(
       `AAUM[${q.calendarQ}]:   Period found=${fPeriod.found} chosen=${fPeriod.chosen ?? "—"} value="${fPeriod.visibleValue}" options=[${fPeriod.options.slice(0, 8).join(" | ")}]`
     );
 
@@ -839,7 +846,7 @@ async function fetchQuarter(
     // showed as populated — likely an MUI dual-mount + race quirk we can't
     // reliably work around. The field outcomes match the visible inputs.
     const goState = await readGoButtonState(page);
-    info(
+    vinfo(
       `AAUM[${q.calendarQ}]: pre-Go field outcomes: Data="${fData.visibleValue}" FY="${fFy.visibleValue}" Period="${fPeriod.visibleValue}"   Go: ${JSON.stringify(goState)}`
     );
 
@@ -852,28 +859,28 @@ async function fetchQuarter(
       goState.ariaDisabled !== "true";
 
     if (!dataOk || !fyOk || !periodOk || !goEnabled) {
-      info(
+      warn(
         `AAUM[${q.calendarQ}]: NOT clicking Go — dataOk=${dataOk} fyOk=${fyOk} periodOk=${periodOk} goEnabled=${goEnabled}`
       );
-      info(
+      warn(
         `AAUM[${q.calendarQ}]:   FY options at fail: [${fFy.options.slice(0, 12).join(" | ")}]`
       );
-      info(
+      warn(
         `AAUM[${q.calendarQ}]:   Period options at fail: [${fPeriod.options.slice(0, 12).join(" | ")}]`
       );
       await logVisiblePlaceholders(page, q.calendarQ, "before-Go (skipped)");
       return null;
     }
 
-    info(`AAUM[${q.calendarQ}]: clicking Go`);
+    vinfo(`AAUM[${q.calendarQ}]: clicking Go`);
     const goClicked = await clickGoButton(page);
-    info(`AAUM[${q.calendarQ}]:   Go clicked=${goClicked}`);
+    vinfo(`AAUM[${q.calendarQ}]:   Go clicked=${goClicked}`);
     if (!goClicked) {
       await logVisiblePlaceholders(page, q.calendarQ, "after Go-click failed");
       return null;
     }
 
-    info(`AAUM[${q.calendarQ}]: waiting for results (max ${T.postGoNetworkIdle}ms)`);
+    vinfo(`AAUM[${q.calendarQ}]: waiting for results (max ${T.postGoNetworkIdle}ms)`);
     try {
       await page.waitForLoadState("networkidle", {
         timeout: T.postGoNetworkIdle,
@@ -881,52 +888,60 @@ async function fetchQuarter(
     } catch {}
     await sleep(T.postGoSettle);
 
-    info(`AAUM[${q.calendarQ}]: inspecting results`);
-    const recent = xhrCapture.slice(-25);
-    info(
-      `AAUM[${q.calendarQ}] network capture (${recent.length} of ${xhrCapture.length}):\n${recent
-        .map(
-          (c) =>
-            `    ${c.method.padEnd(4)} ${c.status} ${c.contentType.split(";")[0].padEnd(28)} ${c.url}`
-        )
-        .join("\n")}`
-    );
+    if (DEBUG_ONE_QUARTER) {
+      info(`AAUM[${q.calendarQ}]: inspecting results`);
+      const recent = xhrCapture.slice(-25);
+      info(
+        `AAUM[${q.calendarQ}] network capture (${recent.length} of ${xhrCapture.length}):\n${recent
+          .map(
+            (c) =>
+              `    ${c.method.padEnd(4)} ${c.status} ${c.contentType.split(";")[0].padEnd(28)} ${c.url}`
+          )
+          .join("\n")}`
+      );
+    }
 
     const extract = await captureResult(page, TARGET_AMCS);
-    info(
-      `AAUM[${q.calendarQ}] result: ${extract.tables.length} table(s), AMC cells=${extract.amcCellsSeen.length}, downloads=${extract.downloadLinks.length}, url=${extract.url}`
-    );
-    extract.tables.forEach((t, i) => {
+    if (DEBUG_ONE_QUARTER) {
       info(
-        `   table[${i}] rows=${t.rows.length} headers=[${t.headers.slice(0, 8).join(" | ")}]`
+        `AAUM[${q.calendarQ}] result: ${extract.tables.length} table(s), AMC cells=${extract.amcCellsSeen.length}, downloads=${extract.downloadLinks.length}, url=${extract.url}`
       );
-    });
-    if (extract.downloadLinks.length > 0) {
-      info(
-        `   download links:\n      ${extract.downloadLinks
-          .map((l) => `${l.href}  «${l.text.slice(0, 40)}»`)
-          .join("\n      ")}`
-      );
+      extract.tables.forEach((t, i) => {
+        info(
+          `   table[${i}] rows=${t.rows.length} headers=[${t.headers.slice(0, 8).join(" | ")}]`
+        );
+      });
+      if (extract.downloadLinks.length > 0) {
+        info(
+          `   download links:\n      ${extract.downloadLinks
+            .map((l) => `${l.href}  «${l.text.slice(0, 40)}»`)
+            .join("\n      ")}`
+        );
+      }
     }
 
     let parsed: ParsedAmcRow[] = [];
     for (let ti = 0; ti < extract.tables.length; ti++) {
       const t = extract.tables[ti];
-      const sample = t.rows
-        .slice(0, 5)
-        .map((r, i) => `      row[${i}]: ${JSON.stringify(r).slice(0, 220)}`)
-        .join("\n");
-      info(
-        `AAUM[${q.calendarQ}]:   table[${ti}] preview (first 5 rows):\n${sample}`
-      );
-      const rows = parseAmcRowsFromTable(t);
-      info(
-        `AAUM[${q.calendarQ}]:   table[${ti}] parsed ${rows.length} mapped AMC rows`
-      );
-      for (const r of rows) {
+      if (DEBUG_ONE_QUARTER) {
+        const sample = t.rows
+          .slice(0, 5)
+          .map((r, i) => `      row[${i}]: ${JSON.stringify(r).slice(0, 220)}`)
+          .join("\n");
         info(
-          `       ${r.amcSlug.padEnd(8)} ${r.amcNameAsReported}  →  ${r.avgAum.toFixed(2)} Cr (from Lakhs in source)`
+          `AAUM[${q.calendarQ}]:   table[${ti}] preview (first 5 rows):\n${sample}`
         );
+      }
+      const rows = parseAmcRowsFromTable(t);
+      if (DEBUG_ONE_QUARTER) {
+        info(
+          `AAUM[${q.calendarQ}]:   table[${ti}] parsed ${rows.length} mapped AMC rows`
+        );
+        for (const r of rows) {
+          info(
+            `       ${r.amcSlug.padEnd(8)} ${r.amcNameAsReported}  →  ${r.avgAum.toFixed(2)} Cr (from Lakhs in source)`
+          );
+        }
       }
       if (rows.length > 0) {
         parsed = rows;
@@ -951,7 +966,10 @@ async function fetchQuarter(
       return null;
     }
 
-    info(`AAUM[${q.calendarQ}]: parsed ${parsed.length} AMC rows`);
+    const slugs = Array.from(new Set(parsed.map((r) => r.amcSlug))).sort();
+    info(
+      `AAUM[${q.calendarQ}]: ok · FY="${fFy.visibleValue}" period="${fPeriod.visibleValue}" rows=${parsed.length} amcs=${slugs.length} [${slugs.slice(0, 6).join(", ")}${slugs.length > 6 ? ", …" : ""}]`
+    );
     return { rows: parsed, sourceUrl: extract.url };
   } finally {
     await ctx.close().catch(() => {});
