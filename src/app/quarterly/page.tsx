@@ -57,8 +57,8 @@ export default async function QuarterlyPage({
   const aaumMeta = amcAaumQuarterlySnapshot.meta;
   const yieldsSubtitle =
     amcAaumQuarterlySnapshot.rows.length > 0
-      ? `Source: AMFI AAUM · ${new Date(aaumMeta.generatedAt).toISOString().slice(0, 10)}`
-      : "Quarterly revenue / operating / profit yield (bps)";
+      ? `bps of AAUM · quarterly P&L ×4 / same-quarter AMFI AAUM · ${new Date(aaumMeta.generatedAt).toISOString().slice(0, 10)}`
+      : "Management-comparable bps of AAUM · quarterly P&L ×4 / same-quarter AMFI AAUM";
 
   const trend = (n: number) =>
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
@@ -95,16 +95,16 @@ export default async function QuarterlyPage({
   const patYoy = yoyChangeQuarterly(fullSeries.map((q) => q.pat));
   const patMargin = (latest.pat / latest.revenue) * 100;
   const opMargin = (latest.operatingProfit / latest.revenue) * 100;
-  // Quarterly bps yields: NOT annualised. Same-quarter P&L over
-  // same-quarter AAUM, expressed in basis points.
+  // Management-comparable "bps of AAUM": quarterly P&L × 4 / AAUM × 10,000.
+  // Mirrors the disclosure on listed AMC investor decks.
   const revenueYieldBps = latest.avgAum
-    ? (latest.revenue * 10_000) / latest.avgAum
+    ? (latest.revenue * 4 * 10_000) / latest.avgAum
     : 0;
   const opYieldBps = latest.avgAum
-    ? (latest.operatingProfit * 10_000) / latest.avgAum
+    ? (latest.operatingProfit * 4 * 10_000) / latest.avgAum
     : 0;
   const profitYieldBps = latest.avgAum
-    ? (latest.pat * 10_000) / latest.avgAum
+    ? (latest.pat * 4 * 10_000) / latest.avgAum
     : 0;
 
   const prevPatMargin =
@@ -133,13 +133,13 @@ export default async function QuarterlyPage({
     return {
       quarter: q.quarter,
       revenue: hasAaum
-        ? Number(((q.revenue * 10_000) / q.avgAum).toFixed(1))
+        ? Number(((q.revenue * 4 * 10_000) / q.avgAum).toFixed(1))
         : null,
       op: hasAaum
-        ? Number(((q.operatingProfit * 10_000) / q.avgAum).toFixed(1))
+        ? Number(((q.operatingProfit * 4 * 10_000) / q.avgAum).toFixed(1))
         : null,
       profit: hasAaum
-        ? Number(((q.pat * 10_000) / q.avgAum).toFixed(1))
+        ? Number(((q.pat * 4 * 10_000) / q.avgAum).toFixed(1))
         : null,
     };
   });
@@ -214,24 +214,24 @@ export default async function QuarterlyPage({
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="Operating Margin"
+          label="Operating Margin (% of revenue)"
           value={opMargin.toFixed(1) + "%"}
           note={pnlNote}
         />
         <KpiCard
-          label="Revenue Yield"
+          label="Revenue Realization (bps of AAUM)"
           value={
             latest.avgAum > 0 ? revenueYieldBps.toFixed(1) + " bps" : "—"
           }
           note={yieldNote}
         />
         <KpiCard
-          label="Operating Yield"
+          label="Operating Yield (bps of AAUM)"
           value={latest.avgAum > 0 ? opYieldBps.toFixed(1) + " bps" : "—"}
           note={yieldNote}
         />
         <KpiCard
-          label="Profit Yield"
+          label="Profit Yield (bps of AAUM)"
           value={
             latest.avgAum > 0 ? profitYieldBps.toFixed(1) + " bps" : "—"
           }
@@ -267,7 +267,7 @@ export default async function QuarterlyPage({
           />
         </Card>
         <Card
-          title="Yields (bps)"
+          title="Yields (bps of AAUM)"
           subtitle={yieldsSubtitle}
           className="lg:col-span-2"
         >
@@ -277,7 +277,7 @@ export default async function QuarterlyPage({
             valueFormat="bps"
             axisFormat="bps"
             lines={[
-              { key: "revenue", name: "Revenue yield", color: "hsl(var(--chart-1))" },
+              { key: "revenue", name: "Revenue realization", color: "hsl(var(--chart-1))" },
               { key: "op", name: "Operating yield", color: "hsl(var(--chart-2))" },
               { key: "profit", name: "Profit yield", color: "hsl(var(--chart-3))" },
             ]}
