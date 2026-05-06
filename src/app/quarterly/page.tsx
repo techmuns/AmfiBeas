@@ -10,6 +10,7 @@ import {
   qoqChange,
   yoyChangeQuarterly,
 } from "@/data/aggregate";
+import { amcAaumQuarterlySnapshot } from "@/data/source";
 import { formatINR, formatDelta } from "@/lib/format";
 import { parseFilters, selectedSlugs, trimQuarters } from "@/lib/filter";
 import { QUARTERS_LIST } from "@/data/generator";
@@ -62,18 +63,26 @@ export default async function QuarterlyPage({
     patMargin: Number(((q.pat / q.revenue) * 100).toFixed(2)),
     opMargin: Number(((q.operatingProfit / q.revenue) * 100).toFixed(2)),
   }));
+  // null (not 0) for quarters where AAUM is missing, so the line renders as
+  // a gap rather than a misleading drop-to-zero.
   const yieldData = series.map((q) => ({
     quarter: q.quarter,
     revenue: q.avgAum
       ? Number(((q.revenue * 4 * 10_000) / q.avgAum).toFixed(1))
-      : 0,
+      : null,
     op: q.avgAum
       ? Number(((q.operatingProfit * 4 * 10_000) / q.avgAum).toFixed(1))
-      : 0,
+      : null,
     profit: q.avgAum
       ? Number(((q.pat * 4 * 10_000) / q.avgAum).toFixed(1))
-      : 0,
+      : null,
   }));
+
+  const aaumMeta = amcAaumQuarterlySnapshot.meta;
+  const aaumLive = amcAaumQuarterlySnapshot.rows.length > 0;
+  const yieldsSubtitle = aaumLive
+    ? `Source: AMFI AAUM · ${new Date(aaumMeta.generatedAt).toISOString().slice(0, 10)}`
+    : "Annualised revenue / operating / profit yield";
 
   const trend = (n: number) =>
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
@@ -160,7 +169,7 @@ export default async function QuarterlyPage({
         </Card>
         <Card
           title="Yields (bps)"
-          subtitle="Annualised revenue / operating / profit yield"
+          subtitle={yieldsSubtitle}
           className="lg:col-span-2"
         >
           <MultiLine

@@ -27,7 +27,7 @@ export interface LineSpec {
 }
 
 interface MultiLineProps {
-  data: Record<string, string | number>[];
+  data: Record<string, string | number | null>[];
   xKey: string;
   lines: LineSpec[];
   height?: number;
