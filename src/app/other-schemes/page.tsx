@@ -21,7 +21,10 @@ export default function OtherSchemesPage() {
   if (!isLive || !latest || !breakdown) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Other Schemes" subtitle="No data yet" />
+        <PageHeader
+          title="Passive & Other Schemes"
+          subtitle="No data yet"
+        />
         <Card>
           <p className="text-sm text-muted-foreground">
             Awaiting first ingest.
@@ -56,7 +59,7 @@ export default function OtherSchemesPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Other Schemes"
+        title="Passive & Other Schemes"
         subtitle={`Live AMFI data · SEBI Group V · ${formatMonthLabel(latest.month)} · ${series.length}M history`}
         action={
           <span className="inline-flex items-center gap-1.5 rounded-full border border-positive/40 bg-positive/10 px-2 py-0.5 text-[10px] tabular text-positive">
@@ -92,7 +95,7 @@ export default function OtherSchemesPage() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card title="AUM Trend" subtitle="Other Schemes total · 11 months">
+        <Card title="AUM Trend" subtitle="Group V total · 11 months">
           <AreaTrend data={aumSeries} name="AUM" />
         </Card>
         <Card title="Net Flow" subtitle="Inflow (+) / Outflow (−) per month">

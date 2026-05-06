@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -265,6 +267,15 @@ export default async function MonthlyPage({
           title="AUM Mix"
           subtitle="Latest month · category share"
           className="lg:col-span-2"
+          action={
+            <Link
+              href="/other-schemes"
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            >
+              View Passive &amp; Other Schemes
+              <ArrowUpRight className="h-3 w-3" />
+            </Link>
+          }
         >
           {aumMixHasData ? (
             <Donut data={aumMixSlices} />
