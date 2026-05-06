@@ -12,10 +12,11 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
-  group: ingest
-  cancel-in-progress: false
+  group: ingest-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ingest:
