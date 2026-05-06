@@ -13,6 +13,22 @@ import type {
 import type { Page, Browser } from "playwright";
 
 const FORM_URL = "https://www.amfiindia.com/aum-data/average-aum";
+
+/**
+ * Direct backend endpoint discovered in the network capture of a successful
+ * Playwright run:
+ *   GET https://www.amfiindia.com/api/average-aum-fundwise?fyId=1&periodId=1
+ * Returns the same Fundwise AAUM JSON the form populates the table from.
+ *
+ * TODO: once we have a stable mapping from (calendar quarter) → (fyId,
+ * periodId) we can replace the Playwright form-driving with a direct
+ * fetch — much faster and more reliable. For now we keep Playwright
+ * because the id mapping isn't documented and AMFI may rotate ids.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _DISCOVERED_API_BASE =
+  "https://www.amfiindia.com/api/average-aum-fundwise";
+
 const TARGET_AMCS = [
   "HDFC Mutual Fund",
   "Nippon India Mutual Fund",
@@ -477,33 +493,155 @@ async function captureResult(page: Page, targets: string[]) {
   }, targets);
 }
 
+/**
+ * Two-strategy parser for the AMFI Fundwise AAUM table.
+ *
+ * Header-based:
+ *   Walk all rows looking for one whose cells contain "Mutual Fund Name"
+ *   (or AMC / Fund House) AND "Average AUM" / "AAUM". Use that row's
+ *   indices to read AMC name + AAUM from subsequent rows.
+ *
+ * Row-based fallback:
+ *   For each row, scan cells for any of the 4 target AMC names. If found,
+ *   sum the numeric cells AFTER the name cell (Sr No is before, so it's
+ *   excluded). Numeric threshold > 100 ignores Sr No-style ints.
+ *
+ * Unit conversion:
+ *   AMFI publishes Average AUM in Rs Lakhs ("(Rs in Lakhs)" appears in
+ *   the title row). Dashboard convention is ₹ Cr, so divide by 100.
+ */
 function parseAmcRowsFromTable(table: {
   headers: string[];
   rows: string[][];
 }): ParsedAmcRow[] {
-  const lc = table.headers.map((h) => h.toLowerCase());
-  const amcIdx = lc.findIndex((h) =>
-    /amc|fund\s*house|mutual\s*fund\s*name|name\s*of\s*the\s*amc/.test(h)
-  );
-  if (amcIdx === -1) return [];
-  let aaumIdx = lc.findIndex((h) =>
-    /(grand\s*total|total\s*aaum|total\s*average\s*aum)/.test(h)
-  );
-  if (aaumIdx === -1)
-    aaumIdx = lc.findIndex((h) =>
-      /aaum|average\s*aum|avg\.?\s*aum/.test(h)
+  const headerBased = parseHeaderBased(table);
+  if (headerBased.length > 0) return headerBased;
+  return parseRowBased(table);
+}
+
+function parseHeaderBased(table: {
+  headers: string[];
+  rows: string[][];
+}): ParsedAmcRow[] {
+  // 1. Initial check on the captured headers (single-row pattern).
+  let headerRowIdx = -1;
+  let amcIdx = -1;
+  let aaumIdx = -1;
+  let aaumIdxAlt = -1;
+
+  const tryLocate = (cells: string[]) => {
+    const lc = cells.map((h) => h.toLowerCase());
+    const a = lc.findIndex((h) =>
+      /mutual\s*fund\s*name|fund\s*house|amc|name\s*of\s*the\s*amc/.test(h)
     );
-  if (aaumIdx === -1) return [];
+    let b = lc.findIndex((h) =>
+      /(grand\s*total|total\s*aaum|total\s*average\s*aum)/.test(h)
+    );
+    if (b === -1)
+      b = lc.findIndex((h) =>
+        /aaum|average\s*aum|avg\.?\s*aum/.test(h)
+      );
+    // Also note any "Fund of Funds - Domestic" sibling column to add.
+    const c = lc.findIndex((h) => /fund\s*of\s*funds.*domestic/.test(h));
+    return { a, b, c };
+  };
+
+  // Try the captured headers first.
+  let r = tryLocate(table.headers);
+  if (r.a !== -1 && r.b !== -1) {
+    amcIdx = r.a;
+    aaumIdx = r.b;
+    aaumIdxAlt = r.c;
+  } else {
+    // Walk into the body rows; AMFI's first row is often a title.
+    for (let i = 0; i < Math.min(table.rows.length, 6); i++) {
+      r = tryLocate(table.rows[i]);
+      if (r.a !== -1 && r.b !== -1) {
+        headerRowIdx = i;
+        amcIdx = r.a;
+        aaumIdx = r.b;
+        aaumIdxAlt = r.c;
+        break;
+      }
+    }
+  }
+  if (amcIdx === -1 || aaumIdx === -1) return [];
+
   const out: ParsedAmcRow[] = [];
-  for (const row of table.rows) {
+  const startIdx = headerRowIdx === -1 ? 0 : headerRowIdx + 1;
+  for (let i = startIdx; i < table.rows.length; i++) {
+    const row = table.rows[i];
     const name = (row[amcIdx] ?? "").trim();
     if (!name) continue;
     if (/^(total|grand|sub|industry|note|\*|s\.?\s*no)/i.test(name)) continue;
-    const aaum = parseNumberLoose(row[aaumIdx]);
-    if (aaum === null || aaum <= 0) continue;
+    const aaumA = parseNumberLoose(row[aaumIdx]);
+    if (aaumA === null || aaumA <= 0) continue;
+    const aaumB =
+      aaumIdxAlt !== -1 ? parseNumberLoose(row[aaumIdxAlt]) ?? 0 : 0;
     const slug = amfiNameToSlug(name);
     if (!slug) continue;
-    out.push({ amcSlug: slug, amcNameAsReported: name, avgAum: aaum });
+    // Lakhs → Crores. Sum (Excl FoF Domestic) + FoF Domestic if both columns
+    // exist so the value reflects total AAUM.
+    const totalLakhs = aaumA + aaumB;
+    out.push({
+      amcSlug: slug,
+      amcNameAsReported: name,
+      avgAum: Math.round((totalLakhs / 100) * 100) / 100, // Cr, 2dp
+    });
+  }
+  return out;
+}
+
+function parseRowBased(table: {
+  headers: string[];
+  rows: string[][];
+}): ParsedAmcRow[] {
+  const out: ParsedAmcRow[] = [];
+  const seen = new Set<string>();
+  const targetLc = TARGET_AMCS.map((n) => n.toLowerCase());
+
+  for (const row of table.rows) {
+    // 1. Locate AMC name cell.
+    let nameIdx = -1;
+    let nameRaw = "";
+    for (let i = 0; i < row.length; i++) {
+      const cell = (row[i] ?? "").trim();
+      if (!cell) continue;
+      const slug = amfiNameToSlug(cell);
+      if (slug) {
+        nameIdx = i;
+        nameRaw = cell;
+        break;
+      }
+      // Looser match: target name is contained in cell text.
+      const lc = cell.toLowerCase();
+      const matched = targetLc.find((n) => lc.includes(n));
+      if (matched) {
+        nameIdx = i;
+        nameRaw = TARGET_AMCS[targetLc.indexOf(matched)];
+        break;
+      }
+    }
+    if (nameIdx === -1) continue;
+
+    // 2. Sum numeric cells after the name; threshold filters out Sr No.
+    let sumLakhs = 0;
+    for (let i = nameIdx + 1; i < row.length; i++) {
+      const num = parseNumberLoose(row[i]);
+      if (num !== null && num > 100) sumLakhs += num;
+    }
+    if (sumLakhs <= 0) continue;
+
+    const slug = amfiNameToSlug(nameRaw);
+    if (!slug) continue;
+    if (seen.has(slug)) continue;
+    seen.add(slug);
+
+    out.push({
+      amcSlug: slug,
+      amcNameAsReported: nameRaw,
+      avgAum: Math.round((sumLakhs / 100) * 100) / 100, // Lakhs → Cr, 2dp
+    });
   }
   return out;
 }
@@ -772,8 +910,24 @@ async function fetchQuarter(
     }
 
     let parsed: ParsedAmcRow[] = [];
-    for (const t of extract.tables) {
+    for (let ti = 0; ti < extract.tables.length; ti++) {
+      const t = extract.tables[ti];
+      const sample = t.rows
+        .slice(0, 5)
+        .map((r, i) => `      row[${i}]: ${JSON.stringify(r).slice(0, 220)}`)
+        .join("\n");
+      info(
+        `AAUM[${q.calendarQ}]:   table[${ti}] preview (first 5 rows):\n${sample}`
+      );
       const rows = parseAmcRowsFromTable(t);
+      info(
+        `AAUM[${q.calendarQ}]:   table[${ti}] parsed ${rows.length} mapped AMC rows`
+      );
+      for (const r of rows) {
+        info(
+          `       ${r.amcSlug.padEnd(8)} ${r.amcNameAsReported}  →  ${r.avgAum.toFixed(2)} Cr (from Lakhs in source)`
+        );
+      }
       if (rows.length > 0) {
         parsed = rows;
         break;
@@ -881,8 +1035,12 @@ export async function ingestAmfiAaum(): Promise<void> {
       meta: {
         generatedAt: fetchedAt,
         source: FORM_URL,
-        notes:
-          "Per-AMC quarterly AAUM extracted via the AMFI Average AUM disclosure form (MUI Autocomplete UI). Each row carries source + fetchedAt provenance.",
+        notes: [
+          "Per-AMC quarterly AAUM extracted via the AMFI Average AUM disclosure form (MUI Autocomplete UI).",
+          "unitOriginal=Rs Lakhs · unitStored=Rs Crore · conversion=lakhs_to_crore_divide_by_100.",
+          "Backend endpoint discovered: /api/average-aum-fundwise?fyId=N&periodId=N (not yet used directly).",
+          "Per-row provenance: source URL + fetchedAt.",
+        ].join(" "),
       },
       rows: outRows,
     };
