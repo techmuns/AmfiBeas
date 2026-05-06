@@ -6,6 +6,7 @@ import amcQuarterlyRaw from "./snapshots/amc-quarterly.json";
 import otherSchemesRaw from "./snapshots/other-schemes-monthly.json";
 import amcAaumRaw from "./snapshots/amc-aaum-quarterly.json";
 import morningstarRaw from "./snapshots/morningstar-amc-aum.json";
+import managementYieldsRaw from "./snapshots/amc-management-yields.json";
 import type {
   AmcAaumQuarterlyRow,
   AmcAaumQuarterlySnapshot,
@@ -13,6 +14,7 @@ import type {
   AmcMonthlySnapshot,
   AmcQuarterlySnapshot,
   IndustryMonthlySnapshot,
+  ManagementYieldsSnapshot,
   MorningstarAumSnapshot,
   OtherSchemesMonthlySnapshot,
   SchemeNavsSnapshot,
@@ -30,6 +32,8 @@ export const amcAaumQuarterlySnapshot =
   amcAaumRaw as AmcAaumQuarterlySnapshot;
 export const morningstarAumSnapshot =
   morningstarRaw as MorningstarAumSnapshot;
+export const managementYieldsSnapshot =
+  managementYieldsRaw as ManagementYieldsSnapshot;
 
 export interface DataMode {
   industryMonthly: "live" | "demo";

@@ -2,6 +2,7 @@ import { ingestAmfiAmcMaster } from "./amfi-nav";
 import { ingestAmfiSubClassification } from "./amfi-sub-classification";
 import { ingestListedAmcQuarterly } from "./listed-amc-quarterly";
 import { ingestAmfiAaum } from "./amfi-aaum";
+import { ingestManagementYields } from "./management-yields";
 import { ingestMorningstar } from "./morningstar";
 
 interface Step {
@@ -23,6 +24,10 @@ const STEPS: Step[] = [
     optional: true,
   },
   { name: "amfi-aaum", run: ingestAmfiAaum, optional: true },
+  // Best-effort ingest of management-disclosed "bps of AAUM" yields from
+  // public IR pages. Always optional — a parse failure must not block the
+  // rest of the pipeline.
+  { name: "management-yields", run: ingestManagementYields, optional: true },
   // Morningstar is opt-in via MORNINGSTAR_FETCH_ENABLED=1; the step itself
   // returns immediately when the flag is unset, so registering unconditionally
   // is safe.
