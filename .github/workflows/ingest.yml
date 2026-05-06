@@ -42,6 +42,11 @@ jobs:
       - name: Install Chromium for Playwright
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
+      - name: Install pdf-parse for management-yields ingester
+        # Installed inline so it never reaches the production / Cloudflare
+        # Workers builds — those run `npm ci` and the lockfile must stay
+        # clean. --no-save keeps package.json untouched.
+        run: npm install --no-save pdf-parse@1.1.1
       - name: Run ingest
         env:
           # AAUM_DEBUG_ONE_QUARTER: set to "1" to limit AAUM ingestion to a
