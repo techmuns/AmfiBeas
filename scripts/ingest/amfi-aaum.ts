@@ -1,7 +1,9 @@
 import {
   info,
+  mergeBySlugQuarter,
   nowIso,
   parseNumberLoose,
+  readSnapshot,
   warn,
   writeSnapshot,
 } from "./utils";
@@ -997,6 +999,7 @@ export async function ingestAmfiAaum(): Promise<void> {
   }, T.totalKill);
 
   try {
+    info("=== amfi-aaum ===");
     info(
       `AAUM: starting (debug-one-quarter=${DEBUG_ONE_QUARTER ? "on" : "off"}, total budget=${T.totalKill}ms)`
     );
@@ -1004,9 +1007,13 @@ export async function ingestAmfiAaum(): Promise<void> {
 
     const allQuarters = recentQuartersFY(8);
     const quarters = DEBUG_ONE_QUARTER ? allQuarters.slice(0, 1) : allQuarters;
-    info(`AAUM: will attempt ${quarters.length} quarter(s)`);
+    info(
+      `AAUM: rolling fetch window = ${quarters.length} quarter(s) (${quarters[quarters.length - 1].calendarQ}…${quarters[0].calendarQ})`
+    );
 
     const outRows: AmcAaumQuarterlyRow[] = [];
+    const succeededQuarters: string[] = [];
+    const failedQuarters: string[] = [];
     for (const q of quarters) {
       if (killed) break;
       info(
@@ -1018,7 +1025,11 @@ export async function ingestAmfiAaum(): Promise<void> {
       } catch (err) {
         warn(`AAUM[${q.calendarQ}]: ${(err as Error).message}`);
       }
-      if (!outcome || outcome.rows.length === 0) continue;
+      if (!outcome || outcome.rows.length === 0) {
+        failedQuarters.push(q.calendarQ);
+        continue;
+      }
+      let added = 0;
       for (const r of outcome.rows) {
         if (!Number.isFinite(r.avgAum) || r.avgAum <= 0) continue;
         if (!r.amcSlug) continue;
@@ -1031,8 +1042,18 @@ export async function ingestAmfiAaum(): Promise<void> {
           fetchedAt,
           status: "ok",
         });
+        added += 1;
       }
+      if (added > 0) succeededQuarters.push(q.calendarQ);
+      else failedQuarters.push(q.calendarQ);
     }
+
+    // Merge into prior snapshot — quarters that failed this run keep their
+    // historical rows; refetched (slug, quarter) pairs are replaced in place.
+    const prior =
+      (await readSnapshot<AmcAaumQuarterlySnapshot>(
+        "amc-aaum-quarterly.json"
+      ))?.rows ?? [];
 
     if (outRows.length === 0) {
       warn(
@@ -1041,12 +1062,25 @@ export async function ingestAmfiAaum(): Promise<void> {
       return;
     }
 
-    const slugsCovered = new Set(outRows.map((r) => r.amcSlug));
-    const quartersCovered = Array.from(
+    const { rows: merged, stats } = mergeBySlugQuarter(prior, outRows);
+    const fetchedQuarters = Array.from(
       new Set(outRows.map((r) => r.quarter))
     ).sort();
+    const allQuartersOut = Array.from(
+      new Set(merged.map((r) => r.quarter))
+    ).sort();
+    const allSlugs = Array.from(new Set(merged.map((r) => r.amcSlug)));
     info(
-      `AAUM: ${outRows.length} rows · ${slugsCovered.size} AMCs · ${quartersCovered.length} quarters · range ${quartersCovered[0]}…${quartersCovered[quartersCovered.length - 1]}`
+      `AAUM: quarters fetched=${succeededQuarters.length} failed=[${failedQuarters.join(", ")}]`
+    );
+    info(
+      `AAUM: this run ${outRows.length} rows across ${fetchedQuarters.length} quarter(s) (${fetchedQuarters[0]}…${fetchedQuarters[fetchedQuarters.length - 1]})`
+    );
+    info(
+      `AAUM: merge — added=${stats.added} updated=${stats.updated} preserved=${stats.preserved} total=${stats.total}`
+    );
+    info(
+      `AAUM: snapshot range ${allQuartersOut[0]}…${allQuartersOut[allQuartersOut.length - 1]} · ${allSlugs.length} AMCs`
     );
 
     const snapshot: AmcAaumQuarterlySnapshot = {
@@ -1058,9 +1092,11 @@ export async function ingestAmfiAaum(): Promise<void> {
           "unitOriginal=Rs Lakhs · unitStored=Rs Crore · conversion=lakhs_to_crore_divide_by_100.",
           "Backend endpoint discovered: /api/average-aum-fundwise?fyId=N&periodId=N (not yet used directly).",
           "Per-row provenance: source URL + fetchedAt.",
+          `lastSuccessfulFetchAt=${fetchedAt} · fetchWindow=${quarters.length} · quartersThisRun=[${succeededQuarters.join(", ")}] · failedThisRun=[${failedQuarters.join(", ")}].`,
+          `quartersCovered=${allQuartersOut.length} (${allQuartersOut[0]}…${allQuartersOut[allQuartersOut.length - 1]}) · rowCount=${stats.total}.`,
         ].join(" "),
       },
-      rows: outRows,
+      rows: merged,
     };
     await writeSnapshot("amc-aaum-quarterly.json", snapshot);
     info("AAUM: wrote amc-aaum-quarterly.json");

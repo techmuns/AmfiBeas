@@ -6,6 +6,7 @@ import {
 } from "./generator";
 import {
   aaumWithFallback,
+  amcAaumQuarterlySnapshot,
   amcQuarterlySnapshot,
   industryMonthlySnapshot,
 } from "./source";
@@ -231,8 +232,18 @@ export function latestMonth(): string {
   return MONTHS_LIST[MONTHS_LIST.length - 1];
 }
 
+/**
+ * Latest quarter visible to the dashboard. Prefers the most recent quarter
+ * that has either sourced P&L (screener) or sourced AAUM (AMFI) — so when
+ * a future quarter (e.g. 2026-Q2) lands in either snapshot, the UI picks
+ * it up automatically. Falls back to the generator's anchor quarter.
+ */
 export function latestQuarter(): string {
-  return QUARTERS_LIST[QUARTERS_LIST.length - 1];
+  const seen = new Set<string>();
+  for (const r of amcQuarterlySnapshot.rows) seen.add(r.quarter);
+  for (const r of amcAaumQuarterlySnapshot.rows) seen.add(r.quarter);
+  if (seen.size === 0) return QUARTERS_LIST[QUARTERS_LIST.length - 1];
+  return Array.from(seen).sort().pop()!;
 }
 
 /**

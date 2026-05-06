@@ -1,8 +1,11 @@
 name: Ingest data
 
 on:
+  # Weekly: Mondays 02:30 UTC. New quarterly disclosures from screener.in
+  # and AMFI typically appear within a few weeks of quarter end; weekly
+  # cadence picks them up promptly without thrashing rate limits.
   schedule:
-    - cron: "0 4 10 * *"
+    - cron: "30 2 * * 1"
   workflow_dispatch:
     inputs:
       reason:
