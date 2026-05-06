@@ -2,18 +2,36 @@ import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FilterBar } from "@/components/filters/FilterBar";
+import type { AmcStatus } from "@/components/filters/FilterBar";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
 import {
-  industryQuarterly,
-  latestQuarter,
+  SOURCED_FINANCIALS_SLUGS,
   qoqChange,
+  quarterlyForAmc,
   yoyChangeQuarterly,
 } from "@/data/aggregate";
-import { amcAaumQuarterlySnapshot } from "@/data/source";
-import { formatINR, formatDelta } from "@/lib/format";
-import { parseFilters, selectedSlugs, trimQuarters } from "@/lib/filter";
+import { aaumProvenance, amcAaumQuarterlySnapshot, amcQuarterlySnapshot } from "@/data/source";
+import { AMCS, getAMC } from "@/data/amcs";
+import {
+  formatCompactCrSafe,
+  formatDelta,
+  formatQuarterLabelLong,
+} from "@/lib/format";
+import { parseFilters, trimQuarters } from "@/lib/filter";
 import { QUARTERS_LIST } from "@/data/generator";
+
+const DEFAULT_SLUG = "hdfc";
+
+function buildAmcStatus(): Record<string, AmcStatus> {
+  const out: Record<string, AmcStatus> = {};
+  for (const a of AMCS) {
+    if (SOURCED_FINANCIALS_SLUGS.has(a.slug)) out[a.slug] = "live";
+    else if (a.listed) out[a.slug] = "pending";
+    else out[a.slug] = "unavailable";
+  }
+  return out;
+}
 
 export default async function QuarterlyPage({
   searchParams,
@@ -22,13 +40,55 @@ export default async function QuarterlyPage({
 }) {
   const sp = await searchParams;
   const filters = parseFilters(sp);
-  const slugs = selectedSlugs(filters);
+  const status = buildAmcStatus();
 
-  const fullSeries = industryQuarterly(slugs);
+  // Single-select: pick the first sourced AMC from the URL, else fall back to
+  // hdfc. Unlisted / pending slugs in the URL are ignored.
+  const requested = filters.amcs.find((s) => status[s] === "live");
+  const slug = requested ?? DEFAULT_SLUG;
+  const profile = getAMC(slug);
+
+  const fullSeries = quarterlyForAmc(slug);
   const trimmedSet = new Set(trimQuarters(QUARTERS_LIST, filters.range));
   const series = fullSeries.filter((q) => trimmedSet.has(q.quarter));
-
   const latest = fullSeries[fullSeries.length - 1];
+
+  const aaumMeta = amcAaumQuarterlySnapshot.meta;
+  const yieldsSubtitle =
+    amcAaumQuarterlySnapshot.rows.length > 0
+      ? `Source: AMFI AAUM · ${new Date(aaumMeta.generatedAt).toISOString().slice(0, 10)}`
+      : "Annualised revenue / operating / profit yield";
+
+  const trend = (n: number) =>
+    n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
+
+  // No data → render empty state. Reaches this branch only if the default
+  // slug somehow has no rows (defensive — hdfc is always sourced today).
+  if (!latest || !profile) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Quarterly Financials"
+          subtitle="Single-AMC view · sourced quarterly P&L"
+        />
+        <FilterBar
+          showRange="quarterly"
+          amcMode="single"
+          amcStatus={status}
+          defaultSlug={DEFAULT_SLUG}
+        />
+        <Card
+          title="Financials unavailable"
+          subtitle="No sourced quarterly P&L for the selected AMC."
+        >
+          <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+            —
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   const revenueYoy = yoyChangeQuarterly(fullSeries.map((q) => q.revenue));
   const opYoy = yoyChangeQuarterly(fullSeries.map((q) => q.operatingProfit));
   const patYoy = yoyChangeQuarterly(fullSeries.map((q) => q.pat));
@@ -65,53 +125,73 @@ export default async function QuarterlyPage({
   }));
   // null (not 0) for quarters where AAUM is missing, so the line renders as
   // a gap rather than a misleading drop-to-zero.
-  const yieldData = series.map((q) => ({
-    quarter: q.quarter,
-    revenue: q.avgAum
-      ? Number(((q.revenue * 4 * 10_000) / q.avgAum).toFixed(1))
-      : null,
-    op: q.avgAum
-      ? Number(((q.operatingProfit * 4 * 10_000) / q.avgAum).toFixed(1))
-      : null,
-    profit: q.avgAum
-      ? Number(((q.pat * 4 * 10_000) / q.avgAum).toFixed(1))
-      : null,
-  }));
+  const yieldData = series.map((q) => {
+    const hasAaum = aaumProvenance(slug, q.quarter)?.status === "ok";
+    return {
+      quarter: q.quarter,
+      revenue: hasAaum
+        ? Number(((q.revenue * 4 * 10_000) / q.avgAum).toFixed(1))
+        : null,
+      op: hasAaum
+        ? Number(((q.operatingProfit * 4 * 10_000) / q.avgAum).toFixed(1))
+        : null,
+      profit: hasAaum
+        ? Number(((q.pat * 4 * 10_000) / q.avgAum).toFixed(1))
+        : null,
+    };
+  });
 
-  const aaumMeta = amcAaumQuarterlySnapshot.meta;
-  const aaumLive = amcAaumQuarterlySnapshot.rows.length > 0;
-  const yieldsSubtitle = aaumLive
-    ? `Source: AMFI AAUM · ${new Date(aaumMeta.generatedAt).toISOString().slice(0, 10)}`
-    : "Annualised revenue / operating / profit yield";
+  const subtitle = `${profile.name}${profile.ticker ? ` (${profile.ticker})` : ""} · ${formatQuarterLabelLong(latest.quarter)}`;
 
-  const trend = (n: number) =>
-    n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
-
-  const subtitle = slugs
-    ? `${slugs.length} AMC${slugs.length > 1 ? "s" : ""} · ${latestQuarter()}`
-    : `Industry P&L (10 AMCs) · ${latestQuarter()}`;
+  // Compact source / provenance line. Hostname only — keeps the line tight
+  // while making the source unambiguous (screener.in for P&L, AMFI for AAUM).
+  const pnlSourceHost = (() => {
+    try {
+      return new URL(amcQuarterlySnapshot.meta.source).hostname.replace(
+        /^www\./,
+        ""
+      );
+    } catch {
+      return amcQuarterlySnapshot.meta.source;
+    }
+  })();
+  const pnlSourceDate = new Date(amcQuarterlySnapshot.meta.generatedAt)
+    .toISOString()
+    .slice(0, 10);
+  const aaumSourceDate = new Date(amcAaumQuarterlySnapshot.meta.generatedAt)
+    .toISOString()
+    .slice(0, 10);
+  const provenanceLine = `P&L: ${pnlSourceHost} · ${pnlSourceDate} · AAUM: AMFI · ${aaumSourceDate}`;
 
   return (
     <div className="space-y-6">
       <PageHeader title="Quarterly Financials" subtitle={subtitle} />
-      <FilterBar showRange="quarterly" />
+      <FilterBar
+        showRange="quarterly"
+        amcMode="single"
+        amcStatus={status}
+        defaultSlug={DEFAULT_SLUG}
+      />
+      <p className="-mt-2 text-[11px] tabular text-muted-foreground">
+        {provenanceLine}
+      </p>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label="Revenue"
-          value={formatINR(latest.revenue, { compact: true })}
+          value={formatCompactCrSafe(latest.revenue)}
           delta={`${formatDelta(revenueYoy)} YoY`}
           trend={trend(revenueYoy)}
         />
         <KpiCard
           label="Operating Profit"
-          value={formatINR(latest.operatingProfit, { compact: true })}
+          value={formatCompactCrSafe(latest.operatingProfit)}
           delta={`${formatDelta(opYoy)} YoY`}
           trend={trend(opYoy)}
         />
         <KpiCard
           label="PAT"
-          value={formatINR(latest.pat, { compact: true })}
+          value={formatCompactCrSafe(latest.pat)}
           delta={`${formatDelta(patYoy)} YoY`}
           trend={trend(patYoy)}
         />
@@ -144,7 +224,10 @@ export default async function QuarterlyPage({
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card title="Revenue / Op Profit / PAT" subtitle="Quarterly">
+        <Card
+          title="Revenue / Op Profit / PAT"
+          subtitle="Quarterly financials · 3-month reporting periods · ₹ Cr"
+        >
           <GroupedBars
             data={pnlData}
             xKey="quarter"
@@ -155,7 +238,7 @@ export default async function QuarterlyPage({
             ]}
           />
         </Card>
-        <Card title="Margin Trend" subtitle="PAT & Operating margin">
+        <Card title="Margin Trend" subtitle="PAT & Operating margin · %">
           <MultiLine
             data={marginData}
             xKey="quarter"

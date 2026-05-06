@@ -2,8 +2,10 @@ import * as cheerio from "cheerio";
 import {
   fetchText,
   info,
+  mergeBySlugQuarter,
   nowIso,
   parseNumberLoose,
+  readSnapshot,
   warn,
   writeSnapshot,
 } from "./utils";
@@ -146,35 +148,73 @@ async function fetchOne(amc: ListedAmc): Promise<AmcQuarterlyRow[]> {
 }
 
 export async function ingestListedAmcQuarterly(): Promise<void> {
-  const all: AmcQuarterlyRow[] = [];
+  info("=== listed-amc-quarterly ===");
+  const fetched: AmcQuarterlyRow[] = [];
+  const succeeded: string[] = [];
+  const failed: string[] = [];
+
   for (const amc of LISTED) {
     try {
       const rows = await fetchOne(amc);
-      all.push(...rows);
+      if (rows.length === 0) {
+        warn(`listed-amc-q: ${amc.slug} returned 0 rows — preserving prior`);
+        failed.push(amc.slug);
+        continue;
+      }
+      fetched.push(...rows);
+      succeeded.push(amc.slug);
     } catch (err) {
       warn(`listed-amc-q: ${amc.slug} failed → ${(err as Error).message}`);
+      failed.push(amc.slug);
     }
   }
 
-  if (all.length === 0) {
-    warn("listed-amc-q: no rows parsed — keeping previous snapshot");
+  // Merge into prior snapshot. Missing AMCs (in failed[]) keep their
+  // historical rows untouched; refetched AMCs replace their (slug, quarter)
+  // rows in place so corrections to a published quarter propagate.
+  const prior =
+    (await readSnapshot<AmcQuarterlySnapshot>("amc-quarterly.json"))?.rows ??
+    [];
+
+  if (fetched.length === 0) {
+    warn(
+      "listed-amc-q: no new rows parsed across all AMCs — keeping previous snapshot"
+    );
     return;
   }
 
-  const slugsCovered = new Set(all.map((r) => r.amcSlug));
-  const quartersCovered = Array.from(new Set(all.map((r) => r.quarter))).sort();
+  const { rows: merged, stats } = mergeBySlugQuarter(prior, fetched);
+  const fetchedQuarters = Array.from(
+    new Set(fetched.map((r) => r.quarter))
+  ).sort();
+  const allQuarters = Array.from(new Set(merged.map((r) => r.quarter))).sort();
+  const allSlugs = Array.from(new Set(merged.map((r) => r.amcSlug))).sort();
+
   info(
-    `listed-amc-q: ${all.length} rows · ${slugsCovered.size}/4 AMCs · ${quartersCovered.length} quarters · range ${quartersCovered[0]}…${quartersCovered[quartersCovered.length - 1]}`
+    `listed-amc-q: AMCs fetched=${succeeded.length}/${LISTED.length} ok=[${succeeded.join(", ")}] failed=[${failed.join(", ")}]`
+  );
+  info(
+    `listed-amc-q: fetched ${fetched.length} rows across ${fetchedQuarters.length} quarters (${fetchedQuarters[0]}…${fetchedQuarters[fetchedQuarters.length - 1]})`
+  );
+  info(
+    `listed-amc-q: merge — added=${stats.added} updated=${stats.updated} preserved=${stats.preserved} total=${stats.total}`
+  );
+  info(
+    `listed-amc-q: snapshot range ${allQuarters[0]}…${allQuarters[allQuarters.length - 1]} · ${allSlugs.length} AMCs`
   );
 
   const snapshot: AmcQuarterlySnapshot = {
     meta: {
       generatedAt: nowIso(),
       source: "https://www.screener.in/company/{ticker}/consolidated/",
-      notes:
-        "Quarterly P&L for the 4 listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC). Revenue / op profit / PAT in ₹ Cr; avgAum not provided by source.",
+      notes: [
+        "Quarterly P&L for listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC).",
+        "Revenue / op profit / PAT in ₹ Cr; avgAum not provided by source.",
+        `lastSuccessfulFetchAt=${nowIso()} · slugsThisRun=[${succeeded.join(", ")}] · failedThisRun=[${failed.join(", ")}].`,
+        `quartersCovered=${allQuarters.length} (${allQuarters[0]}…${allQuarters[allQuarters.length - 1]}) · rowCount=${stats.total} · fetchWindow=${fetchedQuarters.length}.`,
+      ].join(" "),
     },
-    rows: all,
+    rows: merged,
   };
   await writeSnapshot("amc-quarterly.json", snapshot);
   info("wrote amc-quarterly.json");

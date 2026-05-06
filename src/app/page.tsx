@@ -21,6 +21,7 @@ import {
   formatDelta,
   formatLakhSafe,
   formatPctSafe,
+  formatQuarterLabelLong,
 } from "@/lib/format";
 
 export default function HomePage() {
@@ -56,7 +57,7 @@ export default function HomePage() {
     <div className="space-y-6">
       <PageHeader
         title="Overview"
-        subtitle={`Industry snapshot · ${latestMonth()} (operating) · ${latestQuarter()} (financial)`}
+        subtitle={`Industry snapshot · ${latestMonth()} (operating) · ${formatQuarterLabelLong(latestQuarter())} (financial)`}
       />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -88,20 +89,20 @@ export default function HomePage() {
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="Industry Revenue"
+          label="Listed AMC Revenue"
           value={formatCompactCrSafe(latestQ.revenue)}
         />
         <KpiCard
-          label="Operating Profit"
+          label="Listed AMC Op Profit"
           value={formatCompactCrSafe(latestQ.operatingProfit)}
         />
         <KpiCard
-          label="PAT"
+          label="Listed AMC PAT"
           value={formatCompactCrSafe(latestQ.pat)}
           delta={`${formatDelta(patYoy)} YoY`}
           trend={trend(patYoy)}
         />
-        <KpiCard label="PAT Margin" value={formatPctSafe(patMargin)} />
+        <KpiCard label="Listed AMC PAT Margin" value={formatPctSafe(patMargin)} />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">

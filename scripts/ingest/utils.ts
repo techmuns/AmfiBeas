@@ -44,6 +44,58 @@ export async function writeSnapshot(name: string, data: unknown): Promise<void> 
   await fs.writeFile(file, JSON.stringify(data, null, 2) + "\n", "utf8");
 }
 
+export async function readSnapshot<T>(name: string): Promise<T | null> {
+  const file = path.join(SNAPSHOT_DIR, name);
+  try {
+    const text = await fs.readFile(file, "utf8");
+    return JSON.parse(text) as T;
+  } catch {
+    return null;
+  }
+}
+
+export interface MergeStats {
+  added: number; // (slug, quarter) pairs new in this fetch
+  updated: number; // (slug, quarter) pairs that existed and got refreshed
+  preserved: number; // (slug, quarter) pairs untouched from prior snapshot
+  total: number; // final row count
+}
+
+/**
+ * Merge new rows into prior rows by (amcSlug, quarter). New rows replace
+ * existing ones with the same key; rows not present in `next` are kept.
+ * Result is sorted by (quarter ascending, amcSlug ascending) for stable diffs.
+ *
+ * Use for snapshots that should grow forward and never lose history when
+ * a fetch returns a smaller window than the last successful run.
+ */
+export function mergeBySlugQuarter<
+  T extends { amcSlug: string; quarter: string },
+>(prev: T[], next: T[]): { rows: T[]; stats: MergeStats } {
+  const key = (r: T) => `${r.amcSlug}::${r.quarter}`;
+  const map = new Map<string, T>();
+  for (const r of prev) map.set(key(r), r);
+  let added = 0;
+  let updated = 0;
+  for (const r of next) {
+    const k = key(r);
+    if (map.has(k)) updated += 1;
+    else added += 1;
+    map.set(k, r);
+  }
+  const rows = Array.from(map.values()).sort((a, b) => {
+    if (a.quarter !== b.quarter) return a.quarter.localeCompare(b.quarter);
+    return a.amcSlug.localeCompare(b.amcSlug);
+  });
+  const stats: MergeStats = {
+    added,
+    updated,
+    preserved: prev.length - updated,
+    total: rows.length,
+  };
+  return { rows, stats };
+}
+
 export function nowIso(): string {
   return new Date().toISOString();
 }
