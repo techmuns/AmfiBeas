@@ -23,10 +23,11 @@ const TARGET_AMCS = [
 // All timing budgets in milliseconds. Sized so a single quarter run finishes
 // well inside the overall 90 s kill timer even when most steps fail soft.
 const T = {
-  totalKill: 90_000,
+  totalKill: 120_000,
   pageGoto: 25_000,
   waitForFormReady: 12_000,
   waitForDependentFields: 8_000,
+  waitForLoadingDone: 12_000,
   waitForOptionsListbox: 2_500,
   clickInput: 3_000,
   clickOption: 1_500,
@@ -154,6 +155,58 @@ interface XhrCapture {
 
 function sleep(ms: number) {
   return new Promise<void>((r) => setTimeout(r, ms));
+}
+
+/**
+ * After a dropdown selection AMFI may swap the next dependent input to a
+ * disabled "Loading..." placeholder while it fetches options. Poll until
+ * that placeholder is gone (or never existed). Returns true when settled,
+ * false on timeout. Cheap polling (every 400ms) so we exit fast on success.
+ */
+async function waitForLoadingDone(
+  page: Page,
+  quarter: string,
+  label: string,
+  timeoutMs: number
+): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const stillLoading = await page
+      .evaluate(() => {
+        const inputs = Array.from(
+          document.querySelectorAll('input[placeholder="Loading..."]')
+        );
+        return inputs.some((el) => (el as HTMLElement).offsetParent !== null);
+      })
+      .catch(() => false);
+    if (!stillLoading) {
+      info(
+        `AAUM[${quarter}]: loading settled [${label}] in ${Math.round(
+          timeoutMs - (deadline - Date.now())
+        )}ms`
+      );
+      return true;
+    }
+    await sleep(400);
+  }
+  info(
+    `AAUM[${quarter}]: loading TIMED OUT [${label}] after ${timeoutMs}ms (Loading... still present)`
+  );
+  return false;
+}
+
+async function isPlaceholderVisible(
+  page: Page,
+  placeholder: string
+): Promise<boolean> {
+  return await page
+    .evaluate((ph: string) => {
+      const matches = Array.from(
+        document.querySelectorAll(`input[placeholder="${ph}"]`)
+      );
+      return matches.some((el) => (el as HTMLElement).offsetParent !== null);
+    }, placeholder)
+    .catch(() => false);
 }
 
 async function logVisiblePlaceholders(
@@ -565,33 +618,10 @@ async function fetchQuarter(
     }
     if (fType.found) await sleep(T.midSleep);
 
-    // Step 3: Select Mutual Fund
-    info(`AAUM[${q.calendarQ}]: setting Select Mutual Fund`);
-    let fMf = await setMuiAutocompleteByPlaceholder(
-      page,
-      "Select Mutual Fund",
-      ["All Mutual Funds", "Select All", "All"]
-    );
-    info(
-      `AAUM[${q.calendarQ}]:   MF found=${fMf.found} chosen=${fMf.chosen ?? "—"} value="${fMf.visibleValue}" options=[${fMf.options.slice(0, 8).join(" | ")}]`
-    );
-    // Debug fallback: if no "All" option exists or click didn't take, pick HDFC.
-    if (fMf.found && !fMf.visibleValue && fMf.options.length > 0) {
-      info(
-        `AAUM[${q.calendarQ}]:   MF: no "All" option visible — falling back to HDFC Mutual Fund (debug)`
-      );
-      fMf = await setMuiAutocompleteByPlaceholder(
-        page,
-        "Select Mutual Fund",
-        ["HDFC Mutual Fund"]
-      );
-      info(
-        `AAUM[${q.calendarQ}]:   MF (HDFC fallback) chosen=${fMf.chosen ?? "—"} value="${fMf.visibleValue}"`
-      );
-    }
-    await sleep(T.midSleep);
-
-    // Step 4: Financial Year
+    // Step 3: Financial Year FIRST. The previous run showed Period turns
+    // into a disabled "Loading..." input the moment FY is set, which means
+    // FY triggers the async load that produces Period (and possibly MF)
+    // options. We must drive FY before Period.
     info(`AAUM[${q.calendarQ}]: setting Select Financial Year`);
     const fFy = await setMuiAutocompleteByPlaceholder(
       page,
@@ -601,7 +631,58 @@ async function fetchQuarter(
     info(
       `AAUM[${q.calendarQ}]:   FY found=${fFy.found} chosen=${fFy.chosen ?? "—"} value="${fFy.visibleValue}" options=[${fFy.options.slice(0, 8).join(" | ")}]`
     );
-    await sleep(T.midSleep);
+
+    // Wait for the async load (Loading... placeholder) to settle.
+    await waitForLoadingDone(
+      page,
+      q.calendarQ,
+      "post-FY",
+      T.waitForLoadingDone
+    );
+    await logVisiblePlaceholders(page, q.calendarQ, "post-FY-load");
+
+    // Step 4: Mutual Fund — only if it actually rendered after FY's load.
+    // Tolerate absence: if MF isn't visible, the form just doesn't gate
+    // Period on MF in this Fundwise mode.
+    let fMf = { ...EMPTY_FIELD };
+    const mfPresent = await isPlaceholderVisible(page, "Select Mutual Fund");
+    if (mfPresent) {
+      info(`AAUM[${q.calendarQ}]: setting Select Mutual Fund`);
+      fMf = await setMuiAutocompleteByPlaceholder(
+        page,
+        "Select Mutual Fund",
+        ["All Mutual Funds", "Select All", "All"]
+      );
+      info(
+        `AAUM[${q.calendarQ}]:   MF found=${fMf.found} chosen=${fMf.chosen ?? "—"} value="${fMf.visibleValue}" options=[${fMf.options.slice(0, 8).join(" | ")}]`
+      );
+      // Debug fallback: if no "All" option, pick HDFC.
+      if (fMf.found && !fMf.visibleValue && fMf.options.length > 0) {
+        info(
+          `AAUM[${q.calendarQ}]:   MF: no "All" option visible — falling back to HDFC Mutual Fund (debug)`
+        );
+        fMf = await setMuiAutocompleteByPlaceholder(
+          page,
+          "Select Mutual Fund",
+          ["HDFC Mutual Fund"]
+        );
+        info(
+          `AAUM[${q.calendarQ}]:   MF (HDFC fallback) chosen=${fMf.chosen ?? "—"} value="${fMf.visibleValue}"`
+        );
+      }
+      // Wait for the second async load that MF selection may trigger.
+      await waitForLoadingDone(
+        page,
+        q.calendarQ,
+        "post-MF",
+        T.waitForLoadingDone
+      );
+      await logVisiblePlaceholders(page, q.calendarQ, "post-MF-load");
+    } else {
+      info(
+        `AAUM[${q.calendarQ}]:   MF not present after FY load — proceeding directly to Period`
+      );
+    }
 
     // Step 5: Period
     info(`AAUM[${q.calendarQ}]: setting Select Period`);
