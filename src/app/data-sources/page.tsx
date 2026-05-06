@@ -142,8 +142,16 @@ export default function DataSourcesPage() {
         title="Public Morningstar Data"
         subtitle={
           ms.meta.status === "ok"
-            ? `Live · ${ms.rows.length} rows · ${new Date(ms.meta.fetchedAt).toISOString().slice(0, 10)}`
-            : `Disabled · MORNINGSTAR_FETCH_ENABLED=${process.env.MORNINGSTAR_FETCH_ENABLED ?? ""}`
+            ? `Live · ${ms.rows.length} rows · ${new Date(
+                ms.meta.fetchedAt
+              )
+                .toISOString()
+                .slice(0, 10)}`
+            : ms.meta.status === "blocked"
+            ? "Blocked"
+            : ms.meta.status === "failed"
+            ? "Failed"
+            : "Not connected"
         }
       >
         <PublicKpiList items={publicKpis} />
