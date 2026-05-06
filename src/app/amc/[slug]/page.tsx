@@ -104,7 +104,7 @@ export default async function AmcPage({
     (y) => (y.revenue ?? 0) > 0 || (y.op ?? 0) > 0 || (y.profit ?? 0) > 0
   );
   const yieldsSubtitle = yieldsAvailable
-    ? `Source: AMFI AAUM · ${new Date(amcAaumQuarterlySnapshot.meta.generatedAt).toISOString().slice(0, 10)}`
+    ? `bps of AAUM · quarterly P&L ×4 / same-quarter AMFI AAUM · ${new Date(amcAaumQuarterlySnapshot.meta.generatedAt).toISOString().slice(0, 10)}`
     : "AAUM not in source";
 
   const trend = (n: number) =>
@@ -265,7 +265,7 @@ export default async function AmcPage({
           )}
         </Card>
         <Card
-          title="Yields (bps)"
+          title="Yields (bps of AAUM)"
           subtitle={
             quarterlyLive ? yieldsSubtitle : financialsUnavailableMessage
           }
@@ -277,7 +277,7 @@ export default async function AmcPage({
               valueFormat="bps"
               axisFormat="bps"
               lines={[
-                { key: "revenue", name: "Revenue yield", color: "hsl(var(--chart-1))" },
+                { key: "revenue", name: "Revenue realization", color: "hsl(var(--chart-1))" },
                 { key: "op", name: "Operating", color: "hsl(var(--chart-2))" },
                 { key: "profit", name: "Profit", color: "hsl(var(--chart-3))" },
               ]}

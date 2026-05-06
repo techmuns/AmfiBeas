@@ -295,15 +295,16 @@ export function yieldsForAmc(slug: string): QuarterlyYields[] {
   const rows = quarterlyForAmc(slug);
   return rows.map((q) => ({
     quarter: q.quarter,
-    // Quarterly bps yields: same-quarter P&L numerator over same-quarter
-    // AAUM denominator. NOT annualised — values express the share of AAUM
-    // earned/extracted in this single 3-month window.
+    // Management-comparable "bps of AAUM": quarterly P&L is annualised
+    // (× 4) and divided by the same quarter's AAUM, then converted to
+    // basis points. This matches the disclosure style on listed AMC
+    // investor decks (e.g. HDFC AMC Q1 FY26 op margin ≈ 36 bps of AAUM).
     revenueYieldBps:
-      q.avgAum === 0 ? 0 : (q.revenue * 10_000) / q.avgAum,
+      q.avgAum === 0 ? 0 : (q.revenue * 4 * 10_000) / q.avgAum,
     operatingYieldBps:
-      q.avgAum === 0 ? 0 : (q.operatingProfit * 10_000) / q.avgAum,
+      q.avgAum === 0 ? 0 : (q.operatingProfit * 4 * 10_000) / q.avgAum,
     profitYieldBps:
-      q.avgAum === 0 ? 0 : (q.pat * 10_000) / q.avgAum,
+      q.avgAum === 0 ? 0 : (q.pat * 4 * 10_000) / q.avgAum,
     patMargin: q.revenue === 0 ? 0 : (q.pat / q.revenue) * 100,
     opMargin: q.revenue === 0 ? 0 : (q.operatingProfit / q.revenue) * 100,
   }));
