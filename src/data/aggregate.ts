@@ -1,10 +1,8 @@
 import type { MonthlyOperating, QuarterlyFinancial } from "./types";
 import {
   MONTHLY,
-  QUARTERLY,
   MONTHS_LIST,
   QUARTERS_LIST,
-  quarterlyForAmc as generatedQuarterlyForAmc,
 } from "./generator";
 import {
   aaumWithFallback,
@@ -16,8 +14,9 @@ const liveQuarterlyBySlug = (() => {
   const m = new Map<string, QuarterlyFinancial[]>();
   for (const r of amcQuarterlySnapshot.rows) {
     const arr = m.get(r.amcSlug) ?? [];
-    // Source priority: AMFI primary → Morningstar public fallback → fall back
-    // to whatever the P&L source provided. Morningstar never overrides AMFI.
+    // AAUM denominator: AMFI primary → Morningstar opt-in fallback → P&L
+    // source's avgAum (which is 0 from screener). Morningstar never
+    // overrides AMFI.
     const fallback = aaumWithFallback(r.amcSlug, r.quarter);
     arr.push({
       amcSlug: r.amcSlug,
@@ -38,9 +37,25 @@ export function isLiveQuarterly(slug: string): boolean {
   return liveQuarterlyBySlug.has(slug);
 }
 
+/**
+ * Returns sourced quarterly financials for an AMC, or [] when no source is
+ * available. Demo / generator-derived financials are NEVER returned — pages
+ * must render "—" or hide cards rather than showing fake numbers for AMCs
+ * (Kotak, SBI, ICICI Pru, Axis, DSP, Mirae, …) that lack a P&L source.
+ */
 export function quarterlyForAmc(slug: string): QuarterlyFinancial[] {
-  return liveQuarterlyBySlug.get(slug) ?? generatedQuarterlyForAmc(slug);
+  return liveQuarterlyBySlug.get(slug) ?? [];
 }
+
+/**
+ * Slugs of AMCs with sourced quarterly financials (the 4 listed AMCs whose
+ * P&L was scraped from screener.in). Used as the universe for any
+ * "industry" financial aggregation — anything outside this set has no
+ * sourced revenue / op profit / PAT and must not be summed in.
+ */
+export const SOURCED_FINANCIALS_SLUGS: ReadonlySet<string> = new Set(
+  liveQuarterlyBySlug.keys()
+);
 
 export interface IndustryMonthRow {
   month: string;
@@ -278,26 +293,34 @@ export function yieldsForAmc(slug: string): QuarterlyYields[] {
   }));
 }
 
+/**
+ * Aggregate quarterly financials across the AMCs that have a sourced P&L.
+ * Demo / generator data is never summed in — if `slugs` includes any AMC
+ * without sourced financials, that AMC simply contributes nothing.
+ *
+ * Returned series labels itself "industry" but, with current sources, only
+ * reflects the 4 listed AMCs (HDFC AMC, Nippon, ABSL, UTI). Pages should
+ * surface that scope in the UI (subtitle / footnote).
+ */
 export function industryQuarterly(
   slugs?: string[] | null
 ): QuarterlyFinancial[] {
   return QUARTERS_LIST.map((quarter) => {
-    const generatedRows = QUARTERLY.filter(
-      (q) => q.quarter === quarter && (!slugs || slugs.includes(q.amcSlug))
-    );
-    const merged = generatedRows.map((q) => {
+    const sourced: QuarterlyFinancial[] = [];
+    for (const amcSlug of liveQuarterlyBySlug.keys()) {
+      if (slugs && !slugs.includes(amcSlug)) continue;
       const live = liveQuarterlyBySlug
-        .get(q.amcSlug)
-        ?.find((r) => r.quarter === quarter);
-      return live ?? q;
-    });
+        .get(amcSlug)!
+        .find((r) => r.quarter === quarter);
+      if (live) sourced.push(live);
+    }
     return {
       amcSlug: "industry",
       quarter,
-      revenue: merged.reduce((s, r) => s + r.revenue, 0),
-      operatingProfit: merged.reduce((s, r) => s + r.operatingProfit, 0),
-      pat: merged.reduce((s, r) => s + r.pat, 0),
-      avgAum: merged.reduce((s, r) => s + r.avgAum, 0),
+      revenue: sourced.reduce((s, r) => s + r.revenue, 0),
+      operatingProfit: sourced.reduce((s, r) => s + r.operatingProfit, 0),
+      pat: sourced.reduce((s, r) => s + r.pat, 0),
+      avgAum: sourced.reduce((s, r) => s + r.avgAum, 0),
     };
   });
 }

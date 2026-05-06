@@ -5,6 +5,7 @@ import { FilterBar } from "@/components/filters/FilterBar";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
 import {
+  SOURCED_FINANCIALS_SLUGS,
   industryQuarterly,
   latestQuarter,
   qoqChange,
@@ -22,7 +23,17 @@ export default async function QuarterlyPage({
 }) {
   const sp = await searchParams;
   const filters = parseFilters(sp);
-  const slugs = selectedSlugs(filters);
+  const requestedSlugs = selectedSlugs(filters);
+  // Only AMCs with sourced P&L can be summed. Drop unlisted slugs from the
+  // selection so we never accidentally aggregate demo data.
+  const slugs = requestedSlugs
+    ? requestedSlugs.filter((s) => SOURCED_FINANCIALS_SLUGS.has(s))
+    : null;
+  const droppedUnsourced =
+    requestedSlugs &&
+    requestedSlugs.length !== (slugs?.length ?? 0);
+  const noSourcedSelection =
+    requestedSlugs !== null && (slugs?.length ?? 0) === 0;
 
   const fullSeries = industryQuarterly(slugs);
   const trimmedSet = new Set(trimQuarters(QUARTERS_LIST, filters.range));
@@ -87,14 +98,47 @@ export default async function QuarterlyPage({
   const trend = (n: number) =>
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
 
+  const sourcedCount = SOURCED_FINANCIALS_SLUGS.size;
   const subtitle = slugs
-    ? `${slugs.length} AMC${slugs.length > 1 ? "s" : ""} · ${latestQuarter()}`
-    : `Industry P&L (10 AMCs) · ${latestQuarter()}`;
+    ? `${slugs.length} listed AMC${slugs.length > 1 ? "s" : ""} · ${latestQuarter()}`
+    : `Listed AMC P&L · ${sourcedCount} AMCs · ${latestQuarter()}`;
+
+  if (noSourcedSelection) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Quarterly Financials"
+          subtitle="Selection contains no listed AMCs — financials unavailable"
+        />
+        <FilterBar showRange="quarterly" />
+        <Card
+          title="Financials unavailable"
+          subtitle="Quarterly P&L is sourced only for the 4 listed AMCs (HDFC AMC, Nippon, ABSL, UTI). Unlisted AMCs have no standalone quarterly disclosures."
+        >
+          <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+            —
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <PageHeader title="Quarterly Financials" subtitle={subtitle} />
       <FilterBar showRange="quarterly" />
+
+      {droppedUnsourced && (
+        <Card
+          title="Filter scope reduced"
+          subtitle="Some selected AMCs have no sourced quarterly financials and were excluded from the aggregate."
+        >
+          <div className="text-sm text-muted-foreground">
+            Showing {slugs?.length ?? 0} of {requestedSlugs?.length ?? 0}{" "}
+            selected AMCs.
+          </div>
+        </Card>
+      )}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard

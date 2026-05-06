@@ -3,7 +3,8 @@ import { ArrowRight, BadgeCheck } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { AMCS, amfiNameToSlug, getAMC } from "@/data/amcs";
-import { monthlyForAmc, quarterlyForAmc } from "@/data/generator";
+import { monthlyForAmc } from "@/data/generator";
+import { quarterlyForAmc } from "@/data/aggregate";
 import { amcMasterSnapshot, dataMode } from "@/data/source";
 import {
   formatCompactCrSafe,

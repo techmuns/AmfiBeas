@@ -41,11 +41,16 @@ export default async function AmcPage({
   const quarterly = quarterlyForAmc(slug);
   const yields = yieldsForAmc(slug);
   const latest = monthly[monthly.length - 1];
-  const latestQ = quarterly[quarterly.length - 1];
+  const quarterlyLive = isLiveQuarterly(slug);
+  const latestQ = quarterlyLive
+    ? quarterly[quarterly.length - 1]
+    : undefined;
 
   const aumYoy = yoyChange(monthly.map((m) => m.totalAum));
   const sipMom = momChange(monthly.map((m) => m.sipContribution));
-  const patYoy = yoyChangeQuarterly(quarterly.map((q) => q.pat));
+  const patYoy = quarterlyLive
+    ? yoyChangeQuarterly(quarterly.map((q) => q.pat))
+    : 0;
 
   const industry = industryByMonth();
   const industryLatest = industry[industry.length - 1];
@@ -97,7 +102,9 @@ export default async function AmcPage({
   const trend = (n: number) =>
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
 
-  const quarterlyLive = isLiveQuarterly(slug);
+  const financialsUnavailableMessage = profile.listed
+    ? "Financials unavailable"
+    : "Unlisted · no standalone quarterly financials";
 
   return (
     <div className="space-y-6">
@@ -149,13 +156,19 @@ export default async function AmcPage({
         <KpiCard label="SIP Share" value={formatPctSafe(sipShare, 2)} />
         <KpiCard
           label="Quarterly Revenue"
-          value={formatCompactCrSafe(latestQ.revenue)}
+          value={
+            quarterlyLive && latestQ
+              ? formatCompactCrSafe(latestQ.revenue)
+              : "—"
+          }
         />
         <KpiCard
           label="PAT"
-          value={formatCompactCrSafe(latestQ.pat)}
-          delta={`${formatDelta(patYoy)} YoY`}
-          trend={trend(patYoy)}
+          value={
+            quarterlyLive && latestQ ? formatCompactCrSafe(latestQ.pat) : "—"
+          }
+          delta={quarterlyLive ? `${formatDelta(patYoy)} YoY` : undefined}
+          trend={quarterlyLive ? trend(patYoy) : undefined}
         />
       </section>
 
@@ -166,19 +179,33 @@ export default async function AmcPage({
         <Card title="SIP Flow" subtitle="Monthly inflows">
           <BarSeries data={sipSeries} name="SIP" />
         </Card>
-        <Card title="Quarterly P&L" subtitle="Revenue / Op / PAT">
-          <GroupedBars
-            data={pnlData}
-            xKey="quarter"
-            bars={[
-              { key: "revenue", name: "Revenue", color: "hsl(var(--chart-1))" },
-              { key: "op", name: "Op Profit", color: "hsl(var(--chart-2))" },
-              { key: "pat", name: "PAT", color: "hsl(var(--chart-3))" },
-            ]}
-          />
+        <Card
+          title="Quarterly P&L"
+          subtitle={quarterlyLive ? "Revenue / Op / PAT" : financialsUnavailableMessage}
+        >
+          {quarterlyLive ? (
+            <GroupedBars
+              data={pnlData}
+              xKey="quarter"
+              bars={[
+                { key: "revenue", name: "Revenue", color: "hsl(var(--chart-1))" },
+                { key: "op", name: "Op Profit", color: "hsl(var(--chart-2))" },
+                { key: "pat", name: "PAT", color: "hsl(var(--chart-3))" },
+              ]}
+            />
+          ) : (
+            <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+              —
+            </div>
+          )}
         </Card>
-        <Card title="Yields (bps)" subtitle={yieldsSubtitle}>
-          {yieldsAvailable ? (
+        <Card
+          title="Yields (bps)"
+          subtitle={
+            quarterlyLive ? yieldsSubtitle : financialsUnavailableMessage
+          }
+        >
+          {quarterlyLive && yieldsAvailable ? (
             <MultiLine
               data={yieldData}
               xKey="quarter"
