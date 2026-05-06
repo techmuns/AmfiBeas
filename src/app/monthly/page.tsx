@@ -5,8 +5,10 @@ import { FilterBar } from "@/components/filters/FilterBar";
 import { AreaTrend } from "@/components/charts/AreaTrend";
 import { BarSeries } from "@/components/charts/BarSeries";
 import { StackedArea } from "@/components/charts/StackedArea";
+import { Donut, type DonutSlice } from "@/components/charts/Donut";
 import { Heatmap, type HeatmapRow } from "@/components/charts/Heatmap";
 import {
+  aumMixForMonth,
   industryByMonth,
   latestMonth,
   marketShare,
@@ -101,6 +103,24 @@ export default async function MonthlyPage({
     label: m.month,
     value: m.nfoCount,
   }));
+
+  // AUM Mix donut. Other Schemes is preserved as its own residual bucket.
+  const AUM_MIX_COLORS: Record<string, string> = {
+    activeEquity: "hsl(var(--chart-1))",
+    passive: "hsl(var(--chart-5))",
+    debt: "hsl(var(--chart-2))",
+    liquid: "hsl(var(--chart-4))",
+    hybrid: "hsl(var(--chart-3))",
+    otherSchemes: "hsl(var(--muted-foreground))",
+  };
+  const aumMix = aumMixForMonth(latestMonth(), slugs);
+  const aumMixSlices: DonutSlice[] = aumMix.map((s) => ({
+    key: s.key,
+    label: s.label,
+    value: s.aum,
+    color: AUM_MIX_COLORS[s.key] ?? "hsl(var(--muted-foreground))",
+  }));
+  const aumMixHasData = aumMix.some((s) => s.aum > 0);
 
   const heatmapAmcs = slugs ? AMCS.filter((a) => slugs.includes(a.slug)) : AMCS;
   const heatmapRows: HeatmapRow[] = heatmapAmcs.map((a) => ({
@@ -240,6 +260,19 @@ export default async function MonthlyPage({
               color: AMC_COLORS[k] ?? "hsl(var(--muted-foreground))",
             }))}
           />
+        </Card>
+        <Card
+          title="AUM Mix"
+          subtitle="Latest month · category share"
+          className="lg:col-span-2"
+        >
+          {aumMixHasData ? (
+            <Donut data={aumMixSlices} />
+          ) : (
+            <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+              —
+            </div>
+          )}
         </Card>
         <Card title="SIP Flows" subtitle="Monthly inflows">
           <BarSeries data={sipChartSeries} name="SIP" />
