@@ -35,7 +35,7 @@ export const FREE_PUBLIC_KPIS: readonly MorningstarKpi[] = [
     source: "Morningstar",
     status: "not_connected",
     description: "Quarterly AAUM by fund house (public).",
-    dashboardUse: "/quarterly fallback to AMFI",
+    dashboardUse: "/financials fallback to AMFI",
   },
   {
     id: "fund-aaum",
