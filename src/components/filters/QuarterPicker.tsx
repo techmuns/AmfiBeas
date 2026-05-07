@@ -24,7 +24,12 @@ export function QuarterPicker({ availableQuarters, selectedQuarter }: Props) {
   const params = useSearchParams();
   const [pending, startTransition] = useTransition();
 
-  const display = availableQuarters.slice(-8);
+  // Pills render newest → oldest (latest quarter left-most), so the most
+  // recent period is always the first action and the eye doesn't have to
+  // scan to find it. Charts elsewhere stay chronological (oldest → newest).
+  // Cap at 8 quarters; sort by quarter id descending so future quarters
+  // automatically slot in at the left without code changes.
+  const display = availableQuarters.slice(-8).slice().reverse();
   const latest = availableQuarters[availableQuarters.length - 1];
 
   const setPeriod = (q: string) => {
