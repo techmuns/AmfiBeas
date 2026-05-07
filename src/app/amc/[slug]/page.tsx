@@ -104,8 +104,8 @@ export default async function AmcPage({
     (y) => (y.revenue ?? 0) > 0 || (y.op ?? 0) > 0 || (y.profit ?? 0) > 0
   );
   const yieldsSubtitle = yieldsAvailable
-    ? `bps of AAUM · quarterly P&L ×4 / same-quarter AMFI AAUM · ${new Date(amcAaumQuarterlySnapshot.meta.generatedAt).toISOString().slice(0, 10)}`
-    : "AAUM not in source";
+    ? `bps of MF QAAUM · quarterly P&L ×4 / same-quarter AMFI MF QAAUM · ${new Date(amcAaumQuarterlySnapshot.meta.generatedAt).toISOString().slice(0, 10)}`
+    : "MF QAAUM not in source";
 
   const trend = (n: number) =>
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
@@ -137,7 +137,7 @@ export default async function AmcPage({
     .toISOString()
     .slice(0, 10);
   const aaumNote = latestAaumQuarter
-    ? `Source: AMFI AAUM · ${aaumGeneratedAt}`
+    ? `Source: AMFI MF QAAUM · ${aaumGeneratedAt}`
     : undefined;
 
   // Per-AMC financials provenance: live screener.in for sourced AMCs,
@@ -175,7 +175,7 @@ export default async function AmcPage({
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="Average AUM"
+          label="MF Average AUM"
           value={formatCompactCrSafe(latestAaum)}
           delta={
             aaumQoq !== null ? `${formatDelta(aaumQoq)} QoQ` : undefined
@@ -265,7 +265,7 @@ export default async function AmcPage({
           )}
         </Card>
         <Card
-          title="Yields (bps of AAUM)"
+          title="Yields (bps of MF QAAUM)"
           subtitle={
             quarterlyLive ? yieldsSubtitle : financialsUnavailableMessage
           }

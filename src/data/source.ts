@@ -55,9 +55,20 @@ export function dataMode(): DataMode {
 }
 
 /**
- * Look up a live AAUM value (₹ Cr) for a single AMC + calendar quarter.
+ * Look up a live MF QAAUM value (₹ Cr) for a single AMC + calendar quarter.
+ *
+ * INVARIANT: this denominator is MUTUAL-FUND-ONLY. The underlying snapshot
+ * is sourced from AMFI's Fundwise Average AUM disclosure
+ * (https://www.amfiindia.com/aum-data/average-aum), which by construction
+ * excludes PMS, AIF, offshore mandates, advisory / SMA, real-estate, and
+ * any other non-MF business. Yield helpers (Revenue Realization,
+ * Operating Margin, Profit Yield, all "bps of MF QAAUM") rely on this
+ * property — never replace the denominator with a wider company-AUM
+ * series without auditing every consumer.
+ *
  * Returns null if the value is not in the snapshot, or if it fails the
- * deterministic validation (must be a positive finite number with status === "ok").
+ * deterministic validation (must be a positive finite number with
+ * status === "ok").
  */
 export function aaumFor(slug: string, quarter: string): number | null {
   const row = amcAaumQuarterlySnapshot.rows.find(
