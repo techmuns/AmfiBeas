@@ -188,13 +188,18 @@ export default async function MonthlyPage({
   /** All cards we'd surface if the row had every field. The render below
    *  hides any whose value is null on the latest row, so a press-release-
    *  only month would skip totalAaum/netInflow, and a Monthly-Report-only
-   *  month would skip the SIP cards. */
+   *  month would skip the SIP cards.
+   *
+   *  totalAum is intentionally NOT in this list — totalAaum (period
+   *  average) is the dashboard-canonical headline and is comparable to
+   *  the bps-of-MF-QAAUM yields elsewhere. The closing-balance totalAum
+   *  is still extracted and stored in the snapshot for any future
+   *  consumer; just not rendered here. */
   const AMFI_CARDS: {
     field: AmfiMonthlyKpiField;
     label: string;
     format: (v: number) => string;
   }[] = [
-    { field: "totalAum", label: "Total AUM", format: formatCompactCrSafe },
     { field: "totalAaum", label: "Total AAUM", format: formatCompactCrSafe },
     { field: "equityAum", label: "Equity AUM", format: formatCompactCrSafe },
     { field: "debtAum", label: "Debt AUM", format: formatCompactCrSafe },
