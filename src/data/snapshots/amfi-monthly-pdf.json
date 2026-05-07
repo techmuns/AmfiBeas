@@ -1,8 +1,24 @@
 {
   "meta": {
-    "generatedAt": "",
+    "generatedAt": "2026-05-07T16:47:14.047Z",
     "source": "manual-data/amfi-monthly/pdfs/",
-    "notes": "Industry-level monthly KPIs extracted from manually-uploaded AMFI PDFs. Not yet wired into /monthly UI. Optional fields are OMITTED when not detected — never zeroed. Rows are merged by month across runs."
+    "notes": "Industry-level monthly KPIs extracted from manually-uploaded AMFI PDFs. Auto-detects Monthly Report vs press release per file. Optional fields are OMITTED when not detected — never zeroed. Rows merged by month; prior values preserved when the latest PDF doesn't carry them. processedPdfs=1 / 1, totalRows=1."
   },
-  "rows": []
+  "rows": [
+    {
+      "month": "2026-03",
+      "sourceFormat": "monthly-report",
+      "sourcePdf": "march-ammar2026repo.pdf",
+      "sourcePages": [
+        1
+      ],
+      "extractedAt": "2026-05-07T16:47:14.046Z",
+      "liquidAum": 466498.11,
+      "debtAum": 1651502.37,
+      "equityAum": 3197698.15,
+      "totalAum": 7373376.98,
+      "totalAaum": 7946027.87,
+      "netInflow": -239910
+    }
+  ]
 }
