@@ -142,8 +142,17 @@ export default async function AmcPage({
 
   // Per-AMC financials provenance: live screener.in for sourced AMCs,
   // pending for listed but un-ingested (ICICI Pru), unavailable for unlisted.
+  // When the AMC's latest sourced quarter is a *derived* row (e.g. ICICI's
+  // 2025-Q2 reconstructed from 9M FY26 minus reported quarters), swap the
+  // standard screener note for an explicit "derived" caption so the user
+  // can tell it's not a direct scrape.
+  const derivedHeadline = latestQ?.derivedFrom
+    ? latestQ.derivedFrom.split(".")[0].trim() + "."
+    : null;
   const financialsNote = quarterlyLive
-    ? liveScreenerNote()
+    ? derivedHeadline
+      ? `Source: derived · ${derivedHeadline}`
+      : liveScreenerNote()
     : profile.listed
       ? pendingFinancialsNote()
       : unlistedFinancialsNote();
