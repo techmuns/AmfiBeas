@@ -189,15 +189,23 @@ export interface OtherSchemesMonthlySnapshot {
  */
 export interface AmfiMonthlyPdfRow {
   month: string;                       // YYYY-MM
-  totalAum?: number;                   // ₹ Cr
-  equityAum?: number;                  // ₹ Cr
+  /** Net AUM as on month-end (₹ Cr). Closing-balance figure from the
+   *  Monthly Report's Grand Total row. */
+  totalAum?: number;
+  /** Average AUM for the month (₹ Cr). Period-average figure
+   *  ("AAUM") — comparable to investor-disclosure denominators. */
+  totalAaum?: number;
+  equityAum?: number;                  // ₹ Cr (Sub Total - II / Growth/Equity Oriented)
   activeEquityAum?: number;            // ₹ Cr (when AMFI splits active vs passive)
-  debtAum?: number;                    // ₹ Cr
-  liquidAum?: number;                  // ₹ Cr
-  sipContribution?: number;            // ₹ Cr (monthly inflow)
-  sipAum?: number;                     // ₹ Cr
-  sipAccounts?: number;                // count of live SIP accounts
+  debtAum?: number;                    // ₹ Cr (Sub Total - I / Income/Debt Oriented)
+  liquidAum?: number;                  // ₹ Cr (Liquid Fund row)
+  sipContribution?: number;            // ₹ Cr (monthly inflow, press release only)
+  sipAum?: number;                     // ₹ Cr (press release only)
+  sipAccounts?: number;                // count of live SIP accounts (press release only)
   netInflow?: number;                  // ₹ Cr (industry net inflow / outflow)
+  /** "monthly-report" | "press-release" | "unknown" — which AMFI
+   *  publication this row was extracted from. */
+  sourceFormat: "monthly-report" | "press-release" | "unknown";
   sourcePdf: string;                   // filename only
   sourcePages: number[];               // 1-indexed page numbers used
   extractedAt: string;                 // ISO timestamp

@@ -1,15 +1,23 @@
 # AMFI monthly — manual PDF upload
 
-Drop raw AMFI monthly press-release / "Note for Press" PDFs into:
+Drop raw AMFI monthly PDFs into:
 
 ```
 manual-data/amfi-monthly/pdfs/
 ```
 
-That's it. No CSV conversion, no rename rules required — though a filename
-that includes the month (e.g. `amfi-2025-04.pdf` or `amfi-april-2025.pdf`)
-makes month detection more reliable when the PDF itself does not state
-the period clearly on its first page.
+The extractor auto-detects two AMFI publication formats:
+
+1. **Monthly Report** — the per-scheme tabular report (`Sub Total - I/II/…`,
+   `Grand Total`). Carries AUM totals, category sub-totals, net inflow.
+   Does **not** carry SIP figures.
+2. **Note for Press** / "Note for the Press" — the monthly press
+   release. Carries AAUM, SIP Contribution, SIP AUM, SIP Accounts.
+
+You don't have to label the file or rename it — the script picks the
+right parser per file. A filename like `amfi-2026-04.pdf` or
+`amfi-april-2026.pdf` is still useful as a backup if the PDF itself
+doesn't state the period clearly.
 
 ## Running the extractor
 
@@ -17,7 +25,7 @@ the period clearly on its first page.
 npm run ingest:amfi-pdf
 ```
 
-This reads every PDF under `pdfs/` and writes a clean JSON snapshot to:
+This reads every `*.pdf` under `pdfs/` and writes a clean JSON snapshot to:
 
 ```
 src/data/snapshots/amfi-monthly-pdf.json
@@ -25,35 +33,42 @@ src/data/snapshots/amfi-monthly-pdf.json
 
 The script:
 
-- Extracts each PDF's text page-by-page and runs labelled-number
-  pattern matching.
-- Records source provenance per row: `sourcePdf` (filename),
-  `sourcePages` (1-indexed page numbers each value was found on),
-  `month` (YYYY-MM), `extractedAt` (ISO timestamp).
-- **Never writes fake values.** Fields that cannot be confidently
-  parsed are simply omitted from the row — they are not zeroed.
+- Detects the format per file (`monthly-report` / `press-release` /
+  `unknown`) and dispatches to the right parser.
+- Records source provenance per row: `sourceFormat`, `sourcePdf`
+  (filename), `sourcePages` (1-indexed page numbers each value was
+  found on), `month` (YYYY-MM), `extractedAt` (ISO timestamp).
+- **Never writes fake values.** Fields the format does not carry, or
+  that cannot be confidently parsed, are simply omitted from the row
+  — they are not zeroed.
 - **Preserves prior data.** The snapshot is merged by `month`. New
   values overwrite previous ones for the same month; months not in
   the current run are kept as-is. A field that had a value previously
-  but is not detected this run is left untouched, not blanked.
+  but is not detected this run is left untouched, not blanked. So
+  a press release run can fill in SIP fields a Monthly Report run
+  left blank for the same month, and vice versa.
 
 ## Fields extracted (when available)
 
-| Field            | ₹ unit | Source label patterns                                   |
-| ---------------- | ------ | ------------------------------------------------------- |
-| `totalAum`       | ₹ Cr   | "Average Assets Under Management", "AAUM", "Total AUM"  |
-| `equityAum`      | ₹ Cr   | "Equity-Oriented", "Equity Schemes"                     |
-| `activeEquityAum`| ₹ Cr   | "Active Equity"                                         |
-| `debtAum`        | ₹ Cr   | "Debt-Oriented", "Debt Schemes"                         |
-| `liquidAum`      | ₹ Cr   | "Liquid", "Liquid / Money Market"                       |
-| `sipContribution`| ₹ Cr   | "SIP Contribution"                                      |
-| `sipAum`         | ₹ Cr   | "SIP AUM"                                               |
-| `sipAccounts`    | count  | "SIP Accounts" / "No. of SIP Accounts"                  |
-| `netInflow`      | ₹ Cr   | "Net Inflow / Outflow", "Total Net Inflow"              |
+| Field             | ₹ unit | Monthly Report source                       | Press release source                       |
+| ----------------- | ------ | ------------------------------------------- | ------------------------------------------ |
+| `totalAum`        | ₹ Cr   | Grand Total · Net AUM as on month-end       | "Industry / Total / Net AUM"               |
+| `totalAaum`       | ₹ Cr   | Grand Total · Average Net AUM for the month | "Average Assets Under Management" / "AAUM" |
+| `equityAum`       | ₹ Cr   | Sub Total - II (Growth/Equity Oriented)     | "Equity-Oriented", "Equity Schemes"        |
+| `activeEquityAum` | ₹ Cr   | n/a in the per-scheme table                 | "Active Equity"                            |
+| `debtAum`         | ₹ Cr   | Sub Total - I (Income/Debt Oriented)        | "Debt-Oriented", "Debt Schemes"            |
+| `liquidAum`       | ₹ Cr   | Liquid Fund row · Net AUM                   | "Liquid", "Liquid / Money Market"          |
+| `sipContribution` | ₹ Cr   | not in this format                          | "SIP Contribution"                         |
+| `sipAum`          | ₹ Cr   | not in this format                          | "SIP AUM"                                  |
+| `sipAccounts`     | count  | not in this format                          | "No. of SIP Accounts" (handles "in lakh")  |
+| `netInflow`       | ₹ Cr   | Grand Total · Net Inflow / Outflow column   | "Net Inflow / Outflow", "Total Net Inflow" |
 
-The label list is intentionally generous; AMFI changes wording across
-months. If your PDF uses a label not yet covered, add a new entry to
-`LABEL_PATTERNS` in `scripts/ingest/amfi-monthly-pdf.ts`.
+If a future AMFI PDF uses a label not yet covered, edit:
+
+- `parseMonthlyReport` (block / inline label maps) for the tabular form.
+- `PRESS_RELEASE_PATTERNS` for the press release form.
+
+Both live in `scripts/ingest/amfi-monthly-pdf.ts`.
 
 ## What this does not do (yet)
 
@@ -62,4 +77,5 @@ months. If your PDF uses a label not yet covered, add a new entry to
 - Does not push values to AMC-level rows (`amc-monthly.json`).
 
 The `/monthly` page will be wired to `amfi-monthly-pdf.json` in a
-follow-up once the extractor has been validated against a real PDF.
+follow-up once we have at least one Monthly Report and one press
+release ingested cleanly.
