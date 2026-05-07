@@ -1,14 +1,16 @@
 {
   "meta": {
-    "generatedAt": "2026-05-07T01:17:09.056Z",
+    "generatedAt": "2026-05-07T07:29:14.130Z",
     "source": "https://www.screener.in/company/{ticker}/consolidated/",
-    "notes": "Quarterly P&L for listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC). Revenue / op profit / PAT in ₹ Cr; avgAum not provided by source. lastSuccessfulFetchAt=2026-05-07T01:17:09.056Z · slugsThisRun=[hdfc, nippon, absl, uti] · failedThisRun=[]. quartersCovered=13 (2023-Q1…2026-Q1) · rowCount=52 · fetchWindow=13."
+    "notes": "Quarterly P&L for listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC). Source mapping: screener.in 'Sales' row → Revenue from Operations (excludes Other Income); 'Other Income' captured separately for display only; 'Operating Profit' and 'Net Profit' as labelled. revenueFromOperations is what feeds Revenue Realization (bps of MF QAAUM). avgAum not provided by this source. lastSuccessfulFetchAt=2026-05-07T07:29:14.130Z · slugsThisRun=[hdfc, nippon, absl, uti] · failedThisRun=[]. quartersCovered=13 (2023-Q1…2026-Q1) · rowCount=52 · fetchWindow=13."
   },
   "rows": [
     {
       "amcSlug": "absl",
       "quarter": "2023-Q1",
       "revenue": 297,
+      "revenueFromOperations": 297,
+      "otherIncome": 0,
       "operatingProfit": 158,
       "pat": 136,
       "avgAum": 0
@@ -17,6 +19,8 @@
       "amcSlug": "hdfc",
       "quarter": "2023-Q1",
       "revenue": 541,
+      "revenueFromOperations": 541,
+      "otherIncome": 0,
       "operatingProfit": 410,
       "pat": 376,
       "avgAum": 0
@@ -25,6 +29,8 @@
       "amcSlug": "nippon",
       "quarter": "2023-Q1",
       "revenue": 348,
+      "revenueFromOperations": 348,
+      "otherIncome": 0,
       "operatingProfit": 209,
       "pat": 198,
       "avgAum": 0
@@ -33,6 +39,8 @@
       "amcSlug": "uti",
       "quarter": "2023-Q1",
       "revenue": 301,
+      "revenueFromOperations": 301,
+      "otherIncome": 0,
       "operatingProfit": 122,
       "pat": 86,
       "avgAum": 0
@@ -41,6 +49,8 @@
       "amcSlug": "absl",
       "quarter": "2023-Q2",
       "revenue": 311,
+      "revenueFromOperations": 311,
+      "otherIncome": 0,
       "operatingProfit": 170,
       "pat": 185,
       "avgAum": 0
@@ -49,6 +59,8 @@
       "amcSlug": "hdfc",
       "quarter": "2023-Q2",
       "revenue": 575,
+      "revenueFromOperations": 575,
+      "otherIncome": 0,
       "operatingProfit": 428,
       "pat": 477,
       "avgAum": 0
@@ -57,6 +69,8 @@
       "amcSlug": "nippon",
       "quarter": "2023-Q2",
       "revenue": 354,
+      "revenueFromOperations": 354,
+      "otherIncome": 0,
       "operatingProfit": 202,
       "pat": 236,
       "avgAum": 0
@@ -65,6 +79,8 @@
       "amcSlug": "uti",
       "quarter": "2023-Q2",
       "revenue": 468,
+      "revenueFromOperations": 468,
+      "otherIncome": 0,
       "operatingProfit": 300,
       "pat": 234,
       "avgAum": 0
@@ -73,6 +89,8 @@
       "amcSlug": "absl",
       "quarter": "2023-Q3",
       "revenue": 335,
+      "revenueFromOperations": 335,
+      "otherIncome": 0,
       "operatingProfit": 192,
       "pat": 178,
       "avgAum": 0
@@ -81,6 +99,8 @@
       "amcSlug": "hdfc",
       "quarter": "2023-Q3",
       "revenue": 643,
+      "revenueFromOperations": 643,
+      "otherIncome": 0,
       "operatingProfit": 481,
       "pat": 437,
       "avgAum": 0
@@ -89,6 +109,8 @@
       "amcSlug": "nippon",
       "quarter": "2023-Q3",
       "revenue": 397,
+      "revenueFromOperations": 397,
+      "otherIncome": 0,
       "operatingProfit": 241,
       "pat": 244,
       "avgAum": 0
@@ -97,6 +119,8 @@
       "amcSlug": "uti",
       "quarter": "2023-Q3",
       "revenue": 404,
+      "revenueFromOperations": 404,
+      "otherIncome": 0,
       "operatingProfit": 232,
       "pat": 183,
       "avgAum": 0
@@ -105,6 +129,8 @@
       "amcSlug": "absl",
       "quarter": "2023-Q4",
       "revenue": 341,
+      "revenueFromOperations": 341,
+      "otherIncome": 0,
       "operatingProfit": 194,
       "pat": 209,
       "avgAum": 0
@@ -113,6 +139,8 @@
       "amcSlug": "hdfc",
       "quarter": "2023-Q4",
       "revenue": 671,
+      "revenueFromOperations": 671,
+      "otherIncome": 0,
       "operatingProfit": 509,
       "pat": 488,
       "avgAum": 0
@@ -121,6 +149,8 @@
       "amcSlug": "nippon",
       "quarter": "2023-Q4",
       "revenue": 423,
+      "revenueFromOperations": 423,
+      "otherIncome": 0,
       "operatingProfit": 259,
       "pat": 284,
       "avgAum": 0
@@ -129,6 +159,8 @@
       "amcSlug": "uti",
       "quarter": "2023-Q4",
       "revenue": 449,
+      "revenueFromOperations": 449,
+      "otherIncome": 0,
       "operatingProfit": 273,
       "pat": 203,
       "avgAum": 0
@@ -137,6 +169,8 @@
       "amcSlug": "absl",
       "quarter": "2024-Q1",
       "revenue": 366,
+      "revenueFromOperations": 366,
+      "otherIncome": 0,
       "operatingProfit": 205,
       "pat": 208,
       "avgAum": 0
@@ -145,6 +179,8 @@
       "amcSlug": "hdfc",
       "quarter": "2024-Q1",
       "revenue": 695,
+      "revenueFromOperations": 695,
+      "otherIncome": 0,
       "operatingProfit": 539,
       "pat": 541,
       "avgAum": 0
@@ -153,6 +189,8 @@
       "amcSlug": "nippon",
       "quarter": "2024-Q1",
       "revenue": 468,
+      "revenueFromOperations": 468,
+      "otherIncome": 0,
       "operatingProfit": 291,
       "pat": 343,
       "avgAum": 0
@@ -161,6 +199,8 @@
       "amcSlug": "uti",
       "quarter": "2024-Q1",
       "revenue": 416,
+      "revenueFromOperations": 416,
+      "otherIncome": 0,
       "operatingProfit": 228,
       "pat": 181,
       "avgAum": 0
@@ -169,6 +209,8 @@
       "amcSlug": "absl",
       "quarter": "2024-Q2",
       "revenue": 387,
+      "revenueFromOperations": 387,
+      "otherIncome": 0,
       "operatingProfit": 220,
       "pat": 236,
       "avgAum": 0
@@ -177,6 +219,8 @@
       "amcSlug": "hdfc",
       "quarter": "2024-Q2",
       "revenue": 775,
+      "revenueFromOperations": 775,
+      "otherIncome": 0,
       "operatingProfit": 594,
       "pat": 604,
       "avgAum": 0
@@ -185,6 +229,8 @@
       "amcSlug": "nippon",
       "quarter": "2024-Q2",
       "revenue": 505,
+      "revenueFromOperations": 505,
+      "otherIncome": 0,
       "operatingProfit": 316,
       "pat": 332,
       "avgAum": 0
@@ -193,6 +239,8 @@
       "amcSlug": "uti",
       "quarter": "2024-Q2",
       "revenue": 529,
+      "revenueFromOperations": 529,
+      "otherIncome": 0,
       "operatingProfit": 351,
       "pat": 274,
       "avgAum": 0
@@ -201,6 +249,8 @@
       "amcSlug": "absl",
       "quarter": "2024-Q3",
       "revenue": 424,
+      "revenueFromOperations": 424,
+      "otherIncome": 0,
       "operatingProfit": 250,
       "pat": 242,
       "avgAum": 0
@@ -209,6 +259,8 @@
       "amcSlug": "hdfc",
       "quarter": "2024-Q3",
       "revenue": 887,
+      "revenueFromOperations": 887,
+      "otherIncome": 0,
       "operatingProfit": 703,
       "pat": 577,
       "avgAum": 0
@@ -217,6 +269,8 @@
       "amcSlug": "nippon",
       "quarter": "2024-Q3",
       "revenue": 571,
+      "revenueFromOperations": 571,
+      "otherIncome": 0,
       "operatingProfit": 374,
       "pat": 360,
       "avgAum": 0
@@ -225,6 +279,8 @@
       "amcSlug": "uti",
       "quarter": "2024-Q3",
       "revenue": 538,
+      "revenueFromOperations": 538,
+      "otherIncome": 0,
       "operatingProfit": 348,
       "pat": 263,
       "avgAum": 0
@@ -233,6 +289,8 @@
       "amcSlug": "absl",
       "quarter": "2024-Q4",
       "revenue": 445,
+      "revenueFromOperations": 445,
+      "otherIncome": 0,
       "operatingProfit": 274,
       "pat": 224,
       "avgAum": 0
@@ -241,6 +299,8 @@
       "amcSlug": "hdfc",
       "quarter": "2024-Q4",
       "revenue": 935,
+      "revenueFromOperations": 935,
+      "otherIncome": 0,
       "operatingProfit": 764,
       "pat": 641,
       "avgAum": 0
@@ -249,6 +309,8 @@
       "amcSlug": "nippon",
       "quarter": "2024-Q4",
       "revenue": 588,
+      "revenueFromOperations": 588,
+      "otherIncome": 0,
       "operatingProfit": 386,
       "pat": 295,
       "avgAum": 0
@@ -257,6 +319,8 @@
       "amcSlug": "uti",
       "quarter": "2024-Q4",
       "revenue": 418,
+      "revenueFromOperations": 418,
+      "otherIncome": 0,
       "operatingProfit": 233,
       "pat": 174,
       "avgAum": 0
@@ -265,6 +329,8 @@
       "amcSlug": "absl",
       "quarter": "2025-Q1",
       "revenue": 429,
+      "revenueFromOperations": 429,
+      "otherIncome": 0,
       "operatingProfit": 244,
       "pat": 228,
       "avgAum": 0
@@ -273,6 +339,8 @@
       "amcSlug": "hdfc",
       "quarter": "2025-Q1",
       "revenue": 901,
+      "revenueFromOperations": 901,
+      "otherIncome": 0,
       "operatingProfit": 730,
       "pat": 638,
       "avgAum": 0
@@ -281,6 +349,8 @@
       "amcSlug": "nippon",
       "quarter": "2025-Q1",
       "revenue": 567,
+      "revenueFromOperations": 567,
+      "otherIncome": 0,
       "operatingProfit": 365,
       "pat": 299,
       "avgAum": 0
@@ -289,6 +359,8 @@
       "amcSlug": "uti",
       "quarter": "2025-Q1",
       "revenue": 376,
+      "revenueFromOperations": 376,
+      "otherIncome": 0,
       "operatingProfit": 169,
       "pat": 102,
       "avgAum": 0
@@ -297,6 +369,8 @@
       "amcSlug": "absl",
       "quarter": "2025-Q2",
       "revenue": 447,
+      "revenueFromOperations": 447,
+      "otherIncome": 0,
       "operatingProfit": 266,
       "pat": 277,
       "avgAum": 0
@@ -305,6 +379,8 @@
       "amcSlug": "hdfc",
       "quarter": "2025-Q2",
       "revenue": 968,
+      "revenueFromOperations": 968,
+      "otherIncome": 0,
       "operatingProfit": 773,
       "pat": 748,
       "avgAum": 0
@@ -313,6 +389,8 @@
       "amcSlug": "nippon",
       "quarter": "2025-Q2",
       "revenue": 607,
+      "revenueFromOperations": 607,
+      "otherIncome": 0,
       "operatingProfit": 388,
       "pat": 396,
       "avgAum": 0
@@ -321,6 +399,8 @@
       "amcSlug": "uti",
       "quarter": "2025-Q2",
       "revenue": 547,
+      "revenueFromOperations": 547,
+      "otherIncome": 0,
       "operatingProfit": 340,
       "pat": 254,
       "avgAum": 0
@@ -329,6 +409,8 @@
       "amcSlug": "absl",
       "quarter": "2025-Q3",
       "revenue": 461,
+      "revenueFromOperations": 461,
+      "otherIncome": 0,
       "operatingProfit": 283,
       "pat": 241,
       "avgAum": 0
@@ -337,6 +419,8 @@
       "amcSlug": "hdfc",
       "quarter": "2025-Q3",
       "revenue": 1027,
+      "revenueFromOperations": 1027,
+      "otherIncome": 0,
       "operatingProfit": 801,
       "pat": 718,
       "avgAum": 0
@@ -345,6 +429,8 @@
       "amcSlug": "nippon",
       "quarter": "2025-Q3",
       "revenue": 658,
+      "revenueFromOperations": 658,
+      "otherIncome": 0,
       "operatingProfit": 430,
       "pat": 345,
       "avgAum": 0
@@ -353,6 +439,8 @@
       "amcSlug": "uti",
       "quarter": "2025-Q3",
       "revenue": 419,
+      "revenueFromOperations": 419,
+      "otherIncome": 0,
       "operatingProfit": 177,
       "pat": 132,
       "avgAum": 0
@@ -361,6 +449,8 @@
       "amcSlug": "absl",
       "quarter": "2025-Q4",
       "revenue": 478,
+      "revenueFromOperations": 478,
+      "otherIncome": 0,
       "operatingProfit": 290,
       "pat": 270,
       "avgAum": 0
@@ -369,6 +459,8 @@
       "amcSlug": "hdfc",
       "quarter": "2025-Q4",
       "revenue": 1075,
+      "revenueFromOperations": 1075,
+      "otherIncome": 0,
       "operatingProfit": 876,
       "pat": 769,
       "avgAum": 0
@@ -377,6 +469,8 @@
       "amcSlug": "nippon",
       "quarter": "2025-Q4",
       "revenue": 705,
+      "revenueFromOperations": 705,
+      "otherIncome": 0,
       "operatingProfit": 470,
       "pat": 404,
       "avgAum": 0
@@ -385,6 +479,8 @@
       "amcSlug": "uti",
       "quarter": "2025-Q4",
       "revenue": 517,
+      "revenueFromOperations": 517,
+      "otherIncome": 0,
       "operatingProfit": 302,
       "pat": 138,
       "avgAum": 0
@@ -393,6 +489,8 @@
       "amcSlug": "absl",
       "quarter": "2026-Q1",
       "revenue": 458,
+      "revenueFromOperations": 458,
+      "otherIncome": 0,
       "operatingProfit": 266,
       "pat": 187,
       "avgAum": 0
@@ -401,6 +499,8 @@
       "amcSlug": "hdfc",
       "quarter": "2026-Q1",
       "revenue": 1052,
+      "revenueFromOperations": 1052,
+      "otherIncome": 0,
       "operatingProfit": 845,
       "pat": 623,
       "avgAum": 0
@@ -409,6 +509,8 @@
       "amcSlug": "nippon",
       "quarter": "2026-Q1",
       "revenue": 739,
+      "revenueFromOperations": 739,
+      "otherIncome": 0,
       "operatingProfit": 507,
       "pat": 385,
       "avgAum": 0
@@ -417,6 +519,8 @@
       "amcSlug": "uti",
       "quarter": "2026-Q1",
       "revenue": 390,
+      "revenueFromOperations": 390,
+      "otherIncome": 0,
       "operatingProfit": -12,
       "pat": -51,
       "avgAum": 0
