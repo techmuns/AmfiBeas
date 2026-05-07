@@ -56,24 +56,28 @@ interface PdfPage {
 // -------- format detection ---------------------------------------------
 
 /**
- * Format heuristics — anchor on the most distinctive text in each
- * publication. Monthly Report wins ties (it has more numeric ground
- * truth, so we'd rather treat ambiguous PDFs as Monthly Reports).
+ * Format heuristics — keep the Monthly-Report signals STRICT so that
+ * a press-release "Monthly Note" isn't misclassified just because it
+ * mentions phrases like "Income/Debt Oriented Schemes" in a chart
+ * legend. The unambiguous tell of a Monthly Report is the per-scheme
+ * sub-totals (Sub Total - I/II/III/IV/V) which never appear in the
+ * Crisil-produced press-release notes.
  */
 function detectFormat(pages: PdfPage[]): Format {
   const text = pages.map((p) => p.text).join("\n");
-  const monthlyReportSignals = [
-    /\bMonthly\s+Report\s+for\b/i,
-    /\bSub\s*Total\s*-\s*I\b/i,
-    /\bGrowth\s*\/\s*Equity\s+Oriented\s+Schemes\b/i,
-    /\bIncome\s*\/\s*Debt\s+Oriented\s+Schemes\b/i,
-    /\bNet\s+Assets\s+Under\s+Management\s+as\s+on\b/i,
-  ];
-  if (monthlyReportSignals.some((re) => re.test(text))) return "monthly-report";
+  // Monthly Report unambiguously contains explicit "Sub Total - <roman>"
+  // labels on its per-scheme rows. Nothing else carries that wording.
+  // [IV]+ matches the roman numerals I, II, III, IV, V, VI, VII, VIII
+  // that appear as section identifiers in the per-scheme table.
+  if (/\bSub\s*Total\s*-\s*[IV]+\b/i.test(text)) return "monthly-report";
+  // Press release / Monthly Note signals.
   const pressReleaseSignals = [
+    /\bAMFI\s+monthly\s+note\b/i,
+    /\bMonthly\s+mutual\s+fund\s+industry\s+update\b/i,
+    /\bSIP\s+monthly\s+contribution\b/i,
     /\bNote\s+for\s+(?:the\s+)?Press\b/i,
     /\bSIP\s+Contribution\b/i,
-    /\bMonthly\s+Trends?\b/i,
+    /\bIndustry\s+snapshot\b/i,
   ];
   if (pressReleaseSignals.some((re) => re.test(text))) return "press-release";
   return "unknown";
@@ -361,7 +365,24 @@ function parseMonthlyReport(pages: PdfPage[]): {
 
 // -------- Press Release parser -----------------------------------------
 
-interface PressReleaseLabelSpec {
+/**
+ * Press-release / Monthly Note layouts mix three quoting conventions
+ * for numbers:
+ *   - cr           — already in ₹ Cr (e.g. "SIP monthly contribution
+ *                    (crore) 32,087"). No scaling.
+ *   - lakh-cr      — value is in ₹ lakh crore; multiply by 100,000 to
+ *                    get ₹ Cr (e.g. "SIP assets (Rs lakh crore) 15.11"
+ *                    → 15,11,000 Cr).
+ *   - crore-count  — value is in crore (10⁷); multiply by 10,000,000
+ *                    to get a raw count (e.g. "Number of contributing
+ *                    SIP accounts (crore) 9.72" → 97,200,000).
+ *   - lakh-count   — value is in lakh (10⁵); multiply by 100,000 to
+ *                    get a raw count (e.g. "No. of SIP Accounts (in
+ *                    lakh) 9,943.55" → 994,355,000).
+ */
+type PressReleaseUnit = "cr" | "lakh-cr" | "crore-count" | "lakh-count";
+
+interface PressReleaseLineSpec {
   field: keyof Pick<
     AmfiMonthlyPdfRow,
     | "totalAum"
@@ -375,17 +396,116 @@ interface PressReleaseLabelSpec {
     | "sipAccounts"
     | "netInflow"
   >;
+  /** Patterns are tried in order; the FIRST match per page wins. */
   patterns: RegExp[];
-  /** "cr" → ₹ Cr (number, possibly with comma group separators).
-   *  "count" → integer count.
-   *  "lakh" → input is in lakh; converted to count by ×100,000. */
-  kind: "cr" | "count" | "lakh";
+  unit: PressReleaseUnit;
+  /**
+   * Optional: rejection threshold applied AFTER scaling. Used to
+   * disambiguate the AUM-trend "Total" / "Equity" / "Debt" rows from
+   * the flow-trend rows for the same category, where the AUM value
+   * is always ≥ 100× the absolute flow value. e.g. equityAum needs
+   * a > 100,000 ₹ Cr threshold to avoid matching "Equity 40,450" in
+   * the flow table.
+   */
+  minScaledValue?: number;
 }
 
 const NUM = String.raw`([0-9][0-9,]*\.?[0-9]*)`;
 const NEAR_NUM = String.raw`(?:[^\n]{0,160}?)` + NUM;
 
-const PRESS_RELEASE_PATTERNS: PressReleaseLabelSpec[] = [
+const PRESS_RELEASE_PATTERNS: PressReleaseLineSpec[] = [
+  // ---- SIP trend table — unique row labels, ordered by specificity.
+  {
+    field: "sipAccounts",
+    patterns: [
+      // "Number of contributing SIP accounts (crore) 9.72 ..."
+      new RegExp(
+        String.raw`Number\s+of\s+contributing\s+SIP\s+accounts\s*\(\s*crore\s*\)\s+` +
+          NUM,
+        "i"
+      ),
+      // "No. of SIP Accounts (in lakh) 9,943.55"
+      new RegExp(
+        String.raw`(?:No\.?\s+of\s+)?SIP\s+Accounts(?:[^\n]{0,40}\bin\s+lakh\b)` +
+          NEAR_NUM,
+        "i"
+      ),
+    ],
+    unit: "crore-count",
+  },
+  {
+    field: "sipContribution",
+    patterns: [
+      // "SIP monthly contribution (crore) 32,087 ..."
+      new RegExp(
+        String.raw`SIP\s+monthly\s+contribution\s*\(\s*crore\s*\)\s+` + NUM,
+        "i"
+      ),
+      // Older / generic press-release wordings.
+      new RegExp(String.raw`SIP\s+Contribution[^\n]{0,80}?` + NUM, "i"),
+      new RegExp(String.raw`Monthly\s+SIP(?:\s+Contribution)?[^\n]{0,80}?` + NUM, "i"),
+    ],
+    unit: "cr",
+  },
+  {
+    field: "sipAum",
+    patterns: [
+      // "SIP assets (Rs lakh crore) 15.11 ..."
+      new RegExp(
+        String.raw`SIP\s+assets\s*\(\s*Rs\s+lakh\s+crore\s*\)\s+` + NUM,
+        "i"
+      ),
+    ],
+    unit: "lakh-cr",
+  },
+  // Older direct "SIP AUM <N>" fallback in ₹ Cr (no lakh-crore wrapper).
+  {
+    field: "sipAum",
+    patterns: [new RegExp(String.raw`SIP\s+AUM[^\n]{0,80}?` + NUM, "i")],
+    unit: "cr",
+  },
+
+  // ---- Industry AUM — tabular rows. Each category appears in two
+  //      tables on different pages (AUM trend, then flow trend); the
+  //      AUM-trend table comes FIRST in document order, so the first
+  //      match per page is the AUM value. The minScaledValue check
+  //      additionally rejects flow-table values whose magnitude is
+  //      orders smaller than the AUM.
+  {
+    field: "totalAum",
+    patterns: [new RegExp(String.raw`^\s*Total\s+` + NUM, "im")],
+    unit: "cr",
+    // Industry-wide totalAum is always ≥ 50 lakh Cr (~5,000,000); flow-table
+    // totals are ≤ a few lakh Cr in absolute terms.
+    minScaledValue: 5_000_000,
+  },
+  {
+    field: "equityAum",
+    patterns: [new RegExp(String.raw`^\s*Equity\s+` + NUM, "im")],
+    unit: "cr",
+    minScaledValue: 100_000,
+  },
+  {
+    field: "debtAum",
+    patterns: [new RegExp(String.raw`^\s*Debt\s+` + NUM, "im")],
+    unit: "cr",
+    minScaledValue: 100_000,
+  },
+  {
+    field: "liquidAum",
+    patterns: [
+      // Press-release subcategory table: "Liquid funds 4,66,498 ..."
+      new RegExp(String.raw`^\s*Liquid\s+funds?\s+` + NUM, "im"),
+      // Older flat-key wordings.
+      new RegExp(String.raw`Liquid\s*/\s*Money\s*Market[^\n]{0,80}?` + NUM, "i"),
+    ],
+    unit: "cr",
+    minScaledValue: 10_000,
+  },
+
+  // ---- AAUM — older flat-key press-release wording. The Crisil
+  //      Monthly Note doesn't carry an AAUM number directly; this
+  //      pattern stays as a fallback for any future PDF that does.
   {
     field: "totalAaum",
     patterns: [
@@ -395,89 +515,32 @@ const PRESS_RELEASE_PATTERNS: PressReleaseLabelSpec[] = [
       ),
       new RegExp(String.raw`\bAAUM\b[^\n]{0,80}?` + NUM, "i"),
     ],
-    kind: "cr",
+    unit: "cr",
   },
-  {
-    field: "totalAum",
-    patterns: [
-      new RegExp(String.raw`Industry\s+(?:Total\s+)?AUM[^\n]{0,80}?` + NUM, "i"),
-      new RegExp(String.raw`Total\s+AUM[^\n]{0,80}?` + NUM, "i"),
-      new RegExp(String.raw`Net\s+AUM[^\n]{0,80}?` + NUM, "i"),
-    ],
-    kind: "cr",
-  },
-  {
-    field: "equityAum",
-    patterns: [
-      new RegExp(
-        String.raw`Equity[\s\-]+Oriented(?:\s+Schemes)?[^\n]{0,80}?` + NUM,
-        "i"
-      ),
-      new RegExp(String.raw`Equity\s+Schemes[^\n]{0,80}?` + NUM, "i"),
-    ],
-    kind: "cr",
-  },
+
+  // ---- Active equity / older flat-key fallbacks.
   {
     field: "activeEquityAum",
     patterns: [new RegExp(String.raw`Active\s+Equity[^\n]{0,80}?` + NUM, "i")],
-    kind: "cr",
-  },
-  {
-    field: "debtAum",
-    patterns: [
-      new RegExp(
-        String.raw`Debt[\s\-]+Oriented(?:\s+Schemes)?[^\n]{0,80}?` + NUM,
-        "i"
-      ),
-      new RegExp(String.raw`Debt\s+Schemes[^\n]{0,80}?` + NUM, "i"),
-    ],
-    kind: "cr",
-  },
-  {
-    field: "liquidAum",
-    patterns: [
-      new RegExp(String.raw`Liquid\s*/\s*Money\s*Market[^\n]{0,80}?` + NUM, "i"),
-      new RegExp(String.raw`\bLiquid(?:\s+Schemes)?\b[^\n]{0,80}?` + NUM, "i"),
-    ],
-    kind: "cr",
-  },
-  {
-    field: "sipContribution",
-    patterns: [
-      new RegExp(String.raw`SIP\s+Contribution[^\n]{0,80}?` + NUM, "i"),
-      new RegExp(String.raw`Monthly\s+SIP(?:\s+Contribution)?[^\n]{0,80}?` + NUM, "i"),
-    ],
-    kind: "cr",
-  },
-  {
-    field: "sipAum",
-    patterns: [new RegExp(String.raw`SIP\s+AUM[^\n]{0,80}?` + NUM, "i")],
-    kind: "cr",
-  },
-  {
-    field: "sipAccounts",
-    patterns: [
-      new RegExp(
-        String.raw`(?:No\.?\s+of\s+)?SIP\s+Accounts(?:[^\n]{0,40}\bin\s+lakh\b)` +
-          NEAR_NUM,
-        "i"
-      ),
-      new RegExp(String.raw`(?:No\.?\s+of\s+)?SIP\s+Accounts[^\n]{0,80}?` + NUM, "i"),
-    ],
-    kind: "count",
-  },
-  {
-    field: "netInflow",
-    patterns: [
-      new RegExp(String.raw`Net\s+Inflow\s*\/\s*Outflow[^\n]{0,80}?` + NUM, "i"),
-      new RegExp(String.raw`Total\s+Net\s+Inflow[^\n]{0,80}?` + NUM, "i"),
-    ],
-    kind: "cr",
+    unit: "cr",
   },
 ];
 
 interface PressReleaseHits {
   [field: string]: { value: number; page: number };
+}
+
+function scaleByUnit(n: number, unit: PressReleaseUnit): number {
+  switch (unit) {
+    case "lakh-cr":
+      return n * 100_000;
+    case "crore-count":
+      return Math.round(n * 10_000_000);
+    case "lakh-count":
+      return Math.round(n * 100_000);
+    case "cr":
+      return n;
+  }
 }
 
 function parsePressRelease(pages: PdfPage[]): {
@@ -487,27 +550,25 @@ function parsePressRelease(pages: PdfPage[]): {
   const hits: PressReleaseHits = {};
   const pagesUsed = new Set<number>();
 
+  // Iterate pages in order so first-match-wins resolves to the
+  // earliest occurrence (AUM tables before flow tables, etc.).
   for (const page of pages) {
     for (const spec of PRESS_RELEASE_PATTERNS) {
       if (hits[spec.field]) continue;
       for (const re of spec.patterns) {
         const m = re.exec(page.text);
         if (!m) continue;
-        // sipAccounts has a (in lakh) variant — switch scaling locally.
-        const localKind: PressReleaseLabelSpec["kind"] =
-          spec.field === "sipAccounts" && /\blakh\b/i.test(m[0])
-            ? "lakh"
-            : spec.kind;
         const cleaned = m[1].replace(/,/g, "");
         const n = Number(cleaned);
         if (!Number.isFinite(n) || n <= 0) continue;
-        const value =
-          localKind === "lakh"
-            ? Math.round(n * 100_000)
-            : localKind === "count"
-              ? Math.round(n)
-              : n;
-        hits[spec.field] = { value, page: page.num };
+        const scaled = scaleByUnit(n, spec.unit);
+        if (
+          spec.minScaledValue !== undefined &&
+          scaled < spec.minScaledValue
+        ) {
+          continue;
+        }
+        hits[spec.field] = { value: scaled, page: page.num };
         pagesUsed.add(page.num);
         break;
       }

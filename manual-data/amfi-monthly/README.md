@@ -50,23 +50,35 @@ The script:
 
 ## Fields extracted (when available)
 
-| Field             | ₹ unit | Monthly Report source                       | Press release source                       |
-| ----------------- | ------ | ------------------------------------------- | ------------------------------------------ |
-| `totalAum`        | ₹ Cr   | Grand Total · Net AUM as on month-end       | "Industry / Total / Net AUM"               |
-| `totalAaum`       | ₹ Cr   | Grand Total · Average Net AUM for the month | "Average Assets Under Management" / "AAUM" |
-| `equityAum`       | ₹ Cr   | Sub Total - II (Growth/Equity Oriented)     | "Equity-Oriented", "Equity Schemes"        |
-| `activeEquityAum` | ₹ Cr   | n/a in the per-scheme table                 | "Active Equity"                            |
-| `debtAum`         | ₹ Cr   | Sub Total - I (Income/Debt Oriented)        | "Debt-Oriented", "Debt Schemes"            |
-| `liquidAum`       | ₹ Cr   | Liquid Fund row · Net AUM                   | "Liquid", "Liquid / Money Market"          |
-| `sipContribution` | ₹ Cr   | not in this format                          | "SIP Contribution"                         |
-| `sipAum`          | ₹ Cr   | not in this format                          | "SIP AUM"                                  |
-| `sipAccounts`     | count  | not in this format                          | "No. of SIP Accounts" (handles "in lakh")  |
-| `netInflow`       | ₹ Cr   | Grand Total · Net Inflow / Outflow column   | "Net Inflow / Outflow", "Total Net Inflow" |
+| Field             | Stored unit | Monthly Report source                     | Press release source                                                                               |
+| ----------------- | ----------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `totalAum`        | ₹ Cr        | Grand Total · Net AUM as on month-end     | "Total" row · 1st column of the *Monthly AUM trend* table (page ~4)                                |
+| `totalAaum`       | ₹ Cr        | Grand Total · Average Net AUM for the month | "Average Assets Under Management" / "AAUM" (older flat-key wording)                              |
+| `equityAum`       | ₹ Cr        | Sub Total - II (Growth/Equity Oriented)   | "Equity" row · 1st column of the *Monthly AUM trend* table                                         |
+| `activeEquityAum` | ₹ Cr        | n/a in the per-scheme table               | "Active Equity"                                                                                    |
+| `debtAum`         | ₹ Cr        | Sub Total - I (Income/Debt Oriented)      | "Debt" row · 1st column of the *Monthly AUM trend* table                                           |
+| `liquidAum`       | ₹ Cr        | Liquid Fund row · Net AUM                 | "Liquid funds" row · 1st column of the *Monthly AUM trend of income/debt-oriented schemes* table   |
+| `sipContribution` | ₹ Cr        | not in this format                        | "SIP monthly contribution (crore)" row · 1st column                                                |
+| `sipAum`          | ₹ Cr        | not in this format                        | "SIP assets (Rs lakh crore)" row · 1st column · ×100,000                                           |
+| `sipAccounts`     | count       | not in this format                        | "Number of contributing SIP accounts (crore)" · ×10,000,000 (or "(in lakh)" · ×100,000)            |
+| `netInflow`       | ₹ Cr        | Grand Total · Net Inflow / Outflow column | not parsed from press release (Monthly Report value preserved by merge)                            |
+
+### Number-format conversions
+
+The press-release "Monthly Note" mixes three quoting conventions; the
+extractor converts each to a canonical stored unit:
+
+| In the PDF                    | What it means                | Stored as                      |
+| ----------------------------- | ---------------------------- | ------------------------------ |
+| `(crore)` after a label       | already in ₹ Cr              | as-is                          |
+| `(Rs lakh crore)` after label | × 100,000 to get ₹ Cr        | ₹ Cr                           |
+| `(crore)` for SIP accounts    | × 10,000,000 to get a count  | count                          |
+| `(in lakh)` for SIP accounts  | × 100,000 to get a count     | count                          |
 
 If a future AMFI PDF uses a label not yet covered, edit:
 
 - `parseMonthlyReport` (block / inline label maps) for the tabular form.
-- `PRESS_RELEASE_PATTERNS` for the press release form.
+- `PRESS_RELEASE_PATTERNS` for the press release / Monthly Note form.
 
 Both live in `scripts/ingest/amfi-monthly-pdf.ts`.
 
