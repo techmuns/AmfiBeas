@@ -22,14 +22,24 @@ import {
 import { AMCS } from "@/data/amcs";
 import { monthlyForAmc, MONTHS_LIST } from "@/data/generator";
 import {
+  amfiMonthlyRows,
+  formatKpiProvenanceLine,
+  getKpiProvenance,
+  getKpiValue,
+  latestAmfiMonthlyRow,
+  type AmfiMonthlyKpiField,
+} from "@/data/amfi-monthly";
+import {
   formatCompactCrSafe,
   formatCroreCountSafe,
   formatDelta,
   formatIntSafe,
   formatLakhSafe,
+  formatMonthLabel,
   formatPctSafe,
 } from "@/lib/format";
 import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
+import { cn } from "@/lib/cn";
 import { parseFilters, selectedSlugs, trimMonths } from "@/lib/filter";
 
 export default async function MonthlyPage({
@@ -162,10 +172,111 @@ export default async function MonthlyPage({
     : `Industry-wide · ${latestMonth()}`;
   const demoIndustryNote = industryMonthlyNote();
 
+  // AMFI Monthly Snapshot — first live AMFI widget. Reads directly from the
+  // manually-uploaded-PDF snapshot. Renders cards only for KPIs the latest
+  // row actually carries — never substitutes zero or a dash for a missing
+  // value, never falls back to the demo industry data.
+  const amfiLatest = latestAmfiMonthlyRow();
+  const amfiRowCount = amfiMonthlyRows().length;
+
+  /** All cards we'd surface if the row had every field. The render below
+   *  hides any whose value is null on the latest row, so a press-release-
+   *  only month would skip totalAaum/netInflow, and a Monthly-Report-only
+   *  month would skip the SIP cards. */
+  const AMFI_CARDS: {
+    field: AmfiMonthlyKpiField;
+    label: string;
+    format: (v: number) => string;
+  }[] = [
+    { field: "totalAum", label: "Total AUM", format: formatCompactCrSafe },
+    { field: "totalAaum", label: "Total AAUM", format: formatCompactCrSafe },
+    { field: "equityAum", label: "Equity AUM", format: formatCompactCrSafe },
+    { field: "debtAum", label: "Debt AUM", format: formatCompactCrSafe },
+    { field: "liquidAum", label: "Liquid AUM", format: formatCompactCrSafe },
+    {
+      field: "netInflow",
+      label: "Net Inflow",
+      // formatCompactCrSafe handles only positive values via its compact
+      // suffixes; for negative net-flow values we render the magnitude
+      // with the same suffix and a leading minus so signs are obvious.
+      format: (v: number) => {
+        if (v >= 0) return formatCompactCrSafe(v);
+        return "−" + formatCompactCrSafe(-v);
+      },
+    },
+    {
+      field: "sipContribution",
+      label: "SIP Contribution",
+      format: formatCompactCrSafe,
+    },
+    { field: "sipAum", label: "SIP AUM", format: formatCompactCrSafe },
+    {
+      field: "sipAccounts",
+      label: "SIP Accounts",
+      // SIP accounts are stored as a raw count (e.g. 97,200,000); the
+      // safe formatter divides by 1e7 and emits "9.72 Cr".
+      format: (v: number) => formatCroreCountSafe(v),
+    },
+  ];
+
+  const amfiCardsToRender = AMFI_CARDS.flatMap((spec) => {
+    const value = getKpiValue(amfiLatest, spec.field);
+    if (value === null) return [];
+    const provenance = getKpiProvenance(amfiLatest, spec.field);
+    return [
+      {
+        ...spec,
+        value,
+        formatted: spec.format(value),
+        note: formatKpiProvenanceLine(provenance) ?? "",
+      },
+    ];
+  });
+
+  const amfiSectionSubtitle = amfiLatest
+    ? `Industry-wide · ${formatMonthLabel(amfiLatest.month)} · live from uploaded AMFI PDFs`
+    : "Upload AMFI monthly PDFs to manual-data/amfi-monthly/pdfs/, then run npm run ingest:amfi-pdf";
+
   return (
     <div className="space-y-6">
       <PageHeader title="Monthly Operating" subtitle={subtitle} />
       <FilterBar showRange="monthly" />
+
+      <Card
+        title="AMFI Monthly Snapshot"
+        subtitle={amfiSectionSubtitle}
+        action={
+          <span
+            className={cn(
+              "shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
+              amfiLatest
+                ? "border-positive/40 bg-positive/10 text-positive"
+                : "border-border text-muted-foreground"
+            )}
+          >
+            {amfiLatest
+              ? `Live · ${amfiRowCount} month${amfiRowCount === 1 ? "" : "s"}`
+              : "Not connected"}
+          </span>
+        }
+      >
+        {amfiCardsToRender.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {amfiCardsToRender.map((c) => (
+              <KpiCard
+                key={c.field}
+                label={c.label}
+                value={c.formatted}
+                note={c.note}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
+            No AMFI PDF data ingested yet.
+          </div>
+        )}
+      </Card>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
