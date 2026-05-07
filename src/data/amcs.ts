@@ -32,12 +32,12 @@ export const AMCS: AMCProfile[] = [
   {
     slug: "icici-pru",
     name: "ICICI Prudential AMC",
-    // Listed on NSE/BSE — exact ticker / Screener slug to be verified.
-    // The first attempt with ticker "ICICIAMC" returned an annual/TTM
-    // table layout that would have produced ~110 bps revenue
-    // realisation, so we hold the slug as pending until the right
-    // quarterly source is identified. /amc/icici-pru renders "Listed ·
-    // financials pending source" until then.
+    // Listed on NSE/BSE. Quarterly P&L sourced from
+    // https://www.screener.in/company/ICICIAMC/ (the standalone variant —
+    // the /consolidated/ variant returns an annual/TTM table). The
+    // ingester sanity-checks every page and rejects layouts that would
+    // produce out-of-envelope yields, so a future page change can't
+    // poison the snapshot.
     ticker: "ICICIAMC",
     listed: true,
     baseAum: 920_000,
