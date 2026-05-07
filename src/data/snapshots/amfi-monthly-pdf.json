@@ -1,8 +1,8 @@
 {
   "meta": {
-    "generatedAt": "2026-05-07T16:47:14.047Z",
+    "generatedAt": "2026-05-07T17:14:42.147Z",
     "source": "manual-data/amfi-monthly/pdfs/",
-    "notes": "Industry-level monthly KPIs extracted from manually-uploaded AMFI PDFs. Auto-detects Monthly Report vs press release per file. Optional fields are OMITTED when not detected — never zeroed. Rows merged by month; prior values preserved when the latest PDF doesn't carry them. processedPdfs=1 / 1, totalRows=1."
+    "notes": "Industry-level monthly KPIs extracted from manually-uploaded AMFI PDFs. Auto-detects Monthly Report vs press release per file. Optional fields are OMITTED when not detected — never zeroed. Rows merged by month; prior values preserved when the latest PDF doesn't carry them. processedPdfs=2 / 2, totalRows=1."
   },
   "rows": [
     {
@@ -12,11 +12,14 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T16:47:14.046Z",
-      "liquidAum": 466498.11,
-      "debtAum": 1651502.37,
-      "equityAum": 3197698.15,
+      "extractedAt": "2026-05-07T17:14:42.145Z",
       "totalAum": 7373376.98,
+      "equityAum": 3197698.15,
+      "debtAum": 1651502.37,
+      "liquidAum": 466498.11,
+      "sipAccounts": 97200000,
+      "sipContribution": 32087,
+      "sipAum": 1511000,
       "totalAaum": 7946027.87,
       "netInflow": -239910
     }
