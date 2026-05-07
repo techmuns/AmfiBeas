@@ -254,7 +254,7 @@ export function latestQuarter(): string {
 
 /**
  * Returns the `count` most recent calendar quarters ending at `latest`
- * (inclusive), in ascending order. Used to pin every /quarterly trend
+ * (inclusive), in ascending order. Used to pin every /financials trend
  * chart to the same x-axis regardless of the selected AMC's data
  * coverage — AMCs missing some quarters render nulls/gaps within this
  * fixed window rather than shrinking the axis.
