@@ -295,10 +295,17 @@ export function yieldsForAmc(slug: string): QuarterlyYields[] {
   const rows = quarterlyForAmc(slug);
   return rows.map((q) => ({
     quarter: q.quarter,
-    // Management-comparable "bps of AAUM": quarterly P&L is annualised
-    // (× 4) and divided by the same quarter's AAUM, then converted to
-    // basis points. This matches the disclosure style on listed AMC
-    // investor decks (e.g. HDFC AMC Q1 FY26 op margin ≈ 36 bps of AAUM).
+    // Management-comparable "bps of MF QAAUM": quarterly P&L is annualised
+    // (× 4) and divided by the same quarter's MUTUAL-FUND-ONLY Average AUM,
+    // then converted to basis points. Matches the disclosure style on
+    // listed AMC investor decks (HDFC AMC Q1 FY26 op margin ≈ 36 bps).
+    //
+    // INVARIANT: q.avgAum here is sourced from AMFI's Fundwise AAUM
+    // disclosure via aaumWithFallback() and is MF-ONLY by construction.
+    // It MUST NOT be replaced with overall company AUM (which would
+    // include PMS / AIF / offshore / advisory / alternates). If a future
+    // source change widens the denominator, the bps figures stop being
+    // comparable to AMC investor-deck disclosures.
     revenueYieldBps:
       q.avgAum === 0 ? 0 : (q.revenue * 4 * 10_000) / q.avgAum,
     operatingYieldBps:

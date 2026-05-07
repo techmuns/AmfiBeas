@@ -57,8 +57,8 @@ export default async function QuarterlyPage({
   const aaumMeta = amcAaumQuarterlySnapshot.meta;
   const yieldsSubtitle =
     amcAaumQuarterlySnapshot.rows.length > 0
-      ? `bps of AAUM · quarterly P&L ×4 / same-quarter AMFI AAUM · ${new Date(aaumMeta.generatedAt).toISOString().slice(0, 10)}`
-      : "Management-comparable bps of AAUM · quarterly P&L ×4 / same-quarter AMFI AAUM";
+      ? `bps of MF QAAUM · quarterly P&L ×4 / same-quarter AMFI MF QAAUM · ${new Date(aaumMeta.generatedAt).toISOString().slice(0, 10)}`
+      : "bps of MF QAAUM · quarterly P&L ×4 / same-quarter AMFI MF QAAUM";
 
   const trend = (n: number) =>
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
@@ -164,7 +164,7 @@ export default async function QuarterlyPage({
   const aaumSourceDate = new Date(amcAaumQuarterlySnapshot.meta.generatedAt)
     .toISOString()
     .slice(0, 10);
-  const provenanceLine = `P&L: ${pnlSourceHost} · ${pnlSourceDate} · AAUM: AMFI · ${aaumSourceDate}`;
+  const provenanceLine = `P&L: ${pnlSourceHost} · ${pnlSourceDate} · MF QAAUM: AMFI · ${aaumSourceDate}`;
   const pnlNote = liveScreenerNote();
   const yieldNote = liveYieldNote();
 
@@ -219,19 +219,19 @@ export default async function QuarterlyPage({
           note={pnlNote}
         />
         <KpiCard
-          label="Revenue Realization (bps of AAUM)"
+          label="Revenue Realization (bps of MF QAAUM)"
           value={
             latest.avgAum > 0 ? revenueYieldBps.toFixed(1) + " bps" : "—"
           }
           note={yieldNote}
         />
         <KpiCard
-          label="Operating Yield (bps of AAUM)"
+          label="Operating Margin (bps of MF QAAUM)"
           value={latest.avgAum > 0 ? opYieldBps.toFixed(1) + " bps" : "—"}
           note={yieldNote}
         />
         <KpiCard
-          label="Profit Yield (bps of AAUM)"
+          label="Profit Yield (bps of MF QAAUM)"
           value={
             latest.avgAum > 0 ? profitYieldBps.toFixed(1) + " bps" : "—"
           }
@@ -267,7 +267,7 @@ export default async function QuarterlyPage({
           />
         </Card>
         <Card
-          title="Yields (bps of AAUM)"
+          title="Yields (bps of MF QAAUM)"
           subtitle={yieldsSubtitle}
           className="lg:col-span-2"
         >

@@ -48,7 +48,7 @@ function amfiSources(): AmfiSource[] {
       status: mode.amcQuarterly,
     },
     {
-      label: "AMC AAUM (per-quarter)",
+      label: "AMC MF QAAUM (per-quarter)",
       rows: amcAaumQuarterlySnapshot.rows.length,
       generatedAt: amcAaumQuarterlySnapshot.meta.generatedAt,
       status: mode.amcAaum,

@@ -1088,7 +1088,7 @@ export async function ingestAmfiAaum(): Promise<void> {
         generatedAt: fetchedAt,
         source: FORM_URL,
         notes: [
-          "Per-AMC quarterly AAUM extracted via the AMFI Average AUM disclosure form (MUI Autocomplete UI).",
+          "Per-AMC quarterly MF QAAUM (mutual-fund-only Average AUM) extracted via the AMFI Average AUM disclosure form (MUI Autocomplete UI). MF-only by construction — AMFI does not publish PMS / AIF / offshore / advisory / alternates here.",
           "unitOriginal=Rs Lakhs · unitStored=Rs Crore · conversion=lakhs_to_crore_divide_by_100.",
           "Backend endpoint discovered: /api/average-aum-fundwise?fyId=N&periodId=N (not yet used directly).",
           "Per-row provenance: source URL + fetchedAt.",

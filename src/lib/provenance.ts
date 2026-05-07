@@ -27,9 +27,19 @@ export type DataStatus =
 const isoDate = (iso?: string): string =>
   iso ? new Date(iso).toISOString().slice(0, 10) : "";
 
-/** Live AMFI AAUM provenance for the AAUM denominator + Average AUM card. */
+/**
+ * Live AMFI MF QAAUM provenance for the MF Average AUM card and the yield
+ * denominator.
+ *
+ * INVARIANT: this denominator must be **mutual-fund-only** Average AUM.
+ * AMFI's Fundwise AAUM disclosure
+ * (https://www.amfiindia.com/aum-data/average-aum) is by construction MF-
+ * only — it excludes PMS, AIF, offshore mandates, advisory / SMA, real
+ * estate, and any other non-MF business. Any future change to the AAUM
+ * denominator must preserve this property.
+ */
 export function liveAaumNote(): string {
-  return `Source: AMFI AAUM · ${isoDate(amcAaumQuarterlySnapshot.meta.generatedAt)}`;
+  return `Source: AMFI MF QAAUM · ${isoDate(amcAaumQuarterlySnapshot.meta.generatedAt)}`;
 }
 
 /** Live screener.in P&L provenance for revenue / op profit / PAT / margins. */
@@ -37,9 +47,12 @@ export function liveScreenerNote(): string {
   return `Source: screener.in · ${isoDate(amcQuarterlySnapshot.meta.generatedAt)}`;
 }
 
-/** Combined provenance for yield metrics (P&L numerator + AAUM denominator). */
+/**
+ * Combined provenance for yield metrics (P&L numerator + MF QAAUM
+ * denominator). Used on Yields card subtitles and yield KPI notes.
+ */
 export function liveYieldNote(): string {
-  return `P&L: screener.in · ${isoDate(amcQuarterlySnapshot.meta.generatedAt)} · AAUM: AMFI · ${isoDate(amcAaumQuarterlySnapshot.meta.generatedAt)}`;
+  return `P&L: screener.in · ${isoDate(amcQuarterlySnapshot.meta.generatedAt)} · MF QAAUM: AMFI · ${isoDate(amcAaumQuarterlySnapshot.meta.generatedAt)}`;
 }
 
 /** AMFI master list (the "amcMaster" source covers /amc list and AMC names). */
