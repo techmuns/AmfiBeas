@@ -31,6 +31,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { PDFParse } from "pdf-parse";
 import type {
+  AmfiMonthlyPdfFieldProvenance,
+  AmfiMonthlyPdfFieldSources,
   AmfiMonthlyPdfRow,
   AmfiMonthlyPdfSnapshot,
 } from "../../src/data/snapshots/types";
@@ -221,13 +223,22 @@ const COL_NET_INFLOW = 4;
 const COL_NET_AUM = 5;
 const COL_AAUM = 6;
 
+interface FieldHit {
+  value: number;
+  page: number;
+  /** Human-readable label for which row/column produced this value.
+   *  Surfaced via `fieldSources[field].sourceLabel` so the dashboard
+   *  can show "Sub Total - II row · Net AUM column" in tooltips. */
+  label: string;
+}
+
 interface MonthlyReportHits {
-  totalAum?: { value: number; page: number };
-  totalAaum?: { value: number; page: number };
-  netInflow?: { value: number; page: number };
-  equityAum?: { value: number; page: number };
-  debtAum?: { value: number; page: number };
-  liquidAum?: { value: number; page: number };
+  totalAum?: FieldHit;
+  totalAaum?: FieldHit;
+  netInflow?: FieldHit;
+  equityAum?: FieldHit;
+  debtAum?: FieldHit;
+  liquidAum?: FieldHit;
 }
 
 /**
@@ -276,18 +287,25 @@ function parseMonthlyReport(pages: PdfPage[]): {
   // later. For the Liquid Fund / Active Equity rows, the label and
   // data are on the SAME line, with the label prefixed by a roman
   // numeral.
-  const blockLabels: { key: keyof MonthlyReportHits; re: RegExp }[] = [
+  const blockLabels: {
+    key: keyof MonthlyReportHits;
+    re: RegExp;
+    label: string;
+  }[] = [
     {
       key: "debtAum",
       re: /^\s*Sub\s*Total\s*-\s*I\b(?!\s*[IV])/i, // Sub Total - I, NOT II/III/IV
+      label: "Sub Total - I row · Net AUM column",
     },
     {
       key: "equityAum",
       re: /^\s*Sub\s*Total\s*-\s*II\b(?!\s*[IV])/i,
+      label: "Sub Total - II row · Net AUM column",
     },
     {
       key: "totalAum",
       re: /^\s*Grand\s+Total\b/i,
+      label: "Grand Total row · Net AUM column",
     },
   ];
 
@@ -296,12 +314,14 @@ function parseMonthlyReport(pages: PdfPage[]): {
     key: keyof MonthlyReportHits;
     re: RegExp;
     targetCol: number;
+    label: string;
   }[] = [
     {
       key: "liquidAum",
       // "ii Liquid Fund 42 27,19,972 4,55,110.25 ..."
       re: /\bLiquid\s+Fund\b/i,
       targetCol: COL_NET_AUM,
+      label: "Liquid Fund row · Net AUM column",
     },
   ];
 
@@ -323,7 +343,11 @@ function parseMonthlyReport(pages: PdfPage[]): {
           if (dataCols) {
             const aum = dataCols[COL_NET_AUM];
             if (aum !== null && aum > 0) {
-              hits[spec.key] = { value: aum, page: page.num };
+              hits[spec.key] = {
+                value: aum,
+                page: page.num,
+                label: spec.label,
+              };
               pagesUsed.add(page.num);
             }
             // Grand Total carries totalAaum and netInflow too.
@@ -331,10 +355,18 @@ function parseMonthlyReport(pages: PdfPage[]): {
               const aaum = dataCols[COL_AAUM];
               const netInflow = dataCols[COL_NET_INFLOW];
               if (aaum !== null && aaum > 0 && !hits.totalAaum) {
-                hits.totalAaum = { value: aaum, page: page.num };
+                hits.totalAaum = {
+                  value: aaum,
+                  page: page.num,
+                  label: "Grand Total row · Average Net AUM column",
+                };
               }
               if (netInflow !== null && !hits.netInflow) {
-                hits.netInflow = { value: netInflow, page: page.num };
+                hits.netInflow = {
+                  value: netInflow,
+                  page: page.num,
+                  label: "Grand Total row · Net Inflow / Outflow column",
+                };
               }
             }
           }
@@ -351,7 +383,11 @@ function parseMonthlyReport(pages: PdfPage[]): {
           if (cols.length >= 7) {
             const aum = cols[spec.targetCol];
             if (aum !== null && aum > 0) {
-              hits[spec.key] = { value: aum, page: page.num };
+              hits[spec.key] = {
+                value: aum,
+                page: page.num,
+                label: spec.label,
+              };
               pagesUsed.add(page.num);
             }
           }
@@ -399,6 +435,9 @@ interface PressReleaseLineSpec {
   /** Patterns are tried in order; the FIRST match per page wins. */
   patterns: RegExp[];
   unit: PressReleaseUnit;
+  /** Human-readable description of the row/label this pattern matches.
+   *  Recorded as `fieldSources[field].sourceLabel` for the dashboard. */
+  label: string;
   /**
    * Optional: rejection threshold applied AFTER scaling. Used to
    * disambiguate the AUM-trend "Total" / "Equity" / "Debt" rows from
@@ -432,6 +471,7 @@ const PRESS_RELEASE_PATTERNS: PressReleaseLineSpec[] = [
       ),
     ],
     unit: "crore-count",
+    label: "SIP trend table · Number of contributing SIP accounts row",
   },
   {
     field: "sipContribution",
@@ -446,6 +486,7 @@ const PRESS_RELEASE_PATTERNS: PressReleaseLineSpec[] = [
       new RegExp(String.raw`Monthly\s+SIP(?:\s+Contribution)?[^\n]{0,80}?` + NUM, "i"),
     ],
     unit: "cr",
+    label: "SIP trend table · SIP monthly contribution row",
   },
   {
     field: "sipAum",
@@ -457,12 +498,14 @@ const PRESS_RELEASE_PATTERNS: PressReleaseLineSpec[] = [
       ),
     ],
     unit: "lakh-cr",
+    label: "SIP trend table · SIP assets (Rs lakh crore) row",
   },
   // Older direct "SIP AUM <N>" fallback in ₹ Cr (no lakh-crore wrapper).
   {
     field: "sipAum",
     patterns: [new RegExp(String.raw`SIP\s+AUM[^\n]{0,80}?` + NUM, "i")],
     unit: "cr",
+    label: "SIP AUM (flat-key fallback)",
   },
 
   // ---- Industry AUM — tabular rows. Each category appears in two
@@ -478,18 +521,21 @@ const PRESS_RELEASE_PATTERNS: PressReleaseLineSpec[] = [
     // Industry-wide totalAum is always ≥ 50 lakh Cr (~5,000,000); flow-table
     // totals are ≤ a few lakh Cr in absolute terms.
     minScaledValue: 5_000_000,
+    label: "Monthly AUM trend table · Total row",
   },
   {
     field: "equityAum",
     patterns: [new RegExp(String.raw`^\s*Equity\s+` + NUM, "im")],
     unit: "cr",
     minScaledValue: 100_000,
+    label: "Monthly AUM trend table · Equity row",
   },
   {
     field: "debtAum",
     patterns: [new RegExp(String.raw`^\s*Debt\s+` + NUM, "im")],
     unit: "cr",
     minScaledValue: 100_000,
+    label: "Monthly AUM trend table · Debt row",
   },
   {
     field: "liquidAum",
@@ -501,6 +547,7 @@ const PRESS_RELEASE_PATTERNS: PressReleaseLineSpec[] = [
     ],
     unit: "cr",
     minScaledValue: 10_000,
+    label: "Monthly AUM trend of income/debt-oriented schemes · Liquid funds row",
   },
 
   // ---- AAUM — older flat-key press-release wording. The Crisil
@@ -516,6 +563,7 @@ const PRESS_RELEASE_PATTERNS: PressReleaseLineSpec[] = [
       new RegExp(String.raw`\bAAUM\b[^\n]{0,80}?` + NUM, "i"),
     ],
     unit: "cr",
+    label: "Average Assets Under Management (flat-key fallback)",
   },
 
   // ---- Active equity / older flat-key fallbacks.
@@ -523,11 +571,12 @@ const PRESS_RELEASE_PATTERNS: PressReleaseLineSpec[] = [
     field: "activeEquityAum",
     patterns: [new RegExp(String.raw`Active\s+Equity[^\n]{0,80}?` + NUM, "i")],
     unit: "cr",
+    label: "Active Equity (flat-key fallback)",
   },
 ];
 
 interface PressReleaseHits {
-  [field: string]: { value: number; page: number };
+  [field: string]: FieldHit;
 }
 
 function scaleByUnit(n: number, unit: PressReleaseUnit): number {
@@ -568,7 +617,11 @@ function parsePressRelease(pages: PdfPage[]): {
         ) {
           continue;
         }
-        hits[spec.field] = { value: scaled, page: page.num };
+        hits[spec.field] = {
+          value: scaled,
+          page: page.num,
+          label: spec.label,
+        };
         pagesUsed.add(page.num);
         break;
       }
@@ -610,32 +663,51 @@ async function extractFromPdf(pdfPath: string): Promise<ExtractedRow | null> {
   }
 
   const format = detectFormat(pages);
+  const extractedAt = nowIso();
   const row: AmfiMonthlyPdfRow = {
     month,
     sourceFormat: format,
     sourcePdf: filename,
     sourcePages: [],
-    extractedAt: nowIso(),
+    extractedAt,
+    fieldSources: {},
   };
 
   let pagesUsed = new Set<number>();
   let hitCount = 0;
 
-  if (format === "monthly-report") {
-    const { hits, pagesUsed: pu } = parseMonthlyReport(pages);
-    pagesUsed = pu;
+  // Each parser returns `{ value, page, label }` per matched field.
+  // We project that into BOTH the numeric field on the row AND a
+  // per-field provenance entry on `row.fieldSources`. The per-field
+  // pages array is recorded as a single-element array — most KPIs
+  // come from one specific row on one page; the array shape leaves
+  // room for future cross-referenced KPIs without a schema change.
+  const recordHits = (hits: Record<string, FieldHit | undefined>) => {
     for (const [field, hit] of Object.entries(hits)) {
       if (!hit) continue;
       (row as unknown as Record<string, number>)[field] = hit.value;
+      const provenance: AmfiMonthlyPdfFieldProvenance = {
+        sourcePdf: filename,
+        sourceFormat: format,
+        sourcePages: [hit.page],
+        extractedAt,
+        sourceLabel: hit.label,
+      };
+      (row.fieldSources as Record<string, AmfiMonthlyPdfFieldProvenance>)[
+        field
+      ] = provenance;
       hitCount += 1;
     }
+  };
+
+  if (format === "monthly-report") {
+    const { hits, pagesUsed: pu } = parseMonthlyReport(pages);
+    pagesUsed = pu;
+    recordHits(hits as Record<string, FieldHit | undefined>);
   } else if (format === "press-release") {
     const { hits, pagesUsed: pu } = parsePressRelease(pages);
     pagesUsed = pu;
-    for (const [field, hit] of Object.entries(hits)) {
-      (row as unknown as Record<string, number>)[field] = hit.value;
-      hitCount += 1;
-    }
+    recordHits(hits);
   }
 
   row.sourcePages = Array.from(pagesUsed).sort((a, b) => a - b);
@@ -669,10 +741,17 @@ const NUMERIC_FIELDS: (keyof AmfiMonthlyPdfRow)[] = [
 ];
 
 /**
- * Merge by month. Numeric fields PRESENT on `next` overwrite; numeric
- * fields ABSENT on `next` keep their `prev` value (so a Monthly Report
- * run does not blank previously-captured SIP figures, and vice versa).
- * Provenance fields always come from the latest extraction.
+ * Merge by month. Each numeric field is preserved together with its
+ * provenance:
+ *   - If `next` has the field, BOTH the value and `next.fieldSources`
+ *     entry overwrite the prev row's.
+ *   - If `next` does NOT have the field but `prev` does, BOTH the
+ *     prev value and the prev fieldSources entry are preserved.
+ * The row-level `sourcePdf` / `sourceFormat` / `sourcePages` /
+ * `extractedAt` always reflect the latest write — they are a
+ * convenience for "last-writer-wins" and are NOT authoritative for
+ * which PDF a specific KPI came from. The dashboard should consult
+ * `row.fieldSources[field]` for that.
  */
 function mergeRow(
   prev: AmfiMonthlyPdfRow | undefined,
@@ -680,13 +759,28 @@ function mergeRow(
 ): AmfiMonthlyPdfRow {
   if (!prev) return next;
   const merged: AmfiMonthlyPdfRow = { ...prev, ...next };
+  // Start from prev's fieldSources, overlay anything next supplied —
+  // skipping undefined entries so they don't blank a prev provenance.
+  const mergedSources: AmfiMonthlyPdfFieldSources = { ...prev.fieldSources };
   for (const field of NUMERIC_FIELDS) {
     const nv = next[field];
     const pv = prev[field];
-    if (typeof nv !== "number" && typeof pv === "number") {
+    if (typeof nv === "number") {
+      // next has the field — keep next's value (already on `merged`
+      // via spread) and adopt next's provenance for this field.
+      const ns = next.fieldSources?.[field as keyof AmfiMonthlyPdfFieldSources];
+      if (ns) {
+        (mergedSources as Record<string, AmfiMonthlyPdfFieldProvenance>)[
+          field
+        ] = ns;
+      }
+    } else if (typeof pv === "number") {
+      // next did NOT detect this field; keep prev's value AND keep
+      // prev's provenance (already in mergedSources from the spread).
       (merged as unknown as Record<string, number>)[field] = pv;
     }
   }
+  merged.fieldSources = mergedSources;
   return merged;
 }
 
