@@ -53,6 +53,11 @@ jobs:
           # single quarter with verbose diagnostics. Empty / unset = run the
           # full multi-quarter window with compact per-quarter summaries.
           AAUM_DEBUG_ONE_QUARTER: ""
+          # Management-yields v2: enable Playwright-driven PDF discovery on
+          # AMC investor-relations pages so JS-rendered link lists and
+          # anti-bot pages are reachable. Cheerio is still tried first; this
+          # only kicks in when cheerio finds zero links for an AMC.
+          MGMT_YIELDS_PLAYWRIGHT: "1"
           # Morningstar India is opt-in. Set to "1" to enable the public-pages
           # fetch. Leave empty / unset to skip cleanly. Uses public surfaces
           # only; never bypasses login, captchas, paywalls, or bot protection.
