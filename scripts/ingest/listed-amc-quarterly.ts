@@ -33,15 +33,21 @@ const LISTED: ListedAmc[] = [
     amfiName: "Aditya Birla Sun Life Mutual Fund",
   },
   { slug: "uti", ticker: "UTIAMC", amfiName: "UTI Mutual Fund" },
-  // ICICI Prudential Asset Management Company — listed; screener URL
-  // resolves to the canonical company page. Per-AMC try/catch keeps the
-  // pipeline resilient if the page or a row label changes.
-  {
-    slug: "icici-pru",
-    ticker: "ICICIAMC",
-    amfiName: "ICICI Prudential Mutual Fund",
-  },
+  // ICICI Prudential AMC — NOT in this list yet. The first ingest with
+  // ticker "ICICIAMC" returned only 2 rows with values ~3× the expected
+  // quarterly scale (annual / TTM bleed), producing implausible 110 bps
+  // revenue realisation. The right screener slug is still TBC; once
+  // verified, re-add { slug: "icici-pru", ticker: ..., amfiName: ... }
+  // here. The dashboard auto-promotes it the moment rows land.
 ];
+
+/**
+ * A successfully-parsed AMC must have at least this many quarter columns
+ * for us to accept the page as the standard quarterly results table. If
+ * a page returns 1-3 columns it's almost certainly an annual / half-year
+ * / TTM table layout that we'd map into quarter slots incorrectly.
+ */
+const MIN_QUARTERS_PER_AMC = 4;
 
 const MONTHS_LOOKUP: Record<string, number> = {
   jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
@@ -157,6 +163,16 @@ async function fetchOne(amc: ListedAmc): Promise<AmcQuarterlyRow[]> {
   }
   const quarterly = parseScreenerQuarterly(html);
   info(`  → parsed ${quarterly.length} quarters for ${amc.slug}`);
+  // Sanity check: standard screener quarterly tables show 12-13 columns.
+  // 1-3 columns means we landed on an annual / half-year / TTM layout and
+  // would write garbage into quarter slots. Reject and let the merge
+  // preserve any prior (good) rows for this AMC.
+  if (quarterly.length > 0 && quarterly.length < MIN_QUARTERS_PER_AMC) {
+    warn(
+      `listed-amc-q: ${amc.slug} returned only ${quarterly.length} quarter(s) (< ${MIN_QUARTERS_PER_AMC}) — likely annual/TTM layout; rejecting page`
+    );
+    return [];
+  }
   return quarterly.map((q) => ({
     amcSlug: amc.slug,
     quarter: q.quarter,
@@ -230,7 +246,7 @@ export async function ingestListedAmcQuarterly(): Promise<void> {
       generatedAt: nowIso(),
       source: "https://www.screener.in/company/{ticker}/consolidated/",
       notes: [
-        "Quarterly P&L for listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC, ICICIAMC).",
+        "Quarterly P&L for listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC). ICICI Pru AMC pending — correct screener slug TBC.",
         "Source mapping: screener.in 'Sales' row → Revenue from Operations (excludes Other Income); 'Other Income' captured separately for display only; 'Operating Profit' and 'Net Profit' as labelled. revenueFromOperations is what feeds Revenue Realization (bps of MF QAAUM). avgAum not provided by this source.",
         `lastSuccessfulFetchAt=${nowIso()} · slugsThisRun=[${succeeded.join(", ")}] · failedThisRun=[${failed.join(", ")}].`,
         `quartersCovered=${allQuarters.length} (${allQuarters[0]}…${allQuarters[allQuarters.length - 1]}) · rowCount=${stats.total} · fetchWindow=${fetchedQuarters.length}.`,
