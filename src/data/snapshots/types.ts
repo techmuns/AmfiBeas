@@ -176,3 +176,36 @@ export interface OtherSchemesMonthlySnapshot {
   rows: OtherSchemesMonthlyRow[];
 }
 
+/**
+ * Monthly industry KPIs extracted from AMFI press-release PDFs that the
+ * user uploads under `manual-data/amfi-monthly/pdfs/`. Every numeric
+ * field is OPTIONAL — if a value cannot be confidently parsed from the
+ * PDF, the field is omitted, never zeroed. Each row carries its own
+ * provenance so individual values stay traceable to the exact PDF.
+ *
+ * Not yet wired into the /monthly UI — written by the manual-PDF
+ * extractor (`scripts/ingest/amfi-monthly-pdf.ts`) and reserved for a
+ * follow-up that will switch the dashboard to it.
+ */
+export interface AmfiMonthlyPdfRow {
+  month: string;                       // YYYY-MM
+  totalAum?: number;                   // ₹ Cr
+  equityAum?: number;                  // ₹ Cr
+  activeEquityAum?: number;            // ₹ Cr (when AMFI splits active vs passive)
+  debtAum?: number;                    // ₹ Cr
+  liquidAum?: number;                  // ₹ Cr
+  sipContribution?: number;            // ₹ Cr (monthly inflow)
+  sipAum?: number;                     // ₹ Cr
+  sipAccounts?: number;                // count of live SIP accounts
+  netInflow?: number;                  // ₹ Cr (industry net inflow / outflow)
+  sourcePdf: string;                   // filename only
+  sourcePages: number[];               // 1-indexed page numbers used
+  extractedAt: string;                 // ISO timestamp
+}
+
+export interface AmfiMonthlyPdfSnapshot {
+  meta: SnapshotMeta;
+  rows: AmfiMonthlyPdfRow[];
+}
+
+
