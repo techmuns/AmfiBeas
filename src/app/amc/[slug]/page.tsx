@@ -22,11 +22,6 @@ import {
   amcAaumQuarterlySnapshot,
 } from "@/data/source";
 import {
-  compareToManagement,
-  managementMetric,
-  managementYieldsFor,
-} from "@/data/management-yields";
-import {
   formatCompactCrSafe,
   formatDelta,
   formatPctSafe,
@@ -152,34 +147,6 @@ export default async function AmcPage({
     : profile.listed
       ? pendingFinancialsNote()
       : unlistedFinancialsNote();
-
-  // Management-disclosed yields (scraped from public IR sources). For the
-  // latest sourced quarter, build a calculated-vs-disclosed comparison.
-  const mgmtRowsForLatest = latestAaumQuarter
-    ? managementYieldsFor(slug, latestAaumQuarter)
-    : [];
-  const mgmtComparison = (() => {
-    if (!quarterlyLive || !latestQ || !latestQ.avgAum || latestQ.avgAum <= 0) {
-      return null;
-    }
-    const calcOpMargin =
-      (latestQ.operatingProfit * 4 * 10_000) / latestQ.avgAum;
-    const calcRevenue = (latestQ.revenue * 4 * 10_000) / latestQ.avgAum;
-    return {
-      opMargin: compareToManagement(
-        calcOpMargin,
-        managementMetric(slug, latestQ.quarter, "operating_margin_bps_of_aaum")
-      ),
-      revenue: compareToManagement(
-        calcRevenue,
-        managementMetric(
-          slug,
-          latestQ.quarter,
-          "revenue_realization_bps_of_aaum"
-        )
-      ),
-    };
-  })();
   const operatingDemoNote = demoNote("operating data not yet sourced");
   const sipDemoNote = demoNote("SIP not yet sourced");
   const shareDemoNote = demoNote("share not yet sourced");
@@ -322,139 +289,6 @@ export default async function AmcPage({
           )}
         </Card>
       </section>
-
-      <ManagementYieldsCard
-        rows={mgmtRowsForLatest}
-        comparison={mgmtComparison}
-        listed={profile.listed}
-        latestQuarter={latestAaumQuarter}
-      />
     </div>
-  );
-}
-
-interface ManagementYieldsCardProps {
-  rows: ReturnType<typeof managementYieldsFor>;
-  comparison:
-    | {
-        opMargin: ReturnType<typeof compareToManagement>;
-        revenue: ReturnType<typeof compareToManagement>;
-      }
-    | null;
-  listed: boolean;
-  latestQuarter: string | null;
-}
-
-function ManagementYieldsCard({
-  rows,
-  comparison,
-  listed,
-  latestQuarter,
-}: ManagementYieldsCardProps) {
-  const hasData = rows.length > 0;
-  const flagColor = (flag: "ok" | "warning" | "mismatch") =>
-    flag === "ok"
-      ? "text-positive"
-      : flag === "warning"
-        ? "text-amber-500"
-        : "text-negative";
-  return (
-    <Card
-      title="Management-Disclosed Yields"
-      subtitle={
-        hasData
-          ? `bps of AAUM, sourced from public IR · ${latestQuarter ?? ""}`
-          : listed
-            ? "Pending source · IR presentation / concall not yet ingested"
-            : "Unavailable · unlisted AMC"
-      }
-    >
-      {!hasData ? (
-        <div className="flex h-24 items-center justify-center text-sm text-muted-foreground">
-          —
-        </div>
-      ) : (
-        <div className="space-y-3 text-sm">
-          {/* Top-line comparison: management vs calculated for the latest quarter. */}
-          {comparison?.opMargin && (
-            <div className="flex items-baseline justify-between border-b pb-2">
-              <span className="font-medium">Operating margin</span>
-              <span className="tabular text-xs text-muted-foreground">
-                Calculated{" "}
-                <span className="font-semibold text-foreground">
-                  {comparison.opMargin.calculatedBps.toFixed(1)} bps
-                </span>
-                {" · "}
-                Management{" "}
-                <span className="font-semibold text-foreground">
-                  {comparison.opMargin.disclosedBps} bps
-                </span>
-                {" · "}
-                <span
-                  className={`font-semibold ${flagColor(comparison.opMargin.flag)}`}
-                >
-                  Δ {comparison.opMargin.varianceBps >= 0 ? "+" : ""}
-                  {comparison.opMargin.varianceBps} bps
-                </span>
-              </span>
-            </div>
-          )}
-          {comparison?.revenue && (
-            <div className="flex items-baseline justify-between border-b pb-2">
-              <span className="font-medium">Revenue realization</span>
-              <span className="tabular text-xs text-muted-foreground">
-                Calculated{" "}
-                <span className="font-semibold text-foreground">
-                  {comparison.revenue.calculatedBps.toFixed(1)} bps
-                </span>
-                {" · "}
-                Management{" "}
-                <span className="font-semibold text-foreground">
-                  {comparison.revenue.disclosedBps} bps
-                </span>
-                {" · "}
-                <span
-                  className={`font-semibold ${flagColor(comparison.revenue.flag)}`}
-                >
-                  Δ {comparison.revenue.varianceBps >= 0 ? "+" : ""}
-                  {comparison.revenue.varianceBps} bps
-                </span>
-              </span>
-            </div>
-          )}
-          {/* Asset-class / additional metrics (blended, equity, debt, liquid, …). */}
-          <ul className="space-y-1">
-            {rows.map((r, i) => (
-              <li
-                key={`${r.metric}-${r.sourceUrl}-${i}`}
-                className="flex items-baseline justify-between text-xs"
-              >
-                <span className="text-muted-foreground">
-                  {r.metric.replaceAll("_", " ")}
-                  {r.lowBps !== undefined && r.highBps !== undefined
-                    ? ` (range ${r.lowBps}–${r.highBps})`
-                    : ""}
-                </span>
-                <span className="tabular">
-                  <span className="font-semibold text-foreground">
-                    {r.valueBps} bps
-                  </span>
-                  {" · "}
-                  <a
-                    href={r.sourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-muted-foreground/80 underline-offset-2 hover:underline"
-                  >
-                    {r.sourceName.slice(0, 60)}
-                    {r.page ? ` · p.${r.page}` : ""}
-                  </a>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </Card>
   );
 }
