@@ -42,9 +42,14 @@ export function liveAaumNote(): string {
   return `Source: AMFI MF QAAUM · ${isoDate(amcAaumQuarterlySnapshot.meta.generatedAt)}`;
 }
 
-/** Live screener.in P&L provenance for revenue / op profit / PAT / margins. */
+/**
+ * Live screener.in P&L provenance for revenue / op profit / PAT / margins.
+ * The numerator semantic is **Revenue from Operations** — screener's
+ * "Sales" row on the consolidated quarterly table. Other Income / treasury
+ * income are NOT included.
+ */
 export function liveScreenerNote(): string {
-  return `Source: screener.in · ${isoDate(amcQuarterlySnapshot.meta.generatedAt)}`;
+  return `Source: screener.in · Revenue from Operations · ${isoDate(amcQuarterlySnapshot.meta.generatedAt)}`;
 }
 
 /**
@@ -52,7 +57,7 @@ export function liveScreenerNote(): string {
  * denominator). Used on Yields card subtitles and yield KPI notes.
  */
 export function liveYieldNote(): string {
-  return `P&L: screener.in · ${isoDate(amcQuarterlySnapshot.meta.generatedAt)} · MF QAAUM: AMFI · ${isoDate(amcAaumQuarterlySnapshot.meta.generatedAt)}`;
+  return `P&L: screener.in · Revenue from Operations · ${isoDate(amcQuarterlySnapshot.meta.generatedAt)} · MF QAAUM: AMFI · ${isoDate(amcAaumQuarterlySnapshot.meta.generatedAt)}`;
 }
 
 /** AMFI master list (the "amcMaster" source covers /amc list and AMC names). */

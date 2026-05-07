@@ -183,7 +183,7 @@ export default async function QuarterlyPage({
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="Revenue"
+          label="Revenue from Operations"
           value={formatCompactCrSafe(latest.revenue)}
           delta={`${formatDelta(revenueYoy)} YoY`}
           trend={trend(revenueYoy)}
@@ -242,13 +242,13 @@ export default async function QuarterlyPage({
       <section className="grid gap-4 lg:grid-cols-2">
         <Card
           title="Revenue / Op Profit / PAT"
-          subtitle="Quarterly financials · 3-month reporting periods · ₹ Cr"
+          subtitle="Quarterly · ₹ Cr · Revenue = Revenue from Operations (excludes Other Income)"
         >
           <GroupedBars
             data={pnlData}
             xKey="quarter"
             bars={[
-              { key: "revenue", name: "Revenue", color: "hsl(var(--chart-1))" },
+              { key: "revenue", name: "Revenue from Ops", color: "hsl(var(--chart-1))" },
               { key: "op", name: "Op Profit", color: "hsl(var(--chart-2))" },
               { key: "pat", name: "PAT", color: "hsl(var(--chart-3))" },
             ]}

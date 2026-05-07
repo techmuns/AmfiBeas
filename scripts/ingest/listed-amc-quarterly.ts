@@ -52,7 +52,12 @@ function monthLabelToQuarter(label: string): string | null {
 
 interface ScreenerQuarter {
   quarter: string;
-  revenue: number;
+  /** "Sales" row from screener — for AMC issuers this is Revenue from
+   *  Operations and excludes "Other Income". */
+  revenueFromOperations: number;
+  /** Optional "Other Income" row — display only, never feeds Revenue
+   *  Realization. */
+  otherIncome: number;
   operatingProfit: number;
   pat: number;
 }
@@ -91,11 +96,16 @@ export function parseScreenerQuarterly(html: string): ScreenerQuarter[] {
     valuesByMetric[label] = numbers;
   });
 
+  // Screener's "Sales" row on a finance-company consolidated page IS the
+  // Revenue from Operations line — Other Income is published separately.
+  // We deliberately do NOT use the "revenue" alias here, because "Revenue"
+  // in some screener variants means Total Income (Sales + Other).
   const sales =
     valuesByMetric["sales"] ||
-    valuesByMetric["revenue"] ||
     valuesByMetric["sales +"] ||
+    valuesByMetric["revenue from operations"] ||
     [];
+  const otherIncome = valuesByMetric["other income"] || [];
   const opProfit =
     valuesByMetric["operating profit"] ||
     valuesByMetric["operating profit +"] ||
@@ -111,12 +121,14 @@ export function parseScreenerQuarterly(html: string): ScreenerQuarter[] {
     const q = quarters[i];
     if (!q) continue;
     const rev = sales[i];
+    const oi = otherIncome[i] ?? 0;
     const op = opProfit[i];
     const profit = pat[i];
     if (!rev && !op && !profit) continue;
     out.push({
       quarter: q,
-      revenue: rev ?? 0,
+      revenueFromOperations: rev ?? 0,
+      otherIncome: oi,
       operatingProfit: op ?? 0,
       pat: profit ?? 0,
     });
@@ -140,7 +152,9 @@ async function fetchOne(amc: ListedAmc): Promise<AmcQuarterlyRow[]> {
   return quarterly.map((q) => ({
     amcSlug: amc.slug,
     quarter: q.quarter,
-    revenue: q.revenue,
+    revenue: q.revenueFromOperations,
+    revenueFromOperations: q.revenueFromOperations,
+    otherIncome: q.otherIncome,
     operatingProfit: q.operatingProfit,
     pat: q.pat,
     avgAum: 0,
@@ -209,7 +223,7 @@ export async function ingestListedAmcQuarterly(): Promise<void> {
       source: "https://www.screener.in/company/{ticker}/consolidated/",
       notes: [
         "Quarterly P&L for listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC).",
-        "Revenue / op profit / PAT in ₹ Cr; avgAum not provided by source.",
+        "Source mapping: screener.in 'Sales' row → Revenue from Operations (excludes Other Income); 'Other Income' captured separately for display only; 'Operating Profit' and 'Net Profit' as labelled. revenueFromOperations is what feeds Revenue Realization (bps of MF QAAUM). avgAum not provided by this source.",
         `lastSuccessfulFetchAt=${nowIso()} · slugsThisRun=[${succeeded.join(", ")}] · failedThisRun=[${failed.join(", ")}].`,
         `quartersCovered=${allQuarters.length} (${allQuarters[0]}…${allQuarters[allQuarters.length - 1]}) · rowCount=${stats.total} · fetchWindow=${fetchedQuarters.length}.`,
       ].join(" "),
