@@ -2,7 +2,7 @@
   "meta": {
     "generatedAt": "2026-05-07T07:51:32.116Z",
     "source": "https://www.screener.in/company/{ticker}/consolidated/",
-    "notes": "Quarterly P&L for listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC, ICICIAMC). Source mapping: screener.in 'Sales' row → Revenue from Operations (excludes Other Income); 'Other Income' captured separately for display only; 'Operating Profit' and 'Net Profit' as labelled. revenueFromOperations is what feeds Revenue Realization (bps of MF QAAUM). avgAum not provided by this source. lastSuccessfulFetchAt=2026-05-07T07:51:32.116Z · slugsThisRun=[hdfc, nippon, absl, uti, icici-pru] · failedThisRun=[]. quartersCovered=13 (2023-Q1…2026-Q1) · rowCount=54 · fetchWindow=13."
+    "notes": "Quarterly P&L for listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC). ICICI Pru AMC pending \u2014 correct screener slug TBC. Source mapping: screener.in 'Sales' row \u2192 Revenue from Operations (excludes Other Income); 'Other Income' captured separately for display only; 'Operating Profit' and 'Net Profit' as labelled. revenueFromOperations is what feeds Revenue Realization (bps of MF QAAUM). avgAum not provided by this source. Removed 2 icici-pru rows from a 2-quarter scrape (annual/TTM layout)."
   },
   "rows": [
     {
@@ -266,16 +266,6 @@
       "avgAum": 0
     },
     {
-      "amcSlug": "icici-pru",
-      "quarter": "2024-Q3",
-      "revenue": 2458,
-      "revenueFromOperations": 2458,
-      "otherIncome": 0,
-      "operatingProfit": 1838,
-      "pat": 1327,
-      "avgAum": 0
-    },
-    {
       "amcSlug": "nippon",
       "quarter": "2024-Q3",
       "revenue": 571,
@@ -433,16 +423,6 @@
       "otherIncome": 0,
       "operatingProfit": 801,
       "pat": 718,
-      "avgAum": 0
-    },
-    {
-      "amcSlug": "icici-pru",
-      "quarter": "2025-Q3",
-      "revenue": 2949,
-      "revenueFromOperations": 2949,
-      "otherIncome": 0,
-      "operatingProfit": 2210,
-      "pat": 1618,
       "avgAum": 0
     },
     {
