@@ -74,4 +74,7 @@ export interface QuarterlyFinancial {
   operatingProfit: number;
   pat: number;
   avgAum: number;
+  /** Provenance note when the row is derived (e.g. 9M minus quarters)
+   *  rather than scraped directly. Optional; absent = direct source. */
+  derivedFrom?: string;
 }

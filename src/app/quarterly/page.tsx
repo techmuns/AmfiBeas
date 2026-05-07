@@ -226,8 +226,19 @@ export default async function QuarterlyPage({
     .toISOString()
     .slice(0, 10);
   const provenanceLine = `P&L: ${pnlSourceHost} · ${pnlSourceDate} · MF QAAUM: AMFI · ${aaumSourceDate}`;
-  const pnlNote = liveScreenerNote();
-  const yieldNote = liveYieldNote();
+  // When the selected period is a derived row (e.g. icici-pru 2025-Q2),
+  // swap the provenance note so it's clear this value isn't a direct
+  // scrape. Truncate the long derivation note to the headline sentence
+  // for the KPI caption.
+  const derivedHeadline = latest.derivedFrom
+    ? latest.derivedFrom.split(".")[0].trim() + "."
+    : null;
+  const pnlNote = derivedHeadline
+    ? `Source: derived · ${derivedHeadline}`
+    : liveScreenerNote();
+  const yieldNote = derivedHeadline
+    ? `P&L: derived · ${derivedHeadline} · MF QAAUM: AMFI · ${aaumSourceDate}`
+    : liveYieldNote();
 
   return (
     <div className="space-y-6">

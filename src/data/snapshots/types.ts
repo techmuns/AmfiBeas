@@ -95,6 +95,14 @@ export interface AmcQuarterlyRow {
   operatingProfit: number;
   pat: number;
   avgAum: number;
+  /**
+   * Optional: when set, this row was NOT scraped directly from screener
+   * but **derived** from arithmetic on other published figures (e.g. a
+   * 9M number minus two reported quarters). Surfaced in the dashboard so
+   * the user can tell at a glance which value is direct vs derived.
+   * Null / absent = direct screener "Sales" / "Net Profit" row.
+   */
+  derivedFrom?: string;
 }
 
 export interface AmcQuarterlySnapshot {

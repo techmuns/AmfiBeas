@@ -31,6 +31,7 @@ const liveQuarterlyBySlug = (() => {
       operatingProfit: r.operatingProfit,
       pat: r.pat,
       avgAum: fallback.value ?? r.avgAum,
+      ...(r.derivedFrom !== undefined ? { derivedFrom: r.derivedFrom } : {}),
     });
     m.set(r.amcSlug, arr);
   }
