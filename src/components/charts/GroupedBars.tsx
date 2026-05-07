@@ -27,7 +27,9 @@ export interface BarSpec {
 }
 
 interface GroupedBarsProps {
-  data: Record<string, string | number>[];
+  /** Cell values may be null — Recharts skips null bars so chart x-axes
+   *  can render a fixed-window x-axis with gaps for missing data. */
+  data: Record<string, string | number | null>[];
   xKey: string;
   bars: BarSpec[];
   height?: number;

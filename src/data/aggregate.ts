@@ -252,6 +252,39 @@ export function latestQuarter(): string {
 }
 
 /**
+ * Returns the `count` most recent calendar quarters ending at `latest`
+ * (inclusive), in ascending order. Used to pin every /quarterly trend
+ * chart to the same x-axis regardless of the selected AMC's data
+ * coverage — AMCs missing some quarters render nulls/gaps within this
+ * fixed window rather than shrinking the axis.
+ *
+ *   fixedQuarterWindow("2026-Q1", 8)
+ *     → ["2024-Q2","2024-Q3","2024-Q4","2025-Q1",
+ *        "2025-Q2","2025-Q3","2025-Q4","2026-Q1"]
+ *
+ * When `latest` rolls forward (e.g. 2026-Q2 lands in either snapshot),
+ * the window slides automatically.
+ */
+export function fixedQuarterWindow(
+  latest: string,
+  count: number
+): string[] {
+  const [yStr, qStr] = latest.split("-Q");
+  let y = Number(yStr);
+  let q = Number(qStr);
+  const out: string[] = [];
+  for (let i = 0; i < count; i++) {
+    out.unshift(`${y}-Q${q}`);
+    q -= 1;
+    if (q === 0) {
+      q = 4;
+      y -= 1;
+    }
+  }
+  return out;
+}
+
+/**
  * Month-over-month change (%) — uses the last two values in the series.
  * Returns 0 if the series has fewer than 2 points or the previous value is 0.
  */

@@ -8,6 +8,8 @@ import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
 import {
   SOURCED_FINANCIALS_SLUGS,
+  fixedQuarterWindow,
+  latestQuarter,
   qoqChange,
   quarterlyForAmc,
   yoyChangeQuarterly,
@@ -66,20 +68,19 @@ export default async function QuarterlyPage({
     fullSeries.find((q) => q.quarter === selectedPeriod) ??
     fullSeries[fullSeries.length - 1];
 
-  // Single source of truth for the chart history window. All three chart
-  // groups (Revenue/Op/PAT bars, Margin Trend, Yields) feed off `series`
-  // so they share an identical x-axis.
+  // Fixed-window chart axis. All three chart groups (Revenue/Op/PAT bars,
+  // Margin Trend, Yields) share the same x-axis: the latest 8 calendar
+  // quarters in the overall snapshot, regardless of which AMC is selected.
   //
-  // Rollover behaviour: when the next ingest writes a new quarter into
-  // amc-quarterly.json (e.g. 2026-Q2), `fullSeries` gains it at index
-  // [-1]; this slice automatically drops the oldest displayed quarter
-  // out of the visible window. Older snapshot rows are preserved by the
-  // history-preserving merge (see scripts/ingest/utils.ts
-  // mergeBySlugQuarter) — only the *displayed* window rolls forward.
-  // AMCs with < 8 real quarters (e.g. ICICI Pru) render only what they
-  // have. No fake fill, no interpolation.
+  // Rollover behaviour: `fixedQuarterWindow(latestQuarter(), 8)` derives
+  // the window from snapshot data. When ingest lands 2026-Q2, latestQuarter
+  // returns it and the window slides to 2024-Q3…2026-Q2 automatically.
+  //
+  // Per-AMC data is mapped onto the fixed window below — AMCs with gaps
+  // (e.g. ICICI Pru) render nulls at missing positions so the gaps are
+  // visible rather than silently shrinking the axis. Old snapshot rows
+  // outside the visible window remain preserved by mergeBySlugQuarter.
   const CHART_HISTORY_WINDOW_QUARTERS = 8;
-  const series = fullSeries.slice(-CHART_HISTORY_WINDOW_QUARTERS);
 
   const aaumMeta = amcAaumQuarterlySnapshot.meta;
   const yieldsSubtitle =
@@ -149,31 +150,57 @@ export default async function QuarterlyPage({
       : patMargin;
   const patMarginQoq = qoqChange([prevPatMargin, patMargin]);
 
-  const pnlData = series.map((q) => ({
-    quarter: q.quarter,
-    revenue: q.revenue,
-    op: q.operatingProfit,
-    pat: q.pat,
-  }));
-  const marginData = series.map((q) => ({
-    quarter: q.quarter,
-    patMargin: Number(((q.pat / q.revenue) * 100).toFixed(2)),
-    opMargin: Number(((q.operatingProfit / q.revenue) * 100).toFixed(2)),
-  }));
-  // null (not 0) for quarters where AAUM is missing, so the line renders as
-  // a gap rather than a misleading drop-to-zero.
-  const yieldData = series.map((q) => {
-    const hasAaum = aaumProvenance(slug, q.quarter)?.status === "ok";
+  // FIXED 2-year x-axis: every chart on /quarterly uses the same 8 most
+  // recent calendar quarters in the overall snapshot, regardless of the
+  // selected AMC's data coverage. AMCs with gaps (e.g. ICICI Pru's
+  // pre-listing 2024-Q2…Q3 + post-listing missing 2025-Q2) render nulls
+  // at those positions so the missing quarters are visible as gaps
+  // rather than silently absent. When `latestQuarter()` rolls forward
+  // (e.g. 2026-Q2 lands), `fixedWindow` slides automatically.
+  const fixedWindow = fixedQuarterWindow(
+    latestQuarter(),
+    CHART_HISTORY_WINDOW_QUARTERS
+  );
+  const seriesByQuarter = new Map(fullSeries.map((q) => [q.quarter, q]));
+
+  const pnlData = fixedWindow.map((quarter) => {
+    const r = seriesByQuarter.get(quarter);
     return {
-      quarter: q.quarter,
+      quarter,
+      revenue: r ? r.revenue : null,
+      op: r ? r.operatingProfit : null,
+      pat: r ? r.pat : null,
+    };
+  });
+  const marginData = fixedWindow.map((quarter) => {
+    const r = seriesByQuarter.get(quarter);
+    if (!r || r.revenue === 0) {
+      return { quarter, patMargin: null, opMargin: null };
+    }
+    return {
+      quarter,
+      patMargin: Number(((r.pat / r.revenue) * 100).toFixed(2)),
+      opMargin: Number(((r.operatingProfit / r.revenue) * 100).toFixed(2)),
+    };
+  });
+  // null (not 0) for quarters where the AMC has no row OR where AAUM is
+  // missing — Recharts renders a gap rather than a misleading line drop.
+  const yieldData = fixedWindow.map((quarter) => {
+    const r = seriesByQuarter.get(quarter);
+    const hasAaum =
+      r !== undefined &&
+      aaumProvenance(slug, quarter)?.status === "ok" &&
+      r.avgAum > 0;
+    return {
+      quarter,
       revenue: hasAaum
-        ? Number(((q.revenue * 4 * 10_000) / q.avgAum).toFixed(1))
+        ? Number(((r.revenue * 4 * 10_000) / r.avgAum).toFixed(1))
         : null,
       op: hasAaum
-        ? Number(((q.operatingProfit * 4 * 10_000) / q.avgAum).toFixed(1))
+        ? Number(((r.operatingProfit * 4 * 10_000) / r.avgAum).toFixed(1))
         : null,
       profit: hasAaum
-        ? Number(((q.pat * 4 * 10_000) / q.avgAum).toFixed(1))
+        ? Number(((r.pat * 4 * 10_000) / r.avgAum).toFixed(1))
         : null,
     };
   });
