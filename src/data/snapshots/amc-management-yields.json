@@ -1,12 +1,12 @@
 {
   "meta": {
-    "generatedAt": "",
+    "generatedAt": "2026-05-07T01:18:28.528Z",
     "source": "Public AMC investor relations (presentations, concall transcripts, exchange filings)",
     "status": "empty",
     "rowCount": 0,
     "amcsCovered": [],
     "quartersCovered": [],
-    "notes": "Management-disclosed yield / realisation metrics ('bps of AAUM'). Populated by scripts/ingest/management-yields.ts during the weekly GitHub Actions ingest. Empty until first successful run."
+    "notes": "Management-disclosed bps-of-AAUM yields scraped from public IR pages. lastSuccessfulFetchAt=2026-05-07T01:18:28.528Z · pdfsTried=0 · pdfsParsed=0. Each row carries source URL, raw snippet, confidence; merged on (amcSlug, quarter, metric, sourceName)."
   },
   "rows": []
 }
