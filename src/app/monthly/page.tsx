@@ -22,20 +22,21 @@ import {
 import { AMCS } from "@/data/amcs";
 import { monthlyForAmc, MONTHS_LIST } from "@/data/generator";
 import {
-  amfiMonthlyRows,
+  availableMonthsDesc,
   formatKpiProvenanceLine,
+  formatKpiProvenanceTooltip,
   getKpiProvenance,
   getKpiValue,
-  latestAmfiMonthlyRow,
+  resolveSelectedRow,
   type AmfiMonthlyKpiField,
 } from "@/data/amfi-monthly";
+import { MonthPicker } from "@/components/filters/MonthPicker";
 import {
   formatCompactCrSafe,
   formatCroreCountSafe,
   formatDelta,
   formatIntSafe,
   formatLakhSafe,
-  formatMonthLabel,
   formatPctSafe,
 } from "@/lib/format";
 import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
@@ -172,12 +173,17 @@ export default async function MonthlyPage({
     : `Industry-wide · ${latestMonth()}`;
   const demoIndustryNote = industryMonthlyNote();
 
-  // AMFI Monthly Snapshot — first live AMFI widget. Reads directly from the
-  // manually-uploaded-PDF snapshot. Renders cards only for KPIs the latest
-  // row actually carries — never substitutes zero or a dash for a missing
-  // value, never falls back to the demo industry data.
-  const amfiLatest = latestAmfiMonthlyRow();
-  const amfiRowCount = amfiMonthlyRows().length;
+  // AMFI Monthly Snapshot — first live AMFI widget. Reads directly from
+  // the manually-uploaded-PDF snapshot. The selected row is whichever
+  // month the URL `?month=YYYY-MM` query param picked, falling back to
+  // the latest available month when missing or invalid. Cards only
+  // render for KPIs the SELECTED row carries — never substitutes zero
+  // or a dash for a missing value, never falls back to demo data.
+  const requestedMonthRaw = sp.month;
+  const requestedMonth =
+    typeof requestedMonthRaw === "string" ? requestedMonthRaw : undefined;
+  const amfiSelected = resolveSelectedRow(requestedMonth);
+  const amfiAvailableMonths = availableMonthsDesc();
 
   /** All cards we'd surface if the row had every field. The render below
    *  hides any whose value is null on the latest row, so a press-release-
@@ -220,21 +226,28 @@ export default async function MonthlyPage({
   ];
 
   const amfiCardsToRender = AMFI_CARDS.flatMap((spec) => {
-    const value = getKpiValue(amfiLatest, spec.field);
+    const value = getKpiValue(amfiSelected, spec.field);
     if (value === null) return [];
-    const provenance = getKpiProvenance(amfiLatest, spec.field);
+    const provenance = getKpiProvenance(amfiSelected, spec.field);
     return [
       {
         ...spec,
         value,
         formatted: spec.format(value),
+        // Visible note: "Source: AMFI Monthly Report · p.1" — short.
+        // Tooltip on hover: same plus the full PDF filename for users
+        // who want to verify provenance. Filename stays in the data
+        // (row.fieldSources[field].sourcePdf) regardless.
         note: formatKpiProvenanceLine(provenance) ?? "",
+        noteHover: formatKpiProvenanceTooltip(provenance) ?? undefined,
       },
     ];
   });
 
-  const amfiSectionSubtitle = amfiLatest
-    ? `Industry-wide · ${formatMonthLabel(amfiLatest.month)} · live from uploaded AMFI PDFs`
+  // Subtitle no longer carries the month; the month picker on the right
+  // is the canonical place for period selection.
+  const amfiSectionSubtitle = amfiSelected
+    ? "Industry-wide · live from uploaded AMFI PDFs"
     : "Upload AMFI monthly PDFs to manual-data/amfi-monthly/pdfs/, then run npm run ingest:amfi-pdf";
 
   return (
@@ -246,18 +259,24 @@ export default async function MonthlyPage({
         title="AMFI Monthly Snapshot"
         subtitle={amfiSectionSubtitle}
         action={
-          <span
-            className={cn(
-              "shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
-              amfiLatest
-                ? "border-positive/40 bg-positive/10 text-positive"
-                : "border-border text-muted-foreground"
+          <div className="flex flex-col items-end gap-2">
+            <span
+              className={cn(
+                "shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
+                amfiSelected
+                  ? "border-positive/40 bg-positive/10 text-positive"
+                  : "border-border text-muted-foreground"
+              )}
+            >
+              {amfiSelected ? "Live" : "Not connected"}
+            </span>
+            {amfiSelected && amfiAvailableMonths.length > 0 && (
+              <MonthPicker
+                availableMonths={amfiAvailableMonths}
+                selectedMonth={amfiSelected.month}
+              />
             )}
-          >
-            {amfiLatest
-              ? `Live · ${amfiRowCount} month${amfiRowCount === 1 ? "" : "s"}`
-              : "Not connected"}
-          </span>
+          </div>
         }
       >
         {amfiCardsToRender.length > 0 ? (
@@ -268,6 +287,7 @@ export default async function MonthlyPage({
                 label={c.label}
                 value={c.formatted}
                 note={c.note}
+                noteHover={c.noteHover}
               />
             ))}
           </div>

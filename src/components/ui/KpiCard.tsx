@@ -8,6 +8,10 @@ interface KpiCardProps {
   trend?: "up" | "down" | "flat";
   /** Optional small caption rendered below the value (e.g. source / date). */
   note?: string;
+  /** Optional title-attribute text shown when hovering the note. Used by
+   *  the AMFI Monthly Snapshot to surface the full PDF filename without
+   *  cluttering the visible source line. Ignored when no note is set. */
+  noteHover?: string;
 }
 
 export function KpiCard({
@@ -16,6 +20,7 @@ export function KpiCard({
   delta,
   trend = "flat",
   note,
+  noteHover,
 }: KpiCardProps) {
   const Icon =
     trend === "up" ? ArrowUpRight : trend === "down" ? ArrowDownRight : null;
@@ -42,7 +47,10 @@ export function KpiCard({
         </div>
       )}
       {note && (
-        <div className="mt-1 text-[10px] tabular text-muted-foreground/80">
+        <div
+          className="mt-1 text-[10px] tabular text-muted-foreground/80"
+          title={noteHover}
+        >
           {note}
         </div>
       )}

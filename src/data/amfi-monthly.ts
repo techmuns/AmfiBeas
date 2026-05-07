@@ -87,9 +87,28 @@ export function sourceFormatLabel(
 }
 
 /** Compose the per-field source caption shown beneath each KPI card.
- *  Format: "AMFI Monthly Report · march-ammar2026repo.pdf · p.1".
+ *  Format: "Source: AMFI Monthly Report · p.1". Intentionally compact —
+ *  the full PDF filename is preserved on the row's `fieldSources[field]`
+ *  object (and surfaced via tooltip on the card), but is NOT rendered
+ *  in the visible text because long PDF filenames clutter the cards.
  *  Returns null when no provenance exists. */
 export function formatKpiProvenanceLine(
+  provenance: AmfiMonthlyPdfFieldProvenance | null
+): string | null {
+  if (!provenance) return null;
+  const pages = provenance.sourcePages.length
+    ? "p." + provenance.sourcePages.join(",")
+    : "";
+  const parts = [sourceFormatLabel(provenance.sourceFormat), pages].filter(
+    Boolean
+  );
+  return "Source: " + parts.join(" · ");
+}
+
+/** Hover-only caption that surfaces the full PDF filename for users who
+ *  need to verify provenance. Returned as a single line suitable for a
+ *  `title` attribute. Returns null when no provenance exists. */
+export function formatKpiProvenanceTooltip(
   provenance: AmfiMonthlyPdfFieldProvenance | null
 ): string | null {
   if (!provenance) return null;
@@ -101,5 +120,43 @@ export function formatKpiProvenanceLine(
     provenance.sourcePdf,
     pages,
   ].filter(Boolean);
+  if (provenance.sourceLabel) parts.push(provenance.sourceLabel);
   return parts.join(" · ");
+}
+
+/** Resolve the row for a specific YYYY-MM month, or null if absent. */
+export function rowForMonth(month: string): AmfiMonthlyPdfRow | null {
+  return amfiMonthlyRows().find((r) => r.month === month) ?? null;
+}
+
+/** List available months newest → oldest. Used by the month picker. */
+export function availableMonthsDesc(): string[] {
+  return amfiMonthlyRows()
+    .map((r) => r.month)
+    .sort((a, b) => b.localeCompare(a));
+}
+
+/** Resolve the row to display given a `?month=YYYY-MM` URL value:
+ *   - If `requested` matches an available month, return that row.
+ *   - Otherwise (missing, malformed, or for a month with no data) fall
+ *     back to the latest row.
+ *  Always paired with `resolveSelectedMonth` so the page and the picker
+ *  agree on which month is active. */
+export function resolveSelectedRow(
+  requested: string | undefined
+): AmfiMonthlyPdfRow | null {
+  if (requested) {
+    const hit = rowForMonth(requested);
+    if (hit) return hit;
+  }
+  return latestAmfiMonthlyRow();
+}
+
+/** Returns the YYYY-MM key the page is showing (selected or latest)
+ *  given a `?month=` URL value. Returns null when no rows exist. */
+export function resolveSelectedMonth(
+  requested: string | undefined
+): string | null {
+  const row = resolveSelectedRow(requested);
+  return row?.month ?? null;
 }
