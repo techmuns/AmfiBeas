@@ -177,15 +177,67 @@ export interface OtherSchemesMonthlySnapshot {
 }
 
 /**
- * Monthly industry KPIs extracted from AMFI press-release PDFs that the
- * user uploads under `manual-data/amfi-monthly/pdfs/`. Every numeric
- * field is OPTIONAL — if a value cannot be confidently parsed from the
- * PDF, the field is omitted, never zeroed. Each row carries its own
- * provenance so individual values stay traceable to the exact PDF.
+ * Per-field provenance for an AMFI monthly PDF KPI. Every numeric
+ * field on `AmfiMonthlyPdfRow` carries its OWN provenance entry —
+ * because a single month's row is typically merged from two PDFs
+ * (Monthly Report + Monthly Note) and each KPI comes from exactly
+ * one of them.
  *
- * Not yet wired into the /monthly UI — written by the manual-PDF
- * extractor (`scripts/ingest/amfi-monthly-pdf.ts`) and reserved for a
- * follow-up that will switch the dashboard to it.
+ *   - sourcePdf: filename of the PDF this field's value came from.
+ *   - sourceFormat: which AMFI publication ("monthly-report" /
+ *     "press-release" / "unknown") it was extracted from.
+ *   - sourcePages: 1-indexed page numbers within that PDF where
+ *     the value was found. Usually one page; included as an array
+ *     because some fields could be cross-referenced in future.
+ *   - extractedAt: ISO timestamp of the extraction run that wrote
+ *     this field. Distinct from row-level extractedAt because a
+ *     row may have fields written by different runs over time.
+ *   - sourceLabel: optional human-readable description of the row
+ *     or label the value was matched against (e.g. "Sub Total - II
+ *     row · Net AUM column", "SIP monthly contribution (crore)").
+ *     Lets the dashboard surface "where in the PDF" for tooltips.
+ */
+export interface AmfiMonthlyPdfFieldProvenance {
+  sourcePdf: string;
+  sourceFormat: "monthly-report" | "press-release" | "unknown";
+  sourcePages: number[];
+  extractedAt: string;
+  sourceLabel?: string;
+}
+
+/** Map keyed by AmfiMonthlyPdfRow numeric field name. Each present
+ *  key MUST have a corresponding numeric value on the row, and vice
+ *  versa — the merger keeps these aligned so the dashboard can rely
+ *  on `row.fieldSources[k]` whenever `row[k]` is set. */
+export interface AmfiMonthlyPdfFieldSources {
+  totalAum?: AmfiMonthlyPdfFieldProvenance;
+  totalAaum?: AmfiMonthlyPdfFieldProvenance;
+  equityAum?: AmfiMonthlyPdfFieldProvenance;
+  activeEquityAum?: AmfiMonthlyPdfFieldProvenance;
+  debtAum?: AmfiMonthlyPdfFieldProvenance;
+  liquidAum?: AmfiMonthlyPdfFieldProvenance;
+  sipContribution?: AmfiMonthlyPdfFieldProvenance;
+  sipAum?: AmfiMonthlyPdfFieldProvenance;
+  sipAccounts?: AmfiMonthlyPdfFieldProvenance;
+  netInflow?: AmfiMonthlyPdfFieldProvenance;
+}
+
+/**
+ * Monthly industry KPIs extracted from AMFI PDFs the user uploads
+ * under `manual-data/amfi-monthly/pdfs/`. Every numeric field is
+ * OPTIONAL — if a value cannot be confidently parsed from any PDF,
+ * the field is omitted, never zeroed.
+ *
+ * A row is built up from one or more PDFs for the same month (Monthly
+ * Report contributes AUM totals + sub-category AUM; Monthly Note
+ * contributes SIP figures). Per-field provenance lives in
+ * `fieldSources` — that's what the dashboard should consume. The
+ * row-level `sourcePdf` / `sourceFormat` / `sourcePages` /
+ * `extractedAt` remain as a convenience reflecting the LATEST PDF
+ * that touched this row, but they no longer tell you which PDF a
+ * specific KPI came from once two PDFs have merged.
+ *
+ * Not yet wired into the /monthly UI.
  */
 export interface AmfiMonthlyPdfRow {
   month: string;                       // YYYY-MM
@@ -203,12 +255,18 @@ export interface AmfiMonthlyPdfRow {
   sipAum?: number;                     // ₹ Cr (press release only)
   sipAccounts?: number;                // count of live SIP accounts (press release only)
   netInflow?: number;                  // ₹ Cr (industry net inflow / outflow)
-  /** "monthly-report" | "press-release" | "unknown" — which AMFI
-   *  publication this row was extracted from. */
+  /** Per-field provenance. Always present (may be empty {}). The
+   *  dashboard should prefer this over the row-level fields below
+   *  when surfacing which PDF a specific KPI came from. */
+  fieldSources: AmfiMonthlyPdfFieldSources;
+  /** Row-level convenience: format / file / pages of the LATEST PDF
+   *  that wrote into this row. Kept for backwards compatibility and
+   *  for rows where only one PDF has contributed. The merged row's
+   *  fields may have come from a different PDF — see fieldSources. */
   sourceFormat: "monthly-report" | "press-release" | "unknown";
-  sourcePdf: string;                   // filename only
-  sourcePages: number[];               // 1-indexed page numbers used
-  extractedAt: string;                 // ISO timestamp
+  sourcePdf: string;
+  sourcePages: number[];
+  extractedAt: string;
 }
 
 export interface AmfiMonthlyPdfSnapshot {
