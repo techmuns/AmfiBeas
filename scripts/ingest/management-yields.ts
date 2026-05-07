@@ -24,12 +24,19 @@ import type { Browser, Page } from "playwright";
  */
 interface AmcSource {
   amcSlug: string;
+  /** NSE equity ticker — used for the corporate-announcements API. */
+  nseSymbol?: string;
+  /** BSE scrip code (numeric) — used for the AnnGetData API. */
+  bseScrip?: string;
+  /** Company IR landing pages — Playwright/cheerio fallback. */
   pages: string[];
 }
 
 const AMC_SOURCES: AmcSource[] = [
   {
     amcSlug: "hdfc",
+    nseSymbol: "HDFCAMC",
+    bseScrip: "541729",
     pages: [
       "https://www.hdfcfund.com/about-us/about-us/investor-relations",
       "https://www.hdfcfund.com/about-us/about-us/investor-relations/financials",
@@ -37,21 +44,33 @@ const AMC_SOURCES: AmcSource[] = [
   },
   {
     amcSlug: "nippon",
+    nseSymbol: "NAM-INDIA",
+    bseScrip: "540767",
     pages: [
       "https://mf.nipponindiaim.com/InvestorServices/Pages/Investor-Relations.aspx",
     ],
   },
   {
     amcSlug: "absl",
+    nseSymbol: "ABSLAMC",
+    bseScrip: "542752",
     pages: [
       "https://mutualfund.adityabirlacapital.com/about-us/investor-relations",
     ],
   },
   {
     amcSlug: "uti",
+    nseSymbol: "UTIAMC",
+    bseScrip: "543238",
     pages: ["https://www.utimf.com/about-uti/investors-information"],
   },
-  // ICICI Pru AMC IR site URL TBD — added once stable.
+  // ICICI Pru AMC: not yet listed on NSE/BSE under a separate AMC ticker.
+  // Once a stable corporate-announcements scrip exists, add nseSymbol +
+  // bseScrip here.
+  {
+    amcSlug: "icici-pru",
+    pages: [],
+  },
 ];
 
 /**
@@ -99,7 +118,14 @@ interface DiscoveredPdf {
   pdfUrl: string;
   linkText: string;
   sourceType: ManagementYieldSourceType;
-  origin: "known" | "cheerio" | "playwright";
+  origin: "known" | "nse" | "bse" | "cheerio" | "playwright";
+  /** Source-specific metadata baked into the row when extracted. */
+  exchangeMeta?: {
+    exchange: "NSE" | "BSE";
+    ticker: string;
+    announcementDate?: string;
+    filingSubject?: string;
+  };
 }
 
 function classifySource(
@@ -135,6 +161,164 @@ async function discoverFromKnown(src: AmcSource): Promise<DiscoveredPdf[]> {
     sourceType: k.sourceType,
     origin: "known" as const,
   }));
+}
+
+/** Subjects/headlines that look like investor presentation / concall material. */
+const EXCHANGE_FILING_KEYWORDS =
+  /(investor\s*presentation|earnings\s*presentation|result\s*presentation|financial\s*results\s*presentation|concall|earnings\s*call|investor\s*update|quarterly\s*update|presentation|transcript)/i;
+
+const EXCHANGE_LOOKBACK_MONTHS = 18;
+
+interface NseAnnouncement {
+  symbol: string;
+  subject?: string;
+  attchmntFile?: string;
+  attchmntText?: string;
+  ann_date?: string;
+  desc?: string;
+}
+
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+function nseDateRange(): { from: string; to: string } {
+  const today = new Date();
+  const from = new Date(today);
+  from.setMonth(from.getMonth() - EXCHANGE_LOOKBACK_MONTHS);
+  const fmt = (d: Date) =>
+    `${pad2(d.getDate())}-${pad2(d.getMonth() + 1)}-${d.getFullYear()}`;
+  return { from: fmt(from), to: fmt(today) };
+}
+
+/**
+ * NSE corporate-announcements API. The endpoint is cookie-gated — a direct
+ * curl typically gets 401/403. We try a plain fetch first; if it fails we
+ * fall through silently. (A future iteration can warm a Playwright session
+ * to harvest cookies before the JSON call.)
+ */
+async function discoverFromNse(src: AmcSource): Promise<DiscoveredPdf[]> {
+  if (!src.nseSymbol) return [];
+  const { from, to } = nseDateRange();
+  const url = `https://www.nseindia.com/api/corporate-announcements?index=equities&symbol=${encodeURIComponent(src.nseSymbol)}&from_date=${from}&to_date=${to}`;
+  try {
+    const res = await fetch(url, {
+      headers: {
+        accept: "application/json,text/plain,*/*",
+        "accept-language": "en-US,en;q=0.9",
+        "user-agent":
+          "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        referer: `https://www.nseindia.com/companies-listing/corporate-filings-announcements?symbol=${src.nseSymbol}`,
+      },
+    });
+    if (!res.ok) {
+      warn(
+        `mgmt-yields[${src.amcSlug}]: NSE returned HTTP ${res.status} for ${src.nseSymbol}`
+      );
+      return [];
+    }
+    const json = (await res.json()) as NseAnnouncement[];
+    const out: DiscoveredPdf[] = [];
+    for (const a of json) {
+      const subject = `${a.subject ?? ""} ${a.desc ?? ""} ${a.attchmntText ?? ""}`;
+      if (!EXCHANGE_FILING_KEYWORDS.test(subject)) continue;
+      const pdf = a.attchmntFile;
+      if (!pdf || !/\.pdf(?:[?#]|$)/i.test(pdf)) continue;
+      out.push({
+        amcSlug: src.amcSlug,
+        pageUrl: `nse:${src.nseSymbol}`,
+        pdfUrl: pdf,
+        linkText: (a.subject ?? a.desc ?? "NSE filing").slice(0, 140),
+        sourceType: "exchange_filing",
+        origin: "nse",
+        exchangeMeta: {
+          exchange: "NSE",
+          ticker: src.nseSymbol,
+          announcementDate: a.ann_date,
+          filingSubject: a.subject,
+        },
+      });
+    }
+    return out;
+  } catch (err) {
+    warn(
+      `mgmt-yields[${src.amcSlug}]: NSE fetch failed — ${(err as Error).message}`
+    );
+    return [];
+  }
+}
+
+interface BseAnnouncementRow {
+  HEADLINE?: string;
+  SUBJECT?: string;
+  NEWSSUB?: string;
+  ATTACHMENTNAME?: string;
+  NEWS_DT?: string;
+}
+
+/**
+ * BSE corporate-announcements API. Public, returns JSON without cookies.
+ * ATTACHMENTNAME is a relative filename; the canonical URL is
+ *   https://www.bseindia.com/xml-data/corpfiling/AttachLive/{ATTACHMENTNAME}
+ */
+async function discoverFromBse(src: AmcSource): Promise<DiscoveredPdf[]> {
+  if (!src.bseScrip) return [];
+  const today = new Date();
+  const from = new Date(today);
+  from.setMonth(from.getMonth() - EXCHANGE_LOOKBACK_MONTHS);
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}`;
+  const url =
+    `https://api.bseindia.com/BseIndiaAPI/api/AnnGetData_New/w` +
+    `?strCat=Company%20Update&strPrevDate=${fmt(from)}&strScrip=${src.bseScrip}` +
+    `&strSearch=P&strToDate=${fmt(today)}&strType=C`;
+  try {
+    const res = await fetch(url, {
+      headers: {
+        accept: "application/json,text/plain,*/*",
+        "accept-language": "en-US,en;q=0.9",
+        "user-agent":
+          "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        referer: "https://www.bseindia.com/corporates/ann.html",
+      },
+    });
+    if (!res.ok) {
+      warn(
+        `mgmt-yields[${src.amcSlug}]: BSE returned HTTP ${res.status} for ${src.bseScrip}`
+      );
+      return [];
+    }
+    const json = (await res.json()) as { Table?: BseAnnouncementRow[] };
+    const rows = json.Table ?? [];
+    const out: DiscoveredPdf[] = [];
+    for (const r of rows) {
+      const subject = `${r.HEADLINE ?? ""} ${r.SUBJECT ?? ""} ${r.NEWSSUB ?? ""}`;
+      if (!EXCHANGE_FILING_KEYWORDS.test(subject)) continue;
+      const file = (r.ATTACHMENTNAME ?? "").trim();
+      if (!file || !/\.pdf$/i.test(file)) continue;
+      const pdf = `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${file}`;
+      out.push({
+        amcSlug: src.amcSlug,
+        pageUrl: `bse:${src.bseScrip}`,
+        pdfUrl: pdf,
+        linkText: (r.SUBJECT ?? r.HEADLINE ?? "BSE filing").slice(0, 140),
+        sourceType: "exchange_filing",
+        origin: "bse",
+        exchangeMeta: {
+          exchange: "BSE",
+          ticker: src.bseScrip,
+          announcementDate: r.NEWS_DT,
+          filingSubject: r.SUBJECT ?? r.HEADLINE,
+        },
+      });
+    }
+    return out;
+  } catch (err) {
+    warn(
+      `mgmt-yields[${src.amcSlug}]: BSE fetch failed — ${(err as Error).message}`
+    );
+    return [];
+  }
 }
 
 async function discoverFromCheerio(src: AmcSource): Promise<DiscoveredPdf[]> {
@@ -363,6 +547,8 @@ export async function ingestManagementYields(): Promise<void> {
   const fetchedAt = nowIso();
   const fetched: ManagementYieldRow[] = [];
   const stats = {
+    nsePdfs: 0,
+    bsePdfs: 0,
     knownPdfs: 0,
     cheerioPdfs: 0,
     playwrightPdfs: 0,
@@ -388,18 +574,37 @@ export async function ingestManagementYields(): Promise<void> {
 
   try {
     for (const src of AMC_SOURCES) {
-      info(`mgmt-yields: discovering for ${src.amcSlug}`);
-      const known = await discoverFromKnown(src);
-      stats.knownPdfs += known.length;
+      info(
+        `mgmt-yields: discovering for ${src.amcSlug} (nse=${src.nseSymbol ?? "—"} bse=${src.bseScrip ?? "—"})`
+      );
 
+      // Layer 1: NSE corporate announcements (primary).
+      const nseRes = await discoverFromNse(src);
+      stats.nsePdfs += nseRes.length;
+      info(
+        `mgmt-yields:   ${src.amcSlug} nse → ${nseRes.length} candidate filing(s)`
+      );
+
+      // Layer 2: BSE corporate announcements.
+      const bseRes = await discoverFromBse(src);
+      stats.bsePdfs += bseRes.length;
+      info(
+        `mgmt-yields:   ${src.amcSlug} bse → ${bseRes.length} candidate filing(s)`
+      );
+
+      // Layer 3: company IR static HTML (cheerio).
       const cheerioRes = await discoverFromCheerio(src);
       stats.cheerioPdfs += cheerioRes.length;
       info(
         `mgmt-yields:   ${src.amcSlug} cheerio → ${cheerioRes.length} link(s)`
       );
 
+      // Layer 4: Playwright-rendered IR pages (only if upstream layers
+      // returned zero — keeps runtime predictable).
       let playwrightRes: DiscoveredPdf[] = [];
-      if (browser && cheerioRes.length === 0) {
+      const upstream =
+        nseRes.length + bseRes.length + cheerioRes.length;
+      if (browser && upstream === 0) {
         playwrightRes = await discoverFromPlaywright(browser, src);
         stats.playwrightPdfs += playwrightRes.length;
         info(
@@ -407,7 +612,23 @@ export async function ingestManagementYields(): Promise<void> {
         );
       }
 
-      const all = dedupePdfs([...known, ...cheerioRes, ...playwrightRes]);
+      // Layer 5: pinned KNOWN_PDFS (always considered, dedupe handles
+      // overlap with discovered URLs).
+      const known = await discoverFromKnown(src);
+      stats.knownPdfs += known.length;
+      if (known.length > 0) {
+        info(
+          `mgmt-yields:   ${src.amcSlug} known → ${known.length} pinned URL(s)`
+        );
+      }
+
+      const all = dedupePdfs([
+        ...nseRes,
+        ...bseRes,
+        ...cheerioRes,
+        ...playwrightRes,
+        ...known,
+      ]);
       stats.deduped += all.length;
       info(
         `mgmt-yields:   ${src.amcSlug} dedupe → ${all.length} unique URL(s)`
@@ -511,7 +732,7 @@ export async function ingestManagementYields(): Promise<void> {
         : "partial";
 
   info(
-    `mgmt-yields: discover — known=${stats.knownPdfs} cheerio=${stats.cheerioPdfs} playwright=${stats.playwrightPdfs} unique=${stats.deduped}`
+    `mgmt-yields: discover — nse=${stats.nsePdfs} bse=${stats.bsePdfs} cheerio=${stats.cheerioPdfs} playwright=${stats.playwrightPdfs} known=${stats.knownPdfs} unique=${stats.deduped}`
   );
   info(
     `mgmt-yields: parse — tried=${stats.pdfsTried} parsed=${stats.pdfsParsed} not_pdf=${stats.pdfsNotPdf} keyword_hits=${stats.keywordHits}`
@@ -541,8 +762,8 @@ export async function ingestManagementYields(): Promise<void> {
       amcsCovered,
       quartersCovered,
       notes: [
-        "Management-disclosed bps-of-AAUM yields scraped from public IR pages.",
-        `lastSuccessfulFetchAt=${fetchedAt} · playwright=${PLAYWRIGHT_ENABLED ? "on" : "off"} · pdfsTried=${stats.pdfsTried} · pdfsParsed=${stats.pdfsParsed} · keywordHits=${stats.keywordHits}.`,
+        "Management-disclosed bps-of-AAUM yields scraped from public exchange filings (NSE/BSE primary) and AMC IR pages (fallback).",
+        `lastSuccessfulFetchAt=${fetchedAt} · playwright=${PLAYWRIGHT_ENABLED ? "on" : "off"} · nse=${stats.nsePdfs} · bse=${stats.bsePdfs} · cheerio=${stats.cheerioPdfs} · playwrightPdfs=${stats.playwrightPdfs} · pdfsTried=${stats.pdfsTried} · pdfsParsed=${stats.pdfsParsed} · keywordHits=${stats.keywordHits}.`,
         "Each row carries source URL, raw snippet, confidence; merged on (amcSlug, quarter, metric, sourceName).",
       ].join(" "),
     },
