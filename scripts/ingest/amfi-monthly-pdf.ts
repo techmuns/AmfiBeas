@@ -105,14 +105,23 @@ function findMonthYear(text: string): string | null {
 
 /**
  * Detect the calendar month the PDF reports on.
- * Priority order:
- *   1. "for the month of <Month> <Year>" — strongest signal, used in
- *      Monthly Report column headers and sub-titles.
- *   2. "Monthly Report for <Month>-<Year>" or "<Month>-<Year>"
- *      — Monthly Report footer title.
- *   3. Generic "<Month> <Year>" anywhere — first hit on first page.
+ * Priority order (highest first):
+ *   1. First <Month> <Year> on page 1 — both AMFI publications put the
+ *      canonical reporting period prominently on page 1 ("AMFI monthly
+ *      note February 2026" for press-release Notes; "Funds Mobilized for
+ *      the month of March 2026" for the per-scheme Monthly Report). The
+ *      page-1 scan is checked FIRST so a chart caption deeper in the
+ *      doc that references a comparison month (e.g. a US-flows panel
+ *      saying "for the month of January 2026" inside a February-period
+ *      Note) doesn't mis-set the row's month. (See the Feb 2026 Note
+ *      audit on this branch — that exact bug.)
+ *   2. "for the month of <Month> <Year>" anywhere — fallback when the
+ *      first-page text is unusually sparse (some legacy formats had
+ *      blank cover pages).
+ *   3. "Monthly Report for <Month>-<Year>" anywhere — explicit Monthly
+ *      Report footer title.
  *   4. ISO-style filename "<YYYY>-<MM>" or "<YYYY>_<MM>".
- *   5. Generic "<Month> <Year>" anywhere on later pages.
+ *   5. <Month> <Year> on later pages — last-resort fallback.
  *
  * NEVER matches "as on <Month> 31, <Year>" as "<Month> '31" → 2031,
  * because findMonthYear requires a 4-digit year.
@@ -120,7 +129,17 @@ function findMonthYear(text: string): string | null {
 function detectMonth(filename: string, pages: PdfPage[]): string | null {
   const allText = pages.map((p) => p.text).join("\n");
 
-  // Priority 1: "for the month of March 2026"
+  // Priority 1: first month + 4-digit year on page 1. Wins for both
+  // formats because page 1 is the title page (Notes) or the table
+  // header where the report period appears first ("for the month of
+  // March 2026" on Monthly Reports).
+  if (pages.length > 0) {
+    const firstPageMonth = findMonthYear(pages[0].text);
+    if (firstPageMonth) return firstPageMonth;
+  }
+
+  // Priority 2: "for the month of March 2026" anywhere. Fallback only
+  // — primary detection is the page-1 scan above.
   const forMonth = new RegExp(
     String.raw`for\s+the\s+month(?:\s+of)?\s+` + MONTH_NAMES + String.raw`[\s\-,/]+(\d{4})\b`,
     "i"
@@ -131,7 +150,7 @@ function detectMonth(filename: string, pages: PdfPage[]): string | null {
     if (m) return m;
   }
 
-  // Priority 2: "Monthly Report for March-2026" or "March-2026"
+  // Priority 3: "Monthly Report for March-2026" or "March-2026"
   const reportFor = new RegExp(
     String.raw`Monthly\s+Report\s+for\s+` + MONTH_NAMES + String.raw`[\s\-]+(\d{4})\b`,
     "i"
@@ -140,12 +159,6 @@ function detectMonth(filename: string, pages: PdfPage[]): string | null {
   if (reportMatch) {
     const m = parseMonth(`${reportMatch[1]} ${reportMatch[2]}`);
     if (m) return m;
-  }
-
-  // Priority 3: first month + 4-digit year on the first page
-  if (pages.length > 0) {
-    const firstPageMonth = findMonthYear(pages[0].text);
-    if (firstPageMonth) return firstPageMonth;
   }
 
   // Priority 4: ISO-style filename
