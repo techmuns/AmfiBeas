@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FilterBar } from "@/components/filters/FilterBar";
 import type { AmcStatus } from "@/components/filters/FilterBar";
+import { QuarterPicker } from "@/components/filters/QuarterPicker";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
 import {
@@ -50,9 +51,27 @@ export default async function QuarterlyPage({
   const profile = getAMC(slug);
 
   const fullSeries = quarterlyForAmc(slug);
+
+  // Period picker. KPI cards use this quarter; defaults to the most
+  // recent available quarter for the selected AMC. Unrecognised values in
+  // the URL are silently ignored. ICICI Pru's pre-listing gaps are simply
+  // absent from `availableQuarters` — selector shows real-only quarters.
+  const availableQuarters = fullSeries.map((q) => q.quarter);
+  const requestedPeriod =
+    typeof sp.period === "string" ? sp.period : undefined;
+  const selectedPeriod =
+    requestedPeriod && availableQuarters.includes(requestedPeriod)
+      ? requestedPeriod
+      : availableQuarters[availableQuarters.length - 1];
+  const latest =
+    fullSeries.find((q) => q.quarter === selectedPeriod) ??
+    fullSeries[fullSeries.length - 1];
+
+  // Charts: cap to the most recent 8 quarters (per requirement). The
+  // FilterBar `range` (4Q / 8Q / All) narrows further within that cap.
+  const last8 = fullSeries.slice(-8);
   const trimmedSet = new Set(trimQuarters(QUARTERS_LIST, filters.range));
-  const series = fullSeries.filter((q) => trimmedSet.has(q.quarter));
-  const latest = fullSeries[fullSeries.length - 1];
+  const series = last8.filter((q) => trimmedSet.has(q.quarter));
 
   const aaumMeta = amcAaumQuarterlySnapshot.meta;
   const yieldsSubtitle =
@@ -90,9 +109,13 @@ export default async function QuarterlyPage({
     );
   }
 
-  const revenueYoy = yoyChangeQuarterly(fullSeries.map((q) => q.revenue));
-  const opYoy = yoyChangeQuarterly(fullSeries.map((q) => q.operatingProfit));
-  const patYoy = yoyChangeQuarterly(fullSeries.map((q) => q.pat));
+  // YoY / QoQ deltas computed against the selected period (not always the
+  // latest), so picking an older quarter shows the right historic delta.
+  const selectedIdx = fullSeries.findIndex((q) => q.quarter === selectedPeriod);
+  const seriesUpToSelected = fullSeries.slice(0, selectedIdx + 1);
+  const revenueYoy = yoyChangeQuarterly(seriesUpToSelected.map((q) => q.revenue));
+  const opYoy = yoyChangeQuarterly(seriesUpToSelected.map((q) => q.operatingProfit));
+  const patYoy = yoyChangeQuarterly(seriesUpToSelected.map((q) => q.pat));
   const patMargin = (latest.pat / latest.revenue) * 100;
   const opMargin = (latest.operatingProfit / latest.revenue) * 100;
   // Management-comparable "bps of AAUM": quarterly P&L × 4 / AAUM × 10,000.
@@ -107,11 +130,14 @@ export default async function QuarterlyPage({
     ? (latest.pat * 4 * 10_000) / latest.avgAum
     : 0;
 
+  // PAT-margin QoQ also tracks the selected period (compares to the
+  // immediately-prior available quarter, which may not be calendar-
+  // contiguous for ICICI given its post-listing gaps).
+  const prevQuarterRow =
+    selectedIdx > 0 ? fullSeries[selectedIdx - 1] : null;
   const prevPatMargin =
-    fullSeries.length > 1
-      ? (fullSeries[fullSeries.length - 2].pat /
-          fullSeries[fullSeries.length - 2].revenue) *
-        100
+    prevQuarterRow && prevQuarterRow.revenue > 0
+      ? (prevQuarterRow.pat / prevQuarterRow.revenue) * 100
       : patMargin;
   const patMarginQoq = qoqChange([prevPatMargin, patMargin]);
 
@@ -180,6 +206,11 @@ export default async function QuarterlyPage({
       <p className="-mt-2 text-[11px] tabular text-muted-foreground">
         {provenanceLine}
       </p>
+
+      <QuarterPicker
+        availableQuarters={availableQuarters}
+        selectedQuarter={selectedPeriod}
+      />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
