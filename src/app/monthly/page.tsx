@@ -22,6 +22,7 @@ import {
 import { AMCS } from "@/data/amcs";
 import { monthlyForAmc, MONTHS_LIST } from "@/data/generator";
 import {
+  amfiMonthlyRows,
   availableMonthsDesc,
   formatKpiProvenanceLine,
   formatKpiProvenanceTooltip,
@@ -255,6 +256,104 @@ export default async function MonthlyPage({
     ? "Industry-wide · live from uploaded AMFI PDFs"
     : "Upload AMFI monthly PDFs to manual-data/amfi-monthly/pdfs/, then run npm run ingest:amfi-pdf";
 
+  // ---- AMFI AUM Mix & Trend section -----------------------------------
+  //
+  // Month-end AUM Mix. Denominator is `totalAum` (closing balance) so the
+  // category fields stay on the same month-end basis as the source rows.
+  // We do NOT divide month-end equityAum/debtAum/liquidAum by totalAaum
+  // (period-average) — the units would not match.
+  //
+  // "Other" = totalAum − (equity + debt + liquid). Computed only when
+  // ALL three sub-categories are present and totalAum is present, since
+  // a missing sub-category would inflate the residual into a misleading
+  // bucket. If the residual is ≤ 0, Other is dropped (would either be
+  // a wash or imply mis-extraction).
+  const mixTotalAum = getKpiValue(amfiSelected, "totalAum");
+  const mixEquity = getKpiValue(amfiSelected, "equityAum");
+  const mixDebt = getKpiValue(amfiSelected, "debtAum");
+  const mixLiquid = getKpiValue(amfiSelected, "liquidAum");
+
+  const mixSlices: DonutSlice[] = [];
+  if (typeof mixEquity === "number") {
+    mixSlices.push({
+      key: "equity",
+      label: "Equity",
+      value: mixEquity,
+      color: "hsl(var(--chart-1))",
+    });
+  }
+  if (typeof mixDebt === "number") {
+    mixSlices.push({
+      key: "debt",
+      label: "Debt",
+      value: mixDebt,
+      color: "hsl(var(--chart-2))",
+    });
+  }
+  if (typeof mixLiquid === "number") {
+    mixSlices.push({
+      key: "liquid",
+      label: "Liquid",
+      value: mixLiquid,
+      color: "hsl(var(--chart-4))",
+    });
+  }
+
+  const allSubCategoriesPresent =
+    typeof mixEquity === "number" &&
+    typeof mixDebt === "number" &&
+    typeof mixLiquid === "number";
+  let mixOther: number | null = null;
+  if (typeof mixTotalAum === "number" && allSubCategoriesPresent) {
+    const sumKnown = mixEquity + mixDebt + mixLiquid;
+    const residual = mixTotalAum - sumKnown;
+    if (residual > 0) {
+      mixOther = residual;
+      mixSlices.push({
+        key: "other",
+        label: "Other",
+        value: residual,
+        color: "hsl(var(--muted-foreground))",
+      });
+    }
+  }
+  const mixHasData = mixSlices.length > 0;
+
+  // Subtitle clarifies the basis. When `Other` is included it's by
+  // residual against totalAum; when it's dropped (e.g. if totalAum was
+  // missing or sub-categories were incomplete), say so plainly.
+  const mixSubtitle =
+    mixHasData && mixOther !== null
+      ? "Month-end Net AUM · share of Total AUM (residual = Other)"
+      : mixHasData
+        ? "Month-end Net AUM · partial breakdown · Other not computed"
+        : "Month-end Net AUM not available for this month";
+
+  // AAUM Trend across all available months. We use totalAaum (period
+  // average) because that's the disclosure-comparable headline; falling
+  // back to nothing when no row carries it. The chart renders 1 bar
+  // when a single month is ingested, and naturally extends as more
+  // PDFs land.
+  const aaumTrendData = amfiMonthlyRows()
+    .filter((r) => typeof r.totalAaum === "number")
+    .map((r) => ({ label: r.month, value: r.totalAaum as number }));
+  const aaumTrendHasData = aaumTrendData.length > 0;
+  const aaumTrendSubtitle = aaumTrendHasData
+    ? `Total AAUM · ${aaumTrendData.length} month${aaumTrendData.length === 1 ? "" : "s"} · ₹ Cr`
+    : "Total AAUM not available";
+
+  // Provenance captions for the section. All four contributing fields
+  // (totalAum / equityAum / debtAum / liquidAum / totalAaum) come from
+  // the AMFI Monthly Report on the current snapshot, so a single
+  // "Source: AMFI Monthly Report" caption is accurate. Hover surfaces
+  // the same per-field detail the KPI cards expose.
+  const mixHoverProvenance = formatKpiProvenanceTooltip(
+    getKpiProvenance(amfiSelected, "totalAum")
+  );
+  const trendHoverProvenance = formatKpiProvenanceTooltip(
+    getKpiProvenance(amfiSelected, "totalAaum")
+  );
+
   return (
     <div className="space-y-6">
       <PageHeader title="Monthly Operating" subtitle={subtitle} />
@@ -302,6 +401,55 @@ export default async function MonthlyPage({
           </div>
         )}
       </Card>
+
+      {amfiSelected && (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight">
+              AMFI AUM Mix &amp; Trend
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Live from uploaded AMFI PDFs
+            </p>
+          </div>
+          <section className="grid gap-4 lg:grid-cols-2">
+            <Card title="Month-end AUM Mix" subtitle={mixSubtitle}>
+              {mixHasData ? (
+                <Donut data={mixSlices} />
+              ) : (
+                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                  Mix unavailable · sub-category AUM not in uploaded AMFI PDFs
+                </div>
+              )}
+              <div
+                className="mt-3 text-[10px] tabular text-muted-foreground/80"
+                title={mixHoverProvenance ?? undefined}
+              >
+                Source: AMFI Monthly Report
+              </div>
+            </Card>
+            <Card title="Total AAUM Trend" subtitle={aaumTrendSubtitle}>
+              {aaumTrendHasData ? (
+                <BarSeries
+                  data={aaumTrendData}
+                  name="AAUM"
+                  color="hsl(var(--chart-1))"
+                />
+              ) : (
+                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                  AAUM unavailable · totalAaum not in uploaded AMFI PDFs
+                </div>
+              )}
+              <div
+                className="mt-3 text-[10px] tabular text-muted-foreground/80"
+                title={trendHoverProvenance ?? undefined}
+              >
+                Source: AMFI Monthly Report
+              </div>
+            </Card>
+          </section>
+        </div>
+      )}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
