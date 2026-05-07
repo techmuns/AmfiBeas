@@ -87,22 +87,17 @@ export function sourceFormatLabel(
 }
 
 /** Compose the per-field source caption shown beneath each KPI card.
- *  Format: "Source: AMFI Monthly Report · p.1". Intentionally compact —
- *  the full PDF filename is preserved on the row's `fieldSources[field]`
- *  object (and surfaced via tooltip on the card), but is NOT rendered
- *  in the visible text because long PDF filenames clutter the cards.
- *  Returns null when no provenance exists. */
+ *  Format: "Source: AMFI Monthly Report". Intentionally minimal — the
+ *  publication name is enough for at-a-glance recognition; the full
+ *  PDF filename and page numbers are preserved on the row's
+ *  `fieldSources[field]` object and surfaced via the hover tooltip
+ *  (formatKpiProvenanceTooltip). Returns null when no provenance
+ *  exists. */
 export function formatKpiProvenanceLine(
   provenance: AmfiMonthlyPdfFieldProvenance | null
 ): string | null {
   if (!provenance) return null;
-  const pages = provenance.sourcePages.length
-    ? "p." + provenance.sourcePages.join(",")
-    : "";
-  const parts = [sourceFormatLabel(provenance.sourceFormat), pages].filter(
-    Boolean
-  );
-  return "Source: " + parts.join(" · ");
+  return "Source: " + sourceFormatLabel(provenance.sourceFormat);
 }
 
 /** Hover-only caption that surfaces the full PDF filename for users who
