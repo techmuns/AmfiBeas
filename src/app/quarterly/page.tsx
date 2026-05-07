@@ -20,8 +20,7 @@ import {
   formatQuarterLabelLong,
 } from "@/lib/format";
 import { liveScreenerNote, liveYieldNote } from "@/lib/provenance";
-import { parseFilters, trimQuarters } from "@/lib/filter";
-import { QUARTERS_LIST } from "@/data/generator";
+import { parseFilters } from "@/lib/filter";
 
 const DEFAULT_SLUG = "hdfc";
 
@@ -67,11 +66,12 @@ export default async function QuarterlyPage({
     fullSeries.find((q) => q.quarter === selectedPeriod) ??
     fullSeries[fullSeries.length - 1];
 
-  // Charts: cap to the most recent 8 quarters (per requirement). The
-  // FilterBar `range` (4Q / 8Q / All) narrows further within that cap.
-  const last8 = fullSeries.slice(-8);
-  const trimmedSet = new Set(trimQuarters(QUARTERS_LIST, filters.range));
-  const series = last8.filter((q) => trimmedSet.has(q.quarter));
+  // Charts always show the AMC's most recent 8 available quarters. No
+  // user-facing range narrowing on /quarterly — the period picker covers
+  // the "look at a specific quarter" use case, and limiting to ≤ 8 makes
+  // the per-AMC chart density consistent. AMCs with fewer real quarters
+  // (e.g. ICICI = 5) just render what they have; no fake / interpolation.
+  const series = fullSeries.slice(-8);
 
   const aaumMeta = amcAaumQuarterlySnapshot.meta;
   const yieldsSubtitle =
@@ -92,7 +92,7 @@ export default async function QuarterlyPage({
           subtitle="Single-AMC view · sourced quarterly P&L"
         />
         <FilterBar
-          showRange="quarterly"
+          showRange={false}
           amcMode="single"
           amcStatus={status}
           defaultSlug={DEFAULT_SLUG}
@@ -198,7 +198,7 @@ export default async function QuarterlyPage({
     <div className="space-y-6">
       <PageHeader title="Quarterly Financials" subtitle={subtitle} />
       <FilterBar
-        showRange="quarterly"
+        showRange={false}
         amcMode="single"
         amcStatus={status}
         defaultSlug={DEFAULT_SLUG}
