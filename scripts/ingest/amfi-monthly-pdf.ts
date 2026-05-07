@@ -484,6 +484,9 @@ const PRESS_RELEASE_PATTERNS: PressReleaseLineSpec[] = [
       ),
     ],
     unit: "crore-count",
+    // SIP-account counts are tens of millions; reject anything below
+    // 1M to filter out percentages / counts on the wrong scale.
+    minScaledValue: 1_000_000,
     label: "SIP trend table · Number of contributing SIP accounts row",
   },
   {
@@ -499,6 +502,10 @@ const PRESS_RELEASE_PATTERNS: PressReleaseLineSpec[] = [
       new RegExp(String.raw`Monthly\s+SIP(?:\s+Contribution)?[^\n]{0,80}?` + NUM, "i"),
     ],
     unit: "cr",
+    // Monthly SIP contribution at industry scale is in the ₹15K-₹35K
+    // Cr band; reject anything below ₹5K Cr so loose patterns can't
+    // accidentally store a YoY percentage (e.g. "grew by 34.53%").
+    minScaledValue: 5_000,
     label: "SIP trend table · SIP monthly contribution row",
   },
   {
@@ -511,6 +518,9 @@ const PRESS_RELEASE_PATTERNS: PressReleaseLineSpec[] = [
       ),
     ],
     unit: "lakh-cr",
+    // SIP AUM in ₹ Cr is always > 1 lakh Cr; reject anything below
+    // (filters scale mismatches).
+    minScaledValue: 100_000,
     label: "SIP trend table · SIP assets (Rs lakh crore) row",
   },
   // Older direct "SIP AUM <N>" fallback in ₹ Cr (no lakh-crore wrapper).
@@ -518,7 +528,138 @@ const PRESS_RELEASE_PATTERNS: PressReleaseLineSpec[] = [
     field: "sipAum",
     patterns: [new RegExp(String.raw`SIP\s+AUM[^\n]{0,80}?` + NUM, "i")],
     unit: "cr",
+    // Same threshold as the lakh-cr spec — SIP AUM is always > ₹1L Cr.
+    // Without this, "SIP AUM share stood at ~20%" stored 20 ₹ Cr.
+    minScaledValue: 100_000,
     label: "SIP AUM (flat-key fallback)",
+  },
+
+  // ---- Older / prose Monthly Note variants ----------------------------
+  //
+  // These specs run AFTER the canonical-tabular ones above. They only
+  // fire when the existing patterns missed (e.g. older Notes with
+  // different table headers or with prose-only SIP figures). Each new
+  // spec carries its own label so the dashboard tooltip can show
+  // whether the value came from a table or a prose mention.
+  //
+  // Constraint: SIP-prose patterns explicitly REJECT "lakh crore"
+  // tails so a sentence like "SIP assets stood at Rs 15.11 lakh crore"
+  // doesn't accidentally fill sipContribution with the lakh-crore AUM.
+  // The negative lookahead `(?!\s+lakh)` does that.
+
+  // sipAccounts — older table layouts: "(in crore)" / "(crore)" with
+  // "Contributing" / "No. of Contributing" prefixes that the existing
+  // exact-phrase pattern doesn't cover.
+  {
+    field: "sipAccounts",
+    patterns: [
+      new RegExp(
+        String.raw`(?:No\.?\s+of\s+)?(?:Contributing\s+)?SIP\s+accounts\s*\(\s*(?:in\s+)?crore\s*\)\s+` +
+          NUM,
+        "i"
+      ),
+    ],
+    unit: "crore-count",
+    minScaledValue: 1_000_000,
+    label: "SIP trend table · SIP accounts row (older format)",
+  },
+  // sipAccounts — prose: "SIP accounts totalled / crossed / reached <N> crore"
+  // and "(contributing) SIP accounts has increased to <N> crore". Both
+  // give the absolute count (in crore) for the report period.
+  {
+    field: "sipAccounts",
+    patterns: [
+      new RegExp(
+        String.raw`SIP\s+accounts\s+(?:totalled|crossed|reached|stood\s+at)\s+` +
+          String.raw`(\d[\d,]*(?:\.\d+)?)\s+crores?`,
+        "i"
+      ),
+      new RegExp(
+        String.raw`(?:contributing|active)\s+SIP\s+accounts[^\n.]{0,80}?` +
+          String.raw`(?:reaching|stood\s+at|to)\s+(\d[\d,]*(?:\.\d+)?)\s+crores?`,
+        "i"
+      ),
+    ],
+    unit: "crore-count",
+    minScaledValue: 1_000_000,
+    label: "Prose · SIP accounts in crore",
+  },
+
+  // sipContribution — older table layout: "SIP monthly contributions
+  // (in crore) <N>" (note plural and "in" prefix vs the canonical one).
+  {
+    field: "sipContribution",
+    patterns: [
+      new RegExp(
+        String.raw`SIP\s+monthly\s+contributions\s*\(\s*in\s+crore\s*\)\s+` + NUM,
+        "i"
+      ),
+    ],
+    unit: "cr",
+    minScaledValue: 5_000,
+    label: "SIP trend table · SIP monthly contributions row (older format)",
+  },
+  // sipContribution — prose: SIP keyword + flows/contribution(s)/inflows
+  // within a short window of "Rs <N> crore". The (?!\s+lakh) lookahead
+  // rejects matches where the value is in lakh-crore (those are SIP AUM,
+  // not contribution).
+  {
+    field: "sipContribution",
+    patterns: [
+      // SIP appears BEFORE the keyword: "SIP flows were at Rs <N> crore",
+      // "Systematic investment plan (SIP) flows touched a new high of Rs <N> crore",
+      // "monthly SIP contributions reached an all-time high of Rs <N> crore".
+      new RegExp(
+        String.raw`(?:SIP|systematic\s+investment\s+plan)[^\n.]{0,80}?` +
+          String.raw`(?:flows|contributions?|inflows?)[^\n.]{0,120}?Rs\.?\s+` +
+          String.raw`(\d[\d,]*(?:\.\d+)?)\s+crores?\b(?!\s+lakh)`,
+        "i"
+      ),
+      // Keyword appears BEFORE SIP: "Flows into SIPs rose ... to Rs <N> crore".
+      new RegExp(
+        String.raw`(?:flows|contributions?|inflows?)\s+(?:into\s+)?SIPs?[^\n.]{0,120}?Rs\.?\s+` +
+          String.raw`(\d[\d,]*(?:\.\d+)?)\s+crores?\b(?!\s+lakh)`,
+        "i"
+      ),
+    ],
+    unit: "cr",
+    minScaledValue: 5_000,
+    label: "Prose · SIP flows / contribution mention",
+  },
+
+  // sipAum — older table layout: "SIP assets (Rs in lakh crore) <N>"
+  // (the existing pattern requires "(Rs lakh crore)" without "in").
+  {
+    field: "sipAum",
+    patterns: [
+      new RegExp(
+        String.raw`SIP\s+assets\s*\(\s*Rs\s+in\s+lakh\s+crore\s*\)\s+` + NUM,
+        "i"
+      ),
+    ],
+    unit: "lakh-cr",
+    minScaledValue: 100_000,
+    label: "SIP trend table · SIP assets (Rs in lakh crore) row (older format)",
+  },
+  // sipAum — prose: "SIP assets ... Rs <N> lakh crore". Requires "lakh
+  // crore" tail so we never accidentally pick a non-AUM value or
+  // collide with the sipContribution prose pattern.
+  // Uses [^\n] (NOT [^\n.]) because typical wording has decimals in
+  // the gap, e.g. "SIP assets increased 5.3% to Rs 13.09 lakh crore" —
+  // the period in "5.3" would otherwise break the match. Bound the
+  // gap to 80 chars so the lazy match can't span a sentence break.
+  {
+    field: "sipAum",
+    patterns: [
+      new RegExp(
+        String.raw`SIP\s+assets[^\n]{0,80}?Rs\.?\s+` +
+          String.raw`(\d[\d,]*(?:\.\d+)?)\s+lakh\s+crores?`,
+        "i"
+      ),
+    ],
+    unit: "lakh-cr",
+    minScaledValue: 100_000,
+    label: "Prose · SIP assets in Rs lakh crore",
   },
 
   // ---- Industry AUM — tabular rows. Each category appears in two
