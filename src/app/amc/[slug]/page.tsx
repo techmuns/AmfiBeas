@@ -214,7 +214,7 @@ export default async function AmcPage({
           note={shareDemoNote}
         />
         <KpiCard
-          label="Quarterly Revenue"
+          label="Revenue from Operations (Q)"
           value={
             quarterlyLive && latestQ
               ? formatCompactCrSafe(latestQ.revenue)
@@ -244,7 +244,7 @@ export default async function AmcPage({
           title="Quarterly P&L"
           subtitle={
             quarterlyLive
-              ? "Revenue / Op / PAT · ₹ Cr"
+              ? "Revenue from Ops / Op Profit / PAT · ₹ Cr"
               : financialsUnavailableMessage
           }
         >
@@ -253,7 +253,7 @@ export default async function AmcPage({
               data={pnlData}
               xKey="quarter"
               bars={[
-                { key: "revenue", name: "Revenue", color: "hsl(var(--chart-1))" },
+                { key: "revenue", name: "Revenue from Ops", color: "hsl(var(--chart-1))" },
                 { key: "op", name: "Op Profit", color: "hsl(var(--chart-2))" },
                 { key: "pat", name: "PAT", color: "hsl(var(--chart-3))" },
               ]}

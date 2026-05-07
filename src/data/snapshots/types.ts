@@ -70,7 +70,28 @@ export interface AmcMonthlySnapshot {
 export interface AmcQuarterlyRow {
   amcSlug: string;
   quarter: string;
+  /**
+   * Revenue from Operations (₹ Cr). Sourced from screener.in's "Sales" row
+   * on the consolidated quarterly results table — for AMC issuers this is
+   * the management-disclosure equivalent of "Revenue from Operations" and
+   * EXCLUDES "Other Income" / treasury / investment income.
+   *
+   * INVARIANT: Revenue Realization = revenue × 4 × 10,000 / MF QAAUM uses
+   * THIS field exactly. Do not substitute Total Income or Sales + Other.
+   */
   revenue: number;
+  /**
+   * Optional: same value as `revenue` but the field name carries the
+   * semantic. New rows written by the ingester populate both for forward
+   * compatibility; legacy rows have `revenue` only.
+   */
+  revenueFromOperations?: number;
+  /**
+   * Optional: "Other Income" row from screener (treasury / investment
+   * income, etc.). Stored for display only — never used in Revenue
+   * Realization.
+   */
+  otherIncome?: number;
   operatingProfit: number;
   pat: number;
   avgAum: number;

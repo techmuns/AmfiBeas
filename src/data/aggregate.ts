@@ -15,14 +15,19 @@ const liveQuarterlyBySlug = (() => {
   const m = new Map<string, QuarterlyFinancial[]>();
   for (const r of amcQuarterlySnapshot.rows) {
     const arr = m.get(r.amcSlug) ?? [];
-    // AAUM denominator: AMFI primary → Morningstar opt-in fallback → P&L
-    // source's avgAum (which is 0 from screener). Morningstar never
-    // overrides AMFI.
+    // MF QAAUM denominator: AMFI primary → Morningstar opt-in fallback →
+    // P&L source's avgAum (which is 0 from screener). Morningstar never
+    // overrides AMFI. INVARIANT: MF-only — see aaumFor() doc.
     const fallback = aaumWithFallback(r.amcSlug, r.quarter);
+    // Revenue numerator: prefer the explicit revenueFromOperations field
+    // (post-types-migration ingester writes it); fall back to the legacy
+    // `revenue` field, which historically also sourced screener's "Sales"
+    // row. Both produce the same number for current snapshots.
+    const revenueFromOps = r.revenueFromOperations ?? r.revenue;
     arr.push({
       amcSlug: r.amcSlug,
       quarter: r.quarter,
-      revenue: r.revenue,
+      revenue: revenueFromOps,
       operatingProfit: r.operatingProfit,
       pat: r.pat,
       avgAum: fallback.value ?? r.avgAum,
