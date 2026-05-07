@@ -10,6 +10,7 @@ import {
   writeSnapshot,
 } from "./utils";
 import type {
+  AmcAaumQuarterlySnapshot,
   AmcQuarterlyRow,
   AmcQuarterlySnapshot,
 } from "../../src/data/snapshots/types";
@@ -18,6 +19,18 @@ interface ListedAmc {
   slug: string;
   ticker: string;
   amfiName: string;
+  /**
+   * Optional override of the screener URL. When set, takes precedence
+   * over the default consolidated path. Use the bare /company/{ticker}/
+   * form when the consolidated page returns an annual / TTM layout
+   * (currently the case for ICICIAMC).
+   */
+  sourceUrl?: string;
+  /**
+   * Whether the resolved page is the consolidated variant. Defaults to
+   * true. Currently only affects logs / provenance.
+   */
+  consolidated?: boolean;
 }
 
 const LISTED: ListedAmc[] = [
@@ -33,12 +46,19 @@ const LISTED: ListedAmc[] = [
     amfiName: "Aditya Birla Sun Life Mutual Fund",
   },
   { slug: "uti", ticker: "UTIAMC", amfiName: "UTI Mutual Fund" },
-  // ICICI Prudential AMC — NOT in this list yet. The first ingest with
-  // ticker "ICICIAMC" returned only 2 rows with values ~3× the expected
-  // quarterly scale (annual / TTM bleed), producing implausible 110 bps
-  // revenue realisation. The right screener slug is still TBC; once
-  // verified, re-add { slug: "icici-pru", ticker: ..., amfiName: ... }
-  // here. The dashboard auto-promotes it the moment rows land.
+  // ICICI Prudential Asset Management Company. The /consolidated/ variant
+  // returns an annual/TTM layout for this ticker (~110 bps realisation
+  // when mapped to quarter slots — see PR #18 rollback). The standalone
+  // /company/ICICIAMC/ page exposes the standard Quarterly Results table.
+  // Sanity guards (MIN_QUARTERS_PER_AMC + realization/margin caps) keep
+  // us safe if this layout drifts again.
+  {
+    slug: "icici-pru",
+    ticker: "ICICIAMC",
+    amfiName: "ICICI Prudential Mutual Fund",
+    sourceUrl: "https://www.screener.in/company/ICICIAMC/",
+    consolidated: false,
+  },
 ];
 
 /**
@@ -48,6 +68,18 @@ const LISTED: ListedAmc[] = [
  * / TTM table layout that we'd map into quarter slots incorrectly.
  */
 const MIN_QUARTERS_PER_AMC = 4;
+
+/**
+ * Caps used as final post-parse sanity guards. Listed AMCs (HDFC, Nippon,
+ * ABSL, UTI, ICICI Pru) report quarterly revenue realisation in the
+ * 35-60 bps range and operating margins in the 25-55 bps range; values
+ * far outside that envelope almost always indicate the parser hit the
+ * wrong table layout (annual / TTM / consolidated parent rather than
+ * the AMC subsidiary). A breach causes us to reject the entire AMC's
+ * fetched rows and preserve prior history via the merge helper.
+ */
+const REASONABLE_REALIZATION_BPS_MAX = 90;
+const REASONABLE_OP_MARGIN_BPS_MAX = 75;
 
 const MONTHS_LOOKUP: Record<string, number> = {
   jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
@@ -150,14 +182,28 @@ export function parseScreenerQuarterly(html: string): ScreenerQuarter[] {
   return out;
 }
 
-async function fetchOne(amc: ListedAmc): Promise<AmcQuarterlyRow[]> {
-  const url = `https://www.screener.in/company/${amc.ticker}/consolidated/`;
-  info(`listed-amc-q: ${amc.slug} → ${url}`);
+async function fetchOne(
+  amc: ListedAmc,
+  aaumLookup: Map<string, number>
+): Promise<AmcQuarterlyRow[]> {
+  const useConsolidated = amc.consolidated !== false;
+  const primaryUrl =
+    amc.sourceUrl ??
+    `https://www.screener.in/company/${amc.ticker}/${useConsolidated ? "consolidated/" : ""}`;
+  info(
+    `listed-amc-q: ${amc.slug} → ${primaryUrl}${useConsolidated ? "" : " (standalone)"}`
+  );
   let html: string;
   try {
-    html = await fetchText(url);
+    html = await fetchText(primaryUrl);
   } catch (err) {
-    warn(`  ${amc.slug} consolidated → ${(err as Error).message}; trying standalone`);
+    // Only fall back if the AMC didn't pin a custom URL (i.e. the default
+    // consolidated path). A pinned override should not silently switch
+    // pages.
+    if (amc.sourceUrl) throw err;
+    warn(
+      `  ${amc.slug} consolidated → ${(err as Error).message}; trying standalone`
+    );
     const fallback = `https://www.screener.in/company/${amc.ticker}/`;
     html = await fetchText(fallback);
   }
@@ -173,7 +219,58 @@ async function fetchOne(amc: ListedAmc): Promise<AmcQuarterlyRow[]> {
     );
     return [];
   }
-  return quarterly.map((q) => ({
+
+  // Per-row hygiene: drop rows where the numerator is missing/non-positive
+  // or PAT is non-finite. These typically come from blank columns or
+  // trailing TTM rows.
+  const valid = quarterly.filter(
+    (q) =>
+      q.revenueFromOperations > 0 && Number.isFinite(q.pat)
+  );
+  if (valid.length < MIN_QUARTERS_PER_AMC) {
+    warn(
+      `listed-amc-q: ${amc.slug} only ${valid.length} valid row(s) after hygiene filter (< ${MIN_QUARTERS_PER_AMC}); rejecting page`
+    );
+    return [];
+  }
+
+  // Realization / op-margin sanity envelope. Compute against the live
+  // AMFI MF QAAUM for the most recent quarter where both sides exist.
+  // If a value falls outside the envelope we reject the entire AMC's
+  // fetch — a parser-level layout mismatch typically affects every row.
+  const sortedDesc = [...valid].sort((a, b) =>
+    b.quarter.localeCompare(a.quarter)
+  );
+  const checked = sortedDesc.find((q) =>
+    aaumLookup.has(`${amc.slug}::${q.quarter}`)
+  );
+  if (checked) {
+    const aaum = aaumLookup.get(`${amc.slug}::${checked.quarter}`)!;
+    const realization =
+      (checked.revenueFromOperations * 4 * 10_000) / aaum;
+    const opMargin = (checked.operatingProfit * 4 * 10_000) / aaum;
+    if (realization > REASONABLE_REALIZATION_BPS_MAX) {
+      warn(
+        `listed-amc-q: ${amc.slug} ${checked.quarter} realization ${realization.toFixed(1)} bps > ${REASONABLE_REALIZATION_BPS_MAX} cap — rejecting page (likely wrong table/parent layout)`
+      );
+      return [];
+    }
+    if (opMargin > REASONABLE_OP_MARGIN_BPS_MAX) {
+      warn(
+        `listed-amc-q: ${amc.slug} ${checked.quarter} op margin ${opMargin.toFixed(1)} bps > ${REASONABLE_OP_MARGIN_BPS_MAX} cap — rejecting page`
+      );
+      return [];
+    }
+    info(
+      `listed-amc-q: ${amc.slug} sanity ok — ${checked.quarter} realization ${realization.toFixed(1)} bps · op margin ${opMargin.toFixed(1)} bps`
+    );
+  } else {
+    info(
+      `listed-amc-q: ${amc.slug} sanity check skipped — no overlapping AMFI quarter`
+    );
+  }
+
+  return valid.map((q) => ({
     amcSlug: amc.slug,
     quarter: q.quarter,
     revenue: q.revenueFromOperations,
@@ -191,9 +288,26 @@ export async function ingestListedAmcQuarterly(): Promise<void> {
   const succeeded: string[] = [];
   const failed: string[] = [];
 
+  // AMFI MF QAAUM lookup powers the realization / op-margin sanity guard.
+  // Empty map is fine — guard simply skips for AMCs without overlap.
+  const aaumSnap = await readSnapshot<AmcAaumQuarterlySnapshot>(
+    "amc-aaum-quarterly.json"
+  );
+  const aaumLookup = new Map<string, number>();
+  if (aaumSnap) {
+    for (const r of aaumSnap.rows) {
+      if (r.status === "ok" && r.avgAum > 0) {
+        aaumLookup.set(`${r.amcSlug}::${r.quarter}`, r.avgAum);
+      }
+    }
+  }
+  info(
+    `listed-amc-q: AAUM lookup loaded ${aaumLookup.size} (slug, quarter) entries for sanity guards`
+  );
+
   for (const amc of LISTED) {
     try {
-      const rows = await fetchOne(amc);
+      const rows = await fetchOne(amc, aaumLookup);
       if (rows.length === 0) {
         warn(`listed-amc-q: ${amc.slug} returned 0 rows — preserving prior`);
         failed.push(amc.slug);
@@ -246,7 +360,7 @@ export async function ingestListedAmcQuarterly(): Promise<void> {
       generatedAt: nowIso(),
       source: "https://www.screener.in/company/{ticker}/consolidated/",
       notes: [
-        "Quarterly P&L for listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC). ICICI Pru AMC pending — correct screener slug TBC.",
+        "Quarterly P&L for listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC, ICICIAMC standalone). ICICIAMC uses /company/ICICIAMC/ — the consolidated variant returned an annual/TTM layout. Sanity guards: MIN_QUARTERS_PER_AMC=4, REVENUE_REALIZATION ≤ 90 bps, OP_MARGIN ≤ 75 bps; failures preserve prior history.",
         "Source mapping: screener.in 'Sales' row → Revenue from Operations (excludes Other Income); 'Other Income' captured separately for display only; 'Operating Profit' and 'Net Profit' as labelled. revenueFromOperations is what feeds Revenue Realization (bps of MF QAAUM). avgAum not provided by this source.",
         `lastSuccessfulFetchAt=${nowIso()} · slugsThisRun=[${succeeded.join(", ")}] · failedThisRun=[${failed.join(", ")}].`,
         `quartersCovered=${allQuarters.length} (${allQuarters[0]}…${allQuarters[allQuarters.length - 1]}) · rowCount=${stats.total} · fetchWindow=${fetchedQuarters.length}.`,
