@@ -33,6 +33,14 @@ const LISTED: ListedAmc[] = [
     amfiName: "Aditya Birla Sun Life Mutual Fund",
   },
   { slug: "uti", ticker: "UTIAMC", amfiName: "UTI Mutual Fund" },
+  // ICICI Prudential Asset Management Company — listed; screener URL
+  // resolves to the canonical company page. Per-AMC try/catch keeps the
+  // pipeline resilient if the page or a row label changes.
+  {
+    slug: "icici-pru",
+    ticker: "ICICIAMC",
+    amfiName: "ICICI Prudential Mutual Fund",
+  },
 ];
 
 const MONTHS_LOOKUP: Record<string, number> = {
@@ -222,7 +230,7 @@ export async function ingestListedAmcQuarterly(): Promise<void> {
       generatedAt: nowIso(),
       source: "https://www.screener.in/company/{ticker}/consolidated/",
       notes: [
-        "Quarterly P&L for listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC).",
+        "Quarterly P&L for listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC, ICICIAMC).",
         "Source mapping: screener.in 'Sales' row → Revenue from Operations (excludes Other Income); 'Other Income' captured separately for display only; 'Operating Profit' and 'Net Profit' as labelled. revenueFromOperations is what feeds Revenue Realization (bps of MF QAAUM). avgAum not provided by this source.",
         `lastSuccessfulFetchAt=${nowIso()} · slugsThisRun=[${succeeded.join(", ")}] · failedThisRun=[${failed.join(", ")}].`,
         `quartersCovered=${allQuarters.length} (${allQuarters[0]}…${allQuarters[allQuarters.length - 1]}) · rowCount=${stats.total} · fetchWindow=${fetchedQuarters.length}.`,
