@@ -66,12 +66,20 @@ export default async function QuarterlyPage({
     fullSeries.find((q) => q.quarter === selectedPeriod) ??
     fullSeries[fullSeries.length - 1];
 
-  // Charts always show the AMC's most recent 8 available quarters. No
-  // user-facing range narrowing on /quarterly — the period picker covers
-  // the "look at a specific quarter" use case, and limiting to ≤ 8 makes
-  // the per-AMC chart density consistent. AMCs with fewer real quarters
-  // (e.g. ICICI = 5) just render what they have; no fake / interpolation.
-  const series = fullSeries.slice(-8);
+  // Single source of truth for the chart history window. All three chart
+  // groups (Revenue/Op/PAT bars, Margin Trend, Yields) feed off `series`
+  // so they share an identical x-axis.
+  //
+  // Rollover behaviour: when the next ingest writes a new quarter into
+  // amc-quarterly.json (e.g. 2026-Q2), `fullSeries` gains it at index
+  // [-1]; this slice automatically drops the oldest displayed quarter
+  // out of the visible window. Older snapshot rows are preserved by the
+  // history-preserving merge (see scripts/ingest/utils.ts
+  // mergeBySlugQuarter) — only the *displayed* window rolls forward.
+  // AMCs with < 8 real quarters (e.g. ICICI Pru) render only what they
+  // have. No fake fill, no interpolation.
+  const CHART_HISTORY_WINDOW_QUARTERS = 8;
+  const series = fullSeries.slice(-CHART_HISTORY_WINDOW_QUARTERS);
 
   const aaumMeta = amcAaumQuarterlySnapshot.meta;
   const yieldsSubtitle =
