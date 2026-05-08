@@ -444,10 +444,12 @@ export default async function MonthlyPage({
   // 12-month × 15-category heatmap of net-inflow share within the
   // IIFL active-equity envelope:
   //   netInflowSharePct = categoryNetInflow / activeEquityNetInflow × 100
-  // Window ends at the selected `?month=` (or latest available) and
-  // includes the 11 prior months. Cells are null when either side
-  // is missing — the heatmap renders a muted "—", never a fake zero.
-  const iiflHeatmap = iiflActiveEquityHeatmapData(amfiSelected?.month);
+  // Always anchored on the latest available month — independent of
+  // the `?month=` selection elsewhere on /monthly — so the window
+  // rolls forward automatically when new months are ingested. Cells
+  // are null when either side is missing; the heatmap renders a
+  // muted "—", never a fake zero.
+  const iiflHeatmap = iiflActiveEquityHeatmapData();
   const iiflHeatmapHasData = iiflHeatmap.rows.some((r) =>
     r.values.some((v) => v !== null)
   );
