@@ -326,4 +326,60 @@ export interface AmfiMonthlyPdfSnapshot {
   rows: AmfiMonthlyPdfRow[];
 }
 
+/**
+ * Slugs for the category-level rows we extract from the AMFI Monthly
+ * Report into the long-form `amfi-monthly-category.json` snapshot.
+ * Each slug maps to a specific row label inside Sub Total - II
+ * (Growth/Equity Oriented) or Sub Total - III (Hybrid Schemes).
+ *
+ * The set is INTENTIONALLY closed — the extractor only writes rows
+ * for these slugs, so adding a new category requires an explicit
+ * code change (and a friendly label + regex). Keeps the long-form
+ * data clean and predictable for downstream charts.
+ */
+export type AmfiMonthlyCategorySlug =
+  | "flexi-cap"
+  | "multi-asset"
+  | "sectoral-thematic"
+  | "large-cap";
+
+export interface AmfiMonthlyCategoryFieldSources {
+  categoryAum?: AmfiMonthlyPdfFieldProvenance;
+  categoryNetInflow?: AmfiMonthlyPdfFieldProvenance;
+}
+
+/**
+ * One row per (month, category) combination. Long-form so the
+ * dashboard can filter by category at render-time without reshaping.
+ *
+ * `categoryAum` is the month-end Net AUM column from the AMFI Monthly
+ * Report; `categoryNetInflow` is the Net Inflow / Outflow column on
+ * the same row. Both are optional — a row that's missing either is
+ * still useful (e.g. when AMFI's table layout changes for a vintage),
+ * never zero-filled.
+ */
+export interface AmfiMonthlyCategoryRow {
+  month: string;                       // YYYY-MM
+  categorySlug: AmfiMonthlyCategorySlug;
+  /** Friendly name of the category (matches the AMFI row label
+   *  exactly), e.g. "Flexi Cap Fund". */
+  category: string;
+  categoryAum?: number;                // ₹ Cr
+  categoryNetInflow?: number;          // ₹ Cr (signed; can be negative)
+  fieldSources: AmfiMonthlyCategoryFieldSources;
+  /** Row-level provenance (always set on category rows since each
+   *  row originates from a single AMFI Monthly Report PDF — there's
+   *  no last-writer-wins ambiguity here, unlike the per-month
+   *  AmfiMonthlyPdfRow which can merge fields from two PDFs). */
+  sourcePdf: string;
+  sourceFormat: "monthly-report" | "press-release" | "unknown";
+  sourcePages: number[];
+  extractedAt: string;
+}
+
+export interface AmfiMonthlyCategorySnapshot {
+  meta: SnapshotMeta;
+  rows: AmfiMonthlyCategoryRow[];
+}
+
 

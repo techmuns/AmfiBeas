@@ -31,6 +31,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { PDFParse } from "pdf-parse";
 import type {
+  AmfiMonthlyCategoryRow,
+  AmfiMonthlyCategorySlug,
+  AmfiMonthlyCategorySnapshot,
   AmfiMonthlyPdfFieldProvenance,
   AmfiMonthlyPdfFieldSources,
   AmfiMonthlyPdfRow,
@@ -47,6 +50,43 @@ import {
 
 const PDF_DIR = path.resolve(process.cwd(), "manual-data/amfi-monthly/pdfs");
 const SNAPSHOT_FILE = "amfi-monthly-pdf.json";
+const CATEGORY_SNAPSHOT_FILE = "amfi-monthly-category.json";
+
+/**
+ * The closed set of (slug, friendly-label, row-pattern) entries the
+ * extractor pulls into the long-form `amfi-monthly-category.json`
+ * snapshot. Each pattern matches the EXACT row label as it appears
+ * in AMFI Monthly Reports — care taken so e.g. "Large Cap Fund"
+ * doesn't false-match "Large & Mid Cap Fund" (which is a different
+ * row).
+ *
+ * Adding a new category here ALSO requires extending
+ * `AmfiMonthlyCategorySlug` in the schema.
+ */
+const CATEGORY_SPECS: {
+  slug: AmfiMonthlyCategorySlug;
+  label: string;
+  re: RegExp;
+}[] = [
+  { slug: "flexi-cap", label: "Flexi Cap Fund", re: /\bFlexi\s+Cap\s+Fund\b/i },
+  {
+    slug: "multi-asset",
+    label: "Multi Asset Allocation Fund",
+    re: /\bMulti[\s-]+Asset[\s-]+Allocation\s+Fund\b/i,
+  },
+  {
+    slug: "sectoral-thematic",
+    label: "Sectoral/Thematic Funds",
+    // Match "Sectoral/Thematic Funds" (slash) and tolerate "Sectoral-
+    // Thematic Funds" if AMFI ever rewords it.
+    re: /\bSectoral\s*[/\-]\s*Thematic\s+Funds?\b/i,
+  },
+  // "Large Cap Fund" must NOT collide with "Large & Mid Cap Fund".
+  // The pattern requires "Large" then whitespace then "Cap" — the
+  // "& Mid" interrupt rejects the other row. Verified on Mar 2026,
+  // Feb 2026, Apr 2025, Apr 2024.
+  { slug: "large-cap", label: "Large Cap Fund", re: /\bLarge\s+Cap\s+Fund\b/i },
+];
 
 type Format = "monthly-report" | "press-release" | "unknown";
 
@@ -564,6 +604,81 @@ function parseMonthlyReport(pages: PdfPage[]): {
   return { hits, pagesUsed };
 }
 
+/**
+ * Long-form per-(month, category) extractor. Scans an AMFI Monthly
+ * Report PDF for the rows in CATEGORY_SPECS and returns one row per
+ * category found. Used to populate `amfi-monthly-category.json`,
+ * which is consumed by category-level dashboard charts (IIFL
+ * Figures 31-34).
+ *
+ * Behavior:
+ *   - First-match-per-category wins per file (the data row is
+ *     unambiguous once we've matched the label).
+ *   - `categoryAum` requires netAum > 0; if absent on the row the
+ *     entire category record is skipped (no half-baked rows).
+ *   - `categoryNetInflow` is captured separately and may be null
+ *     if the row's net-inflow cell is "-" (rare on these
+ *     categories, but the extractor honours it).
+ *   - Each row carries its own per-field provenance, with the
+ *     `sourceLabel` describing which row + column produced the
+ *     value.
+ */
+function parseCategoriesFromMonthlyReport(
+  pages: PdfPage[],
+  filename: string,
+  format: AmfiMonthlyCategoryRow["sourceFormat"],
+  extractedAt: string,
+  month: string
+): AmfiMonthlyCategoryRow[] {
+  const found = new Set<AmfiMonthlyCategorySlug>();
+  const out: AmfiMonthlyCategoryRow[] = [];
+
+  for (const page of pages) {
+    const lines = page.text.split("\n");
+    for (const line of lines) {
+      for (const spec of CATEGORY_SPECS) {
+        if (found.has(spec.slug)) continue;
+        if (!spec.re.test(line)) continue;
+        const cols = numericColumns(line);
+        if (cols.length < 7) continue;
+        const aum = cols[COL_NET_AUM];
+        if (aum === null || aum <= 0) continue;
+        const flow = cols[COL_NET_INFLOW];
+        const provenanceBase = {
+          sourcePdf: filename,
+          sourceFormat: format,
+          sourcePages: [page.num],
+          extractedAt,
+        };
+        const row: AmfiMonthlyCategoryRow = {
+          month,
+          categorySlug: spec.slug,
+          category: spec.label,
+          categoryAum: aum,
+          fieldSources: {
+            categoryAum: {
+              ...provenanceBase,
+              sourceLabel: `${spec.label} row · Net AUM column`,
+            },
+          },
+          ...provenanceBase,
+        };
+        if (flow !== null) {
+          row.categoryNetInflow = flow;
+          row.fieldSources.categoryNetInflow = {
+            ...provenanceBase,
+            sourceLabel: `${spec.label} row · Net Inflow / Outflow column`,
+          };
+        }
+        out.push(row);
+        found.add(spec.slug);
+      }
+    }
+  }
+
+  return out;
+}
+
 // -------- Press Release parser -----------------------------------------
 
 /**
@@ -941,6 +1056,10 @@ function parsePressRelease(pages: PdfPage[]): {
 
 interface ExtractedRow {
   row: AmfiMonthlyPdfRow;
+  /** Long-form per-(month, category) rows extracted from the same
+   *  PDF. Empty for press-release files (only the Monthly Report
+   *  has the per-scheme table). */
+  categoryRows: AmfiMonthlyCategoryRow[];
 }
 
 async function extractFromPdf(pdfPath: string): Promise<ExtractedRow | null> {
@@ -1006,10 +1125,20 @@ async function extractFromPdf(pdfPath: string): Promise<ExtractedRow | null> {
     }
   };
 
+  let categoryRows: AmfiMonthlyCategoryRow[] = [];
   if (format === "monthly-report") {
     const { hits, pagesUsed: pu } = parseMonthlyReport(pages);
     pagesUsed = pu;
     recordHits(hits as Record<string, FieldHit | undefined>);
+    // Long-form per-category rows. Only run on Monthly Report PDFs —
+    // press-release Notes don't have the per-scheme tabular layout.
+    categoryRows = parseCategoriesFromMonthlyReport(
+      pages,
+      filename,
+      format,
+      extractedAt,
+      month
+    );
   } else if (format === "press-release") {
     const { hits, pagesUsed: pu } = parsePressRelease(pages);
     pagesUsed = pu;
@@ -1024,11 +1153,11 @@ async function extractFromPdf(pdfPath: string): Promise<ExtractedRow | null> {
     );
   } else {
     info(
-      `amfi-monthly-pdf: ${filename}: format=${format}, month=${month}, fields=${hitCount}, pages=${row.sourcePages.join(",") || "-"}`
+      `amfi-monthly-pdf: ${filename}: format=${format}, month=${month}, fields=${hitCount}, pages=${row.sourcePages.join(",") || "-"}, categoryRows=${categoryRows.length}`
     );
   }
 
-  return { row };
+  return { row, categoryRows };
 }
 
 // -------- merge + write ------------------------------------------------
@@ -1121,13 +1250,29 @@ export async function ingestAmfiMonthlyPdf(): Promise<void> {
   const priorByMonth = new Map<string, AmfiMonthlyPdfRow>();
   for (const r of prior?.rows ?? []) priorByMonth.set(r.month, r);
 
+  // Long-form (month, categorySlug) snapshot. Merged identically to
+  // the per-month snapshot — prior rows are preserved unless this run
+  // produced a (month, slug) that overwrites them.
+  const priorCategorySnapshot = await readSnapshot<AmfiMonthlyCategorySnapshot>(
+    CATEGORY_SNAPSHOT_FILE
+  );
+  const priorCategoryByKey = new Map<string, AmfiMonthlyCategoryRow>();
+  for (const r of priorCategorySnapshot?.rows ?? []) {
+    priorCategoryByKey.set(`${r.month}::${r.categorySlug}`, r);
+  }
+
   let processed = 0;
+  let categoryHitCount = 0;
   for (const pdfPath of pdfs) {
     const result = await extractFromPdf(pdfPath);
     if (!result) continue;
     processed += 1;
     const merged = mergeRow(priorByMonth.get(result.row.month), result.row);
     priorByMonth.set(result.row.month, merged);
+    for (const cat of result.categoryRows) {
+      priorCategoryByKey.set(`${cat.month}::${cat.categorySlug}`, cat);
+      categoryHitCount += 1;
+    }
   }
 
   const rows = Array.from(priorByMonth.values()).sort((a, b) =>
@@ -1146,6 +1291,25 @@ export async function ingestAmfiMonthlyPdf(): Promise<void> {
   await writeSnapshot(SNAPSHOT_FILE, snapshot);
   info(
     `amfi-monthly-pdf: wrote ${rows.length} row(s) to src/data/snapshots/${SNAPSHOT_FILE} from ${processed}/${pdfs.length} PDFs`
+  );
+
+  // Long-form per-(month, category) snapshot. Sort deterministically
+  // (month asc, then slug asc) for stable diffs.
+  const categoryRows = Array.from(priorCategoryByKey.values()).sort((a, b) => {
+    if (a.month !== b.month) return a.month.localeCompare(b.month);
+    return a.categorySlug.localeCompare(b.categorySlug);
+  });
+  const categorySnapshot: AmfiMonthlyCategorySnapshot = {
+    meta: {
+      generatedAt: nowIso(),
+      source: "AMFI Monthly Report PDFs (manual-data/amfi-monthly/pdfs/)",
+      notes: `Long-form per-(month, category) rows extracted from AMFI Monthly Reports. Categories: ${CATEGORY_SPECS.map((c) => c.slug).join(", ")}. Optional fields are OMITTED when not detected — never zeroed. Rows merged by (month, categorySlug); prior rows preserved when the current run doesn't re-extract them. categoryHitsThisRun=${categoryHitCount}, totalCategoryRows=${categoryRows.length}.`,
+    },
+    rows: categoryRows,
+  };
+  await writeSnapshot(CATEGORY_SNAPSHOT_FILE, categorySnapshot);
+  info(
+    `amfi-monthly-pdf: wrote ${categoryRows.length} category row(s) to src/data/snapshots/${CATEGORY_SNAPSHOT_FILE}`
   );
 }
 
