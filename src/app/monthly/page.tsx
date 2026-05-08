@@ -29,10 +29,12 @@ import {
   getKpiProvenance,
   getKpiValue,
   latestProvenanceFor,
+  monthlyFlowsData,
   monthlyTrend,
   resolveSelectedRow,
   type AmfiMonthlyKpiField,
 } from "@/data/amfi-monthly";
+import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MonthPicker } from "@/components/filters/MonthPicker";
 import {
   formatCompactCrSafe,
@@ -384,6 +386,25 @@ export default async function MonthlyPage({
     sipAumTrend.length > 0 ||
     sipAccountsTrend.length > 0;
 
+  // ---- Monthly Flows (Figure 22-style) section -----------------------
+  //
+  // Three category-level net-flow series: equity (Sub Total - II),
+  // debt (Sub Total - I; INCLUDES liquid), and liquid (Liquid Fund
+  // row alone). All from the AMFI Monthly Report. Cells are null
+  // when a month's row didn't carry the field — Recharts' GroupedBars
+  // skips null cells, which honours the "no fake zero" rule while
+  // still rendering the other categories on the same x-axis.
+  const monthlyFlowsRows = monthlyFlowsData(24);
+  const monthlyFlowsHasData = monthlyFlowsRows.some(
+    (r) => r.equity !== null || r.debt !== null || r.liquid !== null
+  );
+  // Provenance: all three fields come from the AMFI Monthly Report.
+  // Use the most-recent debt-net-inflow provenance for the tooltip
+  // since the debt row is the most reliable across older Reports.
+  const monthlyFlowsHover = formatKpiProvenanceTooltip(
+    latestProvenanceFor("debtNetInflow")
+  );
+
   return (
     <div className="space-y-6">
       <PageHeader title="Monthly Operating" subtitle={subtitle} />
@@ -568,6 +589,46 @@ export default async function MonthlyPage({
               </div>
             </Card>
           </section>
+        </div>
+      )}
+
+      {monthlyFlowsHasData && (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight">
+              Monthly Flows
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Live from uploaded AMFI Monthly Reports
+            </p>
+          </div>
+          <Card
+            title="Equity / Debt / Liquid Monthly Net Flows"
+            subtitle={`${monthlyFlowsRows.length} month${monthlyFlowsRows.length === 1 ? "" : "s"} · ₹ Cr · positive = inflow, negative = outflow`}
+          >
+            <GroupedBars
+              data={monthlyFlowsRows}
+              xKey="month"
+              labelFormat="month"
+              valueFormat="cr"
+              axisFormat="cr"
+              bars={[
+                { key: "equity", name: "Equity", color: "hsl(var(--chart-1))" },
+                { key: "debt", name: "Debt", color: "hsl(var(--chart-2))" },
+                { key: "liquid", name: "Liquid", color: "hsl(var(--chart-4))" },
+              ]}
+            />
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              Liquid is shown separately; it is part of debt-oriented
+              schemes in AMFI classification.
+            </p>
+            <div
+              className="mt-2 text-[10px] tabular text-muted-foreground/80"
+              title={monthlyFlowsHover ?? undefined}
+            >
+              Source: AMFI Monthly Report
+            </div>
+          </Card>
         </div>
       )}
 

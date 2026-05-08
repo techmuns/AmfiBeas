@@ -201,3 +201,27 @@ export function latestProvenanceFor(
   }
   return null;
 }
+
+/**
+ * Category-level monthly net-flow series for a Figure 22-style chart.
+ * Each row is `{ month, equity, debt, liquid }` where each numeric is
+ * either the field value (signed; positive on inflow months, negative
+ * on outflow months) or `null` when that month's row didn't carry the
+ * field. Recharts' GroupedBars treats `null` cells as gaps and renders
+ * the other categories normally — that's how we honour the
+ * "no-fake-zero" rule.
+ *
+ * The latest `lastN` months are returned, in chronological order.
+ * `lastN` defaults to 24 to match the dashboard cap.
+ */
+export function monthlyFlowsData(
+  lastN = 24
+): { month: string; equity: number | null; debt: number | null; liquid: number | null }[] {
+  const rows = amfiMonthlyRows().slice(-lastN);
+  return rows.map((r) => ({
+    month: r.month,
+    equity: typeof r.equityNetInflow === "number" ? r.equityNetInflow : null,
+    debt: typeof r.debtNetInflow === "number" ? r.debtNetInflow : null,
+    liquid: typeof r.liquidNetInflow === "number" ? r.liquidNetInflow : null,
+  }));
+}
