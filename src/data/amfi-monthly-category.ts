@@ -398,12 +398,24 @@ export const IIFL_TREND_EXPANDED_SLUGS: AmfiMonthlyCategorySlug[] = [
   "value-contra",
 ];
 
+/** The trailing-12-month window used by both IIFL Active-Equity
+ *  surfaces (heatmap and per-category trend cards). Always anchored
+ *  on the latest ingested month; `?month=` is intentionally ignored
+ *  so the window rolls forward automatically as new months arrive
+ *  and the previous oldest month drops off. Returns fewer than 12
+ *  months only when fewer real months exist — never zero-padded. */
+export function iiflActiveEquityWindowMonths(): string[] {
+  return amfiMonthlyRows()
+    .map((r) => r.month)
+    .slice(-12);
+}
+
 /** Build the per-category trailing-12-month series for the IIFL
- *  Active-Equity Category Trends card. Always anchored on the latest
- *  available month (independent of `?month=`), oldest → newest, so
- *  the card window matches the heatmap window exactly. Returns
- *  `aumSharePct` / `flowSharePct` per month with `null` whenever the
- *  numerator or denominator is missing — never zero-padded. */
+ *  Active-Equity Category Trends card. Window comes from the same
+ *  `iiflActiveEquityWindowMonths()` helper the heatmap uses, so the
+ *  two surfaces never drift out of sync. Returns `aumSharePct` /
+ *  `flowSharePct` per month with `null` whenever the numerator or
+ *  denominator is missing — never zero-padded. */
 export function iiflActiveEquityTrendCard(slug: AmfiMonthlyCategorySlug): {
   series: {
     month: string;
@@ -412,14 +424,13 @@ export function iiflActiveEquityTrendCard(slug: AmfiMonthlyCategorySlug): {
   }[];
   hasData: boolean;
 } {
-  const monthly = amfiMonthlyRows();
-  const windowMonths = monthly.map((r) => r.month).slice(-12);
+  const windowMonths = iiflActiveEquityWindowMonths();
 
   const denomByMonth = new Map<
     string,
     { aaum?: number; flow?: number }
   >();
-  for (const r of monthly) {
+  for (const r of amfiMonthlyRows()) {
     denomByMonth.set(r.month, {
       aaum: r.activeEquityAaum,
       flow: r.activeEquityNetInflow,
@@ -453,29 +464,22 @@ export function iiflActiveEquityTrendCard(slug: AmfiMonthlyCategorySlug): {
   return { series, hasData };
 }
 
-/** Build the 12-month × 12-category heatmap payload. The window
- *  always ENDS at the latest available month and includes the 11
- *  prior months chronologically — independent of any `?month=`
- *  selection on /monthly. When fewer than 12 months are available,
- *  returns only the real months that exist (never padded with fake
- *  zeros). Returns the months it actually used so the page can
- *  title the axis correctly. */
+/** Build the 12-month × 12-category heatmap payload. Window comes
+ *  from the same `iiflActiveEquityWindowMonths()` helper the trend
+ *  cards use, so the two surfaces never drift out of sync. When
+ *  fewer than 12 months are available, returns only the real months
+ *  that exist (never padded with fake zeros). Returns the months it
+ *  actually used so the page can title the axis correctly. */
 export function iiflActiveEquityHeatmapData(): {
   months: string[];
   rows: { slug: AmfiMonthlyCategorySlug; label: string; values: (number | null)[] }[];
 } {
-  const monthly = amfiMonthlyRows();
-  const allMonths = monthly.map((r) => r.month);
-  if (allMonths.length === 0) return { months: [], rows: [] };
-
-  // Always anchor on the latest available month; slice the trailing
-  // 12 (or fewer if not enough history exists yet). New months
-  // ingested in future will automatically roll the oldest off.
-  const windowMonths = allMonths.slice(-12);
+  const windowMonths = iiflActiveEquityWindowMonths();
+  if (windowMonths.length === 0) return { months: [], rows: [] };
 
   // Per-month active-equity net-flow denominator lookup.
   const denomByMonth = new Map<string, number>();
-  for (const r of monthly) {
+  for (const r of amfiMonthlyRows()) {
     if (typeof r.activeEquityNetInflow === "number") {
       denomByMonth.set(r.month, r.activeEquityNetInflow);
     }
