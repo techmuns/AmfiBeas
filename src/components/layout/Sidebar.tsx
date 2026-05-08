@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   CalendarDays,
+  CalendarRange,
   FileBarChart,
   Building2,
   Database,
@@ -14,6 +15,7 @@ import { cn } from "@/lib/cn";
 const nav = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
   { href: "/monthly", label: "Monthly", icon: CalendarDays },
+  { href: "/quarterly", label: "Quarterly", icon: CalendarRange },
   { href: "/financials", label: "Financials", icon: FileBarChart },
   { href: "/amc", label: "AMCs", icon: Building2 },
   { href: "/data-sources", label: "Sources", icon: Database },
