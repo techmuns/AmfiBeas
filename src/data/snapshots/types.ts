@@ -371,10 +371,27 @@ export interface AmfiMonthlyPdfSnapshot {
  * data clean and predictable for downstream charts.
  */
 export type AmfiMonthlyCategorySlug =
-  | "flexi-cap"
-  | "multi-asset"
+  // Sub II — Growth/Equity Oriented (all 11 rows; in active-equity envelope)
+  | "multi-cap"
+  | "large-cap"
+  | "large-mid-cap"
+  | "mid-cap"
+  | "small-cap"
+  | "dividend-yield"
+  | "value-contra"
+  | "focused"
   | "sectoral-thematic"
-  | "large-cap";
+  | "elss"
+  | "flexi-cap"
+  // Sub III — Hybrid (5 rows in envelope; Arbitrage excluded by formula)
+  | "conservative-hybrid"
+  | "balanced-aggressive-hybrid"
+  | "baf-daa"
+  | "multi-asset"
+  | "equity-savings"
+  // Sub IV — Solution Oriented (both rows in envelope)
+  | "retirement"
+  | "childrens";
 
 export interface AmfiMonthlyCategoryFieldSources {
   categoryAum?: AmfiMonthlyPdfFieldProvenance;
