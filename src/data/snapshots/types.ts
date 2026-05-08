@@ -529,4 +529,234 @@ export interface AmfiMonthlyCategorySnapshot {
   rows: AmfiMonthlyCategoryRow[];
 }
 
+// ---- AMFI Quarterly Report PDFs ------------------------------------
+//
+// Schema for the AMFI quarterly PDFs uploaded to
+// `manual-data/amfi-quarterly/pdfs/`. The publication has the same
+// per-scheme tabular layout as the AMFI Monthly Report but anchored
+// on a fiscal quarter (Apr-Jun, Jul-Sep, Oct-Dec, Jan-Mar). Important:
+// the "Average Net AUM" column reports the LAST MONTH of the quarter
+// only — NOT a true 3-month average. The `LastMonthAaum` naming on
+// every AAUM field below is deliberate: any field that read "Aaum" or
+// "Qaaum" without "LastMonth" would invite a quiet methodology bug
+// where consumers compute QAAUM share off this column. Consumers who
+// need a true period-average AAUM must aggregate the monthly snapshot
+// at render time.
+//
+// New / non-monthly columns the quarterly publication does carry:
+//   - Funds Mobilized   (gross inflow,  3-month sum)
+//   - Repurchase        (gross outflow, 3-month sum)
+//   - No. of Schemes / Folios per category
+//
+// Net Inflow per category in the quarterly PDF is the 3-month sum of
+// the monthly Net Inflow values — verified to match the monthly
+// snapshot exactly when both sides are present, so the quarterly PDF
+// can also serve as a cross-check for the monthly extractor.
+
+/** Per-field provenance for an AMFI quarterly PDF KPI. Every numeric
+ *  field on `AmfiQuarterlyIndustryRow` / `AmfiQuarterlyCategoryRow`
+ *  carries its OWN provenance entry — same provenance contract as
+ *  the monthly schema, narrowed to the single quarterly publication
+ *  format. */
+export interface AmfiQuarterlyFieldSource {
+  sourcePdf: string;
+  sourceFormat: "quarterly-report";
+  sourcePages: number[];
+  extractedAt: string;
+  /** Optional human-readable description of the row + column the
+   *  value was matched against, e.g. "Sub Total - II row · Net
+   *  Inflow column · Apr - Jun 2025". Mirrors the monthly schema's
+   *  `sourceLabel`. */
+  sourceLabel?: string;
+}
+
+/** Map keyed by AmfiQuarterlyIndustryRow numeric field name. Each
+ *  present key MUST have a corresponding numeric value on the row
+ *  and vice versa (mirrors AmfiMonthlyPdfFieldSources). */
+export interface AmfiQuarterlyIndustryFieldSources {
+  // Industry totals (Grand Total row, all five sub-totals collapsed).
+  grandTotalAum?: AmfiQuarterlyFieldSource;
+  grandTotalLastMonthAaum?: AmfiQuarterlyFieldSource;
+  grandTotalNetInflow?: AmfiQuarterlyFieldSource;
+  grandTotalFundsMobilized?: AmfiQuarterlyFieldSource;
+  grandTotalRepurchase?: AmfiQuarterlyFieldSource;
+  grandTotalFolios?: AmfiQuarterlyFieldSource;
+  // Sub Total - I (Income/Debt Oriented Schemes).
+  debtAum?: AmfiQuarterlyFieldSource;
+  debtLastMonthAaum?: AmfiQuarterlyFieldSource;
+  debtNetInflow?: AmfiQuarterlyFieldSource;
+  debtFundsMobilized?: AmfiQuarterlyFieldSource;
+  debtRepurchase?: AmfiQuarterlyFieldSource;
+  debtFolios?: AmfiQuarterlyFieldSource;
+  // Sub Total - II (Growth/Equity Oriented Schemes).
+  equityAum?: AmfiQuarterlyFieldSource;
+  equityLastMonthAaum?: AmfiQuarterlyFieldSource;
+  equityNetInflow?: AmfiQuarterlyFieldSource;
+  equityFundsMobilized?: AmfiQuarterlyFieldSource;
+  equityRepurchase?: AmfiQuarterlyFieldSource;
+  equityFolios?: AmfiQuarterlyFieldSource;
+  // Sub Total - III (Hybrid Schemes).
+  hybridAum?: AmfiQuarterlyFieldSource;
+  hybridLastMonthAaum?: AmfiQuarterlyFieldSource;
+  hybridNetInflow?: AmfiQuarterlyFieldSource;
+  hybridFundsMobilized?: AmfiQuarterlyFieldSource;
+  hybridRepurchase?: AmfiQuarterlyFieldSource;
+  hybridFolios?: AmfiQuarterlyFieldSource;
+  // Sub Total - V (Other Schemes).
+  otherSchemesAum?: AmfiQuarterlyFieldSource;
+  otherSchemesLastMonthAaum?: AmfiQuarterlyFieldSource;
+  otherSchemesNetInflow?: AmfiQuarterlyFieldSource;
+  otherSchemesFundsMobilized?: AmfiQuarterlyFieldSource;
+  otherSchemesRepurchase?: AmfiQuarterlyFieldSource;
+  otherSchemesFolios?: AmfiQuarterlyFieldSource;
+  /** IIFL active-equity envelope flow. DERIVED from
+   *    Sub Total - II  +  (Sub Total - III - Arbitrage Fund)  +  Sub Total - IV
+   *  computed against the quarter-sum Net Inflow column. The
+   *  `sourceLabel` describes the formula. */
+  activeEquityNetInflow?: AmfiQuarterlyFieldSource;
+}
+
+/** One row per fiscal quarter, extracted from the AMFI quarterly
+ *  Report PDF for that quarter. Every numeric field is OPTIONAL — if
+ *  a value cannot be confidently parsed, the field is omitted, never
+ *  zeroed. Per-field provenance lives in `fieldSources`; the row-
+ *  level `sourcePdf` / `sourceFormat` / `sourcePages` /
+ *  `extractedAt` reflect the single PDF that produced the row. */
+export interface AmfiQuarterlyIndustryRow {
+  /** Canonical fiscal-quarter id, e.g. "FY26-Q4". Same id space as
+   *  the in-page helper used by /quarterly so quarterly-PDF rows
+   *  can be joined to the monthly-aggregated quarter buckets. */
+  quarter: string;
+  /** Display label, e.g. "4QFY26". */
+  quarterLabel: string;
+  /** First month of the quarter (YYYY-MM), e.g. "2026-01". */
+  quarterStart: string;
+  /** Last month of the quarter (YYYY-MM), e.g. "2026-03". */
+  quarterEnd: string;
+
+  // Industry totals (Grand Total row).
+  grandTotalAum?: number;
+  grandTotalLastMonthAaum?: number;
+  grandTotalNetInflow?: number;
+  grandTotalFundsMobilized?: number;
+  grandTotalRepurchase?: number;
+  grandTotalFolios?: number;
+
+  // Sub Total - I (Income/Debt Oriented Schemes).
+  debtAum?: number;
+  debtLastMonthAaum?: number;
+  debtNetInflow?: number;
+  debtFundsMobilized?: number;
+  debtRepurchase?: number;
+  debtFolios?: number;
+
+  // Sub Total - II (Growth/Equity Oriented Schemes).
+  equityAum?: number;
+  equityLastMonthAaum?: number;
+  equityNetInflow?: number;
+  equityFundsMobilized?: number;
+  equityRepurchase?: number;
+  equityFolios?: number;
+
+  // Sub Total - III (Hybrid Schemes).
+  hybridAum?: number;
+  hybridLastMonthAaum?: number;
+  hybridNetInflow?: number;
+  hybridFundsMobilized?: number;
+  hybridRepurchase?: number;
+  hybridFolios?: number;
+
+  // Sub Total - V (Other Schemes).
+  otherSchemesAum?: number;
+  otherSchemesLastMonthAaum?: number;
+  otherSchemesNetInflow?: number;
+  otherSchemesFundsMobilized?: number;
+  otherSchemesRepurchase?: number;
+  otherSchemesFolios?: number;
+
+  /** IIFL active-equity envelope quarter-sum Net Inflow. DERIVED:
+   *    Sub Total - II + (Sub Total - III - Arbitrage Fund) + Sub Total - IV. */
+  activeEquityNetInflow?: number;
+
+  fieldSources: AmfiQuarterlyIndustryFieldSources;
+  // Row-level provenance — single source PDF per quarterly row.
+  sourcePdf: string;
+  sourceFormat: "quarterly-report";
+  sourcePages: number[];
+  extractedAt: string;
+}
+
+/** Per-field provenance for an AmfiQuarterlyCategoryRow. */
+export interface AmfiQuarterlyCategoryFieldSources {
+  categorySchemes?: AmfiQuarterlyFieldSource;
+  categoryFolios?: AmfiQuarterlyFieldSource;
+  categoryFundsMobilized?: AmfiQuarterlyFieldSource;
+  categoryRepurchase?: AmfiQuarterlyFieldSource;
+  categoryNetInflow?: AmfiQuarterlyFieldSource;
+  categoryAum?: AmfiQuarterlyFieldSource;
+  categoryLastMonthAaum?: AmfiQuarterlyFieldSource;
+}
+
+/** One row per (quarter, category). Long-form so the dashboard can
+ *  filter without reshaping. Reuses the existing `AmfiMonthlyCategorySlug`
+ *  / `AmfiMonthlyMajorCategorySlug` so the same category set works
+ *  across monthly + quarterly surfaces.
+ *
+ *  Note on `categoryLastMonthAaum`: the AMFI quarterly PDF's
+ *  "Average Net AUM" column reports only the last month of the
+ *  quarter, NOT a true period-average. Any consumer that needs a
+ *  3-month average AAUM must aggregate from the monthly snapshot. */
+export interface AmfiQuarterlyCategoryRow {
+  quarter: string;
+  quarterLabel: string;
+  quarterStart: string;
+  quarterEnd: string;
+
+  categorySlug: AmfiMonthlyCategorySlug;
+  /** Friendly name of the category (matches the AMFI row label
+   *  exactly), e.g. "Flexi Cap Fund". */
+  category: string;
+  majorCategorySlug: AmfiMonthlyMajorCategorySlug;
+  majorCategoryLabel: string;
+
+  categorySchemes?: number;
+  categoryFolios?: number;
+  categoryFundsMobilized?: number;             // ₹ Cr (gross inflow,  3-month sum)
+  categoryRepurchase?: number;                 // ₹ Cr (gross outflow, 3-month sum)
+  categoryNetInflow?: number;                  // ₹ Cr (signed,        3-month sum)
+  categoryAum?: number;                        // ₹ Cr (closing as of quarter-end)
+  categoryLastMonthAaum?: number;              // ₹ Cr (LAST MONTH only)
+
+  fieldSources: AmfiQuarterlyCategoryFieldSources;
+  sourcePdf: string;
+  sourceFormat: "quarterly-report";
+  sourcePages: number[];
+  extractedAt: string;
+}
+
+/** Wrapper for `src/data/snapshots/amfi-quarterly-industry.json` and
+ *  `src/data/snapshots/amfi-quarterly-category.json`.
+ *
+ *  `meta.generatedAt` is `null` until the extractor runs for the
+ *  first time, then becomes the ISO timestamp of the latest run.
+ *  `meta.rowCount` mirrors `rows.length` after each run so consumers
+ *  can detect a still-empty seed snapshot without inspecting the
+ *  array. */
+export interface AmfiQuarterlySnapshotMeta {
+  source: string;
+  generatedAt: string | null;
+  rowCount: number;
+  notes?: string;
+}
+
+export interface AmfiQuarterlyIndustrySnapshot {
+  meta: AmfiQuarterlySnapshotMeta;
+  rows: AmfiQuarterlyIndustryRow[];
+}
+
+export interface AmfiQuarterlyCategorySnapshot {
+  meta: AmfiQuarterlySnapshotMeta;
+  rows: AmfiQuarterlyCategoryRow[];
+}
+
 
