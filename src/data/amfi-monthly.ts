@@ -255,6 +255,47 @@ export function monthlyActiveEquityShareTrend(
 }
 
 /**
+ * Month-over-month net additions to the industry folio count. For
+ * each pair of CONSECUTIVE rows (chronological), emit the delta
+ * `current.industryFolios − previous.industryFolios` labelled with
+ * the CURRENT month (i.e. additions DURING that month). The first
+ * row of the series has no prior month and is omitted; rows where
+ * either side's `industryFolios` is missing are also skipped — no
+ * synthetic zero is introduced.
+ *
+ * Negative deltas are surfaced as-is (industry has occasional
+ * net-folio-decrease months from closures).
+ *
+ * Returns the latest `lastN` deltas in chronological order. Defaults
+ * to 24 to match the dashboard cap.
+ */
+export function monthlyIndustryFolioAdditionsTrend(
+  lastN = 24
+): { label: string; value: number }[] {
+  const rows = amfiMonthlyRows();
+  const out: { label: string; value: number }[] = [];
+  for (let i = 1; i < rows.length; i++) {
+    const cur = rows[i].industryFolios;
+    const prev = rows[i - 1].industryFolios;
+    if (typeof cur === "number" && typeof prev === "number") {
+      out.push({ label: rows[i].month, value: cur - prev });
+    }
+  }
+  return out.slice(-lastN);
+}
+
+/** Latest month's `industryFolios` − previous month's. Returns null
+ *  when either side is missing or there is no previous row. */
+export function latestIndustryFolioAdditions(): number | null {
+  const rows = amfiMonthlyRows();
+  if (rows.length < 2) return null;
+  const cur = rows[rows.length - 1].industryFolios;
+  const prev = rows[rows.length - 2].industryFolios;
+  if (typeof cur !== "number" || typeof prev !== "number") return null;
+  return cur - prev;
+}
+
+/**
  * IIFL Figure 19-style equity breakdown trend. Each row is
  * `{ month, activeEquity, etfIndex, arbitrage }` for the latest
  * `lastN` months (chronological). Each numeric is either the field
