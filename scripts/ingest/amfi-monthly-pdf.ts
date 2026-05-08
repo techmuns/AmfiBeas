@@ -1160,6 +1160,15 @@ function parseCategoriesFromMonthlyReport(
         // tokens INSIDE the label (e.g. the "10" in "Gilt Fund with 10
         // year constant duration") don't shift the column indices.
         const tail = line.slice(labelMatch.index + labelMatch[0].length);
+        // Reject column-collision artifacts where pdf-parse merges two
+        // adjacent cells onto a single line, e.g. Aug 2025's
+        //   "Equity Savings Fund\tCredit Risk Fund 14 1,86,961 ..."
+        // where the label is followed by ANOTHER label rather than the
+        // numeric data row. A legitimate category data row's tail
+        // ALWAYS starts with whitespace then a digit (or `-` for a
+        // negative number); anything else means the matched label is
+        // a stray header that has collided with a different row's data.
+        if (!/^\s+-?\d/.test(tail)) continue;
         const cols = numericColumns(tail);
         if (cols.length < 7) continue;
         const aum = cols[COL_NET_AUM];
