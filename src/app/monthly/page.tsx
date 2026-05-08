@@ -7,6 +7,7 @@ import { BarSeries } from "@/components/charts/BarSeries";
 import { StackedArea } from "@/components/charts/StackedArea";
 import { Donut, type DonutSlice } from "@/components/charts/Donut";
 import { Heatmap, type HeatmapRow } from "@/components/charts/Heatmap";
+import { IiflHeatmap } from "@/components/charts/IiflHeatmap";
 import {
   industryByMonth,
   latestMonth,
@@ -34,14 +35,11 @@ import {
   type AmfiMonthlyKpiField,
 } from "@/data/amfi-monthly";
 import {
-  CATEGORY_DISPLAY,
-  EXPANDED_CATEGORIES,
   MAJOR_CATEGORIES,
   categoryRowsForMajor,
+  iiflActiveEquityHeatmapData,
   latestCategoryAaumShare,
-  latestCategoryAum,
   latestCategoryProvenance,
-  monthlyCategoryShareTrend,
   monthlyMajorCategoryShareTrend,
   resolveMajorCategory,
 } from "@/data/amfi-monthly-category";
@@ -449,46 +447,22 @@ export default async function MonthlyPage({
 
   // ---- Category Flow Share (IIFL Figure 31-34) section ---------------
   //
-  // For each of the 4 IIFL-reference categories, build a chronological
-  // {month, aumSharePct, flowSharePct} series with both shares
-  // computed against the active-equity envelope (activeEquityAum and
-  // activeEquityNetInflow respectively). Cells are null when either
-  // numerator or denominator is missing — the chart shows a gap, not
-  // a fake zero.
-  const categoryShareCards = CATEGORY_DISPLAY.map((c) => {
-    const series = monthlyCategoryShareTrend(c.slug, 24);
-    const hasData = series.some(
-      (r) => r.aumSharePct !== null || r.flowSharePct !== null
-    );
-    const aumHover = formatKpiProvenanceTooltip(
-      latestCategoryProvenance(c.slug, "categoryAum")
-    );
-    return { ...c, series, hasData, aumHover };
-  });
-  const hasAnyCategoryShare = categoryShareCards.some((c) => c.hasData);
-
-  // Expanded panel: the 14 remaining active-equity envelope categories
-  // (everything in-envelope except the 4 IIFL featured slugs above).
-  // Same chart machinery, same denominators — sorted by latest-month
-  // categoryAum so the heaviest categories surface first when the
-  // viewer expands the panel.
-  const expandedCategoryCards = EXPANDED_CATEGORIES.map((c) => {
-    const series = monthlyCategoryShareTrend(c.slug, 24);
-    const hasData = series.some(
-      (r) => r.aumSharePct !== null || r.flowSharePct !== null
-    );
-    const aumHover = formatKpiProvenanceTooltip(
-      latestCategoryProvenance(c.slug, "categoryAum")
-    );
-    const latestAum = latestCategoryAum(c.slug);
-    return { ...c, series, hasData, aumHover, latestAum };
-  })
-    .sort(
-      (a, b) =>
-        // null sinks to bottom; descending by latest categoryAum.
-        (b.latestAum ?? -Infinity) - (a.latestAum ?? -Infinity)
-    );
-  const hasAnyExpandedCategory = expandedCategoryCards.some((c) => c.hasData);
+  // 12-month × 15-category heatmap of net-inflow share within the
+  // IIFL active-equity envelope:
+  //   netInflowSharePct = categoryNetInflow / activeEquityNetInflow × 100
+  // Window ends at the selected `?month=` (or latest available) and
+  // includes the 11 prior months. Cells are null when either side
+  // is missing — the heatmap renders a muted "—", never a fake zero.
+  const iiflHeatmap = iiflActiveEquityHeatmapData(amfiSelected?.month);
+  const iiflHeatmapHasData = iiflHeatmap.rows.some((r) =>
+    r.values.some((v) => v !== null)
+  );
+  // Hover provenance for the source line — pull a representative
+  // category's `categoryNetInflow` provenance (Flexi Cap is dense
+  // across all months).
+  const iiflHeatmapHover = formatKpiProvenanceTooltip(
+    latestCategoryProvenance("flexi-cap", "categoryNetInflow")
+  );
 
   // ---- Category Drilldown section ------------------------------------
   //
@@ -995,131 +969,34 @@ export default async function MonthlyPage({
         </div>
       )}
 
-      {hasAnyCategoryShare && (
+      {iiflHeatmapHasData && (
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
-              IIFL Active-Equity Lens
+              IIFL Active-Equity Heatmap
             </h2>
             <p className="text-xs text-muted-foreground">
-              QAAUM share uses the active-equity AAUM envelope (Sub II
-              AAUM + Sub III ex-Arbitrage AAUM + Sub IV AAUM). Net
-              inflow share uses active-equity net inflow.
+              Net inflow share of active equity categories · past 12
+              months
             </p>
           </div>
 
-          <section className="grid gap-4 lg:grid-cols-2">
-            {categoryShareCards.map((c) => (
-              <Card
-                key={c.slug}
-                title={c.label}
-                subtitle={`${c.series.length} month${c.series.length === 1 ? "" : "s"} · % of active-equity AAUM envelope`}
-              >
-                {c.hasData ? (
-                  <MultiLine
-                    data={c.series}
-                    xKey="month"
-                    labelFormat="month"
-                    valueFormat="pct"
-                    axisFormat="pct"
-                    lines={[
-                      {
-                        key: "aumSharePct",
-                        name: "QAAUM share",
-                        color: "hsl(var(--chart-1))",
-                      },
-                      {
-                        key: "flowSharePct",
-                        name: "Net inflow share",
-                        color: "hsl(var(--chart-3))",
-                      },
-                    ]}
-                  />
-                ) : (
-                  <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                    Category data unavailable
-                  </div>
-                )}
-                <div
-                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                  title={c.aumHover ?? undefined}
-                >
-                  Source: AMFI Monthly Report
-                </div>
-              </Card>
-            ))}
-          </section>
+          <IiflHeatmap
+            months={iiflHeatmap.months}
+            rows={iiflHeatmap.rows}
+          />
 
-          {hasAnyExpandedCategory && (
-            <details className="group rounded-md border border-dashed border-border bg-muted/20">
-              <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium tracking-tight marker:hidden">
-                <span className="inline-flex items-center gap-2">
-                  <span className="text-foreground">
-                    All Active Equity Categories
-                  </span>
-                  <span className="rounded-full border border-border bg-background px-1.5 py-0 text-[10px] uppercase tracking-wide text-muted-foreground">
-                    {expandedCategoryCards.length} more
-                  </span>
-                  <span className="text-muted-foreground transition-transform group-open:rotate-90">
-                    ›
-                  </span>
-                </span>
-                <p className="mt-1 text-[11px] font-normal text-muted-foreground">
-                  AUM share vs net inflow share · selected additional
-                  active-equity categories · sorted by latest-month AUM
-                </p>
-              </summary>
-              <div className="border-t border-border/60 p-4">
-                <section className="grid gap-4 lg:grid-cols-2">
-                  {expandedCategoryCards.map((c) => (
-                    <Card
-                      key={c.slug}
-                      title={c.label}
-                      subtitle={`${c.series.length} month${c.series.length === 1 ? "" : "s"} · % of active-equity AAUM envelope`}
-                    >
-                      {c.hasData ? (
-                        <MultiLine
-                          data={c.series}
-                          xKey="month"
-                          labelFormat="month"
-                          valueFormat="pct"
-                          axisFormat="pct"
-                          lines={[
-                            {
-                              key: "aumSharePct",
-                              name: "AUM share",
-                              color: "hsl(var(--chart-1))",
-                            },
-                            {
-                              key: "flowSharePct",
-                              name: "Net inflow share",
-                              color: "hsl(var(--chart-3))",
-                            },
-                          ]}
-                        />
-                      ) : (
-                        <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                          Category data unavailable
-                        </div>
-                      )}
-                      <div
-                        className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                        title={c.aumHover ?? undefined}
-                      >
-                        Source: AMFI Monthly Report
-                      </div>
-                    </Card>
-                  ))}
-                </section>
-              </div>
-            </details>
-          )}
-
+          <div
+            className="text-[10px] tabular text-muted-foreground/80"
+            title={iiflHeatmapHover ?? undefined}
+          >
+            Source: AMFI Monthly Report
+          </div>
           <p className="text-[11px] text-muted-foreground">
-            QAAUM share uses the active-equity AAUM envelope as
-            denominator. Net inflow share uses active-equity net
-            inflow. Active Equity = Growth/Equity + Hybrid
-            ex-Arbitrage + Solution-oriented schemes.
+            Note: Share is calculated as category net inflow divided by
+            active-equity net inflow. Active equity includes equity-
+            oriented schemes, hybrid schemes excluding arbitrage, and
+            solution-oriented schemes.
           </p>
         </div>
       )}
