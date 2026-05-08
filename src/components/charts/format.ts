@@ -5,8 +5,8 @@ import {
   formatQuarterLabel,
 } from "@/lib/format";
 
-export type ValueFormat = "cr" | "pct" | "bps" | "lakh" | "count";
-export type AxisFormat = "cr" | "pct" | "bps" | "lakh" | "count";
+export type ValueFormat = "cr" | "pct" | "bps" | "lakh" | "count" | "crore-count";
+export type AxisFormat = "cr" | "pct" | "bps" | "lakh" | "count" | "crore-count";
 export type LabelFormat = "month" | "quarter" | "none";
 
 export function valueFormatter(fmt: ValueFormat): (n: number) => string {
@@ -21,6 +21,10 @@ export function valueFormatter(fmt: ValueFormat): (n: number) => string {
       return (n) => `${(n / 1e5).toFixed(1)} L`;
     case "count":
       return (n) => n.toLocaleString("en-IN");
+    // Raw count → divided by 1e7 for an Indian-numbering "Cr" suffix
+    // (e.g. 97,200,000 → "9.72 Cr"). Used for SIP-account counts.
+    case "crore-count":
+      return (n) => `${(n / 1e7).toFixed(2)} Cr`;
   }
 }
 
@@ -36,6 +40,8 @@ export function axisFormatter(fmt: AxisFormat): (n: number) => string {
       return (n) => `${(n / 1e5).toFixed(0)}L`;
     case "count":
       return (n) => String(n);
+    case "crore-count":
+      return (n) => `${(n / 1e7).toFixed(1)}`;
   }
 }
 

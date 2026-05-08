@@ -28,6 +28,8 @@ import {
   formatKpiProvenanceTooltip,
   getKpiProvenance,
   getKpiValue,
+  latestProvenanceFor,
+  monthlyTrend,
   resolveSelectedRow,
   type AmfiMonthlyKpiField,
 } from "@/data/amfi-monthly";
@@ -354,6 +356,34 @@ export default async function MonthlyPage({
     getKpiProvenance(amfiSelected, "totalAaum")
   );
 
+  // ---- SIP Trends section --------------------------------------------
+  //
+  // Three line/bar trend charts driven by the press-release Monthly
+  // Notes' SIP fields. monthlyTrend(field, 24) returns the chronological
+  // series of months that have a value for `field` — months where the
+  // field is absent are OMITTED, never zeroed or interpolated. The
+  // x-axis can therefore be non-uniform (e.g. sipAccounts is missing on
+  // 2024-12 / 2025-01 because those Notes don't carry the row), but no
+  // synthetic data is introduced.
+  const sipContribTrend = monthlyTrend("sipContribution", 24);
+  const sipAumTrend = monthlyTrend("sipAum", 24);
+  const sipAccountsTrend = monthlyTrend("sipAccounts", 24);
+
+  const sipContribHover = formatKpiProvenanceTooltip(
+    latestProvenanceFor("sipContribution")
+  );
+  const sipAumHover = formatKpiProvenanceTooltip(
+    latestProvenanceFor("sipAum")
+  );
+  const sipAccountsHover = formatKpiProvenanceTooltip(
+    latestProvenanceFor("sipAccounts")
+  );
+
+  const hasAnySipTrend =
+    sipContribTrend.length > 0 ||
+    sipAumTrend.length > 0 ||
+    sipAccountsTrend.length > 0;
+
   return (
     <div className="space-y-6">
       <PageHeader title="Monthly Operating" subtitle={subtitle} />
@@ -445,6 +475,96 @@ export default async function MonthlyPage({
                 title={trendHoverProvenance ?? undefined}
               >
                 Source: AMFI Monthly Report
+              </div>
+            </Card>
+          </section>
+        </div>
+      )}
+
+      {hasAnySipTrend && (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight">SIP Trends</h2>
+            <p className="text-xs text-muted-foreground">
+              Live from uploaded AMFI Monthly Notes
+            </p>
+          </div>
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <Card
+              title="SIP Contribution Trend"
+              subtitle={`Monthly inflow · ${sipContribTrend.length} month${sipContribTrend.length === 1 ? "" : "s"} · ₹ Cr`}
+            >
+              {sipContribTrend.length > 0 ? (
+                <BarSeries
+                  data={sipContribTrend}
+                  name="SIP Contribution"
+                  color="hsl(var(--chart-1))"
+                  valueFormat="cr"
+                  axisFormat="cr"
+                  labelFormat="month"
+                />
+              ) : (
+                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                  No SIP contribution months yet
+                </div>
+              )}
+              <div
+                className="mt-3 text-[10px] tabular text-muted-foreground/80"
+                title={sipContribHover ?? undefined}
+              >
+                Source: AMFI Monthly Note
+              </div>
+            </Card>
+
+            <Card
+              title="SIP AUM Trend"
+              subtitle={`Period-end SIP assets · ${sipAumTrend.length} month${sipAumTrend.length === 1 ? "" : "s"} · ₹ Cr`}
+            >
+              {sipAumTrend.length > 0 ? (
+                <BarSeries
+                  data={sipAumTrend}
+                  name="SIP AUM"
+                  color="hsl(var(--chart-2))"
+                  valueFormat="cr"
+                  axisFormat="cr"
+                  labelFormat="month"
+                />
+              ) : (
+                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                  No SIP AUM months yet
+                </div>
+              )}
+              <div
+                className="mt-3 text-[10px] tabular text-muted-foreground/80"
+                title={sipAumHover ?? undefined}
+              >
+                Source: AMFI Monthly Note
+              </div>
+            </Card>
+
+            <Card
+              title="SIP Contributing Accounts Trend"
+              subtitle={`Active SIP accounts · ${sipAccountsTrend.length} month${sipAccountsTrend.length === 1 ? "" : "s"} · crore accounts`}
+            >
+              {sipAccountsTrend.length > 0 ? (
+                <BarSeries
+                  data={sipAccountsTrend}
+                  name="SIP Accounts"
+                  color="hsl(var(--chart-3))"
+                  valueFormat="crore-count"
+                  axisFormat="crore-count"
+                  labelFormat="month"
+                />
+              ) : (
+                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                  No SIP accounts months yet
+                </div>
+              )}
+              <div
+                className="mt-3 text-[10px] tabular text-muted-foreground/80"
+                title={sipAccountsHover ?? undefined}
+              >
+                Source: AMFI Monthly Note
               </div>
             </Card>
           </section>
