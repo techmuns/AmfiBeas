@@ -506,3 +506,183 @@ export function iiflActiveEquityHeatmapData(): {
 
   return { months: windowMonths, rows };
 }
+
+// ---- IIFL Active-Equity Quarterly surfaces -------------------------
+//
+// /quarterly hosts a quarterly variant of the IIFL Figure 31-34 trend
+// cards. Months are bucketed into Indian fiscal quarters
+// (FY26 = Apr 2025 – Mar 2026) and the same active-equity envelope
+// denominators are applied:
+//
+//   QAAUM share %    = avg(categoryAaum)      / avg(activeEquityAaum)      × 100
+//   Net inflow share = sum(categoryNetInflow) / sum(activeEquityNetInflow) × 100
+//
+// Averages and sums use the months in the quarter where the value is
+// present — never zero-padded. Quarters with neither side populated
+// are omitted; the latest quarter is flagged QTD when fewer than 3
+// months of data have been ingested for it so the page can append a
+// "TD" suffix to the label.
+
+/** Indian fiscal-quarter id + label for a YYYY-MM month. FY26 runs
+ *  Apr 2025 – Mar 2026, so 2025-04 → 1QFY26 and 2026-01 → 4QFY26. */
+function fiscalQuarterFor(month: string): {
+  id: string;
+  label: string;
+  fyYear: number;
+  fyQ: number;
+} {
+  const [yStr, mStr] = month.split("-");
+  const y = Number(yStr);
+  const m = Number(mStr);
+  let fyYear: number;
+  let fyQ: number;
+  if (m >= 4 && m <= 6) {
+    fyYear = y + 1;
+    fyQ = 1;
+  } else if (m >= 7 && m <= 9) {
+    fyYear = y + 1;
+    fyQ = 2;
+  } else if (m >= 10 && m <= 12) {
+    fyYear = y + 1;
+    fyQ = 3;
+  } else {
+    // Jan–Mar of calendar year y closes FY ending in y.
+    fyYear = y;
+    fyQ = 4;
+  }
+  return {
+    id: `FY${fyYear}-Q${fyQ}`,
+    label: `${fyQ}QFY${String(fyYear).slice(-2)}`,
+    fyYear,
+    fyQ,
+  };
+}
+
+/** Per-category quarterly trend series for the /quarterly IIFL
+ *  Active-Equity Category Trends cards. Buckets months into Indian
+ *  fiscal quarters and applies:
+ *
+ *    QAAUM share %    = avg(categoryAaum)      / avg(activeEquityAaum)      × 100
+ *    Net inflow share = sum(categoryNetInflow) / sum(activeEquityNetInflow) × 100
+ *
+ *  Averages / sums are taken over only the months that carry the
+ *  value (no fake zeros). A quarter is dropped when neither share is
+ *  computable. Returns the trailing 8 quarters available, oldest →
+ *  newest. The most-recent quarter is flagged `qtd: true` when fewer
+ *  than 3 months of data exist for it; the page appends "TD" to the
+ *  display label in that case. */
+export function iiflActiveEquityQuarterlyTrendCard(
+  slug: AmfiMonthlyCategorySlug
+): {
+  series: {
+    quarter: string;
+    label: string;
+    aumSharePct: number | null;
+    flowSharePct: number | null;
+  }[];
+  hasData: boolean;
+} {
+  const monthly = amfiMonthlyRows();
+
+  // Index this category's rows by month for O(1) lookup inside the
+  // bucket loop below.
+  const categoryByMonth = new Map<string, AmfiMonthlyCategoryRow>();
+  for (const r of amfiMonthlyCategorySnapshot.rows) {
+    if (r.categorySlug === slug) categoryByMonth.set(r.month, r);
+  }
+
+  // Active-equity envelope denominators per month.
+  const denomByMonth = new Map<
+    string,
+    { aaum?: number; flow?: number }
+  >();
+  for (const r of monthly) {
+    denomByMonth.set(r.month, {
+      aaum: r.activeEquityAaum,
+      flow: r.activeEquityNetInflow,
+    });
+  }
+
+  // Bucket months into fiscal quarters. `monthly` is already sorted
+  // ascending so insertion order within each bucket is chronological.
+  const buckets = new Map<
+    string,
+    {
+      id: string;
+      label: string;
+      fyYear: number;
+      fyQ: number;
+      months: string[];
+    }
+  >();
+  for (const r of monthly) {
+    const q = fiscalQuarterFor(r.month);
+    let bucket = buckets.get(q.id);
+    if (!bucket) {
+      bucket = {
+        id: q.id,
+        label: q.label,
+        fyYear: q.fyYear,
+        fyQ: q.fyQ,
+        months: [],
+      };
+      buckets.set(q.id, bucket);
+    }
+    bucket.months.push(r.month);
+  }
+
+  const ordered = [...buckets.values()].sort((a, b) =>
+    a.fyYear !== b.fyYear ? a.fyYear - b.fyYear : a.fyQ - b.fyQ
+  );
+
+  const computed = ordered.map((b, i) => {
+    const catAaum: number[] = [];
+    const aeAaum: number[] = [];
+    const catFlow: number[] = [];
+    const aeFlow: number[] = [];
+    for (const m of b.months) {
+      const cat = categoryByMonth.get(m);
+      const den = denomByMonth.get(m);
+      if (typeof cat?.categoryAaum === "number") catAaum.push(cat.categoryAaum);
+      if (typeof den?.aaum === "number") aeAaum.push(den.aaum);
+      if (typeof cat?.categoryNetInflow === "number")
+        catFlow.push(cat.categoryNetInflow);
+      if (typeof den?.flow === "number") aeFlow.push(den.flow);
+    }
+
+    const sum = (arr: number[]) => arr.reduce((s, x) => s + x, 0);
+    const avg = (arr: number[]) => sum(arr) / arr.length;
+
+    const aumSharePct =
+      catAaum.length > 0 && aeAaum.length > 0 && avg(aeAaum) > 0
+        ? (avg(catAaum) / avg(aeAaum)) * 100
+        : null;
+
+    const aeFlowSum = sum(aeFlow);
+    const flowSharePct =
+      catFlow.length > 0 && aeFlow.length > 0 && aeFlowSum !== 0
+        ? (sum(catFlow) / aeFlowSum) * 100
+        : null;
+
+    const isLatest = i === ordered.length - 1;
+    const label =
+      isLatest && b.months.length < 3 ? `${b.label} TD` : b.label;
+
+    return {
+      quarter: b.id,
+      label,
+      aumSharePct,
+      flowSharePct,
+    };
+  });
+
+  // Drop quarters where both shares are null (no usable numerator or
+  // denominator that quarter), then keep only the trailing 8.
+  const populated = computed.filter(
+    (q) => q.aumSharePct !== null || q.flowSharePct !== null
+  );
+  const series = populated.slice(-8);
+  const hasData = series.length > 0;
+
+  return { series, hasData };
+}
