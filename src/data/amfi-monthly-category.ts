@@ -101,23 +101,21 @@ export function categoryRowsForSlug(
 }
 
 /**
- * Per-month share percentages for a category. Each entry has
+ * Per-month share percentages for a category in the IIFL Active-
+ * Equity Lens. Each entry has
  *   { month, aumSharePct, flowSharePct }
- * where each share is the category's own AUM/flow divided by the
- * corresponding active-equity envelope figure on the same month
- * (× 100). Either share is `null` when its numerator or
- * denominator is absent — chart renders a gap rather than a fake
- * zero.
+ * where:
+ *   aumSharePct  = categoryAaum / activeEquityAaum  (period-average)
+ *   flowSharePct = categoryNetInflow / activeEquityNetInflow (signed)
  *
- * Denominators on the per-month snapshot:
- *   AUM share        : activeEquityAum
- *   net inflow share : activeEquityNetInflow
+ * Either share is `null` when its numerator or denominator is
+ * absent — chart renders a gap rather than a fake zero.
  *
- * Both denominators were derived in the extractor (PRs #41 and
- * #44) using the same Sub II + Sub III ex-Arbitrage + Sub IV
- * envelope, so the four categories' shares are consistent and
- * comparable across the equity-oriented (Flexi/Large/Sectoral)
- * and hybrid-oriented (Multi-Asset) cases.
+ * The AUM-side denominator is the AAUM-based active-equity envelope
+ * (Sub II AAUM + Sub III ex-Arbitrage AAUM + Sub IV AAUM) so the
+ * share line uses period-average AUM consistently with IIFL Figure
+ * 31-34's QAAUM framing. The flow-side denominator remains the
+ * Net Inflow envelope (no AAUM analogue exists for flows).
  */
 export function monthlyCategoryShareTrend(
   slug: AmfiMonthlyCategorySlug,
@@ -133,11 +131,11 @@ export function monthlyCategoryShareTrend(
   const monthly = amfiMonthlyRows();
   const byMonth = new Map<
     string,
-    { activeEquityAum?: number; activeEquityNetInflow?: number }
+    { activeEquityAaum?: number; activeEquityNetInflow?: number }
   >();
   for (const r of monthly) {
     byMonth.set(r.month, {
-      activeEquityAum: r.activeEquityAum,
+      activeEquityAaum: r.activeEquityAaum,
       activeEquityNetInflow: r.activeEquityNetInflow,
     });
   }
@@ -145,14 +143,14 @@ export function monthlyCategoryShareTrend(
   const cats = categoryRowsForSlug(slug, lastN);
   return cats.map((r) => {
     const den = byMonth.get(r.month);
-    const aumDen = den?.activeEquityAum;
+    const aumDen = den?.activeEquityAaum;
     const flowDen = den?.activeEquityNetInflow;
 
     const aumSharePct =
-      typeof r.categoryAum === "number" &&
+      typeof r.categoryAaum === "number" &&
       typeof aumDen === "number" &&
       aumDen > 0
-        ? (r.categoryAum / aumDen) * 100
+        ? (r.categoryAaum / aumDen) * 100
         : null;
 
     const flowSharePct =

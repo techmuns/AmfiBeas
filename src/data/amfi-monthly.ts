@@ -227,30 +227,29 @@ export function monthlyFlowsData(
 }
 
 /**
- * Active equity share of total AUM, IIFL Figure 21-style. Returned
+ * Active equity share of total AAUM, IIFL Figure 21-style. Returned
  * as a chronological `{ label, value }` series suitable for the
  * existing BarSeries chart with valueFormat="pct".
  *
- *   activeEquitySharePct = activeEquityAum / totalAum × 100
+ *   activeEquitySharePct = activeEquityAaum / totalAaum × 100
  *
- * IMPORTANT: divides by totalAum (closing balance), NOT totalAaum
- * (period average), because activeEquityAum itself is a closing-
- * balance figure derived from AMFI Monthly Report Sub Total rows.
- *
- * Months where either field is missing are OMITTED — never zero-
- * filled. The resulting series may have an uneven x-axis if some
- * months have data and others don't.
+ * Both numerator and denominator are period-average (AAUM) so the
+ * ratio is consistently on a period-average basis. Months where
+ * either field is missing are OMITTED — never zero-filled.
  */
 export function monthlyActiveEquityShareTrend(
   lastN = 24
 ): { label: string; value: number }[] {
   const rows = amfiMonthlyRows().slice(-lastN);
   return rows.flatMap((r) => {
-    if (typeof r.activeEquityAum !== "number" || typeof r.totalAum !== "number") {
+    if (
+      typeof r.activeEquityAaum !== "number" ||
+      typeof r.totalAaum !== "number"
+    ) {
       return [];
     }
-    if (r.totalAum <= 0) return [];
-    return [{ label: r.month, value: (r.activeEquityAum / r.totalAum) * 100 }];
+    if (r.totalAaum <= 0) return [];
+    return [{ label: r.month, value: (r.activeEquityAaum / r.totalAaum) * 100 }];
   });
 }
 
@@ -296,12 +295,12 @@ export function latestIndustryFolioAdditions(): number | null {
 }
 
 /**
- * IIFL Figure 19-style equity breakdown trend. Each row is
- * `{ month, activeEquity, etfIndex, arbitrage }` for the latest
- * `lastN` months (chronological). Each numeric is either the field
- * value (₹ Cr) or `null` when missing. Used by GroupedBars (or a
- * stacked component if added later) to show how the equity stack
- * evolves over time.
+ * IIFL Figure 19-style equity breakdown trend (AAUM basis). Each
+ * row is `{ month, activeEquity, etfIndex, arbitrage }` for the
+ * latest `lastN` months (chronological). Each numeric is the
+ * period-average AAUM for that bucket (₹ Cr) or `null` when
+ * missing. Used by GroupedBars (or a stacked component if added
+ * later) to show how the period-average equity stack evolves.
  */
 export function monthlyEquityBreakdown(
   lastN = 24
@@ -315,8 +314,8 @@ export function monthlyEquityBreakdown(
   return rows.map((r) => ({
     month: r.month,
     activeEquity:
-      typeof r.activeEquityAum === "number" ? r.activeEquityAum : null,
-    etfIndex: typeof r.etfIndexAum === "number" ? r.etfIndexAum : null,
-    arbitrage: typeof r.arbitrageAum === "number" ? r.arbitrageAum : null,
+      typeof r.activeEquityAaum === "number" ? r.activeEquityAaum : null,
+    etfIndex: typeof r.etfIndexAaum === "number" ? r.etfIndexAaum : null,
+    arbitrage: typeof r.arbitrageAaum === "number" ? r.arbitrageAaum : null,
   }));
 }

@@ -365,10 +365,12 @@ export default async function MonthlyPage({
   // ---- Active Equity & Equity Mix (IIFL Figure 19 / 21) section -----
   //
   // Three charts driven by the IIFL-derived equity breakdown fields
-  // (activeEquityAum, etfIndexAum, arbitrageAum) extracted from the
-  // AMFI Monthly Report. All cells are real per-month values; missing
-  // months are omitted from each per-field series — never zero-filled.
-  const activeEquityTrend = monthlyTrend("activeEquityAum", 24);
+  // (activeEquityAaum, etfIndexAaum, arbitrageAaum) extracted from
+  // the AMFI Monthly Report. All charts in this section use the AAUM
+  // (period-average) basis so the trend line and share denominator
+  // are consistent with IIFL's Figure 19 / 21 framing. Missing months
+  // are omitted from each per-field series — never zero-filled.
+  const activeEquityTrend = monthlyTrend("activeEquityAaum", 24);
   const activeEquityShareTrend = monthlyActiveEquityShareTrend(24);
   const equityBreakdown = monthlyEquityBreakdown(24);
   const equityBreakdownHasData = equityBreakdown.some(
@@ -379,10 +381,10 @@ export default async function MonthlyPage({
     activeEquityShareTrend.length > 0 ||
     equityBreakdownHasData;
   const activeEquityHover = formatKpiProvenanceTooltip(
-    latestProvenanceFor("activeEquityAum")
+    latestProvenanceFor("activeEquityAaum")
   );
   const etfIndexHover = formatKpiProvenanceTooltip(
-    latestProvenanceFor("etfIndexAum")
+    latestProvenanceFor("etfIndexAaum")
   );
 
   // ---- Industry Folios & NFO section ---------------------------------
@@ -814,13 +816,13 @@ export default async function MonthlyPage({
 
           <section className="grid gap-4 lg:grid-cols-2">
             <Card
-              title="Active Equity AUM Trend"
-              subtitle={`${activeEquityTrend.length} month${activeEquityTrend.length === 1 ? "" : "s"} · ₹ Cr · IIFL Figure 21-style`}
+              title="Active Equity AAUM Trend"
+              subtitle={`${activeEquityTrend.length} month${activeEquityTrend.length === 1 ? "" : "s"} · ₹ Cr · IIFL Figure 21-style (period-average)`}
             >
               {activeEquityTrend.length > 0 ? (
                 <BarSeries
                   data={activeEquityTrend}
-                  name="Active Equity AUM"
+                  name="Active Equity AAUM"
                   color="hsl(var(--chart-1))"
                   valueFormat="cr"
                   axisFormat="cr"
@@ -828,7 +830,7 @@ export default async function MonthlyPage({
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  Active Equity AUM unavailable
+                  Active Equity AAUM unavailable
                 </div>
               )}
               <div
@@ -840,8 +842,8 @@ export default async function MonthlyPage({
             </Card>
 
             <Card
-              title="Active Equity Share of Total AUM"
-              subtitle={`${activeEquityShareTrend.length} month${activeEquityShareTrend.length === 1 ? "" : "s"} · % of month-end Total AUM`}
+              title="Active Equity Share of Total AAUM"
+              subtitle={`${activeEquityShareTrend.length} month${activeEquityShareTrend.length === 1 ? "" : "s"} · % of period-average Total AAUM`}
             >
               {activeEquityShareTrend.length > 0 ? (
                 <BarSeries
@@ -867,8 +869,8 @@ export default async function MonthlyPage({
           </section>
 
           <Card
-            title="Equity Breakdown Trend"
-            subtitle={`${equityBreakdown.length} month${equityBreakdown.length === 1 ? "" : "s"} · ₹ Cr · grouped bars`}
+            title="Equity AAUM Breakdown"
+            subtitle={`${equityBreakdown.length} month${equityBreakdown.length === 1 ? "" : "s"} · ₹ Cr · period-average · grouped bars`}
           >
             {equityBreakdownHasData ? (
               <GroupedBars
@@ -997,12 +999,12 @@ export default async function MonthlyPage({
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
-              Category Flow Share — IIFL Active-Equity Envelope
+              IIFL Active-Equity Lens
             </h2>
             <p className="text-xs text-muted-foreground">
-              AUM share vs net inflow share · denominator =
-              active-equity envelope (Sub II + Sub III ex-Arbitrage +
-              Sub IV)
+              QAAUM share uses the active-equity AAUM envelope (Sub II
+              AAUM + Sub III ex-Arbitrage AAUM + Sub IV AAUM). Net
+              inflow share uses active-equity net inflow.
             </p>
           </div>
 
@@ -1011,7 +1013,7 @@ export default async function MonthlyPage({
               <Card
                 key={c.slug}
                 title={c.label}
-                subtitle={`${c.series.length} month${c.series.length === 1 ? "" : "s"} · % of active-equity envelope`}
+                subtitle={`${c.series.length} month${c.series.length === 1 ? "" : "s"} · % of active-equity AAUM envelope`}
               >
                 {c.hasData ? (
                   <MultiLine
@@ -1023,7 +1025,7 @@ export default async function MonthlyPage({
                     lines={[
                       {
                         key: "aumSharePct",
-                        name: "AUM share",
+                        name: "QAAUM share",
                         color: "hsl(var(--chart-1))",
                       },
                       {
@@ -1073,7 +1075,7 @@ export default async function MonthlyPage({
                     <Card
                       key={c.slug}
                       title={c.label}
-                      subtitle={`${c.series.length} month${c.series.length === 1 ? "" : "s"} · % of active-equity envelope`}
+                      subtitle={`${c.series.length} month${c.series.length === 1 ? "" : "s"} · % of active-equity AAUM envelope`}
                     >
                       {c.hasData ? (
                         <MultiLine
@@ -1114,10 +1116,10 @@ export default async function MonthlyPage({
           )}
 
           <p className="text-[11px] text-muted-foreground">
-            AUM share uses Active Equity AUM denominator. Net inflow
-            share uses Active Equity Net Inflow denominator. Active
-            Equity = Growth/Equity + Hybrid ex-Arbitrage +
-            Solution-oriented schemes.
+            QAAUM share uses the active-equity AAUM envelope as
+            denominator. Net inflow share uses active-equity net
+            inflow. Active Equity = Growth/Equity + Hybrid
+            ex-Arbitrage + Solution-oriented schemes.
           </p>
         </div>
       )}
