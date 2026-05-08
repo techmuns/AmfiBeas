@@ -260,6 +260,24 @@ interface MonthlyReportHits {
   equityNetInflow?: FieldHit;
   debtNetInflow?: FieldHit;
   liquidNetInflow?: FieldHit;
+  // IIFL Figure 19-style equity breakdown derived from AMFI rows.
+  // See AmfiMonthlyPdfRow docstring for the per-field formula.
+  activeEquityAum?: FieldHit;
+  etfIndexAum?: FieldHit;
+  arbitrageAum?: FieldHit;
+}
+
+/** Internal scratch — intermediate row values that feed the IIFL-
+ *  derived fields. NOT stored on the row schema (which carries only
+ *  the final derived values), but tracked through parsing so we can
+ *  reject the derivation if ANY contributing row is missing. */
+interface MonthlyReportIntermediates {
+  subTotalII?: FieldHit;       // Growth/Equity Oriented Schemes total
+  subTotalIII?: FieldHit;      // Hybrid Schemes total
+  subTotalIV?: FieldHit;       // Solution Oriented Schemes total
+  arbitrageRow?: FieldHit;     // Arbitrage Fund row (sub of Sub III)
+  indexFundsRow?: FieldHit;    // Index Funds row (sub of Sub V)
+  otherEtfsRow?: FieldHit;     // Other ETFs row (sub of Sub V)
 }
 
 /**
@@ -302,14 +320,24 @@ function parseMonthlyReport(pages: PdfPage[]): {
 } {
   const hits: MonthlyReportHits = {};
   const pagesUsed = new Set<number>();
+  // Scratch for intermediate rows (Sub Total - II/III/IV, Arbitrage,
+  // Index Funds, Other ETFs) used to derive the IIFL Figure 19-style
+  // activeEquityAum / etfIndexAum / arbitrageAum after parsing.
+  const inter: MonthlyReportIntermediates = {};
 
   // Match the row labels we care about. For block-style sub totals,
   // the label sits on its own line(s) and the data row comes 1-3 lines
   // later. For the Liquid Fund / Active Equity rows, the label and
   // data are on the SAME line, with the label prefixed by a roman
   // numeral.
+  //
+  // `interKey` (when set) ALSO captures the row's Net AUM into the
+  // intermediates object — used by rows that don't directly map to a
+  // public field but feed a derived field (e.g. Sub Total - III feeds
+  // activeEquityAum but isn't itself a public KPI).
   const blockLabels: {
-    key: keyof MonthlyReportHits;
+    key: keyof MonthlyReportHits | null;
+    interKey?: keyof MonthlyReportIntermediates;
     re: RegExp;
     label: string;
   }[] = [
@@ -320,8 +348,21 @@ function parseMonthlyReport(pages: PdfPage[]): {
     },
     {
       key: "equityAum",
+      interKey: "subTotalII",
       re: /^\s*Sub\s*Total\s*-\s*II\b(?!\s*[IV])/i,
       label: "Sub Total - II row · Net AUM column",
+    },
+    {
+      key: null,
+      interKey: "subTotalIII",
+      re: /^\s*Sub\s*Total\s*-\s*III\b/i,
+      label: "Sub Total - III row · Net AUM column",
+    },
+    {
+      key: null,
+      interKey: "subTotalIV",
+      re: /^\s*Sub\s*Total\s*-\s*IV\b/i,
+      label: "Sub Total - IV row · Net AUM column",
     },
     {
       key: "totalAum",
@@ -331,8 +372,10 @@ function parseMonthlyReport(pages: PdfPage[]): {
   ];
 
   // Inline rows: label and numbers on the same line.
+  // `interKey` works the same way as on blockLabels.
   const inlineLabels: {
-    key: keyof MonthlyReportHits;
+    key: keyof MonthlyReportHits | null;
+    interKey?: keyof MonthlyReportIntermediates;
     re: RegExp;
     targetCol: number;
     label: string;
@@ -343,6 +386,27 @@ function parseMonthlyReport(pages: PdfPage[]): {
       re: /\bLiquid\s+Fund\b/i,
       targetCol: COL_NET_AUM,
       label: "Liquid Fund row · Net AUM column",
+    },
+    {
+      key: null,
+      interKey: "arbitrageRow",
+      re: /\bArbitrage\s+Fund\b/i,
+      targetCol: COL_NET_AUM,
+      label: "Arbitrage Fund row · Net AUM column",
+    },
+    {
+      key: null,
+      interKey: "indexFundsRow",
+      re: /\bIndex\s+Funds?\b/i,
+      targetCol: COL_NET_AUM,
+      label: "Index Funds row · Net AUM column",
+    },
+    {
+      key: null,
+      interKey: "otherEtfsRow",
+      re: /\bOther\s+ETFs?\b/i,
+      targetCol: COL_NET_AUM,
+      label: "Other ETFs row · Net AUM column",
     },
   ];
 
@@ -359,96 +423,142 @@ function parseMonthlyReport(pages: PdfPage[]): {
       //     lines (e.g. Sub Total - I has 16 sub-items and overflows).
       // findDataRow accepts both because we start at the label line.
       for (const spec of blockLabels) {
-        if (!hits[spec.key] && spec.re.test(line)) {
-          const dataCols = findDataRow(lines, i, 6);
-          if (dataCols) {
-            const aum = dataCols[COL_NET_AUM];
-            if (aum !== null && aum > 0) {
-              hits[spec.key] = {
-                value: aum,
-                page: page.num,
-                label: spec.label,
-              };
-              pagesUsed.add(page.num);
-            }
-            // Each Sub Total / Grand Total row also carries a net-flow
-            // column for the SAME category. Capture it alongside the
-            // AUM so callers can render category-level monthly flow
-            // charts (Figure 22 in the IIFL deck). Net flows can be
-            // positive OR negative, so the only guard is "not null".
-            const netInflow = dataCols[COL_NET_INFLOW];
-            if (spec.key === "totalAum") {
-              const aaum = dataCols[COL_AAUM];
-              if (aaum !== null && aaum > 0 && !hits.totalAaum) {
-                hits.totalAaum = {
-                  value: aaum,
-                  page: page.num,
-                  label: "Grand Total row · Average Net AUM column",
-                };
-              }
-              if (netInflow !== null && !hits.netInflow) {
-                hits.netInflow = {
-                  value: netInflow,
-                  page: page.num,
-                  label: "Grand Total row · Net Inflow / Outflow column",
-                };
-              }
-            } else if (spec.key === "debtAum") {
-              if (netInflow !== null && !hits.debtNetInflow) {
-                hits.debtNetInflow = {
-                  value: netInflow,
-                  page: page.num,
-                  label: "Sub Total - I row · Net Inflow / Outflow column",
-                };
-              }
-            } else if (spec.key === "equityAum") {
-              if (netInflow !== null && !hits.equityNetInflow) {
-                hits.equityNetInflow = {
-                  value: netInflow,
-                  page: page.num,
-                  label: "Sub Total - II row · Net Inflow / Outflow column",
-                };
-              }
-            }
+        // Skip if either the public hit (when key is set) or the
+        // intermediate (when interKey is set) is already filled.
+        if (spec.key && hits[spec.key]) continue;
+        if (spec.interKey && inter[spec.interKey]) continue;
+        if (!spec.re.test(line)) continue;
+        const dataCols = findDataRow(lines, i, 6);
+        if (!dataCols) continue;
+        const aum = dataCols[COL_NET_AUM];
+        if (aum === null || aum <= 0) continue;
+        const hit: FieldHit = { value: aum, page: page.num, label: spec.label };
+        if (spec.key) hits[spec.key] = hit;
+        if (spec.interKey) inter[spec.interKey] = hit;
+        pagesUsed.add(page.num);
+        // Each Sub Total / Grand Total row also carries a net-flow
+        // column for the SAME category. Capture it alongside the
+        // AUM so callers can render category-level monthly flow
+        // charts (Figure 22 in the IIFL deck). Net flows can be
+        // positive OR negative, so the only guard is "not null".
+        const netInflow = dataCols[COL_NET_INFLOW];
+        if (spec.key === "totalAum") {
+          const aaum = dataCols[COL_AAUM];
+          if (aaum !== null && aaum > 0 && !hits.totalAaum) {
+            hits.totalAaum = {
+              value: aaum,
+              page: page.num,
+              label: "Grand Total row · Average Net AUM column",
+            };
+          }
+          if (netInflow !== null && !hits.netInflow) {
+            hits.netInflow = {
+              value: netInflow,
+              page: page.num,
+              label: "Grand Total row · Net Inflow / Outflow column",
+            };
+          }
+        } else if (spec.key === "debtAum") {
+          if (netInflow !== null && !hits.debtNetInflow) {
+            hits.debtNetInflow = {
+              value: netInflow,
+              page: page.num,
+              label: "Sub Total - I row · Net Inflow / Outflow column",
+            };
+          }
+        } else if (spec.key === "equityAum") {
+          if (netInflow !== null && !hits.equityNetInflow) {
+            hits.equityNetInflow = {
+              value: netInflow,
+              page: page.num,
+              label: "Sub Total - II row · Net Inflow / Outflow column",
+            };
           }
         }
       }
 
       // Inline labels (data on the same line as the label).
       for (const spec of inlineLabels) {
-        if (!hits[spec.key] && spec.re.test(line)) {
-          const cols = numericColumns(line);
-          // For inline rows the row label may consume 1-2 leading
-          // tokens (roman numeral, scheme name); the numeric columns
-          // start whenever the first numeric token appears.
-          if (cols.length >= 7) {
-            const aum = cols[spec.targetCol];
-            if (aum !== null && aum > 0) {
-              hits[spec.key] = {
-                value: aum,
-                page: page.num,
-                label: spec.label,
-              };
-              pagesUsed.add(page.num);
-            }
-            // The Liquid Fund inline row also carries a net-flow
-            // column. Capture as liquidNetInflow (signed; can be
-            // negative on outflow months). This is itself a sub-
-            // component of debtNetInflow — see schema docstring.
-            if (spec.key === "liquidAum") {
-              const netInflow = cols[COL_NET_INFLOW];
-              if (netInflow !== null && !hits.liquidNetInflow) {
-                hits.liquidNetInflow = {
-                  value: netInflow,
-                  page: page.num,
-                  label: "Liquid Fund row · Net Inflow / Outflow column",
-                };
-              }
-            }
+        if (spec.key && hits[spec.key]) continue;
+        if (spec.interKey && inter[spec.interKey]) continue;
+        if (!spec.re.test(line)) continue;
+        const cols = numericColumns(line);
+        // For inline rows the row label may consume 1-2 leading
+        // tokens (roman numeral, scheme name); the numeric columns
+        // start whenever the first numeric token appears.
+        if (cols.length < 7) continue;
+        const aum = cols[spec.targetCol];
+        if (aum === null || aum <= 0) continue;
+        const hit: FieldHit = { value: aum, page: page.num, label: spec.label };
+        if (spec.key) hits[spec.key] = hit;
+        if (spec.interKey) inter[spec.interKey] = hit;
+        pagesUsed.add(page.num);
+        // The Liquid Fund inline row also carries a net-flow
+        // column. Capture as liquidNetInflow (signed; can be
+        // negative on outflow months). This is itself a sub-
+        // component of debtNetInflow — see schema docstring.
+        if (spec.key === "liquidAum") {
+          const netInflow = cols[COL_NET_INFLOW];
+          if (netInflow !== null && !hits.liquidNetInflow) {
+            hits.liquidNetInflow = {
+              value: netInflow,
+              page: page.num,
+              label: "Liquid Fund row · Net Inflow / Outflow column",
+            };
           }
         }
       }
     }
+  }
+
+  // ---- Derive IIFL Figure 19-style fields from intermediate rows ---
+  //
+  // arbitrageAum = the Arbitrage Fund row alone (Sub Total - III's
+  // sub-row). Direct mapping; no math.
+  if (inter.arbitrageRow) {
+    hits.arbitrageAum = {
+      value: inter.arbitrageRow.value,
+      page: inter.arbitrageRow.page,
+      label: "Arbitrage Fund row · Net AUM column",
+    };
+  }
+
+  // etfIndexAum = Index Funds + Other ETFs (excludes Gold ETFs and
+  // Fund of Funds investing overseas). Reconciles to within ~0.4% of
+  // IIFL Figure 19 reference for Feb 2026.
+  if (inter.indexFundsRow && inter.otherEtfsRow) {
+    hits.etfIndexAum = {
+      value: inter.indexFundsRow.value + inter.otherEtfsRow.value,
+      page: inter.indexFundsRow.page,
+      label:
+        "Index Funds row + Other ETFs row · Net AUM column · " +
+        "(IIFL Figure 19-style; excludes Gold ETFs and Fund of Funds " +
+        "investing overseas)",
+    };
+  }
+
+  // activeEquityAum = Sub Total - II + (Sub Total - III - Arbitrage
+  // Fund row) + Sub Total - IV. Captures the active equity-oriented
+  // component (Growth/Equity Schemes) plus all active hybrid rows
+  // (Conservative, Balanced/Aggressive, Dynamic Allocation, Multi-
+  // Asset, Equity Savings) plus Solution-Oriented schemes (Retirement
+  // and Children's). Excludes the Arbitrage Fund row (IIFL splits it
+  // out as its own bucket). Reconciles to within ~1% of IIFL Figure
+  // 19 reference for Feb 2026; the residual is consistent with IIFL
+  // using period-average AAUM vs our closing-balance Net AUM.
+  if (inter.subTotalII && inter.subTotalIII && inter.subTotalIV && inter.arbitrageRow) {
+    const v =
+      inter.subTotalII.value +
+      (inter.subTotalIII.value - inter.arbitrageRow.value) +
+      inter.subTotalIV.value;
+    hits.activeEquityAum = {
+      value: v,
+      page: inter.subTotalII.page,
+      label:
+        "Sub Total - II + (Sub Total - III − Arbitrage Fund row) + " +
+        "Sub Total - IV · Net AUM column · " +
+        "(IIFL Figure 19-style active equity)",
+    };
   }
 
   return { hits, pagesUsed };
@@ -937,6 +1047,8 @@ const NUMERIC_FIELDS: (keyof AmfiMonthlyPdfRow)[] = [
   "equityNetInflow",
   "debtNetInflow",
   "liquidNetInflow",
+  "etfIndexAum",
+  "arbitrageAum",
 ];
 
 /**

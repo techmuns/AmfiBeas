@@ -227,6 +227,10 @@ export interface AmfiMonthlyPdfFieldSources {
   equityNetInflow?: AmfiMonthlyPdfFieldProvenance;
   debtNetInflow?: AmfiMonthlyPdfFieldProvenance;
   liquidNetInflow?: AmfiMonthlyPdfFieldProvenance;
+  /** IIFL-style equity breakdown derived from the AMFI Monthly Report.
+   *  See AmfiMonthlyPdfRow for the per-field definition. */
+  etfIndexAum?: AmfiMonthlyPdfFieldProvenance;
+  arbitrageAum?: AmfiMonthlyPdfFieldProvenance;
 }
 
 /**
@@ -255,9 +259,37 @@ export interface AmfiMonthlyPdfRow {
    *  ("AAUM") — comparable to investor-disclosure denominators. */
   totalAaum?: number;
   equityAum?: number;                  // ₹ Cr (Sub Total - II / Growth/Equity Oriented)
-  activeEquityAum?: number;            // ₹ Cr (when AMFI splits active vs passive)
+  /** IIFL Figure 19-style "Active Equity" AUM (₹ Cr). DERIVED from
+   *  the AMFI Monthly Report as:
+   *    Sub Total - II (Growth/Equity Oriented Schemes)
+   *    + (Sub Total - III  −  Arbitrage Fund row)        // active hybrid, ex-arbitrage
+   *    + Sub Total - IV (Solution Oriented Schemes)
+   *  Excludes ETFs / Index Funds / Arbitrage Fund. Includes the
+   *  active-hybrid rows (Conservative Hybrid, Balanced/Aggressive,
+   *  Dynamic Asset Allocation, Multi-Asset Allocation, Equity
+   *  Savings) and the Solution-Oriented schemes (Retirement +
+   *  Children's). Reconciles to within ~1% of IIFL Figure 19's
+   *  Feb 2026 reference (₹44.84 trn) — the residual is consistent
+   *  with IIFL using period-average AAUM vs our closing-balance
+   *  Net AUM. */
+  activeEquityAum?: number;
   debtAum?: number;                    // ₹ Cr (Sub Total - I / Income/Debt Oriented)
   liquidAum?: number;                  // ₹ Cr (Liquid Fund row)
+  /** IIFL Figure 19-style "ETF & Index" AUM (₹ Cr). DERIVED from
+   *  the AMFI Monthly Report Sub Total - V (Other Schemes) component
+   *  rows as: Index Funds + Other ETFs. EXCLUDES Gold ETFs (precious
+   *  metal exposure, not equity) and Fund of Funds investing
+   *  overseas (foreign-equity exposure). Reconciles to within ~0.4%
+   *  of IIFL Figure 19's Feb 2026 reference (₹13.054 trn). */
+  etfIndexAum?: number;
+  /** Arbitrage Fund AUM (₹ Cr). The single Arbitrage Fund row from
+   *  Sub Total - III (Hybrid Schemes). Used to break out arbitrage
+   *  from active hybrid for IIFL Figure 19-style separation. NOTE:
+   *  IIFL's Feb 2026 reference (₹3.336 trn) is ~18% higher than
+   *  this AMFI row alone (₹2.736 trn) — the discrepancy is
+   *  unexplained but does NOT affect the Active Equity / ETF & Index
+   *  classification, which match IIFL within ~1%. */
+  arbitrageAum?: number;
   sipContribution?: number;            // ₹ Cr (monthly inflow, press release only)
   sipAum?: number;                     // ₹ Cr (press release only)
   sipAccounts?: number;                // count of live SIP accounts (press release only)
