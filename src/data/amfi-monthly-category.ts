@@ -29,13 +29,60 @@ export const amfiMonthlyCategorySnapshot =
 
 /** Friendly category labels for the dashboard. Mirrors the friendly
  *  names stored on each row, but consolidated so the page can
- *  iterate over CATEGORY_DISPLAY without reading every row. */
+ *  iterate over CATEGORY_DISPLAY without reading every row.
+ *
+ *  These are the four IIFL Figure 31-34 reference categories — kept
+ *  as the headline 4-up grid on /monthly.  The remaining 14
+ *  active-equity-envelope categories appear in EXPANDED_CATEGORIES. */
 export const CATEGORY_DISPLAY: { slug: AmfiMonthlyCategorySlug; label: string }[] = [
   { slug: "flexi-cap", label: "Flexi Cap Fund" },
   { slug: "multi-asset", label: "Multi Asset Allocation Fund" },
   { slug: "sectoral-thematic", label: "Sectoral/Thematic Funds" },
   { slug: "large-cap", label: "Large Cap Fund" },
 ];
+
+/** The remaining 14 active-equity envelope categories — all in-envelope
+ *  rows EXCEPT the 4 featured IIFL ones above. Order here is
+ *  display-agnostic; the page sorts by latest-month `categoryAum`
+ *  descending before rendering. */
+export const EXPANDED_CATEGORIES: { slug: AmfiMonthlyCategorySlug; label: string }[] = [
+  // Sub II — Growth/Equity Oriented (excluding the 3 featured slugs)
+  { slug: "multi-cap", label: "Multi Cap Fund" },
+  { slug: "large-mid-cap", label: "Large & Mid Cap Fund" },
+  { slug: "mid-cap", label: "Mid Cap Fund" },
+  { slug: "small-cap", label: "Small Cap Fund" },
+  { slug: "dividend-yield", label: "Dividend Yield Fund" },
+  { slug: "value-contra", label: "Value Fund/Contra Fund" },
+  { slug: "focused", label: "Focused Fund" },
+  { slug: "elss", label: "ELSS" },
+  // Sub III — Hybrid (excluding multi-asset which is featured;
+  // arbitrage is excluded from the active-equity envelope by formula).
+  { slug: "conservative-hybrid", label: "Conservative Hybrid Fund" },
+  {
+    slug: "balanced-aggressive-hybrid",
+    label: "Balanced Hybrid / Aggressive Hybrid Fund",
+  },
+  { slug: "baf-daa", label: "Balanced Advantage / Dynamic Asset Allocation" },
+  { slug: "equity-savings", label: "Equity Savings Fund" },
+  // Sub IV — Solution Oriented
+  { slug: "retirement", label: "Retirement Fund" },
+  { slug: "childrens", label: "Childrens Fund" },
+];
+
+/** Latest-month `categoryAum` for a slug, used by the expanded panel
+ *  to sort cards heaviest → lightest so the largest categories appear
+ *  first. Returns `null` when no row carries `categoryAum`, which
+ *  sinks the slug to the bottom of the sort. */
+export function latestCategoryAum(
+  slug: AmfiMonthlyCategorySlug
+): number | null {
+  const rows = categoryRowsForSlug(slug);
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const v = rows[i].categoryAum;
+    if (typeof v === "number") return v;
+  }
+  return null;
+}
 
 /** Returns category rows for `slug`, sorted chronologically by month
  *  ascending, capped to the latest `lastN` months. Used by the share
