@@ -41,32 +41,33 @@ export const CATEGORY_DISPLAY: { slug: AmfiMonthlyCategorySlug; label: string }[
   { slug: "large-cap", label: "Large Cap Fund" },
 ];
 
-/** The remaining 14 active-equity envelope categories — all in-envelope
- *  rows EXCEPT the 4 featured IIFL ones above. Order here is
- *  display-agnostic; the page sorts by latest-month `categoryAum`
- *  descending before rendering. */
+/** The active-equity envelope categories surfaced in the /monthly
+ *  "All Active Equity Categories" expanded panel — a curated subset
+ *  rather than every in-envelope category. The 6 long-tail
+ *  categories (Conservative Hybrid, Childrens, Dividend Yield,
+ *  Retirement, Equity Savings, Focused) remain extracted and
+ *  reconcile in the denominator, but are hidden from the UI to keep
+ *  the panel scannable. The list is display-agnostic; the page sorts
+ *  by latest-month `categoryAum` descending before rendering. */
 export const EXPANDED_CATEGORIES: { slug: AmfiMonthlyCategorySlug; label: string }[] = [
-  // Sub II — Growth/Equity Oriented (excluding the 3 featured slugs)
+  // Sub II — Growth/Equity Oriented (excluding the 3 featured slugs
+  // and the long-tail Dividend Yield + Focused).
   { slug: "multi-cap", label: "Multi Cap Fund" },
   { slug: "large-mid-cap", label: "Large & Mid Cap Fund" },
   { slug: "mid-cap", label: "Mid Cap Fund" },
   { slug: "small-cap", label: "Small Cap Fund" },
-  { slug: "dividend-yield", label: "Dividend Yield Fund" },
   { slug: "value-contra", label: "Value Fund/Contra Fund" },
-  { slug: "focused", label: "Focused Fund" },
   { slug: "elss", label: "ELSS" },
-  // Sub III — Hybrid (excluding multi-asset which is featured;
-  // arbitrage is excluded from the active-equity envelope by formula).
-  { slug: "conservative-hybrid", label: "Conservative Hybrid Fund" },
+  // Sub III — Hybrid (excluding Multi Asset which is featured;
+  // Conservative Hybrid + Equity Savings hidden as long-tail;
+  // Arbitrage is excluded from the envelope by formula).
   {
     slug: "balanced-aggressive-hybrid",
     label: "Balanced Hybrid / Aggressive Hybrid Fund",
   },
   { slug: "baf-daa", label: "Balanced Advantage / Dynamic Asset Allocation" },
-  { slug: "equity-savings", label: "Equity Savings Fund" },
-  // Sub IV — Solution Oriented
-  { slug: "retirement", label: "Retirement Fund" },
-  { slug: "childrens", label: "Childrens Fund" },
+  // Sub IV — Solution Oriented (Retirement + Childrens hidden as
+  // long-tail).
 ];
 
 /** Latest-month `categoryAum` for a slug, used by the expanded panel

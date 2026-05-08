@@ -899,8 +899,8 @@ export default async function MonthlyPage({
                   </span>
                 </span>
                 <p className="mt-1 text-[11px] font-normal text-muted-foreground">
-                  AUM share vs net inflow share · expanded AMFI category
-                  coverage · sorted by latest-month AUM
+                  AUM share vs net inflow share · selected additional
+                  active-equity categories · sorted by latest-month AUM
                 </p>
               </summary>
               <div className="border-t border-border/60 p-4">
