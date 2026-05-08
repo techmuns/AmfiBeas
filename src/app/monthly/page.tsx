@@ -461,6 +461,24 @@ export default async function MonthlyPage({
       <PageHeader title="Monthly Operating" subtitle={subtitle} />
       <FilterBar showRange="monthly" />
 
+      {/* Data-status legend — quick visual key for the colorful (live)
+          vs muted/dashed (demo) treatments used across the page. */}
+      <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+        <span className="font-medium text-foreground">Data status:</span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-positive" />
+          Live · sourced data
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block h-2 w-3 rounded-sm border border-dashed border-muted-foreground/60 bg-muted" />
+          Demo · placeholder
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />
+          Pending · not connected
+        </span>
+      </div>
+
       <Card
         title="AMFI Monthly Snapshot"
         subtitle={amfiSectionSubtitle}
@@ -850,6 +868,7 @@ export default async function MonthlyPage({
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
+          tone="demo"
           label="Total AUM"
           value={formatCompactCrSafe(latest.totalAum)}
           delta={`${formatDelta(aumMom)} MoM`}
@@ -857,6 +876,7 @@ export default async function MonthlyPage({
           note={demoIndustryNote}
         />
         <KpiCard
+          tone="demo"
           label={slugs ? "AUM Share" : "Active Equity AUM"}
           value={
             slugs
@@ -870,6 +890,7 @@ export default async function MonthlyPage({
           note={demoIndustryNote}
         />
         <KpiCard
+          tone="demo"
           label={
             slugs ? "Active Equity Share" : "SIP Contribution"
           }
@@ -883,6 +904,7 @@ export default async function MonthlyPage({
           note={demoIndustryNote}
         />
         <KpiCard
+          tone="demo"
           label={slugs ? "SIP Share" : "Investor Additions"}
           value={
             slugs
@@ -898,6 +920,7 @@ export default async function MonthlyPage({
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {slugs && (
           <KpiCard
+            tone="demo"
             label="Active Equity AUM"
             value={formatCompactCrSafe(latest.activeEquityAum)}
             delta={`${formatDelta(activeEquityYoy)} YoY`}
@@ -907,6 +930,7 @@ export default async function MonthlyPage({
         )}
         {slugs && (
           <KpiCard
+            tone="demo"
             label="SIP Contribution"
             value={formatCompactCrSafe(latest.sipContribution)}
             delta={`${formatDelta(sipYoy)} YoY`}
@@ -915,6 +939,7 @@ export default async function MonthlyPage({
           />
         )}
         <KpiCard
+          tone="demo"
           label="Folios"
           value={formatCroreCountSafe(latest.folios)}
           delta={`${formatDelta(foliosYoy)} YoY`}
@@ -922,6 +947,7 @@ export default async function MonthlyPage({
           note={demoIndustryNote}
         />
         <KpiCard
+          tone="demo"
           label="NFO Launches"
           value={formatIntSafe(latest.nfoCount)}
           delta={`${formatDelta(nfoMom)} MoM`}
@@ -930,6 +956,7 @@ export default async function MonthlyPage({
         />
         {!slugs && (
           <KpiCard
+            tone="demo"
             label="NFO AUM Collected"
             value={formatCompactCrSafe(latest.nfoAumCollected)}
             note={demoIndustryNote}
@@ -938,10 +965,15 @@ export default async function MonthlyPage({
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card title="AUM Trend" subtitle={`Total AUM · ${demoIndustryNote}`}>
+        <Card
+          tone="demo"
+          title="AUM Trend"
+          subtitle={`Total AUM · ${demoIndustryNote}`}
+        >
           <AreaTrend data={aumChartSeries} name="AUM" />
         </Card>
         <Card
+          tone="demo"
           title="AUM Market Share"
           subtitle={`${slugs ? "Within selected peers" : "Top 6 + Others"} · ${demoIndustryNote}`}
         >
@@ -956,6 +988,7 @@ export default async function MonthlyPage({
           />
         </Card>
         <Card
+          tone="demo"
           title="AUM Mix"
           subtitle="Latest month · category share"
           className="lg:col-span-2"
@@ -977,10 +1010,11 @@ export default async function MonthlyPage({
             </div>
           )}
         </Card>
-        <Card title="SIP Flows" subtitle="Monthly inflows">
+        <Card tone="demo" title="SIP Flows" subtitle="Monthly inflows">
           <BarSeries data={sipChartSeries} name="SIP" />
         </Card>
         <Card
+          tone="demo"
           title="SIP Market Share"
           subtitle={slugs ? "Within selected peers" : "Top 6 + Others"}
         >
@@ -994,7 +1028,11 @@ export default async function MonthlyPage({
             }))}
           />
         </Card>
-        <Card title="Investor Additions" subtitle="New folios per month">
+        <Card
+          tone="demo"
+          title="Investor Additions"
+          subtitle="New folios per month"
+        >
           <BarSeries
             data={investorsChartSeries}
             valueFormat="lakh"
@@ -1003,7 +1041,7 @@ export default async function MonthlyPage({
             name="New investors"
           />
         </Card>
-        <Card title="NFO Launches" subtitle="Count per month">
+        <Card tone="demo" title="NFO Launches" subtitle="Count per month">
           <BarSeries
             data={nfoChartSeries}
             valueFormat="count"
@@ -1013,6 +1051,7 @@ export default async function MonthlyPage({
           />
         </Card>
         <Card
+          tone="demo"
           title="Active Equity Market Share"
           subtitle={slugs ? "Within selected peers" : "Top 6 + Others"}
           className="lg:col-span-2"
@@ -1028,6 +1067,7 @@ export default async function MonthlyPage({
           />
         </Card>
         <Card
+          tone="demo"
           title="Scheme Outperformance"
           subtitle="AMC × month · % over benchmark, centered on 50"
           className="lg:col-span-2"
@@ -1035,6 +1075,7 @@ export default async function MonthlyPage({
           <Heatmap rows={heatmapRows} columns={heatmapColumns} />
         </Card>
         <Card
+          tone="demo"
           title="Top Quartile %"
           subtitle="Share of AMC funds ranked Q1 · latest month"
           className="lg:col-span-2"
