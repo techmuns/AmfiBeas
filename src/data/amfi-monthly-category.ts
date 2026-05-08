@@ -328,24 +328,27 @@ export function latestCategoryAaumShare(
   };
 }
 
-// ---- IIFL Active-Equity Heatmap -------------------------------------
+// ---- IIFL Active-Equity surfaces ------------------------------------
 //
 // Net inflow share of active-equity categories over a 12-month rolling
-// window. Replaces the old card-based IIFL Active-Equity Lens.
+// window — surfaced both as a dense heatmap and as a per-category
+// trend card grid. Both surfaces share the same 12-category set.
 //
 //   netInflowSharePct = categoryNetInflow / activeEquityNetInflow × 100
+//   qaaumSharePct     = categoryAaum      / activeEquityAaum      × 100
 //
-// Categories are listed in a curated IIFL-report-style order. Cells
-// are `null` when either numerator (the category's net flow that
-// month) or denominator (the active-equity envelope flow that month)
-// is missing — the table renders a blank/muted cell, never a fake
-// zero.
+// Cells / points are `null` when either numerator (the category's net
+// flow / AAUM that month) or denominator (the active-equity envelope
+// flow / AAUM that month) is missing — surfaces render a blank /
+// muted slot, never a fake zero.
+//
+// Equity Savings, Dividend Yield, and ELSS remain in the envelope's
+// denominator but are intentionally hidden from these display
+// surfaces (long-tail / out-of-scope for the IIFL lens).
 
-/** The 15 active-equity categories displayed in the heatmap, in
- *  exact order. Includes hybrid categories that are part of the
- *  active-equity envelope (Multi Asset, BAF/DAA, Balanced/Aggressive
- *  Hybrid, Equity Savings) plus the 11 Sub II Growth/Equity rows. */
-export const IIFL_HEATMAP_CATEGORIES: {
+/** The 12 IIFL active-equity envelope categories surfaced in the
+ *  trend cards and the heatmap, in canonical IIFL display order. */
+export const IIFL_ACTIVE_EQUITY_CATEGORIES: {
   slug: AmfiMonthlyCategorySlug;
   label: string;
 }[] = [
@@ -354,7 +357,7 @@ export const IIFL_HEATMAP_CATEGORIES: {
   { slug: "mid-cap", label: "Mid Cap Fund" },
   { slug: "small-cap", label: "Small Cap Fund" },
   { slug: "large-mid-cap", label: "Large & Mid Cap Fund" },
-  { slug: "sectoral-thematic", label: "Sectoral / Thematic Funds" },
+  { slug: "sectoral-thematic", label: "Sectoral/Thematic Funds" },
   { slug: "large-cap", label: "Large Cap Fund" },
   { slug: "multi-cap", label: "Multi Cap Fund" },
   {
@@ -363,16 +366,94 @@ export const IIFL_HEATMAP_CATEGORIES: {
   },
   {
     slug: "balanced-aggressive-hybrid",
-    label: "Balanced Hybrid / Aggressive Hybrid Fund",
+    label: "Balanced Hybrid Fund / Aggressive Hybrid Fund",
   },
   { slug: "focused", label: "Focused Fund" },
   { slug: "value-contra", label: "Value Fund / Contra Fund" },
-  { slug: "equity-savings", label: "Equity Savings Fund" },
-  { slug: "dividend-yield", label: "Dividend Yield Fund" },
-  { slug: "elss", label: "ELSS" },
 ];
 
-/** Build the 12-month × 15-category heatmap payload. The window
+/** Heatmap category list — kept as an alias of the canonical IIFL
+ *  set so the heatmap and card section never drift apart. */
+export const IIFL_HEATMAP_CATEGORIES = IIFL_ACTIVE_EQUITY_CATEGORIES;
+
+/** Featured 4 cards visible by default in the IIFL Active-Equity
+ *  Category Trends section, in display order. */
+export const IIFL_TREND_FEATURED_SLUGS: AmfiMonthlyCategorySlug[] = [
+  "flexi-cap",
+  "multi-asset",
+  "sectoral-thematic",
+  "large-cap",
+];
+
+/** The remaining 8 cards revealed by the "Show more" expand control,
+ *  in display order. */
+export const IIFL_TREND_EXPANDED_SLUGS: AmfiMonthlyCategorySlug[] = [
+  "mid-cap",
+  "small-cap",
+  "large-mid-cap",
+  "multi-cap",
+  "baf-daa",
+  "balanced-aggressive-hybrid",
+  "focused",
+  "value-contra",
+];
+
+/** Build the per-category trailing-12-month series for the IIFL
+ *  Active-Equity Category Trends card. Always anchored on the latest
+ *  available month (independent of `?month=`), oldest → newest, so
+ *  the card window matches the heatmap window exactly. Returns
+ *  `aumSharePct` / `flowSharePct` per month with `null` whenever the
+ *  numerator or denominator is missing — never zero-padded. */
+export function iiflActiveEquityTrendCard(slug: AmfiMonthlyCategorySlug): {
+  series: {
+    month: string;
+    aumSharePct: number | null;
+    flowSharePct: number | null;
+  }[];
+  hasData: boolean;
+} {
+  const monthly = amfiMonthlyRows();
+  const windowMonths = monthly.map((r) => r.month).slice(-12);
+
+  const denomByMonth = new Map<
+    string,
+    { aaum?: number; flow?: number }
+  >();
+  for (const r of monthly) {
+    denomByMonth.set(r.month, {
+      aaum: r.activeEquityAaum,
+      flow: r.activeEquityNetInflow,
+    });
+  }
+
+  const series = windowMonths.map((m) => {
+    const cat = amfiMonthlyCategorySnapshot.rows.find(
+      (r) => r.month === m && r.categorySlug === slug
+    );
+    const den = denomByMonth.get(m);
+    const aumSharePct =
+      typeof cat?.categoryAaum === "number" &&
+      typeof den?.aaum === "number" &&
+      den.aaum > 0
+        ? (cat.categoryAaum / den.aaum) * 100
+        : null;
+    const flowSharePct =
+      typeof cat?.categoryNetInflow === "number" &&
+      typeof den?.flow === "number" &&
+      den.flow !== 0
+        ? (cat.categoryNetInflow / den.flow) * 100
+        : null;
+    return { month: m, aumSharePct, flowSharePct };
+  });
+
+  const hasData = series.some(
+    (r) => r.aumSharePct !== null || r.flowSharePct !== null
+  );
+
+  return { series, hasData };
+}
+
+/** Build the 12-month × 12-category heatmap payload. The window
  *  always ENDS at the latest available month and includes the 11
  *  prior months chronologically — independent of any `?month=`
  *  selection on /monthly. When fewer than 12 months are available,
