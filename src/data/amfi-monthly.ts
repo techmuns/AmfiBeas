@@ -225,3 +225,57 @@ export function monthlyFlowsData(
     liquid: typeof r.liquidNetInflow === "number" ? r.liquidNetInflow : null,
   }));
 }
+
+/**
+ * Active equity share of total AUM, IIFL Figure 21-style. Returned
+ * as a chronological `{ label, value }` series suitable for the
+ * existing BarSeries chart with valueFormat="pct".
+ *
+ *   activeEquitySharePct = activeEquityAum / totalAum × 100
+ *
+ * IMPORTANT: divides by totalAum (closing balance), NOT totalAaum
+ * (period average), because activeEquityAum itself is a closing-
+ * balance figure derived from AMFI Monthly Report Sub Total rows.
+ *
+ * Months where either field is missing are OMITTED — never zero-
+ * filled. The resulting series may have an uneven x-axis if some
+ * months have data and others don't.
+ */
+export function monthlyActiveEquityShareTrend(
+  lastN = 24
+): { label: string; value: number }[] {
+  const rows = amfiMonthlyRows().slice(-lastN);
+  return rows.flatMap((r) => {
+    if (typeof r.activeEquityAum !== "number" || typeof r.totalAum !== "number") {
+      return [];
+    }
+    if (r.totalAum <= 0) return [];
+    return [{ label: r.month, value: (r.activeEquityAum / r.totalAum) * 100 }];
+  });
+}
+
+/**
+ * IIFL Figure 19-style equity breakdown trend. Each row is
+ * `{ month, activeEquity, etfIndex, arbitrage }` for the latest
+ * `lastN` months (chronological). Each numeric is either the field
+ * value (₹ Cr) or `null` when missing. Used by GroupedBars (or a
+ * stacked component if added later) to show how the equity stack
+ * evolves over time.
+ */
+export function monthlyEquityBreakdown(
+  lastN = 24
+): {
+  month: string;
+  activeEquity: number | null;
+  etfIndex: number | null;
+  arbitrage: number | null;
+}[] {
+  const rows = amfiMonthlyRows().slice(-lastN);
+  return rows.map((r) => ({
+    month: r.month,
+    activeEquity:
+      typeof r.activeEquityAum === "number" ? r.activeEquityAum : null,
+    etfIndex: typeof r.etfIndexAum === "number" ? r.etfIndexAum : null,
+    arbitrage: typeof r.arbitrageAum === "number" ? r.arbitrageAum : null,
+  }));
+}

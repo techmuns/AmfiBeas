@@ -29,6 +29,8 @@ import {
   getKpiProvenance,
   getKpiValue,
   latestProvenanceFor,
+  monthlyActiveEquityShareTrend,
+  monthlyEquityBreakdown,
   monthlyFlowsData,
   monthlyTrend,
   resolveSelectedRow,
@@ -405,6 +407,29 @@ export default async function MonthlyPage({
     latestProvenanceFor("debtNetInflow")
   );
 
+  // ---- Active Equity & Equity Mix (IIFL Figure 19 / 21) section -----
+  //
+  // Three charts driven by the IIFL-derived equity breakdown fields
+  // (activeEquityAum, etfIndexAum, arbitrageAum) extracted from the
+  // AMFI Monthly Report. All cells are real per-month values; missing
+  // months are omitted from each per-field series — never zero-filled.
+  const activeEquityTrend = monthlyTrend("activeEquityAum", 24);
+  const activeEquityShareTrend = monthlyActiveEquityShareTrend(24);
+  const equityBreakdown = monthlyEquityBreakdown(24);
+  const equityBreakdownHasData = equityBreakdown.some(
+    (r) => r.activeEquity !== null || r.etfIndex !== null || r.arbitrage !== null
+  );
+  const hasAnyEquityMix =
+    activeEquityTrend.length > 0 ||
+    activeEquityShareTrend.length > 0 ||
+    equityBreakdownHasData;
+  const activeEquityHover = formatKpiProvenanceTooltip(
+    latestProvenanceFor("activeEquityAum")
+  );
+  const etfIndexHover = formatKpiProvenanceTooltip(
+    latestProvenanceFor("etfIndexAum")
+  );
+
   return (
     <div className="space-y-6">
       <PageHeader title="Monthly Operating" subtitle={subtitle} />
@@ -625,6 +650,108 @@ export default async function MonthlyPage({
             <div
               className="mt-2 text-[10px] tabular text-muted-foreground/80"
               title={monthlyFlowsHover ?? undefined}
+            >
+              Source: AMFI Monthly Report
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {hasAnyEquityMix && (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight">
+              Active Equity &amp; Equity Mix
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Live from uploaded AMFI Monthly Reports
+            </p>
+          </div>
+
+          <section className="grid gap-4 lg:grid-cols-2">
+            <Card
+              title="Active Equity AUM Trend"
+              subtitle={`${activeEquityTrend.length} month${activeEquityTrend.length === 1 ? "" : "s"} · ₹ Cr · IIFL Figure 21-style`}
+            >
+              {activeEquityTrend.length > 0 ? (
+                <BarSeries
+                  data={activeEquityTrend}
+                  name="Active Equity AUM"
+                  color="hsl(var(--chart-1))"
+                  valueFormat="cr"
+                  axisFormat="cr"
+                  labelFormat="month"
+                />
+              ) : (
+                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                  Active Equity AUM unavailable
+                </div>
+              )}
+              <div
+                className="mt-3 text-[10px] tabular text-muted-foreground/80"
+                title={activeEquityHover ?? undefined}
+              >
+                Source: AMFI Monthly Report
+              </div>
+            </Card>
+
+            <Card
+              title="Active Equity Share of Total AUM"
+              subtitle={`${activeEquityShareTrend.length} month${activeEquityShareTrend.length === 1 ? "" : "s"} · % of month-end Total AUM`}
+            >
+              {activeEquityShareTrend.length > 0 ? (
+                <BarSeries
+                  data={activeEquityShareTrend}
+                  name="Active Equity Share"
+                  color="hsl(var(--chart-3))"
+                  valueFormat="pct"
+                  axisFormat="pct"
+                  labelFormat="month"
+                />
+              ) : (
+                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                  Active Equity Share unavailable
+                </div>
+              )}
+              <div
+                className="mt-3 text-[10px] tabular text-muted-foreground/80"
+                title={activeEquityHover ?? undefined}
+              >
+                Source: AMFI Monthly Report
+              </div>
+            </Card>
+          </section>
+
+          <Card
+            title="Equity Breakdown Trend"
+            subtitle={`${equityBreakdown.length} month${equityBreakdown.length === 1 ? "" : "s"} · ₹ Cr · grouped bars`}
+          >
+            {equityBreakdownHasData ? (
+              <GroupedBars
+                data={equityBreakdown}
+                xKey="month"
+                labelFormat="month"
+                valueFormat="cr"
+                axisFormat="cr"
+                bars={[
+                  { key: "activeEquity", name: "Active Equity", color: "hsl(var(--chart-1))" },
+                  { key: "etfIndex", name: "ETF & Index", color: "hsl(var(--chart-5))" },
+                  { key: "arbitrage", name: "Arbitrage", color: "hsl(var(--chart-2))" },
+                ]}
+              />
+            ) : (
+              <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                Equity breakdown unavailable
+              </div>
+            )}
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              Active Equity = Growth/Equity schemes + Hybrid ex-Arbitrage +
+              Solution-oriented schemes. ETF &amp; Index = Index Funds + Other
+              ETFs. Arbitrage shown separately.
+            </p>
+            <div
+              className="mt-2 text-[10px] tabular text-muted-foreground/80"
+              title={etfIndexHover ?? undefined}
             >
               Source: AMFI Monthly Report
             </div>
