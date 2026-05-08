@@ -8,6 +8,7 @@ import { StackedArea } from "@/components/charts/StackedArea";
 import { Donut, type DonutSlice } from "@/components/charts/Donut";
 import { Heatmap, type HeatmapRow } from "@/components/charts/Heatmap";
 import { IiflHeatmap } from "@/components/charts/IiflHeatmap";
+import { MultiLine } from "@/components/charts/MultiLine";
 import {
   industryByMonth,
   latestMonth,
@@ -35,7 +36,11 @@ import {
   type AmfiMonthlyKpiField,
 } from "@/data/amfi-monthly";
 import {
+  IIFL_ACTIVE_EQUITY_CATEGORIES,
+  IIFL_TREND_EXPANDED_SLUGS,
+  IIFL_TREND_FEATURED_SLUGS,
   iiflActiveEquityHeatmapData,
+  iiflActiveEquityTrendCard,
   latestCategoryProvenance,
 } from "@/data/amfi-monthly-category";
 import { GroupedBars } from "@/components/charts/GroupedBars";
@@ -439,9 +444,37 @@ export default async function MonthlyPage({
     nfoCountTrend.length > 0 ||
     nfoFundsTrend.length > 0;
 
+  // ---- IIFL Active-Equity Category Trends (cards) -------------------
+  //
+  // Per-category 12-month line cards above the heatmap. Two series
+  // per card:
+  //   QAAUM share %    = categoryAaum      / activeEquityAaum      × 100
+  //   Net inflow share = categoryNetInflow / activeEquityNetInflow × 100
+  // Both denominators come from the IIFL active-equity envelope
+  // (NOT major-category, NOT industry totals). Window is the same
+  // trailing 12 months as the heatmap — anchored on latest, never
+  // on `?month=`. Featured 4 cards render inline; the remaining 8
+  // sit behind a "Show more" details element.
+  const iiflTrendCards = IIFL_ACTIVE_EQUITY_CATEGORIES.map((c) => {
+    const { series, hasData } = iiflActiveEquityTrendCard(c.slug);
+    const aumHover = formatKpiProvenanceTooltip(
+      latestCategoryProvenance(c.slug, "categoryAaum")
+    );
+    return { ...c, series, hasData, aumHover };
+  });
+  const iiflTrendBySlug = new Map(iiflTrendCards.map((c) => [c.slug, c]));
+  const featuredTrendCards = IIFL_TREND_FEATURED_SLUGS.map(
+    (s) => iiflTrendBySlug.get(s)!
+  );
+  const expandedTrendCards = IIFL_TREND_EXPANDED_SLUGS.map(
+    (s) => iiflTrendBySlug.get(s)!
+  );
+  const iiflTrendHasAny = iiflTrendCards.some((c) => c.hasData);
+  const iiflTrendHasExpanded = expandedTrendCards.some((c) => c.hasData);
+
   // ---- Category Flow Share (IIFL Figure 31-34) section ---------------
   //
-  // 12-month × 15-category heatmap of net-inflow share within the
+  // 12-month × 12-category heatmap of net-inflow share within the
   // IIFL active-equity envelope:
   //   netInflowSharePct = categoryNetInflow / activeEquityNetInflow × 100
   // Always anchored on the latest available month — independent of
@@ -804,6 +837,129 @@ export default async function MonthlyPage({
               Source: AMFI Monthly Report
             </div>
           </Card>
+        </div>
+      )}
+
+      {iiflTrendHasAny && (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight">
+              IIFL Active-Equity Category Trends
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              QAAUM share vs net inflow share · active-equity envelope
+            </p>
+          </div>
+
+          <section className="grid gap-4 lg:grid-cols-2">
+            {featuredTrendCards.map((c) => (
+              <Card
+                key={c.slug}
+                title={c.label}
+                subtitle={`${c.series.length} month${c.series.length === 1 ? "" : "s"} · % of active-equity envelope`}
+              >
+                {c.hasData ? (
+                  <MultiLine
+                    data={c.series}
+                    xKey="month"
+                    labelFormat="month"
+                    valueFormat="pct"
+                    axisFormat="pct"
+                    lines={[
+                      {
+                        key: "aumSharePct",
+                        name: "QAAUM share",
+                        color: "hsl(var(--chart-1))",
+                      },
+                      {
+                        key: "flowSharePct",
+                        name: "Net inflow share",
+                        color: "hsl(var(--chart-3))",
+                      },
+                    ]}
+                  />
+                ) : (
+                  <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                    Category data unavailable
+                  </div>
+                )}
+                <div
+                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
+                  title={c.aumHover ?? undefined}
+                >
+                  Source: AMFI Monthly Report
+                </div>
+              </Card>
+            ))}
+          </section>
+
+          {iiflTrendHasExpanded && (
+            <details className="group rounded-md border border-dashed border-border bg-muted/20">
+              <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium tracking-tight marker:hidden">
+                <span className="inline-flex items-center gap-2">
+                  <span className="text-foreground">
+                    Show more active-equity categories
+                  </span>
+                  <span className="rounded-full border border-border bg-background px-1.5 py-0 text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {expandedTrendCards.length} more
+                  </span>
+                  <span className="text-muted-foreground transition-transform group-open:rotate-90">
+                    ›
+                  </span>
+                </span>
+              </summary>
+              <div className="border-t border-border/60 p-4">
+                <section className="grid gap-4 lg:grid-cols-2">
+                  {expandedTrendCards.map((c) => (
+                    <Card
+                      key={c.slug}
+                      title={c.label}
+                      subtitle={`${c.series.length} month${c.series.length === 1 ? "" : "s"} · % of active-equity envelope`}
+                    >
+                      {c.hasData ? (
+                        <MultiLine
+                          data={c.series}
+                          xKey="month"
+                          labelFormat="month"
+                          valueFormat="pct"
+                          axisFormat="pct"
+                          lines={[
+                            {
+                              key: "aumSharePct",
+                              name: "QAAUM share",
+                              color: "hsl(var(--chart-1))",
+                            },
+                            {
+                              key: "flowSharePct",
+                              name: "Net inflow share",
+                              color: "hsl(var(--chart-3))",
+                            },
+                          ]}
+                        />
+                      ) : (
+                        <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                          Category data unavailable
+                        </div>
+                      )}
+                      <div
+                        className="mt-3 text-[10px] tabular text-muted-foreground/80"
+                        title={c.aumHover ?? undefined}
+                      >
+                        Source: AMFI Monthly Report
+                      </div>
+                    </Card>
+                  ))}
+                </section>
+              </div>
+            </details>
+          )}
+
+          <p className="text-[11px] text-muted-foreground">
+            QAAUM share uses active-equity AAUM. Net inflow share uses
+            active-equity net inflow. Active equity includes equity-
+            oriented schemes, hybrid schemes excluding arbitrage, and
+            solution-oriented schemes.
+          </p>
         </div>
       )}
 
