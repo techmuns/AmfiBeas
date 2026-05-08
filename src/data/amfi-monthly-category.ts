@@ -327,3 +327,99 @@ export function latestCategoryAaumShare(
     share: (monthRow.categoryAaum / denom) * 100,
   };
 }
+
+// ---- IIFL Active-Equity Heatmap -------------------------------------
+//
+// Net inflow share of active-equity categories over a 12-month rolling
+// window. Replaces the old card-based IIFL Active-Equity Lens.
+//
+//   netInflowSharePct = categoryNetInflow / activeEquityNetInflow × 100
+//
+// Categories are listed in a curated IIFL-report-style order. Cells
+// are `null` when either numerator (the category's net flow that
+// month) or denominator (the active-equity envelope flow that month)
+// is missing — the table renders a blank/muted cell, never a fake
+// zero.
+
+/** The 15 active-equity categories displayed in the heatmap, in
+ *  exact order. Includes hybrid categories that are part of the
+ *  active-equity envelope (Multi Asset, BAF/DAA, Balanced/Aggressive
+ *  Hybrid, Equity Savings) plus the 11 Sub II Growth/Equity rows. */
+export const IIFL_HEATMAP_CATEGORIES: {
+  slug: AmfiMonthlyCategorySlug;
+  label: string;
+}[] = [
+  { slug: "multi-asset", label: "Multi Asset Allocation Fund" },
+  { slug: "flexi-cap", label: "Flexi Cap Fund" },
+  { slug: "mid-cap", label: "Mid Cap Fund" },
+  { slug: "small-cap", label: "Small Cap Fund" },
+  { slug: "large-mid-cap", label: "Large & Mid Cap Fund" },
+  { slug: "sectoral-thematic", label: "Sectoral / Thematic Funds" },
+  { slug: "large-cap", label: "Large Cap Fund" },
+  { slug: "multi-cap", label: "Multi Cap Fund" },
+  {
+    slug: "baf-daa",
+    label: "Dynamic Asset Allocation / Balanced Advantage Fund",
+  },
+  {
+    slug: "balanced-aggressive-hybrid",
+    label: "Balanced Hybrid / Aggressive Hybrid Fund",
+  },
+  { slug: "focused", label: "Focused Fund" },
+  { slug: "value-contra", label: "Value Fund / Contra Fund" },
+  { slug: "equity-savings", label: "Equity Savings Fund" },
+  { slug: "dividend-yield", label: "Dividend Yield Fund" },
+  { slug: "elss", label: "ELSS" },
+];
+
+/** Build the 12-month × 15-category heatmap payload. The window ENDS
+ *  at `selectedMonth` (or the latest available month when missing /
+ *  unavailable) and includes the 11 prior months chronologically.
+ *  Returns the months it actually used so the page can title the
+ *  axis correctly. */
+export function iiflActiveEquityHeatmapData(selectedMonth?: string): {
+  months: string[];
+  rows: { slug: AmfiMonthlyCategorySlug; label: string; values: (number | null)[] }[];
+} {
+  const monthly = amfiMonthlyRows();
+  const allMonths = monthly.map((r) => r.month);
+  if (allMonths.length === 0) return { months: [], rows: [] };
+
+  // Resolve the end month — selected if available, else latest.
+  let endIdx = allMonths.length - 1;
+  if (selectedMonth) {
+    const i = allMonths.indexOf(selectedMonth);
+    if (i >= 0) endIdx = i;
+  }
+  const startIdx = Math.max(0, endIdx - 11);
+  const windowMonths = allMonths.slice(startIdx, endIdx + 1);
+
+  // Per-month active-equity net-flow denominator lookup.
+  const denomByMonth = new Map<string, number>();
+  for (const r of monthly) {
+    if (typeof r.activeEquityNetInflow === "number") {
+      denomByMonth.set(r.month, r.activeEquityNetInflow);
+    }
+  }
+
+  const rows = IIFL_HEATMAP_CATEGORIES.map((c) => {
+    const values: (number | null)[] = windowMonths.map((m) => {
+      const denom = denomByMonth.get(m);
+      const cat = amfiMonthlyCategorySnapshot.rows.find(
+        (r) => r.month === m && r.categorySlug === c.slug
+      );
+      const num = cat?.categoryNetInflow;
+      if (
+        typeof num !== "number" ||
+        typeof denom !== "number" ||
+        denom === 0
+      ) {
+        return null;
+      }
+      return (num / denom) * 100;
+    });
+    return { slug: c.slug, label: c.label, values };
+  });
+
+  return { months: windowMonths, rows };
+}
