@@ -252,6 +252,14 @@ interface MonthlyReportHits {
   equityAum?: FieldHit;
   debtAum?: FieldHit;
   liquidAum?: FieldHit;
+  // Category-level net flows. Sub Total - I (Income/Debt) → debtNetInflow,
+  // Sub Total - II (Growth/Equity) → equityNetInflow, Liquid Fund row →
+  // liquidNetInflow. liquidNetInflow is a SUB-component of debtNetInflow
+  // (Liquid Fund is a row inside the Income/Debt section), exposed
+  // separately so the dashboard can plot it as its own series.
+  equityNetInflow?: FieldHit;
+  debtNetInflow?: FieldHit;
+  liquidNetInflow?: FieldHit;
 }
 
 /**
@@ -363,10 +371,14 @@ function parseMonthlyReport(pages: PdfPage[]): {
               };
               pagesUsed.add(page.num);
             }
-            // Grand Total carries totalAaum and netInflow too.
+            // Each Sub Total / Grand Total row also carries a net-flow
+            // column for the SAME category. Capture it alongside the
+            // AUM so callers can render category-level monthly flow
+            // charts (Figure 22 in the IIFL deck). Net flows can be
+            // positive OR negative, so the only guard is "not null".
+            const netInflow = dataCols[COL_NET_INFLOW];
             if (spec.key === "totalAum") {
               const aaum = dataCols[COL_AAUM];
-              const netInflow = dataCols[COL_NET_INFLOW];
               if (aaum !== null && aaum > 0 && !hits.totalAaum) {
                 hits.totalAaum = {
                   value: aaum,
@@ -379,6 +391,22 @@ function parseMonthlyReport(pages: PdfPage[]): {
                   value: netInflow,
                   page: page.num,
                   label: "Grand Total row · Net Inflow / Outflow column",
+                };
+              }
+            } else if (spec.key === "debtAum") {
+              if (netInflow !== null && !hits.debtNetInflow) {
+                hits.debtNetInflow = {
+                  value: netInflow,
+                  page: page.num,
+                  label: "Sub Total - I row · Net Inflow / Outflow column",
+                };
+              }
+            } else if (spec.key === "equityAum") {
+              if (netInflow !== null && !hits.equityNetInflow) {
+                hits.equityNetInflow = {
+                  value: netInflow,
+                  page: page.num,
+                  label: "Sub Total - II row · Net Inflow / Outflow column",
                 };
               }
             }
@@ -402,6 +430,20 @@ function parseMonthlyReport(pages: PdfPage[]): {
                 label: spec.label,
               };
               pagesUsed.add(page.num);
+            }
+            // The Liquid Fund inline row also carries a net-flow
+            // column. Capture as liquidNetInflow (signed; can be
+            // negative on outflow months). This is itself a sub-
+            // component of debtNetInflow — see schema docstring.
+            if (spec.key === "liquidAum") {
+              const netInflow = cols[COL_NET_INFLOW];
+              if (netInflow !== null && !hits.liquidNetInflow) {
+                hits.liquidNetInflow = {
+                  value: netInflow,
+                  page: page.num,
+                  label: "Liquid Fund row · Net Inflow / Outflow column",
+                };
+              }
             }
           }
         }
@@ -892,6 +934,9 @@ const NUMERIC_FIELDS: (keyof AmfiMonthlyPdfRow)[] = [
   "sipAum",
   "sipAccounts",
   "netInflow",
+  "equityNetInflow",
+  "debtNetInflow",
+  "liquidNetInflow",
 ];
 
 /**

@@ -220,6 +220,13 @@ export interface AmfiMonthlyPdfFieldSources {
   sipAum?: AmfiMonthlyPdfFieldProvenance;
   sipAccounts?: AmfiMonthlyPdfFieldProvenance;
   netInflow?: AmfiMonthlyPdfFieldProvenance;
+  /** Category-level net flows for the month (₹ Cr). Sourced from the
+   *  AMFI Monthly Report. Sub Total - I (Income/Debt Oriented) feeds
+   *  debtNetInflow; Sub Total - II (Growth/Equity Oriented) feeds
+   *  equityNetInflow; the Liquid Fund row feeds liquidNetInflow. */
+  equityNetInflow?: AmfiMonthlyPdfFieldProvenance;
+  debtNetInflow?: AmfiMonthlyPdfFieldProvenance;
+  liquidNetInflow?: AmfiMonthlyPdfFieldProvenance;
 }
 
 /**
@@ -254,7 +261,20 @@ export interface AmfiMonthlyPdfRow {
   sipContribution?: number;            // ₹ Cr (monthly inflow, press release only)
   sipAum?: number;                     // ₹ Cr (press release only)
   sipAccounts?: number;                // count of live SIP accounts (press release only)
-  netInflow?: number;                  // ₹ Cr (industry net inflow / outflow)
+  netInflow?: number;                  // ₹ Cr (industry net inflow / outflow — Grand Total row)
+  /** Net inflow for Growth/Equity Oriented Schemes (₹ Cr).
+   *  From Sub Total - II row of the AMFI Monthly Report. */
+  equityNetInflow?: number;
+  /** Net inflow for Income/Debt Oriented Schemes (₹ Cr).
+   *  From Sub Total - I row of the AMFI Monthly Report. NOTE: this
+   *  value INCLUDES Liquid Fund's net flow (Liquid is a sub-row of
+   *  Sub Total - I); see liquidNetInflow for the standalone Liquid
+   *  Fund flow. */
+  debtNetInflow?: number;
+  /** Net inflow for the Liquid Fund category (₹ Cr).
+   *  From the inline Liquid Fund row of the AMFI Monthly Report.
+   *  Already counted within debtNetInflow. */
+  liquidNetInflow?: number;
   /** Per-field provenance. Always present (may be empty {}). The
    *  dashboard should prefer this over the row-level fields below
    *  when surfacing which PDF a specific KPI came from. */

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-05-07T20:40:14.052Z",
+    "generatedAt": "2026-05-08T03:32:51.269Z",
     "source": "manual-data/amfi-monthly/pdfs/",
     "notes": "Industry-level monthly KPIs extracted from manually-uploaded AMFI PDFs. Auto-detects Monthly Report vs press release per file. Optional fields are OMITTED when not detected — never zeroed. Rows merged by month; prior values preserved when the latest PDF doesn't carry them. processedPdfs=46 / 46, totalRows=24."
   },
@@ -12,7 +12,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:12.348Z",
+      "extractedAt": "2026-05-08T03:32:49.516Z",
       "fieldSources": {
         "liquidAum": {
           "sourcePdf": "amapr2024repo.pdf",
@@ -20,8 +20,17 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.348Z",
+          "extractedAt": "2026-05-08T03:32:49.516Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amapr2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:49.516Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         },
         "debtAum": {
           "sourcePdf": "amapr2024repo.pdf",
@@ -29,8 +38,17 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.348Z",
+          "extractedAt": "2026-05-08T03:32:49.516Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amapr2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:49.516Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
         },
         "equityAum": {
           "sourcePdf": "amapr2024repo.pdf",
@@ -38,8 +56,17 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.348Z",
+          "extractedAt": "2026-05-08T03:32:49.516Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amapr2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:49.516Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
         },
         "totalAum": {
           "sourcePdf": "amapr2024repo.pdf",
@@ -47,7 +74,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.348Z",
+          "extractedAt": "2026-05-08T03:32:49.516Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "totalAaum": {
@@ -56,7 +83,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.348Z",
+          "extractedAt": "2026-05-08T03:32:49.516Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -65,13 +92,16 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.348Z",
+          "extractedAt": "2026-05-08T03:32:49.516Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
         }
       },
       "liquidAum": 469040.53,
+      "liquidNetInflow": 102751.5,
       "debtAum": 1458788.03,
+      "debtNetInflow": 189890.52,
       "equityAum": 2474323.47,
+      "equityNetInflow": 18917.09,
       "totalAum": 5725897.98,
       "totalAaum": 5701358.87,
       "netInflow": 239232.86
@@ -83,7 +113,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:13.460Z",
+      "extractedAt": "2026-05-08T03:32:50.687Z",
       "fieldSources": {
         "liquidAum": {
           "sourcePdf": "ammay2024repo.pdf",
@@ -91,8 +121,17 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.460Z",
+          "extractedAt": "2026-05-08T03:32:50.687Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "ammay2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.687Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         },
         "debtAum": {
           "sourcePdf": "ammay2024repo.pdf",
@@ -100,8 +139,17 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.460Z",
+          "extractedAt": "2026-05-08T03:32:50.687Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "ammay2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.687Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
         },
         "equityAum": {
           "sourcePdf": "ammay2024repo.pdf",
@@ -109,8 +157,17 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.460Z",
+          "extractedAt": "2026-05-08T03:32:50.687Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "ammay2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.687Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
         },
         "totalAum": {
           "sourcePdf": "ammay2024repo.pdf",
@@ -118,7 +175,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.460Z",
+          "extractedAt": "2026-05-08T03:32:50.687Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "totalAaum": {
@@ -127,7 +184,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.460Z",
+          "extractedAt": "2026-05-08T03:32:50.687Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -136,13 +193,16 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.460Z",
+          "extractedAt": "2026-05-08T03:32:50.687Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
         }
       },
       "liquidAum": 497847.25,
+      "liquidNetInflow": 25873.38,
       "debtAum": 1511987.63,
+      "debtNetInflow": 42294.99,
       "equityAum": 2539777.74,
+      "equityNetInflow": 34697,
       "totalAum": 5891160.48,
       "totalAaum": 5859951.39,
       "netInflow": 110516.97
@@ -154,7 +214,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:13.237Z",
+      "extractedAt": "2026-05-08T03:32:50.478Z",
       "fieldSources": {
         "sipAccounts": {
           "sourcePdf": "AMFIMonthlyNote_June2024.pdf",
@@ -162,7 +222,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:09.700Z",
+          "extractedAt": "2026-05-08T03:32:46.449Z",
           "sourceLabel": "Prose · SIP accounts in crore"
         },
         "sipContribution": {
@@ -171,7 +231,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:09.700Z",
+          "extractedAt": "2026-05-08T03:32:46.449Z",
           "sourceLabel": "Prose · SIP flows / contribution mention"
         },
         "equityAum": {
@@ -180,7 +240,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.237Z",
+          "extractedAt": "2026-05-08T03:32:50.478Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -189,7 +249,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.237Z",
+          "extractedAt": "2026-05-08T03:32:50.478Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -198,7 +258,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.237Z",
+          "extractedAt": "2026-05-08T03:32:50.478Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipAum": {
@@ -207,7 +267,7 @@
           "sourcePages": [
             13
           ],
-          "extractedAt": "2026-05-07T20:40:09.700Z",
+          "extractedAt": "2026-05-08T03:32:46.449Z",
           "sourceLabel": "Prose · SIP assets in Rs lakh crore"
         },
         "totalAum": {
@@ -216,7 +276,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.237Z",
+          "extractedAt": "2026-05-08T03:32:50.478Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "totalAaum": {
@@ -225,7 +285,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.237Z",
+          "extractedAt": "2026-05-08T03:32:50.478Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -234,8 +294,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.237Z",
+          "extractedAt": "2026-05-08T03:32:50.478Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amjun2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.478Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amjun2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.478Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amjun2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.478Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "sipAccounts": 89900000,
@@ -244,6 +331,9 @@
       "debtAum": 1413232.02,
       "liquidAum": 420256.2,
       "sipAum": 1243000,
+      "liquidNetInflow": -80354.03,
+      "debtNetInflow": -107357.62,
+      "equityNetInflow": 40608.19,
       "totalAum": 6115581.92,
       "totalAaum": 6133226.77,
       "netInflow": -43636.55
@@ -255,7 +345,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:13.081Z",
+      "extractedAt": "2026-05-08T03:32:50.333Z",
       "fieldSources": {
         "sipAccounts": {
           "sourcePdf": "AMFIMonthlyNote_July2024.pdf",
@@ -263,7 +353,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:09.315Z",
+          "extractedAt": "2026-05-08T03:32:45.931Z",
           "sourceLabel": "Prose · SIP accounts in crore"
         },
         "sipContribution": {
@@ -272,7 +362,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:09.315Z",
+          "extractedAt": "2026-05-08T03:32:45.931Z",
           "sourceLabel": "Prose · SIP flows / contribution mention"
         },
         "equityAum": {
@@ -281,7 +371,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.081Z",
+          "extractedAt": "2026-05-08T03:32:50.333Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -290,7 +380,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.081Z",
+          "extractedAt": "2026-05-08T03:32:50.333Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -299,7 +389,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.081Z",
+          "extractedAt": "2026-05-08T03:32:50.333Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipAum": {
@@ -308,7 +398,7 @@
           "sourcePages": [
             13
           ],
-          "extractedAt": "2026-05-07T20:40:09.315Z",
+          "extractedAt": "2026-05-08T03:32:45.931Z",
           "sourceLabel": "Prose · SIP assets in Rs lakh crore"
         },
         "totalAum": {
@@ -317,7 +407,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.081Z",
+          "extractedAt": "2026-05-08T03:32:50.333Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "totalAaum": {
@@ -326,7 +416,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.081Z",
+          "extractedAt": "2026-05-08T03:32:50.333Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -335,8 +425,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.081Z",
+          "extractedAt": "2026-05-08T03:32:50.333Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amjul2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.333Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amjul2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.333Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amjul2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.333Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "sipAccounts": 93400000,
@@ -345,6 +462,9 @@
       "debtAum": 1544181.2,
       "liquidAum": 493493.47,
       "sipAum": 1309000,
+      "liquidNetInflow": 70060.88,
+      "debtNetInflow": 119587.6,
+      "equityNetInflow": 37113.39,
       "totalAum": 6496653.14,
       "totalAaum": 6470664.34,
       "netInflow": 189043.7
@@ -356,7 +476,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:12.484Z",
+      "extractedAt": "2026-05-08T03:32:49.662Z",
       "fieldSources": {
         "sipAccounts": {
           "sourcePdf": "AMFIMonthlyNote_August2024.pdf",
@@ -364,7 +484,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:08.377Z",
+          "extractedAt": "2026-05-08T03:32:44.627Z",
           "sourceLabel": "Prose · SIP accounts in crore"
         },
         "sipContribution": {
@@ -373,7 +493,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:08.377Z",
+          "extractedAt": "2026-05-08T03:32:44.627Z",
           "sourceLabel": "Prose · SIP flows / contribution mention"
         },
         "equityAum": {
@@ -382,7 +502,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.484Z",
+          "extractedAt": "2026-05-08T03:32:49.662Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -391,7 +511,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.484Z",
+          "extractedAt": "2026-05-08T03:32:49.662Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -400,7 +520,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.484Z",
+          "extractedAt": "2026-05-08T03:32:49.662Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipAum": {
@@ -409,7 +529,7 @@
           "sourcePages": [
             13
           ],
-          "extractedAt": "2026-05-07T20:40:08.377Z",
+          "extractedAt": "2026-05-08T03:32:44.627Z",
           "sourceLabel": "SIP trend table · SIP assets (Rs in lakh crore) row (older format)"
         },
         "totalAum": {
@@ -418,7 +538,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.484Z",
+          "extractedAt": "2026-05-08T03:32:49.662Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "totalAaum": {
@@ -427,7 +547,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.484Z",
+          "extractedAt": "2026-05-08T03:32:49.662Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -436,8 +556,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.484Z",
+          "extractedAt": "2026-05-08T03:32:49.662Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amaug2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:49.662Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amaug2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:49.662Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amaug2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:49.662Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "sipAccounts": 96100000,
@@ -446,6 +593,9 @@
       "debtAum": 1599650.51,
       "liquidAum": 510165.37,
       "sipAum": 1339000,
+      "liquidNetInflow": 13594.87,
+      "debtNetInflow": 45169.36,
+      "equityNetInflow": 38239.16,
       "totalAum": 6670305.14,
       "totalAaum": 6604057.21,
       "netInflow": 108123.4
@@ -457,7 +607,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:13.900Z",
+      "extractedAt": "2026-05-08T03:32:51.113Z",
       "fieldSources": {
         "sipAccounts": {
           "sourcePdf": "AMFIMonthlyNote_September2024.pdf",
@@ -465,7 +615,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:10.861Z",
+          "extractedAt": "2026-05-08T03:32:47.758Z",
           "sourceLabel": "Prose · SIP accounts in crore"
         },
         "sipContribution": {
@@ -474,7 +624,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:10.861Z",
+          "extractedAt": "2026-05-08T03:32:47.758Z",
           "sourceLabel": "Prose · SIP flows / contribution mention"
         },
         "equityAum": {
@@ -483,7 +633,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.900Z",
+          "extractedAt": "2026-05-08T03:32:51.113Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -492,7 +642,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.900Z",
+          "extractedAt": "2026-05-08T03:32:51.113Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -501,7 +651,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.900Z",
+          "extractedAt": "2026-05-08T03:32:51.113Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipAum": {
@@ -510,7 +660,7 @@
           "sourcePages": [
             13
           ],
-          "extractedAt": "2026-05-07T20:40:10.861Z",
+          "extractedAt": "2026-05-08T03:32:47.758Z",
           "sourceLabel": "SIP trend table · SIP assets (Rs in lakh crore) row (older format)"
         },
         "totalAum": {
@@ -519,7 +669,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.900Z",
+          "extractedAt": "2026-05-08T03:32:51.113Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "totalAaum": {
@@ -528,7 +678,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.900Z",
+          "extractedAt": "2026-05-08T03:32:51.113Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -537,8 +687,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.900Z",
+          "extractedAt": "2026-05-08T03:32:51.113Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amsep2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:51.113Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amsep2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:51.113Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amsep2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:51.113Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "sipAccounts": 98700000,
@@ -547,6 +724,9 @@
       "debtAum": 1497187.33,
       "liquidAum": 440332.54,
       "sipAum": 1382000,
+      "liquidNetInflow": -72665.97,
+      "debtNetInflow": -113833.95,
+      "equityNetInflow": 34419.26,
       "totalAum": 6709259.24,
       "totalAaum": 6800485.75,
       "netInflow": -71114.08
@@ -558,7 +738,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:13.751Z",
+      "extractedAt": "2026-05-08T03:32:50.966Z",
       "fieldSources": {
         "sipAccounts": {
           "sourcePdf": "AMFIMonthlyNote_October2024.pdf",
@@ -566,7 +746,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:10.688Z",
+          "extractedAt": "2026-05-08T03:32:47.582Z",
           "sourceLabel": "Prose · SIP accounts in crore"
         },
         "sipContribution": {
@@ -575,7 +755,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:10.688Z",
+          "extractedAt": "2026-05-08T03:32:47.582Z",
           "sourceLabel": "Prose · SIP flows / contribution mention"
         },
         "equityAum": {
@@ -584,7 +764,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.751Z",
+          "extractedAt": "2026-05-08T03:32:50.966Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -593,7 +773,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.751Z",
+          "extractedAt": "2026-05-08T03:32:50.966Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -602,7 +782,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.751Z",
+          "extractedAt": "2026-05-08T03:32:50.966Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipAum": {
@@ -611,7 +791,7 @@
           "sourcePages": [
             13
           ],
-          "extractedAt": "2026-05-07T20:40:10.688Z",
+          "extractedAt": "2026-05-08T03:32:47.582Z",
           "sourceLabel": "SIP trend table · SIP assets (Rs in lakh crore) row (older format)"
         },
         "totalAum": {
@@ -620,7 +800,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.751Z",
+          "extractedAt": "2026-05-08T03:32:50.966Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "totalAaum": {
@@ -629,7 +809,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.751Z",
+          "extractedAt": "2026-05-08T03:32:50.966Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -638,8 +818,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.751Z",
+          "extractedAt": "2026-05-08T03:32:50.966Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amoct2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.966Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amoct2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.966Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amoct2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.966Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "sipAccounts": 101200000,
@@ -648,6 +855,9 @@
       "debtAum": 1663695.74,
       "liquidAum": 527290.58,
       "sipAum": 1330000,
+      "liquidNetInflow": 83863.34,
+      "debtNetInflow": 157402.3,
+      "equityNetInflow": 41886.69,
       "totalAum": 6725614.61,
       "totalAaum": 6850321.44,
       "netInflow": 239828.69
@@ -659,7 +869,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:13.613Z",
+      "extractedAt": "2026-05-08T03:32:50.831Z",
       "fieldSources": {
         "sipAccounts": {
           "sourcePdf": "AMFIMonthlyNote_November2024.pdf",
@@ -667,7 +877,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:10.515Z",
+          "extractedAt": "2026-05-08T03:32:47.347Z",
           "sourceLabel": "Prose · SIP accounts in crore"
         },
         "totalAum": {
@@ -676,7 +886,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.613Z",
+          "extractedAt": "2026-05-08T03:32:50.831Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "equityAum": {
@@ -685,7 +895,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.613Z",
+          "extractedAt": "2026-05-08T03:32:50.831Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -694,7 +904,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.613Z",
+          "extractedAt": "2026-05-08T03:32:50.831Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -703,7 +913,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.613Z",
+          "extractedAt": "2026-05-08T03:32:50.831Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipContribution": {
@@ -712,7 +922,7 @@
           "sourcePages": [
             13
           ],
-          "extractedAt": "2026-05-07T20:40:10.515Z",
+          "extractedAt": "2026-05-08T03:32:47.347Z",
           "sourceLabel": "SIP trend table · SIP monthly contribution row"
         },
         "sipAum": {
@@ -721,7 +931,7 @@
           "sourcePages": [
             13
           ],
-          "extractedAt": "2026-05-07T20:40:10.515Z",
+          "extractedAt": "2026-05-08T03:32:47.347Z",
           "sourceLabel": "SIP trend table · SIP assets (Rs in lakh crore) row (older format)"
         },
         "totalAaum": {
@@ -730,7 +940,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.613Z",
+          "extractedAt": "2026-05-08T03:32:50.831Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -739,8 +949,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.613Z",
+          "extractedAt": "2026-05-08T03:32:50.831Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amnov2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.831Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amnov2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.831Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amnov2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.831Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "sipAccounts": 102200000,
@@ -750,6 +987,9 @@
       "liquidAum": 528550.68,
       "sipContribution": 25320,
       "sipAum": 1354000,
+      "liquidNetInflow": -1778.98,
+      "debtNetInflow": 12915.9,
+      "equityNetInflow": 35943.49,
       "totalAaum": 6804913.46,
       "netInflow": 60295.3
     },
@@ -760,7 +1000,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:12.626Z",
+      "extractedAt": "2026-05-08T03:32:49.805Z",
       "fieldSources": {
         "sipContribution": {
           "sourcePdf": "AMFIMonthlyNote_December2024.pdf",
@@ -768,7 +1008,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:08.766Z",
+          "extractedAt": "2026-05-08T03:32:45.122Z",
           "sourceLabel": "Prose · SIP flows / contribution mention"
         },
         "totalAum": {
@@ -777,7 +1017,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.626Z",
+          "extractedAt": "2026-05-08T03:32:49.805Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "equityAum": {
@@ -786,7 +1026,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.626Z",
+          "extractedAt": "2026-05-08T03:32:49.805Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -795,7 +1035,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.626Z",
+          "extractedAt": "2026-05-08T03:32:49.805Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -804,7 +1044,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.626Z",
+          "extractedAt": "2026-05-08T03:32:49.805Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipAum": {
@@ -813,7 +1053,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:08.766Z",
+          "extractedAt": "2026-05-08T03:32:45.122Z",
           "sourceLabel": "SIP trend table · SIP assets (Rs in lakh crore) row (older format)"
         },
         "totalAaum": {
@@ -822,7 +1062,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.626Z",
+          "extractedAt": "2026-05-08T03:32:49.805Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -831,8 +1071,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.626Z",
+          "extractedAt": "2026-05-08T03:32:49.805Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amdec2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:49.805Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amdec2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:49.805Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amdec2024repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:49.805Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "sipContribution": 26459,
@@ -841,6 +1108,9 @@
       "debtAum": 1567477.28,
       "liquidAum": 464671.53,
       "sipAum": 1363000,
+      "liquidNetInflow": -66532.12,
+      "debtNetInflow": -127152.63,
+      "equityNetInflow": 41155.91,
       "totalAaum": 6932959.05,
       "netInflow": -80354.57
     },
@@ -851,7 +1121,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:12.937Z",
+      "extractedAt": "2026-05-08T03:32:50.156Z",
       "fieldSources": {
         "sipContribution": {
           "sourcePdf": "AMFIMonthlyNote_January2025.pdf",
@@ -859,7 +1129,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:09.129Z",
+          "extractedAt": "2026-05-08T03:32:45.643Z",
           "sourceLabel": "Prose · SIP flows / contribution mention"
         },
         "totalAum": {
@@ -868,7 +1138,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.937Z",
+          "extractedAt": "2026-05-08T03:32:50.156Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "equityAum": {
@@ -877,7 +1147,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.937Z",
+          "extractedAt": "2026-05-08T03:32:50.156Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -886,7 +1156,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.937Z",
+          "extractedAt": "2026-05-08T03:32:50.156Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -895,7 +1165,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.937Z",
+          "extractedAt": "2026-05-08T03:32:50.156Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipAum": {
@@ -904,7 +1174,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:09.129Z",
+          "extractedAt": "2026-05-08T03:32:45.643Z",
           "sourceLabel": "SIP trend table · SIP assets (Rs in lakh crore) row (older format)"
         },
         "totalAaum": {
@@ -913,7 +1183,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.937Z",
+          "extractedAt": "2026-05-08T03:32:50.156Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -922,8 +1192,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.937Z",
+          "extractedAt": "2026-05-08T03:32:50.156Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amjan2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.156Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amjan2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.156Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amjan2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.156Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "sipContribution": 26400,
@@ -932,6 +1229,9 @@
       "debtAum": 1706315.14,
       "liquidAum": 559392.7,
       "sipAum": 1320000,
+      "liquidNetInflow": 91592.92,
+      "debtNetInflow": 128652.58,
+      "equityNetInflow": 39687.78,
       "totalAaum": 6804760.67,
       "netInflow": 187550.96
     },
@@ -942,7 +1242,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:12.781Z",
+      "extractedAt": "2026-05-08T03:32:50.011Z",
       "fieldSources": {
         "sipAccounts": {
           "sourcePdf": "AMFIMonthlyNote_February2025.pdf",
@@ -950,7 +1250,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:08.950Z",
+          "extractedAt": "2026-05-08T03:32:45.349Z",
           "sourceLabel": "Prose · SIP accounts in crore"
         },
         "totalAum": {
@@ -959,7 +1259,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.781Z",
+          "extractedAt": "2026-05-08T03:32:50.011Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "equityAum": {
@@ -968,7 +1268,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.781Z",
+          "extractedAt": "2026-05-08T03:32:50.011Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -977,7 +1277,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.781Z",
+          "extractedAt": "2026-05-08T03:32:50.011Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -986,7 +1286,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.781Z",
+          "extractedAt": "2026-05-08T03:32:50.011Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipContribution": {
@@ -995,7 +1295,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:08.950Z",
+          "extractedAt": "2026-05-08T03:32:45.349Z",
           "sourceLabel": "SIP trend table · SIP monthly contributions row (older format)"
         },
         "sipAum": {
@@ -1004,7 +1304,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:08.950Z",
+          "extractedAt": "2026-05-08T03:32:45.349Z",
           "sourceLabel": "SIP trend table · SIP assets (Rs in lakh crore) row (older format)"
         },
         "totalAaum": {
@@ -1013,7 +1313,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.781Z",
+          "extractedAt": "2026-05-08T03:32:50.011Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -1022,8 +1322,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.781Z",
+          "extractedAt": "2026-05-08T03:32:50.011Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amfeb2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.011Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amfeb2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.011Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amfeb2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.011Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "sipAccounts": 82600000,
@@ -1033,6 +1360,9 @@
       "liquidAum": 567506.1,
       "sipContribution": 25999,
       "sipAum": 1238000,
+      "liquidNetInflow": 4976.97,
+      "debtNetInflow": -6525.56,
+      "equityNetInflow": 29303.34,
       "totalAaum": 6758305.35,
       "netInflow": 40063.36
     },
@@ -1043,7 +1373,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:13.391Z",
+      "extractedAt": "2026-05-08T03:32:50.623Z",
       "fieldSources": {
         "sipAccounts": {
           "sourcePdf": "AMFIMonthlyNote_March2025.pdf",
@@ -1051,7 +1381,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:10.146Z",
+          "extractedAt": "2026-05-08T03:32:46.936Z",
           "sourceLabel": "Prose · SIP accounts in crore"
         },
         "totalAum": {
@@ -1060,7 +1390,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.391Z",
+          "extractedAt": "2026-05-08T03:32:50.623Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "equityAum": {
@@ -1069,7 +1399,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.391Z",
+          "extractedAt": "2026-05-08T03:32:50.623Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -1078,7 +1408,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.391Z",
+          "extractedAt": "2026-05-08T03:32:50.623Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -1087,7 +1417,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.391Z",
+          "extractedAt": "2026-05-08T03:32:50.623Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipContribution": {
@@ -1096,7 +1426,7 @@
           "sourcePages": [
             15
           ],
-          "extractedAt": "2026-05-07T20:40:10.146Z",
+          "extractedAt": "2026-05-08T03:32:46.936Z",
           "sourceLabel": "SIP trend table · SIP monthly contributions row (older format)"
         },
         "sipAum": {
@@ -1105,7 +1435,7 @@
           "sourcePages": [
             15
           ],
-          "extractedAt": "2026-05-07T20:40:10.146Z",
+          "extractedAt": "2026-05-08T03:32:46.936Z",
           "sourceLabel": "SIP trend table · SIP assets (Rs in lakh crore) row (older format)"
         },
         "totalAaum": {
@@ -1114,7 +1444,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.391Z",
+          "extractedAt": "2026-05-08T03:32:50.623Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -1123,8 +1453,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.391Z",
+          "extractedAt": "2026-05-08T03:32:50.623Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "ammar2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.623Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "ammar2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.623Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "ammar2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.623Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "sipAccounts": 81100000,
@@ -1134,6 +1491,9 @@
       "liquidAum": 437773.94,
       "sipContribution": 25926,
       "sipAum": 1335000,
+      "liquidNetInflow": -133034.04,
+      "debtNetInflow": -202663.04,
+      "equityNetInflow": 25082.01,
       "totalAaum": 6670186.27,
       "netInflow": -164434.7
     },
@@ -1144,7 +1504,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:12.418Z",
+      "extractedAt": "2026-05-08T03:32:49.592Z",
       "fieldSources": {
         "sipContribution": {
           "sourcePdf": "AMFIMonthlyNote_April2025.pdf",
@@ -1152,7 +1512,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:08.158Z",
+          "extractedAt": "2026-05-08T03:32:44.404Z",
           "sourceLabel": "SIP trend table · SIP monthly contribution row"
         },
         "sipAccounts": {
@@ -1161,7 +1521,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:08.158Z",
+          "extractedAt": "2026-05-08T03:32:44.404Z",
           "sourceLabel": "Prose · SIP accounts in crore"
         },
         "totalAum": {
@@ -1170,7 +1530,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.418Z",
+          "extractedAt": "2026-05-08T03:32:49.592Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "equityAum": {
@@ -1179,7 +1539,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.418Z",
+          "extractedAt": "2026-05-08T03:32:49.592Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -1188,7 +1548,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.418Z",
+          "extractedAt": "2026-05-08T03:32:49.592Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -1197,7 +1557,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.418Z",
+          "extractedAt": "2026-05-08T03:32:49.592Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipAum": {
@@ -1206,7 +1566,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:08.158Z",
+          "extractedAt": "2026-05-08T03:32:44.404Z",
           "sourceLabel": "SIP trend table · SIP assets (Rs in lakh crore) row (older format)"
         },
         "totalAaum": {
@@ -1215,7 +1575,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.418Z",
+          "extractedAt": "2026-05-08T03:32:49.592Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -1224,8 +1584,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.418Z",
+          "extractedAt": "2026-05-08T03:32:49.592Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amapr2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:49.592Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amapr2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:49.592Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amapr2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:49.592Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "sipContribution": 26632,
@@ -1235,6 +1622,9 @@
       "debtAum": 1757215.73,
       "liquidAum": 559824.18,
       "sipAum": 1390000,
+      "liquidNetInflow": 118656.44,
+      "debtNetInflow": 219136.27,
+      "equityNetInflow": 24269.26,
       "totalAaum": 6949894.29,
       "netInflow": 276827.19
     },
@@ -1245,7 +1635,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:13.536Z",
+      "extractedAt": "2026-05-08T03:32:50.757Z",
       "fieldSources": {
         "sipContribution": {
           "sourcePdf": "AMFIMonthlyNote_May2025.pdf",
@@ -1253,7 +1643,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:10.339Z",
+          "extractedAt": "2026-05-08T03:32:47.153Z",
           "sourceLabel": "SIP trend table · SIP monthly contribution row"
         },
         "sipAccounts": {
@@ -1262,7 +1652,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:10.339Z",
+          "extractedAt": "2026-05-08T03:32:47.153Z",
           "sourceLabel": "Prose · SIP accounts in crore"
         },
         "totalAum": {
@@ -1271,7 +1661,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.536Z",
+          "extractedAt": "2026-05-08T03:32:50.757Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "equityAum": {
@@ -1280,7 +1670,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.536Z",
+          "extractedAt": "2026-05-08T03:32:50.757Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -1289,7 +1679,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.536Z",
+          "extractedAt": "2026-05-08T03:32:50.757Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -1298,7 +1688,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.536Z",
+          "extractedAt": "2026-05-08T03:32:50.757Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipAum": {
@@ -1307,7 +1697,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:10.339Z",
+          "extractedAt": "2026-05-08T03:32:47.153Z",
           "sourceLabel": "SIP trend table · SIP assets (Rs lakh crore) row"
         },
         "totalAaum": {
@@ -1316,7 +1706,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.536Z",
+          "extractedAt": "2026-05-08T03:32:50.757Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -1325,8 +1715,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.536Z",
+          "extractedAt": "2026-05-08T03:32:50.757Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "ammay2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.757Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "ammay2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.757Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "ammay2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.757Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "sipContribution": 26688,
@@ -1336,6 +1753,9 @@
       "debtAum": 1754345.7,
       "liquidAum": 522714.52,
       "sipAum": 1461000,
+      "liquidNetInflow": -40205.36,
+      "debtNetInflow": -15908.48,
+      "equityNetInflow": 19013.12,
       "totalAaum": 7218274.12,
       "netInflow": 29108.33
     },
@@ -1346,7 +1766,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:13.310Z",
+      "extractedAt": "2026-05-08T03:32:50.548Z",
       "fieldSources": {
         "sipAccounts": {
           "sourcePdf": "AMFIMonthlyNote_June2025.pdf",
@@ -1354,7 +1774,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:09.945Z",
+          "extractedAt": "2026-05-08T03:32:46.708Z",
           "sourceLabel": "Prose · SIP accounts in crore"
         },
         "sipContribution": {
@@ -1363,7 +1783,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:09.945Z",
+          "extractedAt": "2026-05-08T03:32:46.708Z",
           "sourceLabel": "Prose · SIP flows / contribution mention"
         },
         "totalAum": {
@@ -1372,7 +1792,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.310Z",
+          "extractedAt": "2026-05-08T03:32:50.548Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "equityAum": {
@@ -1381,7 +1801,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.310Z",
+          "extractedAt": "2026-05-08T03:32:50.548Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -1390,7 +1810,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.310Z",
+          "extractedAt": "2026-05-08T03:32:50.548Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -1399,7 +1819,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.310Z",
+          "extractedAt": "2026-05-08T03:32:50.548Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipAum": {
@@ -1408,7 +1828,7 @@
           "sourcePages": [
             15
           ],
-          "extractedAt": "2026-05-07T20:40:09.945Z",
+          "extractedAt": "2026-05-08T03:32:46.708Z",
           "sourceLabel": "SIP trend table · SIP assets (Rs lakh crore) row"
         },
         "totalAaum": {
@@ -1417,7 +1837,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.310Z",
+          "extractedAt": "2026-05-08T03:32:50.548Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -1426,8 +1846,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.310Z",
+          "extractedAt": "2026-05-08T03:32:50.548Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amjun2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.548Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amjun2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.548Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amjun2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.548Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "sipAccounts": 86400000,
@@ -1437,6 +1884,9 @@
       "debtAum": 1758110.18,
       "liquidAum": 499856.82,
       "sipAum": 1531000,
+      "liquidNetInflow": -25196.09,
+      "debtNetInflow": -1711.47,
+      "equityNetInflow": 23587.05,
       "totalAaum": 7479155.51,
       "netInflow": 49094.61
     },
@@ -1447,7 +1897,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:13.161Z",
+      "extractedAt": "2026-05-08T03:32:50.410Z",
       "fieldSources": {
         "totalAum": {
           "sourcePdf": "amjul2025repo.pdf",
@@ -1455,7 +1905,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.161Z",
+          "extractedAt": "2026-05-08T03:32:50.410Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "equityAum": {
@@ -1464,7 +1914,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.161Z",
+          "extractedAt": "2026-05-08T03:32:50.410Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -1473,7 +1923,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.161Z",
+          "extractedAt": "2026-05-08T03:32:50.410Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -1482,7 +1932,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.161Z",
+          "extractedAt": "2026-05-08T03:32:50.410Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipContribution": {
@@ -1491,7 +1941,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:09.520Z",
+          "extractedAt": "2026-05-08T03:32:46.222Z",
           "sourceLabel": "SIP trend table · SIP monthly contribution row"
         },
         "sipAum": {
@@ -1500,7 +1950,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:09.520Z",
+          "extractedAt": "2026-05-08T03:32:46.222Z",
           "sourceLabel": "SIP trend table · SIP assets (Rs lakh crore) row"
         },
         "sipAccounts": {
@@ -1509,7 +1959,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:09.520Z",
+          "extractedAt": "2026-05-08T03:32:46.222Z",
           "sourceLabel": "SIP trend table · SIP accounts row (older format)"
         },
         "totalAaum": {
@@ -1518,7 +1968,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.161Z",
+          "extractedAt": "2026-05-08T03:32:50.410Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -1527,8 +1977,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.161Z",
+          "extractedAt": "2026-05-08T03:32:50.410Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amjul2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.410Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amjul2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.410Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amjul2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.410Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "totalAum": 7535970.68,
@@ -1538,6 +2015,9 @@
       "sipContribution": 28464,
       "sipAum": 1519000,
       "sipAccounts": 91100000,
+      "liquidNetInflow": 39354.93,
+      "debtNetInflow": 106801.23,
+      "equityNetInflow": 42702.35,
       "totalAaum": 7700420.46,
       "netInflow": 178794.31
     },
@@ -1548,7 +2028,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:12.549Z",
+      "extractedAt": "2026-05-08T03:32:49.731Z",
       "fieldSources": {
         "totalAum": {
           "sourcePdf": "amaug2025repo.pdf",
@@ -1556,7 +2036,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.549Z",
+          "extractedAt": "2026-05-08T03:32:49.731Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "equityAum": {
@@ -1565,7 +2045,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.549Z",
+          "extractedAt": "2026-05-08T03:32:49.731Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -1574,7 +2054,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.549Z",
+          "extractedAt": "2026-05-08T03:32:49.731Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -1583,7 +2063,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.549Z",
+          "extractedAt": "2026-05-08T03:32:49.731Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipContribution": {
@@ -1592,7 +2072,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:08.582Z",
+          "extractedAt": "2026-05-08T03:32:44.854Z",
           "sourceLabel": "SIP trend table · SIP monthly contribution row"
         },
         "sipAum": {
@@ -1601,7 +2081,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:08.582Z",
+          "extractedAt": "2026-05-08T03:32:44.854Z",
           "sourceLabel": "SIP trend table · SIP assets (Rs lakh crore) row"
         },
         "sipAccounts": {
@@ -1610,7 +2090,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:08.582Z",
+          "extractedAt": "2026-05-08T03:32:44.854Z",
           "sourceLabel": "SIP trend table · SIP accounts row (older format)"
         },
         "totalAaum": {
@@ -1619,7 +2099,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.549Z",
+          "extractedAt": "2026-05-08T03:32:49.731Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -1628,8 +2108,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.549Z",
+          "extractedAt": "2026-05-08T03:32:49.731Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amaug2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:49.731Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amaug2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:49.731Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amaug2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:49.731Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "totalAum": 7518702.5,
@@ -1639,6 +2146,9 @@
       "sipContribution": 28265,
       "sipAum": 1518000,
       "sipAccounts": 89900000,
+      "liquidNetInflow": -13350.06,
+      "debtNetInflow": -7979.84,
+      "equityNetInflow": 33430.37,
       "totalAaum": 7671481.9,
       "netInflow": 52442.78
     },
@@ -1649,7 +2159,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:13.972Z",
+      "extractedAt": "2026-05-08T03:32:51.184Z",
       "fieldSources": {
         "sipContribution": {
           "sourcePdf": "AMFI_Monthly_Note_September2025_414d6bb2c3.pdf",
@@ -1657,7 +2167,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:12.286Z",
+          "extractedAt": "2026-05-08T03:32:49.450Z",
           "sourceLabel": "SIP trend table · SIP monthly contribution row"
         },
         "sipAum": {
@@ -1666,7 +2176,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:12.286Z",
+          "extractedAt": "2026-05-08T03:32:49.450Z",
           "sourceLabel": "Prose · SIP assets in Rs lakh crore"
         },
         "totalAum": {
@@ -1675,7 +2185,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.972Z",
+          "extractedAt": "2026-05-08T03:32:51.184Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "equityAum": {
@@ -1684,7 +2194,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.972Z",
+          "extractedAt": "2026-05-08T03:32:51.184Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -1693,7 +2203,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.972Z",
+          "extractedAt": "2026-05-08T03:32:51.184Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -1702,7 +2212,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.972Z",
+          "extractedAt": "2026-05-08T03:32:51.184Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipAccounts": {
@@ -1711,7 +2221,7 @@
           "sourcePages": [
             15
           ],
-          "extractedAt": "2026-05-07T20:40:12.286Z",
+          "extractedAt": "2026-05-08T03:32:49.450Z",
           "sourceLabel": "SIP trend table · SIP accounts row (older format)"
         },
         "totalAaum": {
@@ -1720,7 +2230,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.972Z",
+          "extractedAt": "2026-05-08T03:32:51.184Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -1729,8 +2239,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.972Z",
+          "extractedAt": "2026-05-08T03:32:51.184Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amsep2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:51.184Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amsep2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:51.184Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amsep2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:51.184Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "sipContribution": 29361,
@@ -1740,6 +2277,9 @@
       "debtAum": 1779828.1,
       "liquidAum": 467363.81,
       "sipAccounts": 92500000,
+      "liquidNetInflow": -66042.32,
+      "debtNetInflow": -101977.26,
+      "equityNetInflow": 30421.69,
       "totalAaum": 7777801.7,
       "netInflow": -43146.32
     },
@@ -1750,7 +2290,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:13.823Z",
+      "extractedAt": "2026-05-08T03:32:51.039Z",
       "fieldSources": {
         "sipContribution": {
           "sourcePdf": "AMFI_Monthly_Note_Oct_2025_Final_8b27c12107.pdf",
@@ -1758,7 +2298,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:12.098Z",
+          "extractedAt": "2026-05-08T03:32:49.238Z",
           "sourceLabel": "SIP trend table · SIP monthly contribution row"
         },
         "sipAum": {
@@ -1767,7 +2307,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:12.098Z",
+          "extractedAt": "2026-05-08T03:32:49.238Z",
           "sourceLabel": "Prose · SIP assets in Rs lakh crore"
         },
         "totalAum": {
@@ -1776,7 +2316,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.823Z",
+          "extractedAt": "2026-05-08T03:32:51.039Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "equityAum": {
@@ -1785,7 +2325,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.823Z",
+          "extractedAt": "2026-05-08T03:32:51.039Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -1794,7 +2334,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.823Z",
+          "extractedAt": "2026-05-08T03:32:51.039Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -1803,7 +2343,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.823Z",
+          "extractedAt": "2026-05-08T03:32:51.039Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipAccounts": {
@@ -1812,7 +2352,7 @@
           "sourcePages": [
             15
           ],
-          "extractedAt": "2026-05-07T20:40:12.098Z",
+          "extractedAt": "2026-05-08T03:32:49.238Z",
           "sourceLabel": "SIP trend table · SIP accounts row (older format)"
         },
         "totalAaum": {
@@ -1821,7 +2361,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.823Z",
+          "extractedAt": "2026-05-08T03:32:51.039Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -1830,8 +2370,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.823Z",
+          "extractedAt": "2026-05-08T03:32:51.039Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amoct2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:51.039Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amoct2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:51.039Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amoct2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:51.039Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "sipContribution": 29529,
@@ -1841,6 +2408,9 @@
       "debtAum": 1951436.18,
       "liquidAum": 559686.58,
       "sipAccounts": 94500000,
+      "liquidNetInflow": 89375.12,
+      "debtNetInflow": 159957.96,
+      "equityNetInflow": 24690.33,
       "totalAaum": 7979397.53,
       "netInflow": 215656.68
     },
@@ -1851,7 +2421,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:13.683Z",
+      "extractedAt": "2026-05-08T03:32:50.900Z",
       "fieldSources": {
         "sipAum": {
           "sourcePdf": "AMFI_Monthly_Note_November_2025_5ace781e32.pdf",
@@ -1859,7 +2429,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:11.901Z",
+          "extractedAt": "2026-05-08T03:32:49.032Z",
           "sourceLabel": "Prose · SIP assets in Rs lakh crore"
         },
         "totalAum": {
@@ -1868,7 +2438,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.683Z",
+          "extractedAt": "2026-05-08T03:32:50.900Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "equityAum": {
@@ -1877,7 +2447,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.683Z",
+          "extractedAt": "2026-05-08T03:32:50.900Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -1886,7 +2456,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.683Z",
+          "extractedAt": "2026-05-08T03:32:50.900Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -1895,7 +2465,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.683Z",
+          "extractedAt": "2026-05-08T03:32:50.900Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipContribution": {
@@ -1904,7 +2474,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:11.901Z",
+          "extractedAt": "2026-05-08T03:32:49.032Z",
           "sourceLabel": "SIP trend table · SIP monthly contribution row"
         },
         "sipAccounts": {
@@ -1913,7 +2483,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:11.901Z",
+          "extractedAt": "2026-05-08T03:32:49.032Z",
           "sourceLabel": "SIP trend table · SIP accounts row (older format)"
         },
         "totalAaum": {
@@ -1922,7 +2492,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.683Z",
+          "extractedAt": "2026-05-08T03:32:50.900Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -1931,8 +2501,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.683Z",
+          "extractedAt": "2026-05-08T03:32:50.900Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amnov2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.900Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amnov2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.900Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amnov2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.900Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "sipAum": 1653000,
@@ -1942,6 +2539,9 @@
       "liquidAum": 548393.27,
       "sipContribution": 29445,
       "sipAccounts": 94300000,
+      "liquidNetInflow": -14050.72,
+      "debtNetInflow": -25692.63,
+      "equityNetInflow": 29911.05,
       "totalAaum": 8131763.67,
       "netInflow": 32755.36
     },
@@ -1952,7 +2552,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:12.700Z",
+      "extractedAt": "2026-05-08T03:32:49.872Z",
       "fieldSources": {
         "sipAum": {
           "sourcePdf": "AMFI_Monthly_Note_Dec_2025_4fce34b885.pdf",
@@ -1960,7 +2560,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:11.056Z",
+          "extractedAt": "2026-05-08T03:32:48.020Z",
           "sourceLabel": "Prose · SIP assets in Rs lakh crore"
         },
         "totalAum": {
@@ -1969,7 +2569,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.700Z",
+          "extractedAt": "2026-05-08T03:32:49.872Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "equityAum": {
@@ -1978,7 +2578,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.700Z",
+          "extractedAt": "2026-05-08T03:32:49.872Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -1987,7 +2587,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.700Z",
+          "extractedAt": "2026-05-08T03:32:49.872Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -1996,7 +2596,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.700Z",
+          "extractedAt": "2026-05-08T03:32:49.872Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipContribution": {
@@ -2005,7 +2605,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:11.056Z",
+          "extractedAt": "2026-05-08T03:32:48.020Z",
           "sourceLabel": "SIP trend table · SIP monthly contribution row"
         },
         "sipAccounts": {
@@ -2014,7 +2614,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:11.056Z",
+          "extractedAt": "2026-05-08T03:32:48.020Z",
           "sourceLabel": "SIP trend table · SIP accounts row (older format)"
         },
         "totalAaum": {
@@ -2023,7 +2623,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.700Z",
+          "extractedAt": "2026-05-08T03:32:49.872Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -2032,8 +2632,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.700Z",
+          "extractedAt": "2026-05-08T03:32:49.872Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amdec2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:49.872Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amdec2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:49.872Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amdec2025repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:49.872Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "sipAum": 1663000,
@@ -2043,6 +2670,9 @@
       "liquidAum": 503143.33,
       "sipContribution": 31002,
       "sipAccounts": 97900000,
+      "liquidNetInflow": -47307.95,
+      "debtNetInflow": -132410.37,
+      "equityNetInflow": 28054.06,
       "totalAaum": 8199191.21,
       "netInflow": -66590.7
     },
@@ -2053,7 +2683,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:13.011Z",
+      "extractedAt": "2026-05-08T03:32:50.266Z",
       "fieldSources": {
         "totalAum": {
           "sourcePdf": "amjan2026repo.pdf",
@@ -2061,7 +2691,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.011Z",
+          "extractedAt": "2026-05-08T03:32:50.266Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "equityAum": {
@@ -2070,7 +2700,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.011Z",
+          "extractedAt": "2026-05-08T03:32:50.266Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -2079,7 +2709,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.011Z",
+          "extractedAt": "2026-05-08T03:32:50.266Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -2088,7 +2718,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.011Z",
+          "extractedAt": "2026-05-08T03:32:50.266Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipAccounts": {
@@ -2097,7 +2727,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:11.481Z",
+          "extractedAt": "2026-05-08T03:32:48.569Z",
           "sourceLabel": "SIP trend table · Number of contributing SIP accounts row"
         },
         "sipContribution": {
@@ -2106,7 +2736,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:11.481Z",
+          "extractedAt": "2026-05-08T03:32:48.569Z",
           "sourceLabel": "SIP trend table · SIP monthly contribution row"
         },
         "sipAum": {
@@ -2115,7 +2745,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:11.481Z",
+          "extractedAt": "2026-05-08T03:32:48.569Z",
           "sourceLabel": "SIP trend table · SIP assets (Rs lakh crore) row"
         },
         "totalAaum": {
@@ -2124,7 +2754,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.011Z",
+          "extractedAt": "2026-05-08T03:32:50.266Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -2133,8 +2763,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:13.011Z",
+          "extractedAt": "2026-05-08T03:32:50.266Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amjan2026repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.266Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amjan2026repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.266Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amjan2026repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.266Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "totalAum": 8101305.58,
@@ -2144,6 +2801,9 @@
       "sipAccounts": 99200000,
       "sipContribution": 31002,
       "sipAum": 1636000,
+      "liquidNetInflow": 30681.55,
+      "debtNetInflow": 74827.13,
+      "equityNetInflow": 24028.59,
       "totalAaum": 8201174.62,
       "netInflow": 156458.63
     },
@@ -2154,7 +2814,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:12.860Z",
+      "extractedAt": "2026-05-08T03:32:50.086Z",
       "fieldSources": {
         "totalAum": {
           "sourcePdf": "amfeb2026repo.pdf",
@@ -2162,7 +2822,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.860Z",
+          "extractedAt": "2026-05-08T03:32:50.086Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "equityAum": {
@@ -2171,7 +2831,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.860Z",
+          "extractedAt": "2026-05-08T03:32:50.086Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -2180,7 +2840,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.860Z",
+          "extractedAt": "2026-05-08T03:32:50.086Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -2189,7 +2849,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.860Z",
+          "extractedAt": "2026-05-08T03:32:50.086Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipContribution": {
@@ -2198,7 +2858,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:11.268Z",
+          "extractedAt": "2026-05-08T03:32:48.301Z",
           "sourceLabel": "SIP trend table · SIP monthly contribution row"
         },
         "sipAum": {
@@ -2207,7 +2867,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:11.268Z",
+          "extractedAt": "2026-05-08T03:32:48.301Z",
           "sourceLabel": "SIP trend table · SIP assets (Rs lakh crore) row"
         },
         "sipAccounts": {
@@ -2216,7 +2876,7 @@
           "sourcePages": [
             14
           ],
-          "extractedAt": "2026-05-07T20:40:11.268Z",
+          "extractedAt": "2026-05-08T03:32:48.301Z",
           "sourceLabel": "SIP trend table · SIP accounts row (older format)"
         },
         "totalAaum": {
@@ -2225,7 +2885,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.860Z",
+          "extractedAt": "2026-05-08T03:32:50.086Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -2234,8 +2894,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:12.860Z",
+          "extractedAt": "2026-05-08T03:32:50.086Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "amfeb2026repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.086Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "amfeb2026repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.086Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "amfeb2026repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:50.086Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "totalAum": 8202956.35,
@@ -2245,6 +2932,9 @@
       "sipContribution": 29845,
       "sipAum": 1664000,
       "sipAccounts": 94400000,
+      "liquidNetInflow": 59077.39,
+      "debtNetInflow": 42106.31,
+      "equityNetInflow": 25977.91,
       "totalAaum": 8342616.57,
       "netInflow": 94530
     },
@@ -2255,7 +2945,7 @@
       "sourcePages": [
         1
       ],
-      "extractedAt": "2026-05-07T20:40:14.041Z",
+      "extractedAt": "2026-05-08T03:32:51.259Z",
       "fieldSources": {
         "sipAum": {
           "sourcePdf": "AMFI_Monthly_Note_Mar_2026_1f0a1f5c48.pdf",
@@ -2263,7 +2953,7 @@
           "sourcePages": [
             2
           ],
-          "extractedAt": "2026-05-07T20:40:11.705Z",
+          "extractedAt": "2026-05-08T03:32:48.819Z",
           "sourceLabel": "Prose · SIP assets in Rs lakh crore"
         },
         "totalAum": {
@@ -2272,7 +2962,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:14.041Z",
+          "extractedAt": "2026-05-08T03:32:51.259Z",
           "sourceLabel": "Grand Total row · Net AUM column"
         },
         "equityAum": {
@@ -2281,7 +2971,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:14.041Z",
+          "extractedAt": "2026-05-08T03:32:51.259Z",
           "sourceLabel": "Sub Total - II row · Net AUM column"
         },
         "debtAum": {
@@ -2290,7 +2980,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:14.041Z",
+          "extractedAt": "2026-05-08T03:32:51.259Z",
           "sourceLabel": "Sub Total - I row · Net AUM column"
         },
         "liquidAum": {
@@ -2299,7 +2989,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:14.041Z",
+          "extractedAt": "2026-05-08T03:32:51.259Z",
           "sourceLabel": "Liquid Fund row · Net AUM column"
         },
         "sipAccounts": {
@@ -2308,7 +2998,7 @@
           "sourcePages": [
             16
           ],
-          "extractedAt": "2026-05-07T20:40:11.705Z",
+          "extractedAt": "2026-05-08T03:32:48.819Z",
           "sourceLabel": "SIP trend table · Number of contributing SIP accounts row"
         },
         "sipContribution": {
@@ -2317,7 +3007,7 @@
           "sourcePages": [
             16
           ],
-          "extractedAt": "2026-05-07T20:40:11.705Z",
+          "extractedAt": "2026-05-08T03:32:48.819Z",
           "sourceLabel": "SIP trend table · SIP monthly contribution row"
         },
         "totalAaum": {
@@ -2326,7 +3016,7 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:14.041Z",
+          "extractedAt": "2026-05-08T03:32:51.259Z",
           "sourceLabel": "Grand Total row · Average Net AUM column"
         },
         "netInflow": {
@@ -2335,8 +3025,35 @@
           "sourcePages": [
             1
           ],
-          "extractedAt": "2026-05-07T20:40:14.041Z",
+          "extractedAt": "2026-05-08T03:32:51.259Z",
           "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "march-ammar2026repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:51.259Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "march-ammar2026repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:51.259Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "liquidNetInflow": {
+          "sourcePdf": "march-ammar2026repo.pdf",
+          "sourceFormat": "monthly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-08T03:32:51.259Z",
+          "sourceLabel": "Liquid Fund row · Net Inflow / Outflow column"
         }
       },
       "sipAum": 1511000,
@@ -2346,6 +3063,9 @@
       "liquidAum": 466498.11,
       "sipAccounts": 97200000,
       "sipContribution": 32087,
+      "liquidNetInflow": -134987.64,
+      "debtNetInflow": -294987.18,
+      "equityNetInflow": 40450.26,
       "totalAaum": 7946027.87,
       "netInflow": -239910
     }
