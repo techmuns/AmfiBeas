@@ -237,6 +237,16 @@ export interface AmfiMonthlyPdfFieldSources {
    *  See AmfiMonthlyPdfRow for the per-field definition. */
   etfIndexAum?: AmfiMonthlyPdfFieldProvenance;
   arbitrageAum?: AmfiMonthlyPdfFieldProvenance;
+  // Major-category AAUM denominators from page-1 Sub Total rows.
+  // Used by the /monthly Category Drilldown for QAAUM-share %.
+  debtAaum?: AmfiMonthlyPdfFieldProvenance;
+  equityAaum?: AmfiMonthlyPdfFieldProvenance;
+  hybridAum?: AmfiMonthlyPdfFieldProvenance;
+  hybridAaum?: AmfiMonthlyPdfFieldProvenance;
+  hybridNetInflow?: AmfiMonthlyPdfFieldProvenance;
+  otherSchemesAum?: AmfiMonthlyPdfFieldProvenance;
+  otherSchemesAaum?: AmfiMonthlyPdfFieldProvenance;
+  otherSchemesNetInflow?: AmfiMonthlyPdfFieldProvenance;
 }
 
 /**
@@ -340,6 +350,27 @@ export interface AmfiMonthlyPdfRow {
    *  row's "Funds mobilized" columns, summing open-ended and
    *  close-ended. */
   industryNfoFundsMobilized?: number;
+  // ---- Major-category AAUM / AUM / Net-Inflow denominators ----
+  // Sourced from page-1 Sub Total rows. Used by the /monthly
+  // Category Drilldown to compute QAAUM share % and net-inflow
+  // share % per row, where the denominator is the sub-total of the
+  // row's parent group rather than the active-equity envelope.
+  /** Sub Total - I (Income/Debt) Average Net AUM (₹ Cr). */
+  debtAaum?: number;
+  /** Sub Total - II (Growth/Equity) Average Net AUM (₹ Cr). */
+  equityAaum?: number;
+  /** Sub Total - III (Hybrid) Net AUM (₹ Cr). */
+  hybridAum?: number;
+  /** Sub Total - III (Hybrid) Average Net AUM (₹ Cr). */
+  hybridAaum?: number;
+  /** Sub Total - III (Hybrid) Net Inflow / Outflow (₹ Cr, signed). */
+  hybridNetInflow?: number;
+  /** Sub Total - V (Other Schemes) Net AUM (₹ Cr). */
+  otherSchemesAum?: number;
+  /** Sub Total - V (Other Schemes) Average Net AUM (₹ Cr). */
+  otherSchemesAaum?: number;
+  /** Sub Total - V (Other Schemes) Net Inflow / Outflow (₹ Cr, signed). */
+  otherSchemesNetInflow?: number;
   /** Per-field provenance. Always present (may be empty {}). The
    *  dashboard should prefer this over the row-level fields below
    *  when surfacing which PDF a specific KPI came from. */
@@ -371,6 +402,23 @@ export interface AmfiMonthlyPdfSnapshot {
  * data clean and predictable for downstream charts.
  */
 export type AmfiMonthlyCategorySlug =
+  // Sub I — Income/Debt Oriented Schemes (16 rows)
+  | "overnight"
+  | "liquid"
+  | "ultra-short-duration"
+  | "low-duration"
+  | "money-market"
+  | "short-duration"
+  | "medium-duration"
+  | "medium-to-long-duration"
+  | "long-duration"
+  | "dynamic-bond"
+  | "corporate-bond"
+  | "credit-risk"
+  | "banking-psu"
+  | "gilt"
+  | "gilt-10y-constant"
+  | "floater"
   // Sub II — Growth/Equity Oriented (all 11 rows; in active-equity envelope)
   | "multi-cap"
   | "large-cap"
@@ -383,18 +431,39 @@ export type AmfiMonthlyCategorySlug =
   | "sectoral-thematic"
   | "elss"
   | "flexi-cap"
-  // Sub III — Hybrid (5 rows in envelope; Arbitrage excluded by formula)
+  // Sub III — Hybrid (all 6 rows; Arbitrage is in Hybrid major
+  // category but excluded from active-equity envelope by formula).
   | "conservative-hybrid"
   | "balanced-aggressive-hybrid"
   | "baf-daa"
   | "multi-asset"
+  | "arbitrage"
   | "equity-savings"
-  // Sub IV — Solution Oriented (both rows in envelope)
+  // Sub IV — Solution Oriented (both rows in envelope, but not
+  // surfaced in the major-category drilldown UI).
   | "retirement"
-  | "childrens";
+  | "childrens"
+  // Sub V — Other Schemes (4 rows)
+  | "index-funds"
+  | "gold-etf"
+  | "other-etfs"
+  | "fof-overseas";
+
+/** Major category groupings on the AMFI Monthly Report (open-ended).
+ *  Each category row is tagged with its parent group so the
+ *  dashboard can drill down per group with a group-specific
+ *  denominator. "solution" is extracted but not currently surfaced
+ *  in the drilldown UI; included here to keep the schema closed. */
+export type AmfiMonthlyMajorCategorySlug =
+  | "income-debt"
+  | "growth-equity"
+  | "hybrid"
+  | "solution"
+  | "other-schemes";
 
 export interface AmfiMonthlyCategoryFieldSources {
   categoryAum?: AmfiMonthlyPdfFieldProvenance;
+  categoryAaum?: AmfiMonthlyPdfFieldProvenance;
   categoryNetInflow?: AmfiMonthlyPdfFieldProvenance;
 }
 
@@ -403,10 +472,16 @@ export interface AmfiMonthlyCategoryFieldSources {
  * dashboard can filter by category at render-time without reshaping.
  *
  * `categoryAum` is the month-end Net AUM column from the AMFI Monthly
- * Report; `categoryNetInflow` is the Net Inflow / Outflow column on
- * the same row. Both are optional — a row that's missing either is
- * still useful (e.g. when AMFI's table layout changes for a vintage),
- * never zero-filled.
+ * Report; `categoryAaum` is the period-average AAUM column on the
+ * same row; `categoryNetInflow` is the Net Inflow / Outflow column.
+ * All three are optional — a row that's missing any is still useful
+ * (e.g. when AMFI's table layout changes for a vintage), never
+ * zero-filled.
+ *
+ * `majorCategorySlug` / `majorCategoryLabel` tag each row with the
+ * Sub Total - I / II / III / IV / V parent group so the dashboard's
+ * Category Drilldown can filter and use a group-specific denominator
+ * without re-grouping at render time.
  */
 export interface AmfiMonthlyCategoryRow {
   month: string;                       // YYYY-MM
@@ -414,7 +489,12 @@ export interface AmfiMonthlyCategoryRow {
   /** Friendly name of the category (matches the AMFI row label
    *  exactly), e.g. "Flexi Cap Fund". */
   category: string;
+  /** Major-category bucket (Sub Total - I / II / III / IV / V).
+   *  Drives drilldown denominator selection and grouping. */
+  majorCategorySlug: AmfiMonthlyMajorCategorySlug;
+  majorCategoryLabel: string;
   categoryAum?: number;                // ₹ Cr
+  categoryAaum?: number;               // ₹ Cr (Average Net AUM)
   categoryNetInflow?: number;          // ₹ Cr (signed; can be negative)
   fieldSources: AmfiMonthlyCategoryFieldSources;
   /** Row-level provenance (always set on category rows since each

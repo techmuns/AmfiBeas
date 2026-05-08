@@ -20,7 +20,9 @@ import type {
   AmfiMonthlyCategoryRow,
   AmfiMonthlyCategorySlug,
   AmfiMonthlyCategorySnapshot,
+  AmfiMonthlyMajorCategorySlug,
   AmfiMonthlyPdfFieldProvenance,
+  AmfiMonthlyPdfRow,
 } from "./snapshots/types";
 import { amfiMonthlyRows } from "./amfi-monthly";
 
@@ -166,13 +168,13 @@ export function monthlyCategoryShareTrend(
 
 /**
  * Latest per-(slug, field) provenance — used as the source pointer
- * for the chart's hover tooltip. Returns the `categoryAum`
- * provenance from the most-recent row that carries it for `slug`.
- * Returns null when no row has the field.
+ * for the chart's hover tooltip. Returns the provenance from the
+ * most-recent row that carries `field` for `slug`. Returns null
+ * when no row has the field.
  */
 export function latestCategoryProvenance(
   slug: AmfiMonthlyCategorySlug,
-  field: "categoryAum" | "categoryNetInflow"
+  field: "categoryAum" | "categoryAaum" | "categoryNetInflow"
 ): AmfiMonthlyPdfFieldProvenance | null {
   const rows = categoryRowsForSlug(slug);
   for (let i = rows.length - 1; i >= 0; i--) {
@@ -180,4 +182,150 @@ export function latestCategoryProvenance(
     if (fs) return fs;
   }
   return null;
+}
+
+// ---- Major-category drilldown -------------------------------------
+//
+// Per-major-category drilldown helpers used by the /monthly Category
+// Drilldown section. Denominators are the matching Sub Total - I /
+// II / III / V row fields on the per-month snapshot, NOT the
+// active-equity envelope. Multi Asset, BAF/DAA, etc. now compare
+// against the Hybrid total; ETFs / GOLD / FoF-Overseas compare
+// against the Other Schemes total; etc.
+
+/** Friendly label + per-month-row denominator field keys for each
+ *  major category surfaced in the drilldown. */
+export const MAJOR_CATEGORIES: {
+  slug: AmfiMonthlyMajorCategorySlug;
+  label: string;
+  /** Field on `AmfiMonthlyPdfRow` carrying this group's AAUM (₹ Cr). */
+  aaumField: keyof AmfiMonthlyPdfRow;
+  /** Field on `AmfiMonthlyPdfRow` carrying this group's Net Inflow (₹ Cr). */
+  netInflowField: keyof AmfiMonthlyPdfRow;
+}[] = [
+  {
+    slug: "income-debt",
+    label: "Income/Debt",
+    aaumField: "debtAaum",
+    netInflowField: "debtNetInflow",
+  },
+  {
+    slug: "growth-equity",
+    label: "Growth/Equity",
+    aaumField: "equityAaum",
+    netInflowField: "equityNetInflow",
+  },
+  {
+    slug: "hybrid",
+    label: "Hybrid",
+    aaumField: "hybridAaum",
+    netInflowField: "hybridNetInflow",
+  },
+  {
+    slug: "other-schemes",
+    label: "Other Schemes",
+    aaumField: "otherSchemesAaum",
+    netInflowField: "otherSchemesNetInflow",
+  },
+];
+
+/** Resolve the major-category descriptor by slug, falling back to
+ *  Growth/Equity (the drilldown's default selection). */
+export function resolveMajorCategory(
+  requested: string | undefined
+): (typeof MAJOR_CATEGORIES)[number] {
+  return (
+    MAJOR_CATEGORIES.find((m) => m.slug === requested) ??
+    MAJOR_CATEGORIES.find((m) => m.slug === "growth-equity")!
+  );
+}
+
+/** All category rows belonging to `majorSlug`, sorted chronologically. */
+export function categoryRowsForMajor(
+  majorSlug: AmfiMonthlyMajorCategorySlug
+): AmfiMonthlyCategoryRow[] {
+  return amfiMonthlyCategorySnapshot.rows
+    .filter((r) => r.majorCategorySlug === majorSlug)
+    .sort((a, b) => a.month.localeCompare(b.month));
+}
+
+/**
+ * Per-month QAAUM-share + net-inflow-share trend for `slug`, using
+ * the slug's MAJOR-CATEGORY denominator (NOT the active-equity
+ * envelope used by `monthlyCategoryShareTrend`).
+ *
+ *   aumSharePct  = categoryAaum / majorCategoryAaum × 100
+ *   flowSharePct = categoryNetInflow / majorCategoryNetInflow × 100
+ *
+ * Either share is `null` when its numerator or denominator is
+ * absent (or denominator is 0), so the chart shows a gap rather
+ * than a fake zero.
+ */
+export function monthlyMajorCategoryShareTrend(
+  slug: AmfiMonthlyCategorySlug,
+  majorSlug: AmfiMonthlyMajorCategorySlug,
+  lastN = 24
+): {
+  month: string;
+  aumSharePct: number | null;
+  flowSharePct: number | null;
+}[] {
+  const major = MAJOR_CATEGORIES.find((m) => m.slug === majorSlug);
+  if (!major) return [];
+  const monthly = amfiMonthlyRows();
+  const denomByMonth = new Map<
+    string,
+    { aaum?: number; flow?: number }
+  >();
+  for (const r of monthly) {
+    denomByMonth.set(r.month, {
+      aaum: r[major.aaumField] as number | undefined,
+      flow: r[major.netInflowField] as number | undefined,
+    });
+  }
+  const cats = categoryRowsForSlug(slug, lastN);
+  return cats.map((r) => {
+    const den = denomByMonth.get(r.month);
+    const aumSharePct =
+      typeof r.categoryAaum === "number" &&
+      typeof den?.aaum === "number" &&
+      den.aaum > 0
+        ? (r.categoryAaum / den.aaum) * 100
+        : null;
+    const flowSharePct =
+      typeof r.categoryNetInflow === "number" &&
+      typeof den?.flow === "number" &&
+      den.flow !== 0
+        ? (r.categoryNetInflow / den.flow) * 100
+        : null;
+    return { month: r.month, aumSharePct, flowSharePct };
+  });
+}
+
+/**
+ * Latest-month QAAUM share % for a category in its major group,
+ * used by the >5% display filter. Returns `null` when the latest
+ * month for this category lacks `categoryAaum` or the denominator.
+ */
+export function latestCategoryAaumShare(
+  slug: AmfiMonthlyCategorySlug,
+  majorSlug: AmfiMonthlyMajorCategorySlug,
+  selectedMonth?: string
+): { month: string; aaum: number; share: number } | null {
+  const major = MAJOR_CATEGORIES.find((m) => m.slug === majorSlug);
+  if (!major) return null;
+  const cats = categoryRowsForSlug(slug);
+  const monthly = amfiMonthlyRows();
+  const monthRow = selectedMonth
+    ? cats.find((r) => r.month === selectedMonth) ?? cats[cats.length - 1]
+    : cats[cats.length - 1];
+  if (!monthRow || typeof monthRow.categoryAaum !== "number") return null;
+  const denomRow = monthly.find((r) => r.month === monthRow.month);
+  const denom = denomRow?.[major.aaumField] as number | undefined;
+  if (typeof denom !== "number" || denom <= 0) return null;
+  return {
+    month: monthRow.month,
+    aaum: monthRow.categoryAaum,
+    share: (monthRow.categoryAaum / denom) * 100,
+  };
 }
