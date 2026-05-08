@@ -35,17 +35,11 @@ import {
   type AmfiMonthlyKpiField,
 } from "@/data/amfi-monthly";
 import {
-  MAJOR_CATEGORIES,
-  categoryRowsForMajor,
   iiflActiveEquityHeatmapData,
-  latestCategoryAaumShare,
   latestCategoryProvenance,
-  monthlyMajorCategoryShareTrend,
-  resolveMajorCategory,
 } from "@/data/amfi-monthly-category";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MonthPicker } from "@/components/filters/MonthPicker";
-import { MultiLine } from "@/components/charts/MultiLine";
 import {
   formatCompactCrSafe,
   formatCroreCountSafe,
@@ -464,74 +458,6 @@ export default async function MonthlyPage({
     latestCategoryProvenance("flexi-cap", "categoryNetInflow")
   );
 
-  // ---- Category Drilldown section ------------------------------------
-  //
-  // Major-category drilldown: select Income/Debt, Growth/Equity, Hybrid,
-  // or Other Schemes via the `?major=` query param (default: Growth/
-  // Equity). Each card uses the SELECTED MAJOR's Sub Total AAUM and Net
-  // Inflow as denominators (NOT the active-equity envelope), so e.g.
-  // Multi Asset compares against the Hybrid total, ETFs against Other
-  // Schemes total, etc.
-  //
-  // The >5% filter is UI-only: a card is rendered for a category only
-  // when its categoryAaum / majorCategoryAaum (on the selected month)
-  // exceeds 5%. Hidden categories remain in the snapshot and reconcile.
-  const requestedMajor =
-    typeof sp.major === "string" ? sp.major : undefined;
-  const drilldownMajor = resolveMajorCategory(requestedMajor);
-  const drilldownMonth = amfiSelected?.month;
-  const drilldownAllRows = categoryRowsForMajor(drilldownMajor.slug);
-  const drilldownSlugs = Array.from(
-    new Set(drilldownAllRows.map((r) => r.categorySlug))
-  );
-  // Build a {slug, label, share, aaum} entry per category in this major
-  // group based on the selected (or latest) month.
-  const drilldownByCategory = drilldownSlugs.map((slug) => {
-    const row = drilldownAllRows.find(
-      (r) => r.categorySlug === slug && r.month === drilldownMonth
-    );
-    const latest = latestCategoryAaumShare(
-      slug,
-      drilldownMajor.slug,
-      drilldownMonth
-    );
-    return {
-      slug,
-      label: row?.category ?? slug,
-      aaum: latest?.aaum ?? null,
-      share: latest?.share ?? null,
-    };
-  });
-  const drilldownVisible = drilldownByCategory
-    .filter((c) => typeof c.share === "number" && c.share > 5)
-    .sort((a, b) => (b.aaum ?? -Infinity) - (a.aaum ?? -Infinity))
-    .map((c) => {
-      const series = monthlyMajorCategoryShareTrend(
-        c.slug,
-        drilldownMajor.slug,
-        24
-      );
-      const hasData = series.some(
-        (r) => r.aumSharePct !== null || r.flowSharePct !== null
-      );
-      const aumHover = formatKpiProvenanceTooltip(
-        latestCategoryProvenance(c.slug, "categoryAaum")
-      );
-      return { ...c, series, hasData, aumHover };
-    });
-  const drilldownHidden = drilldownByCategory
-    .filter((c) => typeof c.share === "number" && c.share <= 5)
-    .sort((a, b) => (b.share ?? 0) - (a.share ?? 0));
-  const hasDrilldownData = drilldownVisible.length > 0;
-  // Build pill links that preserve other URL params (notably `?month=`).
-  const buildPillHref = (majorSlug: string) => {
-    const params = new URLSearchParams();
-    if (typeof sp.month === "string") params.set("month", sp.month);
-    params.set("major", majorSlug);
-    const qs = params.toString();
-    return qs ? `/monthly?${qs}` : "/monthly";
-  };
-
   return (
     <div className="space-y-6">
       <PageHeader title="Monthly Operating" subtitle={subtitle} />
@@ -876,96 +802,6 @@ export default async function MonthlyPage({
               Source: AMFI Monthly Report
             </div>
           </Card>
-        </div>
-      )}
-
-      {hasDrilldownData && (
-        <div className="space-y-3">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="text-sm font-medium tracking-tight">
-                Category Drilldown
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Select a major category to view AAUM share and net
-                inflow share. Showing categories with &gt;5% AAUM
-                share of the selected major.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {MAJOR_CATEGORIES.map((m) => {
-                const active = m.slug === drilldownMajor.slug;
-                return (
-                  <a
-                    key={m.slug}
-                    href={buildPillHref(m.slug)}
-                    className={cn(
-                      "rounded-full border px-3 py-1 text-[11px] tracking-tight transition-colors",
-                      active
-                        ? "border-positive/60 bg-positive/15 text-foreground"
-                        : "border-border bg-card text-muted-foreground hover:bg-muted"
-                    )}
-                  >
-                    {m.label}
-                  </a>
-                );
-              })}
-            </div>
-          </div>
-
-          <section className="grid gap-4 lg:grid-cols-2">
-            {drilldownVisible.map((c) => (
-              <Card
-                key={c.slug}
-                title={c.label}
-                subtitle={`${c.share!.toFixed(1)}% of ${drilldownMajor.label} AAUM · 24-month trend`}
-              >
-                {c.hasData ? (
-                  <MultiLine
-                    data={c.series}
-                    xKey="month"
-                    labelFormat="month"
-                    valueFormat="pct"
-                    axisFormat="pct"
-                    lines={[
-                      {
-                        key: "aumSharePct",
-                        name: "AAUM share",
-                        color: "hsl(var(--chart-1))",
-                      },
-                      {
-                        key: "flowSharePct",
-                        name: "Net inflow share",
-                        color: "hsl(var(--chart-3))",
-                      },
-                    ]}
-                  />
-                ) : (
-                  <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                    Category trend unavailable
-                  </div>
-                )}
-                <div
-                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                  title={c.aumHover ?? undefined}
-                >
-                  Source: AMFI Monthly Report
-                </div>
-              </Card>
-            ))}
-          </section>
-
-          <p className="text-[11px] text-muted-foreground">
-            AAUM share = category Average Net AUM ÷ {drilldownMajor.label}{" "}
-            Sub Total AAUM. Net inflow share = category Net Inflow ÷{" "}
-            {drilldownMajor.label} Sub Total Net Inflow. Cards are shown
-            only when the selected month&apos;s AAUM share exceeds 5%;
-            {drilldownHidden.length > 0
-              ? ` ${drilldownHidden.length} additional categor${
-                  drilldownHidden.length === 1 ? "y is" : "ies are"
-                } extracted but hidden.`
-              : ""}
-          </p>
         </div>
       )}
 
