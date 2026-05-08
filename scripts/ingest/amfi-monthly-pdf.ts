@@ -309,6 +309,12 @@ interface MonthlyReportHits {
   // Sub II + (Sub III − Arbitrage) + Sub IV netInflows. Mirrors
   // activeEquityAum but on the flow column.
   activeEquityNetInflow?: FieldHit;
+  // Industry totals: total folios from page-1 Grand Total row's
+  // "No. of Folios" column; NFO count + funds-mobilised from
+  // the New Schemes Report on page 2.
+  industryFolios?: FieldHit;
+  industryNfoCount?: FieldHit;
+  industryNfoFundsMobilized?: FieldHit;
 }
 
 /** Internal scratch — intermediate row values that feed the IIFL-
@@ -514,6 +520,16 @@ function parseMonthlyReport(pages: PdfPage[]): {
               label: "Grand Total row · Net Inflow / Outflow column",
             };
           }
+          // Industry-wide folio count = column 1 of the Grand Total
+          // row (No. of Folios). Stored as a raw integer count.
+          const folios = dataCols[1];
+          if (folios !== null && folios > 0 && !hits.industryFolios) {
+            hits.industryFolios = {
+              value: Math.round(folios),
+              page: page.num,
+              label: "Grand Total row · No. of Folios column",
+            };
+          }
         } else if (spec.key === "debtAum") {
           if (netInflow !== null && !hits.debtNetInflow) {
             hits.debtNetInflow = {
@@ -676,6 +692,76 @@ function parseMonthlyReport(pages: PdfPage[]): {
         "Sub IV net inflow · (IIFL Figure 19-style active-equity " +
         "envelope flow)",
     };
+  }
+
+  // ---- New Schemes Report (industry NFO totals) ---------------------
+  //
+  // The AMFI Monthly Report's New Schemes Report (typically page 2)
+  // has a "Grand Total" / "Total A + B + C [+ D]" row with 4 numeric
+  // columns: open-ended count, open-ended funds, close-ended count,
+  // close-ended funds (older PDFs follow with 2 redundant total
+  // columns; we only consume the first 4 and compute totals
+  // ourselves so the parser is independent of layout drift).
+  //
+  // Layout variants seen across vintages (each captures 2 mandatory
+  // numbers — count, funds — and an OPTIONAL second pair for layouts
+  // that split open-ended vs close-ended):
+  //   - Mar 2026 / Feb 2026   "Grand Total (A+B+C+D) 23 3743 1 242"
+  //                            (4 numbers: open count/funds + close count/funds)
+  //   - Apr 2025 / Apr 2024   "Total A + B + C [+ D] 7 350 - - 7 350"
+  //                            (4 numbers + 2 redundant total cols; we use
+  //                             only the first 4)
+  //   - Dec 2025 / Jan 2026   "Total (A + B + C + D) 23 4,074"
+  //                            (2 numbers: combined count + funds; no split)
+  // NO `i` flag and `[A-E]` only (uppercase) — keeps the regex away
+  // from lowercase Roman numerals like "(i+ii+iii+iv)" used by the
+  // close-ended Sub Total rows on page 1, which would otherwise yield
+  // wrong NFO totals. A-E covers 4-cat (A+B+C+D) and 5-cat
+  // (A+B+C+D+E, e.g. Dec 2024 "Other Schemes") layouts.
+  const NSR_GRAND_TOTAL = new RegExp(
+    String.raw`(?:Grand\s+Total\s*\(\s*[A-E](?:\s*\+\s*[A-E])+\s*\)|Total\s*(?:\(\s*[A-E](?:\s*\+\s*[A-E])+\s*\)|[A-E](?:\s*\+\s*[A-E]){1,4}))` +
+      String.raw`\s+(\d[\d,]*)\s+(-|\d[\d,]*)` +
+      String.raw`(?:\s+(-|\d[\d,]*)\s+(-|\d[\d,]*))?`
+  );
+  for (const page of pages) {
+    if (hits.industryNfoCount && hits.industryNfoFundsMobilized) break;
+    const m = NSR_GRAND_TOTAL.exec(page.text);
+    if (!m) continue;
+    const parseTok = (t: string | undefined) => {
+      if (!t || t === "-" || t === "—") return 0;
+      return Number(t.replace(/,/g, ""));
+    };
+    const count1 = parseTok(m[1]);
+    const funds1 = parseTok(m[2]);
+    const count2 = parseTok(m[3]);
+    const funds2 = parseTok(m[4]);
+    if (![count1, funds1, count2, funds2].every((n) => Number.isFinite(n))) {
+      continue;
+    }
+    // 2-col layout (m[3]/m[4] absent) → count1/funds1 ARE the total.
+    // 4-col layout → sum open+close.
+    const splitLayout = m[3] !== undefined && m[4] !== undefined;
+    const totalCount = splitLayout ? count1 + count2 : count1;
+    const totalFunds = splitLayout ? funds1 + funds2 : funds1;
+    if (!hits.industryNfoCount && totalCount > 0) {
+      hits.industryNfoCount = {
+        value: totalCount,
+        page: page.num,
+        label:
+          "New Schemes Report · Grand Total row · No. of schemes" +
+          (splitLayout ? " (open + close-ended)" : ""),
+      };
+    }
+    if (!hits.industryNfoFundsMobilized && totalFunds > 0) {
+      hits.industryNfoFundsMobilized = {
+        value: totalFunds,
+        page: page.num,
+        label:
+          "New Schemes Report · Grand Total row · Funds mobilized" +
+          (splitLayout ? " (open + close-ended)" : ""),
+      };
+    }
+    pagesUsed.add(page.num);
   }
 
   return { hits, pagesUsed };
@@ -1256,6 +1342,9 @@ const NUMERIC_FIELDS: (keyof AmfiMonthlyPdfRow)[] = [
   "etfIndexAum",
   "arbitrageAum",
   "activeEquityNetInflow",
+  "industryFolios",
+  "industryNfoCount",
+  "industryNfoFundsMobilized",
 ];
 
 /**
