@@ -155,3 +155,49 @@ export function resolveSelectedMonth(
   const row = resolveSelectedRow(requested);
   return row?.month ?? null;
 }
+
+/**
+ * Return a chronological trend series for `field`. Each entry has
+ * `{label, value}` where `label` is the YYYY-MM month (passed through
+ * `formatMonthLabel` by the chart's labelFormat="month" axis) and
+ * `value` is the numeric KPI on that month.
+ *
+ * Months WHERE `field` IS ABSENT are OMITTED from the array — the
+ * chart's x-axis is non-uniform but no synthetic zero / interpolation
+ * is introduced (the spec for SIP Trends says "omit that month for
+ * that specific series rather than showing zero" when the chart can't
+ * render gaps cleanly, which is the case for the existing BarSeries).
+ *
+ * `lastN` clamps the series length to the most recent N months so a
+ * very long backfill of uploaded PDFs doesn't crowd the trend axis.
+ * Defaults to 24 to match the spec.
+ */
+export function monthlyTrend(
+  field: AmfiMonthlyKpiField,
+  lastN = 24
+): { label: string; value: number }[] {
+  const rows = amfiMonthlyRows();
+  const all = rows
+    .filter((r) => typeof r[field] === "number")
+    .map((r) => ({ label: r.month, value: r[field] as number }));
+  return all.slice(-lastN);
+}
+
+/**
+ * Resolve the freshest per-field provenance for a field across the
+ * entire snapshot, used as a single source caption for a trend chart
+ * that may span months from multiple PDFs. Returns the provenance of
+ * the LATEST month that carries the field — typically the most-recent
+ * AMFI publication, which is the most useful pointer for a tooltip.
+ * Returns null when no row has the field.
+ */
+export function latestProvenanceFor(
+  field: AmfiMonthlyKpiField
+): AmfiMonthlyPdfFieldProvenance | null {
+  const rows = amfiMonthlyRows();
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const fs = rows[i].fieldSources?.[field];
+    if (fs) return fs;
+  }
+  return null;
+}
