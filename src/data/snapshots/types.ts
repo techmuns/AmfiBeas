@@ -230,6 +230,9 @@ export interface AmfiMonthlyPdfFieldSources {
   /** Provenance for the IIFL-style active-equity envelope flow.
    *  The single sourceLabel describes the formula. */
   activeEquityNetInflow?: AmfiMonthlyPdfFieldProvenance;
+  industryFolios?: AmfiMonthlyPdfFieldProvenance;
+  industryNfoCount?: AmfiMonthlyPdfFieldProvenance;
+  industryNfoFundsMobilized?: AmfiMonthlyPdfFieldProvenance;
   /** IIFL-style equity breakdown derived from the AMFI Monthly Report.
    *  See AmfiMonthlyPdfRow for the per-field definition. */
   etfIndexAum?: AmfiMonthlyPdfFieldProvenance;
@@ -322,6 +325,21 @@ export interface AmfiMonthlyPdfRow {
    *  categories from Sub II. Omitted when any contributing row
    *  is missing — never zero-filled. */
   activeEquityNetInflow?: number;
+  /** Industry-wide total folio count (raw count of folios across
+   *  all schemes). Sourced from the AMFI Monthly Report's Grand
+   *  Total row, "No. of Folios" column. ~27 crore on the latest
+   *  month. */
+  industryFolios?: number;
+  /** Number of NFOs (New Fund Offers) launched in the month.
+   *  Sourced from the AMFI Monthly Report's "New Schemes" page —
+   *  Grand Total row's "No. of Schemes" columns, summing the
+   *  open-ended and close-ended counts. */
+  industryNfoCount?: number;
+  /** Funds mobilised by NFOs in the month (₹ Cr). Sourced from
+   *  the AMFI Monthly Report's "New Schemes" page — Grand Total
+   *  row's "Funds mobilized" columns, summing open-ended and
+   *  close-ended. */
+  industryNfoFundsMobilized?: number;
   /** Per-field provenance. Always present (may be empty {}). The
    *  dashboard should prefer this over the row-level fields below
    *  when surfacing which PDF a specific KPI came from. */
