@@ -305,19 +305,35 @@ interface MonthlyReportHits {
   activeEquityAum?: FieldHit;
   etfIndexAum?: FieldHit;
   arbitrageAum?: FieldHit;
+  // Active-equity-envelope net inflow (signed). Derived from
+  // Sub II + (Sub III − Arbitrage) + Sub IV netInflows. Mirrors
+  // activeEquityAum but on the flow column.
+  activeEquityNetInflow?: FieldHit;
 }
 
 /** Internal scratch — intermediate row values that feed the IIFL-
  *  derived fields. NOT stored on the row schema (which carries only
  *  the final derived values), but tracked through parsing so we can
- *  reject the derivation if ANY contributing row is missing. */
+ *  reject the derivation if ANY contributing row is missing.
+ *
+ *  Each Sub Total / row-level entry has TWO companion slots: the
+ *  Net AUM column (no suffix) and the Net Inflow / Outflow column
+ *  (suffix `Flow`). The AUM slots feed activeEquityAum / etfIndexAum
+ *  / arbitrageAum; the Flow slots feed activeEquityNetInflow. */
 interface MonthlyReportIntermediates {
-  subTotalII?: FieldHit;       // Growth/Equity Oriented Schemes total
-  subTotalIII?: FieldHit;      // Hybrid Schemes total
-  subTotalIV?: FieldHit;       // Solution Oriented Schemes total
-  arbitrageRow?: FieldHit;     // Arbitrage Fund row (sub of Sub III)
-  indexFundsRow?: FieldHit;    // Index Funds row (sub of Sub V)
-  otherEtfsRow?: FieldHit;     // Other ETFs row (sub of Sub V)
+  subTotalII?: FieldHit;       // Growth/Equity Oriented Schemes total — Net AUM
+  subTotalIII?: FieldHit;      // Hybrid Schemes total — Net AUM
+  subTotalIV?: FieldHit;       // Solution Oriented Schemes total — Net AUM
+  arbitrageRow?: FieldHit;     // Arbitrage Fund row (sub of Sub III) — Net AUM
+  indexFundsRow?: FieldHit;    // Index Funds row (sub of Sub V) — Net AUM
+  otherEtfsRow?: FieldHit;     // Other ETFs row (sub of Sub V) — Net AUM
+  // Net Inflow / Outflow column counterparts for the active-equity
+  // envelope flow derivation. equityNetInflow (Sub II flow) is
+  // captured directly on `hits` and reused; we only need the three
+  // below as new intermediates.
+  subTotalIIIflow?: FieldHit;
+  subTotalIVflow?: FieldHit;
+  arbitrageRowFlow?: FieldHit;
 }
 
 /**
@@ -515,6 +531,26 @@ function parseMonthlyReport(pages: PdfPage[]): {
             };
           }
         }
+        // Capture the Net Inflow / Outflow column on Sub III and Sub
+        // IV so we can derive activeEquityNetInflow downstream. (Sub
+        // II's flow is already captured above as equityNetInflow.)
+        if (spec.interKey === "subTotalIII") {
+          if (netInflow !== null && !inter.subTotalIIIflow) {
+            inter.subTotalIIIflow = {
+              value: netInflow,
+              page: page.num,
+              label: "Sub Total - III row · Net Inflow / Outflow column",
+            };
+          }
+        } else if (spec.interKey === "subTotalIV") {
+          if (netInflow !== null && !inter.subTotalIVflow) {
+            inter.subTotalIVflow = {
+              value: netInflow,
+              page: page.num,
+              label: "Sub Total - IV row · Net Inflow / Outflow column",
+            };
+          }
+        }
       }
 
       // Inline labels (data on the same line as the label).
@@ -544,6 +580,19 @@ function parseMonthlyReport(pages: PdfPage[]): {
               value: netInflow,
               page: page.num,
               label: "Liquid Fund row · Net Inflow / Outflow column",
+            };
+          }
+        }
+        // Arbitrage Fund inline row also carries a net-flow column.
+        // Captured as the third intermediate piece of the active-
+        // equity envelope flow (Sub II + Sub III ex-arb + Sub IV).
+        if (spec.interKey === "arbitrageRow") {
+          const netInflow = cols[COL_NET_INFLOW];
+          if (netInflow !== null && !inter.arbitrageRowFlow) {
+            inter.arbitrageRowFlow = {
+              value: netInflow,
+              page: page.num,
+              label: "Arbitrage Fund row · Net Inflow / Outflow column",
             };
           }
         }
@@ -598,6 +647,34 @@ function parseMonthlyReport(pages: PdfPage[]): {
         "Sub Total - II + (Sub Total - III − Arbitrage Fund row) + " +
         "Sub Total - IV · Net AUM column · " +
         "(IIFL Figure 19-style active equity)",
+    };
+  }
+
+  // activeEquityNetInflow — flow-side mirror of activeEquityAum:
+  //   Sub II net inflow                                  (= equityNetInflow)
+  //   + (Sub III net inflow − Arbitrage Fund net inflow)
+  //   + Sub IV net inflow
+  // Used as the denominator for IIFL Figure 31-34 net-inflow shares
+  // so a hybrid-oriented category like Multi-Asset Allocation
+  // compares apples-to-apples with Sub-II equity-oriented categories.
+  // Signed; can be positive or negative on any given month.
+  if (
+    hits.equityNetInflow &&
+    inter.subTotalIIIflow &&
+    inter.arbitrageRowFlow &&
+    inter.subTotalIVflow
+  ) {
+    const v =
+      hits.equityNetInflow.value +
+      (inter.subTotalIIIflow.value - inter.arbitrageRowFlow.value) +
+      inter.subTotalIVflow.value;
+    hits.activeEquityNetInflow = {
+      value: v,
+      page: hits.equityNetInflow.page,
+      label:
+        "Sub II net inflow + Sub III ex-Arbitrage net inflow + " +
+        "Sub IV net inflow · (IIFL Figure 19-style active-equity " +
+        "envelope flow)",
     };
   }
 
@@ -1178,6 +1255,7 @@ const NUMERIC_FIELDS: (keyof AmfiMonthlyPdfRow)[] = [
   "liquidNetInflow",
   "etfIndexAum",
   "arbitrageAum",
+  "activeEquityNetInflow",
 ];
 
 /**

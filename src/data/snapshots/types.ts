@@ -227,6 +227,9 @@ export interface AmfiMonthlyPdfFieldSources {
   equityNetInflow?: AmfiMonthlyPdfFieldProvenance;
   debtNetInflow?: AmfiMonthlyPdfFieldProvenance;
   liquidNetInflow?: AmfiMonthlyPdfFieldProvenance;
+  /** Provenance for the IIFL-style active-equity envelope flow.
+   *  The single sourceLabel describes the formula. */
+  activeEquityNetInflow?: AmfiMonthlyPdfFieldProvenance;
   /** IIFL-style equity breakdown derived from the AMFI Monthly Report.
    *  See AmfiMonthlyPdfRow for the per-field definition. */
   etfIndexAum?: AmfiMonthlyPdfFieldProvenance;
@@ -307,6 +310,18 @@ export interface AmfiMonthlyPdfRow {
    *  From the inline Liquid Fund row of the AMFI Monthly Report.
    *  Already counted within debtNetInflow. */
   liquidNetInflow?: number;
+  /** Active-equity envelope net inflow (₹ Cr; signed). DERIVED from
+   *  the AMFI Monthly Report as:
+   *    Sub Total - II net inflow                          (equityNetInflow)
+   *    + (Sub Total - III net inflow − Arbitrage Fund net inflow)
+   *    + Sub Total - IV net inflow
+   *  Mirrors the activeEquityAum formula on the FLOW column. Used
+   *  as the denominator for category net-inflow shares so a hybrid-
+   *  oriented category (e.g. Multi-Asset Allocation, sitting in
+   *  Sub III) compares apples-to-apples with equity-oriented
+   *  categories from Sub II. Omitted when any contributing row
+   *  is missing — never zero-filled. */
+  activeEquityNetInflow?: number;
   /** Per-field provenance. Always present (may be empty {}). The
    *  dashboard should prefer this over the row-level fields below
    *  when surfacing which PDF a specific KPI came from. */
