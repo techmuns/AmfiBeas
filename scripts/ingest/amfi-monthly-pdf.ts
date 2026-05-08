@@ -602,6 +602,10 @@ interface MonthlyReportHits {
   otherSchemesAum?: FieldHit;
   otherSchemesAaum?: FieldHit;
   otherSchemesNetInflow?: FieldHit;
+  // AAUM mirrors of the IIFL active-equity envelope fields.
+  activeEquityAaum?: FieldHit;
+  etfIndexAaum?: FieldHit;
+  arbitrageAaum?: FieldHit;
 }
 
 /** Internal scratch — intermediate row values that feed the IIFL-
@@ -627,6 +631,14 @@ interface MonthlyReportIntermediates {
   subTotalIIIflow?: FieldHit;
   subTotalIVflow?: FieldHit;
   arbitrageRowFlow?: FieldHit;
+  // AAUM-side intermediates — Sub II AAUM and Sub III AAUM are captured
+  // directly on hits (equityAaum / hybridAaum). The four below feed the
+  // AAUM-based derived fields (activeEquityAaum / etfIndexAaum /
+  // arbitrageAaum) without bloating the public schema.
+  subTotalIVaaum?: FieldHit;
+  arbitrageRowAaum?: FieldHit;
+  indexFundsRowAaum?: FieldHit;
+  otherEtfsRowAaum?: FieldHit;
 }
 
 /**
@@ -919,6 +931,14 @@ function parseMonthlyReport(pages: PdfPage[]): {
               label: "Sub Total - IV row · Net Inflow / Outflow column",
             };
           }
+          const aaum = dataCols[COL_AAUM];
+          if (aaum !== null && aaum > 0 && !inter.subTotalIVaaum) {
+            inter.subTotalIVaaum = {
+              value: aaum,
+              page: page.num,
+              label: "Sub Total - IV row · Average Net AUM column",
+            };
+          }
         }
       }
 
@@ -962,6 +982,36 @@ function parseMonthlyReport(pages: PdfPage[]): {
               value: netInflow,
               page: page.num,
               label: "Arbitrage Fund row · Net Inflow / Outflow column",
+            };
+          }
+        }
+        // AAUM-side intermediates for the IIFL active-equity envelope
+        // (AAUM mirror of arbitrageRow / indexFundsRow / otherEtfsRow).
+        const aaum = cols[COL_AAUM];
+        if (aaum !== null && aaum > 0) {
+          if (spec.interKey === "arbitrageRow" && !inter.arbitrageRowAaum) {
+            inter.arbitrageRowAaum = {
+              value: aaum,
+              page: page.num,
+              label: "Arbitrage Fund row · Average Net AUM column",
+            };
+          } else if (
+            spec.interKey === "indexFundsRow" &&
+            !inter.indexFundsRowAaum
+          ) {
+            inter.indexFundsRowAaum = {
+              value: aaum,
+              page: page.num,
+              label: "Index Funds row · Average Net AUM column",
+            };
+          } else if (
+            spec.interKey === "otherEtfsRow" &&
+            !inter.otherEtfsRowAaum
+          ) {
+            inter.otherEtfsRowAaum = {
+              value: aaum,
+              page: page.num,
+              label: "Other ETFs row · Average Net AUM column",
             };
           }
         }
@@ -1016,6 +1066,49 @@ function parseMonthlyReport(pages: PdfPage[]): {
         "Sub Total - II + (Sub Total - III − Arbitrage Fund row) + " +
         "Sub Total - IV · Net AUM column · " +
         "(IIFL Figure 19-style active equity)",
+    };
+  }
+
+  // ---- AAUM-side derivations (IIFL active-equity envelope, AAUM) ---
+  // arbitrageAaum = Arbitrage Fund row · Average Net AUM column.
+  if (inter.arbitrageRowAaum) {
+    hits.arbitrageAaum = {
+      value: inter.arbitrageRowAaum.value,
+      page: inter.arbitrageRowAaum.page,
+      label: "Arbitrage Fund row · Average Net AUM column",
+    };
+  }
+  // etfIndexAaum = Index Funds AAUM + Other ETFs AAUM. Same exclusions
+  // as etfIndexAum (no Gold ETFs / FoF Overseas).
+  if (inter.indexFundsRowAaum && inter.otherEtfsRowAaum) {
+    hits.etfIndexAaum = {
+      value:
+        inter.indexFundsRowAaum.value + inter.otherEtfsRowAaum.value,
+      page: inter.indexFundsRowAaum.page,
+      label:
+        "Index Funds AAUM + Other ETFs AAUM · " +
+        "(IIFL Figure 19-style; excludes Gold ETFs and Fund of Funds " +
+        "investing overseas)",
+    };
+  }
+  // activeEquityAaum = Sub II AAUM + (Sub III AAUM − Arbitrage AAUM) +
+  // Sub IV AAUM. AAUM mirror of activeEquityAum.
+  if (
+    hits.equityAaum &&
+    hits.hybridAaum &&
+    inter.subTotalIVaaum &&
+    inter.arbitrageRowAaum
+  ) {
+    const v =
+      hits.equityAaum.value +
+      (hits.hybridAaum.value - inter.arbitrageRowAaum.value) +
+      inter.subTotalIVaaum.value;
+    hits.activeEquityAaum = {
+      value: v,
+      page: hits.equityAaum.page,
+      label:
+        "Sub II AAUM + Sub III ex-Arbitrage AAUM + Sub IV AAUM · " +
+        "(IIFL Figure 19-style active-equity envelope, period-average)",
     };
   }
 
@@ -1725,7 +1818,10 @@ const NUMERIC_FIELDS: (keyof AmfiMonthlyPdfRow)[] = [
   "debtNetInflow",
   "liquidNetInflow",
   "etfIndexAum",
+  "etfIndexAaum",
   "arbitrageAum",
+  "arbitrageAaum",
+  "activeEquityAaum",
   "activeEquityNetInflow",
   "industryFolios",
   "industryNfoCount",

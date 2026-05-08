@@ -237,6 +237,12 @@ export interface AmfiMonthlyPdfFieldSources {
    *  See AmfiMonthlyPdfRow for the per-field definition. */
   etfIndexAum?: AmfiMonthlyPdfFieldProvenance;
   arbitrageAum?: AmfiMonthlyPdfFieldProvenance;
+  /** AAUM-side mirrors of the IIFL active-equity envelope fields.
+   *  Used by IIFL-lens charts so QAAUM share is computed against the
+   *  period-average envelope, not the closing-balance one. */
+  activeEquityAaum?: AmfiMonthlyPdfFieldProvenance;
+  etfIndexAaum?: AmfiMonthlyPdfFieldProvenance;
+  arbitrageAaum?: AmfiMonthlyPdfFieldProvenance;
   // Major-category AAUM denominators from page-1 Sub Total rows.
   // Used by the /monthly Category Drilldown for QAAUM-share %.
   debtAaum?: AmfiMonthlyPdfFieldProvenance;
@@ -306,6 +312,17 @@ export interface AmfiMonthlyPdfRow {
    *  unexplained but does NOT affect the Active Equity / ETF & Index
    *  classification, which match IIFL within ~1%. */
   arbitrageAum?: number;
+  /** AAUM (period-average) version of `activeEquityAum`, derived as:
+   *    Sub Total - II AAUM
+   *    + (Sub Total - III AAUM − Arbitrage Fund AAUM)
+   *    + Sub Total - IV AAUM
+   *  Used by IIFL-lens charts so QAAUM share lines compute against a
+   *  period-average envelope rather than the closing-balance one. */
+  activeEquityAaum?: number;
+  /** AAUM version of `etfIndexAum` = Index Funds AAUM + Other ETFs AAUM. */
+  etfIndexAaum?: number;
+  /** AAUM version of `arbitrageAum` (Arbitrage Fund Average Net AUM column). */
+  arbitrageAaum?: number;
   sipContribution?: number;            // ₹ Cr (monthly inflow, press release only)
   sipAum?: number;                     // ₹ Cr (press release only)
   sipAccounts?: number;                // count of live SIP accounts (press release only)
