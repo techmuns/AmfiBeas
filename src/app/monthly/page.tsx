@@ -36,8 +36,14 @@ import {
   resolveSelectedRow,
   type AmfiMonthlyKpiField,
 } from "@/data/amfi-monthly";
+import {
+  CATEGORY_DISPLAY,
+  latestCategoryProvenance,
+  monthlyCategoryShareTrend,
+} from "@/data/amfi-monthly-category";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MonthPicker } from "@/components/filters/MonthPicker";
+import { MultiLine } from "@/components/charts/MultiLine";
 import {
   formatCompactCrSafe,
   formatCroreCountSafe,
@@ -430,6 +436,26 @@ export default async function MonthlyPage({
     latestProvenanceFor("etfIndexAum")
   );
 
+  // ---- Category Flow Share (IIFL Figure 31-34) section ---------------
+  //
+  // For each of the 4 IIFL-reference categories, build a chronological
+  // {month, aumSharePct, flowSharePct} series with both shares
+  // computed against the active-equity envelope (activeEquityAum and
+  // activeEquityNetInflow respectively). Cells are null when either
+  // numerator or denominator is missing — the chart shows a gap, not
+  // a fake zero.
+  const categoryShareCards = CATEGORY_DISPLAY.map((c) => {
+    const series = monthlyCategoryShareTrend(c.slug, 24);
+    const hasData = series.some(
+      (r) => r.aumSharePct !== null || r.flowSharePct !== null
+    );
+    const aumHover = formatKpiProvenanceTooltip(
+      latestCategoryProvenance(c.slug, "categoryAum")
+    );
+    return { ...c, series, hasData, aumHover };
+  });
+  const hasAnyCategoryShare = categoryShareCards.some((c) => c.hasData);
+
   return (
     <div className="space-y-6">
       <PageHeader title="Monthly Operating" subtitle={subtitle} />
@@ -756,6 +782,69 @@ export default async function MonthlyPage({
               Source: AMFI Monthly Report
             </div>
           </Card>
+        </div>
+      )}
+
+      {hasAnyCategoryShare && (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight">
+              Category Flow Share
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              AUM share vs net inflow share · live from uploaded AMFI
+              Monthly Reports
+            </p>
+          </div>
+
+          <section className="grid gap-4 lg:grid-cols-2">
+            {categoryShareCards.map((c) => (
+              <Card
+                key={c.slug}
+                title={c.label}
+                subtitle={`${c.series.length} month${c.series.length === 1 ? "" : "s"} · % of active-equity envelope`}
+              >
+                {c.hasData ? (
+                  <MultiLine
+                    data={c.series}
+                    xKey="month"
+                    labelFormat="month"
+                    valueFormat="pct"
+                    axisFormat="pct"
+                    lines={[
+                      {
+                        key: "aumSharePct",
+                        name: "AUM share",
+                        color: "hsl(var(--chart-1))",
+                      },
+                      {
+                        key: "flowSharePct",
+                        name: "Net inflow share",
+                        color: "hsl(var(--chart-3))",
+                      },
+                    ]}
+                  />
+                ) : (
+                  <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                    Category data unavailable
+                  </div>
+                )}
+                <div
+                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
+                  title={c.aumHover ?? undefined}
+                >
+                  Source: AMFI Monthly Report
+                </div>
+              </Card>
+            ))}
+          </section>
+
+          <p className="text-[11px] text-muted-foreground">
+            AUM share uses Active Equity AUM denominator. Net inflow
+            share uses Active Equity Net Inflow denominator. Active
+            Equity = Growth/Equity + Hybrid ex-Arbitrage +
+            Solution-oriented schemes.
+          </p>
         </div>
       )}
 
