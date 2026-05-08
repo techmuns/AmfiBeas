@@ -34,6 +34,7 @@ import type {
   AmfiMonthlyCategoryRow,
   AmfiMonthlyCategorySlug,
   AmfiMonthlyCategorySnapshot,
+  AmfiMonthlyMajorCategorySlug,
   AmfiMonthlyPdfFieldProvenance,
   AmfiMonthlyPdfFieldSources,
   AmfiMonthlyPdfRow,
@@ -63,26 +64,156 @@ const CATEGORY_SNAPSHOT_FILE = "amfi-monthly-category.json";
  * Adding a new category here ALSO requires extending
  * `AmfiMonthlyCategorySlug` in the schema.
  */
+const MAJOR_CATEGORY_LABELS: Record<
+  AmfiMonthlyMajorCategorySlug,
+  string
+> = {
+  "income-debt": "Income/Debt Oriented Schemes",
+  "growth-equity": "Growth/Equity Oriented Schemes",
+  hybrid: "Hybrid Schemes",
+  solution: "Solution Oriented Schemes",
+  "other-schemes": "Other Schemes",
+};
+
 const CATEGORY_SPECS: {
   slug: AmfiMonthlyCategorySlug;
   label: string;
+  majorCategorySlug: AmfiMonthlyMajorCategorySlug;
   re: RegExp;
 }[] = [
+  // ---- Sub I — Income/Debt Oriented (16 rows). Several pairs need
+  // negative lookbehinds / lookaheads to avoid sub-string collisions:
+  //   - "Short Duration Fund" appears INSIDE "Ultra Short Duration Fund"
+  //   - "Long Duration Fund" appears INSIDE "Medium to Long Duration Fund"
+  //   - "Gilt Fund" appears INSIDE "Gilt Fund with 10 year constant duration"
+  {
+    slug: "overnight",
+    label: "Overnight Fund",
+    majorCategorySlug: "income-debt",
+    re: /\bOvernight\s+Fund\b/i,
+  },
+  {
+    slug: "liquid",
+    label: "Liquid Fund",
+    majorCategorySlug: "income-debt",
+    re: /\bLiquid\s+Fund\b/i,
+  },
+  {
+    slug: "ultra-short-duration",
+    label: "Ultra Short Duration Fund",
+    majorCategorySlug: "income-debt",
+    re: /\bUltra\s+Short\s+Duration\s+Fund\b/i,
+  },
+  {
+    slug: "low-duration",
+    label: "Low Duration Fund",
+    majorCategorySlug: "income-debt",
+    re: /\bLow\s+Duration\s+Fund\b/i,
+  },
+  {
+    slug: "money-market",
+    label: "Money Market Fund",
+    majorCategorySlug: "income-debt",
+    re: /\bMoney\s+Market\s+Fund\b/i,
+  },
+  {
+    // Avoid matching "Ultra Short Duration Fund" — lookbehind rejects
+    // "Ultra " (6 chars) and "ra " (3 chars) before "Short".
+    slug: "short-duration",
+    label: "Short Duration Fund",
+    majorCategorySlug: "income-debt",
+    re: /(?<!Ultra\s)\bShort\s+Duration\s+Fund\b/i,
+  },
+  {
+    slug: "medium-duration",
+    label: "Medium Duration Fund",
+    majorCategorySlug: "income-debt",
+    re: /\bMedium\s+Duration\s+Fund\b/i,
+  },
+  {
+    slug: "medium-to-long-duration",
+    label: "Medium to Long Duration Fund",
+    majorCategorySlug: "income-debt",
+    re: /\bMedium\s+to\s+Long\s+Duration\s+Fund\b/i,
+  },
+  {
+    // Avoid matching "Medium to Long Duration Fund" — lookbehind
+    // rejects "to " (3 chars) before "Long".
+    slug: "long-duration",
+    label: "Long Duration Fund",
+    majorCategorySlug: "income-debt",
+    re: /(?<!to\s)\bLong\s+Duration\s+Fund\b/i,
+  },
+  {
+    slug: "dynamic-bond",
+    label: "Dynamic Bond Fund",
+    majorCategorySlug: "income-debt",
+    re: /\bDynamic\s+Bond\s+Fund\b/i,
+  },
+  {
+    slug: "corporate-bond",
+    label: "Corporate Bond Fund",
+    majorCategorySlug: "income-debt",
+    re: /\bCorporate\s+Bond\s+Fund\b/i,
+  },
+  {
+    slug: "credit-risk",
+    label: "Credit Risk Fund",
+    majorCategorySlug: "income-debt",
+    re: /\bCredit\s+Risk\s+Fund\b/i,
+  },
+  {
+    slug: "banking-psu",
+    label: "Banking and PSU Fund",
+    majorCategorySlug: "income-debt",
+    re: /\bBanking\s+and\s+PSU\s+Fund\b/i,
+  },
+  {
+    // Avoid matching "Gilt Fund with 10 year constant duration" by
+    // refusing to match when followed by " with".
+    slug: "gilt",
+    label: "Gilt Fund",
+    majorCategorySlug: "income-debt",
+    re: /\bGilt\s+Fund\b(?!\s+with)/i,
+  },
+  {
+    slug: "gilt-10y-constant",
+    label: "Gilt Fund with 10 year constant duration",
+    majorCategorySlug: "income-debt",
+    re: /\bGilt\s+Fund\s+with\s+10\s+year\s+constant\s+duration\b/i,
+  },
+  {
+    slug: "floater",
+    label: "Floater Fund",
+    majorCategorySlug: "income-debt",
+    re: /\bFloater\s+Fund\b/i,
+  },
+
   // ---- Sub II — Growth/Equity Oriented (11 rows; all in active-equity
   // envelope). Order matters only when two patterns could match the
   // same line — see the disambiguation comments inline.
   //
   // "Multi Cap Fund" vs "Multi Asset Allocation Fund": both start with
   // "Multi" but the "Cap" vs "Asset" second word makes them disjoint.
-  { slug: "multi-cap", label: "Multi Cap Fund", re: /\bMulti\s+Cap\s+Fund\b/i },
+  {
+    slug: "multi-cap",
+    label: "Multi Cap Fund",
+    majorCategorySlug: "growth-equity",
+    re: /\bMulti\s+Cap\s+Fund\b/i,
+  },
   // "Large Cap Fund" must NOT collide with "Large & Mid Cap Fund".
   // The pattern requires "Large" then whitespace then "Cap" — the
-  // "& Mid" interrupt rejects the other row. Verified on Mar 2026,
-  // Feb 2026, Apr 2025, Apr 2024.
-  { slug: "large-cap", label: "Large Cap Fund", re: /\bLarge\s+Cap\s+Fund\b/i },
+  // "& Mid" interrupt rejects the other row.
+  {
+    slug: "large-cap",
+    label: "Large Cap Fund",
+    majorCategorySlug: "growth-equity",
+    re: /\bLarge\s+Cap\s+Fund\b/i,
+  },
   {
     slug: "large-mid-cap",
     label: "Large & Mid Cap Fund",
+    majorCategorySlug: "growth-equity",
     re: /\bLarge\s*&\s*Mid\s+Cap\s+Fund\b/i,
   },
   // "Mid Cap Fund" appears as a substring inside "Large & Mid Cap Fund".
@@ -91,23 +222,37 @@ const CATEGORY_SPECS: {
   {
     slug: "mid-cap",
     label: "Mid Cap Fund",
+    majorCategorySlug: "growth-equity",
     re: /(?<!&\s)\bMid\s+Cap\s+Fund\b/i,
   },
-  { slug: "small-cap", label: "Small Cap Fund", re: /\bSmall\s+Cap\s+Fund\b/i },
+  {
+    slug: "small-cap",
+    label: "Small Cap Fund",
+    majorCategorySlug: "growth-equity",
+    re: /\bSmall\s+Cap\s+Fund\b/i,
+  },
   {
     slug: "dividend-yield",
     label: "Dividend Yield Fund",
+    majorCategorySlug: "growth-equity",
     re: /\bDividend\s+Yield\s+Fund\b/i,
   },
   {
     slug: "value-contra",
     label: "Value Fund/Contra Fund",
+    majorCategorySlug: "growth-equity",
     re: /\bValue\s+Fund\s*\/\s*Contra\s+Fund\b/i,
   },
-  { slug: "focused", label: "Focused Fund", re: /\bFocused\s+Fund\b/i },
+  {
+    slug: "focused",
+    label: "Focused Fund",
+    majorCategorySlug: "growth-equity",
+    re: /\bFocused\s+Fund\b/i,
+  },
   {
     slug: "sectoral-thematic",
     label: "Sectoral/Thematic Funds",
+    majorCategorySlug: "growth-equity",
     // Match "Sectoral/Thematic Funds" (slash) and tolerate "Sectoral-
     // Thematic Funds" if AMFI ever rewords it.
     re: /\bSectoral\s*[/\-]\s*Thematic\s+Funds?\b/i,
@@ -116,49 +261,104 @@ const CATEGORY_SPECS: {
   // (Sub B-II). The open-ended row appears first in document order, so
   // first-match-per-category-per-file (the loop's `found` set) ensures
   // we capture the open-ended row.
-  { slug: "elss", label: "ELSS", re: /\bELSS\b/i },
-  { slug: "flexi-cap", label: "Flexi Cap Fund", re: /\bFlexi\s+Cap\s+Fund\b/i },
+  {
+    slug: "elss",
+    label: "ELSS",
+    majorCategorySlug: "growth-equity",
+    re: /\bELSS\b/i,
+  },
+  {
+    slug: "flexi-cap",
+    label: "Flexi Cap Fund",
+    majorCategorySlug: "growth-equity",
+    re: /\bFlexi\s+Cap\s+Fund\b/i,
+  },
 
-  // ---- Sub III — Hybrid (5 rows in envelope; Arbitrage excluded by
-  // the active-equity formula and intentionally left out here).
+  // ---- Sub III — Hybrid (all 6 rows). Arbitrage IS in the Hybrid
+  // major category (it's row v under Sub III on the AMFI table) so it
+  // belongs here for the drilldown denominator, even though the IIFL-
+  // active-equity envelope formula excludes it.
   {
     slug: "conservative-hybrid",
     label: "Conservative Hybrid Fund",
+    majorCategorySlug: "hybrid",
     re: /\bConservative\s+Hybrid\s+Fund\b/i,
   },
   {
     slug: "balanced-aggressive-hybrid",
     label: "Balanced Hybrid Fund/Aggressive Hybrid Fund",
+    majorCategorySlug: "hybrid",
     re: /\bBalanced\s+Hybrid\s+Fund\s*\/\s*Aggressive\s+Hybrid\s+Fund\b/i,
   },
   {
     slug: "baf-daa",
     label: "Dynamic Asset Allocation/Balanced Advantage Fund",
+    majorCategorySlug: "hybrid",
     re: /\bDynamic\s+Asset\s+Allocation\s*\/\s*Balanced\s+Advantage\s+Fund\b/i,
   },
   {
     slug: "multi-asset",
     label: "Multi Asset Allocation Fund",
+    majorCategorySlug: "hybrid",
     re: /\bMulti[\s-]+Asset[\s-]+Allocation\s+Fund\b/i,
+  },
+  {
+    slug: "arbitrage",
+    label: "Arbitrage Fund",
+    majorCategorySlug: "hybrid",
+    re: /\bArbitrage\s+Fund\b/i,
   },
   {
     slug: "equity-savings",
     label: "Equity Savings Fund",
+    majorCategorySlug: "hybrid",
     re: /\bEquity\s+Savings\s+Fund\b/i,
   },
 
-  // ---- Sub IV — Solution Oriented (both rows in envelope).
-  // AMFI writes "Childrens Fund" without an apostrophe in some
-  // vintages and "Children's Fund" in others; tolerate both.
+  // ---- Sub IV — Solution Oriented (both rows). Extracted but not
+  // surfaced in the drilldown UI. AMFI writes "Childrens Fund" without
+  // an apostrophe in some vintages and "Children's Fund" in others;
+  // tolerate both.
   {
     slug: "retirement",
     label: "Retirement Fund",
+    majorCategorySlug: "solution",
     re: /\bRetirement\s+Fund\b/i,
   },
   {
     slug: "childrens",
     label: "Childrens Fund",
+    majorCategorySlug: "solution",
     re: /\bChildren'?s\s+Fund\b/i,
+  },
+
+  // ---- Sub V — Other Schemes (4 rows). The denominator for this
+  // group is captured separately as `otherSchemesAaum` /
+  // `otherSchemesNetInflow` from the Sub Total - V row.
+  {
+    slug: "index-funds",
+    label: "Index Funds",
+    majorCategorySlug: "other-schemes",
+    re: /\bIndex\s+Funds?\b/i,
+  },
+  {
+    slug: "gold-etf",
+    label: "GOLD ETF",
+    majorCategorySlug: "other-schemes",
+    // AMFI writes "GOLD ETF" (uppercase) — `i` flag matches both.
+    re: /\bGOLD\s+ETF\b/i,
+  },
+  {
+    slug: "other-etfs",
+    label: "Other ETFs",
+    majorCategorySlug: "other-schemes",
+    re: /\bOther\s+ETFs?\b/i,
+  },
+  {
+    slug: "fof-overseas",
+    label: "Fund of funds investing overseas",
+    majorCategorySlug: "other-schemes",
+    re: /\bFund\s+of\s+funds\s+investing\s+overseas\b/i,
   },
 ];
 
@@ -389,6 +589,19 @@ interface MonthlyReportHits {
   industryFolios?: FieldHit;
   industryNfoCount?: FieldHit;
   industryNfoFundsMobilized?: FieldHit;
+  // Major-category AAUM / Net AUM / Net Inflow denominators —
+  // used by the /monthly Category Drilldown. All sourced from
+  // page-1 Sub Total - I / II / III / V rows. Sub Total - I and
+  // Sub Total - II Net AUM and net inflow already exist as
+  // debtAum / equityAum / debtNetInflow / equityNetInflow above.
+  debtAaum?: FieldHit;
+  equityAaum?: FieldHit;
+  hybridAum?: FieldHit;
+  hybridAaum?: FieldHit;
+  hybridNetInflow?: FieldHit;
+  otherSchemesAum?: FieldHit;
+  otherSchemesAaum?: FieldHit;
+  otherSchemesNetInflow?: FieldHit;
 }
 
 /** Internal scratch — intermediate row values that feed the IIFL-
@@ -499,6 +712,15 @@ function parseMonthlyReport(pages: PdfPage[]): {
       interKey: "subTotalIV",
       re: /^\s*Sub\s*Total\s*-\s*IV\b/i,
       label: "Sub Total - IV row · Net AUM column",
+    },
+    {
+      // Sub Total - V (Other Schemes) — denominator for the Other
+      // Schemes drilldown. Captures Net AUM here; AAUM and net
+      // inflow are captured in the netInflow/aaum side branch
+      // below using `spec.key === "otherSchemesAum"`.
+      key: "otherSchemesAum",
+      re: /^\s*Sub\s*Total\s*-\s*V\b/i,
+      label: "Sub Total - V row · Net AUM column",
     },
     {
       key: "totalAum",
@@ -612,12 +834,44 @@ function parseMonthlyReport(pages: PdfPage[]): {
               label: "Sub Total - I row · Net Inflow / Outflow column",
             };
           }
+          const aaum = dataCols[COL_AAUM];
+          if (aaum !== null && aaum > 0 && !hits.debtAaum) {
+            hits.debtAaum = {
+              value: aaum,
+              page: page.num,
+              label: "Sub Total - I row · Average Net AUM column",
+            };
+          }
         } else if (spec.key === "equityAum") {
           if (netInflow !== null && !hits.equityNetInflow) {
             hits.equityNetInflow = {
               value: netInflow,
               page: page.num,
               label: "Sub Total - II row · Net Inflow / Outflow column",
+            };
+          }
+          const aaum = dataCols[COL_AAUM];
+          if (aaum !== null && aaum > 0 && !hits.equityAaum) {
+            hits.equityAaum = {
+              value: aaum,
+              page: page.num,
+              label: "Sub Total - II row · Average Net AUM column",
+            };
+          }
+        } else if (spec.key === "otherSchemesAum") {
+          if (netInflow !== null && !hits.otherSchemesNetInflow) {
+            hits.otherSchemesNetInflow = {
+              value: netInflow,
+              page: page.num,
+              label: "Sub Total - V row · Net Inflow / Outflow column",
+            };
+          }
+          const aaum = dataCols[COL_AAUM];
+          if (aaum !== null && aaum > 0 && !hits.otherSchemesAaum) {
+            hits.otherSchemesAaum = {
+              value: aaum,
+              page: page.num,
+              label: "Sub Total - V row · Average Net AUM column",
             };
           }
         }
@@ -630,6 +884,31 @@ function parseMonthlyReport(pages: PdfPage[]): {
               value: netInflow,
               page: page.num,
               label: "Sub Total - III row · Net Inflow / Outflow column",
+            };
+          }
+          // Sub III is the Hybrid major-category denominator. Mirror
+          // the Sub I/II/V handlers above to expose Hybrid's Net AUM,
+          // AAUM, and Net Inflow as public hits.
+          if (!hits.hybridAum) {
+            hits.hybridAum = {
+              value: aum,
+              page: page.num,
+              label: "Sub Total - III row · Net AUM column",
+            };
+          }
+          if (netInflow !== null && !hits.hybridNetInflow) {
+            hits.hybridNetInflow = {
+              value: netInflow,
+              page: page.num,
+              label: "Sub Total - III row · Net Inflow / Outflow column",
+            };
+          }
+          const aaum = dataCols[COL_AAUM];
+          if (aaum !== null && aaum > 0 && !hits.hybridAaum) {
+            hits.hybridAaum = {
+              value: aaum,
+              page: page.num,
+              label: "Sub Total - III row · Average Net AUM column",
             };
           }
         } else if (spec.interKey === "subTotalIV") {
@@ -875,8 +1154,13 @@ function parseCategoriesFromMonthlyReport(
     for (const line of lines) {
       for (const spec of CATEGORY_SPECS) {
         if (found.has(spec.slug)) continue;
-        if (!spec.re.test(line)) continue;
-        const cols = numericColumns(line);
+        const labelMatch = spec.re.exec(line);
+        if (!labelMatch) continue;
+        // Tokenise only the substring AFTER the label match, so numeric
+        // tokens INSIDE the label (e.g. the "10" in "Gilt Fund with 10
+        // year constant duration") don't shift the column indices.
+        const tail = line.slice(labelMatch.index + labelMatch[0].length);
+        const cols = numericColumns(tail);
         if (cols.length < 7) continue;
         const aum = cols[COL_NET_AUM];
         if (aum === null || aum <= 0) continue;
@@ -887,10 +1171,13 @@ function parseCategoriesFromMonthlyReport(
           sourcePages: [page.num],
           extractedAt,
         };
+        const aaum = cols[COL_AAUM];
         const row: AmfiMonthlyCategoryRow = {
           month,
           categorySlug: spec.slug,
           category: spec.label,
+          majorCategorySlug: spec.majorCategorySlug,
+          majorCategoryLabel: MAJOR_CATEGORY_LABELS[spec.majorCategorySlug],
           categoryAum: aum,
           fieldSources: {
             categoryAum: {
@@ -900,6 +1187,13 @@ function parseCategoriesFromMonthlyReport(
           },
           ...provenanceBase,
         };
+        if (aaum !== null && aaum > 0) {
+          row.categoryAaum = aaum;
+          row.fieldSources.categoryAaum = {
+            ...provenanceBase,
+            sourceLabel: `${spec.label} row · Average Net AUM column`,
+          };
+        }
         if (flow !== null) {
           row.categoryNetInflow = flow;
           row.fieldSources.categoryNetInflow = {
@@ -1403,9 +1697,17 @@ const NUMERIC_FIELDS: (keyof AmfiMonthlyPdfRow)[] = [
   "totalAum",
   "totalAaum",
   "equityAum",
+  "equityAaum",
   "activeEquityAum",
   "debtAum",
+  "debtAaum",
   "liquidAum",
+  "hybridAum",
+  "hybridAaum",
+  "hybridNetInflow",
+  "otherSchemesAum",
+  "otherSchemesAaum",
+  "otherSchemesNetInflow",
   "sipContribution",
   "sipAum",
   "sipAccounts",
