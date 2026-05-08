@@ -11,9 +11,7 @@ import {
   industryByMonth,
   latestMonth,
   marketShare,
-  momChange,
   shareSeries,
-  yoyChange,
 } from "@/data/aggregate";
 import { AMCS } from "@/data/amcs";
 import { monthlyForAmc, MONTHS_LIST } from "@/data/generator";
@@ -24,10 +22,13 @@ import {
   formatKpiProvenanceTooltip,
   getKpiProvenance,
   getKpiValue,
+  latestAmfiMonthlyRow,
+  latestIndustryFolioAdditions,
   latestProvenanceFor,
   monthlyActiveEquityShareTrend,
   monthlyEquityBreakdown,
   monthlyFlowsData,
+  monthlyIndustryFolioAdditionsTrend,
   monthlyTrend,
   resolveSelectedRow,
   type AmfiMonthlyKpiField,
@@ -43,7 +44,6 @@ import { MultiLine } from "@/components/charts/MultiLine";
 import {
   formatCompactCrSafe,
   formatCroreCountSafe,
-  formatDelta,
   formatIntSafe,
   formatLakhSafe,
   formatPctSafe,
@@ -74,7 +74,6 @@ export default async function MonthlyPage({
   );
 
   const trimmedMonths = new Set(trimMonths(MONTHS_LIST, filters.range));
-  const series = fullSeries.filter((r) => trimmedMonths.has(r.month));
   const aumShareRows = fullShareAum.rows.filter((r) =>
     trimmedMonths.has(r.month as string)
   );
@@ -88,27 +87,12 @@ export default async function MonthlyPage({
   const latest = fullSeries[fullSeries.length - 1];
   const industryLatest = industrySeries[industrySeries.length - 1];
 
-  const investorsYoy = yoyChange(
-    fullSeries.map((m) => m.investorAdditions)
-  );
-  const foliosYoy = yoyChange(fullSeries.map((m) => m.folios));
-  const nfoMom = momChange(fullSeries.map((m) => m.nfoCount));
-
   // Peer-vs-industry market share KPIs (only meaningful when filtered).
   // Currently only sipShareTotal feeds a still-rendered demo card; the
   // AUM- and active-equity-share KPIs were retired with their cards.
   const sipShareTotal = slugs
     ? marketShare(latest.sipContribution, industryLatest.sipContribution)
     : null;
-
-  const investorsChartSeries = series.map((m) => ({
-    label: m.month,
-    value: m.investorAdditions,
-  }));
-  const nfoChartSeries = series.map((m) => ({
-    label: m.month,
-    value: m.nfoCount,
-  }));
 
   const heatmapAmcs = slugs ? AMCS.filter((a) => slugs.includes(a.slug)) : AMCS;
   const heatmapRows: HeatmapRow[] = heatmapAmcs.map((a) => ({
@@ -138,9 +122,6 @@ export default async function MonthlyPage({
       };
     }
   );
-
-  const trend = (n: number) =>
-    n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
 
   const subtitle = slugs
     ? `${slugs.length} peer${slugs.length > 1 ? "s" : ""} · ${latestMonth()}`
@@ -396,6 +377,66 @@ export default async function MonthlyPage({
   const etfIndexHover = formatKpiProvenanceTooltip(
     latestProvenanceFor("etfIndexAum")
   );
+
+  // ---- Industry Folios & NFO section ---------------------------------
+  //
+  // Four live KPI cards + up to three trend charts driven by the
+  // industry-wide AMFI Monthly Report fields landed by PR #48:
+  //   - industryFolios            (raw folio count)
+  //   - industryNfoCount          (open + close-ended NFO launches)
+  //   - industryNfoFundsMobilized (₹ Cr raised during the month)
+  //
+  // industryFolioAdditions is DERIVED from consecutive months of
+  // industryFolios (delta) — never stored, always computed at render
+  // time. When the prior month's folios are missing the delta is
+  // omitted (no fake zero).
+  const folioLatestRow = latestAmfiMonthlyRow();
+  const industryFoliosLatest =
+    folioLatestRow && typeof folioLatestRow.industryFolios === "number"
+      ? folioLatestRow.industryFolios
+      : null;
+  const industryFolioAdditionsLatest = latestIndustryFolioAdditions();
+  const industryNfoCountLatest =
+    folioLatestRow && typeof folioLatestRow.industryNfoCount === "number"
+      ? folioLatestRow.industryNfoCount
+      : null;
+  const industryNfoFundsLatest =
+    folioLatestRow &&
+    typeof folioLatestRow.industryNfoFundsMobilized === "number"
+      ? folioLatestRow.industryNfoFundsMobilized
+      : null;
+
+  const folioAdditionsTrend = monthlyIndustryFolioAdditionsTrend(24);
+  const nfoCountTrend = monthlyTrend("industryNfoCount", 24);
+  const nfoFundsTrend = monthlyTrend("industryNfoFundsMobilized", 24);
+
+  const foliosHover = formatKpiProvenanceTooltip(
+    latestProvenanceFor("industryFolios")
+  );
+  const nfoCountHover = formatKpiProvenanceTooltip(
+    latestProvenanceFor("industryNfoCount")
+  );
+  const nfoFundsHover = formatKpiProvenanceTooltip(
+    latestProvenanceFor("industryNfoFundsMobilized")
+  );
+  const foliosSourceLine =
+    formatKpiProvenanceLine(latestProvenanceFor("industryFolios")) ??
+    "Source: AMFI Monthly Report";
+  const nfoCountSourceLine =
+    formatKpiProvenanceLine(latestProvenanceFor("industryNfoCount")) ??
+    "Source: AMFI Monthly Report";
+  const nfoFundsSourceLine =
+    formatKpiProvenanceLine(latestProvenanceFor("industryNfoFundsMobilized")) ??
+    "Source: AMFI Monthly Report";
+
+  const hasAnyFolioOrNfo =
+    industryFoliosLatest !== null ||
+    industryNfoCountLatest !== null ||
+    industryNfoFundsLatest !== null;
+  const hasAnyFolioOrNfoTrend =
+    folioAdditionsTrend.length > 0 ||
+    nfoCountTrend.length > 0 ||
+    nfoFundsTrend.length > 0;
 
   // ---- Category Flow Share (IIFL Figure 31-34) section ---------------
   //
@@ -827,44 +868,138 @@ export default async function MonthlyPage({
         </div>
       )}
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          tone="demo"
-          label={slugs ? "SIP Share" : "Investor Additions"}
-          value={
-            slugs
-              ? formatPctSafe(sipShareTotal, 2)
-              : formatLakhSafe(latest.investorAdditions)
-          }
-          delta={slugs ? undefined : `${formatDelta(investorsYoy)} YoY`}
-          trend={slugs ? "flat" : trend(investorsYoy)}
-          note={demoIndustryNote}
-        />
-        <KpiCard
-          tone="demo"
-          label="Folios"
-          value={formatCroreCountSafe(latest.folios)}
-          delta={`${formatDelta(foliosYoy)} YoY`}
-          trend={trend(foliosYoy)}
-          note={demoIndustryNote}
-        />
-        <KpiCard
-          tone="demo"
-          label="NFO Launches"
-          value={formatIntSafe(latest.nfoCount)}
-          delta={`${formatDelta(nfoMom)} MoM`}
-          trend={trend(nfoMom)}
-          note={demoIndustryNote}
-        />
-        {!slugs && (
+      {hasAnyFolioOrNfo && (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight">
+              Industry Folios &amp; NFO
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Live from uploaded AMFI Monthly Reports
+            </p>
+          </div>
+
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <KpiCard
+              label="Folios"
+              value={formatCroreCountSafe(industryFoliosLatest)}
+              note={foliosSourceLine}
+              noteHover={foliosHover ?? undefined}
+            />
+            <KpiCard
+              label="Folio Additions"
+              value={formatLakhSafe(industryFolioAdditionsLatest)}
+              note={foliosSourceLine}
+              noteHover={foliosHover ?? undefined}
+            />
+            <KpiCard
+              label="NFO Launches"
+              value={formatIntSafe(industryNfoCountLatest)}
+              note={nfoCountSourceLine}
+              noteHover={nfoCountHover ?? undefined}
+            />
+            <KpiCard
+              label="NFO Funds Mobilized"
+              value={formatCompactCrSafe(industryNfoFundsLatest)}
+              note={nfoFundsSourceLine}
+              noteHover={nfoFundsHover ?? undefined}
+            />
+          </section>
+
+          {hasAnyFolioOrNfoTrend && (
+            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <Card
+                title="Folio Additions Trend"
+                subtitle={`Net new folios per month · ${folioAdditionsTrend.length} month${folioAdditionsTrend.length === 1 ? "" : "s"} · lakh`}
+              >
+                {folioAdditionsTrend.length > 0 ? (
+                  <BarSeries
+                    data={folioAdditionsTrend}
+                    name="Folio Additions"
+                    color="hsl(var(--chart-4))"
+                    valueFormat="lakh"
+                    axisFormat="lakh"
+                    labelFormat="month"
+                  />
+                ) : (
+                  <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                    Need at least two consecutive months of folios
+                  </div>
+                )}
+                <div
+                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
+                  title={foliosHover ?? undefined}
+                >
+                  {foliosSourceLine} · derived MoM Δ from industryFolios
+                </div>
+              </Card>
+
+              <Card
+                title="NFO Launches Trend"
+                subtitle={`Open + close-ended schemes · ${nfoCountTrend.length} month${nfoCountTrend.length === 1 ? "" : "s"}`}
+              >
+                {nfoCountTrend.length > 0 ? (
+                  <BarSeries
+                    data={nfoCountTrend}
+                    name="NFO Launches"
+                    color="hsl(var(--chart-5))"
+                    valueFormat="count"
+                    axisFormat="count"
+                    labelFormat="month"
+                  />
+                ) : (
+                  <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                    No NFO count months yet
+                  </div>
+                )}
+                <div
+                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
+                  title={nfoCountHover ?? undefined}
+                >
+                  {nfoCountSourceLine}
+                </div>
+              </Card>
+
+              <Card
+                title="NFO Funds Mobilized Trend"
+                subtitle={`Funds raised during NFOs · ${nfoFundsTrend.length} month${nfoFundsTrend.length === 1 ? "" : "s"} · ₹ Cr`}
+              >
+                {nfoFundsTrend.length > 0 ? (
+                  <BarSeries
+                    data={nfoFundsTrend}
+                    name="NFO Funds"
+                    color="hsl(var(--chart-2))"
+                    valueFormat="cr"
+                    axisFormat="cr"
+                    labelFormat="month"
+                  />
+                ) : (
+                  <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                    No NFO funds months yet
+                  </div>
+                )}
+                <div
+                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
+                  title={nfoFundsHover ?? undefined}
+                >
+                  {nfoFundsSourceLine}
+                </div>
+              </Card>
+            </section>
+          )}
+        </div>
+      )}
+
+      {slugs && (
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <KpiCard
             tone="demo"
-            label="NFO AUM Collected"
-            value={formatCompactCrSafe(latest.nfoAumCollected)}
+            label="SIP Share"
+            value={formatPctSafe(sipShareTotal, 2)}
             note={demoIndustryNote}
           />
-        )}
-      </section>
+        </section>
+      )}
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Card
@@ -895,28 +1030,6 @@ export default async function MonthlyPage({
               name: amcLabel(k),
               color: AMC_COLORS[k] ?? "hsl(var(--muted-foreground))",
             }))}
-          />
-        </Card>
-        <Card
-          tone="demo"
-          title="Investor Additions"
-          subtitle="New folios per month"
-        >
-          <BarSeries
-            data={investorsChartSeries}
-            valueFormat="lakh"
-            axisFormat="lakh"
-            color="hsl(var(--chart-4))"
-            name="New investors"
-          />
-        </Card>
-        <Card tone="demo" title="NFO Launches" subtitle="Count per month">
-          <BarSeries
-            data={nfoChartSeries}
-            valueFormat="count"
-            axisFormat="count"
-            color="hsl(var(--chart-5))"
-            name="NFOs"
           />
         </Card>
         <Card
