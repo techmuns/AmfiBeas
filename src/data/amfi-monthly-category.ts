@@ -372,12 +372,14 @@ export const IIFL_HEATMAP_CATEGORIES: {
   { slug: "elss", label: "ELSS" },
 ];
 
-/** Build the 12-month × 15-category heatmap payload. The window ENDS
- *  at `selectedMonth` (or the latest available month when missing /
- *  unavailable) and includes the 11 prior months chronologically.
- *  Returns the months it actually used so the page can title the
- *  axis correctly. */
-export function iiflActiveEquityHeatmapData(selectedMonth?: string): {
+/** Build the 12-month × 15-category heatmap payload. The window
+ *  always ENDS at the latest available month and includes the 11
+ *  prior months chronologically — independent of any `?month=`
+ *  selection on /monthly. When fewer than 12 months are available,
+ *  returns only the real months that exist (never padded with fake
+ *  zeros). Returns the months it actually used so the page can
+ *  title the axis correctly. */
+export function iiflActiveEquityHeatmapData(): {
   months: string[];
   rows: { slug: AmfiMonthlyCategorySlug; label: string; values: (number | null)[] }[];
 } {
@@ -385,14 +387,10 @@ export function iiflActiveEquityHeatmapData(selectedMonth?: string): {
   const allMonths = monthly.map((r) => r.month);
   if (allMonths.length === 0) return { months: [], rows: [] };
 
-  // Resolve the end month — selected if available, else latest.
-  let endIdx = allMonths.length - 1;
-  if (selectedMonth) {
-    const i = allMonths.indexOf(selectedMonth);
-    if (i >= 0) endIdx = i;
-  }
-  const startIdx = Math.max(0, endIdx - 11);
-  const windowMonths = allMonths.slice(startIdx, endIdx + 1);
+  // Always anchor on the latest available month; slice the trailing
+  // 12 (or fewer if not enough history exists yet). New months
+  // ingested in future will automatically roll the oldest off.
+  const windowMonths = allMonths.slice(-12);
 
   // Per-month active-equity net-flow denominator lookup.
   const denomByMonth = new Map<string, number>();

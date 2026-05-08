@@ -80,21 +80,33 @@ function formatCell(v: number): string {
  * IIFL-style flow heatmap: dark blue header, dense rows, red→pale→green
  * cells with whole-percent values. Designed to match the institutional
  * look of the source report's category flow tables.
+ *
+ * Sizing: uses `table-fixed` with a percentage-based <colgroup> so the
+ * 12 month columns + category column fit within the parent card width
+ * on standard desktops without horizontal scrolling. The wrapper still
+ * allows horizontal scroll on very small screens where the labels
+ * cannot be made any narrower without becoming unreadable.
  */
 export function IiflHeatmap({ months, rows }: IiflHeatmapProps) {
+  const monthColPct = months.length > 0 ? 76 / months.length : 0;
   return (
-    <div className="overflow-x-auto rounded-md border border-border">
-      <table className="min-w-full border-collapse text-[11px] tabular">
+    <div className="overflow-x-auto rounded-md border border-border md:overflow-x-visible">
+      <table className="w-full table-fixed border-collapse text-[10px] tabular">
+        <colgroup>
+          <col style={{ width: "24%" }} />
+          {months.map((m) => (
+            <col key={m} style={{ width: `${monthColPct}%` }} />
+          ))}
+        </colgroup>
         <thead>
           <tr className="bg-[#1e3a5f] text-white">
-            <th className="sticky left-0 z-10 bg-[#1e3a5f] px-3 py-2 text-left font-medium tracking-tight">
+            <th className="bg-[#1e3a5f] px-2 py-1.5 text-left text-[11px] font-medium tracking-tight">
               Category
             </th>
             {months.map((m) => (
               <th
                 key={m}
-                className="whitespace-nowrap px-2 py-2 text-center font-medium"
-                style={{ minWidth: 56 }}
+                className="whitespace-nowrap px-1 py-1.5 text-center font-medium"
               >
                 {formatHeatmapMonth(m)}
               </th>
@@ -113,7 +125,7 @@ export function IiflHeatmap({ months, rows }: IiflHeatmapProps) {
               <th
                 scope="row"
                 className={cn(
-                  "sticky left-0 z-10 whitespace-nowrap px-3 py-1.5 text-left text-xs font-medium",
+                  "px-2 py-1 text-left text-[11px] font-medium leading-tight",
                   rowIdx % 2 === 0 ? "bg-card" : "bg-muted/20"
                 )}
               >
@@ -124,9 +136,8 @@ export function IiflHeatmap({ months, rows }: IiflHeatmapProps) {
                   return (
                     <td
                       key={i}
-                      className="border-l border-background bg-muted text-center text-muted-foreground"
+                      className="border-l border-background bg-muted px-0.5 py-1 text-center text-muted-foreground"
                       title={`${row.label} · ${formatHeatmapMonth(months[i])}: data unavailable`}
-                      style={{ minWidth: 56 }}
                     >
                       —
                     </td>
@@ -135,11 +146,10 @@ export function IiflHeatmap({ months, rows }: IiflHeatmapProps) {
                 return (
                   <td
                     key={i}
-                    className="border-l border-background px-2 py-1.5 text-center font-medium"
+                    className="border-l border-background px-0.5 py-1 text-center font-medium"
                     style={{
                       backgroundColor: cellBackground(v),
                       color: cellTextColor(v),
-                      minWidth: 56,
                     }}
                     title={`${row.label} · ${formatHeatmapMonth(months[i])}: ${v.toFixed(1)}%`}
                   >
