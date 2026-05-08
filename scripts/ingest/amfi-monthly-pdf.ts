@@ -68,12 +68,43 @@ const CATEGORY_SPECS: {
   label: string;
   re: RegExp;
 }[] = [
-  { slug: "flexi-cap", label: "Flexi Cap Fund", re: /\bFlexi\s+Cap\s+Fund\b/i },
+  // ---- Sub II — Growth/Equity Oriented (11 rows; all in active-equity
+  // envelope). Order matters only when two patterns could match the
+  // same line — see the disambiguation comments inline.
+  //
+  // "Multi Cap Fund" vs "Multi Asset Allocation Fund": both start with
+  // "Multi" but the "Cap" vs "Asset" second word makes them disjoint.
+  { slug: "multi-cap", label: "Multi Cap Fund", re: /\bMulti\s+Cap\s+Fund\b/i },
+  // "Large Cap Fund" must NOT collide with "Large & Mid Cap Fund".
+  // The pattern requires "Large" then whitespace then "Cap" — the
+  // "& Mid" interrupt rejects the other row. Verified on Mar 2026,
+  // Feb 2026, Apr 2025, Apr 2024.
+  { slug: "large-cap", label: "Large Cap Fund", re: /\bLarge\s+Cap\s+Fund\b/i },
   {
-    slug: "multi-asset",
-    label: "Multi Asset Allocation Fund",
-    re: /\bMulti[\s-]+Asset[\s-]+Allocation\s+Fund\b/i,
+    slug: "large-mid-cap",
+    label: "Large & Mid Cap Fund",
+    re: /\bLarge\s*&\s*Mid\s+Cap\s+Fund\b/i,
   },
+  // "Mid Cap Fund" appears as a substring inside "Large & Mid Cap Fund".
+  // The negative lookbehind `(?<!&\s)` rejects the "& Mid Cap Fund"
+  // case so the standalone Mid Cap row is the only match.
+  {
+    slug: "mid-cap",
+    label: "Mid Cap Fund",
+    re: /(?<!&\s)\bMid\s+Cap\s+Fund\b/i,
+  },
+  { slug: "small-cap", label: "Small Cap Fund", re: /\bSmall\s+Cap\s+Fund\b/i },
+  {
+    slug: "dividend-yield",
+    label: "Dividend Yield Fund",
+    re: /\bDividend\s+Yield\s+Fund\b/i,
+  },
+  {
+    slug: "value-contra",
+    label: "Value Fund/Contra Fund",
+    re: /\bValue\s+Fund\s*\/\s*Contra\s+Fund\b/i,
+  },
+  { slug: "focused", label: "Focused Fund", re: /\bFocused\s+Fund\b/i },
   {
     slug: "sectoral-thematic",
     label: "Sectoral/Thematic Funds",
@@ -81,11 +112,54 @@ const CATEGORY_SPECS: {
     // Thematic Funds" if AMFI ever rewords it.
     re: /\bSectoral\s*[/\-]\s*Thematic\s+Funds?\b/i,
   },
-  // "Large Cap Fund" must NOT collide with "Large & Mid Cap Fund".
-  // The pattern requires "Large" then whitespace then "Cap" — the
-  // "& Mid" interrupt rejects the other row. Verified on Mar 2026,
-  // Feb 2026, Apr 2025, Apr 2024.
-  { slug: "large-cap", label: "Large Cap Fund", re: /\bLarge\s+Cap\s+Fund\b/i },
+  // ELSS appears in two places: open-ended (Sub II) AND close-ended
+  // (Sub B-II). The open-ended row appears first in document order, so
+  // first-match-per-category-per-file (the loop's `found` set) ensures
+  // we capture the open-ended row.
+  { slug: "elss", label: "ELSS", re: /\bELSS\b/i },
+  { slug: "flexi-cap", label: "Flexi Cap Fund", re: /\bFlexi\s+Cap\s+Fund\b/i },
+
+  // ---- Sub III — Hybrid (5 rows in envelope; Arbitrage excluded by
+  // the active-equity formula and intentionally left out here).
+  {
+    slug: "conservative-hybrid",
+    label: "Conservative Hybrid Fund",
+    re: /\bConservative\s+Hybrid\s+Fund\b/i,
+  },
+  {
+    slug: "balanced-aggressive-hybrid",
+    label: "Balanced Hybrid Fund/Aggressive Hybrid Fund",
+    re: /\bBalanced\s+Hybrid\s+Fund\s*\/\s*Aggressive\s+Hybrid\s+Fund\b/i,
+  },
+  {
+    slug: "baf-daa",
+    label: "Dynamic Asset Allocation/Balanced Advantage Fund",
+    re: /\bDynamic\s+Asset\s+Allocation\s*\/\s*Balanced\s+Advantage\s+Fund\b/i,
+  },
+  {
+    slug: "multi-asset",
+    label: "Multi Asset Allocation Fund",
+    re: /\bMulti[\s-]+Asset[\s-]+Allocation\s+Fund\b/i,
+  },
+  {
+    slug: "equity-savings",
+    label: "Equity Savings Fund",
+    re: /\bEquity\s+Savings\s+Fund\b/i,
+  },
+
+  // ---- Sub IV — Solution Oriented (both rows in envelope).
+  // AMFI writes "Childrens Fund" without an apostrophe in some
+  // vintages and "Children's Fund" in others; tolerate both.
+  {
+    slug: "retirement",
+    label: "Retirement Fund",
+    re: /\bRetirement\s+Fund\b/i,
+  },
+  {
+    slug: "childrens",
+    label: "Childrens Fund",
+    re: /\bChildren'?s\s+Fund\b/i,
+  },
 ];
 
 type Format = "monthly-report" | "press-release" | "unknown";
