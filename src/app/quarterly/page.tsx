@@ -3,6 +3,7 @@ import { ChartPlaceholder } from "@/components/ui/ChartPlaceholder";
 import { Donut, type DonutSlice } from "@/components/charts/Donut";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
+import { StackedArea } from "@/components/charts/StackedArea";
 import { Card } from "@/components/ui/Card";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { FilterBar } from "@/components/filters/FilterBar";
@@ -44,6 +45,8 @@ import {
   formatIntSafe,
   formatLakhSafe,
 } from "@/lib/format";
+import { topAumMarketShareSeries } from "@/data/amc-peer-universe";
+import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
 import { cn } from "@/lib/cn";
 
 /** Sign-aware compact ₹ Cr formatter — mirrors the equivalent helper
@@ -305,6 +308,13 @@ export default async function QuarterlyPage({
     foliosTrend.length > 0 ||
     folioAdditionsTrend.length > 0 ||
     schemesTrend.length > 0;
+
+  // ---- AUM Market Share — live top 7 from AMFI Fundwise AAUM -------
+  // Same chart and helper as /monthly so the two pages render an
+  // identical live view of the top 7. Source is AMFI Fundwise AAUM
+  // disclosure (the only AMC-wise share source we have).
+  const aumMarketShare = topAumMarketShareSeries(7, 8);
+  const aumMarketShareCoverage = aumMarketShare.coverage;
 
   return (
     <div className="space-y-6">
@@ -862,14 +872,48 @@ export default async function QuarterlyPage({
           AMFI Quarterly Report has no SIP rows, and the source-
           discipline rule for /quarterly forbids substituting AMFI
           Monthly Note data. */}
+      <Card
+        title="AUM Market Share"
+        subtitle={
+          aumMarketShareCoverage
+            ? `Top ${aumMarketShare.topAmcs.length} AMCs · AMFI Fundwise AAUM disclosure · ${aumMarketShareCoverage.quarterLabel}`
+            : `Top ${aumMarketShare.topAmcs.length} AMCs · AMFI Fundwise AAUM disclosure`
+        }
+      >
+        {aumMarketShare.rows.length > 0 ? (
+          <StackedArea
+            data={aumMarketShare.rows}
+            xKey="quarterLabel"
+            labelFormat="none"
+            series={aumMarketShare.topAmcs.map((a) => ({
+              key: a.slug,
+              name: amcLabel(a.slug),
+              color: AMC_COLORS[a.slug] ?? "hsl(var(--muted-foreground))",
+            }))}
+          />
+        ) : (
+          <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+            AAUM disclosure unavailable
+          </div>
+        )}
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          Coverage: top {aumMarketShare.topAmcs.length} shown from AMFI
+          Fundwise AAUM disclosure; denominator uses currently stored
+          AMCs
+          {aumMarketShareCoverage
+            ? ` (${aumMarketShareCoverage.storedAmcCount} AMCs, ` +
+              `top ${aumMarketShare.topAmcs.length} cover ` +
+              `${aumMarketShareCoverage.topNCoveragePct.toFixed(1)}% ` +
+              `of stored AAUM)`
+            : ""}
+          .
+        </p>
+        <div className="mt-2 text-[10px] tabular text-muted-foreground/80">
+          Source: AMFI Fundwise AAUM disclosure
+        </div>
+      </Card>
+
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card
-          tone="pending"
-          title="AUM Market Share"
-          subtitle="Pending · per-AMC quarterly AUM share"
-        >
-          <ChartPlaceholder height={240} />
-        </Card>
         <Card
           tone="pending"
           title="SIP Market Share"

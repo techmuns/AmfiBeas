@@ -43,6 +43,7 @@ import {
   iiflActiveEquityTrendCard,
   latestCategoryProvenance,
 } from "@/data/amfi-monthly-category";
+import { topAumMarketShareSeries } from "@/data/amc-peer-universe";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MonthPicker } from "@/components/filters/MonthPicker";
 import {
@@ -69,7 +70,10 @@ export default async function MonthlyPage({
   // only when peer filter is active so we can compute market share %.
   const fullSeries = industryByMonth(slugs);
   const industrySeries = slugs ? industryByMonth(null) : fullSeries;
-  const fullShareAum = shareSeries("totalAum", 6, slugs);
+  // AUM Market Share is now sourced live from AMFI Fundwise AAUM via
+  // amc-peer-universe.ts (see aumMarketShare below) — `shareSeries
+  // ("totalAum", …)` is no longer needed because that demo card was
+  // replaced with a live top-7 quarterly chart.
   const fullShareSip = shareSeries("sipContribution", 6, slugs);
   const activeEquityShareSeries = shareSeries(
     "activeEquityAum",
@@ -78,9 +82,6 @@ export default async function MonthlyPage({
   );
 
   const trimmedMonths = new Set(trimMonths(MONTHS_LIST, filters.range));
-  const aumShareRows = fullShareAum.rows.filter((r) =>
-    trimmedMonths.has(r.month as string)
-  );
   const sipShareRows = fullShareSip.rows.filter((r) =>
     trimmedMonths.has(r.month as string)
   );
@@ -492,6 +493,14 @@ export default async function MonthlyPage({
   const iiflHeatmapHover = formatKpiProvenanceTooltip(
     latestCategoryProvenance("flexi-cap", "categoryNetInflow")
   );
+
+  // ---- AUM Market Share — live top 7 from AMFI Fundwise AAUM -------
+  // Quarterly data on a monthly page: the source is intrinsically
+  // quarterly (AMFI Fundwise AAUM disclosure) so the card label says
+  // so. Same chart + helper are reused on /quarterly so the two
+  // pages render an identical view.
+  const aumMarketShare = topAumMarketShareSeries(7, 8);
+  const aumMarketShareCoverage = aumMarketShare.coverage;
 
   return (
     <div className="space-y-6">
@@ -1130,19 +1139,45 @@ export default async function MonthlyPage({
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Card
-          tone="demo"
           title="AUM Market Share"
-          subtitle={`${slugs ? "Within selected peers" : "Top 6 + Others"} · ${demoIndustryNote}`}
+          subtitle={
+            aumMarketShareCoverage
+              ? `Top ${aumMarketShare.topAmcs.length} AMCs · quarterly AMFI Fundwise AAUM · ${aumMarketShareCoverage.quarterLabel}`
+              : `Top ${aumMarketShare.topAmcs.length} AMCs · quarterly AMFI Fundwise AAUM`
+          }
+          className="lg:col-span-2"
         >
-          <StackedArea
-            data={aumShareRows}
-            xKey="month"
-            series={fullShareAum.keys.map((k) => ({
-              key: k,
-              name: amcLabel(k),
-              color: AMC_COLORS[k] ?? "hsl(var(--muted-foreground))",
-            }))}
-          />
+          {aumMarketShare.rows.length > 0 ? (
+            <StackedArea
+              data={aumMarketShare.rows}
+              xKey="quarterLabel"
+              labelFormat="none"
+              series={aumMarketShare.topAmcs.map((a) => ({
+                key: a.slug,
+                name: amcLabel(a.slug),
+                color: AMC_COLORS[a.slug] ?? "hsl(var(--muted-foreground))",
+              }))}
+            />
+          ) : (
+            <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+              AAUM disclosure unavailable
+            </div>
+          )}
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            Coverage: top {aumMarketShare.topAmcs.length} shown from AMFI
+            Fundwise AAUM disclosure; denominator uses currently stored
+            AMCs
+            {aumMarketShareCoverage
+              ? ` (${aumMarketShareCoverage.storedAmcCount} AMCs, ` +
+                `top ${aumMarketShare.topAmcs.length} cover ` +
+                `${aumMarketShareCoverage.topNCoveragePct.toFixed(1)}% ` +
+                `of stored AAUM)`
+              : ""}
+            .
+          </p>
+          <div className="mt-2 text-[10px] tabular text-muted-foreground/80">
+            Source: AMFI Fundwise AAUM disclosure
+          </div>
         </Card>
         <Card
           tone="demo"
