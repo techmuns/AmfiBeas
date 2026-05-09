@@ -318,6 +318,53 @@ export default async function QuarterlyPage({
         </span>
       </div>
 
+      {/* AMFI Quarterly Snapshot — first live section, mirrors
+          /monthly's AMFI Monthly Snapshot card. The FiscalQuarterPicker
+          sits in the action slot and drives the selected-quarter
+          KPI grid below. */}
+      <Card
+        title="AMFI Quarterly Snapshot"
+        subtitle={snapshotSubtitle}
+        action={
+          <div className="flex flex-col items-end gap-2">
+            <span
+              className={cn(
+                "shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
+                selectedRow
+                  ? "border-positive/40 bg-positive/10 text-positive"
+                  : "border-border text-muted-foreground"
+              )}
+            >
+              {selectedRow ? "Live" : "Not connected"}
+            </span>
+            {selectedRow && availableQuarters.length > 0 && (
+              <FiscalQuarterPicker
+                availableQuarters={availableQuarters}
+                selectedQuarterId={selectedRow.quarter}
+              />
+            )}
+          </div>
+        }
+      >
+        {quarterlyKpiCards.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {quarterlyKpiCards.map((c) => (
+              <KpiCard
+                key={c.field}
+                label={c.label}
+                value={c.formatted}
+                note={c.note}
+                noteHover={c.noteHover}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
+            No AMFI quarterly PDF data ingested yet.
+          </div>
+        )}
+      </Card>
+
       {/* IIFL Active-Equity Category Trends — LIVE. Sourced from
           AMFI Monthly Reports aggregated into fiscal quarters. The
           /quarterly source-discipline rule normally restricts the page
@@ -450,53 +497,6 @@ export default async function QuarterlyPage({
           </p>
         </div>
       ) : null}
-
-      {/* AMFI Quarterly Snapshot — first live section, mirrors
-          /monthly's AMFI Monthly Snapshot card. The FiscalQuarterPicker
-          sits in the action slot and drives the selected-quarter
-          KPI grid below. */}
-      <Card
-        title="AMFI Quarterly Snapshot"
-        subtitle={snapshotSubtitle}
-        action={
-          <div className="flex flex-col items-end gap-2">
-            <span
-              className={cn(
-                "shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
-                selectedRow
-                  ? "border-positive/40 bg-positive/10 text-positive"
-                  : "border-border text-muted-foreground"
-              )}
-            >
-              {selectedRow ? "Live" : "Not connected"}
-            </span>
-            {selectedRow && availableQuarters.length > 0 && (
-              <FiscalQuarterPicker
-                availableQuarters={availableQuarters}
-                selectedQuarterId={selectedRow.quarter}
-              />
-            )}
-          </div>
-        }
-      >
-        {quarterlyKpiCards.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {quarterlyKpiCards.map((c) => (
-              <KpiCard
-                key={c.field}
-                label={c.label}
-                value={c.formatted}
-                note={c.note}
-                noteHover={c.noteHover}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
-            No AMFI quarterly PDF data ingested yet.
-          </div>
-        )}
-      </Card>
 
       {/* AMFI Quarterly AUM Mix & Trend — Donut bound to the selected
           quarter; bar trend shows the full 8-quarter history. */}
