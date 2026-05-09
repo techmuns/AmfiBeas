@@ -873,11 +873,12 @@ export default async function QuarterlyPage({
           discipline rule for /quarterly forbids substituting AMFI
           Monthly Note data. */}
       <Card
+        tone={aumMarketShare.isFullUniverse ? undefined : "pending"}
         title="AUM Market Share"
         subtitle={
           aumMarketShareCoverage
-            ? `Top ${aumMarketShare.topAmcs.length} AMCs · AMFI Fundwise AAUM disclosure · ${aumMarketShareCoverage.quarterLabel}`
-            : `Top ${aumMarketShare.topAmcs.length} AMCs · AMFI Fundwise AAUM disclosure`
+            ? `Top ${aumMarketShare.topAmcs.length} AMCs + Others · AMFI Fundwise AAUM disclosure · ${aumMarketShareCoverage.quarterLabel}`
+            : `Top ${aumMarketShare.topAmcs.length} AMCs + Others · AMFI Fundwise AAUM disclosure`
         }
       >
         {aumMarketShare.rows.length > 0 ? (
@@ -885,11 +886,18 @@ export default async function QuarterlyPage({
             data={aumMarketShare.rows}
             xKey="quarterLabel"
             labelFormat="none"
-            series={aumMarketShare.topAmcs.map((a) => ({
-              key: a.slug,
-              name: amcLabel(a.slug),
-              color: AMC_COLORS[a.slug] ?? "hsl(var(--muted-foreground))",
-            }))}
+            series={[
+              ...aumMarketShare.topAmcs.map((a) => ({
+                key: a.slug,
+                name: amcLabel(a.slug),
+                color: AMC_COLORS[a.slug] ?? "hsl(var(--muted-foreground))",
+              })),
+              {
+                key: "others",
+                name: "Others",
+                color: "hsl(var(--muted-foreground))",
+              },
+            ]}
           />
         ) : (
           <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
@@ -897,16 +905,17 @@ export default async function QuarterlyPage({
           </div>
         )}
         <p className="mt-3 text-[11px] text-muted-foreground">
-          Coverage: top {aumMarketShare.topAmcs.length} shown from AMFI
-          Fundwise AAUM disclosure; denominator uses currently stored
-          AMCs
+          Top {aumMarketShare.topAmcs.length} shown by latest AAUM;
+          Others includes all remaining AMCs. Denominator is total
+          AAUM of all AMCs in AMFI Fundwise AAUM disclosure.
           {aumMarketShareCoverage
-            ? ` (${aumMarketShareCoverage.storedAmcCount} AMCs, ` +
-              `top ${aumMarketShare.topAmcs.length} cover ` +
+            ? ` Top ${aumMarketShare.topAmcs.length} coverage: ` +
               `${aumMarketShareCoverage.topNCoveragePct.toFixed(1)}% ` +
-              `of stored AAUM)`
+              `of total AMFI Fundwise AAUM (${aumMarketShareCoverage.storedAmcCount} AMCs in snapshot).`
             : ""}
-          .
+          {!aumMarketShare.isFullUniverse && aumMarketShareCoverage
+            ? ` Snapshot covers ${aumMarketShareCoverage.storedAmcCount} AMCs — below the ~30+ AMC threshold AMFI publishes per quarter; run npm run ingest to refresh to the full ~50-AMC universe.`
+            : ""}
         </p>
         <div className="mt-2 text-[10px] tabular text-muted-foreground/80">
           Source: AMFI Fundwise AAUM disclosure

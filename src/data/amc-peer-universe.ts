@@ -176,42 +176,83 @@ export interface AumMarketShareData {
     amcNameAsReported: string;
     latestAaum: number;
   }[];
-  /** Latest-quarter coverage diagnostics — drives the "Coverage:
-   *  top N shown / denominator uses currently stored AMCs" caption
-   *  rendered beneath the chart. */
+  /** Whether the snapshot covers a credibly-complete AMC universe.
+   *  AMFI publishes ~45-50 AMCs per quarter; threshold of
+   *  MIN_FULL_UNIVERSE = 30 lets us flip to "live" once a fresh
+   *  ingest has expanded the snapshot beyond the legacy 10-AMC
+   *  curated set. When false, dashboard consumers should render
+   *  the chart with `tone="pending"` and surface a partial-coverage
+   *  note — the share % is still correctly calculated against the
+   *  stored sum, but the denominator is incomplete relative to AMFI. */
+  isFullUniverse: boolean;
+  /** Latest-quarter coverage diagnostics — drives the "Top 7 cover
+   *  X% of total AMFI Fundwise AAUM" caption rendered beneath the
+   *  chart. */
   coverage: {
     quarter: string;            // calendar id of the latest qtr
     quarterLabel: string;       // fiscal display label
     storedAmcCount: number;     // how many ok rows the latest qtr has
     storedAaumTotal: number;    // ₹ Cr — sum of all ok rows that qtr
     topNAaumTotal: number;      // ₹ Cr — sum of just the top N
-    topNCoveragePct: number;    // topNAaumTotal / storedAaumTotal × 100
+    /** Sum of all stored AMCs OUTSIDE the top N (i.e. the Others
+     *  residual). Always = storedAaumTotal − topNAaumTotal. */
+    othersAaumTotal: number;    // ₹ Cr
+    /** Top-N share of the stored denominator. Equal to the chart's
+     *  top-7 stack height in the latest quarter. */
+    topNCoveragePct: number;    // %
+    /** Others residual share. Equal to the chart's "Others" slice
+     *  in the latest quarter. Always = 100 − topNCoveragePct
+     *  (within float rounding). */
+    othersCoveragePct: number;  // %
   } | null;
 }
 
+/** Minimum number of AMCs in the latest quarter for the snapshot to
+ *  be considered a credibly-complete AMFI universe. AMFI typically
+ *  publishes 45-50 AMCs per quarter; 30 is a forgiving floor that
+ *  flips the dashboard to "live" once the bulk of the long tail has
+ *  been ingested. Below this threshold, the chart renders with
+ *  `tone="pending"` and a partial-coverage note. */
+export const MIN_FULL_UNIVERSE = 30;
+
 /**
  * Build the StackedArea-ready market-share series for the top N AMCs
- * over the latest `lastN` quarters.
+ * + an "Others" residual over the latest `lastN` quarters.
  *
- *   industryCoveredAaum_q = Σ avgAum across all stored ok rows in q
- *   shareSlug_q           = avgAum_q(slug) / industryCoveredAaum_q × 100
+ *   denominator_q = Σ avgAum across ALL stored ok rows in q
+ *                   (i.e. all AMFI Fundwise AAUM rows the snapshot
+ *                    has for that quarter — never just the top N)
+ *   shareSlug_q   = avgAum_q(slug) / denominator_q × 100
+ *   shareOthers_q = Σ avgAum_q(non-top-N) / denominator_q × 100
+ *                 = 100 − Σ shareSlug_q
  *
  * The top-N AMC set is fixed at the LATEST quarter's ranking so the
  * stack order doesn't reshuffle quarter to quarter (a stable visual
  * for trend reading). When an AMC has no row for an earlier quarter
  * — e.g. it joined the universe mid-window — that cell is OMITTED
- * from the data row (no fake zero, no fake AMC). Recharts treats an
- * absent stack key as a gap; the slice resumes when the AMC's data
- * reappears.
+ * from the data row (no fake zero, no fake AMC). Others ALWAYS rolls
+ * up the residual against the same denominator, so per-quarter
+ * top N + Others = 100% (within float rounding) when every top-N
+ * AMC has data in the quarter.
  *
- * Returns `rows: []` and `coverage: null` when the snapshot is empty.
+ * The `isFullUniverse` flag on the result is true when the latest
+ * quarter has at least `MIN_FULL_UNIVERSE` (30) AMC rows — a signal
+ * that the snapshot has been ingested since the all-AMC parser fix
+ * (PR #72) and the denominator is a credibly-complete AMFI universe.
+ * When false, dashboard consumers should render the chart with
+ * `tone="pending"` and a partial-coverage note explaining the gap.
+ *
+ * Returns `rows: []`, `topAmcs: []`, `coverage: null`, and
+ * `isFullUniverse: false` when the snapshot is empty.
  */
 export function topAumMarketShareSeries(
   n = 7,
   lastN = 8
 ): AumMarketShareData {
   const latestQ = latestAaumQuarter();
-  if (!latestQ) return { rows: [], topAmcs: [], coverage: null };
+  if (!latestQ) {
+    return { rows: [], topAmcs: [], coverage: null, isFullUniverse: false };
+  }
 
   const topRows = topAumAmcsForQuarter(latestQ, n);
   const topAmcs = topRows.map((r) => ({
@@ -220,6 +261,7 @@ export function topAumMarketShareSeries(
     amcNameAsReported: r.amcNameAsReported,
     latestAaum: r.avgAum,
   }));
+  const topSlugSet = new Set(topAmcs.map((a) => a.slug));
 
   // Window: last N quarters that have at least one ok row.
   const allQuarters = Array.from(
@@ -234,20 +276,44 @@ export function topAumMarketShareSeries(
 
   const rows: AumMarketShareRow[] = allQuarters.map((q) => {
     const allInQ = allAmcAaumRowsForQuarter(q);
+    // Denominator = ALL stored AMCs for the quarter (not just top N).
+    // After the next AMFI ingest run this is the full ~50-AMC industry
+    // universe. Until then it's the legacy 10-AMC stored set; share %
+    // is still correctly calculated against whatever denominator is
+    // available, and the page surfaces an `isFullUniverse=false` flag
+    // so the card renders as Pending.
     const total = allInQ.reduce((s, r) => s + r.avgAum, 0);
     const row: AumMarketShareRow = {
       quarter: q,
       quarterLabel: fiscalLabelFromCalendarQuarter(q),
     };
     if (total > 0) {
+      let topSum = 0;
       for (const top of topAmcs) {
         const amcRow = allInQ.find((r) => r.amcSlug === top.slug);
         if (amcRow) {
-          row[top.slug] = (amcRow.avgAum / total) * 100;
+          const share = (amcRow.avgAum / total) * 100;
+          row[top.slug] = share;
+          topSum += share;
         }
-        // Absent → omit the key, Recharts renders a gap on that
-        // AMC's slice for that quarter.
+        // Absent → omit the key. Recharts renders a gap.
       }
+      // Others = the residual share contributed by all AMCs OUTSIDE
+      // the top-N set in this quarter. Computed as a sum over actual
+      // non-top-N rows so an absent top-N AMC doesn't inflate Others
+      // (it would just leave a gap in the stack instead). Equivalent
+      // to (100 - topSum) when every top-N AMC has data this quarter,
+      // which matches the spec's "top 7 + Others = 100%" invariant.
+      let othersAaum = 0;
+      for (const r of allInQ) {
+        if (!topSlugSet.has(r.amcSlug)) othersAaum += r.avgAum;
+      }
+      if (othersAaum > 0) {
+        row["others"] = (othersAaum / total) * 100;
+      }
+      // Suppress unused-var warning for `topSum` while keeping it
+      // around as documentation for the share-residual identity.
+      void topSum;
     }
     return row;
   });
@@ -255,18 +321,25 @@ export function topAumMarketShareSeries(
   const allInLatest = allAmcAaumRowsForQuarter(latestQ);
   const storedAaumTotal = allInLatest.reduce((s, r) => s + r.avgAum, 0);
   const topNAaumTotal = topRows.reduce((s, r) => s + r.avgAum, 0);
+  const othersAaumTotal = storedAaumTotal - topNAaumTotal;
+  const topNCoveragePct =
+    storedAaumTotal > 0 ? (topNAaumTotal / storedAaumTotal) * 100 : 0;
+  const othersCoveragePct =
+    storedAaumTotal > 0 ? (othersAaumTotal / storedAaumTotal) * 100 : 0;
 
   return {
     rows,
     topAmcs,
+    isFullUniverse: allInLatest.length >= MIN_FULL_UNIVERSE,
     coverage: {
       quarter: latestQ,
       quarterLabel: fiscalLabelFromCalendarQuarter(latestQ),
       storedAmcCount: allInLatest.length,
       storedAaumTotal,
       topNAaumTotal,
-      topNCoveragePct:
-        storedAaumTotal > 0 ? (topNAaumTotal / storedAaumTotal) * 100 : 0,
+      othersAaumTotal,
+      topNCoveragePct,
+      othersCoveragePct,
     },
   };
 }
