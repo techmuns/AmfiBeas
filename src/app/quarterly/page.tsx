@@ -365,139 +365,6 @@ export default async function QuarterlyPage({
         )}
       </Card>
 
-      {/* IIFL Active-Equity Category Trends — LIVE. Sourced from
-          AMFI Monthly Reports aggregated into fiscal quarters. The
-          /quarterly source-discipline rule normally restricts the page
-          to quarterly-PDF data; this section is the documented
-          exception because true QAAUM share requires monthly period-
-          average AAUM (the quarterly Report's Average Net AUM column
-          is last-month only). All other sections below remain bound
-          to amfi-quarterly-* snapshots. */}
-      {hasAnyIiflTrend ? (
-        <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-medium tracking-tight">
-              IIFL Active-Equity Category Trends
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              QAAUM share vs net inflow share · aggregated from AMFI
-              Monthly Reports
-            </p>
-          </div>
-
-          <section className="grid gap-4 lg:grid-cols-2">
-            {iiflFeaturedCards.map((c) => (
-              <Card
-                key={c.slug}
-                title={c.label}
-                subtitle={`${c.series.length} quarter${c.series.length === 1 ? "" : "s"} · % of active-equity envelope`}
-              >
-                {c.hasData ? (
-                  <MultiLine
-                    data={c.series}
-                    xKey="label"
-                    labelFormat="none"
-                    valueFormat="pct"
-                    axisFormat="pct"
-                    lines={[
-                      {
-                        key: "aumSharePct",
-                        name: "QAAUM share",
-                        color: "hsl(var(--chart-1))",
-                      },
-                      {
-                        key: "flowSharePct",
-                        name: "Net inflow share",
-                        color: "hsl(var(--chart-3))",
-                      },
-                    ]}
-                  />
-                ) : (
-                  <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                    Category data unavailable
-                  </div>
-                )}
-                <div
-                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                  title={c.aumHover ?? undefined}
-                >
-                  Source: AMFI Monthly Reports · aggregated quarterly
-                </div>
-              </Card>
-            ))}
-          </section>
-
-          {hasExpandedIiflTrend && (
-            <details className="group rounded-md border border-dashed border-border bg-muted/20">
-              <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium tracking-tight marker:hidden">
-                <span className="inline-flex items-center gap-2">
-                  <span className="text-foreground">
-                    Show more active-equity categories
-                  </span>
-                  <span className="rounded-full border border-border bg-background px-1.5 py-0 text-[10px] uppercase tracking-wide text-muted-foreground">
-                    {iiflExpandedCards.length} more
-                  </span>
-                  <span className="text-muted-foreground transition-transform group-open:rotate-90">
-                    ›
-                  </span>
-                </span>
-              </summary>
-              <div className="border-t border-border/60 p-4">
-                <section className="grid gap-4 lg:grid-cols-2">
-                  {iiflExpandedCards.map((c) => (
-                    <Card
-                      key={c.slug}
-                      title={c.label}
-                      subtitle={`${c.series.length} quarter${c.series.length === 1 ? "" : "s"} · % of active-equity envelope`}
-                    >
-                      {c.hasData ? (
-                        <MultiLine
-                          data={c.series}
-                          xKey="label"
-                          labelFormat="none"
-                          valueFormat="pct"
-                          axisFormat="pct"
-                          lines={[
-                            {
-                              key: "aumSharePct",
-                              name: "QAAUM share",
-                              color: "hsl(var(--chart-1))",
-                            },
-                            {
-                              key: "flowSharePct",
-                              name: "Net inflow share",
-                              color: "hsl(var(--chart-3))",
-                            },
-                          ]}
-                        />
-                      ) : (
-                        <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                          Category data unavailable
-                        </div>
-                      )}
-                      <div
-                        className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                        title={c.aumHover ?? undefined}
-                      >
-                        Source: AMFI Monthly Reports · aggregated quarterly
-                      </div>
-                    </Card>
-                  ))}
-                </section>
-              </div>
-            </details>
-          )}
-
-          <p className="text-[11px] text-muted-foreground">
-            QAAUM share = avg(categoryAaum) / avg(activeEquityAaum) over
-            the months in each fiscal quarter. Net inflow share =
-            sum(categoryNetInflow) / sum(activeEquityNetInflow) over
-            the same months. Active equity = Growth/Equity schemes +
-            Hybrid ex-Arbitrage + Solution-Oriented schemes.
-          </p>
-        </div>
-      ) : null}
-
       {/* AMFI Quarterly AUM Mix & Trend — Donut bound to the selected
           quarter; bar trend shows the full 8-quarter history. */}
       {selectedRow && (
@@ -806,6 +673,141 @@ export default async function QuarterlyPage({
           )}
         </div>
       )}
+
+      {/* IIFL Active-Equity Category Trends — LIVE. Sourced from
+          AMFI Monthly Reports aggregated into fiscal quarters. The
+          /quarterly source-discipline rule normally restricts the page
+          to quarterly-PDF data; this section is the documented
+          exception because true QAAUM share requires monthly period-
+          average AAUM (the quarterly Report's Average Net AUM column
+          is last-month only). All other sections above remain bound
+          to amfi-quarterly-* snapshots. Placement mirrors the broker-
+          analytical role of this lens: it sits below the canonical
+          Snapshot / AUM / Flows / Folios sections rather than above. */}
+      {hasAnyIiflTrend ? (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight">
+              IIFL Active-Equity Category Trends
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              QAAUM share vs net inflow share · aggregated from AMFI
+              Monthly Reports
+            </p>
+          </div>
+
+          <section className="grid gap-4 lg:grid-cols-2">
+            {iiflFeaturedCards.map((c) => (
+              <Card
+                key={c.slug}
+                title={c.label}
+                subtitle={`${c.series.length} quarter${c.series.length === 1 ? "" : "s"} · % of active-equity envelope`}
+              >
+                {c.hasData ? (
+                  <MultiLine
+                    data={c.series}
+                    xKey="label"
+                    labelFormat="none"
+                    valueFormat="pct"
+                    axisFormat="pct"
+                    lines={[
+                      {
+                        key: "aumSharePct",
+                        name: "QAAUM share",
+                        color: "hsl(var(--chart-1))",
+                      },
+                      {
+                        key: "flowSharePct",
+                        name: "Net inflow share",
+                        color: "hsl(var(--chart-3))",
+                      },
+                    ]}
+                  />
+                ) : (
+                  <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                    Category data unavailable
+                  </div>
+                )}
+                <div
+                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
+                  title={c.aumHover ?? undefined}
+                >
+                  Source: AMFI Monthly Reports · aggregated quarterly
+                </div>
+              </Card>
+            ))}
+          </section>
+
+          {hasExpandedIiflTrend && (
+            <details className="group rounded-md border border-dashed border-border bg-muted/20">
+              <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium tracking-tight marker:hidden">
+                <span className="inline-flex items-center gap-2">
+                  <span className="text-foreground">
+                    Show more active-equity categories
+                  </span>
+                  <span className="rounded-full border border-border bg-background px-1.5 py-0 text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {iiflExpandedCards.length} more
+                  </span>
+                  <span className="text-muted-foreground transition-transform group-open:rotate-90">
+                    ›
+                  </span>
+                </span>
+              </summary>
+              <div className="border-t border-border/60 p-4">
+                <section className="grid gap-4 lg:grid-cols-2">
+                  {iiflExpandedCards.map((c) => (
+                    <Card
+                      key={c.slug}
+                      title={c.label}
+                      subtitle={`${c.series.length} quarter${c.series.length === 1 ? "" : "s"} · % of active-equity envelope`}
+                    >
+                      {c.hasData ? (
+                        <MultiLine
+                          data={c.series}
+                          xKey="label"
+                          labelFormat="none"
+                          valueFormat="pct"
+                          axisFormat="pct"
+                          lines={[
+                            {
+                              key: "aumSharePct",
+                              name: "QAAUM share",
+                              color: "hsl(var(--chart-1))",
+                            },
+                            {
+                              key: "flowSharePct",
+                              name: "Net inflow share",
+                              color: "hsl(var(--chart-3))",
+                            },
+                          ]}
+                        />
+                      ) : (
+                        <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                          Category data unavailable
+                        </div>
+                      )}
+                      <div
+                        className="mt-3 text-[10px] tabular text-muted-foreground/80"
+                        title={c.aumHover ?? undefined}
+                      >
+                        Source: AMFI Monthly Reports · aggregated quarterly
+                      </div>
+                    </Card>
+                  ))}
+                </section>
+              </div>
+            </details>
+          )}
+
+          <p className="text-[11px] text-muted-foreground">
+            QAAUM share = avg(categoryAaum) / avg(activeEquityAaum) over
+            the months in each fiscal quarter. Net inflow share =
+            sum(categoryNetInflow) / sum(activeEquityNetInflow) over
+            the same months. Active equity = Growth/Equity schemes +
+            Hybrid ex-Arbitrage + Solution-Oriented schemes.
+          </p>
+        </div>
+      ) : null}
 
       {/* Demo · SIP KPIs — sourced from AMFI Monthly Notes on /monthly,
           and the AMFI Quarterly Report does not carry SIP fields.
