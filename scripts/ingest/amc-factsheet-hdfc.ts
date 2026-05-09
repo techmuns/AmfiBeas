@@ -67,25 +67,28 @@
  * old) the scheme is dropped from that period's denominator — never
  * counted as a non-outperformer.
  *
- * ### Parser strategy (PR #84 rewrite)
+ * ### Parser strategy (PRs #84 → #85)
  *
- * The first PoC heuristic walked every block on every page and
- * caught false positives from Market Review prose ("consumption
- * demand moderated...") and the FUND DETAILS ANNEXURE allocation
- * tables ("SCHEME Large Cap MidCap SmallCap"). The rewrite anchors
- * on HDFC's literal section header — "PERFORMANCE ^ - Regular Plan
- * - Growth Option" — and rejects "SIP PERFORMANCE" siblings before
- * parsing. Within a section we require:
- *   - a scheme line that starts with "HDFC " (case-sensitive)
- *   - a primary benchmark line ("Scheme Benchmark - <NIFTY ...>"
- *     or any line carrying a NIFTY/BSE/CRISIL/MSCI/FTSE token)
- *   - at least 3 CAGR-shaped numbers on each row
- *   - rejection of paragraph-y scheme names (FY26 / however / due
- *     to / etc.) so any prose that incidentally starts with "HDFC"
- *     gets dropped.
+ * Anchor on HDFC's literal section header — "PERFORMANCE ^ -
+ * Regular Plan - Growth Option" — and reject "SIP PERFORMANCE"
+ * siblings before parsing. The page header (text BEFORE the
+ * marker) carries the scheme title and a category-hint line; the
+ * section body is a row-major-by-time-period table whose rows are
+ * "Last 1 Year" / "Last 3 Years" / "Last 5 Years" / "Since
+ * Inception". Each row's first 3 CAGR-shaped numbers are
+ * (scheme %, benchmark %, additional benchmark %); we keep scheme
+ * + benchmark and discard the additional. The benchmark NAME
+ * comes from the page-level "#" legend, not from any row.
+ *
+ * PR #84 wrongly assumed each row was a separate (scheme,
+ * benchmark, additional) entity and read 1Y/3Y/5Y from columns —
+ * that's the wrong table orientation. PR #85 fixes the
+ * orientation and pulls the scheme title from the page header.
+ *
  * Each rejected section is recorded under
- * `rejectedCandidateSamples` with its reason + a 240-char snippet
- * so misses are easy to triage.
+ * `rejectedCandidateSamples` with its reason + the page-header
+ * context + the title/category candidates so misses are easy to
+ * triage without re-running.
  */
 
 import fs from "node:fs/promises";
@@ -301,20 +304,27 @@ interface RejectedCandidate {
     | "no-hdfc-scheme-line"
     | "no-benchmark-line"
     | "no-scheme-numbers"
+    | "no-period-rows"
     | "scheme-name-too-long"
     | "scheme-name-paragraph";
   /** First ~240 chars of the section text, useful to eyeball the
    *  rejection reason. */
   textSnippet: string;
+  /** First ~800 chars of the page (above the PERFORMANCE marker) —
+   *  this is where the scheme title and category typically live. */
+  pageHeaderSnippet?: string;
+  /** ~800 chars immediately before the PERFORMANCE marker (most
+   *  recent context). */
+  textBeforePerformance?: string;
+  /** What the scheme-title walker locked onto (or null if nothing). */
+  detectedSchemeTitleCandidate?: string | null;
+  /** What the category-from-title classifier returned (or null). */
+  detectedCategoryCandidate?: string | null;
 }
 
-// Benchmark token list. "Scheme Benchmark" is HDFC's literal label
-// for the primary benchmark row; the others match the actual index
-// names that appear inline.
+// Benchmark index tokens — used to validate the "#" legend hits
+// and to recognise inline benchmark mentions on a page.
 const RE_BENCHMARK_TOKEN = /\b(?:NIFTY|S&P\s*BSE|BSE\s+\d|CRISIL|MSCI|FTSE|Sensex)\b/i;
-const RE_SCHEME_BENCHMARK_LABEL = /\bScheme\s+Benchmark\b/i;
-const RE_ADDITIONAL_BENCHMARK_LABEL = /\bAdditional\s+Benchmark\b/i;
-const RE_SCHEME_BENCHMARK_DASH = /^Scheme\s+Benchmark\s*[-–]\s*/i;
 
 // CAGR number regex — decimals only. Rejects integer scheme codes
 // ("1", "10") and PIN codes. Accepts "-1.50%" / "12.34" / "1,234.56".
@@ -334,6 +344,12 @@ interface PerformanceSection {
   /** The section's full text — from this marker to the next
    *  (PERFORMANCE / SIP-PERFORMANCE / page end). */
   text: string;
+  /** Page text BEFORE the PERFORMANCE marker. The scheme title and
+   *  category live here in HDFC factsheets. */
+  pageHeaderText: string;
+  /** Full page text — used to locate the # / ## benchmark legend
+   *  (the legend can appear EITHER above or below the table). */
+  pageFullText: string;
   isSip: boolean;
 }
 
@@ -366,6 +382,8 @@ function findPerformanceSections(pages: PdfPage[]): PerformanceSection[] {
       out.push({
         pageNum: p.num,
         text: text.slice(start, end),
+        pageHeaderText: text.slice(0, start),
+        pageFullText: text,
         isSip: markers[i].isSip,
       });
     }
@@ -380,19 +398,45 @@ interface ParsedSection {
   rejection?: RejectedCandidate;
 }
 
-/** Try to extract a (scheme, benchmark) pair from one PERFORMANCE
- *  section. Strict acceptance criteria — see the doc-comments inline.
+const PERIOD_LABELS = {
+  "1Y": /^Last\s+1\s+Year\b/i,
+  "3Y": /^Last\s+3\s+Years?\b/i,
+  "5Y": /^Last\s+5\s+Years?\b/i,
+} as const;
+
+type Period = "1Y" | "3Y" | "5Y";
+
+/** HDFC's per-scheme PERFORMANCE block (March 2026 audit confirms):
  *
- *  HDFC factsheet performance block shape (March 2026 audit confirms):
+ *    [page header — usually scheme title + category line]
+ *    HDFC <Fund Name>
+ *    <Category Label>
+ *    ...
  *    PERFORMANCE ^ - Regular Plan - Growth Option
- *    CAGR (%)                       Value of Rs. 10,000 invested
- *    Last 1Y  Last 3Y  Last 5Y  SI  Last 1Y  Last 3Y  Last 5Y  SI
- *    HDFC <Fund Name>      12.34  18.56  16.78  14.20  11,234  17,890  ...
- *    Scheme Benchmark - <NIFTY ...>  11.10  15.20  14.50  ...
- *    Additional Benchmark - <NIFTY 50 TRI>  10.20  14.80  ...
+ *    Date Period
+ *    Scheme Returns (%)        Benchmark Returns (%)#   Additional Benchmark Returns (%)##
+ *    Value of ₹ 10,000 invested
+ *    Scheme (₹)  Benchmark (₹)#  Additional Benchmark (₹)##
+ *    Mar 31, 25  Last 1 Year   <s%>  <b%>  <a%>  <s₹>  <b₹>  <a₹>
+ *    Mar 31, 23  Last 3 Years  <s%>  <b%>  <a%>  ...
+ *    Mar 31, 21  Last 5 Years  <s%>  <b%>  <a%>  ...
+ *    SI         Since Inception <s%>  <b%>  <a%>  ...
+ *    SIP PERFORMANCE ^ - ...
  *
- *  pdf-parse may emit each row as a single line OR split the name
- *  from the numbers across two lines. We handle both. */
+ *  Earlier PoC assumed each row was scheme/benchmark/additional and
+ *  read the 1Y/3Y/5Y values from columns. WRONG — HDFC's table is
+ *  row-major by TIME PERIOD; each row carries (scheme%, benchmark%,
+ *  additional%, scheme₹, benchmark₹, additional₹) for ONE period.
+ *
+ *  Per-row extraction (PR #85):
+ *    schemeReturn1Y    = first CAGR number on the "Last 1 Year" row
+ *    benchmarkReturn1Y = second CAGR number on the "Last 1 Year" row
+ *    (third = additional benchmark — discarded)
+ *    Same for 3Y / 5Y rows.
+ *
+ *  Scheme title / category come from the page header (above the
+ *  marker). Benchmark name comes from the "#" legend, which may
+ *  appear above OR below the table. */
 function parsePerformanceSection(section: PerformanceSection): ParsedSection {
   if (section.isSip) {
     return {
@@ -404,133 +448,109 @@ function parsePerformanceSection(section: PerformanceSection): ParsedSection {
     };
   }
 
+  // ---- Scheme title & category from the page header ----
+  const titleCandidate = detectSchemeTitleCandidate(section.pageHeaderText);
+  const baseRejection = (
+    reason: RejectedCandidate["reason"]
+  ): RejectedCandidate => ({
+    pageNum: section.pageNum,
+    reason,
+    textSnippet: section.text.slice(0, 240),
+    pageHeaderSnippet: section.pageHeaderText.slice(-800),
+    textBeforePerformance: section.pageHeaderText.slice(-800),
+    detectedSchemeTitleCandidate: titleCandidate,
+    detectedCategoryCandidate: titleCandidate
+      ? classifyCategory(titleCandidate)?.label ?? null
+      : null,
+  });
+
+  if (!titleCandidate) {
+    return { rejection: baseRejection("no-hdfc-scheme-line") };
+  }
+  if (titleCandidate.length > 80) {
+    return { rejection: baseRejection("scheme-name-too-long") };
+  }
+  if (looksLikeParagraph(titleCandidate)) {
+    return { rejection: baseRejection("scheme-name-paragraph") };
+  }
+
+  // ---- Walk the table body for "Last N Year(s)" rows ----
   const lines = section.text
     .split(/\n+/)
     .map((l) => l.trim())
     .filter((l) => l.length > 0);
 
-  // Find the scheme line — first line that:
-  //   - starts with "HDFC " (case-sensitive — uppercase brand)
-  //   - is NOT one of HDFC's recurring header phrases
-  // We allow the row to be split across two adjacent lines: if line N
-  // starts with HDFC but has < 3 numbers, lines N and N+1 are joined.
-  let schemeIdx = -1;
-  let schemeLine = "";
-  for (let i = 1; i < lines.length; i++) {
+  const periodRows: Partial<
+    Record<Period, { line: string; nums: (number | null)[] }>
+  > = {};
+
+  for (let i = 0; i < lines.length; i++) {
     const l = lines[i];
-    if (!/^HDFC\s/.test(l)) continue;
-    if (isHdfcBoilerplate(l)) continue;
-    // Combine with next line in case pdf-parse split name and numbers.
-    const combined = lines[i + 1] ? `${l} ${lines[i + 1]}` : l;
-    const numsHere = (l.match(RE_CAGR) ?? []).length;
-    const numsCombined = (combined.match(RE_CAGR) ?? []).length;
-    if (numsHere >= 3) {
-      schemeIdx = i;
-      schemeLine = l;
-      break;
-    }
-    if (numsCombined >= 3) {
-      schemeIdx = i;
-      schemeLine = combined;
-      break;
-    }
-  }
-  if (schemeIdx === -1) {
-    return {
-      rejection: {
-        pageNum: section.pageNum,
-        reason: "no-hdfc-scheme-line",
-        textSnippet: section.text.slice(0, 240),
-      },
-    };
-  }
-
-  // Strip numbers + "Value of 10K" tokens to get the clean name.
-  const schemeNameRaw = cleanRowText(schemeLine);
-  if (schemeNameRaw.length > 80) {
-    return {
-      rejection: {
-        pageNum: section.pageNum,
-        reason: "scheme-name-too-long",
-        textSnippet: schemeLine.slice(0, 240),
-      },
-    };
-  }
-  if (looksLikeParagraph(schemeNameRaw)) {
-    return {
-      rejection: {
-        pageNum: section.pageNum,
-        reason: "scheme-name-paragraph",
-        textSnippet: schemeLine.slice(0, 240),
-      },
-    };
-  }
-
-  const schemeNums = extractNumbers(schemeLine);
-  if (schemeNums.length < 3) {
-    return {
-      rejection: {
-        pageNum: section.pageNum,
-        reason: "no-scheme-numbers",
-        textSnippet: schemeLine.slice(0, 240),
-      },
-    };
-  }
-
-  // Walk forward from schemeIdx to find the FIRST primary-benchmark
-  // row. HDFC marks it explicitly with "Scheme Benchmark - <name>".
-  // Some sections may instead inline the benchmark name with a token
-  // (NIFTY/BSE/CRISIL...); we accept either. We reject lines that
-  // are clearly the "Additional Benchmark" — that's the secondary,
-  // not the primary.
-  let benchmarkIdx = -1;
-  let benchmarkLine = "";
-  for (let i = schemeIdx + 1; i < lines.length; i++) {
-    const l = lines[i];
-    if (RE_ADDITIONAL_BENCHMARK_LABEL.test(l)) {
-      // Hit additional-benchmark line first (rare layout); skip.
-      // The primary is on the prior line if not already matched.
-      continue;
-    }
-    const isPrimary =
-      RE_SCHEME_BENCHMARK_LABEL.test(l) || RE_BENCHMARK_TOKEN.test(l);
-    if (!isPrimary) continue;
-    const combined = lines[i + 1] ? `${l} ${lines[i + 1]}` : l;
-    const numsHere = (l.match(RE_CAGR) ?? []).length;
-    const numsCombined = (combined.match(RE_CAGR) ?? []).length;
-    if (numsHere >= 3) {
-      benchmarkIdx = i;
-      benchmarkLine = l;
-      break;
-    }
-    if (numsCombined >= 3) {
-      benchmarkIdx = i;
-      benchmarkLine = combined;
-      break;
+    // The pdf-parse output sometimes puts "Mar 31, 25 Last 1 Year"
+    // as the row prefix; the period label may be at the START or
+    // AFTER a date prefix. Normalise by stripping a leading date.
+    const stripped = l.replace(
+      /^[A-Z][a-z]{2}\s+\d{1,2},\s*\d{2,4}\s+/,
+      ""
+    );
+    for (const [period, re] of Object.entries(PERIOD_LABELS) as [
+      Period,
+      RegExp,
+    ][]) {
+      if (periodRows[period]) continue;
+      if (!re.test(stripped)) continue;
+      // Numbers on this row may spill onto the next 1-2 lines (pdf-
+      // parse often wraps wide tables). Concatenate up to 3 lines.
+      const merged = [l, lines[i + 1] ?? "", lines[i + 2] ?? ""]
+        .join(" ")
+        .replace(/\s+/g, " ");
+      const nums = extractNumbers(merged);
+      if (nums.length === 0) continue;
+      periodRows[period] = { line: merged, nums };
+      break; // one period per line
     }
   }
 
-  if (benchmarkIdx === -1) {
-    return {
-      rejection: {
-        pageNum: section.pageNum,
-        reason: "no-benchmark-line",
-        textSnippet: section.text.slice(0, 240),
-      },
-    };
+  if (
+    !periodRows["1Y"] &&
+    !periodRows["3Y"] &&
+    !periodRows["5Y"]
+  ) {
+    return { rejection: baseRejection("no-period-rows") };
   }
 
-  const benchmarkName = cleanBenchmarkName(benchmarkLine);
-  const benchmarkNums = extractNumbers(benchmarkLine);
+  // Each row's first 3 numbers are (scheme%, benchmark%, additional%).
+  // We keep scheme + benchmark and discard additional. Rows with
+  // fewer than 3 numbers are unreliable (some columns may be N.A.
+  // and pdf-parse silently drops them) — treat scheme/benchmark
+  // as null rather than guessing at column position.
+  const pickPair = (
+    nums: (number | null)[]
+  ): [number | null, number | null] =>
+    nums.length >= 3 ? [nums[0] ?? null, nums[1] ?? null] : [null, null];
+  const [s1Y, b1Y] = pickPair(periodRows["1Y"]?.nums ?? []);
+  const [s3Y, b3Y] = pickPair(periodRows["3Y"]?.nums ?? []);
+  const [s5Y, b5Y] = pickPair(periodRows["5Y"]?.nums ?? []);
 
-  const [s1Y, s3Y, s5Y] = pickFirstThree(schemeNums);
-  const [b1Y, b3Y, b5Y] = pickFirstThree(benchmarkNums);
+  if (s1Y === null && s3Y === null && s5Y === null) {
+    return { rejection: baseRejection("no-scheme-numbers") };
+  }
+  if (b1Y === null && b3Y === null && b5Y === null) {
+    return { rejection: baseRejection("no-benchmark-line") };
+  }
 
-  const cls = classifyCategory(schemeNameRaw);
+  // ---- Benchmark name from the "#" legend on the page ----
+  const benchmarkName = detectBenchmarkName(section.pageFullText);
+
+  // ---- Category — first try the title regex; fall back to scanning
+  // the page header for a category-label line. ----
+  const cls =
+    classifyCategory(titleCandidate) ??
+    classifyCategory(detectCategoryHintLine(section.pageHeaderText) ?? "");
 
   const row: ParsedSchemeRow = {
-    schemeName: schemeNameRaw,
-    schemeNameRaw,
+    schemeName: titleCandidate,
+    schemeNameRaw: titleCandidate,
     category: cls?.label ?? null,
     categorySlug: cls?.slug ?? null,
     benchmarkName,
@@ -544,9 +564,95 @@ function parsePerformanceSection(section: PerformanceSection): ParsedSection {
     outperformed3Y: outperformed(s3Y, b3Y),
     outperformed5Y: outperformed(s5Y, b5Y),
     pageNum: section.pageNum,
-    textSnippet: section.text.slice(0, 400),
+    textSnippet: `${titleCandidate} | ${section.text.slice(0, 320)}`,
   };
   return { row };
+}
+
+/** Walk the page-header text BACKWARD (closest to the PERFORMANCE
+ *  marker first) and return the first plausible "HDFC <Fund Name>"
+ *  scheme title. Rejects HDFC boilerplate (Asset Management /
+ *  Trustee / Bank Limited) and paragraph-y lines. */
+function detectSchemeTitleCandidate(headerText: string): string | null {
+  const lines = headerText
+    .split(/\n+/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+  // Walk from the END (closest to the PERFORMANCE marker).
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const l = lines[i];
+    if (!/^HDFC\s/.test(l)) continue;
+    if (isHdfcBoilerplate(l)) continue;
+    if (looksLikeParagraph(l)) continue;
+    // Strip trailing markers (^, ##, $, etc) and trailing labels
+    // like "(An open-ended..." — keep just the fund name.
+    const cleaned = l
+      .replace(/\(An\s+open[-\s]ended.*$/i, "")
+      .replace(/\(Open[-\s]ended.*$/i, "")
+      .replace(/[\^*#$]+$/g, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+    if (!cleaned) continue;
+    if (cleaned.length > 80) continue;
+    // Must look like an actual fund name — contains "Fund" / "Plan"
+    // / "Scheme" / "ELSS" somewhere.
+    if (!/\b(?:Fund|Scheme|Plan|ELSS|Advantage|Opportunit|Saver)\b/i.test(cleaned))
+      continue;
+    return cleaned;
+  }
+  return null;
+}
+
+/** Look at the page header for a likely SEBI-category label line —
+ *  e.g. "An open-ended equity scheme predominantly investing in
+ *  large cap stocks". Returns the line text so the caller can run
+ *  classifyCategory() against it. */
+function detectCategoryHintLine(headerText: string): string | null {
+  const lines = headerText
+    .split(/\n+/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const l = lines[i];
+    if (/An\s+open[-\s]ended/i.test(l)) return l;
+    if (/\b(?:large|mid|small|flexi|multi|focused|sectoral|thematic|elss|hybrid|arbitrage|conservative|aggressive|equity\s+saving|balanced|advantage|retirement|children|liquid|overnight|gilt|corporate\s+bond|credit\s+risk|index|etf|fund\s+of\s+fund|low\s+duration|short\s+duration|medium\s+duration|long\s+duration|ultra\s+short|money\s+market|floater|banking\s+(?:and|&)\s+psu|dynamic\s+(?:bond|asset))\b/i.test(
+      l
+    )) {
+      return l;
+    }
+  }
+  return null;
+}
+
+/** Look for the HDFC "#" legend that names the primary benchmark.
+ *  Examples seen in HDFC factsheets:
+ *    "# NIFTY 500 TRI"
+ *    "# NIFTY Smallcap 250 TRI Index"
+ *    "# Benchmark: NIFTY 500 TRI"
+ *    "Benchmark Index: NIFTY 500 TRI"
+ *
+ *  We try a few patterns and return the first hit. The "##" legend
+ *  is the additional benchmark and is ignored. */
+function detectBenchmarkName(pageText: string): string | null {
+  const candidatePatterns = [
+    // Lines beginning with a single "#" followed by a benchmark name.
+    /^\s*#\s*(?!#)([^\n]{3,80})$/m,
+    // "# Benchmark: <name>" / "Benchmark Index: <name>" / "Scheme
+    // Benchmark: <name>".
+    /(?:^|\n)\s*(?:Benchmark\s+Index|Scheme\s+Benchmark|#\s*Benchmark)\s*[:\-]\s*([^\n]{3,80})/i,
+  ];
+  for (const re of candidatePatterns) {
+    const m = pageText.match(re);
+    if (!m) continue;
+    const raw = (m[1] || "").trim();
+    if (!raw) continue;
+    if (!RE_BENCHMARK_TOKEN.test(raw)) continue; // must contain a real index token
+    return raw
+      .replace(/^\s*[-–]\s*/, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+  return null;
 }
 
 /** Reject HDFC strings that start with "HDFC " but are not scheme
@@ -568,45 +674,14 @@ function looksLikeParagraph(name: string): boolean {
   return words.length > 12;
 }
 
-/** Strip CAGR-shaped numbers + comma-separated rupee figures from a
- *  row to leave just the row's text label. */
-function cleanRowText(line: string): string {
-  return line
-    .replace(RE_CAGR, "")
-    .replace(/\b\d{1,3}(?:,\d{3})+\b/g, "") // strip "Value of 10K" amounts
-    .replace(/\bN\.?\s*A\.?\b/gi, "") // remove "N.A." / "NA"
-    .replace(/[*\^#]+/g, "")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-}
-
-/** Same as cleanRowText, plus strip leading "Scheme Benchmark - " /
- *  "Scheme Benchmark : " labels so we keep just the index name
- *  ("NIFTY 500 TRI"). */
-function cleanBenchmarkName(line: string): string {
-  return cleanRowText(line)
-    .replace(RE_SCHEME_BENCHMARK_DASH, "")
-    .replace(/^Scheme\s+Benchmark\s*[:|]\s*/i, "")
-    .replace(/^Scheme\s+Benchmark\s+/i, "")
-    .replace(/^[-–]\s*/, "")
-    .trim();
-}
-
 /** Extract every CAGR-shaped number from a row in left-to-right
- *  order. The factsheet's column order on the CAGR side is
- *  (1Y, 3Y, 5Y, SI); the right side ("Value of Rs 10,000 invested")
- *  uses comma-separated thousands, which RE_CAGR rejects (too long
- *  / has commas without a decimal). So the first 3 RE_CAGR hits
- *  are reliably (1Y, 3Y, 5Y). */
+ *  order. RE_CAGR requires a decimal, so the comma-separated
+ *  rupee figures in the "Value of Rs 10,000 invested" columns
+ *  (e.g. "11,234") never match. The first 3 hits per period row
+ *  are reliably (scheme%, benchmark%, additional%). */
 function extractNumbers(line: string): (number | null)[] {
   const matches = line.match(RE_CAGR) ?? [];
   return matches.map((m) => parseNumberLoose(m.replace("%", "")));
-}
-
-function pickFirstThree(
-  nums: (number | null)[]
-): [number | null, number | null, number | null] {
-  return [nums[0] ?? null, nums[1] ?? null, nums[2] ?? null];
 }
 
 function outperformed(
@@ -1115,7 +1190,8 @@ export async function ingestHdfcFactsheetPoc(): Promise<void> {
       `Eligibility = IIFL active-equity envelope (Sub II + Sub III ex-Arbitrage + Sub IV).`,
       `Outperformance = scheme return > primary benchmark return for the period; null on either side drops the scheme from that period's denominator.`,
       `Direct + Regular plan dedup applied; one row per scheme stem.`,
-      `Parser anchors on HDFC's literal "PERFORMANCE ^" section marker; "SIP PERFORMANCE" siblings are rejected upstream. Scheme line must start with "HDFC ".`,
+      `Parser anchors on HDFC's literal "PERFORMANCE ^" section marker; "SIP PERFORMANCE" siblings are rejected upstream. Scheme title is detected from the page header (above the marker); benchmark name is detected from the page-level "#" legend.`,
+      `Per-row extraction: each table row is a TIME PERIOD ("Last 1 Year" / "Last 3 Years" / "Last 5 Years"); the row's first three CAGR numbers are (scheme %, benchmark %, additional %). We keep scheme + benchmark.`,
     ],
     status,
   };
