@@ -932,14 +932,6 @@ export default async function QuarterlyPage({
         </Card>
         <Card
           tone="pending"
-          title="Active Equity Market Share"
-          subtitle="Pending · per-AMC quarterly active-equity share"
-          className="lg:col-span-2"
-        >
-          <ChartPlaceholder height={240} />
-        </Card>
-        <Card
-          tone="pending"
           title="Scheme Outperformance"
           subtitle="Pending · AMC × quarter · % over benchmark"
           className="lg:col-span-2"
