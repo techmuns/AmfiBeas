@@ -228,3 +228,142 @@ export function formatQuarterlyProvenanceTooltip(
   if (p.sourceLabel) parts.push(p.sourceLabel);
   return parts.filter(Boolean).join(" · ");
 }
+
+/** Latest (most-recent) industry row, or null when the snapshot is
+ *  empty. Mirrors `latestAmfiMonthlyRow()` on the monthly side so the
+ *  /quarterly Snapshot section can render in the same shape. */
+export function latestQuarterlyRow(): AmfiQuarterlyIndustryRow | null {
+  const rows = amfiQuarterlyIndustryRows();
+  return rows.length > 0 ? rows[rows.length - 1] : null;
+}
+
+/** Numeric KPI fields on AmfiQuarterlyIndustryRow. The keys match the
+ *  AmfiQuarterlyIndustryFieldSources shape — only fields the schema
+ *  actually carries can be passed to `quarterlyTrend` and the
+ *  provenance helpers, so the type is closed at compile time. */
+export type AmfiQuarterlyKpiField = keyof AmfiQuarterlyIndustryFieldSources;
+
+/** Resolve a numeric KPI from a row. Returns `null` when the row is
+ *  null OR the field is absent — callers should hide / show "—" in
+ *  that case rather than synthesising a value. */
+export function getQuarterlyKpiValue(
+  row: AmfiQuarterlyIndustryRow | null,
+  field: AmfiQuarterlyKpiField
+): number | null {
+  if (!row) return null;
+  const v = (row as unknown as Record<string, unknown>)[field];
+  return typeof v === "number" ? v : null;
+}
+
+/** Resolve the per-field provenance for a row + field. Returns `null`
+ *  when no value was extracted — provenance is always paired with a
+ *  value by the extractor. */
+export function getQuarterlyKpiProvenance(
+  row: AmfiQuarterlyIndustryRow | null,
+  field: AmfiQuarterlyKpiField
+): AmfiQuarterlyFieldSource | null {
+  if (!row) return null;
+  return row.fieldSources?.[field] ?? null;
+}
+
+/** Visible "Source: AMFI Quarterly Report" caption rendered beneath
+ *  every quarterly-PDF-backed card. Returns null when no provenance is
+ *  set so callers can fall back to a static string. */
+export function formatQuarterlyProvenanceLine(
+  p: AmfiQuarterlyFieldSource | null
+): string | null {
+  if (!p) return null;
+  return "Source: AMFI Quarterly Report";
+}
+
+/** Chronological trend series for an industry-row KPI. Each entry is
+ *  `{ label, value }` where `label` is the fiscal quarter display
+ *  string ("4QFY26") so the chart's labelFormat="none" renders it
+ *  verbatim. Quarters where `field` is absent are OMITTED — never
+ *  zero-filled. The latest `lastN` quarters are returned in
+ *  chronological order; `lastN` defaults to 8 (the full history we
+ *  have). */
+export function quarterlyTrend(
+  field: AmfiQuarterlyKpiField,
+  lastN = 8
+): { label: string; value: number }[] {
+  const rows = amfiQuarterlyIndustryRows();
+  const all = rows.flatMap((r) => {
+    const v = (r as unknown as Record<string, unknown>)[field];
+    if (typeof v !== "number") return [];
+    return [{ label: r.quarterLabel, value: v }];
+  });
+  return all.slice(-lastN);
+}
+
+/** Quarter-over-quarter net additions to industry folios. Computed at
+ *  render time as `current.grandTotalFolios − previous.grandTotalFolios`
+ *  labelled with the CURRENT quarter (i.e. additions DURING that
+ *  quarter). The first quarter has no prior quarter and is omitted;
+ *  any quarter where either side's folios is missing is also skipped
+ *  — no synthetic zero is introduced. Negative deltas are surfaced
+ *  as-is. */
+export function quarterlyFolioAdditionsTrend(
+  lastN = 8
+): { label: string; value: number }[] {
+  const rows = amfiQuarterlyIndustryRows();
+  const out: { label: string; value: number }[] = [];
+  for (let i = 1; i < rows.length; i++) {
+    const prev = rows[i - 1].grandTotalFolios;
+    const cur = rows[i].grandTotalFolios;
+    if (typeof prev !== "number" || typeof cur !== "number") continue;
+    out.push({ label: rows[i].quarterLabel, value: cur - prev });
+  }
+  return out.slice(-lastN);
+}
+
+/** Latest-quarter folio additions = grandTotalFolios on the latest row
+ *  minus grandTotalFolios on the prior row. Returns `null` when fewer
+ *  than two quarters carry the field, OR when either side is missing. */
+export function latestQuarterlyFolioAdditions(): number | null {
+  const trend = quarterlyFolioAdditionsTrend(8);
+  return trend.length > 0 ? trend[trend.length - 1].value : null;
+}
+
+/** Per-quarter open-ended scheme count. DERIVED as the sum of
+ *  `categorySchemes` across all 39 open-ended category slugs the
+ *  extractor captures. The result is the count of OPEN-ENDED schemes
+ *  only — the AMFI quarterly Report's Grand Total scheme count
+ *  additionally includes close-ended and interval schemes (~93 more
+ *  on the latest quarter), but those buckets are intentionally not
+ *  extracted since they aren't surfaced by the dashboard. The card
+ *  label is therefore "Open-Ended Scheme Count" so the basis is
+ *  explicit. Quarters where any contributing category is missing
+ *  `categorySchemes` are computed on the partial sum (each missing
+ *  category is treated as 0 for the count, since adding 0 is
+ *  arithmetically identical to skipping the slug — but a category
+ *  with NO row at all for the quarter contributes 0 silently; in
+ *  practice all 39 slugs have a row in every quarter). */
+export function quarterlyOpenEndedSchemeCountTrend(
+  lastN = 8
+): { label: string; value: number }[] {
+  const byQuarter = new Map<
+    string,
+    { quarterLabel: string; total: number; sourceCount: number }
+  >();
+  for (const r of amfiQuarterlyCategorySnapshot.rows) {
+    if (typeof r.categorySchemes !== "number") continue;
+    const entry =
+      byQuarter.get(r.quarter) ??
+      { quarterLabel: r.quarterLabel, total: 0, sourceCount: 0 };
+    entry.total += r.categorySchemes;
+    entry.sourceCount += 1;
+    byQuarter.set(r.quarter, entry);
+  }
+  return Array.from(byQuarter.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, v]) => ({ label: v.quarterLabel, value: v.total }))
+    .slice(-lastN);
+}
+
+/** Latest-quarter open-ended scheme count. */
+export function latestOpenEndedSchemeCount(): number | null {
+  const trend = quarterlyOpenEndedSchemeCountTrend(1);
+  return trend.length > 0 ? trend[0].value : null;
+}
+
