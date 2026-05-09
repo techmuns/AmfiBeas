@@ -494,3 +494,247 @@ export function latestOpenEndedSchemeCount(): number | null {
   return trend.length > 0 ? trend[0].value : null;
 }
 
+
+// ---------------------------------------------------------------------
+// Helpers for the /quarterly final-alignment rebuild.
+//
+// All numbers below come from amfi-quarterly-{industry,category}.json.
+// LastMonthAaum semantics are documented at the top of this file —
+// none of these helpers should be used to compute QAAUM share. The
+// IIFL Active-Equity Category Trends section continues to use the
+// monthly snapshot via amfi-monthly-category.ts for that purpose.
+// ---------------------------------------------------------------------
+
+/** Quarter-end Liquid Fund AUM. The industry row schema does NOT
+ *  expose a Liquid Fund bucket directly (Liquid is a sub-row of
+ *  Sub Total - I, not its own sub-total), so we read it from the
+ *  category snapshot. Used by the Snapshot card and the AUM Mix
+ *  donut. Returns `null` when the category row is absent. */
+export function liquidAumForQuarter(
+  quarterId: string
+): number | null {
+  const r = amfiQuarterlyCategoryRows("liquid").find(
+    (x) => x.quarter === quarterId
+  );
+  return typeof r?.categoryAum === "number" ? r.categoryAum : null;
+}
+
+/** Per-quarter Equity / Debt / Liquid net inflow series, ready for
+ *  the Quarterly Flows GroupedBars chart. Cells are null when a
+ *  source field is missing — Recharts skips null bars and the chart
+ *  renders without a fake-zero placeholder. Mirrors
+ *  monthlyFlowsData() shape so the bars chart can swap implementations
+ *  with minimal config drift.
+ *
+ *  Liquid is sourced from the Liquid Fund row's categoryNetInflow
+ *  (it's a sub-component of debt; debtNetInflow already includes
+ *  Liquid, but the chart shows them separately for parity with the
+ *  monthly Equity/Debt/Liquid flows view). */
+export function quarterlyFlowsData(
+  lastN = 8
+): {
+  quarter: string;
+  quarterLabel: string;
+  equity: number | null;
+  debt: number | null;
+  liquid: number | null;
+}[] {
+  const liquidByQuarter = new Map<string, number>(
+    amfiQuarterlyCategoryRows("liquid").flatMap((r) =>
+      typeof r.categoryNetInflow === "number"
+        ? [[r.quarter, r.categoryNetInflow] as [string, number]]
+        : []
+    )
+  );
+  return amfiQuarterlyIndustryRows()
+    .slice(-lastN)
+    .map((r) => ({
+      quarter: r.quarter,
+      quarterLabel: r.quarterLabel,
+      equity:
+        typeof r.equityNetInflow === "number" ? r.equityNetInflow : null,
+      debt:
+        typeof r.debtNetInflow === "number" ? r.debtNetInflow : null,
+      liquid: liquidByQuarter.get(r.quarter) ?? null,
+    }));
+}
+
+/**
+ * Active-Equity Last-month AAUM derived per quarter:
+ *   activeEquityLastMonthAaum = equityLastMonthAaum
+ *                             + (hybridLastMonthAaum − arbitrageLastMonthAaum_cat)
+ *                             + retirementLastMonthAaum_cat
+ *                             + childrensLastMonthAaum_cat
+ *
+ * Sub Total - II (Growth/Equity) and Sub Total - III (Hybrid) are
+ * exposed on the industry row directly. Sub Total - IV (Solution) is
+ * intermediate-only on the schema, so we sum its two component
+ * categories from the category snapshot. Arbitrage is similarly read
+ * from the category snapshot to subtract it out of Hybrid.
+ *
+ * IMPORTANT: this is LAST-MONTH AAUM, not a true quarterly average.
+ * The /quarterly Active Equity & Equity Mix section labels every
+ * surface "Last-month AAUM" so consumers don't conflate it with the
+ * monthly QAAUM-share denominators.
+ */
+export function quarterlyActiveEquityLastMonthAaumTrend(
+  lastN = 8
+): { label: string; value: number }[] {
+  const arbitrageBy = new Map<string, number>(
+    amfiQuarterlyCategoryRows("arbitrage").flatMap((r) =>
+      typeof r.categoryLastMonthAaum === "number"
+        ? [[r.quarter, r.categoryLastMonthAaum] as [string, number]]
+        : []
+    )
+  );
+  const retirementBy = new Map<string, number>(
+    amfiQuarterlyCategoryRows("retirement").flatMap((r) =>
+      typeof r.categoryLastMonthAaum === "number"
+        ? [[r.quarter, r.categoryLastMonthAaum] as [string, number]]
+        : []
+    )
+  );
+  const childrensBy = new Map<string, number>(
+    amfiQuarterlyCategoryRows("childrens").flatMap((r) =>
+      typeof r.categoryLastMonthAaum === "number"
+        ? [[r.quarter, r.categoryLastMonthAaum] as [string, number]]
+        : []
+    )
+  );
+  return amfiQuarterlyIndustryRows()
+    .slice(-lastN)
+    .flatMap((r) => {
+      const eq = r.equityLastMonthAaum;
+      const hy = r.hybridLastMonthAaum;
+      const arb = arbitrageBy.get(r.quarter);
+      const ret = retirementBy.get(r.quarter);
+      const chi = childrensBy.get(r.quarter);
+      if (
+        typeof eq !== "number" ||
+        typeof hy !== "number" ||
+        typeof arb !== "number" ||
+        typeof ret !== "number" ||
+        typeof chi !== "number"
+      ) {
+        return [];
+      }
+      const value = eq + (hy - arb) + ret + chi;
+      return [{ label: r.quarterLabel, value }];
+    });
+}
+
+/** Active-Equity Share of Total Last-month AAUM trend.
+ *   share % = activeEquityLastMonthAaum / grandTotalLastMonthAaum × 100
+ *
+ *  IMPORTANT: Both numerator and denominator are LAST-MONTH AAUM.
+ *  This is NOT a QAAUM-share metric — it's the quarterly Report
+ *  column-versus-column ratio. The IIFL section that uses true
+ *  QAAUM share remains on monthly aggregation. */
+export function quarterlyActiveEquityLastMonthShareTrend(
+  lastN = 8
+): { label: string; value: number }[] {
+  const aeByQuarter = new Map<string, number>(
+    quarterlyActiveEquityLastMonthAaumTrend(8).map(
+      (e) => [labelToQuarter(e.label), e.value] as [string, number]
+    )
+  );
+  return amfiQuarterlyIndustryRows()
+    .slice(-lastN)
+    .flatMap((r) => {
+      const ae = aeByQuarter.get(r.quarter);
+      const tot = r.grandTotalLastMonthAaum;
+      if (typeof ae !== "number" || typeof tot !== "number" || tot <= 0) {
+        return [];
+      }
+      return [{ label: r.quarterLabel, value: (ae / tot) * 100 }];
+    });
+}
+
+/** Inverse of quarterLabel→quarter resolution: given the display
+ *  label ("4QFY26"), return the canonical id ("FY26-Q4"). Used only
+ *  to bridge two helpers that report on the same quarter via
+ *  different keys. */
+function labelToQuarter(label: string): string {
+  const r = amfiQuarterlyIndustryRows().find((x) => x.quarterLabel === label);
+  return r?.quarter ?? "";
+}
+
+/**
+ * Equity Last-month AAUM Breakdown per quarter — IIFL Figure 19-style
+ * grouping (Active Equity / ETF & Index / Arbitrage). Returns one row
+ * per quarter ready for the GroupedBars chart.
+ *
+ *   activeEquity = derived as above
+ *   etfIndex     = Index Funds + Other ETFs categoryLastMonthAaum
+ *                  (excludes Gold ETFs and Fund of Funds investing
+ *                  overseas, matching the monthly Equity AAUM
+ *                  Breakdown definition).
+ *   arbitrage    = Arbitrage Fund categoryLastMonthAaum
+ *
+ * Each cell is `null` when its component is absent — chart renders a
+ * gap, never a fake zero.
+ */
+export function quarterlyEquityLastMonthAaumBreakdown(
+  lastN = 8
+): {
+  quarter: string;
+  quarterLabel: string;
+  activeEquity: number | null;
+  etfIndex: number | null;
+  arbitrage: number | null;
+}[] {
+  const arbitrageBy = new Map<string, number>(
+    amfiQuarterlyCategoryRows("arbitrage").flatMap((r) =>
+      typeof r.categoryLastMonthAaum === "number"
+        ? [[r.quarter, r.categoryLastMonthAaum] as [string, number]]
+        : []
+    )
+  );
+  const indexBy = new Map<string, number>(
+    amfiQuarterlyCategoryRows("index-funds").flatMap((r) =>
+      typeof r.categoryLastMonthAaum === "number"
+        ? [[r.quarter, r.categoryLastMonthAaum] as [string, number]]
+        : []
+    )
+  );
+  const otherEtfsBy = new Map<string, number>(
+    amfiQuarterlyCategoryRows("other-etfs").flatMap((r) =>
+      typeof r.categoryLastMonthAaum === "number"
+        ? [[r.quarter, r.categoryLastMonthAaum] as [string, number]]
+        : []
+    )
+  );
+  const aeByQuarter = new Map<string, number>();
+  for (const e of quarterlyActiveEquityLastMonthAaumTrend(8)) {
+    aeByQuarter.set(labelToQuarter(e.label), e.value);
+  }
+  return amfiQuarterlyIndustryRows()
+    .slice(-lastN)
+    .map((r) => {
+      const idx = indexBy.get(r.quarter);
+      const oth = otherEtfsBy.get(r.quarter);
+      const arb = arbitrageBy.get(r.quarter);
+      const ae = aeByQuarter.get(r.quarter);
+      const etfIndex =
+        typeof idx === "number" && typeof oth === "number" ? idx + oth : null;
+      return {
+        quarter: r.quarter,
+        quarterLabel: r.quarterLabel,
+        activeEquity: typeof ae === "number" ? ae : null,
+        etfIndex,
+        arbitrage: typeof arb === "number" ? arb : null,
+      };
+    });
+}
+
+/** Provenance for a category row's `categoryAum` on a specific
+ *  quarter. Used by the AMFI Quarterly Snapshot's Liquid AUM card —
+ *  Liquid is read from the category snapshot (the industry-row
+ *  schema doesn't expose it as its own bucket). */
+export function quarterlyCategoryAumProvenance(
+  slug: AmfiMonthlyCategorySlug,
+  quarterId: string
+): AmfiQuarterlyFieldSource | null {
+  const r = amfiQuarterlyCategoryRows(slug).find((x) => x.quarter === quarterId);
+  return r?.fieldSources?.categoryAum ?? null;
+}
