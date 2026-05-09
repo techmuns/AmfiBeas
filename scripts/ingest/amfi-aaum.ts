@@ -7,7 +7,12 @@ import {
   warn,
   writeSnapshot,
 } from "./utils";
-import { AMCS, amfiNameToSlug, slugifyAmfiName } from "../../src/data/amcs";
+import {
+  AMCS,
+  amfiNameToSlug,
+  isLikelyAmcName,
+  slugifyAmfiName,
+} from "../../src/data/amcs";
 import type {
   AmcAaumQuarterlyRow,
   AmcAaumQuarterlySnapshot,
@@ -617,14 +622,24 @@ function parseHeaderBased(table: {
     const row = table.rows[i];
     const name = (row[amcIdx] ?? "").trim();
     if (!name) continue;
-    if (/^(total|grand|sub|industry|note|\*|s\.?\s*no)/i.test(name)) continue;
+    // Positive AMC-name guard. Without this, the parser would accept
+    // any non-empty cell with a positive AAUM, which is how 50+
+    // garbage rows per quarter (numeric-string footnote cells like
+    // "1,379,300.81") landed in the snapshot after PR #72 dropped
+    // the implicit curated-map filter. isLikelyAmcName rejects:
+    //   - numeric / placeholder cells
+    //   - Total / Grand Total / Sub Total / Industry / footnote markers
+    //   - any string without a "Mutual Fund / Asset Management / MF /
+    //     AMC / Investment Managers" suffix unless it's in the curated
+    //     AMFI_NAME_TO_SLUG map.
+    if (!isLikelyAmcName(name)) continue;
     const aaumA = parseNumberLoose(row[aaumIdx]);
     if (aaumA === null || aaumA <= 0) continue;
     const aaumB =
       aaumIdxAlt !== -1 ? parseNumberLoose(row[aaumIdxAlt]) ?? 0 : 0;
-    // Keep ALL AMC rows, not just the dashboard's curated peer list.
-    // Auto-derive a slug for unmapped AMCs so they round-trip through
-    // the snapshot and surface in /AMCs / peer-universe helpers.
+    // Keep ALL valid AMC rows, not just the dashboard's curated peer
+    // list. Auto-derive a slug for unmapped AMCs so they round-trip
+    // through the snapshot and surface in /AMCs / peer-universe.
     const id = resolveAmcIdentity(name);
     // Lakhs → Crores. Sum (Excl FoF Domestic) + FoF Domestic if both columns
     // exist so the value reflects total AAUM.
@@ -648,28 +663,17 @@ function parseRowBased(table: {
   const seen = new Set<string>();
 
   for (const row of table.rows) {
-    // 1. Locate AMC name cell. Heuristic: the first non-empty cell
-    //    that looks like an AMC name (contains "Mutual Fund" /
-    //    "Asset Management" / matches the curated list) and is not
-    //    a header/total row.
+    // 1. Locate AMC name cell. Same positive-validation rule as
+    //    parseColBased — accept the first cell that passes
+    //    isLikelyAmcName (curated map, or a string with a
+    //    "Mutual Fund / Asset Management / MF / AMC / Investment
+    //    Managers" suffix). Numeric / placeholder cells are rejected.
     let nameIdx = -1;
     let nameRaw = "";
     for (let i = 0; i < row.length; i++) {
       const cell = (row[i] ?? "").trim();
       if (!cell) continue;
-      // Skip explicit header / total / footnote rows.
-      if (/^(s\.?\s*no|sr\.?\s*no|total|grand|sub|industry|note|\*)/i.test(cell)) {
-        continue;
-      }
-      // Curated map → exact match, accept immediately.
-      if (amfiNameToSlug(cell)) {
-        nameIdx = i;
-        nameRaw = cell;
-        break;
-      }
-      // Generic AMC-name heuristic — must mention an AMFI suffix so
-      // we don't pick up numeric / index cells.
-      if (/Mutual\s+Fund|Asset\s+Management|MF\b|AMC\b/i.test(cell)) {
+      if (isLikelyAmcName(cell)) {
         nameIdx = i;
         nameRaw = cell;
         break;
@@ -1078,9 +1082,16 @@ export async function ingestAmfiAaum(): Promise<void> {
       for (const r of outcome.rows) {
         if (!Number.isFinite(r.avgAum) || r.avgAum <= 0) continue;
         if (!r.amcSlug) continue;
+        // Persist mappingStatus + displayName so consumers don't have
+        // to reconstruct them. PR #72 added these on ParsedAmcRow but
+        // the original write step here dropped them on the way out,
+        // making every row default to mappingStatus="mapped" once
+        // the snapshot was loaded back. That's now fixed.
         outRows.push({
           amcSlug: r.amcSlug,
           amcNameAsReported: r.amcNameAsReported,
+          mappingStatus: r.mappingStatus,
+          displayName: r.displayName,
           quarter: q.calendarQ,
           avgAum: r.avgAum,
           source: outcome.sourceUrl,

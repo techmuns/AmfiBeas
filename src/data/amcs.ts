@@ -204,6 +204,61 @@ export function amfiNameToSlug(name: string): string | undefined {
 }
 
 /**
+ * Positive AMC-name guard for AMFI Fundwise AAUM rows. Returns true
+ * only when the supplied name plausibly looks like an AMC label —
+ * either matches the curated AMFI_NAME_TO_SLUG entry exactly, or
+ * carries a recognisable "Mutual Fund" / "Asset Management" / "AMC"
+ * / "MF" suffix.
+ *
+ * Rejects:
+ *   - empty / whitespace-only strings
+ *   - numeric-only / comma-numeric / dash-numeric strings (caused
+ *     the 52 garbage rows / quarter regression after PR #72 dropped
+ *     the implicit curated-map filter — a footnote / summary row
+ *     whose first cell was a numeric string was being parsed as an
+ *     AMC name with `slugifyAmfiName` producing slugs like
+ *     "1-379-300-81")
+ *   - "Total" / "Grand Total" / "Sub Total" / "Industry" / "Note"
+ *     / "*" / footnote markers
+ *
+ * Designed to be applied at the extractor's row-acceptance step so
+ * the snapshot writer never sees an invalid name; downstream helpers
+ * can then trust `amcNameAsReported`. */
+export function isLikelyAmcName(name: string): boolean {
+  const s = (name ?? "").trim();
+  if (!s) return false;
+  // Reject anything that's only digits / commas / dots / dashes /
+  // spaces / asterisks / em-dashes — i.e. pure-numeric or
+  // dash-only / placeholder rows. Note: "-" alone is rejected here.
+  if (/^[\d\s,.\-—*+()]+$/.test(s)) return false;
+  // Reject summary / header / footer markers. The match is anchored
+  // at the start so substrings inside legitimate names (e.g. "Sub-
+  // Account") aren't accidentally rejected.
+  if (
+    /^(s\.?\s*no\b|sr\.?\s*no\b|total\b|grand\s+total\b|sub\s+total\b|industry\b|note\b|footnote\b|all\s+open\b|all\s+close\b|\*)/i.test(
+      s
+    )
+  ) {
+    return false;
+  }
+  // Curated map → always accept. Cheaper than the regex below, and
+  // covers all 10 dashboard peers.
+  if (AMFI_NAME_TO_SLUG[s] !== undefined) return true;
+  // Generic AMC-name suffix heuristic. Every legitimate AMFI AMC
+  // entry includes one of these tokens — verified across the
+  // ~50-AMC industry list. Conservative on purpose: missing a real
+  // AMC is preferable to admitting a numeric footnote.
+  if (
+    /\b(?:Mutual\s+Fund|Asset\s+Management|Investment\s+Managers?|AMC|MF)\b/i.test(
+      s
+    )
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
  * Deterministic slug derivation for AMCs not present in the curated
  * AMFI_NAME_TO_SLUG map. Strips common AMFI suffixes ("Mutual Fund",
  * "Asset Management", etc.) and produces a kebab-case slug.
