@@ -862,6 +862,13 @@ async function fetchQuarter(
      *  is built from the list so a Schemewise audit isn't rejected
      *  by a hardcoded /fund\s*wise/. */
     dataModeCandidates?: string[];
+    /** Override the "Select Type" dropdown candidates. Default keeps
+     *  the existing extractor's catch-all list. Audit modes that
+     *  require a specific Type (e.g. "Categorywise" inside Schemewise
+     *  to get AMC × category rows) pass an explicit list here. The
+     *  pre-Go gate verifies Type was actually set so an AMFI-side
+     *  layout change doesn't silently produce an unscoped result. */
+    typeModeCandidates?: string[];
     /** When set + audit mode failed, fetchQuarter populates
      *  `diagnosticsOut.current` with a snapshot of page state so the
      *  caller can write a sibling debug JSON. Never populated in
@@ -956,6 +963,21 @@ async function fetchQuarter(
         .join("|"),
       "i"
     );
+    // Audit-mode override for the Select Type dropdown. Default
+    // (=undefined) keeps the existing extractor's candidate list,
+    // which is fine for normal Fundwise ingest. Audit modes that
+    // require a specific Type (e.g. "Categorywise" inside Schemewise)
+    // pass their own candidates here.
+    const typeModeCandidates =
+      opts.typeModeCandidates ?? [
+        "AMC-wise",
+        "AMC wise",
+        "Mutual Fund-wise",
+        "Mutual Fund wise",
+        "Fund House",
+        "Fund House Wise",
+        "Average AUM",
+      ];
     vinfo(
       `AAUM[${q.calendarQ}]: setting Select Data → ${dataModeCandidates[0]}`
     );
@@ -1012,17 +1034,19 @@ async function fetchQuarter(
       `after Fundwise (dependentReady=${dependentReady})`
     );
 
-    // Step 2: Select Type — optional. Don't fail if it isn't present.
-    vinfo(`AAUM[${q.calendarQ}]: setting Select Type (optional)`);
-    const fType = await setMuiAutocompleteByPlaceholder(page, "Select Type", [
-      "AMC-wise",
-      "AMC wise",
-      "Mutual Fund-wise",
-      "Mutual Fund wise",
-      "Fund House",
-      "Fund House Wise",
-      "Average AUM",
-    ]);
+    // Step 2: Select Type — optional in normal ingest, required in
+    // audit modes that pass typeModeCandidates (e.g. Categorywise
+    // inside Schemewise). Don't fail here if it isn't present —
+    // the pre-Go gate below will catch a missing Type when audit
+    // mode required one.
+    vinfo(
+      `AAUM[${q.calendarQ}]: setting Select Type (optional, candidates=${typeModeCandidates.slice(0, 4).join(" | ")}…)`
+    );
+    const fType = await setMuiAutocompleteByPlaceholder(
+      page,
+      "Select Type",
+      typeModeCandidates
+    );
     if (fType.found) {
       vinfo(
         `AAUM[${q.calendarQ}]:   Type found=true chosen=${fType.chosen ?? "—"} value="${fType.visibleValue}" options=[${fType.options.slice(0, 8).join(" | ")}]`
@@ -1136,17 +1160,33 @@ async function fetchQuarter(
       `AAUM[${q.calendarQ}]: pre-Go field outcomes: Data="${fData.visibleValue}" FY="${fFy.visibleValue}" Period="${fPeriod.visibleValue}"   Go: ${JSON.stringify(goState)}`
     );
 
-    const dataOk = /fund\s*wise/i.test(fData.visibleValue);
+    // Bug fix: PR #79 generalised the validation at the SET step but
+    // missed this second check, which still hardcoded /fund\s*wise/.
+    // The Schemewise audit mode landed Data="Schemewise" successfully
+    // but failed here with dataOk=false, aborting Go. Reuse the
+    // dynamic dataValidationRe built at the top of the function so
+    // the validation tracks whatever the audit mode targeted.
+    const dataOk = dataValidationRe.test(fData.visibleValue);
     const fyOk = (fFy.visibleValue || "").trim().length > 0;
     const periodOk = (fPeriod.visibleValue || "").trim().length > 0;
+    // Type is required when the audit mode passed an explicit
+    // typeModeCandidates list. If the user-selected Type didn't
+    // come back populated, the form is incomplete — proceeding to
+    // Go would produce an unscoped result (e.g. Schemewise without
+    // Categorywise → per-scheme rows industry-wide instead of per
+    // AMC × per-category). Default Type list is the existing
+    // catch-all (= still optional, same behaviour as PR #79).
+    const typeRequired = !!opts.typeModeCandidates;
+    const typeOk =
+      !typeRequired || (fType.visibleValue || "").trim().length > 0;
     const goEnabled =
       goState.found &&
       goState.disabled === false &&
       goState.ariaDisabled !== "true";
 
-    if (!dataOk || !fyOk || !periodOk || !goEnabled) {
+    if (!dataOk || !typeOk || !fyOk || !periodOk || !goEnabled) {
       warn(
-        `AAUM[${q.calendarQ}]: NOT clicking Go — dataOk=${dataOk} fyOk=${fyOk} periodOk=${periodOk} goEnabled=${goEnabled}`
+        `AAUM[${q.calendarQ}]: NOT clicking Go — dataOk=${dataOk} typeOk=${typeOk} (required=${typeRequired}) fyOk=${fyOk} periodOk=${periodOk} goEnabled=${goEnabled}`
       );
       warn(
         `AAUM[${q.calendarQ}]:   FY options at fail: [${fFy.options.slice(0, 12).join(" | ")}]`
@@ -1158,7 +1198,7 @@ async function fetchQuarter(
       if (auditMode && opts.diagnosticsOut) {
         opts.diagnosticsOut.current = await capturePageDiagnostics(
           page,
-          `pre-Go failure: dataOk=${dataOk} fyOk=${fyOk} periodOk=${periodOk} goEnabled=${goEnabled}`,
+          `pre-Go failure: dataOk=${dataOk} typeOk=${typeOk} (required=${typeRequired}) fyOk=${fyOk} periodOk=${periodOk} goEnabled=${goEnabled}`,
           { fData, fType, fFy, fMf, fPeriod, goState },
           xhrCapture
         );
@@ -1787,6 +1827,7 @@ export async function ingestAmfiAaumCategoryAudit(
     const modes: {
       label: string;
       dataModeCandidates: string[];
+      typeModeCandidates?: string[];
     }[] = [
       // Fundwise + MF=<amc> — known control; returns the all-AMC
       // list. Run first so the diagnostics include a baseline.
@@ -1794,19 +1835,34 @@ export async function ingestAmfiAaumCategoryAudit(
         label: "fundwise-mf-only",
         dataModeCandidates: ["Fundwise", "Fund wise", "Fund-wise"],
       },
-      // Schemewise + MF=<amc> — returns one row per scheme; most
-      // likely to actually scope to the requested AMC. We'd then
-      // need a separate scheme→category mapping to aggregate, but
-      // even confirming that the row list narrows to HDFC schemes
-      // would prove this is the right route.
+      // Schemewise + MF=<amc> with Type left to its default.
+      // PR #79's diagnostics confirmed the form populates a "Select
+      // Type" dropdown with options ["Categorywise", "Typewise"]
+      // when Schemewise is chosen, but PR #79 didn't set Type so
+      // Go stayed disabled. This attempt is kept for diagnostic
+      // completeness — we now know it will likely also fail at
+      // pre-Go (typeOk=false) until Type is explicitly set.
       {
         label: "schemewise-mf",
         dataModeCandidates: ["Schemewise", "Scheme wise", "Scheme-wise"],
       },
-      // Scheme Category-wise + MF=<amc> — long shot; AMFI may not
-      // expose this combination. If the dropdown option doesn't
-      // exist, this attempt fails at Select Data and we capture a
-      // diagnostics dump without a Go submission.
+      // Schemewise + Categorywise + MF=<amc> — THE NEW KEY ATTEMPT.
+      // PR #79's audit JSON revealed AMFI's actual Select Type
+      // options inside Schemewise are ["Categorywise", "Typewise"];
+      // setting Type=Categorywise SHOULD instruct AMFI to return
+      // category-level rows scoped to the chosen AMC. If this works,
+      // detection=category-rows and the audit JSON's parsedRows is
+      // populated.
+      {
+        label: "schemewise-categorywise-mf",
+        dataModeCandidates: ["Schemewise", "Scheme wise", "Scheme-wise"],
+        typeModeCandidates: ["Categorywise", "Category wise", "Category-wise"],
+      },
+      // Scheme Category-wise + MF=<amc> — kept for diagnostic
+      // completeness; PR #79's diagnostics already showed AMFI's
+      // Select Data dropdown has only ["Fundwise", "Schemewise"],
+      // so this attempt fails at Select Data and we capture the
+      // diagnostics dump.
       {
         label: "scheme-category-wise-mf",
         dataModeCandidates: [
@@ -1821,6 +1877,7 @@ export async function ingestAmfiAaumCategoryAudit(
     interface Attempt {
       label: string;
       dataModeCandidates: string[];
+      typeModeCandidates?: string[];
       ok: boolean;
       detection: "category-rows" | "scheme-rows" | "amc-rows" | "unknown" | "failed";
       sourceUrl?: string;
@@ -1846,6 +1903,13 @@ export async function ingestAmfiAaumCategoryAudit(
         auditAmc: amcName,
         returnRawTables: true,
         dataModeCandidates: mode.dataModeCandidates,
+        // typeModeCandidates is opt-in per-mode. Only the
+        // schemewise-categorywise-mf attempt sets it today; other
+        // modes keep the existing extractor's catch-all candidate
+        // list (and Type stays optional for them).
+        ...(mode.typeModeCandidates
+          ? { typeModeCandidates: mode.typeModeCandidates }
+          : {}),
         diagnosticsOut,
       });
       if (!outcome) {
@@ -1853,6 +1917,9 @@ export async function ingestAmfiAaumCategoryAudit(
         attempts.push({
           label: mode.label,
           dataModeCandidates: mode.dataModeCandidates,
+          ...(mode.typeModeCandidates
+            ? { typeModeCandidates: mode.typeModeCandidates }
+            : {}),
           ok: false,
           detection: "failed",
           rawHeaders: [],
@@ -1878,6 +1945,9 @@ export async function ingestAmfiAaumCategoryAudit(
       attempts.push({
         label: mode.label,
         dataModeCandidates: mode.dataModeCandidates,
+        ...(mode.typeModeCandidates
+          ? { typeModeCandidates: mode.typeModeCandidates }
+          : {}),
         ok: true,
         detection,
         sourceUrl: outcome.sourceUrl,
@@ -1905,6 +1975,9 @@ export async function ingestAmfiAaumCategoryAudit(
       );
       const fundwiseAttempt = attempts.find((a) => a.label === "fundwise-mf-only");
       const schemewiseAttempt = attempts.find((a) => a.label === "schemewise-mf");
+      const schemewiseCatAttempt = attempts.find(
+        (a) => a.label === "schemewise-categorywise-mf"
+      );
       const failed: AuditOutput = {
         source: "AMFI Fundwise AAUM disclosure",
         sourceUrl: fundwiseAttempt?.sourceUrl ?? FORM_URL,
@@ -1926,14 +1999,18 @@ export async function ingestAmfiAaumCategoryAudit(
         activeEquityAaum: null,
         status: "failed",
         notes: [
-          "AMFI Average AUM page does NOT support AMC × category in any single Select Data mode.",
+          "AMFI Average AUM page does NOT support AMC × category in any tested Select Data + Type combination.",
           ...attempts.map(
             (a) =>
               `Attempt "${a.label}" → detection=${a.detection}; rowsSample=${a.rawRowsSample.length}; firstHeader=${JSON.stringify(a.rawHeaders.slice(0, 4))}`
           ),
-          schemewiseAttempt && schemewiseAttempt.detection === "scheme-rows"
-            ? `RECOMMENDED FALLBACK: Schemewise + MF=${amcName} returned per-scheme rows (${schemewiseAttempt.rawRowsSample.length} sample rows). Build a follow-up extractor that fetches Schemewise per AMC and joins with the AMFI scheme-categorisation file (https://www.amfiindia.com/research-information/other-data/categorization-of-mutual-fund-schemes) to aggregate by category.`
-            : "RECOMMENDED FALLBACK: parse the AMFI Monthly Report PDF per-scheme table (existing scripts/ingest/amfi-monthly-pdf.ts), which lists scheme name + AAUM per AMC + category. Or use Morningstar fund-wise + categorisation as the secondary source.",
+          // Recommend the fallback that is most likely to work given
+          // what each attempt actually returned.
+          schemewiseCatAttempt && schemewiseCatAttempt.detection === "scheme-rows"
+            ? `RECOMMENDED FALLBACK: Schemewise + Categorywise + MF=${amcName} returned per-scheme rows even with Type=Categorywise (${schemewiseCatAttempt.rawRowsSample.length} sample rows). Build a follow-up extractor that fetches Schemewise per AMC and joins with the AMFI scheme-categorisation file (https://www.amfiindia.com/research-information/other-data/categorization-of-mutual-fund-schemes) to aggregate by category.`
+            : schemewiseAttempt && schemewiseAttempt.detection === "scheme-rows"
+              ? `RECOMMENDED FALLBACK: Schemewise + MF=${amcName} returned per-scheme rows (${schemewiseAttempt.rawRowsSample.length} sample rows). Build a follow-up extractor that fetches Schemewise per AMC and joins with the AMFI scheme-categorisation file (https://www.amfiindia.com/research-information/other-data/categorization-of-mutual-fund-schemes) to aggregate by category.`
+              : "RECOMMENDED FALLBACK: AMFI does not expose AMC × category cleanly. Pivot to per-AMC factsheets, Morningstar fund-wise + categorisation, or AMC investor-deck disclosures.",
           `See manual-data/audit/amfi-aaum-category-${auditFilenameSlug(amcName)}-${q.calendarQ.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-attempts.json for the per-mode breakdown.`,
         ],
       };
