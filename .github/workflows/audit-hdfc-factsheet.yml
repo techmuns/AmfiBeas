@@ -1,0 +1,102 @@
+name: Audit HDFC Factsheet
+
+# Manual-only audit workflow. Drives scripts/ingest/amc-factsheet-hdfc.ts
+# (PoC parser added in PR #82) from a network-enabled GitHub Actions runner
+# so we can verify the HDFC Mutual Fund factsheet PDF parses end-to-end and
+# the scheme-outperformance % comes out sensibly. The local sandbox cannot
+# reach hdfcfund.com (host-not-allowed), so this workflow is the only way
+# to exercise the real fetch path without local setup.
+#
+# Audit-only:
+#   - no production snapshot is written
+#   - no dashboard UI is touched
+#   - the only file the workflow may commit back is
+#     manual-data/audit/hdfc-scheme-outperformance-poc.json
+
+on:
+  workflow_dispatch:
+    inputs:
+      period:
+        description: "Optional period/month, e.g. 2026-03. Leave blank for latest."
+        required: false
+        default: ""
+      write:
+        description: "Write audit JSON (1 = yes, 0 = dry run)"
+        required: true
+        default: "1"
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: audit-hdfc-factsheet-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Chromium for Playwright
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Run HDFC factsheet audit
+        env:
+          # Workflow inputs surfaced as env vars. The script reads:
+          #   HDFC_FACTSHEET_PERIOD — blank = "latest"; "YYYY-MM" pins
+          #     the listing scrape to that publish-month folder
+          #     (e.g. /s3fs-public/2026-03/HDFC...pdf).
+          #   HDFC_FACTSHEET_WRITE — anything other than "0" writes
+          #     the audit JSON; "0" runs in dry-run mode and only logs.
+          HDFC_FACTSHEET_PERIOD: ${{ inputs.period }}
+          HDFC_FACTSHEET_WRITE: ${{ inputs.write }}
+        run: npm run audit:hdfc-factsheet
+
+      - name: List audit directory
+        if: always()
+        run: ls -la manual-data/audit/ || true
+
+      - name: Upload audit JSON artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hdfc-factsheet-audit
+          path: manual-data/audit/hdfc-scheme-outperformance-poc.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Commit audit JSON if updated
+        # Skip the commit step entirely when WRITE=0 (dry run), and
+        # also when the JSON didn't change vs HEAD (no-op). The script
+        # always rewrites the file on success, but git status only
+        # shows changes when content actually differs.
+        if: inputs.write != '0'
+        run: |
+          if [ -z "$(git status --porcelain manual-data/audit/hdfc-scheme-outperformance-poc.json)" ]; then
+            echo "No audit JSON changes — nothing to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manual-data/audit/hdfc-scheme-outperformance-poc.json
+          git commit -m "chore(audit): update HDFC factsheet outperformance audit"
+          git push

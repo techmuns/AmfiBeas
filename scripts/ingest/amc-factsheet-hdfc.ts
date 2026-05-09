@@ -39,6 +39,17 @@
  * WAF, and for testing inside the harness sandbox where hdfcfund.com
  * is on the host-not-allowed list.
  *
+ * ### Other env vars (used by the workflow_dispatch GitHub Action)
+ *
+ *   HDFC_FACTSHEET_PERIOD=YYYY-MM
+ *     Optional. When set, the listing scraper filters to PDFs whose
+ *     URL contains the requested /YYYY-MM/ segment (publish month).
+ *     Blank / unset → pick the most recent listed PDF.
+ *
+ *   HDFC_FACTSHEET_WRITE=0
+ *     Skip writing the audit JSON file. Anything other than "0"
+ *     (including unset) writes as normal.
+ *
  * ### Eligibility (matches the IIFL active-equity envelope)
  *
  *   Sub II — Growth/Equity (all 11)
@@ -477,7 +488,8 @@ interface FetchResult {
 }
 
 async function fetchLatestFactsheet(
-  cacheDir: string
+  cacheDir: string,
+  requestedPeriod?: string | null
 ): Promise<FetchResult | null> {
   let chromium;
   try {
@@ -539,9 +551,10 @@ async function fetchLatestFactsheet(
       return null;
     }
 
-    // Pick the most recent by parsing the YYYY-MM segment from the
-    // URL — `/s3fs-public/<YYYY-MM>/HDFC...pdf`. Falls back to the
-    // first link if no YYYY-MM segment is present.
+    // Tag every link with its YYYY-MM segment from the URL —
+    // `/s3fs-public/<YYYY-MM>/HDFC...pdf`. When the workflow input
+    // pins a specific period, filter to that one; otherwise sort
+    // descending and take the most recent.
     const dated = links
       .map((l) => {
         const m = l.href.match(/\/(\d{4})-(\d{2})\//);
@@ -549,8 +562,25 @@ async function fetchLatestFactsheet(
         return { ...l, period };
       })
       .sort((a, b) => (b.period ?? "").localeCompare(a.period ?? ""));
-    const latest = dated[0];
-    info(`hdfc-factsheet: latest = ${latest.href} (period=${latest.period})`);
+
+    let candidate: (typeof dated)[number] | undefined;
+    if (requestedPeriod) {
+      candidate = dated.find((l) => l.period === requestedPeriod);
+      if (!candidate) {
+        warn(
+          `hdfc-factsheet: no factsheet PDF found for requested period "${requestedPeriod}". Available: [${dated
+            .map((l) => l.period ?? "—")
+            .slice(0, 8)
+            .join(", ")}]`
+        );
+        return null;
+      }
+      info(`hdfc-factsheet: pinned to period=${requestedPeriod} → ${candidate.href}`);
+    } else {
+      candidate = dated[0];
+      info(`hdfc-factsheet: latest = ${candidate.href} (period=${candidate.period})`);
+    }
+    const latest = candidate;
 
     // Download the PDF using the same browser context so the WAF
     // cookie + UA carry over.
@@ -619,9 +649,15 @@ export async function ingestHdfcFactsheetPoc(): Promise<void> {
   const auditFile = path.join(auditDir, "hdfc-scheme-outperformance-poc.json");
 
   const localOverride = process.env.HDFC_FACTSHEET_PDF;
+  // Workflow inputs: blank period → "latest"; HDFC_FACTSHEET_WRITE="0" → no write.
+  const requestedPeriod = (process.env.HDFC_FACTSHEET_PERIOD ?? "").trim() || null;
+  const shouldWrite = (process.env.HDFC_FACTSHEET_WRITE ?? "1") !== "0";
+  if (requestedPeriod) info(`hdfc-factsheet: pinned period = ${requestedPeriod}`);
+  if (!shouldWrite) info(`hdfc-factsheet: write disabled (HDFC_FACTSHEET_WRITE=0)`);
+
   const fetched = localOverride
     ? await loadLocalPdf(localOverride)
-    : await fetchLatestFactsheet(cacheDir);
+    : await fetchLatestFactsheet(cacheDir, requestedPeriod);
 
   if (!fetched) {
     const failed: AuditOutput = {
@@ -650,9 +686,13 @@ export async function ingestHdfcFactsheetPoc(): Promise<void> {
       ],
       status: "failed",
     };
-    await fs.mkdir(auditDir, { recursive: true });
-    await fs.writeFile(auditFile, JSON.stringify(failed, null, 2) + "\n", "utf8");
-    info(`hdfc-factsheet: wrote ${auditFile} (failed)`);
+    if (shouldWrite) {
+      await fs.mkdir(auditDir, { recursive: true });
+      await fs.writeFile(auditFile, JSON.stringify(failed, null, 2) + "\n", "utf8");
+      info(`hdfc-factsheet: wrote ${auditFile} (failed)`);
+    } else {
+      info(`hdfc-factsheet: write disabled — would have written ${auditFile} (failed)`);
+    }
     return;
   }
 
@@ -691,9 +731,13 @@ export async function ingestHdfcFactsheetPoc(): Promise<void> {
       notes: ["pdf-parse returned 0 pages."],
       status: "failed",
     };
-    await fs.mkdir(auditDir, { recursive: true });
-    await fs.writeFile(auditFile, JSON.stringify(failed, null, 2) + "\n", "utf8");
-    info(`hdfc-factsheet: wrote ${auditFile} (failed: 0 pages)`);
+    if (shouldWrite) {
+      await fs.mkdir(auditDir, { recursive: true });
+      await fs.writeFile(auditFile, JSON.stringify(failed, null, 2) + "\n", "utf8");
+      info(`hdfc-factsheet: wrote ${auditFile} (failed: 0 pages)`);
+    } else {
+      info(`hdfc-factsheet: write disabled — would have written ${auditFile} (failed: 0 pages)`);
+    }
     return;
   }
 
@@ -822,15 +866,19 @@ export async function ingestHdfcFactsheetPoc(): Promise<void> {
     status,
   };
 
-  await fs.mkdir(auditDir, { recursive: true });
-  await fs.writeFile(auditFile, JSON.stringify(out, null, 2) + "\n", "utf8");
   info(
     `hdfc-factsheet: parsed=${deduped.length} included=${included.length} excluded=${excluded.length}; ` +
       `1Y ${e1.beatN}/${e1.eligibleN} (${e1.pct ?? "—"}%) · ` +
       `3Y ${e3.beatN}/${e3.eligibleN} (${e3.pct ?? "—"}%) · ` +
       `5Y ${e5.beatN}/${e5.eligibleN} (${e5.pct ?? "—"}%)`
   );
-  info(`hdfc-factsheet: wrote ${auditFile}`);
+  if (shouldWrite) {
+    await fs.mkdir(auditDir, { recursive: true });
+    await fs.writeFile(auditFile, JSON.stringify(out, null, 2) + "\n", "utf8");
+    info(`hdfc-factsheet: wrote ${auditFile}`);
+  } else {
+    info(`hdfc-factsheet: write disabled — would have written ${auditFile}`);
+  }
 }
 
 // Self-invoke when run via `tsx scripts/ingest/amc-factsheet-hdfc.ts`.
