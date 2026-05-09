@@ -704,10 +704,161 @@ function parseRowBased(table: {
   return out;
 }
 
+/** Walks the page DOM + collected XHR log and produces a JSON-safe
+ *  snapshot of the form's state at failure time. Called from audit
+ *  mode only; the snapshot is written to a sibling
+ *  `<slug>-<quarter>-debug.json` next to the audit JSON so the user
+ *  can triage AMFI form drift without re-running.
+ *
+ *  Inputs are deliberately tolerant — when a step fails before some
+ *  fields were populated, the corresponding FieldOutcome is
+ *  `EMPTY_FIELD` and we just record that. */
+async function capturePageDiagnostics(
+  page: Page,
+  reason: string,
+  fieldOutcomes: {
+    fData: FieldOutcome;
+    fType: FieldOutcome;
+    fFy: FieldOutcome;
+    fMf: FieldOutcome;
+    fPeriod: FieldOutcome;
+    goState: GoButtonState;
+  },
+  xhrCapture: XhrCapture[]
+): Promise<AuditDiagnostics> {
+  let url: string | undefined;
+  try {
+    url = page.url();
+  } catch {}
+
+  // Walk visible inputs / buttons + grab a body-text snippet via a
+  // single page.evaluate so we serialise everything in one round-trip.
+  let pageScrape: {
+    inputs: { placeholder: string; value: string; disabled: boolean }[];
+    buttons: { text: string; disabled: boolean }[];
+    bodyTextSnippet: string;
+  } = { inputs: [], buttons: [], bodyTextSnippet: "" };
+  try {
+    pageScrape = await page.evaluate(() => {
+      const inputs = Array.from(document.querySelectorAll("input")).map((i) => {
+        const el = i as HTMLInputElement;
+        return {
+          placeholder: el.placeholder ?? "",
+          value: el.value ?? "",
+          disabled: !!el.disabled,
+        };
+      });
+      const buttons = Array.from(document.querySelectorAll("button")).map((b) => {
+        const el = b as HTMLButtonElement;
+        return {
+          text: (el.textContent || "").trim().slice(0, 80),
+          disabled: !!el.disabled,
+        };
+      });
+      const bodyTextSnippet = (document.body.innerText || "")
+        .replace(/\s+/g, " ")
+        .slice(0, 1500);
+      return { inputs, buttons, bodyTextSnippet };
+    });
+  } catch {}
+
+  // Truncate long screenshots so the debug JSON stays parseable. PNG
+  // base64 of a 1280×720 viewport ≈ 200-400KB; we cap at 600KB.
+  let screenshotBase64: string | undefined;
+  try {
+    const buf = await page.screenshot({ fullPage: false });
+    const b64 = buf.toString("base64");
+    screenshotBase64 = b64.length > 600_000 ? b64.slice(0, 600_000) : b64;
+  } catch {}
+
+  return {
+    url,
+    reason,
+    fields: {
+      Data: {
+        visible: fieldOutcomes.fData.found,
+        value: fieldOutcomes.fData.visibleValue,
+        options: fieldOutcomes.fData.options.slice(0, 30),
+      },
+      Type: {
+        visible: fieldOutcomes.fType.found,
+        value: fieldOutcomes.fType.visibleValue,
+        options: fieldOutcomes.fType.options.slice(0, 30),
+      },
+      FY: {
+        visible: fieldOutcomes.fFy.found,
+        value: fieldOutcomes.fFy.visibleValue,
+        options: fieldOutcomes.fFy.options.slice(0, 30),
+      },
+      MF: {
+        visible: fieldOutcomes.fMf.found,
+        value: fieldOutcomes.fMf.visibleValue,
+        options: fieldOutcomes.fMf.options.slice(0, 30),
+      },
+      Period: {
+        visible: fieldOutcomes.fPeriod.found,
+        value: fieldOutcomes.fPeriod.visibleValue,
+        options: fieldOutcomes.fPeriod.options.slice(0, 30),
+      },
+    },
+    goButton: {
+      found: fieldOutcomes.goState.found,
+      disabled: fieldOutcomes.goState.disabled,
+      ariaDisabled: fieldOutcomes.goState.ariaDisabled,
+    },
+    visibleInputs: pageScrape.inputs,
+    visibleButtons: pageScrape.buttons,
+    bodyTextSnippet: pageScrape.bodyTextSnippet,
+    xhrSummary: xhrCapture.slice(-30).map((x) => ({
+      method: x.method,
+      status: x.status,
+      url: x.url,
+    })),
+    screenshotBase64,
+  };
+}
+
+/** Audit-mode diagnostic dump captured when fetchQuarter fails to
+ *  reach the Go-click step (or fails after). Written to a sibling
+ *  `<slug>-<quarter>-debug.json` next to the audit JSON so the user
+ *  can triage AMFI form drift without re-running. */
+export interface AuditDiagnostics {
+  url?: string;
+  reason: string;
+  fields: {
+    Data?: { visible: boolean; value: string; options: string[] };
+    Type?: { visible: boolean; value: string; options: string[] };
+    FY?: { visible: boolean; value: string; options: string[] };
+    MF?: { visible: boolean; value: string; options: string[] };
+    Period?: { visible: boolean; value: string; options: string[] };
+  };
+  goButton?: {
+    found: boolean;
+    disabled: boolean | null;
+    ariaDisabled: string | null;
+    text?: string;
+  };
+  visibleInputs?: { placeholder: string; value: string; disabled: boolean }[];
+  visibleButtons?: { text: string; disabled: boolean }[];
+  bodyTextSnippet?: string;
+  xhrSummary?: { method: string; status: number; url: string }[];
+  /** Base64 PNG of a viewport screenshot. Truncated to first ~600KB
+   *  (post-base64 ≈ 450KB raw) to keep the JSON parseable. */
+  screenshotBase64?: string;
+}
+
 async function fetchQuarter(
   browser: Browser,
   q: QuarterToFetch,
-  opts: { auditAmc?: string; returnRawTables?: boolean } = {}
+  opts: {
+    auditAmc?: string;
+    returnRawTables?: boolean;
+    /** When set + audit mode failed, fetchQuarter populates
+     *  `diagnosticsOut.current` with a snapshot of page state so the
+     *  caller can write a sibling debug JSON. Never populated in
+     *  normal full-ingest runs. */
+    diagnosticsOut?: { current?: AuditDiagnostics };
+  } = {}
 ): Promise<{
   rows: ParsedAmcRow[];
   sourceUrl: string;
@@ -716,6 +867,19 @@ async function fetchQuarter(
    *  `headers` + `rows` arrays of cell strings. */
   rawTables?: { headers: string[]; rows: string[][] }[];
 } | null> {
+  // Audit-mode timing overrides. The original 8s / 12s budgets in T
+  // are sized for warm sequential ingest runs; the cold single-quarter
+  // audit run on a GitHub Actions runner needed roughly 30s for AMFI's
+  // post-Fundwise JS to populate the FY / Period dropdowns. Triple the
+  // critical waits when an auditAmc is set; normal full-ingest runs
+  // continue to use T verbatim so we don't slow down the working path.
+  const auditMode = !!opts.auditAmc;
+  const tFormReady = auditMode ? 30_000 : T.waitForFormReady;
+  const tDependent = auditMode ? 30_000 : T.waitForDependentFields;
+  const tLoadingDone = auditMode ? 30_000 : T.waitForLoadingDone;
+  const tPostGo = auditMode ? 30_000 : T.postGoNetworkIdle;
+  const tPostFundwiseSettle = auditMode ? 2_000 : T.midSleep;
+
   const ctx = await browser.newContext({
     userAgent:
       "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
@@ -756,7 +920,7 @@ async function fetchQuarter(
     vinfo(`AAUM[${q.calendarQ}]: page loaded, waiting for form ready`);
     try {
       await page.waitForSelector('input[placeholder="Select Data"]', {
-        timeout: T.waitForFormReady,
+        timeout: tFormReady,
       });
     } catch {
       warn(`AAUM[${q.calendarQ}]: Select Data placeholder never appeared`);
@@ -780,22 +944,29 @@ async function fetchQuarter(
     }
 
     // Wait for dependent fields to render after Fundwise is selected.
+    // Audit mode runs cold (one quarter, fresh runner) and AMFI's
+    // post-Fundwise JS sometimes takes 15-25s to populate the FY /
+    // MF dropdowns; tDependent gives it 30s in audit mode (8s for
+    // the warm sequential ingest path).
     vinfo(
-      `AAUM[${q.calendarQ}]: waiting up to ${T.waitForDependentFields}ms for dependent fields`
+      `AAUM[${q.calendarQ}]: waiting up to ${tDependent}ms for dependent fields`
     );
     let dependentReady = false;
     try {
       await page.waitForSelector(
         'input[placeholder="Select Financial Year"], input[placeholder="Select Mutual Fund"]',
-        { timeout: T.waitForDependentFields }
+        { timeout: tDependent }
       );
       dependentReady = true;
     } catch {
       warn(
-        `AAUM[${q.calendarQ}]: dependent fields (FY/MF) did not appear within ${T.waitForDependentFields}ms`
+        `AAUM[${q.calendarQ}]: dependent fields (FY/MF) did not appear within ${tDependent}ms`
       );
     }
-    await sleep(T.midSleep);
+    // Audit mode gives AMFI's post-Fundwise XHR / option-loading code
+    // an extra settle window; production stays at midSleep so the
+    // 8-quarter ingest doesn't bloat its overall budget.
+    await sleep(tPostFundwiseSettle);
     await logVisiblePlaceholders(
       page,
       q.calendarQ,
@@ -841,7 +1012,7 @@ async function fetchQuarter(
       page,
       q.calendarQ,
       "post-FY",
-      T.waitForLoadingDone
+      tLoadingDone
     );
     await logVisiblePlaceholders(page, q.calendarQ, "post-FY-load");
 
@@ -896,7 +1067,7 @@ async function fetchQuarter(
         page,
         q.calendarQ,
         "post-MF",
-        T.waitForLoadingDone
+        tLoadingDone
       );
       await logVisiblePlaceholders(page, q.calendarQ, "post-MF-load");
     } else {
@@ -945,6 +1116,14 @@ async function fetchQuarter(
         `AAUM[${q.calendarQ}]:   Period options at fail: [${fPeriod.options.slice(0, 12).join(" | ")}]`
       );
       await logVisiblePlaceholders(page, q.calendarQ, "before-Go (skipped)");
+      if (auditMode && opts.diagnosticsOut) {
+        opts.diagnosticsOut.current = await capturePageDiagnostics(
+          page,
+          `pre-Go failure: dataOk=${dataOk} fyOk=${fyOk} periodOk=${periodOk} goEnabled=${goEnabled}`,
+          { fData, fType, fFy, fMf, fPeriod, goState },
+          xhrCapture
+        );
+      }
       return null;
     }
 
@@ -956,10 +1135,10 @@ async function fetchQuarter(
       return null;
     }
 
-    vinfo(`AAUM[${q.calendarQ}]: waiting for results (max ${T.postGoNetworkIdle}ms)`);
+    vinfo(`AAUM[${q.calendarQ}]: waiting for results (max ${tPostGo}ms)`);
     try {
       await page.waitForLoadState("networkidle", {
-        timeout: T.postGoNetworkIdle,
+        timeout: tPostGo,
       });
     } catch {}
     await sleep(T.postGoSettle);
@@ -1039,6 +1218,14 @@ async function fetchQuarter(
           `    AMC cells seen: [${extract.amcCellsSeen.slice(0, 6).join(" | ")}]\n` +
           `    URL after Go: ${extract.url}`
       );
+      if (auditMode && opts.diagnosticsOut) {
+        opts.diagnosticsOut.current = await capturePageDiagnostics(
+          page,
+          `post-Go: 0 rows parsed (Go clicked=${goClicked}, ${extract.tables.length} table(s) visible)`,
+          { fData, fType, fFy, fMf, fPeriod, goState },
+          xhrCapture
+        );
+      }
       return null;
     }
 
@@ -1549,9 +1736,16 @@ export async function ingestAmfiAaumCategoryAudit(
   let browser: Browser | null = null;
   try {
     browser = await chromium.launch({ headless: true });
+    // Audit-mode diagnostics carrier — fetchQuarter populates
+    // `current` with a snapshot of page state if it bails out before
+    // the Go-click step (or after with zero rows). We then write a
+    // sibling debug JSON next to the audit JSON so the user can
+    // triage AMFI form drift without re-running.
+    const diagnosticsOut: { current?: AuditDiagnostics } = {};
     const outcome = await fetchQuarter(browser, q, {
       auditAmc: amcName,
       returnRawTables: true,
+      diagnosticsOut,
     });
     if (!outcome) {
       warn(`AAUM-AUDIT: form submission failed for ${amcName} ${q.calendarQ}`);
@@ -1575,9 +1769,22 @@ export async function ingestAmfiAaumCategoryAudit(
         },
         activeEquityAaum: null,
         status: "failed",
-        notes: ["Form submission returned null — see ingest log for details."],
+        notes: [
+          "Form submission returned null — see ingest log for details.",
+          ...(diagnosticsOut.current
+            ? [
+                `Diagnostics captured: ${diagnosticsOut.current.reason}`,
+                `Debug JSON: manual-data/audit/amfi-aaum-category-${auditFilenameSlug(amcName)}-${q.calendarQ.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-debug.json`,
+              ]
+            : ["No diagnostics captured (failure preceded form load)."]),
+        ],
       };
-      if (writeFile) await writeAuditFile(failed);
+      if (writeFile) {
+        await writeAuditFile(failed);
+        if (diagnosticsOut.current) {
+          await writeAuditDebugFile(amcName, q.calendarQ, diagnosticsOut.current);
+        }
+      }
       return failed;
     }
 
@@ -1658,6 +1865,28 @@ async function writeAuditFile(out: AuditOutput): Promise<void> {
   const file = path.join(dir, `amfi-aaum-category-${slug}-${qLc}.json`);
   await fs.writeFile(file, JSON.stringify(out, null, 2) + "\n", "utf8");
   info(`AAUM-AUDIT: wrote ${file}`);
+}
+
+/** Sibling debug JSON that captures the page state when the audit
+ *  failed before reaching Go-click (or after with zero rows). Lets
+ *  the user triage AMFI form drift without re-running. The file is
+ *  written next to the audit JSON with the same slug + quarter
+ *  prefix and a `-debug.json` suffix. */
+async function writeAuditDebugFile(
+  amcName: string,
+  quarterCal: string,
+  diag: AuditDiagnostics
+): Promise<void> {
+  const dir = path.resolve(process.cwd(), "manual-data/audit");
+  await fs.mkdir(dir, { recursive: true });
+  const slug = auditFilenameSlug(amcName);
+  const qLc = quarterCal.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const file = path.join(
+    dir,
+    `amfi-aaum-category-${slug}-${qLc}-debug.json`
+  );
+  await fs.writeFile(file, JSON.stringify(diag, null, 2) + "\n", "utf8");
+  info(`AAUM-AUDIT: wrote debug ${file}`);
 }
 
 // ---- Self-invocation when AAUM_AUDIT_AMC env var is set -------------
