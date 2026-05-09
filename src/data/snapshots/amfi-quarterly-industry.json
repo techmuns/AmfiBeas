@@ -1,9 +1,2602 @@
 {
   "meta": {
     "source": "AMFI Quarterly Report PDFs",
-    "generatedAt": null,
-    "rowCount": 0,
-    "notes": "Seed snapshot. Extractor not yet run. Quarterly PDF AAUM columns are last-month AAUM, not true quarterly average."
+    "generatedAt": "2026-05-09T04:46:50.216Z",
+    "rowCount": 8,
+    "notes": "Quarterly PDF Average Net AUM columns are last-month AAUM, not true quarterly average. Do not use LastMonthAaum fields for QAAUM-share charts."
   },
-  "rows": []
+  "rows": [
+    {
+      "quarter": "FY25-Q1",
+      "quarterLabel": "1QFY25",
+      "quarterStart": "2024-04",
+      "quarterEnd": "2024-06",
+      "fieldSources": {
+        "grandTotalAum": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Grand Total row · Net AUM column"
+        },
+        "grandTotalLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Grand Total row · Average Net AUM (last-month) column"
+        },
+        "grandTotalNetInflow": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "grandTotalFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Grand Total row · Funds Mobilized column"
+        },
+        "grandTotalRepurchase": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Grand Total row · Repurchase / Redemption column"
+        },
+        "grandTotalFolios": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Grand Total row · No. of Folios column"
+        },
+        "debtAum": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - I row · Net AUM column"
+        },
+        "debtLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - I row · Average Net AUM (last-month) column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "debtFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - I row · Funds Mobilized column"
+        },
+        "debtRepurchase": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - I row · Repurchase / Redemption column"
+        },
+        "debtFolios": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - I row · No. of Folios column"
+        },
+        "equityAum": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - II row · Net AUM column"
+        },
+        "equityLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - II row · Average Net AUM (last-month) column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "equityFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - II row · Funds Mobilized column"
+        },
+        "equityRepurchase": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - II row · Repurchase / Redemption column"
+        },
+        "equityFolios": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - II row · No. of Folios column"
+        },
+        "hybridAum": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - III row · Net AUM column"
+        },
+        "hybridLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - III row · Average Net AUM (last-month) column"
+        },
+        "hybridNetInflow": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - III row · Net Inflow / Outflow column"
+        },
+        "hybridFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - III row · Funds Mobilized column"
+        },
+        "hybridRepurchase": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - III row · Repurchase / Redemption column"
+        },
+        "hybridFolios": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - III row · No. of Folios column"
+        },
+        "otherSchemesAum": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - V row · Net AUM column"
+        },
+        "otherSchemesLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - V row · Average Net AUM (last-month) column"
+        },
+        "otherSchemesNetInflow": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - V row · Net Inflow / Outflow column"
+        },
+        "otherSchemesFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - V row · Funds Mobilized column"
+        },
+        "otherSchemesRepurchase": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - V row · Repurchase / Redemption column"
+        },
+        "otherSchemesFolios": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub Total - V row · No. of Folios column"
+        },
+        "activeEquityNetInflow": {
+          "sourcePdf": "aqu-vol24-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.688Z",
+          "sourceLabel": "Sub II net inflow + (Sub III net inflow − Arbitrage Fund net inflow) + Sub IV net inflow · (IIFL active-equity envelope flow, quarter-sum)"
+        }
+      },
+      "sourcePdf": "aqu-vol24-issueI.pdf",
+      "sourceFormat": "quarterly-report",
+      "sourcePages": [
+        1
+      ],
+      "extractedAt": "2026-05-09T04:46:49.688Z",
+      "grandTotalAum": 6115581.92,
+      "grandTotalLastMonthAaum": 6133226.77,
+      "grandTotalNetInflow": 306113.28,
+      "grandTotalFundsMobilized": 3161829.34,
+      "grandTotalRepurchase": 2855716.06,
+      "grandTotalFolios": 191047118,
+      "debtAum": 1413232.02,
+      "debtLastMonthAaum": 1518838.4,
+      "debtNetInflow": 124827.9,
+      "debtFundsMobilized": 2742440.75,
+      "debtRepurchase": 2617612.85,
+      "debtFolios": 7013214,
+      "equityAum": 2767998.88,
+      "equityLastMonthAaum": 2682752.78,
+      "equityNetInflow": 94222.27,
+      "equityFundsMobilized": 207783.83,
+      "equityRepurchase": 113561.55,
+      "equityFolios": 133032315,
+      "hybridAum": 809769.76,
+      "hybridLastMonthAaum": 833978.24,
+      "hybridNetInflow": 46708.35,
+      "hybridFundsMobilized": 128674.5,
+      "hybridRepurchase": 81966.15,
+      "hybridFolios": 14029910,
+      "otherSchemesAum": 1048310.06,
+      "otherSchemesLastMonthAaum": 1022452.82,
+      "otherSchemesNetInflow": 41762.01,
+      "otherSchemesFundsMobilized": 81127.26,
+      "otherSchemesRepurchase": 39365.26,
+      "otherSchemesFolios": 30501433,
+      "activeEquityNetInflow": 111330.96
+    },
+    {
+      "quarter": "FY25-Q2",
+      "quarterLabel": "2QFY25",
+      "quarterStart": "2024-07",
+      "quarterEnd": "2024-09",
+      "fieldSources": {
+        "grandTotalAum": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Grand Total row · Net AUM column"
+        },
+        "grandTotalLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Grand Total row · Average Net AUM (last-month) column"
+        },
+        "grandTotalNetInflow": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "grandTotalFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Grand Total row · Funds Mobilized column"
+        },
+        "grandTotalRepurchase": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Grand Total row · Repurchase / Redemption column"
+        },
+        "grandTotalFolios": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Grand Total row · No. of Folios column"
+        },
+        "debtAum": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - I row · Net AUM column"
+        },
+        "debtLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - I row · Average Net AUM (last-month) column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "debtFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - I row · Funds Mobilized column"
+        },
+        "debtRepurchase": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - I row · Repurchase / Redemption column"
+        },
+        "debtFolios": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - I row · No. of Folios column"
+        },
+        "equityAum": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - II row · Net AUM column"
+        },
+        "equityLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - II row · Average Net AUM (last-month) column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "equityFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - II row · Funds Mobilized column"
+        },
+        "equityRepurchase": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - II row · Repurchase / Redemption column"
+        },
+        "equityFolios": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - II row · No. of Folios column"
+        },
+        "hybridAum": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - III row · Net AUM column"
+        },
+        "hybridLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - III row · Average Net AUM (last-month) column"
+        },
+        "hybridNetInflow": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - III row · Net Inflow / Outflow column"
+        },
+        "hybridFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - III row · Funds Mobilized column"
+        },
+        "hybridRepurchase": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - III row · Repurchase / Redemption column"
+        },
+        "hybridFolios": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - III row · No. of Folios column"
+        },
+        "otherSchemesAum": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - V row · Net AUM column"
+        },
+        "otherSchemesLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - V row · Average Net AUM (last-month) column"
+        },
+        "otherSchemesNetInflow": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - V row · Net Inflow / Outflow column"
+        },
+        "otherSchemesFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - V row · Funds Mobilized column"
+        },
+        "otherSchemesRepurchase": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - V row · Repurchase / Redemption column"
+        },
+        "otherSchemesFolios": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub Total - V row · No. of Folios column"
+        },
+        "activeEquityNetInflow": {
+          "sourcePdf": "aqu-vol24-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.787Z",
+          "sourceLabel": "Sub II net inflow + (Sub III net inflow − Arbitrage Fund net inflow) + Sub IV net inflow · (IIFL active-equity envelope flow, quarter-sum)"
+        }
+      },
+      "sourcePdf": "aqu-vol24-issueII.pdf",
+      "sourceFormat": "quarterly-report",
+      "sourcePages": [
+        1
+      ],
+      "extractedAt": "2026-05-09T04:46:49.787Z",
+      "grandTotalAum": 6709259.24,
+      "grandTotalLastMonthAaum": 6800485.75,
+      "grandTotalNetInflow": 226053.02,
+      "grandTotalFundsMobilized": 3487776.85,
+      "grandTotalRepurchase": 3261723.83,
+      "grandTotalFolios": 210515684,
+      "debtAum": 1497187.33,
+      "debtLastMonthAaum": 1609989.45,
+      "debtNetInflow": 50923.01,
+      "debtFundsMobilized": 3049525.81,
+      "debtRepurchase": 2998602.8,
+      "debtFolios": 7024506,
+      "equityAum": 3110478.62,
+      "equityLastMonthAaum": 3065897.46,
+      "equityNetInflow": 109771.81,
+      "equityFundsMobilized": 225867.16,
+      "equityRepurchase": 116095.35,
+      "equityFolios": 147249946,
+      "hybridAum": 874898.96,
+      "hybridLastMonthAaum": 914360.49,
+      "hybridNetInflow": 32342.44,
+      "hybridFundsMobilized": 119935.02,
+      "hybridRepurchase": 87592.59,
+      "hybridFolios": 14667709,
+      "otherSchemesAum": 1145653.92,
+      "otherSchemesLastMonthAaum": 1129768.9,
+      "otherSchemesNetInflow": 32631.29,
+      "otherSchemesFundsMobilized": 90845.74,
+      "otherSchemesRepurchase": 58214.45,
+      "otherSchemesFolios": 35059833,
+      "activeEquityNetInflow": 132946.04
+    },
+    {
+      "quarter": "FY25-Q3",
+      "quarterLabel": "3QFY25",
+      "quarterStart": "2024-10",
+      "quarterEnd": "2024-12",
+      "fieldSources": {
+        "grandTotalAum": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Grand Total row · Net AUM column"
+        },
+        "grandTotalLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Grand Total row · Average Net AUM (last-month) column"
+        },
+        "grandTotalNetInflow": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "grandTotalFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Grand Total row · Funds Mobilized column"
+        },
+        "grandTotalRepurchase": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Grand Total row · Repurchase / Redemption column"
+        },
+        "grandTotalFolios": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Grand Total row · No. of Folios column"
+        },
+        "debtAum": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - I row · Net AUM column"
+        },
+        "debtLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - I row · Average Net AUM (last-month) column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "debtFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - I row · Funds Mobilized column"
+        },
+        "debtRepurchase": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - I row · Repurchase / Redemption column"
+        },
+        "debtFolios": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - I row · No. of Folios column"
+        },
+        "equityAum": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - II row · Net AUM column"
+        },
+        "equityLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - II row · Average Net AUM (last-month) column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "equityFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - II row · Funds Mobilized column"
+        },
+        "equityRepurchase": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - II row · Repurchase / Redemption column"
+        },
+        "equityFolios": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - II row · No. of Folios column"
+        },
+        "hybridAum": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - III row · Net AUM column"
+        },
+        "hybridLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - III row · Average Net AUM (last-month) column"
+        },
+        "hybridNetInflow": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - III row · Net Inflow / Outflow column"
+        },
+        "hybridFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - III row · Funds Mobilized column"
+        },
+        "hybridRepurchase": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - III row · Repurchase / Redemption column"
+        },
+        "hybridFolios": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - III row · No. of Folios column"
+        },
+        "otherSchemesAum": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - V row · Net AUM column"
+        },
+        "otherSchemesLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - V row · Average Net AUM (last-month) column"
+        },
+        "otherSchemesNetInflow": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - V row · Net Inflow / Outflow column"
+        },
+        "otherSchemesFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - V row · Funds Mobilized column"
+        },
+        "otherSchemesRepurchase": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - V row · Repurchase / Redemption column"
+        },
+        "otherSchemesFolios": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub Total - V row · No. of Folios column"
+        },
+        "activeEquityNetInflow": {
+          "sourcePdf": "aqu-vol24-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.867Z",
+          "sourceLabel": "Sub II net inflow + (Sub III net inflow − Arbitrage Fund net inflow) + Sub IV net inflow · (IIFL active-equity envelope flow, quarter-sum)"
+        }
+      },
+      "sourcePdf": "aqu-vol24-issueIII.pdf",
+      "sourceFormat": "quarterly-report",
+      "sourcePages": [
+        1
+      ],
+      "extractedAt": "2026-05-09T04:46:49.867Z",
+      "grandTotalAum": 6693032.12,
+      "grandTotalLastMonthAaum": 6932959.05,
+      "grandTotalNetInflow": 219769.42,
+      "grandTotalFundsMobilized": 3487887.54,
+      "grandTotalRepurchase": 3268118.12,
+      "grandTotalFolios": 225003545,
+      "debtAum": 1567477.28,
+      "debtLastMonthAaum": 1698139.6,
+      "debtNetInflow": 43165.57,
+      "debtFundsMobilized": 3074851.64,
+      "debtRepurchase": 3031686.07,
+      "debtFolios": 6824169,
+      "equityAum": 3057548.59,
+      "equityLastMonthAaum": 3090095.6,
+      "equityNetInflow": 118986.1,
+      "equityFundsMobilized": 208540.14,
+      "equityRepurchase": 89554.05,
+      "equityFolios": 157496827,
+      "hybridAum": 876535.72,
+      "hybridLastMonthAaum": 931530.02,
+      "hybridNetInflow": 25356.76,
+      "hybridFundsMobilized": 108219.56,
+      "hybridRepurchase": 82862.8,
+      "hybridFolios": 15197642,
+      "otherSchemesAum": 1111660.78,
+      "otherSchemesLastMonthAaum": 1132688.01,
+      "otherSchemesNetInflow": 31273.97,
+      "otherSchemesFundsMobilized": 94342.45,
+      "otherSchemesRepurchase": 63068.48,
+      "otherSchemesFolios": 38919288,
+      "activeEquityNetInflow": 139902.03
+    },
+    {
+      "quarter": "FY25-Q4",
+      "quarterLabel": "4QFY25",
+      "quarterStart": "2025-01",
+      "quarterEnd": "2025-03",
+      "fieldSources": {
+        "grandTotalAum": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Grand Total row · Net AUM column"
+        },
+        "grandTotalLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Grand Total row · Average Net AUM (last-month) column"
+        },
+        "grandTotalNetInflow": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "grandTotalFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Grand Total row · Funds Mobilized column"
+        },
+        "grandTotalRepurchase": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Grand Total row · Repurchase / Redemption column"
+        },
+        "grandTotalFolios": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Grand Total row · No. of Folios column"
+        },
+        "debtAum": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - I row · Net AUM column"
+        },
+        "debtLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - I row · Average Net AUM (last-month) column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "debtFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - I row · Funds Mobilized column"
+        },
+        "debtRepurchase": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - I row · Repurchase / Redemption column"
+        },
+        "debtFolios": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - I row · No. of Folios column"
+        },
+        "equityAum": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - II row · Net AUM column"
+        },
+        "equityLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - II row · Average Net AUM (last-month) column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "equityFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - II row · Funds Mobilized column"
+        },
+        "equityRepurchase": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - II row · Repurchase / Redemption column"
+        },
+        "equityFolios": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - II row · No. of Folios column"
+        },
+        "hybridAum": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - III row · Net AUM column"
+        },
+        "hybridLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - III row · Average Net AUM (last-month) column"
+        },
+        "hybridNetInflow": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - III row · Net Inflow / Outflow column"
+        },
+        "hybridFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - III row · Funds Mobilized column"
+        },
+        "hybridRepurchase": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - III row · Repurchase / Redemption column"
+        },
+        "hybridFolios": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - III row · No. of Folios column"
+        },
+        "otherSchemesAum": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - V row · Net AUM column"
+        },
+        "otherSchemesLastMonthAaum": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - V row · Average Net AUM (last-month) column"
+        },
+        "otherSchemesNetInflow": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - V row · Net Inflow / Outflow column"
+        },
+        "otherSchemesFundsMobilized": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - V row · Funds Mobilized column"
+        },
+        "otherSchemesRepurchase": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - V row · Repurchase / Redemption column"
+        },
+        "otherSchemesFolios": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub Total - V row · No. of Folios column"
+        },
+        "activeEquityNetInflow": {
+          "sourcePdf": "aqu-vol24-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:49.943Z",
+          "sourceLabel": "Sub II net inflow + (Sub III net inflow − Arbitrage Fund net inflow) + Sub IV net inflow · (IIFL active-equity envelope flow, quarter-sum)"
+        }
+      },
+      "sourcePdf": "aqu-vol24-issueIV.pdf",
+      "sourceFormat": "quarterly-report",
+      "sourcePages": [
+        1
+      ],
+      "extractedAt": "2026-05-09T04:46:49.943Z",
+      "grandTotalAum": 6574287.2,
+      "grandTotalLastMonthAaum": 6670186.27,
+      "grandTotalNetInflow": 63179.62,
+      "grandTotalFundsMobilized": 3565857.18,
+      "grandTotalRepurchase": 3502677.56,
+      "grandTotalFolios": 234508071,
+      "debtAum": 1520705.76,
+      "debtLastMonthAaum": 1696665.45,
+      "debtNetInflow": -80536.02,
+      "debtFundsMobilized": 3182583.76,
+      "debtRepurchase": 3263119.78,
+      "debtFolios": 6949759,
+      "equityAum": 2945305.94,
+      "equityLastMonthAaum": 2857080.44,
+      "equityNetInflow": 94073.13,
+      "equityFundsMobilized": 177584.78,
+      "equityRepurchase": 83511.65,
+      "equityFolios": 163824672,
+      "hybridAum": 883443.51,
+      "hybridLastMonthAaum": 926102.69,
+      "hybridNetInflow": 14624.81,
+      "hybridFundsMobilized": 95896.57,
+      "hybridRepurchase": 81271.75,
+      "hybridFolios": 15667477,
+      "otherSchemesAum": 1146946.11,
+      "otherSchemesLastMonthAaum": 1113865.14,
+      "otherSchemesNetInflow": 34652.85,
+      "otherSchemesFundsMobilized": 108289.41,
+      "otherSchemesRepurchase": 73636.56,
+      "otherSchemesFolios": 41472421,
+      "activeEquityNetInflow": 104398.92
+    },
+    {
+      "quarter": "FY26-Q1",
+      "quarterLabel": "1QFY26",
+      "quarterStart": "2025-04",
+      "quarterEnd": "2025-06",
+      "fieldSources": {
+        "grandTotalAum": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Grand Total row · Net AUM column"
+        },
+        "grandTotalLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Grand Total row · Average Net AUM (last-month) column"
+        },
+        "grandTotalNetInflow": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "grandTotalFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Grand Total row · Funds Mobilized column"
+        },
+        "grandTotalRepurchase": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Grand Total row · Repurchase / Redemption column"
+        },
+        "grandTotalFolios": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Grand Total row · No. of Folios column"
+        },
+        "debtAum": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - I row · Net AUM column"
+        },
+        "debtLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - I row · Average Net AUM (last-month) column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "debtFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - I row · Funds Mobilized column"
+        },
+        "debtRepurchase": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - I row · Repurchase / Redemption column"
+        },
+        "debtFolios": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - I row · No. of Folios column"
+        },
+        "equityAum": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - II row · Net AUM column"
+        },
+        "equityLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - II row · Average Net AUM (last-month) column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "equityFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - II row · Funds Mobilized column"
+        },
+        "equityRepurchase": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - II row · Repurchase / Redemption column"
+        },
+        "equityFolios": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - II row · No. of Folios column"
+        },
+        "hybridAum": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - III row · Net AUM column"
+        },
+        "hybridLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - III row · Average Net AUM (last-month) column"
+        },
+        "hybridNetInflow": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - III row · Net Inflow / Outflow column"
+        },
+        "hybridFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - III row · Funds Mobilized column"
+        },
+        "hybridRepurchase": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - III row · Repurchase / Redemption column"
+        },
+        "hybridFolios": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - III row · No. of Folios column"
+        },
+        "otherSchemesAum": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - V row · Net AUM column"
+        },
+        "otherSchemesLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - V row · Average Net AUM (last-month) column"
+        },
+        "otherSchemesNetInflow": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - V row · Net Inflow / Outflow column"
+        },
+        "otherSchemesFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - V row · Funds Mobilized column"
+        },
+        "otherSchemesRepurchase": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - V row · Repurchase / Redemption column"
+        },
+        "otherSchemesFolios": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub Total - V row · No. of Folios column"
+        },
+        "activeEquityNetInflow": {
+          "sourcePdf": "aqu-vol25-issueI.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.018Z",
+          "sourceLabel": "Sub II net inflow + (Sub III net inflow − Arbitrage Fund net inflow) + Sub IV net inflow · (IIFL active-equity envelope flow, quarter-sum)"
+        }
+      },
+      "sourcePdf": "aqu-vol25-issueI.pdf",
+      "sourceFormat": "quarterly-report",
+      "sourcePages": [
+        1
+      ],
+      "extractedAt": "2026-05-09T04:46:50.018Z",
+      "grandTotalAum": 7440670.84,
+      "grandTotalLastMonthAaum": 7479155.51,
+      "grandTotalNetInflow": 355030.13,
+      "grandTotalFundsMobilized": 3729852.52,
+      "grandTotalRepurchase": 3374822.39,
+      "grandTotalFolios": 241344556,
+      "debtAum": 1758110.18,
+      "debtLastMonthAaum": 1857648.08,
+      "debtNetInflow": 201516.32,
+      "debtFundsMobilized": 3326528.87,
+      "debtRepurchase": 3125012.55,
+      "debtFolios": 7247110,
+      "equityAum": 3346849.48,
+      "equityLastMonthAaum": 3269105.38,
+      "equityNetInflow": 66869.42,
+      "equityFundsMobilized": 170296.99,
+      "equityRepurchase": 103427.57,
+      "equityFolios": 168142274,
+      "hybridAum": 992008.59,
+      "hybridLastMonthAaum": 1030054.93,
+      "hybridNetInflow": 58235.25,
+      "hybridFundsMobilized": 132074.3,
+      "hybridRepurchase": 73839.05,
+      "hybridFolios": 16193858,
+      "otherSchemesAum": 1261729.63,
+      "otherSchemesLastMonthAaum": 1241262.77,
+      "otherSchemesNetInflow": 29752.59,
+      "otherSchemesFundsMobilized": 99538.05,
+      "otherSchemesRepurchase": 69785.46,
+      "otherSchemesFolios": 43141612,
+      "activeEquityNetInflow": 82617.48
+    },
+    {
+      "quarter": "FY26-Q2",
+      "quarterLabel": "2QFY26",
+      "quarterStart": "2025-07",
+      "quarterEnd": "2025-09",
+      "fieldSources": {
+        "grandTotalAum": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Grand Total row · Net AUM column"
+        },
+        "grandTotalLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Grand Total row · Average Net AUM (last-month) column"
+        },
+        "grandTotalNetInflow": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "grandTotalFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Grand Total row · Funds Mobilized column"
+        },
+        "grandTotalRepurchase": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Grand Total row · Repurchase / Redemption column"
+        },
+        "grandTotalFolios": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Grand Total row · No. of Folios column"
+        },
+        "debtAum": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - I row · Net AUM column"
+        },
+        "debtLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - I row · Average Net AUM (last-month) column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "debtFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - I row · Funds Mobilized column"
+        },
+        "debtRepurchase": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - I row · Repurchase / Redemption column"
+        },
+        "debtFolios": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - I row · No. of Folios column"
+        },
+        "equityAum": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - II row · Net AUM column"
+        },
+        "equityLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - II row · Average Net AUM (last-month) column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "equityFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - II row · Funds Mobilized column"
+        },
+        "equityRepurchase": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - II row · Repurchase / Redemption column"
+        },
+        "equityFolios": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - II row · No. of Folios column"
+        },
+        "hybridAum": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - III row · Net AUM column"
+        },
+        "hybridLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - III row · Average Net AUM (last-month) column"
+        },
+        "hybridNetInflow": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - III row · Net Inflow / Outflow column"
+        },
+        "hybridFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - III row · Funds Mobilized column"
+        },
+        "hybridRepurchase": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - III row · Repurchase / Redemption column"
+        },
+        "hybridFolios": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - III row · No. of Folios column"
+        },
+        "otherSchemesAum": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - V row · Net AUM column"
+        },
+        "otherSchemesLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - V row · Average Net AUM (last-month) column"
+        },
+        "otherSchemesNetInflow": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - V row · Net Inflow / Outflow column"
+        },
+        "otherSchemesFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - V row · Funds Mobilized column"
+        },
+        "otherSchemesRepurchase": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - V row · Repurchase / Redemption column"
+        },
+        "otherSchemesFolios": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub Total - V row · No. of Folios column"
+        },
+        "activeEquityNetInflow": {
+          "sourcePdf": "aqu-vol25-issueII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.082Z",
+          "sourceLabel": "Sub II net inflow + (Sub III net inflow − Arbitrage Fund net inflow) + Sub IV net inflow · (IIFL active-equity envelope flow, quarter-sum)"
+        }
+      },
+      "sourcePdf": "aqu-vol25-issueII.pdf",
+      "sourceFormat": "quarterly-report",
+      "sourcePages": [
+        1
+      ],
+      "extractedAt": "2026-05-09T04:46:50.082Z",
+      "grandTotalAum": 7561309.29,
+      "grandTotalLastMonthAaum": 7777801.7,
+      "grandTotalNetInflow": 188090.78,
+      "grandTotalFundsMobilized": 3906596.45,
+      "grandTotalRepurchase": 3718505.67,
+      "grandTotalFolios": 251923162,
+      "debtAum": 1779828.1,
+      "debtLastMonthAaum": 1901918.82,
+      "debtNetInflow": -3155.87,
+      "debtFundsMobilized": 3462941.33,
+      "debtRepurchase": 3466097.2,
+      "debtFolios": 7648344,
+      "equityAum": 3368315.01,
+      "equityLastMonthAaum": 3408339.96,
+      "equityNetInflow": 106554.41,
+      "equityFundsMobilized": 202496.12,
+      "equityRepurchase": 95941.71,
+      "equityFolios": 174621669,
+      "hybridAum": 1032911.16,
+      "hybridLastMonthAaum": 1093889.94,
+      "hybridNetInflow": 45570.39,
+      "hybridFundsMobilized": 144358.61,
+      "hybridRepurchase": 98788.22,
+      "hybridFolios": 17006412,
+      "otherSchemesAum": 1299141.11,
+      "otherSchemesLastMonthAaum": 1291635.14,
+      "otherSchemesNetInflow": 38752.79,
+      "otherSchemesFundsMobilized": 95129.33,
+      "otherSchemesRepurchase": 56376.54,
+      "otherSchemesFolios": 45977102,
+      "activeEquityNetInflow": 140039.73
+    },
+    {
+      "quarter": "FY26-Q3",
+      "quarterLabel": "3QFY26",
+      "quarterStart": "2025-10",
+      "quarterEnd": "2025-12",
+      "fieldSources": {
+        "grandTotalAum": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Grand Total row · Net AUM column"
+        },
+        "grandTotalLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Grand Total row · Average Net AUM (last-month) column"
+        },
+        "grandTotalNetInflow": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "grandTotalFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Grand Total row · Funds Mobilized column"
+        },
+        "grandTotalRepurchase": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Grand Total row · Repurchase / Redemption column"
+        },
+        "grandTotalFolios": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Grand Total row · No. of Folios column"
+        },
+        "debtAum": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - I row · Net AUM column"
+        },
+        "debtLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - I row · Average Net AUM (last-month) column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "debtFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - I row · Funds Mobilized column"
+        },
+        "debtRepurchase": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - I row · Repurchase / Redemption column"
+        },
+        "debtFolios": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - I row · No. of Folios column"
+        },
+        "equityAum": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - II row · Net AUM column"
+        },
+        "equityLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - II row · Average Net AUM (last-month) column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "equityFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - II row · Funds Mobilized column"
+        },
+        "equityRepurchase": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - II row · Repurchase / Redemption column"
+        },
+        "equityFolios": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - II row · No. of Folios column"
+        },
+        "hybridAum": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - III row · Net AUM column"
+        },
+        "hybridLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - III row · Average Net AUM (last-month) column"
+        },
+        "hybridNetInflow": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - III row · Net Inflow / Outflow column"
+        },
+        "hybridFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - III row · Funds Mobilized column"
+        },
+        "hybridRepurchase": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - III row · Repurchase / Redemption column"
+        },
+        "hybridFolios": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - III row · No. of Folios column"
+        },
+        "otherSchemesAum": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - V row · Net AUM column"
+        },
+        "otherSchemesLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - V row · Average Net AUM (last-month) column"
+        },
+        "otherSchemesNetInflow": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - V row · Net Inflow / Outflow column"
+        },
+        "otherSchemesFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - V row · Funds Mobilized column"
+        },
+        "otherSchemesRepurchase": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - V row · Repurchase / Redemption column"
+        },
+        "otherSchemesFolios": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub Total - V row · No. of Folios column"
+        },
+        "activeEquityNetInflow": {
+          "sourcePdf": "aqu-vol25-issueIII.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.138Z",
+          "sourceLabel": "Sub II net inflow + (Sub III net inflow − Arbitrage Fund net inflow) + Sub IV net inflow · (IIFL active-equity envelope flow, quarter-sum)"
+        }
+      },
+      "sourcePdf": "aqu-vol25-issueIII.pdf",
+      "sourceFormat": "quarterly-report",
+      "sourcePages": [
+        1
+      ],
+      "extractedAt": "2026-05-09T04:46:50.138Z",
+      "grandTotalAum": 8023378.99,
+      "grandTotalLastMonthAaum": 8199191.21,
+      "grandTotalNetInflow": 181821.33,
+      "grandTotalFundsMobilized": 3811577.11,
+      "grandTotalRepurchase": 3629755.77,
+      "grandTotalFolios": 261253836,
+      "debtAum": 1809978.46,
+      "debtLastMonthAaum": 1974986.05,
+      "debtNetInflow": 1854.95,
+      "debtFundsMobilized": 3355714.19,
+      "debtRepurchase": 3353859.24,
+      "debtFolios": 7995618,
+      "equityAum": 3572543.53,
+      "equityLastMonthAaum": 3550492.98,
+      "equityNetInflow": 82655.44,
+      "equityFundsMobilized": 197073.11,
+      "equityRepurchase": 114417.68,
+      "equityFolios": 178476267,
+      "hybridAum": 1100421.73,
+      "hybridLastMonthAaum": 1162111.2,
+      "hybridNetInflow": 38211.17,
+      "hybridFundsMobilized": 132706.38,
+      "hybridRepurchase": 94495.21,
+      "hybridFolios": 17823744,
+      "otherSchemesAum": 1456806.28,
+      "otherSchemesLastMonthAaum": 1428129.7,
+      "otherSchemesNetInflow": 58776.69,
+      "otherSchemesFundsMobilized": 124373.04,
+      "otherSchemesRepurchase": 65596.35,
+      "otherSchemesFolios": 50234958,
+      "activeEquityNetInflow": 110554.98999999999
+    },
+    {
+      "quarter": "FY26-Q4",
+      "quarterLabel": "4QFY26",
+      "quarterStart": "2026-01",
+      "quarterEnd": "2026-03",
+      "fieldSources": {
+        "grandTotalAum": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Grand Total row · Net AUM column"
+        },
+        "grandTotalLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Grand Total row · Average Net AUM (last-month) column"
+        },
+        "grandTotalNetInflow": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Grand Total row · Net Inflow / Outflow column"
+        },
+        "grandTotalFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Grand Total row · Funds Mobilized column"
+        },
+        "grandTotalRepurchase": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Grand Total row · Repurchase / Redemption column"
+        },
+        "grandTotalFolios": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Grand Total row · No. of Folios column"
+        },
+        "debtAum": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - I row · Net AUM column"
+        },
+        "debtLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - I row · Average Net AUM (last-month) column"
+        },
+        "debtNetInflow": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - I row · Net Inflow / Outflow column"
+        },
+        "debtFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - I row · Funds Mobilized column"
+        },
+        "debtRepurchase": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - I row · Repurchase / Redemption column"
+        },
+        "debtFolios": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - I row · No. of Folios column"
+        },
+        "equityAum": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - II row · Net AUM column"
+        },
+        "equityLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - II row · Average Net AUM (last-month) column"
+        },
+        "equityNetInflow": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - II row · Net Inflow / Outflow column"
+        },
+        "equityFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - II row · Funds Mobilized column"
+        },
+        "equityRepurchase": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - II row · Repurchase / Redemption column"
+        },
+        "equityFolios": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - II row · No. of Folios column"
+        },
+        "hybridAum": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - III row · Net AUM column"
+        },
+        "hybridLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - III row · Average Net AUM (last-month) column"
+        },
+        "hybridNetInflow": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - III row · Net Inflow / Outflow column"
+        },
+        "hybridFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - III row · Funds Mobilized column"
+        },
+        "hybridRepurchase": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - III row · Repurchase / Redemption column"
+        },
+        "hybridFolios": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - III row · No. of Folios column"
+        },
+        "otherSchemesAum": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - V row · Net AUM column"
+        },
+        "otherSchemesLastMonthAaum": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - V row · Average Net AUM (last-month) column"
+        },
+        "otherSchemesNetInflow": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - V row · Net Inflow / Outflow column"
+        },
+        "otherSchemesFundsMobilized": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - V row · Funds Mobilized column"
+        },
+        "otherSchemesRepurchase": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - V row · Repurchase / Redemption column"
+        },
+        "otherSchemesFolios": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub Total - V row · No. of Folios column"
+        },
+        "activeEquityNetInflow": {
+          "sourcePdf": "aqu-vol25-issueIV.pdf",
+          "sourceFormat": "quarterly-report",
+          "sourcePages": [
+            1
+          ],
+          "extractedAt": "2026-05-09T04:46:50.208Z",
+          "sourceLabel": "Sub II net inflow + (Sub III net inflow − Arbitrage Fund net inflow) + Sub IV net inflow · (IIFL active-equity envelope flow, quarter-sum)"
+        }
+      },
+      "sourcePdf": "aqu-vol25-issueIV.pdf",
+      "sourceFormat": "quarterly-report",
+      "sourcePages": [
+        1
+      ],
+      "extractedAt": "2026-05-09T04:46:50.208Z",
+      "grandTotalAum": 7373376.98,
+      "grandTotalLastMonthAaum": 7946027.87,
+      "grandTotalNetInflow": 11078.63,
+      "grandTotalFundsMobilized": 4301605.11,
+      "grandTotalRepurchase": 4290526.47,
+      "grandTotalFolios": 273934259,
+      "debtAum": 1651502.37,
+      "debtLastMonthAaum": 1891223.72,
+      "debtNetInflow": -178053.73,
+      "debtFundsMobilized": 3774309.17,
+      "debtRepurchase": 3952362.9,
+      "debtFolios": 8284434,
+      "equityAum": 3197698.15,
+      "equityLastMonthAaum": 3353616.1,
+      "equityNetInflow": 90456.76,
+      "equityFundsMobilized": 211519.03,
+      "equityRepurchase": 121062.27,
+      "equityFolios": 182731153,
+      "hybridAum": 1034773.8,
+      "hybridLastMonthAaum": 1157565.34,
+      "hybridNetInflow": 12800.92,
+      "hybridFundsMobilized": 130572.19,
+      "hybridRepurchase": 117771.27,
+      "hybridFolios": 19017036,
+      "otherSchemesAum": 1411714.66,
+      "otherSchemesLastMonthAaum": 1463306.58,
+      "otherSchemesNetInflow": 84601.54,
+      "otherSchemesFundsMobilized": 182832.38,
+      "otherSchemesRepurchase": 98230.84,
+      "otherSchemesFolios": 57116569,
+      "activeEquityNetInflow": 121331.37999999999
+    }
+  ]
 }
