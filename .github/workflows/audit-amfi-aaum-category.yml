@@ -1,0 +1,111 @@
+name: Audit AMFI AAUM Category
+
+# Manual audit-only workflow that drives the AMFI Fundwise AAUM
+# disclosure form for ONE specific AMC and writes a per-AMC ×
+# per-category JSON dump to manual-data/audit/. Used to verify the
+# AMFI source can support AMC × Active Equity AAUM before any
+# production extractor work. Companion to PR #76 / scripts/ingest/
+# amfi-aaum-audit.ts.
+#
+# Does NOT run the full AMFI AAUM ingest, NOT touch
+# src/data/snapshots/, and NOT modify dashboard UI.
+
+on:
+  workflow_dispatch:
+    inputs:
+      amc:
+        description: AMC name to audit (verbatim from AMFI Mutual Fund dropdown).
+        required: true
+        default: HDFC Mutual Fund
+        type: string
+      quarter:
+        description: Optional quarter, e.g. 2026-Q1. Leave blank for latest.
+        required: false
+        default: ""
+        type: string
+      write:
+        description: Write audit JSON to manual-data/audit/ ("1" = write, "0" = dry-run).
+        required: true
+        default: "1"
+        type: string
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: audit-amfi-aaum-category-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Chromium for Playwright
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Run AMFI AAUM category audit
+        env:
+          AAUM_AUDIT_AMC: ${{ inputs.amc }}
+          AAUM_AUDIT_QUARTER: ${{ inputs.quarter }}
+          AAUM_AUDIT_WRITE: ${{ inputs.write }}
+        run: npm run audit:amfi-aaum-category
+
+      # Always run the post-audit steps so the user can inspect the
+      # output even when the audit step exits non-zero (parse miss /
+      # browser failure). The audit step's exit code still surfaces
+      # as the job status.
+      - name: List audit output
+        if: always()
+        run: |
+          if [ -d manual-data/audit ]; then
+            ls -la manual-data/audit/
+          else
+            echo "(no audit dir)"
+          fi
+
+      - name: Upload audit artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: amfi-aaum-category-audit
+          path: manual-data/audit/*.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      # Commit the JSON back to the same ref the workflow ran on so
+      # the audit output is preserved alongside the code that
+      # produced it. Skipped when the user picked dry-run mode
+      # (write="0") and silently no-ops when no new audit files
+      # appeared (e.g. browser launch failed before any write).
+      - name: Commit audit JSON
+        if: ${{ always() && inputs.write == '1' }}
+        run: |
+          if [ -z "$(git status --porcelain manual-data/audit 2>/dev/null)" ]; then
+            echo "No new audit files to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manual-data/audit
+          git commit -m "chore(audit): add AMFI AAUM category audit output"
+          git push
