@@ -73,19 +73,13 @@ export default async function MonthlyPage({
   // AUM Market Share is now sourced live from AMFI Fundwise AAUM via
   // amc-peer-universe.ts (see aumMarketShare below) — `shareSeries
   // ("totalAum", …)` is no longer needed because that demo card was
-  // replaced with a live top-7 quarterly chart.
+  // replaced with a live top-7 quarterly chart. The Active Equity
+  // Market Share card was also removed (no clean AMC × category
+  // AAUM source — see PR #80 audit).
   const fullShareSip = shareSeries("sipContribution", 6, slugs);
-  const activeEquityShareSeries = shareSeries(
-    "activeEquityAum",
-    6,
-    slugs
-  );
 
   const trimmedMonths = new Set(trimMonths(MONTHS_LIST, filters.range));
   const sipShareRows = fullShareSip.rows.filter((r) =>
-    trimmedMonths.has(r.month as string)
-  );
-  const activeEquityShareRows = activeEquityShareSeries.rows.filter((r) =>
     trimmedMonths.has(r.month as string)
   );
 
@@ -1197,22 +1191,6 @@ export default async function MonthlyPage({
             data={sipShareRows}
             xKey="month"
             series={fullShareSip.keys.map((k) => ({
-              key: k,
-              name: amcLabel(k),
-              color: AMC_COLORS[k] ?? "hsl(var(--muted-foreground))",
-            }))}
-          />
-        </Card>
-        <Card
-          tone="demo"
-          title="Active Equity Market Share"
-          subtitle={slugs ? "Within selected peers" : "Top 6 + Others"}
-          className="lg:col-span-2"
-        >
-          <StackedArea
-            data={activeEquityShareRows}
-            xKey="month"
-            series={activeEquityShareSeries.keys.map((k) => ({
               key: k,
               name: amcLabel(k),
               color: AMC_COLORS[k] ?? "hsl(var(--muted-foreground))",
