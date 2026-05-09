@@ -2,7 +2,7 @@
   "meta": {
     "generatedAt": "2026-05-07T08:17:14.338Z",
     "source": "https://www.amfiindia.com/aum-data/average-aum",
-    "notes": "Per-AMC quarterly MF QAAUM (mutual-fund-only Average AUM) extracted via the AMFI Average AUM disclosure form (MUI Autocomplete UI). MF-only by construction — AMFI does not publish PMS / AIF / offshore / advisory / alternates here. unitOriginal=Rs Lakhs · unitStored=Rs Crore · conversion=lakhs_to_crore_divide_by_100. Backend endpoint discovered: /api/average-aum-fundwise?fyId=N&periodId=N (not yet used directly). Per-row provenance: source URL + fetchedAt. lastSuccessfulFetchAt=2026-05-07T08:17:14.338Z · fetchWindow=8 · quartersThisRun=[2026-Q1, 2025-Q4, 2025-Q3, 2025-Q2, 2025-Q1, 2024-Q4, 2024-Q3, 2024-Q2] · failedThisRun=[]. quartersCovered=8 (2024-Q2…2026-Q1) · rowCount=80."
+    "notes": "Per-AMC quarterly MF QAAUM (mutual-fund-only Average AUM) extracted via the AMFI Average AUM disclosure form (MUI Autocomplete UI). MF-only by construction — AMFI does not publish PMS / AIF / offshore / advisory / alternates here. unitOriginal=Rs Lakhs · unitStored=Rs Crore · conversion=lakhs_to_crore_divide_by_100. Backend endpoint discovered: /api/average-aum-fundwise?fyId=N&periodId=N (not yet used directly). Per-row provenance: source URL + fetchedAt. lastSuccessfulFetchAt=2026-05-07T08:17:14.338Z · fetchWindow=8 · quartersThisRun=[2026-Q1, 2025-Q4, 2025-Q3, 2025-Q2, 2025-Q1, 2024-Q4, 2024-Q3, 2024-Q2] · failedThisRun=[]. quartersCovered=8 (2024-Q2…2026-Q1) · rowCount=80. · Migrated by PR: backfilled mappingStatus=\"mapped\" + displayName for 80 rows."
   },
   "rows": [
     {
@@ -12,7 +12,9 @@
       "avgAum": 353517.4,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Aditya Birla Sun Life AMC"
     },
     {
       "amcSlug": "axis",
@@ -21,7 +23,9 @@
       "avgAum": 292977.03,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Axis AMC"
     },
     {
       "amcSlug": "dsp",
@@ -30,7 +34,9 @@
       "avgAum": 156447.16,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "DSP Mutual Fund"
     },
     {
       "amcSlug": "hdfc",
@@ -39,7 +45,9 @@
       "avgAum": 676798.02,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "HDFC AMC"
     },
     {
       "amcSlug": "icici-pru",
@@ -48,7 +56,9 @@
       "avgAum": 777435.79,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "ICICI Prudential AMC"
     },
     {
       "amcSlug": "kotak",
@@ -57,7 +67,9 @@
       "avgAum": 421847.6,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Kotak Mahindra AMC"
     },
     {
       "amcSlug": "mirae",
@@ -66,7 +78,9 @@
       "avgAum": 174622.18,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Mirae Asset Investment Managers"
     },
     {
       "amcSlug": "nippon",
@@ -75,7 +89,9 @@
       "avgAum": 486805.05,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Nippon Life India AMC"
     },
     {
       "amcSlug": "sbi",
@@ -84,7 +100,9 @@
       "avgAum": 990090.2,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "SBI Funds Management"
     },
     {
       "amcSlug": "uti",
@@ -93,7 +111,9 @@
       "avgAum": 310822.41,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "UTI AMC"
     },
     {
       "amcSlug": "absl",
@@ -102,7 +122,9 @@
       "avgAum": 384326.89,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Aditya Birla Sun Life AMC"
     },
     {
       "amcSlug": "axis",
@@ -111,7 +133,9 @@
       "avgAum": 313387.24,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Axis AMC"
     },
     {
       "amcSlug": "dsp",
@@ -120,7 +144,9 @@
       "avgAum": 182527.45,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "DSP Mutual Fund"
     },
     {
       "amcSlug": "hdfc",
@@ -129,7 +155,9 @@
       "avgAum": 764396.81,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "HDFC AMC"
     },
     {
       "amcSlug": "icici-pru",
@@ -138,7 +166,9 @@
       "avgAum": 873342.19,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "ICICI Prudential AMC"
     },
     {
       "amcSlug": "kotak",
@@ -147,7 +177,9 @@
       "avgAum": 473746.88,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Kotak Mahindra AMC"
     },
     {
       "amcSlug": "mirae",
@@ -156,7 +188,9 @@
       "avgAum": 195148.32,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Mirae Asset Investment Managers"
     },
     {
       "amcSlug": "nippon",
@@ -165,7 +199,9 @@
       "avgAum": 552409.22,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Nippon Life India AMC"
     },
     {
       "amcSlug": "sbi",
@@ -174,7 +210,9 @@
       "avgAum": 1100886.17,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "SBI Funds Management"
     },
     {
       "amcSlug": "uti",
@@ -183,7 +221,9 @@
       "avgAum": 342690.24,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "UTI AMC"
     },
     {
       "amcSlug": "absl",
@@ -192,7 +232,9 @@
       "avgAum": 384999.94,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Aditya Birla Sun Life AMC"
     },
     {
       "amcSlug": "axis",
@@ -201,7 +243,9 @@
       "avgAum": 327278.18,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Axis AMC"
     },
     {
       "amcSlug": "dsp",
@@ -210,7 +254,9 @@
       "avgAum": 192787.71,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "DSP Mutual Fund"
     },
     {
       "amcSlug": "hdfc",
@@ -219,7 +265,9 @@
       "avgAum": 793714.25,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "HDFC AMC"
     },
     {
       "amcSlug": "icici-pru",
@@ -228,7 +276,9 @@
       "avgAum": 908282.1,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "ICICI Prudential AMC"
     },
     {
       "amcSlug": "kotak",
@@ -237,7 +287,9 @@
       "avgAum": 492719.49,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Kotak Mahindra AMC"
     },
     {
       "amcSlug": "mirae",
@@ -246,7 +298,9 @@
       "avgAum": 198338.42,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Mirae Asset Investment Managers"
     },
     {
       "amcSlug": "nippon",
@@ -255,7 +309,9 @@
       "avgAum": 573673.69,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Nippon Life India AMC"
     },
     {
       "amcSlug": "sbi",
@@ -264,7 +320,9 @@
       "avgAum": 1116707.65,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "SBI Funds Management"
     },
     {
       "amcSlug": "uti",
@@ -273,7 +331,9 @@
       "avgAum": 352592.46,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "UTI AMC"
     },
     {
       "amcSlug": "absl",
@@ -282,7 +342,9 @@
       "avgAum": 382889.63,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Aditya Birla Sun Life AMC"
     },
     {
       "amcSlug": "axis",
@@ -291,7 +353,9 @@
       "avgAum": 322860.94,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Axis AMC"
     },
     {
       "amcSlug": "dsp",
@@ -300,7 +364,9 @@
       "avgAum": 187436.3,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "DSP Mutual Fund"
     },
     {
       "amcSlug": "hdfc",
@@ -309,7 +375,9 @@
       "avgAum": 780967.38,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "HDFC AMC"
     },
     {
       "amcSlug": "icici-pru",
@@ -318,7 +386,9 @@
       "avgAum": 914878.16,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "ICICI Prudential AMC"
     },
     {
       "amcSlug": "kotak",
@@ -327,7 +397,9 @@
       "avgAum": 487121.27,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Kotak Mahindra AMC"
     },
     {
       "amcSlug": "mirae",
@@ -336,7 +408,9 @@
       "avgAum": 190636.93,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Mirae Asset Investment Managers"
     },
     {
       "amcSlug": "nippon",
@@ -345,7 +419,9 @@
       "avgAum": 561387.15,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Nippon Life India AMC"
     },
     {
       "amcSlug": "sbi",
@@ -354,7 +430,9 @@
       "avgAum": 1076363.82,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "SBI Funds Management"
     },
     {
       "amcSlug": "uti",
@@ -363,7 +441,9 @@
       "avgAum": 339982.9,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "UTI AMC"
     },
     {
       "amcSlug": "absl",
@@ -372,7 +452,9 @@
       "avgAum": 405266.76,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Aditya Birla Sun Life AMC"
     },
     {
       "amcSlug": "axis",
@@ -381,7 +463,9 @@
       "avgAum": 337398.57,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Axis AMC"
     },
     {
       "amcSlug": "dsp",
@@ -390,7 +474,9 @@
       "avgAum": 198255.66,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "DSP Mutual Fund"
     },
     {
       "amcSlug": "hdfc",
@@ -399,7 +485,9 @@
       "avgAum": 837348.19,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "HDFC AMC"
     },
     {
       "amcSlug": "icici-pru",
@@ -408,7 +496,9 @@
       "avgAum": 983726.26,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "ICICI Prudential AMC"
     },
     {
       "amcSlug": "kotak",
@@ -417,7 +507,9 @@
       "avgAum": 526212.93,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Kotak Mahindra AMC"
     },
     {
       "amcSlug": "mirae",
@@ -426,7 +518,9 @@
       "avgAum": 202661.53,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Mirae Asset Investment Managers"
     },
     {
       "amcSlug": "nippon",
@@ -435,7 +529,9 @@
       "avgAum": 617875.25,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Nippon Life India AMC"
     },
     {
       "amcSlug": "sbi",
@@ -444,7 +540,9 @@
       "avgAum": 1145315.4,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "SBI Funds Management"
     },
     {
       "amcSlug": "uti",
@@ -453,7 +551,9 @@
       "avgAum": 361294.51,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "UTI AMC"
     },
     {
       "amcSlug": "absl",
@@ -462,7 +562,9 @@
       "avgAum": 428065.94,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Aditya Birla Sun Life AMC"
     },
     {
       "amcSlug": "axis",
@@ -471,7 +573,9 @@
       "avgAum": 354362.32,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Axis AMC"
     },
     {
       "amcSlug": "dsp",
@@ -480,7 +584,9 @@
       "avgAum": 212960.15,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "DSP Mutual Fund"
     },
     {
       "amcSlug": "hdfc",
@@ -489,7 +595,9 @@
       "avgAum": 893027.76,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "HDFC AMC"
     },
     {
       "amcSlug": "icici-pru",
@@ -498,7 +606,9 @@
       "avgAum": 1060746.84,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "ICICI Prudential AMC"
     },
     {
       "amcSlug": "kotak",
@@ -507,7 +617,9 @@
       "avgAum": 566981.82,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Kotak Mahindra AMC"
     },
     {
       "amcSlug": "mirae",
@@ -516,7 +628,9 @@
       "avgAum": 215433.54,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Mirae Asset Investment Managers"
     },
     {
       "amcSlug": "nippon",
@@ -525,7 +639,9 @@
       "avgAum": 663683.96,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Nippon Life India AMC"
     },
     {
       "amcSlug": "sbi",
@@ -534,7 +650,9 @@
       "avgAum": 1207585.39,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "SBI Funds Management"
     },
     {
       "amcSlug": "uti",
@@ -543,7 +661,9 @@
       "avgAum": 379175.93,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "UTI AMC"
     },
     {
       "amcSlug": "absl",
@@ -552,7 +672,9 @@
       "avgAum": 447038.08,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Aditya Birla Sun Life AMC"
     },
     {
       "amcSlug": "axis",
@@ -561,7 +683,9 @@
       "avgAum": 365749.22,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Axis AMC"
     },
     {
       "amcSlug": "dsp",
@@ -570,7 +694,9 @@
       "avgAum": 224668.95,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "DSP Mutual Fund"
     },
     {
       "amcSlug": "hdfc",
@@ -579,7 +705,9 @@
       "avgAum": 943197.14,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "HDFC AMC"
     },
     {
       "amcSlug": "icici-pru",
@@ -588,7 +716,9 @@
       "avgAum": 1130332.91,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "ICICI Prudential AMC"
     },
     {
       "amcSlug": "kotak",
@@ -597,7 +727,9 @@
       "avgAum": 588198.62,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Kotak Mahindra AMC"
     },
     {
       "amcSlug": "mirae",
@@ -606,7 +738,9 @@
       "avgAum": 229565.45,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Mirae Asset Investment Managers"
     },
     {
       "amcSlug": "nippon",
@@ -615,7 +749,9 @@
       "avgAum": 711597.57,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Nippon Life India AMC"
     },
     {
       "amcSlug": "sbi",
@@ -624,7 +760,9 @@
       "avgAum": 1263744.62,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "SBI Funds Management"
     },
     {
       "amcSlug": "uti",
@@ -633,7 +771,9 @@
       "avgAum": 395058.76,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "UTI AMC"
     },
     {
       "amcSlug": "absl",
@@ -642,7 +782,9 @@
       "avgAum": 440740.12,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Aditya Birla Sun Life AMC"
     },
     {
       "amcSlug": "axis",
@@ -651,7 +793,9 @@
       "avgAum": 367900.5,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Axis AMC"
     },
     {
       "amcSlug": "dsp",
@@ -660,7 +804,9 @@
       "avgAum": 228622.34,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "DSP Mutual Fund"
     },
     {
       "amcSlug": "hdfc",
@@ -669,7 +815,9 @@
       "avgAum": 952866.67,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "HDFC AMC"
     },
     {
       "amcSlug": "icici-pru",
@@ -678,7 +826,9 @@
       "avgAum": 1164160,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "ICICI Prudential AMC"
     },
     {
       "amcSlug": "kotak",
@@ -687,7 +837,9 @@
       "avgAum": 599282.71,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Kotak Mahindra AMC"
     },
     {
       "amcSlug": "mirae",
@@ -696,7 +848,9 @@
       "avgAum": 227883.54,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Mirae Asset Investment Managers"
     },
     {
       "amcSlug": "nippon",
@@ -705,7 +859,9 @@
       "avgAum": 740030.99,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "Nippon Life India AMC"
     },
     {
       "amcSlug": "sbi",
@@ -714,7 +870,9 @@
       "avgAum": 1270599.38,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "SBI Funds Management"
     },
     {
       "amcSlug": "uti",
@@ -723,7 +881,9 @@
       "avgAum": 390494.85,
       "source": "https://www.amfiindia.com/aum-data/average-aum",
       "fetchedAt": "2026-05-07T08:17:14.338Z",
-      "status": "ok"
+      "status": "ok",
+      "mappingStatus": "mapped",
+      "displayName": "UTI AMC"
     }
   ]
 }

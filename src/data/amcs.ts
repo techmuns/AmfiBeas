@@ -202,3 +202,50 @@ const AMFI_NAME_TO_SLUG: Record<string, string> = {
 export function amfiNameToSlug(name: string): string | undefined {
   return AMFI_NAME_TO_SLUG[name];
 }
+
+/**
+ * Deterministic slug derivation for AMCs not present in the curated
+ * AMFI_NAME_TO_SLUG map. Strips common AMFI suffixes ("Mutual Fund",
+ * "Asset Management", etc.) and produces a kebab-case slug.
+ *
+ * Examples:
+ *   "Quant Mutual Fund"               → "quant"
+ *   "Tata Mutual Fund"                → "tata"
+ *   "Bandhan Mutual Fund"             → "bandhan"
+ *   "Bank of India Mutual Fund"       → "bank-of-india"
+ *   "Edelweiss Asset Management Ltd." → "edelweiss"
+ *   "Franklin Templeton Mutual Fund"  → "franklin-templeton"
+ *
+ * Used by the AMFI Fundwise AAUM extractor to retain rows for AMCs
+ * that aren't in the dashboard's curated peer list (so /AMCs can
+ * later browse the full universe). Curated slugs (AMFI_NAME_TO_SLUG)
+ * are preferred when present so HDFC stays "hdfc" and ICICI Pru
+ * stays "icici-pru" — never collides with this auto-slugifier.
+ */
+export function slugifyAmfiName(name: string): string {
+  let s = name.trim();
+  // Strip common suffixes (case-insensitive). Order matters — longer
+  // suffixes first so "Asset Management Ltd" doesn't leave a stray
+  // "Ltd" after removing "Asset Management".
+  const suffixes = [
+    /\s*\(\s*India\s*\)\s*$/i,
+    /\s+Asset\s+Management\s+Co(?:mpany)?\s+Limited\s*$/i,
+    /\s+Asset\s+Management\s+Co(?:mpany)?\s+Ltd\.?\s*$/i,
+    /\s+Asset\s+Management\s+Limited\s*$/i,
+    /\s+Asset\s+Management\s+Ltd\.?\s*$/i,
+    /\s+Asset\s+Management\s*$/i,
+    /\s+Investment\s+Managers\s+(?:India\s+)?(?:Pvt\.?|Private)?\s*(?:Ltd\.?|Limited)?\s*$/i,
+    /\s+Investment\s+Managers\s*$/i,
+    /\s+Mutual\s+Fund\s*$/i,
+    /\s+MF\s*$/i,
+    /\s+AMC\s*$/i,
+    /\s+Limited\s*$/i,
+    /\s+Ltd\.?\s*$/i,
+  ];
+  for (const re of suffixes) s = s.replace(re, "");
+  return s
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}

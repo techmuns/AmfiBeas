@@ -7,7 +7,7 @@ import {
   warn,
   writeSnapshot,
 } from "./utils";
-import { amfiNameToSlug } from "../../src/data/amcs";
+import { AMCS, amfiNameToSlug, slugifyAmfiName } from "../../src/data/amcs";
 import type {
   AmcAaumQuarterlyRow,
   AmcAaumQuarterlySnapshot,
@@ -154,6 +154,41 @@ interface ParsedAmcRow {
   amcSlug: string;
   amcNameAsReported: string;
   avgAum: number;
+  /** How `amcSlug` was resolved — "mapped" if the AMFI name matched
+   *  the curated AMFI_NAME_TO_SLUG map, "auto_slug" if derived
+   *  deterministically from the AMFI name. The extractor never
+   *  returns "unmapped" today (all rows produce a slug); the field
+   *  is on the schema for forward compatibility. */
+  mappingStatus: "mapped" | "auto_slug";
+  /** Display label — curated short name (e.g. "HDFC AMC") when
+   *  mapped, AMFI name with the trailing "Mutual Fund"/"Asset
+   *  Management" suffix stripped otherwise. */
+  displayName: string;
+}
+
+/** Resolve the slug + mappingStatus + displayName for an AMFI name.
+ *  Curated mappings always win so HDFC stays "hdfc" and ICICI Pru
+ *  stays "icici-pru" — never collides with the auto-slugifier. */
+function resolveAmcIdentity(name: string): {
+  slug: string;
+  mappingStatus: "mapped" | "auto_slug";
+  displayName: string;
+} {
+  const curated = amfiNameToSlug(name);
+  if (curated) {
+    const profile = AMCS.find((a) => a.slug === curated);
+    return {
+      slug: curated,
+      mappingStatus: "mapped",
+      displayName: profile?.name ?? name.replace(/\s+Mutual\s+Fund\s*$/i, ""),
+    };
+  }
+  const slug = slugifyAmfiName(name);
+  return {
+    slug: slug || name.toLowerCase().replace(/\s+/g, "-"),
+    mappingStatus: "auto_slug",
+    displayName: name.replace(/\s+Mutual\s+Fund\s*$/i, "").trim(),
+  };
 }
 
 interface FieldOutcome {
@@ -587,14 +622,18 @@ function parseHeaderBased(table: {
     if (aaumA === null || aaumA <= 0) continue;
     const aaumB =
       aaumIdxAlt !== -1 ? parseNumberLoose(row[aaumIdxAlt]) ?? 0 : 0;
-    const slug = amfiNameToSlug(name);
-    if (!slug) continue;
+    // Keep ALL AMC rows, not just the dashboard's curated peer list.
+    // Auto-derive a slug for unmapped AMCs so they round-trip through
+    // the snapshot and surface in /AMCs / peer-universe helpers.
+    const id = resolveAmcIdentity(name);
     // Lakhs → Crores. Sum (Excl FoF Domestic) + FoF Domestic if both columns
     // exist so the value reflects total AAUM.
     const totalLakhs = aaumA + aaumB;
     out.push({
-      amcSlug: slug,
+      amcSlug: id.slug,
       amcNameAsReported: name,
+      mappingStatus: id.mappingStatus,
+      displayName: id.displayName,
       avgAum: Math.round((totalLakhs / 100) * 100) / 100, // Cr, 2dp
     });
   }
@@ -607,27 +646,32 @@ function parseRowBased(table: {
 }): ParsedAmcRow[] {
   const out: ParsedAmcRow[] = [];
   const seen = new Set<string>();
-  const targetLc = TARGET_AMCS.map((n) => n.toLowerCase());
 
   for (const row of table.rows) {
-    // 1. Locate AMC name cell.
+    // 1. Locate AMC name cell. Heuristic: the first non-empty cell
+    //    that looks like an AMC name (contains "Mutual Fund" /
+    //    "Asset Management" / matches the curated list) and is not
+    //    a header/total row.
     let nameIdx = -1;
     let nameRaw = "";
     for (let i = 0; i < row.length; i++) {
       const cell = (row[i] ?? "").trim();
       if (!cell) continue;
-      const slug = amfiNameToSlug(cell);
-      if (slug) {
+      // Skip explicit header / total / footnote rows.
+      if (/^(s\.?\s*no|sr\.?\s*no|total|grand|sub|industry|note|\*)/i.test(cell)) {
+        continue;
+      }
+      // Curated map → exact match, accept immediately.
+      if (amfiNameToSlug(cell)) {
         nameIdx = i;
         nameRaw = cell;
         break;
       }
-      // Looser match: target name is contained in cell text.
-      const lc = cell.toLowerCase();
-      const matched = targetLc.find((n) => lc.includes(n));
-      if (matched) {
+      // Generic AMC-name heuristic — must mention an AMFI suffix so
+      // we don't pick up numeric / index cells.
+      if (/Mutual\s+Fund|Asset\s+Management|MF\b|AMC\b/i.test(cell)) {
         nameIdx = i;
-        nameRaw = TARGET_AMCS[targetLc.indexOf(matched)];
+        nameRaw = cell;
         break;
       }
     }
@@ -641,14 +685,15 @@ function parseRowBased(table: {
     }
     if (sumLakhs <= 0) continue;
 
-    const slug = amfiNameToSlug(nameRaw);
-    if (!slug) continue;
-    if (seen.has(slug)) continue;
-    seen.add(slug);
+    const id = resolveAmcIdentity(nameRaw);
+    if (seen.has(id.slug)) continue;
+    seen.add(id.slug);
 
     out.push({
-      amcSlug: slug,
+      amcSlug: id.slug,
       amcNameAsReported: nameRaw,
+      mappingStatus: id.mappingStatus,
+      displayName: id.displayName,
       avgAum: Math.round((sumLakhs / 100) * 100) / 100, // Lakhs → Cr, 2dp
     });
   }

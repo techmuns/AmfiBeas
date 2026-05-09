@@ -117,8 +117,26 @@ export interface AmcQuarterlySnapshot {
  * traceability for a single value.
  */
 export interface AmcAaumQuarterlyRow {
-  amcSlug: string;            // mapped via AMFI_NAME_TO_SLUG
+  amcSlug: string;            // curated map (AMFI_NAME_TO_SLUG) when
+                              // mappingStatus="mapped"; auto-derived
+                              // from `amcNameAsReported` otherwise.
   amcNameAsReported: string;  // verbatim AMC name from source file
+  /** How `amcSlug` was resolved:
+   *   - "mapped"     : matched the curated AMFI_NAME_TO_SLUG entry
+   *                    in src/data/amcs.ts.
+   *   - "auto_slug"  : not in the curated map, slug derived
+   *                    deterministically from `amcNameAsReported`.
+   *   - "unmapped"   : extractor could not derive a stable slug
+   *                    (rare; reserved for future fallback paths).
+   *  Optional for backwards compatibility — pre-PR rows are
+   *  treated as "mapped" by consumers when this is absent.
+   */
+  mappingStatus?: "mapped" | "auto_slug" | "unmapped";
+  /** Friendly display name. When `mappingStatus="mapped"`, this is
+   *  the curated short label (e.g. "HDFC AMC") from `AMCS`. When
+   *  "auto_slug", this is the AMFI name with the trailing "Mutual
+   *  Fund" suffix stripped (e.g. "Quant Mutual Fund" → "Quant"). */
+  displayName?: string;
   quarter: string;            // calendar quarter, YYYY-Qx
   avgAum: number;             // ₹ Cr
   source: string;             // exact URL fetched
