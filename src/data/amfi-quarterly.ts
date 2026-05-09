@@ -237,6 +237,55 @@ export function latestQuarterlyRow(): AmfiQuarterlyIndustryRow | null {
   return rows.length > 0 ? rows[rows.length - 1] : null;
 }
 
+/** Alias for `amfiQuarterlyIndustryRows()` matching the spec naming on
+ *  the /quarterly rebuild. Returns rows sorted by `quarter` ascending. */
+export function quarterlyRows(): AmfiQuarterlyIndustryRow[] {
+  return amfiQuarterlyIndustryRows();
+}
+
+/** List available fiscal quarters newest → oldest, ready for the
+ *  FiscalQuarterPicker. Each entry carries the canonical id
+ *  ("FY26-Q4") plus its display label ("4QFY26") so the picker
+ *  doesn't have to derive labels from ids — the snapshot already
+ *  carries both. */
+export function availableQuartersDesc(): { id: string; label: string }[] {
+  return amfiQuarterlyIndustryRows()
+    .map((r) => ({ id: r.quarter, label: r.quarterLabel }))
+    .sort((a, b) => b.id.localeCompare(a.id));
+}
+
+/** Resolve the row for a specific quarter id (e.g. "FY26-Q4"), or
+ *  `null` if the snapshot doesn't carry that quarter. */
+export function rowForQuarter(
+  quarterId: string
+): AmfiQuarterlyIndustryRow | null {
+  return amfiQuarterlyIndustryRows().find((r) => r.quarter === quarterId) ?? null;
+}
+
+/** Resolve the row to display given a `?quarter=FY26-Q4` URL value:
+ *   - If `requested` matches an available quarter, return that row.
+ *   - Otherwise (missing, malformed, or pointing to a quarter we don't
+ *     have) fall back to the latest row.
+ *  Always paired with `resolveSelectedQuarterId` so the page and the
+ *  picker agree on which quarter is active. */
+export function resolveSelectedQuarter(
+  requested: string | undefined
+): AmfiQuarterlyIndustryRow | null {
+  if (requested) {
+    const hit = rowForQuarter(requested);
+    if (hit) return hit;
+  }
+  return latestQuarterlyRow();
+}
+
+/** YYYY-Qn-style id the page is showing (selected or latest) given a
+ *  `?quarter=` URL value. Returns `null` when no rows exist. */
+export function resolveSelectedQuarterId(
+  requested: string | undefined
+): string | null {
+  return resolveSelectedQuarter(requested)?.quarter ?? null;
+}
+
 /** Numeric KPI fields on AmfiQuarterlyIndustryRow. The keys match the
  *  AmfiQuarterlyIndustryFieldSources shape — only fields the schema
  *  actually carries can be passed to `quarterlyTrend` and the
@@ -264,6 +313,84 @@ export function getQuarterlyKpiProvenance(
 ): AmfiQuarterlyFieldSource | null {
   if (!row) return null;
   return row.fieldSources?.[field] ?? null;
+}
+
+/** Spec-named alias for getQuarterlyKpiProvenance. Same behaviour. */
+export function getQuarterlyProvenance(
+  row: AmfiQuarterlyIndustryRow | null,
+  field: AmfiQuarterlyKpiField
+): AmfiQuarterlyFieldSource | null {
+  return getQuarterlyKpiProvenance(row, field);
+}
+
+/** AUM mix slices for a specific quarter row. Returns the four
+ *  major-category sub-totals (Equity / Debt / Hybrid / Other Schemes)
+ *  the schema exposes, plus a residual slice when the four parts plus
+ *  any implicit Solution-Oriented bucket sum to less than the row's
+ *  Grand Total AUM. The residual catches Solution-Oriented (which is
+ *  intermediate-only on the schema) plus close-ended schemes. The
+ *  residual is suppressed when ≤ 0 (a wash, or implies extraction
+ *  noise). Returned in a chart-ready shape — the page can spread it
+ *  straight into the Donut. */
+export function quarterlyAumMixForQuarter(
+  row: AmfiQuarterlyIndustryRow | null
+): { slices: { key: string; label: string; value: number; color: string }[]; residual: number | null } {
+  if (!row) return { slices: [], residual: null };
+  const slices: { key: string; label: string; value: number; color: string }[] = [];
+  if (typeof row.equityAum === "number") {
+    slices.push({
+      key: "equity",
+      label: "Equity",
+      value: row.equityAum,
+      color: "hsl(var(--chart-1))",
+    });
+  }
+  if (typeof row.debtAum === "number") {
+    slices.push({
+      key: "debt",
+      label: "Debt",
+      value: row.debtAum,
+      color: "hsl(var(--chart-2))",
+    });
+  }
+  if (typeof row.hybridAum === "number") {
+    slices.push({
+      key: "hybrid",
+      label: "Hybrid",
+      value: row.hybridAum,
+      color: "hsl(var(--chart-3))",
+    });
+  }
+  if (typeof row.otherSchemesAum === "number") {
+    slices.push({
+      key: "otherSchemes",
+      label: "Other Schemes",
+      value: row.otherSchemesAum,
+      color: "hsl(var(--chart-4))",
+    });
+  }
+  let residual: number | null = null;
+  if (
+    typeof row.equityAum === "number" &&
+    typeof row.debtAum === "number" &&
+    typeof row.hybridAum === "number" &&
+    typeof row.otherSchemesAum === "number" &&
+    typeof row.grandTotalAum === "number"
+  ) {
+    const sumKnown =
+      row.equityAum + row.debtAum + row.hybridAum + row.otherSchemesAum;
+    const r = row.grandTotalAum - sumKnown;
+    if (r > 0) {
+      residual = r;
+      slices.push({
+        key: "residual",
+        label: "Solution / Close-ended",
+        value: r,
+        color: "hsl(var(--muted-foreground))",
+      });
+    }
+  }
+  return { slices, residual };
 }
 
 /** Visible "Source: AMFI Quarterly Report" caption rendered beneath
