@@ -4,9 +4,87 @@
   "auditAmc": "HDFC Mutual Fund",
   "quarter": "2026-Q1",
   "quarterLabel": "4QFY26",
-  "fetchedAt": "2026-05-09T18:05:47.759Z",
-  "rawHeaders": [],
-  "rawRowsSample": [],
+  "fetchedAt": "2026-05-09T19:03:14.246Z",
+  "rawHeaders": [
+    "Average Assets under Management (AAUM) for the quarter of January - March 2026 (Rs in Lakhs)",
+    "Sr No",
+    "Mutual Fund Name",
+    "Average AUM",
+    "Excluding Fund of Funds - Domestic but including Fund of Funds - Overseas",
+    "Fund Of Funds - Domestic",
+    "1",
+    "360 ONE Mutual Fund",
+    "1,319,387.87",
+    "0"
+  ],
+  "rawRowsSample": [
+    [
+      "Average Assets under Management (AAUM) for the quarter of January - March 2026 (Rs in Lakhs)"
+    ],
+    [
+      "Sr No",
+      "Mutual Fund Name",
+      "Average AUM"
+    ],
+    [
+      "Excluding Fund of Funds - Domestic but including Fund of Funds - Overseas",
+      "Fund Of Funds - Domestic"
+    ],
+    [
+      "1",
+      "360 ONE Mutual Fund",
+      "1,319,387.87",
+      "0"
+    ],
+    [
+      "2",
+      "Abakkus Mutual Fund",
+      "312,947.19",
+      "0"
+    ],
+    [
+      "3",
+      "Aditya Birla Sun Life Mutual Fund",
+      "43,586,595.89",
+      "487,415.73"
+    ],
+    [
+      "4",
+      "Angel One Mutual Fund",
+      "41,930.73",
+      "3,257.91"
+    ],
+    [
+      "5",
+      "Axis Mutual Fund",
+      "35,960,124.78",
+      "829,925.24"
+    ],
+    [
+      "6",
+      "Bajaj Finserv Mutual Fund",
+      "3,062,656.74",
+      "0"
+    ],
+    [
+      "7",
+      "Bandhan Mutual Fund",
+      "19,532,508.97",
+      "196,171.37"
+    ],
+    [
+      "8",
+      "Bank of India Mutual Fund",
+      "1,417,087.27",
+      "0"
+    ],
+    [
+      "9",
+      "Baroda BNP Paribas Mutual Fund",
+      "5,460,795.4",
+      "39,894.38"
+    ]
+  ],
   "parsedRows": [],
   "subtotals": {
     "debt": null,
@@ -14,11 +92,12 @@
     "hybrid": null,
     "solution": null,
     "otherSchemes": null,
-    "grandTotal": null
+    "grandTotal": 8153966.49
   },
   "activeEquityAaum": null,
   "status": "failed",
   "notes": [
-    "Form submission returned null — see ingest log for details."
+    "Missing active-equity envelope categories (AMC may not run them): multi-cap, large-cap, large-mid-cap, mid-cap, small-cap, dividend-yield, value-contra, focused, sectoral-thematic, elss, flexi-cap, conservative-hybrid, balanced-aggressive-hybrid, baf-daa, multi-asset, equity-savings, retirement, childrens",
+    "Reconciliation: parsedSum=₹0 Cr · grandTotal=₹81,53,966.49 Cr · diff=₹81,53,966.49 Cr"
   ]
 }
