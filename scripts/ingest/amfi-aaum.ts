@@ -853,6 +853,15 @@ async function fetchQuarter(
   opts: {
     auditAmc?: string;
     returnRawTables?: boolean;
+    /** Override the "Select Data" dropdown candidates. Default
+     *  ["Fundwise", "Fund wise", "Fund-wise"] = AMC-level totals (the
+     *  normal ingest path). Audit mode can pass e.g. ["Schemewise",
+     *  "Scheme wise", "Scheme-wise"] to drive per-scheme rows
+     *  (gated by the Mutual Fund filter). The first candidate that
+     *  matches an AMFI dropdown option wins; the validation regex
+     *  is built from the list so a Schemewise audit isn't rejected
+     *  by a hardcoded /fund\s*wise/. */
+    dataModeCandidates?: string[];
     /** When set + audit mode failed, fetchQuarter populates
      *  `diagnosticsOut.current` with a snapshot of page state so the
      *  caller can write a sibling debug JSON. Never populated in
@@ -928,18 +937,48 @@ async function fetchQuarter(
     await sleep(T.midSleep);
     await logVisiblePlaceholders(page, q.calendarQ, "after page load");
 
-    // Step 1: Select Data → Fundwise (gates the rest of the form)
-    vinfo(`AAUM[${q.calendarQ}]: setting Select Data → Fundwise`);
-    const fData = await setMuiAutocompleteByPlaceholder(page, "Select Data", [
-      "Fundwise",
-      "Fund wise",
-      "Fund-wise",
-    ]);
+    // Step 1: Select Data → Fundwise / Schemewise / Scheme Category-wise.
+    // Default behaviour (and the entire normal-ingest path) is "Fundwise"
+    // = AMC-level totals. Audit mode can pass alternate candidates
+    // through `opts.dataModeCandidates` to try Schemewise (per-scheme,
+    // gated by the MF filter) or any other dropdown option AMFI exposes.
+    // The validation regex is built from the candidates so a
+    // Schemewise audit doesn't get rejected by a hardcoded /fund\s*wise/.
+    const dataModeCandidates =
+      opts.dataModeCandidates ?? ["Fundwise", "Fund wise", "Fund-wise"];
+    const dataValidationRe = new RegExp(
+      dataModeCandidates
+        .map((c) =>
+          c
+            .replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")
+            .replace(/\s+/g, "\\s*")
+        )
+        .join("|"),
+      "i"
+    );
+    vinfo(
+      `AAUM[${q.calendarQ}]: setting Select Data → ${dataModeCandidates[0]}`
+    );
+    const fData = await setMuiAutocompleteByPlaceholder(
+      page,
+      "Select Data",
+      dataModeCandidates
+    );
     vinfo(
       `AAUM[${q.calendarQ}]:   Data found=${fData.found} chosen=${fData.chosen ?? "—"} value="${fData.visibleValue}" options=[${fData.options.slice(0, 8).join(" | ")}]`
     );
-    if (!fData.visibleValue || !/fund\s*wise/i.test(fData.visibleValue)) {
-      warn(`AAUM[${q.calendarQ}]: Fundwise not visible in input — cannot proceed`);
+    if (!fData.visibleValue || !dataValidationRe.test(fData.visibleValue)) {
+      warn(
+        `AAUM[${q.calendarQ}]: ${dataModeCandidates[0]} not visible in Select Data input — cannot proceed`
+      );
+      if (auditMode && opts.diagnosticsOut) {
+        opts.diagnosticsOut.current = await capturePageDiagnostics(
+          page,
+          `Select Data did not accept any of [${dataModeCandidates.join(", ")}]; visible value="${fData.visibleValue}"`,
+          { fData, fType: { ...EMPTY_FIELD }, fFy: { ...EMPTY_FIELD }, fMf: { ...EMPTY_FIELD }, fPeriod: { ...EMPTY_FIELD }, goState: { found: false, tag: null, disabled: null, ariaDisabled: null, classes: null } },
+          xhrCapture
+        );
+      }
       return null;
     }
 
@@ -1736,28 +1775,145 @@ export async function ingestAmfiAaumCategoryAudit(
   let browser: Browser | null = null;
   try {
     browser = await chromium.launch({ headless: true });
-    // Audit-mode diagnostics carrier — fetchQuarter populates
-    // `current` with a snapshot of page state if it bails out before
-    // the Go-click step (or after with zero rows). We then write a
-    // sibling debug JSON next to the audit JSON so the user can
-    // triage AMFI form drift without re-running.
-    const diagnosticsOut: { current?: AuditDiagnostics } = {};
-    const outcome = await fetchQuarter(browser, q, {
-      auditAmc: amcName,
-      returnRawTables: true,
-      diagnosticsOut,
-    });
-    if (!outcome) {
-      warn(`AAUM-AUDIT: form submission failed for ${amcName} ${q.calendarQ}`);
+
+    // Multi-mode probe. PR #76 / #78 only tried Fundwise + MF=<amc>
+    // and got back the all-AMC list — confirming Fundwise IGNORES the
+    // MF filter (it's a viewing convenience, not a server-side scope).
+    // Try alternative Select Data values to see whether AMFI exposes
+    // an AMC × category route; pick the first attempt whose result
+    // table contains category-level rows. Each attempt's diagnostics
+    // are accumulated into the debug JSON regardless of outcome so
+    // the user can see exactly what AMFI returned for each mode.
+    const modes: {
+      label: string;
+      dataModeCandidates: string[];
+    }[] = [
+      // Fundwise + MF=<amc> — known control; returns the all-AMC
+      // list. Run first so the diagnostics include a baseline.
+      {
+        label: "fundwise-mf-only",
+        dataModeCandidates: ["Fundwise", "Fund wise", "Fund-wise"],
+      },
+      // Schemewise + MF=<amc> — returns one row per scheme; most
+      // likely to actually scope to the requested AMC. We'd then
+      // need a separate scheme→category mapping to aggregate, but
+      // even confirming that the row list narrows to HDFC schemes
+      // would prove this is the right route.
+      {
+        label: "schemewise-mf",
+        dataModeCandidates: ["Schemewise", "Scheme wise", "Scheme-wise"],
+      },
+      // Scheme Category-wise + MF=<amc> — long shot; AMFI may not
+      // expose this combination. If the dropdown option doesn't
+      // exist, this attempt fails at Select Data and we capture a
+      // diagnostics dump without a Go submission.
+      {
+        label: "scheme-category-wise-mf",
+        dataModeCandidates: [
+          "Scheme Category-wise",
+          "Scheme Category wise",
+          "Category-wise",
+          "Category wise",
+        ],
+      },
+    ];
+
+    interface Attempt {
+      label: string;
+      dataModeCandidates: string[];
+      ok: boolean;
+      detection: "category-rows" | "scheme-rows" | "amc-rows" | "unknown" | "failed";
+      sourceUrl?: string;
+      rawHeaders: string[];
+      rawRowsSample: string[][];
+      parsedRowCount: number;
+      diagnostics?: AuditDiagnostics;
+    }
+    const attempts: Attempt[] = [];
+
+    let winningOutcome:
+      | {
+          mode: typeof modes[number];
+          tables: { headers: string[]; rows: string[][] }[];
+          sourceUrl: string;
+        }
+      | null = null;
+
+    for (const mode of modes) {
+      info(`AAUM-AUDIT: trying mode "${mode.label}"`);
+      const diagnosticsOut: { current?: AuditDiagnostics } = {};
+      const outcome = await fetchQuarter(browser, q, {
+        auditAmc: amcName,
+        returnRawTables: true,
+        dataModeCandidates: mode.dataModeCandidates,
+        diagnosticsOut,
+      });
+      if (!outcome) {
+        info(`AAUM-AUDIT[${mode.label}]: returned null`);
+        attempts.push({
+          label: mode.label,
+          dataModeCandidates: mode.dataModeCandidates,
+          ok: false,
+          detection: "failed",
+          rawHeaders: [],
+          rawRowsSample: [],
+          parsedRowCount: 0,
+          diagnostics: diagnosticsOut.current,
+        });
+        continue;
+      }
+      const tables = outcome.rawTables ?? [];
+      const tableForDetect = tables.reduce<
+        { headers: string[]; rows: string[][] } | null
+      >((best, t) => {
+        if (!best || t.rows.length > best.rows.length) return t;
+        return best;
+      }, null);
+      const headers = tableForDetect?.headers ?? [];
+      const rowsSample = (tableForDetect?.rows ?? []).slice(0, 12);
+      const detection = detectTableLayout(headers, rowsSample);
+      info(
+        `AAUM-AUDIT[${mode.label}]: detection=${detection}, headers=${headers.length}, rowsSample=${rowsSample.length}`
+      );
+      attempts.push({
+        label: mode.label,
+        dataModeCandidates: mode.dataModeCandidates,
+        ok: true,
+        detection,
+        sourceUrl: outcome.sourceUrl,
+        rawHeaders: headers,
+        rawRowsSample: rowsSample,
+        parsedRowCount: 0, // populated below if winning
+      });
+      if (detection === "category-rows" && !winningOutcome) {
+        winningOutcome = { mode, tables, sourceUrl: outcome.sourceUrl };
+        // Don't break — let later modes also run for diagnostic
+        // completeness. Stop after the third mode regardless.
+      }
+    }
+
+    // Always write the unified debug JSON listing every attempt.
+    if (writeFile) {
+      await writeAuditAttemptsFile(amcName, q.calendarQ, attempts);
+    }
+
+    // No mode returned a category table → emit a clearly-failed audit
+    // JSON with a recommendation pointing at the next path to try.
+    if (!winningOutcome) {
+      warn(
+        `AAUM-AUDIT: no mode returned category-level rows; AMFI Fundwise/Schemewise/Scheme-Category routes do NOT support AMC × category for ${amcName} ${q.calendarQ}`
+      );
+      const fundwiseAttempt = attempts.find((a) => a.label === "fundwise-mf-only");
+      const schemewiseAttempt = attempts.find((a) => a.label === "schemewise-mf");
       const failed: AuditOutput = {
         source: "AMFI Fundwise AAUM disclosure",
-        sourceUrl: FORM_URL,
+        sourceUrl: fundwiseAttempt?.sourceUrl ?? FORM_URL,
         auditAmc: amcName,
         quarter: q.calendarQ,
         quarterLabel,
         fetchedAt,
-        rawHeaders: [],
-        rawRowsSample: [],
+        rawHeaders: fundwiseAttempt?.rawHeaders ?? [],
+        rawRowsSample: fundwiseAttempt?.rawRowsSample ?? [],
         parsedRows: [],
         subtotals: {
           debt: null,
@@ -1770,27 +1926,31 @@ export async function ingestAmfiAaumCategoryAudit(
         activeEquityAaum: null,
         status: "failed",
         notes: [
-          "Form submission returned null — see ingest log for details.",
-          ...(diagnosticsOut.current
-            ? [
-                `Diagnostics captured: ${diagnosticsOut.current.reason}`,
-                `Debug JSON: manual-data/audit/amfi-aaum-category-${auditFilenameSlug(amcName)}-${q.calendarQ.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-debug.json`,
-              ]
-            : ["No diagnostics captured (failure preceded form load)."]),
+          "AMFI Average AUM page does NOT support AMC × category in any single Select Data mode.",
+          ...attempts.map(
+            (a) =>
+              `Attempt "${a.label}" → detection=${a.detection}; rowsSample=${a.rawRowsSample.length}; firstHeader=${JSON.stringify(a.rawHeaders.slice(0, 4))}`
+          ),
+          schemewiseAttempt && schemewiseAttempt.detection === "scheme-rows"
+            ? `RECOMMENDED FALLBACK: Schemewise + MF=${amcName} returned per-scheme rows (${schemewiseAttempt.rawRowsSample.length} sample rows). Build a follow-up extractor that fetches Schemewise per AMC and joins with the AMFI scheme-categorisation file (https://www.amfiindia.com/research-information/other-data/categorization-of-mutual-fund-schemes) to aggregate by category.`
+            : "RECOMMENDED FALLBACK: parse the AMFI Monthly Report PDF per-scheme table (existing scripts/ingest/amfi-monthly-pdf.ts), which lists scheme name + AAUM per AMC + category. Or use Morningstar fund-wise + categorisation as the secondary source.",
+          `See manual-data/audit/amfi-aaum-category-${auditFilenameSlug(amcName)}-${q.calendarQ.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-attempts.json for the per-mode breakdown.`,
         ],
       };
-      if (writeFile) {
-        await writeAuditFile(failed);
-        if (diagnosticsOut.current) {
-          await writeAuditDebugFile(amcName, q.calendarQ, diagnosticsOut.current);
-        }
-      }
+      if (writeFile) await writeAuditFile(failed);
       return failed;
     }
 
-    const tables = outcome.rawTables ?? [];
+    // We have a winning attempt — parse it as the primary audit JSON.
+    const tables = winningOutcome.tables;
     const { parsedRows, subtotals, rawHeaders, rawRowsSample, notes } =
       parseCategoryRowsFromTables(tables);
+
+    // Mark the winning attempt's parsedRowCount in the debug JSON.
+    const winningAttempt = attempts.find(
+      (a) => a.label === winningOutcome!.mode.label
+    );
+    if (winningAttempt) winningAttempt.parsedRowCount = parsedRows.length;
 
     // Active-equity AAUM = sum of categoryAaum across the IIFL
     // 18-slug envelope. Computed only when at least one envelope
@@ -1824,13 +1984,20 @@ export async function ingestAmfiAaumCategoryAudit(
       );
     }
 
+    notes.push(
+      `Winning audit mode: "${winningOutcome.mode.label}" (Select Data candidates: ${JSON.stringify(winningOutcome.mode.dataModeCandidates)})`
+    );
+    notes.push(
+      `See manual-data/audit/amfi-aaum-category-${auditFilenameSlug(amcName)}-${q.calendarQ.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-attempts.json for the per-mode breakdown.`
+    );
+
     info(
-      `AAUM-AUDIT: parsed ${parsedRows.length} category row(s); activeEquityAaum=${activeEquityAaum !== null ? "₹" + activeEquityAaum.toLocaleString("en-IN") + " Cr" : "n/a"}`
+      `AAUM-AUDIT: parsed ${parsedRows.length} category row(s); activeEquityAaum=${activeEquityAaum !== null ? "₹" + activeEquityAaum.toLocaleString("en-IN") + " Cr" : "n/a"}; mode="${winningOutcome.mode.label}"`
     );
 
     const out: AuditOutput = {
       source: "AMFI Fundwise AAUM disclosure",
-      sourceUrl: outcome.sourceUrl,
+      sourceUrl: winningOutcome.sourceUrl,
       auditAmc: amcName,
       quarter: q.calendarQ,
       quarterLabel,
@@ -1867,15 +2034,59 @@ async function writeAuditFile(out: AuditOutput): Promise<void> {
   info(`AAUM-AUDIT: wrote ${file}`);
 }
 
-/** Sibling debug JSON that captures the page state when the audit
- *  failed before reaching Go-click (or after with zero rows). Lets
- *  the user triage AMFI form drift without re-running. The file is
- *  written next to the audit JSON with the same slug + quarter
- *  prefix and a `-debug.json` suffix. */
-async function writeAuditDebugFile(
+/** Inspect a captured table's headers + first few rows and classify
+ *  what AMFI returned. Used by audit mode to pick a winning Select-
+ *  Data combination from a list of attempts. */
+function detectTableLayout(
+  headers: string[],
+  rowsSample: string[][]
+): "category-rows" | "scheme-rows" | "amc-rows" | "unknown" {
+  const headerText = headers.join(" | ").toLowerCase();
+  // Headers strongly signal the layout most of the time:
+  //   "Mutual Fund Name" → AMC-level Fundwise table (the control)
+  //   "Scheme Name"      → Schemewise per-scheme table
+  if (/\bmutual\s+fund\s+name\b/.test(headerText)) return "amc-rows";
+  if (/\bscheme\s+name\b/.test(headerText)) return "scheme-rows";
+
+  // Headers ambiguous → look at the first non-header row's first
+  // text-like cell. A category-level table starts with rows like
+  // "Overnight Fund" / "Liquid Fund" / "Multi Cap Fund". A scheme-
+  // level table starts with full scheme names ("HDFC Liquid Fund -
+  // Direct - Growth"). An AMC-level table starts with AMC names.
+  for (const row of rowsSample) {
+    for (const cell of row) {
+      const text = (cell ?? "").trim();
+      if (!text) continue;
+      // Skip "Sr No" / "1" / "2" leading numeric cells.
+      if (/^\d+(\.\d+)?$/.test(text)) continue;
+      if (/^(s\.?\s*no|sr\.?\s*no)/i.test(text)) continue;
+      // Category match — is it one of our 39 known AMFI category labels?
+      for (const spec of AUDIT_CATEGORY_SPECS) {
+        if (spec.re.test(text)) return "category-rows";
+      }
+      // AMC match — does it look like an AMC name (curated map or
+      // contains "Mutual Fund" / "Asset Management" / "MF" / "AMC")?
+      if (isLikelyAmcName(text)) return "amc-rows";
+      // Otherwise: probably a scheme name (e.g. "HDFC Liquid Fund -
+      // Direct - Growth"), which mentions an AMC + "Fund" + share
+      // class but isn't a clean category label.
+      if (/\bFund\b|\bScheme\b|\bDirect\b|\bGrowth\b/i.test(text)) {
+        return "scheme-rows";
+      }
+      return "unknown";
+    }
+  }
+  return "unknown";
+}
+
+/** Per-attempt diagnostics file — lists every Select Data mode
+ *  tried, what AMFI returned for each, and the per-mode page
+ *  diagnostics. Written alongside the primary audit JSON so the user
+ *  can triage AMFI form behaviour without re-running. */
+async function writeAuditAttemptsFile(
   amcName: string,
   quarterCal: string,
-  diag: AuditDiagnostics
+  attempts: unknown[]
 ): Promise<void> {
   const dir = path.resolve(process.cwd(), "manual-data/audit");
   await fs.mkdir(dir, { recursive: true });
@@ -1883,11 +2094,16 @@ async function writeAuditDebugFile(
   const qLc = quarterCal.toLowerCase().replace(/[^a-z0-9]+/g, "-");
   const file = path.join(
     dir,
-    `amfi-aaum-category-${slug}-${qLc}-debug.json`
+    `amfi-aaum-category-${slug}-${qLc}-attempts.json`
   );
-  await fs.writeFile(file, JSON.stringify(diag, null, 2) + "\n", "utf8");
-  info(`AAUM-AUDIT: wrote debug ${file}`);
+  await fs.writeFile(
+    file,
+    JSON.stringify({ amcName, quarter: quarterCal, attempts }, null, 2) + "\n",
+    "utf8"
+  );
+  info(`AAUM-AUDIT: wrote attempts ${file}`);
 }
+
 
 // ---- Self-invocation when AAUM_AUDIT_AMC env var is set -------------
 //
