@@ -4,7 +4,7 @@
   "auditAmc": "HDFC Mutual Fund",
   "quarter": "2026-Q1",
   "quarterLabel": "4QFY26",
-  "fetchedAt": "2026-05-09T19:25:33.961Z",
+  "fetchedAt": "2026-05-09T19:51:22.777Z",
   "rawHeaders": [
     "Average Assets under Management (AAUM) for the quarter of January - March 2026 (Rs in Lakhs)",
     "Sr No",
@@ -97,11 +97,12 @@
   "activeEquityAaum": null,
   "status": "failed",
   "notes": [
-    "AMFI Average AUM page does NOT support AMC × category in any single Select Data mode.",
+    "AMFI Average AUM page does NOT support AMC × category in any tested Select Data + Type combination.",
     "Attempt \"fundwise-mf-only\" → detection=amc-rows; rowsSample=12; firstHeader=[\"Average Assets under Management (AAUM) for the quarter of January - March 2026 (Rs in Lakhs)\",\"Sr No\",\"Mutual Fund Name\",\"Average AUM\"]",
     "Attempt \"schemewise-mf\" → detection=failed; rowsSample=0; firstHeader=[]",
+    "Attempt \"schemewise-categorywise-mf\" → detection=failed; rowsSample=0; firstHeader=[]",
     "Attempt \"scheme-category-wise-mf\" → detection=failed; rowsSample=0; firstHeader=[]",
-    "RECOMMENDED FALLBACK: parse the AMFI Monthly Report PDF per-scheme table (existing scripts/ingest/amfi-monthly-pdf.ts), which lists scheme name + AAUM per AMC + category. Or use Morningstar fund-wise + categorisation as the secondary source.",
+    "RECOMMENDED FALLBACK: AMFI does not expose AMC × category cleanly. Pivot to per-AMC factsheets, Morningstar fund-wise + categorisation, or AMC investor-deck disclosures.",
     "See manual-data/audit/amfi-aaum-category-hdfc-2026-q1-attempts.json for the per-mode breakdown."
   ]
 }
