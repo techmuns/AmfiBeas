@@ -1,8 +1,8 @@
 {
   "meta": {
-    "generatedAt": "2026-05-09T15:57:40.055Z",
+    "generatedAt": "2026-05-09T17:37:21.039Z",
     "source": "https://www.screener.in/company/{ticker}/consolidated/",
-    "notes": "Quarterly P&L for listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC, ICICIAMC standalone). ICICIAMC uses /company/ICICIAMC/ — the consolidated variant returned an annual/TTM layout. Sanity guards: MIN_QUARTERS_PER_AMC=4, REVENUE_REALIZATION ≤ 90 bps, OP_MARGIN ≤ 75 bps; failures preserve prior history. Source mapping: screener.in 'Sales' row → Revenue from Operations (excludes Other Income); 'Other Income' captured separately for display only; 'Operating Profit' and 'Net Profit' as labelled. revenueFromOperations is what feeds Revenue Realization (bps of MF QAAUM). avgAum not provided by this source. lastSuccessfulFetchAt=2026-05-09T15:57:40.055Z · slugsThisRun=[hdfc, nippon, absl, uti, icici-pru] · failedThisRun=[]. quartersCovered=13 (2023-Q1…2026-Q1) · rowCount=58 · fetchWindow=13."
+    "notes": "Quarterly P&L for listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC, ICICIAMC standalone). ICICIAMC uses /company/ICICIAMC/ — the consolidated variant returned an annual/TTM layout. Sanity guards: MIN_QUARTERS_PER_AMC=4, REVENUE_REALIZATION ≤ 90 bps, OP_MARGIN ≤ 75 bps; failures preserve prior history. Source mapping: screener.in 'Sales' row → Revenue from Operations (excludes Other Income); 'Other Income' captured separately for display only; 'Operating Profit' and 'Net Profit' as labelled. revenueFromOperations is what feeds Revenue Realization (bps of MF QAAUM). avgAum not provided by this source. lastSuccessfulFetchAt=2026-05-09T17:37:21.039Z · slugsThisRun=[hdfc, nippon, absl, uti, icici-pru] · failedThisRun=[]. quartersCovered=13 (2023-Q1…2026-Q1) · rowCount=58 · fetchWindow=13."
   },
   "rows": [
     {
