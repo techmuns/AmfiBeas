@@ -1,6 +1,6 @@
 import { BarSeries } from "@/components/charts/BarSeries";
 import { ChartPlaceholder } from "@/components/ui/ChartPlaceholder";
-import { Donut } from "@/components/charts/Donut";
+import { Donut, type DonutSlice } from "@/components/charts/Donut";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { Card } from "@/components/ui/Card";
@@ -26,11 +26,13 @@ import {
   latestOpenEndedSchemeCount,
   latestQuarterlyCategoryProvenance,
   latestQuarterlyFolioAdditions,
-  quarterlyActiveEquityGrossFlowsData,
-  quarterlyAumMixForQuarter,
-  quarterlyCategoryGrossFlowData,
+  liquidAumForQuarter,
+  quarterlyCategoryAumProvenance,
+  quarterlyActiveEquityLastMonthAaumTrend,
+  quarterlyActiveEquityLastMonthShareTrend,
+  quarterlyEquityLastMonthAaumBreakdown,
+  quarterlyFlowsData,
   quarterlyFolioAdditionsTrend,
-  quarterlyGrossFlowsData,
   quarterlyOpenEndedSchemeCountTrend,
   quarterlyTrend,
   resolveSelectedQuarter,
@@ -43,34 +45,10 @@ import {
   formatLakhSafe,
 } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import type { AmfiMonthlyCategorySlug } from "@/data/snapshots/types";
-
-const GROSS_FLOW_BARS = [
-  {
-    key: "fundsMobilized",
-    name: "Funds mobilized",
-    color: "hsl(var(--chart-2))",
-  },
-  {
-    key: "repurchase",
-    name: "Repurchase / Redemption",
-    color: "hsl(var(--chart-6))",
-  },
-  { key: "netInflow", name: "Net inflow", color: "hsl(var(--chart-1))" },
-];
-
-/** Same four IIFL Figure 31-34 reference categories as /monthly's
- *  CATEGORY_DISPLAY so the quarterly view feels consistent. */
-const CATEGORY_FLOW_CARDS: { slug: AmfiMonthlyCategorySlug; label: string }[] = [
-  { slug: "flexi-cap", label: "Flexi Cap Fund" },
-  { slug: "multi-asset", label: "Multi Asset Allocation Fund" },
-  { slug: "sectoral-thematic", label: "Sectoral/Thematic Funds" },
-  { slug: "large-cap", label: "Large Cap Fund" },
-];
 
 /** Sign-aware compact ₹ Cr formatter — mirrors the equivalent helper
- *  on /monthly so a negative net-inflow on /quarterly renders as
- *  "−₹32.4K Cr" rather than the unsigned "₹32.4K Cr". */
+ *  on /monthly so a negative net inflow KPI renders as "−₹32.4K Cr"
+ *  rather than the unsigned "₹32.4K Cr". */
 function formatSignedCompactCrSafe(v: number | null): string {
   if (v === null || !Number.isFinite(v)) return "—";
   if (v >= 0) return formatCompactCrSafe(v);
@@ -84,9 +62,9 @@ export default async function QuarterlyPage({
 }) {
   const sp = await searchParams;
 
-  // Quarter selector — `?quarter=FY26-Q4` resolves to the matching row
-  // when valid; otherwise we fall back to the latest available quarter
-  // so the page is never blank just because the URL is stale.
+  // Quarter selector — `?quarter=FY26-Q4` resolves to the matching
+  // row when valid; otherwise we fall back to the latest available
+  // quarter.
   const requestedQuarterRaw = sp.quarter;
   const requestedQuarter =
     typeof requestedQuarterRaw === "string" ? requestedQuarterRaw : undefined;
@@ -94,17 +72,10 @@ export default async function QuarterlyPage({
   const availableQuarters = availableQuartersDesc();
 
   // ---- IIFL Active-Equity Category Trends ---------------------------
-  // Per-category quarterly cards. Helper buckets MONTHS into Indian
-  // fiscal quarters (Apr-Jun, Jul-Sep, Oct-Dec, Jan-Mar) and computes:
-  //   QAAUM share %    = avg(categoryAaum) / avg(activeEquityAaum) × 100
-  //   Net inflow share = sum(categoryNetInflow) / sum(activeEquityNetInflow) × 100
-  // over the months in each quarter. This is the ONLY section on
-  // /quarterly that is allowed to source from AMFI Monthly Reports —
-  // because the quarterly Report's "Average Net AUM" column is
-  // last-month AAUM only, computing TRUE QAAUM share requires
-  // aggregating monthly period-average AAUM. Source caption reads
-  // "Source: AMFI Monthly Reports · aggregated quarterly" so the
-  // discipline is unambiguous.
+  // The single section on /quarterly allowed to source from AMFI
+  // Monthly Reports — true QAAUM share requires period-average AAUM
+  // across all months in the quarter, which the quarterly Report's
+  // Average Net AUM column (last-month only) cannot provide.
   const iiflTrendCards = IIFL_ACTIVE_EQUITY_CATEGORIES.map((c) => {
     const { series, hasData } = iiflActiveEquityQuarterlyTrendCard(c.slug);
     const aumHover = formatKpiProvenanceTooltip(
@@ -123,87 +94,151 @@ export default async function QuarterlyPage({
   const hasExpandedIiflTrend = iiflExpandedCards.some((c) => c.hasData);
 
   // ---- AMFI Quarterly Snapshot — KPI cards (selected quarter) -------
-  // Mirrors /monthly's AMFI Monthly Snapshot. Renders one KPI card
-  // per field the SELECTED quarter row carries; absent fields drop
-  // out rather than rendering "—". Source line is sourced from each
-  // field's own provenance entry so the hover tooltip points at the
-  // exact PDF + page + row + column.
-  const QUARTERLY_KPI_CARDS: {
-    field: AmfiQuarterlyKpiField;
+  // Mirrors /monthly's AMFI Monthly Snapshot card list:
+  //   Total AAUM / Equity AUM / Debt AUM / Liquid AUM / Net Inflow.
+  // Liquid AUM is read from the Liquid Fund category row (the
+  // industry-row schema doesn't expose it as its own bucket — Liquid
+  // is a sub-row of Sub Total - I). Funds Mobilized / Repurchase /
+  // Folios / Hybrid / Other Schemes are intentionally NOT here:
+  //   - Funds Mobilized + Repurchase belong in Quarterly Flows.
+  //   - Folios belongs in Quarterly Folios & Scheme Count.
+  //   - Hybrid + Other Schemes don't appear on /monthly's Snapshot
+  //     and would clutter the headline grid; the AUM Mix donut
+  //     handles those buckets.
+  const liquidAum = selectedRow ? liquidAumForQuarter(selectedRow.quarter) : null;
+  const liquidProvenance = selectedRow
+    ? quarterlyCategoryAumProvenance("liquid", selectedRow.quarter)
+    : null;
+
+  type SnapshotCardSpec = {
+    key: string;
     label: string;
-    format: (v: number | null) => string;
-  }[] = [
-    { field: "grandTotalAum", label: "Total AUM", format: formatCompactCrSafe },
-    {
-      field: "grandTotalLastMonthAaum",
-      label: "Last-month AAUM",
-      format: formatCompactCrSafe,
-    },
-    { field: "equityAum", label: "Equity AUM", format: formatCompactCrSafe },
-    { field: "debtAum", label: "Debt AUM", format: formatCompactCrSafe },
-    { field: "hybridAum", label: "Hybrid AUM", format: formatCompactCrSafe },
-    {
-      field: "otherSchemesAum",
-      label: "Other Schemes AUM",
-      format: formatCompactCrSafe,
-    },
-    {
-      field: "grandTotalNetInflow",
-      label: "Net Inflow",
-      format: formatSignedCompactCrSafe,
-    },
-    {
-      field: "grandTotalFundsMobilized",
-      label: "Funds Mobilized",
-      format: formatCompactCrSafe,
-    },
-    {
-      field: "grandTotalRepurchase",
-      label: "Repurchase / Redemption",
-      format: formatCompactCrSafe,
-    },
-    {
-      field: "grandTotalFolios",
-      label: "Folios",
-      format: (v: number | null) => formatCroreCountSafe(v),
-    },
-  ];
-  const quarterlyKpiCards = QUARTERLY_KPI_CARDS.flatMap((spec) => {
-    const value = getQuarterlyKpiValue(selectedRow, spec.field);
-    if (value === null) return [];
-    const provenance = getQuarterlyKpiProvenance(selectedRow, spec.field);
-    return [
-      {
-        ...spec,
-        value,
-        formatted: spec.format(value),
-        note: formatQuarterlyProvenanceLine(provenance) ?? "",
-        noteHover: formatQuarterlyProvenanceTooltip(provenance) ?? undefined,
-      },
-    ];
-  });
+    value: number | null;
+    formatted: string;
+    note: string;
+    noteHover?: string;
+  };
+  const SNAPSHOT_KPI_CARDS: SnapshotCardSpec[] = [];
+  const pushSnapshotCard = (
+    field: AmfiQuarterlyKpiField,
+    label: string,
+    format: (v: number | null) => string
+  ) => {
+    const value = getQuarterlyKpiValue(selectedRow, field);
+    if (value === null) return;
+    const provenance = getQuarterlyKpiProvenance(selectedRow, field);
+    SNAPSHOT_KPI_CARDS.push({
+      key: field,
+      label,
+      value,
+      formatted: format(value),
+      note: formatQuarterlyProvenanceLine(provenance) ?? "",
+      noteHover: formatQuarterlyProvenanceTooltip(provenance) ?? undefined,
+    });
+  };
+  pushSnapshotCard(
+    "grandTotalLastMonthAaum",
+    "Last-month AAUM",
+    formatCompactCrSafe
+  );
+  pushSnapshotCard("equityAum", "Equity AUM", formatCompactCrSafe);
+  pushSnapshotCard("debtAum", "Debt AUM", formatCompactCrSafe);
+  if (liquidAum !== null) {
+    SNAPSHOT_KPI_CARDS.push({
+      key: "liquidAum",
+      label: "Liquid AUM",
+      value: liquidAum,
+      formatted: formatCompactCrSafe(liquidAum),
+      note: formatQuarterlyProvenanceLine(liquidProvenance) ?? "",
+      noteHover:
+        formatQuarterlyProvenanceTooltip(liquidProvenance) ?? undefined,
+    });
+  }
+  pushSnapshotCard(
+    "grandTotalNetInflow",
+    "Net Inflow",
+    formatSignedCompactCrSafe
+  );
+  // Total AUM rounds out the row to a clean grid; comes last so the
+  // AAUM-driven cards lead.
+  pushSnapshotCard("grandTotalAum", "Total AUM", formatCompactCrSafe);
 
   const snapshotSubtitle = selectedRow
     ? `Industry-wide · live from uploaded AMFI Quarterly Report PDFs · ${selectedRow.quarterLabel}`
     : "Upload AMFI Quarterly PDFs to manual-data/amfi-quarterly/pdfs/, then run npm run ingest:amfi-quarterly-pdf";
 
-  // ---- AUM Mix & Trend (selected quarter for mix; full series for trend) ----
-  const { slices: mixSlices, residual: mixResidual } =
-    quarterlyAumMixForQuarter(selectedRow);
+  // ---- AMFI Quarterly AUM Mix & Trend -------------------------------
+  // Mirrors /monthly's AMFI AUM Mix & Trend exactly:
+  //   Donut slices: Equity / Debt / Liquid / Other (residual).
+  //   Same colors as /monthly:
+  //     Equity = chart-1 (blue)
+  //     Debt   = chart-2 (green)
+  //     Liquid = chart-4 (purple)
+  //     Other  = muted-foreground (grey)
+  //   Other = grandTotalAum − (equity + debt + liquid). Only shown
+  //   when ALL three sub-categories AND grandTotalAum are present and
+  //   the residual is > 0 (otherwise rendering it would mis-state
+  //   share). Hybrid / Other Schemes / Solution / close-ended schemes
+  //   all sit inside the residual.
+  const mixEquity = selectedRow?.equityAum ?? null;
+  const mixDebt = selectedRow?.debtAum ?? null;
+  const mixLiquid = liquidAum;
+  const mixGrand = selectedRow?.grandTotalAum ?? null;
+  const mixSlices: DonutSlice[] = [];
+  if (typeof mixEquity === "number") {
+    mixSlices.push({
+      key: "equity",
+      label: "Equity",
+      value: mixEquity,
+      color: "hsl(var(--chart-1))",
+    });
+  }
+  if (typeof mixDebt === "number") {
+    mixSlices.push({
+      key: "debt",
+      label: "Debt",
+      value: mixDebt,
+      color: "hsl(var(--chart-2))",
+    });
+  }
+  if (typeof mixLiquid === "number") {
+    mixSlices.push({
+      key: "liquid",
+      label: "Liquid",
+      value: mixLiquid,
+      color: "hsl(var(--chart-4))",
+    });
+  }
+  let mixOther: number | null = null;
+  if (
+    typeof mixEquity === "number" &&
+    typeof mixDebt === "number" &&
+    typeof mixLiquid === "number" &&
+    typeof mixGrand === "number"
+  ) {
+    const residual = mixGrand - mixEquity - mixDebt - mixLiquid;
+    if (residual > 0) {
+      mixOther = residual;
+      mixSlices.push({
+        key: "other",
+        label: "Other",
+        value: residual,
+        color: "hsl(var(--muted-foreground))",
+      });
+    }
+  }
   const mixHasData = mixSlices.length > 0;
   const mixSubtitle =
-    mixHasData && mixResidual !== null
-      ? `Quarter-end Net AUM · share of Total AUM · residual = Solution-Oriented + close-ended schemes · ${selectedRow?.quarterLabel ?? ""}`
+    mixHasData && mixOther !== null
+      ? `Quarter-end Net AUM · share of Total AUM (residual = Other) · ${selectedRow?.quarterLabel ?? ""}`
       : mixHasData
-        ? `Quarter-end Net AUM · partial breakdown · residual not computed · ${selectedRow?.quarterLabel ?? ""}`
+        ? `Quarter-end Net AUM · partial breakdown · Other not computed · ${selectedRow?.quarterLabel ?? ""}`
         : "Quarter-end Net AUM not available for the selected quarter";
   const mixHoverProvenance = formatQuarterlyProvenanceTooltip(
     getQuarterlyKpiProvenance(selectedRow, "grandTotalAum")
   );
 
-  // Last-month AAUM trend across ALL ingested quarters (full series,
-  // not bound to the selected-quarter picker — the selector controls
-  // the snapshot KPI cards, the trend rolls forward as new PDFs land).
+  // Last-month AAUM trend across the full 8-quarter history.
   const aaumTrendData = quarterlyTrend("grandTotalLastMonthAaum", 8);
   const aaumTrendHasData = aaumTrendData.length > 0;
   const aaumTrendSubtitle = aaumTrendHasData
@@ -213,63 +248,42 @@ export default async function QuarterlyPage({
     latestIndustryProvenance("grandTotalLastMonthAaum")
   );
 
-  // ---- Quarterly Gross Flows ----------------------------------------
-  // KPI cards reflect the SELECTED quarter so they update with the
-  // picker; bar charts span the full history regardless of selection.
-  const industryGrossFlows = quarterlyGrossFlowsData();
-  const activeEquityGrossFlows = quarterlyActiveEquityGrossFlowsData();
-  const hasIndustryGross = industryGrossFlows.some(
+  // ---- Quarterly Flows ----------------------------------------------
+  // Mirrors /monthly's "Equity / Debt / Liquid Monthly Net Flows"
+  // grouped bar chart exactly. One full-width Card; same colors as
+  // /monthly (Equity = chart-1 blue / Debt = chart-2 green /
+  // Liquid = chart-4 purple). Liquid is shown separately for chart
+  // parity with /monthly even though debtNetInflow already includes
+  // it on the AMFI classification.
+  const flowsData = quarterlyFlowsData(8);
+  const flowsHasData = flowsData.some(
+    (r) => r.equity !== null || r.debt !== null || r.liquid !== null
+  );
+  const flowsHoverProvenance = formatQuarterlyProvenanceTooltip(
+    latestIndustryProvenance("debtNetInflow")
+  );
+
+  // ---- Quarterly Active Equity & Equity Mix -------------------------
+  // Mirrors /monthly's Active Equity & Equity Mix section. All three
+  // cards use LAST-MONTH AAUM (not true QAAUM) — labelled explicitly
+  // so the methodology is unambiguous.
+  const aeAaumTrend = quarterlyActiveEquityLastMonthAaumTrend(8);
+  const aeShareTrend = quarterlyActiveEquityLastMonthShareTrend(8);
+  const aeBreakdown = quarterlyEquityLastMonthAaumBreakdown(8);
+  const aeBreakdownHasData = aeBreakdown.some(
     (r) =>
-      r.fundsMobilized !== null ||
-      r.repurchase !== null ||
-      r.netInflow !== null
+      r.activeEquity !== null || r.etfIndex !== null || r.arbitrage !== null
   );
-  const hasActiveEquityGross = activeEquityGrossFlows.some(
-    (r) =>
-      r.fundsMobilized !== null ||
-      r.repurchase !== null ||
-      r.netInflow !== null
+  const hasAnyEquityMix =
+    aeAaumTrend.length > 0 ||
+    aeShareTrend.length > 0 ||
+    aeBreakdownHasData;
+  const aeAaumHover = formatQuarterlyProvenanceTooltip(
+    latestIndustryProvenance("equityLastMonthAaum")
   );
-  const selectedFundsMobilized = selectedRow?.grandTotalFundsMobilized ?? null;
-  const selectedRepurchase = selectedRow?.grandTotalRepurchase ?? null;
-  const selectedNetInflow = selectedRow?.grandTotalNetInflow ?? null;
-  const selectedActiveEquityNetInflow = selectedRow?.activeEquityNetInflow ?? null;
-  const grossFlowsSourceLine =
-    formatQuarterlyProvenanceLine(
-      getQuarterlyKpiProvenance(selectedRow, "grandTotalFundsMobilized")
-    ) ?? "Source: AMFI Quarterly Report";
-  const fundsHover = formatQuarterlyProvenanceTooltip(
-    getQuarterlyKpiProvenance(selectedRow, "grandTotalFundsMobilized")
+  const aeBreakdownHover = formatQuarterlyProvenanceTooltip(
+    latestQuarterlyCategoryProvenance("arbitrage", "categoryLastMonthAaum")
   );
-  const repurchaseHover = formatQuarterlyProvenanceTooltip(
-    getQuarterlyKpiProvenance(selectedRow, "grandTotalRepurchase")
-  );
-  const netInflowHover = formatQuarterlyProvenanceTooltip(
-    getQuarterlyKpiProvenance(selectedRow, "grandTotalNetInflow")
-  );
-  const activeEquityNetInflowHover = formatQuarterlyProvenanceTooltip(
-    getQuarterlyKpiProvenance(selectedRow, "activeEquityNetInflow")
-  );
-  const industryFundsHover = formatQuarterlyProvenanceTooltip(
-    latestIndustryProvenance("grandTotalFundsMobilized")
-  );
-  const activeEquityHover = formatQuarterlyProvenanceTooltip(
-    latestIndustryProvenance("equityFundsMobilized")
-  );
-  const categoryFlowCards = CATEGORY_FLOW_CARDS.map((c) => {
-    const data = quarterlyCategoryGrossFlowData(c.slug);
-    const hasData = data.some(
-      (r) =>
-        r.fundsMobilized !== null ||
-        r.repurchase !== null ||
-        r.netInflow !== null
-    );
-    const hover = formatQuarterlyProvenanceTooltip(
-      latestQuarterlyCategoryProvenance(c.slug, "categoryFundsMobilized")
-    );
-    return { ...c, data, hasData, hover };
-  });
-  const hasCategoryGross = categoryFlowCards.some((c) => c.hasData);
 
   // ---- Folios & Scheme Count ----------------------------------------
   const totalFolios = selectedRow?.grandTotalFolios ?? null;
@@ -295,13 +309,16 @@ export default async function QuarterlyPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Quarterly KPIs"
-        subtitle="Quarterly AMFI industry dashboard"
+        title="Quarterly Operating"
+        subtitle={
+          selectedRow
+            ? `Industry-wide · ${selectedRow.quarterLabel}`
+            : "Industry-wide"
+        }
       />
       <FilterBar showRange="quarterly" />
 
-      {/* Data-status legend — same key as /monthly so users can read
-          the live vs demo treatments at a glance. */}
+      {/* Data-status legend — same key as /monthly. */}
       <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
         <span className="font-medium text-foreground">Data status:</span>
         <span className="inline-flex items-center gap-1.5">
@@ -318,10 +335,7 @@ export default async function QuarterlyPage({
         </span>
       </div>
 
-      {/* AMFI Quarterly Snapshot — first live section, mirrors
-          /monthly's AMFI Monthly Snapshot card. The FiscalQuarterPicker
-          sits in the action slot and drives the selected-quarter
-          KPI grid below. */}
+      {/* AMFI Quarterly Snapshot — first live section, mirrors /monthly. */}
       <Card
         title="AMFI Quarterly Snapshot"
         subtitle={snapshotSubtitle}
@@ -346,11 +360,11 @@ export default async function QuarterlyPage({
           </div>
         }
       >
-        {quarterlyKpiCards.length > 0 ? (
+        {SNAPSHOT_KPI_CARDS.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {quarterlyKpiCards.map((c) => (
+            {SNAPSHOT_KPI_CARDS.map((c) => (
               <KpiCard
-                key={c.field}
+                key={c.key}
                 label={c.label}
                 value={c.formatted}
                 note={c.note}
@@ -393,10 +407,7 @@ export default async function QuarterlyPage({
                 Source: AMFI Quarterly Report
               </div>
             </Card>
-            <Card
-              title="Last-month AAUM Trend"
-              subtitle={aaumTrendSubtitle}
-            >
+            <Card title="Last-month AAUM Trend" subtitle={aaumTrendSubtitle}>
               {aaumTrendHasData ? (
                 <BarSeries
                   data={aaumTrendData}
@@ -423,137 +434,178 @@ export default async function QuarterlyPage({
         </div>
       )}
 
-      {/* Quarterly Gross Flows — 4 KPI cards (selected quarter) +
-          industry / active-equity / per-category bar charts. */}
-      {(hasIndustryGross || hasActiveEquityGross) && (
+      {/* Quarterly Flows — full-width grouped bar chart mirroring
+          /monthly's Equity / Debt / Liquid Monthly Net Flows. */}
+      {flowsHasData && (
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
-              Quarterly Gross Flows
+              Quarterly Flows
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Live from uploaded AMFI Quarterly Report PDFs
+            </p>
+          </div>
+          <Card
+            title="Equity / Debt / Liquid Quarterly Net Flows"
+            subtitle={`${flowsData.length} quarter${flowsData.length === 1 ? "" : "s"} · ₹ Cr · positive = inflow, negative = outflow`}
+          >
+            <GroupedBars
+              data={flowsData}
+              xKey="quarterLabel"
+              labelFormat="none"
+              valueFormat="cr"
+              axisFormat="cr"
+              bars={[
+                {
+                  key: "equity",
+                  name: "Equity",
+                  color: "hsl(var(--chart-1))",
+                },
+                { key: "debt", name: "Debt", color: "hsl(var(--chart-2))" },
+                {
+                  key: "liquid",
+                  name: "Liquid",
+                  color: "hsl(var(--chart-4))",
+                },
+              ]}
+            />
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              Liquid is shown separately; it is part of debt-oriented
+              schemes in AMFI classification.
+            </p>
+            <div
+              className="mt-2 text-[10px] tabular text-muted-foreground/80"
+              title={flowsHoverProvenance ?? undefined}
+            >
+              Source: AMFI Quarterly Report
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Active Equity & Equity Mix — 3 cards mirroring /monthly. */}
+      {hasAnyEquityMix && (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight">
+              Active Equity &amp; Equity Mix
             </h2>
             <p className="text-xs text-muted-foreground">
               Live from uploaded AMFI Quarterly Report PDFs
             </p>
           </div>
 
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <KpiCard
-              label="Industry Funds Mobilized"
-              value={formatCompactCrSafe(selectedFundsMobilized)}
-              note={grossFlowsSourceLine}
-              noteHover={fundsHover ?? undefined}
-            />
-            <KpiCard
-              label="Industry Repurchase / Redemption"
-              value={formatCompactCrSafe(selectedRepurchase)}
-              note={grossFlowsSourceLine}
-              noteHover={repurchaseHover ?? undefined}
-            />
-            <KpiCard
-              label="Industry Net Inflow"
-              value={formatSignedCompactCrSafe(selectedNetInflow)}
-              note={grossFlowsSourceLine}
-              noteHover={netInflowHover ?? undefined}
-            />
-            <KpiCard
-              label="Active-Equity Net Inflow"
-              value={formatSignedCompactCrSafe(selectedActiveEquityNetInflow)}
-              note={grossFlowsSourceLine}
-              noteHover={activeEquityNetInflowHover ?? undefined}
-            />
-          </section>
-
           <section className="grid gap-4 lg:grid-cols-2">
-            {hasIndustryGross && (
-              <Card
-                title="Industry Gross Flows"
-                subtitle={`${industryGrossFlows.length} quarter${industryGrossFlows.length === 1 ? "" : "s"} · ₹ Cr`}
-              >
-                <GroupedBars
-                  data={industryGrossFlows}
-                  xKey="quarterLabel"
-                  bars={GROSS_FLOW_BARS}
-                  labelFormat="none"
+            <Card
+              title="Active Equity Last-month AAUM Trend"
+              subtitle={`${aeAaumTrend.length} quarter${aeAaumTrend.length === 1 ? "" : "s"} · ₹ Cr · last-month AAUM (not QAAUM)`}
+            >
+              {aeAaumTrend.length > 0 ? (
+                <BarSeries
+                  data={aeAaumTrend}
+                  name="Active Equity Last-month AAUM"
+                  color="hsl(var(--chart-1))"
                   valueFormat="cr"
                   axisFormat="cr"
+                  labelFormat="none"
                 />
-                <div
-                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                  title={industryFundsHover ?? undefined}
-                >
-                  Source: AMFI Quarterly Report
+              ) : (
+                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                  Active Equity Last-month AAUM unavailable
                 </div>
-              </Card>
-            )}
+              )}
+              <div
+                className="mt-3 text-[10px] tabular text-muted-foreground/80"
+                title={aeAaumHover ?? undefined}
+              >
+                Source: AMFI Quarterly Report
+              </div>
+            </Card>
 
-            {hasActiveEquityGross && (
-              <Card
-                title="Active-Equity Gross Flows"
-                subtitle={`${activeEquityGrossFlows.length} quarter${activeEquityGrossFlows.length === 1 ? "" : "s"} · ₹ Cr · Sub II + (Sub III − Arbitrage) + Sub IV`}
-              >
-                <GroupedBars
-                  data={activeEquityGrossFlows}
-                  xKey="quarterLabel"
-                  bars={GROSS_FLOW_BARS}
+            <Card
+              title="Active Equity Share of Total Last-month AAUM"
+              subtitle={`${aeShareTrend.length} quarter${aeShareTrend.length === 1 ? "" : "s"} · % of grandTotalLastMonthAaum`}
+            >
+              {aeShareTrend.length > 0 ? (
+                <BarSeries
+                  data={aeShareTrend}
+                  name="Active Equity Share"
+                  color="hsl(var(--chart-3))"
+                  valueFormat="pct"
+                  axisFormat="pct"
                   labelFormat="none"
-                  valueFormat="cr"
-                  axisFormat="cr"
                 />
-                <div
-                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                  title={activeEquityHover ?? undefined}
-                >
-                  Source: AMFI Quarterly Report
+              ) : (
+                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                  Active Equity Share unavailable
                 </div>
-              </Card>
-            )}
+              )}
+              <div
+                className="mt-3 text-[10px] tabular text-muted-foreground/80"
+                title={aeAaumHover ?? undefined}
+              >
+                Source: AMFI Quarterly Report · last-month AAUM ratio,
+                not a true QAAUM share
+              </div>
+            </Card>
           </section>
 
-          {hasCategoryGross && (
-            <section className="grid gap-4 lg:grid-cols-2">
-              {categoryFlowCards.map((c) => (
-                <Card
-                  key={c.slug}
-                  title={c.label}
-                  subtitle={`${c.data.length} quarter${c.data.length === 1 ? "" : "s"} · ₹ Cr`}
-                >
-                  {c.hasData ? (
-                    <GroupedBars
-                      data={c.data}
-                      xKey="quarterLabel"
-                      bars={GROSS_FLOW_BARS}
-                      labelFormat="none"
-                      valueFormat="cr"
-                      axisFormat="cr"
-                      height={220}
-                    />
-                  ) : (
-                    <div className="flex h-52 items-center justify-center text-sm text-muted-foreground">
-                      Category data unavailable
-                    </div>
-                  )}
-                  <div
-                    className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                    title={c.hover ?? undefined}
-                  >
-                    Source: AMFI Quarterly Report
-                  </div>
-                </Card>
-              ))}
-            </section>
-          )}
-
-          <p className="text-[11px] text-muted-foreground">
-            Funds mobilized + repurchase + net inflow are 3-month sums
-            from the AMFI Quarterly Report Grand Total / Sub Total
-            rows. Active-Equity gross flows sum Sub II, Sub III less
-            the Arbitrage Fund row, and Sub IV — the same envelope used
-            by IIFL Figure 19-22.
-          </p>
+          <Card
+            title="Equity Last-month AAUM Breakdown"
+            subtitle={`${aeBreakdown.length} quarter${aeBreakdown.length === 1 ? "" : "s"} · ₹ Cr · grouped bars · last-month AAUM`}
+          >
+            {aeBreakdownHasData ? (
+              <GroupedBars
+                data={aeBreakdown}
+                xKey="quarterLabel"
+                labelFormat="none"
+                valueFormat="cr"
+                axisFormat="cr"
+                bars={[
+                  {
+                    key: "activeEquity",
+                    name: "Active Equity",
+                    color: "hsl(var(--chart-1))",
+                  },
+                  {
+                    key: "etfIndex",
+                    name: "ETF & Index",
+                    color: "hsl(var(--chart-5))",
+                  },
+                  {
+                    key: "arbitrage",
+                    name: "Arbitrage",
+                    color: "hsl(var(--chart-2))",
+                  },
+                ]}
+              />
+            ) : (
+              <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                Equity breakdown unavailable
+              </div>
+            )}
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              Active Equity = Growth/Equity schemes + Hybrid ex-Arbitrage +
+              Solution-oriented schemes. ETF &amp; Index = Index Funds +
+              Other ETFs. Arbitrage shown separately. All values are the
+              quarterly Report&rsquo;s last-month AAUM column — not a true
+              3-month average.
+            </p>
+            <div
+              className="mt-2 text-[10px] tabular text-muted-foreground/80"
+              title={aeBreakdownHover ?? undefined}
+            >
+              Source: AMFI Quarterly Report
+            </div>
+          </Card>
         </div>
       )}
 
-      {/* Quarterly Folios & Scheme Count — 3 KPI cards + 3 trend charts. */}
+      {/* Quarterly Folios & Scheme Count — mirrors /monthly's Industry
+          Folios & NFO. NFO Launches / NFO Funds Mobilized are NOT
+          mirrored because the quarterly PDF page 2 doesn't carry the
+          industry-wide Grand Total NFO row. */}
       {(hasAnyFolioKpi || hasAnyFolioTrend) && (
         <div className="space-y-3">
           <div>
@@ -676,14 +728,9 @@ export default async function QuarterlyPage({
 
       {/* IIFL Active-Equity Category Trends — LIVE. Sourced from
           AMFI Monthly Reports aggregated into fiscal quarters. The
-          /quarterly source-discipline rule normally restricts the page
-          to quarterly-PDF data; this section is the documented
-          exception because true QAAUM share requires monthly period-
-          average AAUM (the quarterly Report's Average Net AUM column
-          is last-month only). All other sections above remain bound
-          to amfi-quarterly-* snapshots. Placement mirrors the broker-
-          analytical role of this lens: it sits below the canonical
-          Snapshot / AUM / Flows / Folios sections rather than above. */}
+          one section on /quarterly that is allowed to source from
+          AMFI Monthly Reports (true QAAUM share requires monthly
+          period-average AAUM). */}
       {hasAnyIiflTrend ? (
         <div className="space-y-3">
           <div>
@@ -809,41 +856,12 @@ export default async function QuarterlyPage({
         </div>
       ) : null}
 
-      {/* Demo · SIP KPIs — sourced from AMFI Monthly Notes on /monthly,
-          and the AMFI Quarterly Report does not carry SIP fields.
-          Kept here as pending placeholders so the page outline stays
-          consistent with /monthly. */}
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          tone="pending"
-          label="SIP Contribution"
-          value="—"
-          note="Pending · AMFI Quarterly Report has no SIP rows"
-        />
-        <KpiCard
-          tone="pending"
-          label="SIP AUM"
-          value="—"
-          note="Pending · AMFI Quarterly Report has no SIP rows"
-        />
-        <KpiCard
-          tone="pending"
-          label="SIP Accounts"
-          value="—"
-          note="Pending · AMFI Quarterly Report has no SIP rows"
-        />
-        <KpiCard
-          tone="pending"
-          label="SIP Share"
-          value="—"
-          note="Pending · peer share requires per-AMC quarterly SIP data"
-        />
-      </section>
-
       {/* Demo · per-AMC market-share + scheme outperformance + top
-          quartile widgets. /monthly has live monthly aggregations for
-          these; the quarterly versions need per-AMC quarterly fields
-          we don't yet ingest, so they sit as pending placeholders. */}
+          quartile widgets, mirroring /monthly's bottom demo section.
+          SIP operational metrics are intentionally NOT shown here:
+          AMFI Quarterly Report has no SIP rows, and the source-
+          discipline rule for /quarterly forbids substituting AMFI
+          Monthly Note data. */}
       <section className="grid gap-4 lg:grid-cols-2">
         <Card
           tone="pending"
