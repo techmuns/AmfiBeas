@@ -114,3 +114,159 @@ export function mappingStatusCountsForLatestQuarter(): {
   }
   return counts;
 }
+
+// ---------------------------------------------------------------------
+// Chart-ready helper for the AUM Market Share card on /monthly and
+// /quarterly. Both pages render the SAME chart from the SAME data —
+// quarterly AAUM is the only AMC-wise share source we have, so even
+// /monthly's card is labelled "quarterly AMFI Fundwise AAUM".
+// ---------------------------------------------------------------------
+
+/** Calendar quarter "YYYY-Qn" → fiscal display label "{N}QFY{YY}".
+ *  Indian fiscal year ends in March: 2026-Q1 (Jan-Mar 2026) closes
+ *  FY26 → "4QFY26"; 2025-Q2 (Apr-Jun 2025) opens FY26 → "1QFY26"; etc.
+ *  Mirrors `fiscalQuarterFor` in src/data/amfi-monthly-category.ts but
+ *  takes a calendar-quarter id directly so the AMC AAUM snapshot
+ *  (which uses calendar quarters) renders with the same fiscal labels
+ *  the rest of /quarterly displays. */
+export function fiscalLabelFromCalendarQuarter(quarter: string): string {
+  const [yStr, qStr] = quarter.split("-");
+  const y = Number(yStr);
+  if (!Number.isFinite(y) || !qStr) return quarter;
+  let fyYear: number;
+  let fyQ: number;
+  switch (qStr) {
+    case "Q1":
+      fyYear = y;
+      fyQ = 4;
+      break;
+    case "Q2":
+      fyYear = y + 1;
+      fyQ = 1;
+      break;
+    case "Q3":
+      fyYear = y + 1;
+      fyQ = 2;
+      break;
+    case "Q4":
+      fyYear = y + 1;
+      fyQ = 3;
+      break;
+    default:
+      return quarter;
+  }
+  return `${fyQ}QFY${String(fyYear).slice(-2)}`;
+}
+
+export interface AumMarketShareRow extends Record<string, string | number> {
+  /** Calendar quarter id, e.g. "2026-Q1". */
+  quarter: string;
+  /** Fiscal display label, e.g. "4QFY26". This is the StackedArea
+   *  xKey so the chart shows fiscal labels everywhere /quarterly does. */
+  quarterLabel: string;
+}
+
+export interface AumMarketShareData {
+  rows: AumMarketShareRow[];
+  /** The top-N AMCs in **latest-quarter** AAUM order, so the chart
+   *  legend / stack order is stable across the full series. */
+  topAmcs: {
+    slug: string;
+    displayName: string;
+    amcNameAsReported: string;
+    latestAaum: number;
+  }[];
+  /** Latest-quarter coverage diagnostics — drives the "Coverage:
+   *  top N shown / denominator uses currently stored AMCs" caption
+   *  rendered beneath the chart. */
+  coverage: {
+    quarter: string;            // calendar id of the latest qtr
+    quarterLabel: string;       // fiscal display label
+    storedAmcCount: number;     // how many ok rows the latest qtr has
+    storedAaumTotal: number;    // ₹ Cr — sum of all ok rows that qtr
+    topNAaumTotal: number;      // ₹ Cr — sum of just the top N
+    topNCoveragePct: number;    // topNAaumTotal / storedAaumTotal × 100
+  } | null;
+}
+
+/**
+ * Build the StackedArea-ready market-share series for the top N AMCs
+ * over the latest `lastN` quarters.
+ *
+ *   industryCoveredAaum_q = Σ avgAum across all stored ok rows in q
+ *   shareSlug_q           = avgAum_q(slug) / industryCoveredAaum_q × 100
+ *
+ * The top-N AMC set is fixed at the LATEST quarter's ranking so the
+ * stack order doesn't reshuffle quarter to quarter (a stable visual
+ * for trend reading). When an AMC has no row for an earlier quarter
+ * — e.g. it joined the universe mid-window — that cell is OMITTED
+ * from the data row (no fake zero, no fake AMC). Recharts treats an
+ * absent stack key as a gap; the slice resumes when the AMC's data
+ * reappears.
+ *
+ * Returns `rows: []` and `coverage: null` when the snapshot is empty.
+ */
+export function topAumMarketShareSeries(
+  n = 7,
+  lastN = 8
+): AumMarketShareData {
+  const latestQ = latestAaumQuarter();
+  if (!latestQ) return { rows: [], topAmcs: [], coverage: null };
+
+  const topRows = topAumAmcsForQuarter(latestQ, n);
+  const topAmcs = topRows.map((r) => ({
+    slug: r.amcSlug,
+    displayName: r.displayName ?? r.amcSlug,
+    amcNameAsReported: r.amcNameAsReported,
+    latestAaum: r.avgAum,
+  }));
+
+  // Window: last N quarters that have at least one ok row.
+  const allQuarters = Array.from(
+    new Set(
+      amcAaumQuarterlySnapshot.rows
+        .filter((r) => r.status === "ok")
+        .map((r) => r.quarter)
+    )
+  )
+    .sort()
+    .slice(-lastN);
+
+  const rows: AumMarketShareRow[] = allQuarters.map((q) => {
+    const allInQ = allAmcAaumRowsForQuarter(q);
+    const total = allInQ.reduce((s, r) => s + r.avgAum, 0);
+    const row: AumMarketShareRow = {
+      quarter: q,
+      quarterLabel: fiscalLabelFromCalendarQuarter(q),
+    };
+    if (total > 0) {
+      for (const top of topAmcs) {
+        const amcRow = allInQ.find((r) => r.amcSlug === top.slug);
+        if (amcRow) {
+          row[top.slug] = (amcRow.avgAum / total) * 100;
+        }
+        // Absent → omit the key, Recharts renders a gap on that
+        // AMC's slice for that quarter.
+      }
+    }
+    return row;
+  });
+
+  const allInLatest = allAmcAaumRowsForQuarter(latestQ);
+  const storedAaumTotal = allInLatest.reduce((s, r) => s + r.avgAum, 0);
+  const topNAaumTotal = topRows.reduce((s, r) => s + r.avgAum, 0);
+
+  return {
+    rows,
+    topAmcs,
+    coverage: {
+      quarter: latestQ,
+      quarterLabel: fiscalLabelFromCalendarQuarter(latestQ),
+      storedAmcCount: allInLatest.length,
+      storedAaumTotal,
+      topNAaumTotal,
+      topNCoveragePct:
+        storedAaumTotal > 0 ? (topNAaumTotal / storedAaumTotal) * 100 : 0,
+    },
+  };
+}
