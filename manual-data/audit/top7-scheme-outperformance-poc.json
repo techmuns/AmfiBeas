@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-05-10T08:23:15.446Z",
+    "generatedAt": "2026-05-10T08:51:59.332Z",
     "source": "AMC factsheets",
     "periodEnd": "2026-03",
     "notes": [
@@ -19,7 +19,7 @@
       "sourceUrl": "https://www.sbimf.com/factsheets",
       "sourceFile": null,
       "periodEnd": null,
-      "fetchedAt": "2026-05-10T08:23:15.446Z",
+      "fetchedAt": "2026-05-10T08:51:59.332Z",
       "status": "failed",
       "parsedSchemeCount": 0,
       "eligibleSchemeCount1Y": 0,
@@ -49,7 +49,7 @@
       "sourceUrl": "https://digitalfactsheet.icicipruamc.com/fact/pdf/fund-factsheet-for-march-2026.pdf",
       "sourceFile": "/home/runner/work/AmfiBeas/AmfiBeas/manual-data/factsheets/icici-pru/2026-03.pdf",
       "periodEnd": "2026-03",
-      "fetchedAt": "2026-05-10T08:23:15.446Z",
+      "fetchedAt": "2026-05-10T08:51:59.332Z",
       "status": "failed",
       "parsedSchemeCount": 0,
       "eligibleSchemeCount1Y": 0,
@@ -72,8 +72,116 @@
         "Outperformance = scheme return > primary benchmark return for the period; null on either side drops the scheme from that period's denominator.",
         "Direct + Regular plan dedup applied; one row per scheme stem.",
         "Parser anchors on \"PERFORMANCE ^\" section marker; \"SIP PERFORMANCE\" siblings rejected upstream.",
-        "Per-row extraction: each table row is a TIME PERIOD (\"Last 1 Year\" / \"Last 3 Years\" / \"Last 5 Years\"); row's first three CAGR numbers are (scheme %, benchmark %, additional %)."
-      ]
+        "Per-row extraction: each table row is a TIME PERIOD (\"Last 1 Year\" / \"Last 3 Years\" / \"Last 5 Years\"); row's first three CAGR numbers are (scheme %, benchmark %, additional %).",
+        "PDF parsed (166 pages) but found 0 PERFORMANCE section markers. Strategy may need different performanceMarkerPatterns. See diagnostics."
+      ],
+      "failureReason": "PDF parsed (166 pages) but found 0 PERFORMANCE section markers. Strategy may need different performanceMarkerPatterns. See diagnostics.",
+      "diagnostics": {
+        "pageCount": 166,
+        "textExtractionStatus": "ok",
+        "firstPageSnippets": [
+          {
+            "pageNum": 1,
+            "snippet": "1"
+          },
+          {
+            "pageNum": 2,
+            "snippet": "2\nINDEX\nCategory Description Page No\tFund Name\nEconomic Overview and Market Outlook\nEquity Schemes\nHybrid Schemes\nICICI Prudential Equity & Debt Fund Aggressive An open ended hybrid scheme investing predominantly in equity and equity 53-54\nHybrid Fund related instruments\nICICI Prudential Equity - Arbitrage Fund Arbitrage Fund An open ended scheme investing in arbitrage opportunities 55-56\nICICI Prudential Balanced Advantage Fund Dynamic Asset An open ended dynamic asset allocation fund 57-58\nAllocation/Balanced\nAdvantage Fund\nICICI Prudential Equity Savings Fund Equity Savings An open ended scheme investing in equity, arbitrage and debt 59-60\nFund\n5-13\nICICI Prudential Large Cap Fund Large Cap Fund An open ended equity scheme predominantly investing in large cap stocks 14\nICICI Prudential "
+          },
+          {
+            "pageNum": 3,
+            "snippet": "3\nCategory Description Page No\tFund Name\nFund Of Funds Schemes\nDebt Schemes\nICICI Prudential Overnight Fund Overnight Fund An open ended debt scheme investing in overnight securities. 79\nICICI Prudential Liquid Fund Liquid Fund Investment in Debt and money market securities with maturity of upto 91 days only 80\nICICI Prudential Money Market Fund Money Market An open ended debt scheme investing in money market instruments 81\nFund\nICICI Prudential Ultra Short Term Fund Ultra Short An open ended ultra-short term debt scheme investing in instruments such that 82\nDuration Fund the Macaulay duration of the portfolio is between 3 months and 6 months.\nICICI Prudential Savings Fund Low Duration Fund An open ended debt scheme with Macaulay Duration between 6 - 12 months 83\nICICI Prudential Floating "
+          }
+        ],
+        "performanceLines": [
+          "India Equity Market Performance",
+          "Index performance",
+          "performance since the 2008 global financial crisis.",
+          "Fund to the designated open ended Scheme(s) of ICICI Prudential Mutual Fund. This feature does not in any way give assurance of the performance of any of the Schemes of ICICI Prudential Mutual",
+          "Past performance may or may not sustain in future.",
+          "India's Debt Market Performance",
+          "1. Different plans shall have different expense structure. The performance details provided herein are of ICICI Prudential Large Cap Fund.",
+          "Ms. Sharmila D'silva has been managing this fund since March 2026. Total Schemes managed by the Fund Manager is 16 (16 are jointly managed). Refer annexure from page no. 114 for performance of other",
+          "4. Past performance may or may not be sustained in future and the same may not necessarily provide the basis for comparison with other investment.",
+          "7. The performance of the scheme is benchmarked to the Total Return variant of the Index. The benchmark of the scheme has been revised from Nifty 50 TRI to Nifty 100 TRI w.e.f. May 28, 2018.",
+          "1. Different plans shall have different expense structure. The performance details provided herein are of ICICI Prudential Flexicap Fund.",
+          "annexure from page no. 114 for performance of other schemes currently managed by Rajat Chandak.",
+          "4. As the Scheme has completed more than 3 year but less than 5 years, the performance details of since inception,1 & 3 year are provided herein.",
+          "5. Past performance may or may not be sustained in future and the same may not necessarily provide the basis for comparison with other investment.",
+          "9. The performance of the scheme is benchmarked to the Total Return variant of the Index.",
+          "1. Different plans shall have different expense structure. The performance details provided herein are of ICICI Prudential Large & Mid Cap Fund.",
+          "from page no. 114 for performance of other schemes currently managed by Ihab Dalwai.",
+          "7. The performance of the scheme is benchmarked to the Total Return variant of the Index. The benchmark of the scheme has been revised from Nifty 50 TRI to Nifty LargeMidcap 250 TRI w.e.f. May 28, 201",
+          "TRI data for the earlier benchmark is not available since inception of the scheme, benchmark performance is calculated using composite CAGR of Nifty 50 PRI values from 09-Jul-98 to 30-Jun-99 and TRI v",
+          "from 30-Jun-99 . For benchmark performance, values of earlier benchmark has been used till 27th May 2018 and revised benchmark values have been considered thereafter."
+        ],
+        "benchmarkLines": [
+          "• The yield on the 10-year benchmark US Treasury paper ended at 4.4% in Mar-26 vs",
+          "panic selling, leading both Indian benchmark indices to their fourth monthly fall in Mar-26. BSE Sensex slipped below 72,000-point mark first time",
+          "on bonds. The yield on the benchmark 10-year 6.48% GS 2035 paper broke 6.70% by the",
+          "The 10-year Indian benchmark bond yield jumped 36 bps during the month due to impact on macros and fiscal health amid the West Asia conflict. Yields settled at 7.02% on Mar 30, 2026 against 6.66%",
+          "7. The performance of the scheme is benchmarked to the Total Return variant of the Index. The benchmark of the scheme has been revised from Nifty 50 TRI to Nifty 100 TRI w.e.f. May 28, 2018.",
+          "Nifty 100 TRI (Benchmark)",
+          "Nifty 50 TRI (Additional Benchmark)",
+          "Benchmark",
+          "The risk of the scheme is very high The risk of the Benchmark is very high",
+          "BSE 500 TRI (Benchmark)",
+          "7. The performance of the scheme is benchmarked to the Total Return variant of the Index. The benchmark of the scheme has been revised from Nifty 50 TRI to Nifty LargeMidcap 250 TRI w.e.f. May 28, 201",
+          "TRI data for the earlier benchmark is not available since inception of the scheme, benchmark performance is calculated using composite CAGR of Nifty 50 PRI values from 09-Jul-98 to 30-Jun-99 and TRI v",
+          "from 30-Jun-99 . For benchmark performance, values of earlier benchmark has been used till 27th May 2018 and revised benchmark values have been considered thereafter.",
+          "Nifty LargeMidcap 250 TRI (Benchmark)",
+          "7. As the scheme was launched before the launch of the benchmark index, benchmark index figures since inception or the required period are not available.",
+          "8. The performance of the scheme is benchmarked to the Total Return variant of the Index. As TRI data is not available since inception of the scheme, the additional benchmark performance is calculated",
+          "composite CAGR of Nifty 50 PRI values from 01-Oct-94 to 30-Jun-99 and TRI values since 30-Jun-99. The benchmark of the scheme has been revised from BSE 500 TRI to Nifty500 Multicap 50:25:25 TRI w.e.f.",
+          "Jan 29, 2021. For benchmark performance, values of earlier benchmark has been used till 28th January 2021 and revised benchmark values have been considered thereafter.",
+          "Nifty500 Multicap 50:25:25 TRI (Benchmark)",
+          "Nifty 500 TRI (Benchmark)"
+        ],
+        "returnsLines": [
+          "Annexure for Returns of all the Schemes (Regular Plan) 115-125",
+          "Annexure for Returns of all the Schemes (Direct Plan) 126-144",
+          "1 year returns % 1 month returns %",
+          "Fund or provide any guarantee of returns through Transfer plans. Booster STP allows Investors to transfer the amount to Target Scheme basis the EVI calculated and corresponding Trigger Value to the",
+          "1 Year Return Profile - Nifty 50 TRI",
+          "Return Analysis Table of EVI",
+          "1. 1Yr Monthly Rolling returns of Nifty 50 TRI is extracted for the above period",
+          "2. The returns are then classified into different intervals depending on the bands of EVI (eg, EVI < 80)",
+          "3. Returns in the interval are selected on basis of investment period falling in the range of EVI (for Dark Green zone, returns are selected of investment made when EVI was < 80)",
+          "4. Median Returns are used as the median is a better measure of the central tendency of the group as it is not skewed by exceptionally high or low characteristic values",
+          "Negative Returns 0 1 28 8 7",
+          "0-5% Returns 0 4 14 3 1",
+          "5-10% Returns 0 6 22 4 1",
+          "10-15% Returns 0 7 21 1 0",
+          ">15 % Return 9 40 52 11 0",
+          "Negative Returns 0% 2% 20% 30% 78%",
+          "0-5% Returns 0% 7% 10% 11% 11%",
+          "5-10% Returns 0% 10% 16% 15% 11%",
+          "10-15% Returns 0% 12% 15% 4% 0%",
+          ">15 % Return 100% 69% 38% 41% 0%"
+        ],
+        "schemeTitleCandidates": [
+          "ICICI Prudential Equity & Debt Fund Aggressive An open ended hybrid scheme investing predominantly in equity and equity 53-54",
+          "ICICI Prudential Equity - Arbitrage Fund Arbitrage Fund An open ended scheme investing in arbitrage opportunities 55-56",
+          "ICICI Prudential Balanced Advantage Fund Dynamic Asset An open ended dynamic asset allocation fund 57-58",
+          "ICICI Prudential Equity Savings Fund Equity Savings An open ended scheme investing in equity, arbitrage and debt 59-60",
+          "ICICI Prudential Large Cap Fund Large Cap Fund An open ended equity scheme predominantly investing in large cap stocks 14",
+          "ICICI Prudential Flexicap Fund Flexi Cap An open ended dynamic equity scheme investing across large cap, mid cap & 15",
+          "ICICI Prudential Large & Mid Cap Fund Large & Mid Cap An open ended equity scheme investing in both large cap and mid cap stocks 16-17",
+          "ICICI Prudential Multicap Fund Multicap Fund An open ended equity scheme investing across large cap, mid cap, small cap stocks 18-19",
+          "ICICI Prudential India Opportunities Fund Thematic An open ended equity scheme following special situations theme 20",
+          "ICICI Prudential Value Fund Value Fund An open ended equity scheme following a value investment strategy 21",
+          "ICICI Prudential ELSS Tax Saver Fund Equity Linked Savings An open Ended Equity Scheme with Tax Saving advantage 22",
+          "ICICI Prudential Focused Equity Fund Focused Fund An open ended equity scheme investing in maximum 30 stocks 23",
+          "ICICI Prudential Equity Minimum Variance Fund Sectoral/Thematic An open ended equity scheme following Minimum Variance theme 24",
+          "ICICI Prudential Quality Fund Sectoral/Thematic An open ended equity scheme following Quality Factor as theme. 25",
+          "ICICI Prudential Midcap Fund Mid Cap Fund An open ended equity scheme predominantly investing in mid cap stocks 26",
+          "ICICI Prudential Smallcap Fund Small Cap Fund An open ended equity scheme predominantly investing in small cap stocks 27-28",
+          "ICICI Prudential Dividend Yield Equity Fund Dividend Yield An open ended equity scheme predominantly investing in dividend yielding stocks 29",
+          "ICICI Prudential Rural Opportunities Fund Thematic An open ended equity scheme following Rural and allied theme 30",
+          "ICICI Prudential PSU Equity Fund Thematic An open-ended equity scheme following the PSU theme 31",
+          "ICICI Prudential Banking & Financial"
+        ]
+      }
     },
     {
       "amcSlug": "hdfc",
@@ -82,7 +190,7 @@
       "sourceUrl": "https://files.hdfcfund.com/s3fs-public/2026-04/HDFC%20MF%20Factsheet%20-%20March%202026.pdf",
       "sourceFile": "/home/runner/work/AmfiBeas/AmfiBeas/manual-data/factsheets/hdfc/2026-04.pdf",
       "periodEnd": "2026-03",
-      "fetchedAt": "2026-05-10T08:23:15.446Z",
+      "fetchedAt": "2026-05-10T08:51:59.332Z",
       "status": "ok",
       "parsedSchemeCount": 48,
       "eligibleSchemeCount1Y": 30,
@@ -870,7 +978,7 @@
       "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheets/NipponIndia-Factsheet-July-2025.pdf",
       "sourceFile": "/home/runner/work/AmfiBeas/AmfiBeas/manual-data/factsheets/nippon/2025-07.pdf",
       "periodEnd": "2025-07",
-      "fetchedAt": "2026-05-10T08:23:15.446Z",
+      "fetchedAt": "2026-05-10T08:51:59.332Z",
       "status": "failed",
       "parsedSchemeCount": 0,
       "eligibleSchemeCount1Y": 0,
@@ -882,9 +990,190 @@
       "outperformancePct1Y": null,
       "outperformancePct3Y": null,
       "outperformancePct5Y": null,
-      "candidateBlocksScanned": 0,
+      "candidateBlocksScanned": 24,
       "performancePagesDetected": [],
-      "rejectedCandidateSamples": [],
+      "rejectedCandidateSamples": [
+        {
+          "pageNum": 2,
+          "reason": "no-period-rows",
+          "textSnippet": "Scheme Performance \t108\n",
+          "pageHeaderSnippet": " Gold BeES \t93\nFUND OF FUND (FOF)\nFoF -Domestic \tNippon India Gold Savings Fund \t94\nFoF -Domestic \tNippon India Nifty Next 50 Junior BeES FoF \t95\nFoF -Domestic \tNippon India Diversified Equity Flexicap Passive FoF \t96\nFoF -Domestic \tNippon India Multi Asset Active FoF \t97\nFoF -Domestic \tNippon India Income Plus Arbitrage Active Fund of Fund \t98\nFoF -Domestic \tNippon India Silver ETF Fund of Fund (FOF) \t99\nSOLUTION ORIENTED\nRetirement Fund \tNippon India Retirement Fund - Income Generation\nScheme \t100\nRetirement Fund \tNippon India Retirement Fund - Wealth Creation\nScheme \t101\nDebt Snapshot \t102\nSIP Returns of Select Schemes (Regular Schemes) \t103\nBrief on New Securities included in the Portfolio of Debt Funds \t103\nSIP Returns of Select Schemes (Direct Schemes) \t104\nFund Management Team \t107\n",
+          "textBeforePerformance": " Gold BeES \t93\nFUND OF FUND (FOF)\nFoF -Domestic \tNippon India Gold Savings Fund \t94\nFoF -Domestic \tNippon India Nifty Next 50 Junior BeES FoF \t95\nFoF -Domestic \tNippon India Diversified Equity Flexicap Passive FoF \t96\nFoF -Domestic \tNippon India Multi Asset Active FoF \t97\nFoF -Domestic \tNippon India Income Plus Arbitrage Active Fund of Fund \t98\nFoF -Domestic \tNippon India Silver ETF Fund of Fund (FOF) \t99\nSOLUTION ORIENTED\nRetirement Fund \tNippon India Retirement Fund - Income Generation\nScheme \t100\nRetirement Fund \tNippon India Retirement Fund - Wealth Creation\nScheme \t101\nDebt Snapshot \t102\nSIP Returns of Select Schemes (Regular Schemes) \t103\nBrief on New Securities included in the Portfolio of Debt Funds \t103\nSIP Returns of Select Schemes (Direct Schemes) \t104\nFund Management Team \t107\n",
+          "detectedSchemeTitleCandidate": "Nippon India Nifty G-Sec Oct 2028 Maturity Index Fund 66",
+          "detectedCategoryCandidate": "Index Fund"
+        },
+        {
+          "pageNum": 108,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Large Cap Fund\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%)\n",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        },
+        {
+          "pageNum": 110,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Flexi Cap Fund\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%)\n",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        },
+        {
+          "pageNum": 111,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Pharma Fund\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%)\nNAV",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        },
+        {
+          "pageNum": 112,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Taiwan Equity Fund\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns ",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        },
+        {
+          "pageNum": 113,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Money Market Fund\nFund / Benchmark(Value of ₹10, 000\ninvested)\n7 Days \t15 Days \t30 Days \t1 Year \t3 Years \t5 Years \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Retur",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        },
+        {
+          "pageNum": 114,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Banking and PSU Fund\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Return",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        },
+        {
+          "pageNum": 115,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Credit Risk Fund (Existing Number of Segregated Portfolios - 1)\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%)",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        },
+        {
+          "pageNum": 117,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Arbitrage Fund\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%)\n",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        },
+        {
+          "pageNum": 118,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Index Fund - BSE Sensex Plan\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        },
+        {
+          "pageNum": 119,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Nifty Alpha Low Volatility 30 Index Fund\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        },
+        {
+          "pageNum": 120,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Nifty 500 Momentum 50 Index Fund\nFund / Benchmark(Value of ₹10, 000 invested) 6 Months \tSince Inception\nAmount in ₹ \tReturns (%) \tAmount in ₹ \tReturns (%)\nNAV as on June 30, 2025: ₹8.5786\nNippon I",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        },
+        {
+          "pageNum": 121,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Nifty AAA PSU Bond Plus SDL - Sep 2026 Maturity 50:50 Index Fund\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        },
+        {
+          "pageNum": 122,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Nifty SDL Plus G-Sec - Jun 2029 Maturity 70:30 Index Fund\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amoun",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        },
+        {
+          "pageNum": 123,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India ETF BSE Sensex\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%)\n",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        },
+        {
+          "pageNum": 124,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India ETF Nifty Bank BeES\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        },
+        {
+          "pageNum": 125,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Nifty Pharma ETF\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        },
+        {
+          "pageNum": 127,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Diversified Equity Flexicap Passive FoF\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%)",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        },
+        {
+          "pageNum": 128,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Retirement Fund - Wealth Creation Plan\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) ",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        },
+        {
+          "pageNum": 129,
+          "reason": "no-hdfc-scheme-line",
+          "textSnippet": "PERFORMANCE - FUND MANAGER WISE AS ON JUNE 30, 2025\nFund Manager: Sailesh Raj Bhan\nScheme Name/s\nCAGR %\n1 Year Return \t3 Years Return \t5 Years Return\nRegular Scheme Direct Scheme Benchmark Regular Scheme Direct Scheme Benchmark Regular Sche",
+          "pageHeaderSnippet": "SCHEME ",
+          "textBeforePerformance": "SCHEME ",
+          "detectedSchemeTitleCandidate": null,
+          "detectedCategoryCandidate": null
+        }
+      ],
       "includedSchemes": [],
       "excludedSchemes": [],
       "warnings": [],
@@ -903,7 +1192,7 @@
       "sourceUrl": "https://www.kotakmf.com/Information/forms-and-downloads",
       "sourceFile": null,
       "periodEnd": null,
-      "fetchedAt": "2026-05-10T08:23:15.446Z",
+      "fetchedAt": "2026-05-10T08:51:59.332Z",
       "status": "failed",
       "parsedSchemeCount": 0,
       "eligibleSchemeCount1Y": 0,
@@ -933,7 +1222,7 @@
       "sourceUrl": "https://mutualfund.adityabirlacapital.com/forms-and-downloads/factsheets",
       "sourceFile": null,
       "periodEnd": null,
-      "fetchedAt": "2026-05-10T08:23:15.446Z",
+      "fetchedAt": "2026-05-10T08:51:59.332Z",
       "status": "failed",
       "parsedSchemeCount": 0,
       "eligibleSchemeCount1Y": 0,
@@ -963,7 +1252,7 @@
       "sourceUrl": "https://www.utimf.com/downloads/fact-sheet",
       "sourceFile": null,
       "periodEnd": null,
-      "fetchedAt": "2026-05-10T08:23:15.446Z",
+      "fetchedAt": "2026-05-10T08:51:59.332Z",
       "status": "failed",
       "parsedSchemeCount": 0,
       "eligibleSchemeCount1Y": 0,
