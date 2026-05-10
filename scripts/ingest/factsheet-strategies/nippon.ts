@@ -13,9 +13,33 @@ export const NIPPON_STRATEGY: AmcStrategy = {
   amcName: "Nippon India Mutual Fund",
   listingUrl:
     "https://mf.nipponindiaim.com/investor-service/downloads/factsheet-portfolio-and-other-disclosures",
-  pdfHrefPattern: /NipponIndia[-_]Factsheet/i,
+  // Broader pattern — PR #90 only matched "NipponIndia[-_]Factsheet"
+  // and grabbed July 2025 (likely an older entry on the listing).
+  // The actual latest factsheet may use any of these naming variants.
+  pdfHrefPattern:
+    /(?:NipponIndia|Nippon[-_\s]?India|nia)[-_\s]?Factsheet|InvestorServices.*Factsheet/i,
   periodFromHref: (href) => {
-    const m = href.match(/NipponIndia[-_]Factsheet[-_]([a-z]+)[-_](\d{4})/i);
+    // Primary: "NipponIndia-Factsheet-March-2026.pdf" / "..._March_2026.pdf"
+    const m1 = href.match(/Factsheet[-_\s]([a-z]+)[-_\s](\d{4})/i);
+    if (m1) {
+      const n = MONTH_TO_NUM[m1[1].toLowerCase()];
+      if (n) return `${m1[2]}-${String(n).padStart(2, "0")}`;
+    }
+    // Fallback: "<Month>-<Year>" anywhere in the path/filename.
+    const m2 = href.match(/[\/_-]([A-Za-z]+)[-_\s](\d{4})\.pdf/i);
+    if (m2) {
+      const n = MONTH_TO_NUM[m2[1].toLowerCase()];
+      if (n) return `${m2[2]}-${String(n).padStart(2, "0")}`;
+    }
+    return null;
+  },
+  // Some Nippon listing entries label the link with the period text
+  // even when the URL doesn't carry it cleanly. PR #91 adds this as
+  // a fallback so the picker still finds the latest.
+  periodFromLinkText: (text) => {
+    const m = text.match(
+      /\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})\b/i
+    );
     if (!m) return null;
     const n = MONTH_TO_NUM[m[1].toLowerCase()];
     if (!n) return null;
