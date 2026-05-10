@@ -3,17 +3,17 @@
   "sourceUrl": "https://files.hdfcfund.com/s3fs-public/2026-04/HDFC%20MF%20Factsheet%20-%20March%202026.pdf",
   "sourceFile": "/home/runner/work/AmfiBeas/AmfiBeas/manual-data/factsheets/hdfc/2026-04.pdf",
   "periodEnd": "2026-03",
-  "fetchedAt": "2026-05-10T07:15:03.316Z",
+  "fetchedAt": "2026-05-10T07:36:34.789Z",
   "parsedSchemeCount": 48,
-  "eligibleSchemeCount1Y": 0,
-  "eligibleSchemeCount3Y": 0,
-  "eligibleSchemeCount5Y": 0,
-  "outperformingSchemeCount1Y": 0,
-  "outperformingSchemeCount3Y": 0,
-  "outperformingSchemeCount5Y": 0,
-  "outperformancePct1Y": null,
-  "outperformancePct3Y": null,
-  "outperformancePct5Y": null,
+  "eligibleSchemeCount1Y": 6,
+  "eligibleSchemeCount3Y": 3,
+  "eligibleSchemeCount5Y": 1,
+  "outperformingSchemeCount1Y": 3,
+  "outperformingSchemeCount3Y": 2,
+  "outperformingSchemeCount5Y": 1,
+  "outperformancePct1Y": 50,
+  "outperformancePct3Y": 66.7,
+  "outperformancePct5Y": 100,
   "candidateBlocksScanned": 101,
   "performancePagesDetected": [
     9,
@@ -103,182 +103,344 @@
       "detectedCategoryCandidate": null
     }
   ],
-  "includedSchemes": [],
+  "includedSchemes": [
+    {
+      "schemeName": "HDFC Focused Fund",
+      "schemeNameRaw": "HDFC Focused Fund",
+      "category": "Focused Fund",
+      "categorySlug": "focused",
+      "benchmarkName": "NIFTY 500 Index (TRI)",
+      "schemeReturn1Y": -2.52,
+      "schemeReturn3Y": 16.62,
+      "schemeReturn5Y": 18.65,
+      "benchmarkReturn1Y": -2.87,
+      "benchmarkReturn3Y": 13.22,
+      "benchmarkReturn5Y": 11.88,
+      "outperformed1Y": true,
+      "outperformed3Y": true,
+      "outperformed5Y": true,
+      "pageNum": 27,
+      "textSnippet": "HDFC Focused Fund | PERFORMANCE ^ - Regular Plan - Growth Option\nDate Period\nScheme\nReturns\n(%)\nBenchmark\nReturns\n(%)#\nAdditional\nBenchmark\nReturns (%)\n##\nValue of ₹ 10,000 invested\nScheme (₹) Benchmark\n(₹)#\nAdditional\nBenchmark\n(₹)##\nMar 31, 25 Last 1 Year -2.52 -2.87 -5.98 9,748 9,712 9,399\nMar 31, 23 Last 3 Years 16.62 13.22 8.15 15,86"
+    },
+    {
+      "schemeName": "HDFC Transportation and Logistics Fund",
+      "schemeNameRaw": "HDFC Transportation and Logistics Fund",
+      "category": "Sectoral / Thematic Fund",
+      "categorySlug": "sectoral-thematic",
+      "benchmarkName": "NIFTY Transportation & Logistics Index (TRI)",
+      "schemeReturn1Y": 11.89,
+      "schemeReturn3Y": null,
+      "schemeReturn5Y": null,
+      "benchmarkReturn1Y": 7.27,
+      "benchmarkReturn3Y": null,
+      "benchmarkReturn5Y": null,
+      "outperformed1Y": true,
+      "outperformed3Y": null,
+      "outperformed5Y": null,
+      "pageNum": 30,
+      "textSnippet": "HDFC Transportation and Logistics Fund | PERFORMANCE ^ - Regular Plan - Growth Option\nDate Period\nScheme\nReturns\n(%)\nBenchmark\nReturns\n(%)#\nAdditional\nBenchmark\nReturns (%)\n##\nValue of ₹ 10,000 invested\nScheme (₹) Benchmark\n(₹)#\nAdditional\nBenchmark\n(₹)##\nMar 31, 25 Last 1 Year 11.89 7.27 -3.97 11,189 10,732 9,601\nAug 17, 23 Since Inception 17.89 16.35 6.71 1"
+    },
+    {
+      "schemeName": "HDFC Defence Fund",
+      "schemeNameRaw": "HDFC Defence Fund",
+      "category": "Sectoral / Thematic Fund",
+      "categorySlug": "sectoral-thematic",
+      "benchmarkName": "NIFTY India Defence Index TRI",
+      "schemeReturn1Y": 10.34,
+      "schemeReturn3Y": null,
+      "schemeReturn5Y": null,
+      "benchmarkReturn1Y": 13.37,
+      "benchmarkReturn3Y": null,
+      "benchmarkReturn5Y": null,
+      "outperformed1Y": false,
+      "outperformed3Y": null,
+      "outperformed5Y": null,
+      "pageNum": 31,
+      "textSnippet": "HDFC Defence Fund | PERFORMANCE ^ - Regular Plan - Growth Option\nDate Period Scheme\nReturns (%)\nBenchmark\nReturns\n(%)#\nAdditional\nBenchmark\nReturns (%) ##\nValue of ₹ 10,000 invested\nScheme\n(₹)\nBenchmark\n(₹)#\nAdditional\nBenchmark\n(₹)##\nMar 31, 25 Last 1 Year 10.34 13.37 -3.97 11,034 11,345 9,601\nJun 02, 23 Since Inception 31.64 47.52 7.99 "
+    },
+    {
+      "schemeName": "HDFC Banking & Financial Services Fund",
+      "schemeNameRaw": "HDFC Banking & Financial Services Fund",
+      "category": "Sectoral / Thematic Fund",
+      "categorySlug": "sectoral-thematic",
+      "benchmarkName": "NIFTY Financial Services (TRI)",
+      "schemeReturn1Y": 0.04,
+      "schemeReturn3Y": 12,
+      "schemeReturn5Y": null,
+      "benchmarkReturn1Y": -5.24,
+      "benchmarkReturn3Y": 10.31,
+      "benchmarkReturn5Y": null,
+      "outperformed1Y": true,
+      "outperformed3Y": true,
+      "outperformed5Y": null,
+      "pageNum": 32,
+      "textSnippet": "HDFC Banking & Financial Services Fund | PERFORMANCE ^ - Regular Plan - Growth Option\nDate Period Scheme\nReturns (%)\nBenchmark\nReturns\n(%)#\nAdditional\nBenchmark\nReturns (%) ##\nValue of ₹ 10,000 invested\nScheme\n(₹)\nBenchmark\n(₹)#\nAdditional\nBenchmar\nk (₹)##\nMar 31, 25 Last 1 Year 0.04 -5.24 -3.97 10,004 9,474 9,601\nMar 31, 23 Last 3 Years 12.00 10.31 10.03 14,"
+    },
+    {
+      "schemeName": "HDFC MNC Fund",
+      "schemeNameRaw": "HDFC MNC Fund",
+      "category": "Sectoral / Thematic Fund",
+      "categorySlug": "sectoral-thematic",
+      "benchmarkName": "NIFTY MNC (TRI)",
+      "schemeReturn1Y": -4.08,
+      "schemeReturn3Y": 5.75,
+      "schemeReturn5Y": null,
+      "benchmarkReturn1Y": 7.34,
+      "benchmarkReturn3Y": 14.57,
+      "benchmarkReturn5Y": null,
+      "outperformed1Y": false,
+      "outperformed3Y": false,
+      "outperformed5Y": null,
+      "pageNum": 39,
+      "textSnippet": "HDFC MNC Fund | PERFORMANCE ^ - Regular Plan - Growth Option\nDate Period Scheme\nReturns (%)\nBenchmark\nReturns\n(%)#\nAdditional\nBenchmark\nReturns (%) ##\nValue of ₹ 10,000 invested\nScheme\n(₹)\nBenchmark\n(₹)#\nAdditional\nBenchmar\nk (₹)##\nMar 31, 25 Last 1 Year -4.08 7.34 -3.97 9,592 10,738 9,601\nMar 31, 23 Last 3 Years 5.75 14.57 10.03 11,8"
+    },
+    {
+      "schemeName": "HDFC Consumption Fund",
+      "schemeNameRaw": "HDFC Consumption Fund",
+      "category": "Sectoral / Thematic Fund",
+      "categorySlug": "sectoral-thematic",
+      "benchmarkName": "NIFTY India Consumption Index (TRI)",
+      "schemeReturn1Y": -8.34,
+      "schemeReturn3Y": null,
+      "schemeReturn5Y": null,
+      "benchmarkReturn1Y": -2.73,
+      "benchmarkReturn3Y": null,
+      "benchmarkReturn5Y": null,
+      "outperformed1Y": false,
+      "outperformed3Y": null,
+      "outperformed5Y": null,
+      "pageNum": 40,
+      "textSnippet": "HDFC Consumption Fund | PERFORMANCE ^ - Regular Plan - Growth Option\nDate Period\nScheme\nReturns\n(%)\nBenchmark\nReturns\n(%)#\nAdditional\nBenchmark\nReturns (%)\n##\nValue of ₹ 10,000 invested\nScheme (₹) Benchmark\n(₹)#\nAdditional\nBenchmark\n(₹)##\nMar 31, 25 Last 1 Year -8.34 -2.73 -3.97 9,166 9,725 9,601\nJul 12, 23 Since Inception 6.70 8.71 6.52 11,9"
+    }
+  ],
   "excludedSchemes": [
     {
       "schemeName": "HDFC Flexi Cap Fund",
       "reason": "missing-benchmark",
       "categorySlug": "flexi-cap",
       "category": "Flexi Cap Fund",
-      "pageNum": 9
+      "pageNum": 9,
+      "detectedSchemeTitleCandidate": "HDFC Flexi Cap Fund",
+      "pageHeaderSnippet": "nception\nSIP\n15 year\nSIP\n10 year\nSIP\n5 year\nSIP\n3 year\nSIP\n1 year\nSIP\nTotal Amount Invested ₹. in Lacs 37.50 18.00 12.00 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 1,994.10 61.57 27.12 8.34 3.95 1.09\nReturns (%) 20.04 14.99 15.57 13.16 6.12 -16.07\nBenchmark Returns (%)# 14.17 12.74 12.15 7.37 1.36 -18.21\nAdditional Benchmark Returns (%)# # 12.96 11.59 10.98 5.80 0.46 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Multi Cap Fund",
       "reason": "missing-benchmark",
       "categorySlug": "multi-cap",
       "category": "Multi Cap Fund",
-      "pageNum": 12
+      "pageNum": 12,
+      "detectedSchemeTitleCandidate": "HDFC Multi Cap Fund",
+      "pageHeaderSnippet": "1.\n1.1\n1.1\n1.13\n1.09\n1.01\n0.91\n0.90\n0.\n0. 0\n0.\n0. 0\n0. 9\n0.\n0. 3\n0.\n0.11\nSIP PERFORMANCE ^ - Regular Plan - Growth Option\nSince Inception SIP 3 year SIP 1 year SIP\nTotal Amount Invested ₹. in Lacs 5.20 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 6.22 3.65 1.07\nReturns (%) 8.22 0.82 -19.83\nBenchmark Returns (%)# 7.40 1.71 -18.64\nAdditional Benchmark Returns (%)# # 4.76 0.46 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise\non minimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Large Cap Fund",
       "reason": "missing-benchmark",
       "categorySlug": "large-cap",
       "category": "Large Cap Fund",
-      "pageNum": 14
+      "pageNum": 14,
+      "detectedSchemeTitleCandidate": "HDFC Large Cap Fund",
+      "pageHeaderSnippet": "ption\nSIP\n15 year\nSIP\n10 year\nSIP\n5 year\nSIP\n3 year\nSIP\n1 year\nSIP\nTotal Amount Invested ₹. in Lacs 35.40 18.00 12.00 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs $$ 808.38 46.83 21.47 7.20 3.61 1.08\nReturns (%) $$ 17.16 11.81 11.20 7.26 0.15 -18.52\nBenchmark Returns (%)# N.A. 11.83 11.02 6.10 0.80 -18.37\nAdditional Benchmark Returns (%)# # 13.31 11.31 10.47 4.52 -1.27 -20.77\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan - Growth\nOption. The above investment simulation is for illustrative purposes only and should not be construed as a promise on minimum\nreturns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Mid Cap Fund",
       "reason": "missing-benchmark",
       "categorySlug": "mid-cap",
       "category": "Mid Cap Fund",
-      "pageNum": 16
+      "pageNum": 16,
+      "detectedSchemeTitleCandidate": "HDFC Mid Cap Fund",
+      "pageHeaderSnippet": "Inception\nSIP\n15 year\nSIP\n10 year\nSIP\n5 year\nSIP\n3 year\nSIP\n1 year\nSIP\nTotal Amount Invested ₹. in Lacs 22.60 18.00 12.00 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 164.37 81.76 30.04 8.82 4.04 1.12\nReturns (%) 18.36 18.23 17.48 15.43 7.62 -11.90\nBenchmark Returns (%)# 16.57 17.45 16.87 12.79 5.26 -14.85\nAdditional Benchmark Returns (%)# # 11.36 11.59 10.98 5.80 0.46 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Small Cap Fund",
       "reason": "missing-benchmark",
       "categorySlug": "small-cap",
       "category": "Small Cap Fund",
-      "pageNum": 18
+      "pageNum": 18,
+      "detectedSchemeTitleCandidate": "HDFC Small Cap Fund",
+      "pageHeaderSnippet": "Inception\nSIP\n15 year\nSIP\n10 year\nSIP\n5 year\nSIP\n3 year\nSIP\n1 year\nSIP\nTotal Amount Invested ₹. in Lacs 21.60 18.00 12.00 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 110.16 68.14 26.79 7.55 3.53 1.05\nReturns (%) 16.05 16.15 15.35 9.14 -1.19 -22.69\nBenchmark Returns (%)# 12.60 13.28 13.61 7.88 -1.98 -24.55\nAdditional Benchmark Returns (%)# # 11.60 11.59 10.98 5.80 0.46 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Large and Mid Cap Fund",
       "reason": "missing-benchmark",
       "categorySlug": "large-mid-cap",
       "category": "Large & Mid Cap Fund",
-      "pageNum": 21
+      "pageNum": 21,
+      "detectedSchemeTitleCandidate": "HDFC Large and Mid Cap Fund",
+      "pageHeaderSnippet": "ption\nSIP\n15 year\nSIP\n10 year\nSIP\n5 year\nSIP\n3 year\nSIP\n1 year\nSIP\nTotal Amount Invested ₹. in Lacs 38.60 18.00 12.00 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs $$ 544.87 54.70 24.99 7.67 3.70 1.07\nReturns (%) $$ 13.45 13.62 14.05 9.76 1.77 -19.56\nBenchmark Returns (%)# N.A. 14.74 14.03 9.49 3.08 -16.61\nAdditional Benchmark Returns (%)# # 12.83 11.31 10.47 4.52 -1.27 -20.77\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Value Fund",
       "reason": "missing-benchmark",
       "categorySlug": "value-contra",
       "category": "Value Fund / Contra Fund",
-      "pageNum": 23
+      "pageNum": 23,
+      "detectedSchemeTitleCandidate": "HDFC Value Fund",
+      "pageHeaderSnippet": " Inception\nSIP\n15 year\nSIP\n10 year\nSIP\n5 year\nSIP\n3 year\nSIP\n1 year\nSIP\nTotal Amount Invested ₹. in Lacs 38.60 18.00 12.00 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 1,015.17 53.76 23.11 7.69 3.83 1.09\nReturns (%) 16.27 13.42 12.59 9.86 3.99 -16.04\nBenchmark Returns (%)# N.A. 12.74 12.15 7.37 1.36 -18.21\nAdditional Benchmark Returns (%)# # 12.72 11.59 10.98 5.80 0.46 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Dividend Yield Fund",
       "reason": "missing-benchmark",
       "categorySlug": "dividend-yield",
       "category": "Dividend Yield Fund",
-      "pageNum": 26
-    },
-    {
-      "schemeName": "HDFC Focused Fund",
-      "reason": "missing-benchmark",
-      "categorySlug": "focused",
-      "category": "Focused Fund",
-      "pageNum": 27
+      "pageNum": 26,
+      "detectedSchemeTitleCandidate": "HDFC Dividend Yield Fund",
+      "pageHeaderSnippet": "TEGORY OF SCHEME\nDIVIDEND YIELD FUND\nSIP PERFORMANCE ^ - Regular Plan - Growth Option\nSince Inception SIP 5 year SIP 3 year SIP 1 year SIP\nTotal Amount Invested ₹. in Lacs 6.40 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 8.30 7.44 3.61 1.07\nReturns (%) 9.67 8.57 0.20 -19.01\nBenchmark Returns (%)# 8.11 7.37 1.36 -18.21\nAdditional Benchmark Returns (%)# # 6.46 5.80 0.46 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Business Cycle Fund",
       "reason": "missing-benchmark",
       "categorySlug": "sectoral-thematic",
       "category": "Sectoral / Thematic Fund",
-      "pageNum": 29
-    },
-    {
-      "schemeName": "HDFC Transportation and Logistics Fund",
-      "reason": "missing-benchmark",
-      "categorySlug": "sectoral-thematic",
-      "category": "Sectoral / Thematic Fund",
-      "pageNum": 30
-    },
-    {
-      "schemeName": "HDFC Defence Fund",
-      "reason": "missing-benchmark",
-      "categorySlug": "sectoral-thematic",
-      "category": "Sectoral / Thematic Fund",
-      "pageNum": 31
-    },
-    {
-      "schemeName": "HDFC Banking & Financial Services Fund",
-      "reason": "missing-benchmark",
-      "categorySlug": "sectoral-thematic",
-      "category": "Sectoral / Thematic Fund",
-      "pageNum": 32
+      "pageNum": 29,
+      "detectedSchemeTitleCandidate": "HDFC Business Cycle Fund",
+      "pageHeaderSnippet": "\n. 0\n.\n. 0\n.0\n.01\n1.\n1. 3\n1. 9\n1.\n1. 1\n1. 0\n1. 0\n1.1\n1.10\n0.\n0.\n0. 3\n0.\nSIP PERFORMANCE ^ - Regular Plan - Growth Option\nSince Inception SIP 3 year SIP 1 year SIP\nTotal Amount Invested ₹. in Lacs 4.10 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 4.11 3.47 1.05\nReturns (%) 0.12 -2.41 -22.24\nBenchmark Returns (%)# 3.60 1.36 -18.21\nAdditional Benchmark Returns (%)# # 2.25 0.46 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Technology Fund",
       "reason": "missing-benchmark",
       "categorySlug": "sectoral-thematic",
       "category": "Sectoral / Thematic Fund",
-      "pageNum": 33
+      "pageNum": 33,
+      "detectedSchemeTitleCandidate": "HDFC Technology Fund",
+      "pageHeaderSnippet": "al Services Supplies\nIT Services\nFinancial Technology Fintech\nEntertainment\n0.\n19.1\n.30\n. 0\n.39\n1.0\n0.31\nSIP PERFORMANCE ^ - Regular Plan - Growth Option\nSince Inception SIP 1 year SIP\nTotal Amount Invested ₹. in Lacs 3.10 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 2.64 0.96\nReturns (%) -11.59 -34.39\nBenchmark Returns (%)# -9.37 -26.76\nAdditional Benchmark Returns (%)# # -2.38 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "Regular: 2.19% Direct: 0.99%\n#BENCHMARK INDEX\nBSE Teck Index (TRI)\n##ADDL. BENCHMARK INDEX\nNifty 50 Index (TRI)\nEXIT LOAD$$\n• In respect of each purchase/switch-in of units,",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": "Nifty 50 Index (TRI)"
     },
     {
       "schemeName": "HDFC Pharma and Healthcare Fund",
       "reason": "missing-benchmark",
       "categorySlug": "sectoral-thematic",
       "category": "Sectoral / Thematic Fund",
-      "pageNum": 34
+      "pageNum": 34,
+      "detectedSchemeTitleCandidate": "HDFC Pharma and Healthcare Fund",
+      "pageHeaderSnippet": "ets\n0 10 0 30 0 0 0 0\nharmaceuticals iotechnology\nHealthcare Services\nHealthcare E uipment Supplies\n0. 3\n.\n0.\nSIP PERFORMANCE ^ - Regular Plan - Growth Option\nSince Inception SIP 1 year SIP\nTotal Amount Invested ₹. in Lacs 3.00 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 3.53 1.21\nReturns (%) 13.18 1.71\nBenchmark Returns (%)# 6.33 -5.93\nAdditional Benchmark Returns (%)# # -2.94 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "Regular: 2.10% Direct: 0.94%\n#BENCHMARK INDEX\nBSE Healthcare Index (TRI)\n##ADDL. BENCHMARK INDEX\nNifty 50 Index (TRI)\nEXIT LOAD$$\n• In respect of each purchase/switch-in of units,",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": "Nifty 50 Index (TRI)"
     },
     {
       "schemeName": "HDFC Housing Opportunities Fund",
       "reason": "missing-benchmark",
       "categorySlug": "sectoral-thematic",
       "category": "Sectoral / Thematic Fund",
-      "pageNum": 36
+      "pageNum": 36,
+      "detectedSchemeTitleCandidate": "HDFC Housing Opportunities Fund",
+      "pageHeaderSnippet": "0\n. 3\n.\n.30\n3. 1\n.\n1.\n1.31\n1.1\nSIP PERFORMANCE ^ - Regular Plan - Growth Option\nSince Inception SIP 5 year SIP 3 year SIP 1 year SIP\nTotal Amount Invested ₹. in Lacs 10.00 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 16.00 7.24 3.51 1.05\nReturns (%) 11.00 7.45 -1.64 -21.75\nBenchmark Returns (%)# 12.27 7.08 1.74 -14.67\nAdditional Benchmark Returns (%)# # 10.42 5.80 0.46 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan - Growth\nOption. The above investment simulation is for illustrative purposes only and should not be construed as a promise on minimum\nreturns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Infrastructure Fund",
       "reason": "missing-benchmark",
       "categorySlug": "sectoral-thematic",
       "category": "Sectoral / Thematic Fund",
-      "pageNum": 38
-    },
-    {
-      "schemeName": "HDFC MNC Fund",
-      "reason": "missing-benchmark",
-      "categorySlug": "sectoral-thematic",
-      "category": "Sectoral / Thematic Fund",
-      "pageNum": 39
-    },
-    {
-      "schemeName": "HDFC Consumption Fund",
-      "reason": "missing-benchmark",
-      "categorySlug": "sectoral-thematic",
-      "category": "Sectoral / Thematic Fund",
-      "pageNum": 40
+      "pageNum": 38,
+      "detectedSchemeTitleCandidate": "HDFC Infrastructure Fund",
+      "pageHeaderSnippet": " Inception\nSIP\n15 year\nSIP\n10 year\nSIP\n5 year\nSIP\n3 year\nSIP\n1 year\nSIP\nTotal Amount Invested ₹. in Lacs 21.70 18.00 12.00 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 65.18 47.53 25.13 8.76 3.80 1.07\nReturns (%) 11.07 11.98 14.15 15.14 3.63 -18.96\nBenchmark Returns (%)# 13.36 15.03 17.57 17.22 6.52 -13.14\nAdditional Benchmark Returns (%)# # 11.58 11.59 10.98 5.80 0.46 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Manufacturing Fund",
       "reason": "missing-benchmark",
       "categorySlug": "sectoral-thematic",
       "category": "Sectoral / Thematic Fund",
-      "pageNum": 42
+      "pageNum": 42,
+      "detectedSchemeTitleCandidate": "HDFC Manufacturing Fund",
+      "pageHeaderSnippet": "ction\naper, Forest ute roducts\n1 .\n1 .9\n9. 0\n9.\n.9\n.\n.9\n. 0\n.\n. 3\n. 1\n. 1\n. 0\n.0\n1.\n1.1\n1.1\n0.\n0. 1\n0.\n0.3\nSIP PERFORMANCE ^ - Regular Plan - Growth Option\nSince Inception SIP 1 year SIP\nTotal Amount Invested ₹. in Lacs 2.30 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 2.16 1.11\nReturns (%) -6.36 -13.10\nBenchmark Returns (%)# -1.40 -5.99\nAdditional Benchmark Returns (%)# # -7.90 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Balanced Advantage Fund",
       "reason": "missing-benchmark",
-      "categorySlug": "balanced-aggressive-hybrid",
-      "category": "Balanced / Aggressive Hybrid Fund",
-      "pageNum": 47
+      "categorySlug": "baf-daa",
+      "category": "Dynamic Asset Allocation / BAF",
+      "pageNum": 47,
+      "detectedSchemeTitleCandidate": "HDFC Balanced Advantage Fund",
+      "pageHeaderSnippet": "eption\nSIP\n15 year\nSIP\n10 year\nSIP\n5 year\nSIP\n3 year\nSIP\n1 year\nSIP\nTotal Amount Invested ₹. in Lacs 38.60 18.00 12.00 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs $$ 1,460.95 54.53 24.21 7.92 3.83 1.12\nReturns (%) $$ 17.90 13.58 13.46 11.07 4.15 -12.17\nBenchmark Returns (%)# N.A. 9.71 9.01 5.84 2.85 -9.52\nAdditional Benchmark Returns (%)# # 12.72 11.59 10.98 5.80 0.46 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Hybrid Equity Fund",
       "reason": "missing-benchmark",
       "categorySlug": "balanced-aggressive-hybrid",
       "category": "Balanced / Aggressive Hybrid Fund",
-      "pageNum": 49
+      "pageNum": 49,
+      "detectedSchemeTitleCandidate": "HDFC Hybrid Equity Fund",
+      "pageHeaderSnippet": "nce Inception\nSIP\n15 year\nSIP\n10 year\nSIP\n5 year\nSIP\n3 year\nSIP\n1 year\nSIP\nTotal Amount Invested ₹. in Lacs 30.70 18.00 12.00 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 256.96 45.38 19.69 6.81 3.56 1.08\nReturns (%) 14.07 11.44 9.57 5.02 -0.65 -18.15\nBenchmark Returns (%)# N.A. 10.35 9.67 5.86 2.17 -12.22\nAdditional Benchmark Returns (%)# # 13.47 11.59 10.98 5.80 0.46 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Multi-Asset Allocation Fund",
       "reason": "missing-benchmark",
       "categorySlug": "multi-asset",
       "category": "Multi Asset Allocation Fund",
-      "pageNum": 52
+      "pageNum": 52,
+      "detectedSchemeTitleCandidate": "HDFC Multi-Asset Allocation Fund",
+      "pageHeaderSnippet": "ince Inception\nSIP\n15 year\nSIP\n10 year\nSIP\n5 year\nSIP\n3 year\nSIP\n1 year\nSIP\nTotal Amount Invested ₹. in Lacs 24.80 18.00 12.00 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 81.83 42.46 21.42 7.65 4.02 1.17\nReturns (%) 10.39 10.66 11.16 9.69 7.29 -4.23\nBenchmark Returns (%)# 10.03 10.68 10.98 8.99 6.54 -6.51\nAdditional Benchmark Returns (%)# # 11.45 11.59 10.98 5.80 0.46 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Equity Savings Fund",
       "reason": "missing-benchmark",
       "categorySlug": "equity-savings",
       "category": "Equity Savings Fund",
-      "pageNum": 54
+      "pageNum": 54,
+      "detectedSchemeTitleCandidate": "HDFC Equity Savings Fund",
+      "pageHeaderSnippet": "h Option\nSince Inception\nSIP\n15 year\nSIP\n10 year\nSIP\n5 year\nSIP\n3 year\nSIP\n1 year\nSIP\nTotal Amount Invested ₹. in Lacs 25.90 18.00 12.00 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 75.80 36.23 18.48 7.11 3.85 1.18\nReturns (%) 9.00 8.77 8.37 6.74 4.41 -3.57\nBenchmark Returns (%)# N.A. 8.70 8.29 6.75 5.05 -2.87\nAdditional Benchmark Returns (%)# # 6.24 6.20 5.64 5.59 5.12 -1.30\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Hybrid Debt Fund",
       "reason": "missing-benchmark",
       "categorySlug": "conservative-hybrid",
       "category": "Conservative Hybrid Fund",
-      "pageNum": 56
+      "pageNum": 56,
+      "detectedSchemeTitleCandidate": "HDFC Hybrid Debt Fund",
+      "pageHeaderSnippet": "h Option\nSince\nInception SIP\n15 year\nSIP\n10 year\nSIP\n5 year\nSIP\n3 year\nSIP\n1 year\nSIP\nTotal Amount Invested ₹. in Lacs 26.80 18.00 12.00 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 84.41 35.65 18.18 7.12 3.85 1.18\nReturns (%) 9.23 8.58 8.06 6.77 4.34 -3.43\nBenchmark Returns (%)# 8.23 7.97 7.25 5.69 4.34 -3.12\nAdditional Benchmark Returns (%)# # 6.19 6.20 5.64 5.59 5.12 -1.30\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Gold ETF Fund of Fund",
@@ -297,37 +459,62 @@
     {
       "schemeName": "HDFC ELSS Tax Saver",
       "reason": "missing-benchmark",
-      "categorySlug": "sectoral-thematic",
-      "category": "Sectoral / Thematic Fund",
-      "pageNum": 62
+      "categorySlug": "elss",
+      "category": "ELSS",
+      "pageNum": 62,
+      "detectedSchemeTitleCandidate": "HDFC ELSS Tax Saver",
+      "pageHeaderSnippet": "on SIP\n15 year\nSIP\n10 year\nSIP\n5 year\nSIP\n3 year\nSIP\n1 year\nSIP\nTotal Amount Invested ₹. in Lacs 36.00 18.00 12.00 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs $$ 1,603.96 52.09 23.90 7.97 3.81 1.07\nReturns (%) $$ 20.10 13.05 13.22 11.31 3.78 -19.69\nBenchmark Returns (%)# 14.39 12.74 12.15 7.37 1.36 -18.21\nAdditional Benchmark Returns (%)# # 13.15 11.59 10.98 5.80 0.46 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Children's Fund",
       "reason": "missing-benchmark",
       "categorySlug": "childrens",
       "category": "Children's Fund",
-      "pageNum": 64
+      "pageNum": 64,
+      "detectedSchemeTitleCandidate": "HDFC Children's Fund",
+      "pageHeaderSnippet": "Inception\nSIP\n15 year\nSIP\n10 year\nSIP\n5 year\nSIP\n3 year\nSIP\n1 year\nSIP\nTotal Amount Invested ₹. in Lacs 30.10 18.00 12.00 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs $ 254.93 49.93 21.50 7.12 3.62 1.10\nReturns (%) $ 14.44 12.56 11.23 6.79 0.42 -15.72\nBenchmark Returns (%)# N.A. 10.35 9.67 5.86 2.17 -12.22\nAdditional Benchmark Returns (%)# # 13.48 11.59 10.98 5.80 0.46 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Retirement Savings Fund - Equity Plan",
       "reason": "missing-benchmark",
       "categorySlug": "retirement",
       "category": "Retirement Fund",
-      "pageNum": 66
+      "pageNum": 66,
+      "detectedSchemeTitleCandidate": "HDFC Retirement Savings Fund - Equity Plan",
+      "pageHeaderSnippet": "MANCE ^ - Regular Plan - Growth Option\nSince Inception SIP 10 year SIP 5 year SIP 3 year SIP 1 year SIP\nTotal Amount Invested ₹. in Lacs 12.20 12.00 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 25.58 24.70 7.42 3.62 1.07\nReturns (%) 13.94 13.83 8.43 0.41 -19.68\nBenchmark Returns (%)# 12.26 12.15 7.37 1.36 -18.21\nAdditional Benchmark Returns (%)# # 11.10 10.98 5.80 0.46 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Retirement Savings Fund - Hybrid Equity Plan",
       "reason": "missing-benchmark",
       "categorySlug": "retirement",
       "category": "Retirement Fund",
-      "pageNum": 68
+      "pageNum": 68,
+      "detectedSchemeTitleCandidate": "HDFC Retirement Savings Fund - Hybrid Equity Plan",
+      "pageHeaderSnippet": "ORMANCE ^ - Regular Plan - Growth Option\nSince Inception SIP 10 year SIP 5 year SIP 3 year SIP 1 year SIP\nTotal Amount Invested ₹. in Lacs 12.20 12.00 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 21.44 20.75 7.01 3.61 1.09\nReturns (%) 10.68 10.56 6.19 0.19 -16.85\nBenchmark Returns (%)# 9.76 9.67 5.86 2.17 -12.22\nAdditional Benchmark Returns (%)# # 11.10 10.98 5.80 0.46 -18.44\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Retirement Savings Fund - Hybrid Debt Plan",
       "reason": "missing-benchmark",
-      "categorySlug": "conservative-hybrid",
-      "category": "Conservative Hybrid Fund",
-      "pageNum": 70
+      "categorySlug": "retirement",
+      "category": "Retirement Fund",
+      "pageNum": 70,
+      "detectedSchemeTitleCandidate": "HDFC Retirement Savings Fund - Hybrid Debt Plan",
+      "pageHeaderSnippet": "IP PERFORMANCE ^ - Regular Plan - Growth Option\nSince Inception SIP 10 year SIP 5 year SIP 3 year SIP 1 year SIP\nTotal Amount Invested ₹. in Lacs 12.20 12.00 6.00 3.60 1.20\nMar et Value as on March 31, 0 ₹. in Lacs 17.30 16.88 6.87 3.78 1.17\nReturns (%) 6.69 6.65 5.37 3.26 -4.65\nBenchmark Returns (%)# 7.30 7.25 5.69 4.34 -3.12\nAdditional Benchmark Returns (%)# # 5.67 5.64 5.59 5.12 -1.30\nAssuming ₹ 10,000 invested systematically on the first usiness Day of every month over a period of time. CAG returns are\ncomputed after accounting for the cash flow by using XIRR method (investment internal rate of return) for Regular Plan -\nGrowth Option. The above investment simulation is for illustrative purposes only and should not be construed as a promise on\nminimum returns and safeguard of capital.\n",
+      "benchmarkHeaderSnippet": "",
+      "detectedPrimaryBenchmarkCandidate": null,
+      "detectedAdditionalBenchmarkCandidate": null
     },
     {
       "schemeName": "HDFC Overnight Fund",
@@ -448,8 +635,10 @@
     "Eligibility = IIFL active-equity envelope (Sub II + Sub III ex-Arbitrage + Sub IV).",
     "Outperformance = scheme return > primary benchmark return for the period; null on either side drops the scheme from that period's denominator.",
     "Direct + Regular plan dedup applied; one row per scheme stem.",
-    "Parser anchors on HDFC's literal \"PERFORMANCE ^\" section marker; \"SIP PERFORMANCE\" siblings are rejected upstream. Scheme title is detected from the page header (above the marker); benchmark name is detected from the page-level \"#\" legend.",
-    "Per-row extraction: each table row is a TIME PERIOD (\"Last 1 Year\" / \"Last 3 Years\" / \"Last 5 Years\"); the row's first three CAGR numbers are (scheme %, benchmark %, additional %). We keep scheme + benchmark."
+    "Parser anchors on HDFC's literal \"PERFORMANCE ^\" section marker; \"SIP PERFORMANCE\" siblings are rejected upstream. Scheme title is detected from the page header (above the marker).",
+    "Benchmark name is detected from the page-level \"#BENCHMARK INDEX\" legend (multi-line or inline form); \"##ADDL. BENCHMARK INDEX\" is captured for diagnostics only and never used as primary.",
+    "Per-row extraction: each table row is a TIME PERIOD (\"Last 1 Year\" / \"Last 3 Years\" / \"Last 5 Years\"); the row's first three CAGR numbers are (scheme %, benchmark %, additional %). We keep scheme + benchmark.",
+    "Category priority: Solution-oriented (retirement, childrens) → ELSS → BAF/DAA (incl. Balanced Advantage) → other hybrid → Growth/Equity → sectoral-thematic last. Avoids \"ELSS Tax Saver\" leaking into sectoral and \"Hybrid Debt Plan\" leaking into conservative-hybrid for retirement schemes."
   ],
-  "status": "failed"
+  "status": "partial"
 }
