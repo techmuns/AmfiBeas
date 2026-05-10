@@ -6,7 +6,6 @@ import { FilterBar } from "@/components/filters/FilterBar";
 import { BarSeries } from "@/components/charts/BarSeries";
 import { StackedArea } from "@/components/charts/StackedArea";
 import { Donut, type DonutSlice } from "@/components/charts/Donut";
-import { Heatmap, type HeatmapRow } from "@/components/charts/Heatmap";
 import { IiflHeatmap } from "@/components/charts/IiflHeatmap";
 import { MultiLine } from "@/components/charts/MultiLine";
 import {
@@ -15,8 +14,7 @@ import {
   marketShare,
   shareSeries,
 } from "@/data/aggregate";
-import { AMCS } from "@/data/amcs";
-import { monthlyForAmc, MONTHS_LIST } from "@/data/generator";
+import { MONTHS_LIST } from "@/data/generator";
 import {
   amfiMonthlyRows,
   availableMonthsDesc,
@@ -92,35 +90,6 @@ export default async function MonthlyPage({
   const sipShareTotal = slugs
     ? marketShare(latest.sipContribution, industryLatest.sipContribution)
     : null;
-
-  const heatmapAmcs = slugs ? AMCS.filter((a) => slugs.includes(a.slug)) : AMCS;
-  const heatmapRows: HeatmapRow[] = heatmapAmcs.map((a) => ({
-    label: a.ticker ?? a.name.split(" ")[0],
-    values: monthlyForAmc(a.slug)
-      .filter((r) => trimmedMonths.has(r.month))
-      .map((r) => {
-        const v = r.schemeOutperformanceRatio;
-        if (v === undefined || v === null) return null;
-        // Center the heatmap colour scale around 50% (industry-typical
-        // outperformance ratio). Negative = under, positive = over.
-        return Number((v - 50).toFixed(1));
-      }),
-  }));
-  const heatmapColumns = MONTHS_LIST.filter((m) => trimmedMonths.has(m));
-
-  // Quartile-rank summary (top quartile %) for the latest month, peer-aware
-  const quartileLatestRows = (slugs ? AMCS.filter((a) => slugs.includes(a.slug)) : AMCS).map(
-    (a) => {
-      const rec = monthlyForAmc(a.slug).find(
-        (r) => r.month === latestMonth()
-      );
-      return {
-        slug: a.slug,
-        ticker: a.ticker ?? a.name.split(" ")[0],
-        q1: rec?.quartileRankSummary?.q1 ?? null,
-      };
-    }
-  );
 
   const subtitle = slugs
     ? `${slugs.length} peer${slugs.length > 1 ? "s" : ""} · ${latestMonth()}`
@@ -1196,36 +1165,6 @@ export default async function MonthlyPage({
               color: AMC_COLORS[k] ?? "hsl(var(--muted-foreground))",
             }))}
           />
-        </Card>
-        <Card
-          tone="demo"
-          title="Scheme Outperformance"
-          subtitle="AMC × month · % over benchmark, centered on 50"
-          className="lg:col-span-2"
-        >
-          <Heatmap rows={heatmapRows} columns={heatmapColumns} />
-        </Card>
-        <Card
-          tone="demo"
-          title="Top Quartile %"
-          subtitle="Share of AMC funds ranked Q1 · latest month"
-          className="lg:col-span-2"
-        >
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-            {quartileLatestRows.map((r) => (
-              <div
-                key={r.slug}
-                className="rounded-md border px-3 py-2"
-              >
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                  {r.ticker}
-                </div>
-                <div className="mt-1 text-lg font-semibold tabular">
-                  {formatPctSafe(r.q1)}
-                </div>
-              </div>
-            ))}
-          </div>
         </Card>
       </section>
     </div>
