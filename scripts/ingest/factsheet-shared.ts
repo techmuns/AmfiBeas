@@ -67,6 +67,15 @@ export interface AmcStrategy {
    *  before scraping links. Defaults to a generic anchor selector
    *  matching pdfHrefPattern. */
   waitListingSelector?: string;
+  /** Optional: regex(es) used to anchor the per-scheme PERFORMANCE
+   *  section. Each regex is compiled with the global flag and run
+   *  across each page; the union of hits (deduplicated) is the
+   *  candidate marker set. When undefined, defaults to HDFC's
+   *  `\bPERFORMANCE\s*\^` (which requires the SEBI footnote `^`).
+   *  Other AMCs use different section header phrasing — supply
+   *  their patterns here so this strategy can find the right
+   *  sections without forcing a one-size-fits-all change. */
+  performanceMarkerPatterns?: RegExp[];
 }
 
 // ---------------------------------------------------------------------------
@@ -318,6 +327,31 @@ interface ParsedSchemeRowWithContext {
 // Per-AMC audit result shape (returned by runFactsheetStrategy).
 // ---------------------------------------------------------------------------
 
+/** PDF parser diagnostics. Populated when the PDF was fetched and
+ *  pdf-parse returned pages, BUT findPerformanceSections found zero
+ *  PERFORMANCE markers — i.e. the strategy's marker patterns don't
+ *  match the AMC's section headers. Lets the next iteration see
+ *  what's actually in the PDF without re-running. */
+export interface PdfDiagnostics {
+  pageCount: number;
+  textExtractionStatus: "ok" | "empty";
+  /** First 800 chars of the first 3 pages — usually enough to spot
+   *  the layout and the section header phrasing. */
+  firstPageSnippets: { pageNum: number; snippet: string }[];
+  /** Lines (across all pages) containing "performance" — first 20
+   *  hits, trimmed to 200 chars. Reveals the AMC's section header
+   *  phrasing ("Scheme Performance", "Performance of the Fund", etc). */
+  performanceLines: string[];
+  /** Same for "benchmark" — reveals the AMC's benchmark legend
+   *  format. */
+  benchmarkLines: string[];
+  /** Same for "returns". */
+  returnsLines: string[];
+  /** Lines starting with the AMC's brand prefix that are NOT
+   *  flagged as boilerplate — likely scheme titles. First 20 hits. */
+  schemeTitleCandidates: string[];
+}
+
 export interface AmcAuditResult {
   amcSlug: string;
   amcName: string;
@@ -345,6 +379,7 @@ export interface AmcAuditResult {
   warnings: ParseWarning[];
   notes: string[];
   failureReason?: string;
+  diagnostics?: PdfDiagnostics;
 }
 
 // ---------------------------------------------------------------------------
@@ -365,20 +400,51 @@ function isSipMarker(text: string, idx: number): boolean {
   return false;
 }
 
-function findPerformanceSections(pages: PdfPage[]): PerformanceSection[] {
+/** Default PERFORMANCE section marker — HDFC's literal "PERFORMANCE ^"
+ *  with the SEBI footnote `^`. Other AMCs use different phrasing
+ *  (e.g. "Scheme Performance", "Performance of the Fund"); they
+ *  override this via strategy.performanceMarkerPatterns. */
+const DEFAULT_PERFORMANCE_MARKER_PATTERNS: RegExp[] = [RE_PERFORMANCE_MARKER];
+
+function findPerformanceSections(
+  pages: PdfPage[],
+  strategy: AmcStrategy
+): PerformanceSection[] {
+  const rawPatterns =
+    strategy.performanceMarkerPatterns ?? DEFAULT_PERFORMANCE_MARKER_PATTERNS;
+  // Ensure each pattern has the global flag — required for stateful
+  // .exec() in the walking loop below.
+  const patterns = rawPatterns.map((re) =>
+    re.flags.includes("g") ? re : new RegExp(re.source, re.flags + "g")
+  );
+
   const out: PerformanceSection[] = [];
   for (const p of pages) {
     const text = p.text;
     const markers: { idx: number; isSip: boolean }[] = [];
-    RE_PERFORMANCE_MARKER.lastIndex = 0;
-    let m: RegExpExecArray | null;
-    while ((m = RE_PERFORMANCE_MARKER.exec(text)) !== null) {
-      markers.push({ idx: m.index, isSip: isSipMarker(text, m.index) });
+    for (const re of patterns) {
+      re.lastIndex = 0;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(text)) !== null) {
+        markers.push({ idx: m.index, isSip: isSipMarker(text, m.index) });
+      }
     }
-    const firstRegularPos = markers.findIndex((mk) => !mk.isSip);
-    for (let i = 0; i < markers.length; i++) {
-      const start = markers[i].idx;
-      const end = i + 1 < markers.length ? markers[i + 1].idx : text.length;
+    // Sort by position + dedupe near-duplicate hits (multiple
+    // patterns can match the same header — e.g. "Scheme Performance"
+    // and "Performance" both fire on the same line).
+    markers.sort((a, b) => a.idx - b.idx);
+    const dedupedMarkers: typeof markers = [];
+    let prevIdx = -1;
+    for (const mk of markers) {
+      if (mk.idx - prevIdx < 8) continue;
+      dedupedMarkers.push(mk);
+      prevIdx = mk.idx;
+    }
+    const firstRegularPos = dedupedMarkers.findIndex((mk) => !mk.isSip);
+    for (let i = 0; i < dedupedMarkers.length; i++) {
+      const start = dedupedMarkers[i].idx;
+      const end =
+        i + 1 < dedupedMarkers.length ? dedupedMarkers[i + 1].idx : text.length;
       const isPrimaryRegular = i === firstRegularPos;
       out.push({
         pageNum: p.num,
@@ -994,7 +1060,7 @@ export async function runFactsheetStrategy(
   info(`${strategy.amcSlug}: ${pages.length} page(s) parsed`);
 
   // --- Walk performance sections ---
-  const sections = findPerformanceSections(pages);
+  const sections = findPerformanceSections(pages, strategy);
   const allEntries: ParsedSchemeRowWithContext[] = [];
   const allWarnings: ParseWarning[] = [];
   const rejectedCandidateSamples: RejectedCandidate[] = [];
@@ -1133,6 +1199,18 @@ export async function runFactsheetStrategy(
     );
   }
 
+  // Diagnostics — populated when the PDF parsed but no PERFORMANCE
+  // markers matched (i.e. the strategy's marker regexes are wrong
+  // for this AMC's section header phrasing). Lets the next iteration
+  // see the actual page text without a re-run.
+  let diagnostics: PdfDiagnostics | undefined;
+  let failureReason: string | undefined;
+  if (candidateBlocksScanned === 0 && pages.length > 0) {
+    diagnostics = buildPdfDiagnostics(pages, strategy);
+    failureReason = `PDF parsed (${pages.length} pages) but found 0 PERFORMANCE section markers. Strategy may need different performanceMarkerPatterns. See diagnostics.`;
+    notes.push(failureReason);
+  }
+
   info(
     `${strategy.amcSlug}: parsed=${dedupedEntries.length} included=${included.length} excluded=${excluded.length}; ` +
       `1Y ${e1.beatN}/${e1.eligibleN} (${e1.pct ?? "—"}%) · ` +
@@ -1166,5 +1244,69 @@ export async function runFactsheetStrategy(
     excludedSchemes: excluded,
     warnings: allWarnings,
     notes,
+    failureReason,
+    diagnostics,
+  };
+}
+
+/** Walk every page's text and surface the lines that mention
+ *  "performance" / "benchmark" / "returns", plus the lines starting
+ *  with the AMC's brand prefix. The next strategy iteration uses
+ *  this to target its marker patterns at the actual phrasing. */
+function buildPdfDiagnostics(
+  pages: PdfPage[],
+  strategy: AmcStrategy
+): PdfDiagnostics {
+  const allLines: string[] = [];
+  for (const p of pages) {
+    p.text.split(/\n+/).forEach((l) => {
+      const trimmed = l.trim();
+      if (trimmed.length > 0) allLines.push(trimmed);
+    });
+  }
+
+  const findLines = (re: RegExp, max = 20): string[] => {
+    const out: string[] = [];
+    const seen = new Set<string>();
+    for (const l of allLines) {
+      if (!re.test(l)) continue;
+      const truncated = l.slice(0, 200);
+      if (seen.has(truncated)) continue;
+      seen.add(truncated);
+      out.push(truncated);
+      if (out.length >= max) break;
+    }
+    return out;
+  };
+
+  const performanceLines = findLines(/\bperformance\b/i);
+  const benchmarkLines = findLines(/\bbenchmark\b/i);
+  const returnsLines = findLines(/\breturns?\b/i);
+
+  const schemeTitleCandidates: string[] = [];
+  const seenTitles = new Set<string>();
+  for (const l of allLines) {
+    if (!strategy.schemeBrandPrefix.test(l)) continue;
+    if (strategy.isBoilerplate(l)) continue;
+    const truncated = l.slice(0, 200);
+    if (seenTitles.has(truncated)) continue;
+    seenTitles.add(truncated);
+    schemeTitleCandidates.push(truncated);
+    if (schemeTitleCandidates.length >= 20) break;
+  }
+
+  const firstPageSnippets = pages.slice(0, 3).map((p) => ({
+    pageNum: p.num,
+    snippet: p.text.slice(0, 800),
+  }));
+
+  return {
+    pageCount: pages.length,
+    textExtractionStatus: pages.length > 0 ? "ok" : "empty",
+    firstPageSnippets,
+    performanceLines,
+    benchmarkLines,
+    returnsLines,
+    schemeTitleCandidates,
   };
 }

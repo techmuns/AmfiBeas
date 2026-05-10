@@ -26,4 +26,24 @@ export const ICICI_PRU_STRATEGY: AmcStrategy = {
     /\bICICI\s+Prudential\s+(?:Asset\s+Management|AMC|Trust|Trustee|Bank|Securities|Life\s+Insurance|General\s+Insurance|Limited)\b/i.test(
       line
     ),
+  // ICICI Pru's section headers don't carry HDFC's `^` SEBI footnote
+  // marker. The first PR #88 audit found 0 candidate blocks under
+  // HDFC's strict regex. PR #89 supplies these candidate patterns —
+  // they cover the typical SEBI / SID-style phrasings ICICI uses
+  // across its monthly factsheet. The diagnostics block in the
+  // audit JSON will surface the actual phrasing if none of these
+  // hit, so we can iterate per AMC.
+  performanceMarkerPatterns: [
+    // All-caps "PERFORMANCE" with optional ^ — covers HDFC-style
+    // sections too if ICICI ever adopts that.
+    /\bPERFORMANCE\s*\^?/g,
+    // Mixed-case "Performance" headers commonly used in ICICI Pru
+    // factsheets ("Scheme Performance", "Performance of the Fund/
+    // Scheme", "Annualised Performance").
+    /\bScheme\s+Performance\b/g,
+    /\bPerformance\s+of\s+(?:the\s+)?(?:Fund|Scheme)\b/g,
+    /\bAnnualised\s+Performance\b/g,
+    /\bPerformance\s+Report\b/g,
+    /\bFund\s+Performance\b/g,
+  ],
 };
