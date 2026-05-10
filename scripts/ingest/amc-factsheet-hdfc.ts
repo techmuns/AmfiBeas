@@ -124,6 +124,8 @@ export async function ingestHdfcFactsheetPoc(): Promise<void> {
       ...result.notes,
     ],
     status: result.status,
+    failureReason: result.failureReason,
+    diagnostics: result.diagnostics,
   };
 
   if (shouldWrite) {

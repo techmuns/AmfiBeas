@@ -27,4 +27,17 @@ export const NIPPON_STRATEGY: AmcStrategy = {
     /\bNippon\s+(?:Life\s+India|Asset\s+Management|AMC|Investment|Trustee|Capital|Limited)\b/i.test(
       line
     ),
+  // Nippon's section headers don't use HDFC's `^` SEBI footnote.
+  // PR #88's audit found 0 candidate blocks under the strict default;
+  // PR #89 supplies these candidate patterns covering the common
+  // phrasings Nippon uses. The diagnostics block in the audit JSON
+  // surfaces the actual phrasing when none hit so we can iterate.
+  performanceMarkerPatterns: [
+    /\bPERFORMANCE\s*\^?/g,
+    /\bScheme\s+Performance\b/g,
+    /\bPerformance\s+of\s+(?:the\s+)?(?:Fund|Scheme)\b/g,
+    /\bFund\s+Performance\b/g,
+    /\bPerformance\s+Report\b/g,
+    /\bSchemes?\s+Performance\s+Summary\b/g,
+  ],
 };
