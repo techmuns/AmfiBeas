@@ -86,18 +86,19 @@ export function sourceFormatLabel(
   }
 }
 
-/** Compose the per-field source caption shown beneath each KPI card.
- *  Format: "Source: AMFI Monthly Report". Intentionally minimal — the
- *  publication name is enough for at-a-glance recognition; the full
- *  PDF filename and page numbers are preserved on the row's
- *  `fieldSources[field]` object and surfaced via the hover tooltip
- *  (formatKpiProvenanceTooltip). Returns null when no provenance
- *  exists. */
+/** Per-field source caption shown beneath each KPI card.
+ *  PR #98: visible "Source: AMFI Monthly Report" line was retired;
+ *  this helper now returns null so callers render no text under the
+ *  KPI card. The full PDF filename + page numbers stay available on
+ *  the row's `fieldSources[field]` object and continue to surface
+ *  via the hover tooltip (formatKpiProvenanceTooltip) — that
+ *  tooltip remains because hover doesn't add visual clutter to the
+ *  main UI. */
 export function formatKpiProvenanceLine(
-  provenance: AmfiMonthlyPdfFieldProvenance | null
+  _provenance: AmfiMonthlyPdfFieldProvenance | null
 ): string | null {
-  if (!provenance) return null;
-  return "Source: " + sourceFormatLabel(provenance.sourceFormat);
+  void _provenance;
+  return null;
 }
 
 /** Hover-only caption that surfaces the full PDF filename for users who

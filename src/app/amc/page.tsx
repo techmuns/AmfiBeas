@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
-import { amcAaumQuarterlySnapshot } from "@/data/source";
 import { amcIndexRows } from "@/data/amc-detail";
 import {
   formatCompactCrSafe,
@@ -14,21 +13,16 @@ import { cn } from "@/lib/cn";
 
 export default function AmcListPage() {
   const data = amcIndexRows();
-  const fetchedAt = amcAaumQuarterlySnapshot.meta.generatedAt;
-  const fetchedDate = new Date(fetchedAt).toISOString().slice(0, 10);
 
   if (!data) {
     return (
       <div className="space-y-6">
-        <PageHeader
-          title="AMCs"
-          subtitle="No AMFI Fundwise AAUM data available."
-        />
+        <PageHeader title="AMCs" subtitle="No AAUM data available." />
       </div>
     );
   }
 
-  const subtitle = `${data.rows.length} AMCs · AMFI MF Average AUM, ${data.fiscalLabel} · fetched ${fetchedDate}`;
+  const subtitle = `${data.rows.length} AMCs · ${data.fiscalLabel}`;
 
   return (
     <div className="space-y-6">
@@ -125,18 +119,14 @@ export default function AmcListPage() {
       <Card>
         <div className="space-y-1 text-xs text-muted-foreground">
           <div>
-            <strong className="text-foreground">Source:</strong> AMFI Fundwise
-            AAUM disclosure (regulator-mandated, MF-only by construction).
-          </div>
-          <div>
             <strong className="text-foreground">Universe:</strong> all AMCs
             with at least one quarter of <code>status=&quot;ok&quot;</code> AAUM
-            data in the snapshot. AMFI does not publish PMS / AIF / offshore /
-            advisory / alternates here.
+            data in the snapshot. PMS / AIF / offshore / advisory / alternates
+            are not included.
           </div>
           <div>
             <strong className="text-foreground">Snapshot quarter:</strong>{" "}
-            {data.fiscalLabel} ({data.quarter}) · last fetched {fetchedDate}.
+            {data.fiscalLabel} ({data.quarter}).
           </div>
         </div>
       </Card>

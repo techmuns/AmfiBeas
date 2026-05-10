@@ -15,14 +15,13 @@ import {
   quarterlyForAmc,
   yoyChangeQuarterly,
 } from "@/data/aggregate";
-import { aaumProvenance, amcAaumQuarterlySnapshot, amcQuarterlySnapshot } from "@/data/source";
+import { aaumProvenance } from "@/data/source";
 import { AMCS, getAMC } from "@/data/amcs";
 import {
   formatCompactCrSafe,
   formatDelta,
   formatQuarterLabelLong,
 } from "@/lib/format";
-import { liveScreenerNote, liveYieldNote } from "@/lib/provenance";
 import { parseFilters } from "@/lib/filter";
 
 const DEFAULT_SLUG = "hdfc";
@@ -83,11 +82,11 @@ export default async function FinancialsPage({
   // outside the visible window remain preserved by mergeBySlugQuarter.
   const CHART_HISTORY_WINDOW_QUARTERS = 8;
 
-  const aaumMeta = amcAaumQuarterlySnapshot.meta;
+  // Yields chart subtitle — methodology only (formula). Source-attribution
+  // captions retired in PR #98; the formula stays so the user knows what's
+  // being charted.
   const yieldsSubtitle =
-    amcAaumQuarterlySnapshot.rows.length > 0
-      ? `bps of MF QAAUM · quarterly P&L ×4 / same-quarter AMFI MF QAAUM · ${new Date(aaumMeta.generatedAt).toISOString().slice(0, 10)}`
-      : "bps of MF QAAUM · quarterly P&L ×4 / same-quarter AMFI MF QAAUM";
+    "bps of MF QAAUM · quarterly P&L ×4 / same-quarter MF QAAUM";
 
   const trend = (n: number) =>
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
@@ -278,38 +277,17 @@ export default async function FinancialsPage({
 
   const subtitle = `${profile.name}${profile.ticker ? ` (${profile.ticker})` : ""} · ${formatQuarterLabelLong(latest.quarter)}`;
 
-  // Compact source / provenance line. Hostname only — keeps the line tight
-  // while making the source unambiguous (screener.in for P&L, AMFI for AAUM).
-  const pnlSourceHost = (() => {
-    try {
-      return new URL(amcQuarterlySnapshot.meta.source).hostname.replace(
-        /^www\./,
-        ""
-      );
-    } catch {
-      return amcQuarterlySnapshot.meta.source;
-    }
-  })();
-  const pnlSourceDate = new Date(amcQuarterlySnapshot.meta.generatedAt)
-    .toISOString()
-    .slice(0, 10);
-  const aaumSourceDate = new Date(amcAaumQuarterlySnapshot.meta.generatedAt)
-    .toISOString()
-    .slice(0, 10);
-  const provenanceLine = `P&L: ${pnlSourceHost} · ${pnlSourceDate} · MF QAAUM: AMFI · ${aaumSourceDate}`;
-  // When the selected period is a derived row (e.g. icici-pru 2025-Q2),
-  // swap the provenance note so it's clear this value isn't a direct
-  // scrape. Truncate the long derivation note to the headline sentence
-  // for the KPI caption.
+  // PR #98: visible "Source: ..." captions and the top-of-page
+  // provenance line were retired from /financials. We keep the
+  // derivedHeadline computation so a derived row (e.g. ICICI Pru
+  // 2025-Q2 reconstructed from 9M FY26 minus reported quarters)
+  // still carries a "Derived · <reason>" methodology note on the
+  // KPI caption — that's a data-quality flag, not a source label.
   const derivedHeadline = latest.derivedFrom
     ? latest.derivedFrom.split(".")[0].trim() + "."
     : null;
-  const pnlNote = derivedHeadline
-    ? `Source: derived · ${derivedHeadline}`
-    : liveScreenerNote();
-  const yieldNote = derivedHeadline
-    ? `P&L: derived · ${derivedHeadline} · MF QAAUM: AMFI · ${aaumSourceDate}`
-    : liveYieldNote();
+  const pnlNote = derivedHeadline ? `Derived · ${derivedHeadline}` : "";
+  const yieldNote = derivedHeadline ? `Derived · ${derivedHeadline}` : "";
 
   return (
     <div className="space-y-6">
@@ -320,9 +298,6 @@ export default async function FinancialsPage({
         amcStatus={status}
         defaultSlug={DEFAULT_SLUG}
       />
-      <p className="-mt-2 text-[11px] tabular text-muted-foreground">
-        {provenanceLine}
-      </p>
 
       <QuarterPicker
         availableQuarters={availableQuarters}
@@ -435,7 +410,7 @@ export default async function FinancialsPage({
 
       <Card
         title="Listed-AMC Peer Comparison"
-        subtitle={`${peerRows.length} listed AMCs · ${formatQuarterLabelLong(selectedPeriod)} · P&L: screener.in${peerRows.some((p) => p.derivedFrom) ? " / derived where applicable" : ""} · AAUM: AMFI Fundwise AAUM`}
+        subtitle={`${peerRows.length} listed AMCs · ${formatQuarterLabelLong(selectedPeriod)}${peerRows.some((p) => p.derivedFrom) ? " · derived rows flagged inline" : ""}`}
       >
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -525,10 +500,10 @@ export default async function FinancialsPage({
           </table>
         </div>
         <p className="mt-3 text-[11px] tabular text-muted-foreground">
-          Sorted by AAUM descending. Highlighted row matches the AMC selected
-          above. Yields = quarterly P&L × 4 / same-quarter AMFI MF QAAUM ×
-          10,000. AAUM column shows AMFI Fundwise AAUM (₹ Cr); &quot;—&quot;
-          marks quarters with missing AAUM or P&L source data.
+          Sorted by AAUM descending. Highlighted row matches the AMC
+          selected above. Yields = quarterly P&L × 4 / same-quarter MF
+          AAUM × 10,000. AAUM column in ₹ Cr; &quot;—&quot; marks
+          quarters with missing AAUM or P&L data.
         </p>
       </Card>
     </div>
