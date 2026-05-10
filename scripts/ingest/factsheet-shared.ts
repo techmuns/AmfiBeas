@@ -94,6 +94,17 @@ export interface AmcStrategy {
    *  diagnostics lets the next strategy iteration target the
    *  right section without a re-run. */
   diagnosticsPageRange?: [number, number];
+  /** Optional: build a list of direct PDF URLs to try BEFORE
+   *  scraping the listing page. Useful for AMCs whose listing
+   *  surfaces stale PDFs (Nippon — PR #91 + #92 audit found the
+   *  listing scrape grabbing July 2025 even after a March 2026
+   *  factsheet was likely published). The function is called with
+   *  the target period (YYYY-MM); when none was requested, the
+   *  driver passes the current calendar month and tries the
+   *  previous month as a fallback. Each URL is fetched via the
+   *  same browser context; the first one returning a valid PDF
+   *  body wins. */
+  directUrlCandidates?: (targetPeriod: string) => string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -381,6 +392,42 @@ export interface PdfDiagnostics {
   schemeTitleCandidates: string[];
 }
 
+/** Diagnostic record of how the fetcher chose its source PDF.
+ *  Surfaces in the audit JSON so the next iteration can see exactly
+ *  which links were considered and why a particular one won — vital
+ *  when the listing scrape returns a stale PDF (Nippon PR #91 audit
+ *  found July 2025 picked even though March 2026 may have existed
+ *  under a different filename). */
+export interface LinkDiagnostics {
+  /** Target period the driver aimed for (`requestedPeriod` env var
+   *  or, when blank, current calendar month). */
+  targetPeriod: string;
+  /** Direct URLs tried before listing scrape — only populated when
+   *  the strategy supplies `directUrlCandidates`. */
+  triedDirectUrls: {
+    url: string;
+    ok: boolean;
+    status?: number;
+    bytes?: number;
+    reason?: string;
+    selected?: boolean;
+  }[];
+  /** Every candidate from the listing-page scrape, with the parsed
+   *  period and the picker's verdict. */
+  listingCandidates: {
+    href: string;
+    text: string;
+    periodFromHref: string | null;
+    periodFromText: string | null;
+    finalPeriod: string | null;
+    selected: boolean;
+    rejectionReason?: string;
+  }[];
+  chosenSource: "direct" | "listing" | "none";
+  chosenUrl: string | null;
+  chosenReason: string;
+}
+
 export interface AmcAuditResult {
   amcSlug: string;
   amcName: string;
@@ -409,6 +456,12 @@ export interface AmcAuditResult {
   notes: string[];
   failureReason?: string;
   diagnostics?: PdfDiagnostics;
+  /** Compact list of scheme names that were INCLUDED — easier to
+   *  cross-reference against expected universe than reading
+   *  includedSchemes (which carries full row objects). */
+  parsedSchemeNames?: string[];
+  /** Fetcher choice trace — see LinkDiagnostics. */
+  linkDiagnostics?: LinkDiagnostics;
 }
 
 // ---------------------------------------------------------------------------
@@ -1012,6 +1065,17 @@ interface FetchResult {
   sourceUrl: string;
   sourceFile: string;
   periodHint: string | null;
+  linkDiagnostics?: LinkDiagnostics;
+}
+
+/** Wrapper around FetchResult so the fetcher can propagate
+ *  `linkDiagnostics` to the caller even when the fetch fails (e.g.
+ *  listing scrape worked but download died, or all direct URLs
+ *  404'd — both cases still produce a useful diagnostics trail). */
+interface FetchOutcome {
+  result: FetchResult | null;
+  linkDiagnostics?: LinkDiagnostics;
+  failureReason?: string;
 }
 
 const T = {
@@ -1021,12 +1085,128 @@ const T = {
   pdfDownload: 60_000,
 };
 
+function currentMonthYYYYMM(): string {
+  const d = new Date();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+/** Pick the best listing candidate. Rules (PR #92):
+ *   1. If `requestedPeriod` is set and exactly matches, take it.
+ *   2. Filter out candidates older than (latest-year-seen) — if any
+ *      2026 candidate exists, never fall back to 2025. This is the
+ *      anti-staleness rule that prevents Nippon's listing scrape
+ *      from grabbing July 2025 when the latest is later.
+ *   3. Among remaining, pick the highest period.
+ *   4. Tie-break: first listed.
+ */
+type ListingCandidate = {
+  href: string;
+  text: string;
+  periodFromHref: string | null;
+  periodFromText: string | null;
+  finalPeriod: string | null;
+};
+function selectListingCandidate(
+  candidates: ListingCandidate[],
+  requestedPeriod: string | null
+): { selected: ListingCandidate | null; reason: string; rejections: Map<ListingCandidate, string> } {
+  const rejections = new Map<ListingCandidate, string>();
+  if (candidates.length === 0) {
+    return { selected: null, reason: "no-listing-candidates", rejections };
+  }
+  if (requestedPeriod) {
+    const exact = candidates.find((c) => c.finalPeriod === requestedPeriod);
+    if (exact) return { selected: exact, reason: `exact-target-match-${requestedPeriod}`, rejections };
+  }
+  const withPeriod = candidates.filter((c) => c.finalPeriod !== null);
+  if (withPeriod.length === 0) {
+    return { selected: candidates[0], reason: "no-period-detected-fallback-first", rejections };
+  }
+  const years = withPeriod.map((c) => Number(c.finalPeriod!.split("-")[0]));
+  const maxYear = Math.max(...years);
+  const stale = withPeriod.filter((c) => Number(c.finalPeriod!.split("-")[0]) < maxYear);
+  for (const c of stale) {
+    rejections.set(c, `older-year-${c.finalPeriod} (newest seen: ${maxYear})`);
+  }
+  const fresh = withPeriod
+    .filter((c) => Number(c.finalPeriod!.split("-")[0]) === maxYear)
+    .sort((a, b) => (b.finalPeriod ?? "").localeCompare(a.finalPeriod ?? ""));
+  return {
+    selected: fresh[0],
+    reason: `latest-from-year-${maxYear}-period-${fresh[0].finalPeriod}`,
+    rejections,
+  };
+}
+
+/** Try direct PDF URLs supplied by the strategy. Returns the first
+ *  one that downloads as a real PDF (status 200, content-type
+ *  contains "pdf", body > 1 KB). */
+async function tryDirectUrls(
+  strategy: AmcStrategy,
+  ctx: import("playwright").BrowserContext,
+  targetPeriod: string,
+  cacheDir: string
+): Promise<{
+  result: FetchResult | null;
+  tried: LinkDiagnostics["triedDirectUrls"];
+}> {
+  const tried: LinkDiagnostics["triedDirectUrls"] = [];
+  if (!strategy.directUrlCandidates) return { result: null, tried };
+  const urls = strategy.directUrlCandidates(targetPeriod);
+  for (const url of urls) {
+    try {
+      const resp = await ctx.request.get(url, { timeout: T.pdfDownload });
+      const status = resp.status();
+      const ct = resp.headers()["content-type"] ?? "";
+      if (status !== 200 || !/pdf/i.test(ct)) {
+        tried.push({
+          url,
+          ok: false,
+          status,
+          reason: `HTTP ${status} content-type=${ct || "unknown"}`,
+        });
+        continue;
+      }
+      const buffer = Buffer.from(await resp.body());
+      if (buffer.length < 1024) {
+        tried.push({
+          url,
+          ok: false,
+          status,
+          bytes: buffer.length,
+          reason: "PDF body suspiciously small (< 1KB)",
+        });
+        continue;
+      }
+      tried.push({ url, ok: true, status, bytes: buffer.length, selected: true });
+      await fs.mkdir(cacheDir, { recursive: true });
+      const sourceFile = path.join(cacheDir, `${targetPeriod}.pdf`);
+      await fs.writeFile(sourceFile, buffer);
+      info(
+        `${strategy.amcSlug}: direct URL hit ${url} (${buffer.length} bytes), period=${targetPeriod}`
+      );
+      return {
+        result: {
+          buffer,
+          sourceUrl: url,
+          sourceFile,
+          periodHint: targetPeriod,
+        },
+        tried,
+      };
+    } catch (err) {
+      tried.push({ url, ok: false, reason: (err as Error).message });
+    }
+  }
+  return { result: null, tried };
+}
+
 export async function fetchLatestFactsheetPdf(
   strategy: AmcStrategy,
   browser: Browser,
   cacheDir: string,
   requestedPeriod: string | null = null
-): Promise<FetchResult | null> {
+): Promise<FetchOutcome> {
   let ctx;
   try {
     ctx = await browser.newContext({
@@ -1034,22 +1214,76 @@ export async function fetchLatestFactsheetPdf(
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
     });
   } catch (err) {
-    warn(`${strategy.amcSlug}: browser.newContext failed: ${(err as Error).message}`);
-    return null;
+    const msg = `browser.newContext failed: ${(err as Error).message}`;
+    warn(`${strategy.amcSlug}: ${msg}`);
+    return { result: null, failureReason: msg };
   }
   const page: Page = await ctx.newPage();
 
+  // Build the target period for direct-URL probing — explicit
+  // requestedPeriod wins; otherwise default to current calendar
+  // month (then try previous month as a fallback).
+  const allTargetPeriods: string[] = [];
+  if (requestedPeriod) allTargetPeriods.push(requestedPeriod);
+  else {
+    const cur = currentMonthYYYYMM();
+    allTargetPeriods.push(cur);
+    const [y, m] = cur.split("-").map(Number);
+    const prevMonth = m === 1 ? 12 : m - 1;
+    const prevYear = m === 1 ? y - 1 : y;
+    allTargetPeriods.push(
+      `${prevYear}-${String(prevMonth).padStart(2, "0")}`
+    );
+  }
+
+  const linkDiag: LinkDiagnostics = {
+    targetPeriod: allTargetPeriods[0],
+    triedDirectUrls: [],
+    listingCandidates: [],
+    chosenSource: "none",
+    chosenUrl: null,
+    chosenReason: "no-source-resolved",
+  };
+
   try {
+    // ---- Direct URL probing (PR #92) ----
+    if (strategy.directUrlCandidates) {
+      for (const target of allTargetPeriods) {
+        info(`${strategy.amcSlug}: probing direct URLs for target=${target}`);
+        const { result, tried } = await tryDirectUrls(
+          strategy,
+          ctx,
+          target,
+          cacheDir
+        );
+        linkDiag.triedDirectUrls.push(...tried);
+        if (result) {
+          linkDiag.chosenSource = "direct";
+          linkDiag.chosenUrl = result.sourceUrl;
+          linkDiag.chosenReason = `direct-url-hit-target-${target}`;
+          return {
+            result: { ...result, linkDiagnostics: linkDiag },
+            linkDiagnostics: linkDiag,
+          };
+        }
+      }
+    }
+
+    // ---- Listing-page scrape ----
     info(`${strategy.amcSlug}: opening listing ${strategy.listingUrl}`);
     const resp = await page.goto(strategy.listingUrl, {
       waitUntil: "domcontentloaded",
       timeout: T.pageGoto,
     });
     if (!resp || !resp.ok()) {
-      warn(
-        `${strategy.amcSlug}: listing HTTP ${resp?.status() ?? "no-response"}`
-      );
-      return null;
+      const httpStatus = resp?.status() ?? "no-response";
+      warn(`${strategy.amcSlug}: listing HTTP ${httpStatus}`);
+      linkDiag.chosenReason = `listing-fetch-failed-http-${httpStatus}`;
+      return {
+        result: null,
+        linkDiagnostics: linkDiag,
+        failureReason: `Listing HTTP ${httpStatus}`,
+      };
     }
     if (strategy.waitListingSelector) {
       await page
@@ -1058,7 +1292,6 @@ export async function fetchLatestFactsheetPdf(
         })
         .catch(() => {});
     } else {
-      // Generic wait — let any anchor tag render.
       await page.waitForSelector("a[href]", { timeout: T.waitListing }).catch(() => {});
     }
 
@@ -1079,61 +1312,94 @@ export async function fetchLatestFactsheetPdf(
     info(`${strategy.amcSlug}: ${links.length} factsheet PDF link(s) found`);
     if (links.length === 0) {
       warn(`${strategy.amcSlug}: no factsheet PDF links on listing page`);
-      return null;
+      linkDiag.chosenReason = "no-listing-pdf-links";
+      return {
+        result: null,
+        linkDiagnostics: linkDiag,
+        failureReason: "No factsheet PDF links on listing page",
+      };
     }
 
-    const dated = links
-      .map((l) => {
-        const fromHref = strategy.periodFromHref(l.href);
-        const fromText = strategy.periodFromLinkText
-          ? strategy.periodFromLinkText(l.text)
-          : null;
-        return { ...l, period: fromHref ?? fromText ?? null };
-      })
-      .sort((a, b) => (b.period ?? "").localeCompare(a.period ?? ""));
+    const candidates: ListingCandidate[] = links.map((l) => {
+      const fromHref = strategy.periodFromHref(l.href);
+      const fromText = strategy.periodFromLinkText
+        ? strategy.periodFromLinkText(l.text)
+        : null;
+      return {
+        href: l.href,
+        text: l.text,
+        periodFromHref: fromHref,
+        periodFromText: fromText,
+        finalPeriod: fromHref ?? fromText ?? null,
+      };
+    });
 
-    let candidate: (typeof dated)[number] | undefined;
-    if (requestedPeriod) {
-      candidate = dated.find((l) => l.period === requestedPeriod);
-      if (!candidate) {
-        warn(
-          `${strategy.amcSlug}: no factsheet PDF for requested period "${requestedPeriod}". Available: [${dated
-            .map((l) => l.period ?? "—")
-            .slice(0, 8)
-            .join(", ")}]`
-        );
-        return null;
-      }
-    } else {
-      candidate = dated[0];
+    const { selected, reason, rejections } = selectListingCandidate(
+      candidates,
+      requestedPeriod
+    );
+    // Cap to the first 30 to keep the JSON manageable.
+    linkDiag.listingCandidates = candidates.slice(0, 30).map((c) => ({
+      ...c,
+      selected: c === selected,
+      rejectionReason: rejections.get(c),
+    }));
+    linkDiag.chosenReason = reason;
+
+    if (!selected) {
+      warn(`${strategy.amcSlug}: no listing candidate selected — ${reason}`);
+      return {
+        result: null,
+        linkDiagnostics: linkDiag,
+        failureReason: `No listing candidate selected — ${reason}`,
+      };
     }
-    info(`${strategy.amcSlug}: chosen ${candidate.href} (period=${candidate.period})`);
+    info(
+      `${strategy.amcSlug}: chosen ${selected.href} (period=${selected.finalPeriod}) — ${reason}`
+    );
 
-    const dlResp = await ctx.request.get(candidate.href, {
+    const dlResp = await ctx.request.get(selected.href, {
       timeout: T.pdfDownload,
     });
     if (!dlResp.ok()) {
       warn(`${strategy.amcSlug}: PDF download HTTP ${dlResp.status()}`);
-      return null;
+      linkDiag.chosenReason = `${reason}-but-download-failed-http-${dlResp.status()}`;
+      return {
+        result: null,
+        linkDiagnostics: linkDiag,
+        failureReason: `PDF download HTTP ${dlResp.status()} after listing pick (${reason})`,
+      };
     }
     const buffer = Buffer.from(await dlResp.body());
     info(`${strategy.amcSlug}: downloaded ${buffer.length} bytes`);
 
     await fs.mkdir(cacheDir, { recursive: true });
-    const filename = `${candidate.period ?? "unknown"}.pdf`;
+    const filename = `${selected.finalPeriod ?? "unknown"}.pdf`;
     const sourceFile = path.join(cacheDir, filename);
     await fs.writeFile(sourceFile, buffer);
     info(`${strategy.amcSlug}: cached to ${sourceFile}`);
 
+    linkDiag.chosenSource = "listing";
+    linkDiag.chosenUrl = selected.href;
     return {
-      buffer,
-      sourceUrl: candidate.href,
-      sourceFile,
-      periodHint: candidate.period,
+      result: {
+        buffer,
+        sourceUrl: selected.href,
+        sourceFile,
+        periodHint: selected.finalPeriod,
+        linkDiagnostics: linkDiag,
+      },
+      linkDiagnostics: linkDiag,
     };
   } catch (err) {
-    warn(`${strategy.amcSlug}: ${(err as Error).message}`);
-    return null;
+    const msg = (err as Error).message;
+    warn(`${strategy.amcSlug}: ${msg}`);
+    linkDiag.chosenReason = `exception: ${msg}`;
+    return {
+      result: null,
+      linkDiagnostics: linkDiag,
+      failureReason: msg,
+    };
   } finally {
     await ctx.close().catch(() => {});
   }
@@ -1176,7 +1442,8 @@ export async function runFactsheetStrategy(
   const baseFailed = (
     failureReason: string,
     sourceUrl: string | null = null,
-    sourceFile: string | null = null
+    sourceFile: string | null = null,
+    linkDiagnostics?: LinkDiagnostics
   ): AmcAuditResult => ({
     amcSlug: strategy.amcSlug,
     amcName: strategy.amcName,
@@ -1204,9 +1471,11 @@ export async function runFactsheetStrategy(
     warnings: [],
     notes: [failureReason],
     failureReason,
+    linkDiagnostics,
   });
 
   let fetched: FetchResult | null;
+  let linkDiag: LinkDiagnostics | undefined;
   if (opts.localPdfPath) {
     fetched = await loadLocalPdf(opts.localPdfPath);
     if (!fetched) {
@@ -1224,19 +1493,23 @@ export async function runFactsheetStrategy(
         null
       );
     }
-    fetched = await fetchLatestFactsheetPdf(
+    const outcome = await fetchLatestFactsheetPdf(
       strategy,
       browser,
       opts.cacheDir,
       opts.requestedPeriod ?? null
     );
-    if (!fetched) {
+    linkDiag = outcome.linkDiagnostics;
+    if (!outcome.result) {
       return baseFailed(
-        `Failed to fetch latest factsheet from ${strategy.listingUrl} (WAF / no matching link / network).`,
+        outcome.failureReason ??
+          `Failed to fetch latest factsheet from ${strategy.listingUrl} (WAF / no matching link / network).`,
         strategy.listingUrl,
-        null
+        null,
+        linkDiag
       );
     }
+    fetched = outcome.result;
   }
 
   // --- Parse PDF ---
@@ -1417,6 +1690,21 @@ export async function runFactsheetStrategy(
     notes.push(failureReason);
   }
 
+  // Stale-source note — when the chosen factsheet's year is older
+  // than the current year (and no requestedPeriod was set), surface
+  // that the latest discoverable PDF was older than expected. Helps
+  // distinguish "AMC really hasn't published a newer factsheet" from
+  // "our fetcher missed a newer one".
+  if (
+    !opts.requestedPeriod &&
+    periodEnd &&
+    Number(periodEnd.split("-")[0]) < new Date().getUTCFullYear()
+  ) {
+    notes.push(
+      `Latest discovered ${strategy.amcSlug} factsheet is ${periodEnd}; no ${new Date().getUTCFullYear()} candidate found via direct URLs or listing scrape.`
+    );
+  }
+
   info(
     `${strategy.amcSlug}: parsed=${dedupedEntries.length} included=${included.length} excluded=${excluded.length}; ` +
       `1Y ${e1.beatN}/${e1.eligibleN} (${e1.pct ?? "—"}%) · ` +
@@ -1452,6 +1740,8 @@ export async function runFactsheetStrategy(
     notes,
     failureReason,
     diagnostics,
+    parsedSchemeNames: included.map((r) => r.schemeName),
+    linkDiagnostics: linkDiag ?? fetched.linkDiagnostics,
   };
 }
 
