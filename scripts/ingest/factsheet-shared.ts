@@ -267,6 +267,17 @@ export interface ParsedSchemeRow {
   outperformed5Y: boolean | null;
   pageNum: number;
   textSnippet: string;
+  /** Per-scheme parser debug (PR #91). Captures the EXACT lines the
+   *  parser identified as the Fund and Benchmark rows + the raw
+   *  number arrays it extracted. Lets the next iteration tell at a
+   *  glance whether the parser locked onto the right lines or grabbed
+   *  some shared header / NAV / inception text by mistake. */
+  parserDebug?: {
+    rawFundLine?: string;
+    rawBenchmarkLine?: string;
+    fundNumbersRaw?: (number | null)[];
+    benchmarkNumbersRaw?: (number | null)[];
+  };
 }
 
 export interface ExcludedScheme {
@@ -546,6 +557,11 @@ function parsePerformanceSection(
     classifyCategory(titleCandidate) ??
     classifyCategory(detectCategoryHintLine(section.pageHeaderText) ?? "");
 
+  const hasAnyDebug =
+    extracted.rawFundLine !== undefined ||
+    extracted.rawBenchmarkLine !== undefined ||
+    (extracted.fundNumbersRaw && extracted.fundNumbersRaw.length > 0) ||
+    (extracted.benchmarkNumbersRaw && extracted.benchmarkNumbersRaw.length > 0);
   const row: ParsedSchemeRow = {
     schemeName: titleCandidate,
     schemeNameRaw: titleCandidate,
@@ -563,6 +579,16 @@ function parsePerformanceSection(
     outperformed5Y: outperformed(s5Y, b5Y),
     pageNum: section.pageNum,
     textSnippet: `${titleCandidate} | ${section.text.slice(0, 320)}`,
+    ...(hasAnyDebug
+      ? {
+          parserDebug: {
+            rawFundLine: extracted.rawFundLine,
+            rawBenchmarkLine: extracted.rawBenchmarkLine,
+            fundNumbersRaw: extracted.fundNumbersRaw,
+            benchmarkNumbersRaw: extracted.benchmarkNumbersRaw,
+          },
+        }
+      : {}),
   };
   const context: SectionContext = {
     pageHeaderSnippet: section.pageHeaderText.slice(-800),
@@ -581,6 +607,11 @@ interface ExtractedReturns {
   b1Y: number | null;
   b3Y: number | null;
   b5Y: number | null;
+  /** Per-row parser debug — surfaces in ParsedSchemeRow.parserDebug. */
+  rawFundLine?: string;
+  rawBenchmarkLine?: string;
+  fundNumbersRaw?: (number | null)[];
+  benchmarkNumbersRaw?: (number | null)[];
 }
 
 /** HDFC layout — each table row is a TIME PERIOD ("Last 1 Year",
@@ -631,16 +662,18 @@ function extractRowByPeriod(
 /** Nippon layout — each row is an ENTITY (Fund / Benchmark /
  *  Additional Benchmark); periods are the COLUMNS. Each period
  *  column has two sub-columns (Amount in ₹ + Returns %). RE_CAGR
- *  requires a decimal so amounts (whole-rupee comma figures) are
- *  filtered out — the first 3 decimal numbers per row are reliably
+ *  requires a decimal so whole-rupee comma figures (Amounts) are
+ *  filtered out; the first 3 decimal numbers per row are reliably
  *  (1Y, 3Y, 5Y) returns.
  *
- *  Heuristic: walk lines after the section header. The Fund row is
- *  the first decimal-bearing line whose label-portion contains the
- *  brand prefix or "Fund" / "Scheme". The Benchmark row is the
- *  next decimal-bearing line carrying a benchmark token (NIFTY,
- *  BSE, CRISIL, …) or starting with "Benchmark". "Additional"
- *  benchmark rows are skipped. */
+ *  PR #91 — POSITION-based (was keyword-based). PR #90's keyword
+ *  walker matched on /\bFund\b|\bScheme\b|\bNAV\b/ which fired on
+ *  too many false positives — three different Nippon scheme pages
+ *  ended up with identical 1Y=7 and 3Y=17.85 because the walker
+ *  picked an unrelated NAV / inception line. The new approach skips
+ *  known-header lines explicitly, then takes the first decimal-
+ *  bearing line as Fund and the next as Benchmark, with explicit
+ *  swap if the order looks reversed (rare). */
 function extractRowByEntity(
   section: PerformanceSection
 ): ExtractedReturns | null {
@@ -649,53 +682,64 @@ function extractRowByEntity(
     .map((l) => l.trim())
     .filter((l) => l.length > 0);
 
-  let fundNums: (number | null)[] = [];
-  let benchmarkNums: (number | null)[] = [];
-  let foundFund = false;
-  let foundBenchmark = false;
+  // Header / sub-header / decoration lines that should never be
+  // interpreted as data, even if they contain decimal numbers.
+  const isHeaderLine = (l: string): boolean =>
+    /Amount\s+in\s+₹|Value\s+of\s+₹|1\s+Year\s+3\s+Year|3\s+Year\s+5\s+Year|Inception\s+Date|Returns\s*\(\s*%\s*\)|Fund\s*\/\s*Benchmark/i.test(
+      l
+    );
+  // NAV / inception "as on" decoration lines — usually contain a
+  // single small decimal (the per-unit NAV) plus a date but are NOT
+  // the returns row. Heuristic: line starts with "NAV" / "Inception"
+  // / "Date of" and has < 5 decimal numbers.
+  const looksLikeNavDecoration = (l: string, nums: number): boolean => {
+    if (nums >= 5) return false; // a real returns row has 4+ decimals usually
+    return /^(?:NAV|Inception(?:\s+Date)?|Date\s+of\s+Inception|As\s+on)/i.test(l);
+  };
+  // "Additional benchmark" cue.
+  const isAdditional = (l: string): boolean =>
+    /\bAdditional\s+Benchmark\b/i.test(l) ||
+    /\bAdd['’]?l\.?\s+Benchmark\b/i.test(l) ||
+    /^\s*AB\b/i.test(l);
+  const benchmarkTokenRe =
+    /\b(?:Benchmark|S&P|BSE|NIFTY|Nifty|CRISIL|MSCI|FTSE|Sensex|TRI)\b/i;
 
-  for (let i = 0; i < lines.length; i++) {
+  // Walk lines starting after line 0 (the marker). Skip headers /
+  // decorations. Collect the first 3 decimal-bearing data rows.
+  const dataRows: { line: string; nums: (number | null)[]; hasBenchmarkToken: boolean; isAdditional: boolean }[] = [];
+  for (let i = 1; i < lines.length && dataRows.length < 4; i++) {
     const l = lines[i];
-    // Skip column header lines explicitly — they often contain
-    // "1 Year", "3 Year" etc which we don't want to classify as data.
-    if (/Amount\s+in\s+₹|Value\s+of\s+₹\s*10|1\s+Year\s+3\s+Year|Inception\s+Date/i.test(l)) {
-      continue;
-    }
-    // Merge with next line — Nippon often wraps long fund names + numbers.
+    if (isHeaderLine(l)) continue;
     const merged = [l, lines[i + 1] ?? ""].join(" ").replace(/\s+/g, " ");
     const nums = extractNumbers(merged);
     if (nums.length < 3) continue;
-
-    const isAdditional =
-      /\bAdditional\s+Benchmark\b/i.test(merged) ||
-      /\bAdd['’]?l\.?\s+Benchmark\b/i.test(merged);
-    if (isAdditional) continue;
-
-    const isBenchmark =
-      !foundFund || foundFund
-        ? /\b(?:Benchmark|S&P|BSE|NIFTY|Nifty|CRISIL|MSCI|FTSE|Sensex|TRI)\b/i.test(
-            merged
-          ) && !/\bFund\s+Manager\b/i.test(merged)
-        : false;
-    const isFundLine =
-      !foundFund &&
-      (/\bNAV\b/i.test(merged) ||
-        /\bFund\b/i.test(merged) ||
-        /\bScheme\b/i.test(merged));
-
-    if (!foundFund && isFundLine && !isBenchmark) {
-      fundNums = nums;
-      foundFund = true;
-      continue;
-    }
-    if (foundFund && !foundBenchmark && isBenchmark) {
-      benchmarkNums = nums;
-      foundBenchmark = true;
-      break;
-    }
+    if (looksLikeNavDecoration(l, nums.length)) continue;
+    dataRows.push({
+      line: merged.slice(0, 240),
+      nums,
+      hasBenchmarkToken: benchmarkTokenRe.test(merged),
+      isAdditional: isAdditional(merged),
+    });
   }
 
-  if (!foundFund && !foundBenchmark) return null;
+  // Identify Fund + Benchmark from the collected rows.
+  // Strategy:
+  //   - Drop rows flagged as "Additional Benchmark".
+  //   - Fund row = first non-additional row WITHOUT a benchmark token.
+  //   - Benchmark row = first non-additional row WITH a benchmark token.
+  //   - If neither classification succeeds, fall back to natural
+  //     position: dataRows[0] = Fund, dataRows[1] = Benchmark.
+  const filtered = dataRows.filter((r) => !r.isAdditional);
+  const fundRow = filtered.find((r) => !r.hasBenchmarkToken) ?? filtered[0];
+  const benchmarkRow =
+    filtered.find((r) => r.hasBenchmarkToken && r !== fundRow) ?? filtered[1];
+
+  const fundNums = fundRow?.nums ?? [];
+  const benchmarkNums = benchmarkRow?.nums ?? [];
+  const rawFundLine = fundRow?.line;
+  const rawBenchmarkLine = benchmarkRow?.line;
+
+  if (!fundRow && !benchmarkRow) return null;
 
   return {
     s1Y: fundNums[0] ?? null,
@@ -704,6 +748,10 @@ function extractRowByEntity(
     b1Y: benchmarkNums[0] ?? null,
     b3Y: benchmarkNums[1] ?? null,
     b5Y: benchmarkNums[2] ?? null,
+    rawFundLine,
+    rawBenchmarkLine,
+    fundNumbersRaw: fundNums,
+    benchmarkNumbersRaw: benchmarkNums,
   };
 }
 
