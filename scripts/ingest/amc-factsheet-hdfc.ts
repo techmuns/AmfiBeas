@@ -67,7 +67,7 @@
  * old) the scheme is dropped from that period's denominator — never
  * counted as a non-outperformer.
  *
- * ### Parser strategy (PRs #84 → #85)
+ * ### Parser strategy (PRs #84 → #85 → #86)
  *
  * Anchor on HDFC's literal section header — "PERFORMANCE ^ -
  * Regular Plan - Growth Option" — and reject "SIP PERFORMANCE"
@@ -214,7 +214,41 @@ const CATEGORY_SPECS: CategorySpec[] = [
   { slug: "gold-etf", label: "Gold ETF", re: /\bGold\s+ETF\b/i },
   { slug: "other-etfs", label: "Other ETF", re: /\bETF\b/i },
   { slug: "fof-overseas", label: "Fund of Funds (Overseas)", re: /\bFund\s+of\s+Funds?\b.*\b(?:overseas|international)\b/i },
-  // Eligible — Growth/Equity
+
+  // ----- Eligible — Solution-oriented (CHECKED FIRST among eligible) -----
+  // Retirement / Children's are checked before any hybrid regex so
+  // schemes like "HDFC Retirement Savings Fund - Hybrid Debt Plan"
+  // are tagged "retirement", not captured by conservative-hybrid's
+  // "Hybrid\s+Debt" alternative.
+  { slug: "retirement", label: "Retirement Fund", re: /\bRetirement\b/i },
+  { slug: "childrens", label: "Children's Fund", re: /\bChildren'?s?\b.*\b(?:Fund|Gift)\b/i },
+
+  // ----- Eligible — ELSS (CHECKED BEFORE sectoral-thematic) -----
+  // "HDFC ELSS Tax Saver" must classify as ELSS, not sectoral. The
+  // sectoral regex below no longer carries a "Tax Saver" alternative
+  // (handled here exclusively).
+  { slug: "elss", label: "ELSS", re: /\b(?:ELSS|Tax[\s-]?Saver)\b/i },
+
+  // ----- Eligible — Hybrid -----
+  // BAF/DAA includes "Balanced Advantage" — per SEBI taxonomy,
+  // Balanced Advantage Fund and Dynamic Asset Allocation Fund are
+  // the same category. CHECKED BEFORE balanced-aggressive-hybrid so
+  // "Balanced Advantage" doesn't fall into the Aggressive Hybrid
+  // bucket.
+  { slug: "baf-daa", label: "Dynamic Asset Allocation / BAF", re: /\b(?:Balanced\s+Advantage|Dynamic\s+Asset\s+Allocation|Dynamic\s+PE)\b/i },
+  // balanced-aggressive-hybrid covers "Aggressive Hybrid" /
+  // "Balanced Hybrid" / "Hybrid Equity Fund" (HDFC's name for the
+  // aggressive-hybrid category). The negative lookahead on
+  // "Hybrid\s+Equity" excludes "Hybrid Equity Debt" which falls
+  // under conservative-hybrid below.
+  { slug: "balanced-aggressive-hybrid", label: "Balanced / Aggressive Hybrid Fund", re: /\b(?:Aggressive\s+Hybrid|Balanced\s+Hybrid|Hybrid\s+Equity(?!\s+Debt))\b/i },
+  { slug: "conservative-hybrid", label: "Conservative Hybrid Fund", re: /\b(?:Conservative\s+Hybrid|Hybrid\s+Debt|Hybrid\s+Equity\s+Debt)\b/i },
+  { slug: "multi-asset", label: "Multi Asset Allocation Fund", re: /\bMulti[\s-]?Asset\b/i },
+  { slug: "equity-savings", label: "Equity Savings Fund", re: /\bEquity\s+Savings?\b/i },
+
+  // ----- Eligible — Growth/Equity -----
+  // sectoral-thematic LAST because it's the broadest equity catchall.
+  // No longer carries "Tax Saver" — handled by ELSS above.
   { slug: "large-mid-cap", label: "Large & Mid Cap Fund", re: /\bLarge\s*(?:&|and)\s*Mid\s+Cap\b/i },
   { slug: "flexi-cap", label: "Flexi Cap Fund", re: /\bFlexi\s+Cap\b/i },
   { slug: "multi-cap", label: "Multi Cap Fund", re: /\bMulti\s+Cap\b/i },
@@ -224,17 +258,7 @@ const CATEGORY_SPECS: CategorySpec[] = [
   { slug: "dividend-yield", label: "Dividend Yield Fund", re: /\bDividend\s+Yield\b/i },
   { slug: "value-contra", label: "Value Fund / Contra Fund", re: /\b(?:Value\s+Fund|Contra\s+Fund|Capital\s+Builder\s+Value)\b/i },
   { slug: "focused", label: "Focused Fund", re: /\bFocused\b/i },
-  { slug: "sectoral-thematic", label: "Sectoral / Thematic Fund", re: /\b(?:Banking\s+(?:&|and)\s+Financial|Pharma|Healthcare|Technology|Infrastructure|Defence|MNC|FMCG|Energy|Transportation|Logistics|Consumption|Business\s+Cycle|Manufacturing|PSU|Housing|Tax\s+Saver(?!\s*-?\s*ELSS))\b/i },
-  { slug: "elss", label: "ELSS", re: /\b(?:ELSS|Tax[\s-]?Saver)\b/i },
-  // Eligible — Hybrid (Arbitrage already matched above + excluded)
-  { slug: "balanced-aggressive-hybrid", label: "Balanced / Aggressive Hybrid Fund", re: /\b(?:Balanced\s+Advantage|Aggressive\s+Hybrid|Balanced\s+Hybrid)\b/i },
-  { slug: "baf-daa", label: "Dynamic Asset Allocation / BAF", re: /\b(?:Dynamic\s+Asset\s+Allocation|Dynamic\s+PE)\b/i },
-  { slug: "conservative-hybrid", label: "Conservative Hybrid Fund", re: /\b(?:Conservative\s+Hybrid|Hybrid\s+Debt|Hybrid\s+Equity\s+Debt)\b/i },
-  { slug: "multi-asset", label: "Multi Asset Allocation Fund", re: /\bMulti[\s-]?Asset\b/i },
-  { slug: "equity-savings", label: "Equity Savings Fund", re: /\bEquity\s+Savings?\b/i },
-  // Eligible — Solution
-  { slug: "retirement", label: "Retirement Fund", re: /\bRetirement\b/i },
-  { slug: "childrens", label: "Children's Fund", re: /\bChildren'?s?\b.*\b(?:Fund|Gift)\b/i },
+  { slug: "sectoral-thematic", label: "Sectoral / Thematic Fund", re: /\b(?:Banking\s+(?:&|and)\s+Financial|Pharma|Healthcare|Technology|Infrastructure|Defence|MNC|FMCG|Energy|Transportation|Logistics|Consumption|Business\s+Cycle|Manufacturing|PSU|Housing)\b/i },
 ];
 
 function classifyCategory(
@@ -287,6 +311,13 @@ interface ExcludedScheme {
   categorySlug?: CategorySlug;
   category?: string;
   pageNum?: number;
+  /** Set on missing-benchmark exclusions so the next iteration can
+   *  see exactly what the benchmark walker saw vs what it expected. */
+  detectedSchemeTitleCandidate?: string;
+  pageHeaderSnippet?: string;
+  benchmarkHeaderSnippet?: string;
+  detectedPrimaryBenchmarkCandidate?: string | null;
+  detectedAdditionalBenchmarkCandidate?: string | null;
 }
 
 interface ParseWarning {
@@ -396,6 +427,27 @@ interface ParsedSection {
   row?: ParsedSchemeRow;
   /** Set when the section was rejected. */
   rejection?: RejectedCandidate;
+  /** Always set when row is set — debug context the eligibility
+   *  filter can promote onto an ExcludedScheme entry (e.g. when
+   *  the row's category is eligible but the benchmark name came
+   *  back null). */
+  context?: SectionContext;
+}
+
+interface SectionContext {
+  pageHeaderSnippet: string;
+  benchmarkHeaderSnippet: string;
+  detectedSchemeTitleCandidate: string | null;
+  detectedPrimaryBenchmarkCandidate: string | null;
+  detectedAdditionalBenchmarkCandidate: string | null;
+}
+
+interface BenchmarkDetection {
+  primary: string | null;
+  additional: string | null;
+  /** ~600 chars of text around the benchmark legend (the # / ##
+   *  marker lines + the immediately following lines). */
+  headerSnippet: string;
 }
 
 const PERIOD_LABELS = {
@@ -539,8 +591,8 @@ function parsePerformanceSection(section: PerformanceSection): ParsedSection {
     return { rejection: baseRejection("no-benchmark-line") };
   }
 
-  // ---- Benchmark name from the "#" legend on the page ----
-  const benchmarkName = detectBenchmarkName(section.pageFullText);
+  // ---- Benchmark name from the "#" / "##" legend on the page ----
+  const bench = detectBenchmarkName(section.pageFullText);
 
   // ---- Category — first try the title regex; fall back to scanning
   // the page header for a category-label line. ----
@@ -553,7 +605,7 @@ function parsePerformanceSection(section: PerformanceSection): ParsedSection {
     schemeNameRaw: titleCandidate,
     category: cls?.label ?? null,
     categorySlug: cls?.slug ?? null,
-    benchmarkName,
+    benchmarkName: bench.primary,
     schemeReturn1Y: s1Y,
     schemeReturn3Y: s3Y,
     schemeReturn5Y: s5Y,
@@ -566,7 +618,14 @@ function parsePerformanceSection(section: PerformanceSection): ParsedSection {
     pageNum: section.pageNum,
     textSnippet: `${titleCandidate} | ${section.text.slice(0, 320)}`,
   };
-  return { row };
+  const context: SectionContext = {
+    pageHeaderSnippet: section.pageHeaderText.slice(-800),
+    benchmarkHeaderSnippet: bench.headerSnippet,
+    detectedSchemeTitleCandidate: titleCandidate,
+    detectedPrimaryBenchmarkCandidate: bench.primary,
+    detectedAdditionalBenchmarkCandidate: bench.additional,
+  };
+  return { row, context };
 }
 
 /** Walk the page-header text BACKWARD (closest to the PERFORMANCE
@@ -624,35 +683,129 @@ function detectCategoryHintLine(headerText: string): string | null {
   return null;
 }
 
-/** Look for the HDFC "#" legend that names the primary benchmark.
- *  Examples seen in HDFC factsheets:
- *    "# NIFTY 500 TRI"
- *    "# NIFTY Smallcap 250 TRI Index"
- *    "# Benchmark: NIFTY 500 TRI"
- *    "Benchmark Index: NIFTY 500 TRI"
+/** Find both the primary and additional benchmark names from an
+ *  HDFC per-scheme page. HDFC factsheet layouts seen in March 2026:
  *
- *  We try a few patterns and return the first hit. The "##" legend
- *  is the additional benchmark and is ignored. */
-function detectBenchmarkName(pageText: string): string | null {
-  const candidatePatterns = [
-    // Lines beginning with a single "#" followed by a benchmark name.
-    /^\s*#\s*(?!#)([^\n]{3,80})$/m,
-    // "# Benchmark: <name>" / "Benchmark Index: <name>" / "Scheme
-    // Benchmark: <name>".
-    /(?:^|\n)\s*(?:Benchmark\s+Index|Scheme\s+Benchmark|#\s*Benchmark)\s*[:\-]\s*([^\n]{3,80})/i,
-  ];
-  for (const re of candidatePatterns) {
-    const m = pageText.match(re);
-    if (!m) continue;
-    const raw = (m[1] || "").trim();
-    if (!raw) continue;
-    if (!RE_BENCHMARK_TOKEN.test(raw)) continue; // must contain a real index token
-    return raw
-      .replace(/^\s*[-–]\s*/, "")
-      .replace(/\s+/g, " ")
-      .trim();
+ *    A.  #BENCHMARK INDEX                 (multi-line, no space after #)
+ *        NIFTY 500 (TRI)
+ *        ##ADDL. BENCHMARK INDEX
+ *        NIFTY 50 (TRI)
+ *
+ *    B.  # BENCHMARK INDEX                (multi-line, with space)
+ *        NIFTY 500 TRI
+ *
+ *    C.  # NIFTY 500 TRI                  (single-line, no BENCHMARK keyword)
+ *
+ *    D.  #BENCHMARK INDEX NIFTY 500 (TRI) (single-line, inline)
+ *
+ *  PR #85's parser only handled C; A/B/D produced null benchmarks
+ *  for every scheme. The walker below handles all four shapes. The
+ *  "##" lines are tagged as additional and never used as the
+ *  primary, but they are captured for the rejection diagnostics so
+ *  the next iteration can see what got picked vs ignored. */
+function detectBenchmarkName(pageText: string): BenchmarkDetection {
+  const lines = pageText.split(/\n+/).map((l) => l.trim());
+
+  // Markers (with "BENCHMARK INDEX" keyword)
+  const RE_PRIMARY_MARKER = /^#(?!#)\s*BENCHMARK(?:\s+INDEX)?\b/i;
+  const RE_ADDITIONAL_MARKER =
+    /^##\s*(?:ADDL\.?|ADDITIONAL)\s*\.?\s*BENCHMARK(?:\s+INDEX)?\b/i;
+  // Legacy single-line markers ("# NIFTY ..." with no BENCHMARK
+  // keyword — kept for backward compatibility).
+  const RE_LEGACY_PRIMARY =
+    /^#(?!#)\s+(?=.*\b(?:NIFTY|S&P|BSE|CRISIL|MSCI|FTSE|Sensex)\b)/i;
+  const RE_LEGACY_ADDITIONAL =
+    /^##\s+(?=.*\b(?:NIFTY|S&P|BSE|CRISIL|MSCI|FTSE|Sensex)\b)/i;
+  // Prose form: "Benchmark Index: NIFTY 500 TRI" / "Scheme
+  // Benchmark: NIFTY ...".
+  const RE_PROSE_PRIMARY =
+    /^(?:Benchmark\s+Index|Scheme\s+Benchmark)\s*[:\-]\s*/i;
+
+  let primary: string | null = null;
+  let additional: string | null = null;
+  let snippetStart = -1;
+  let snippetEnd = -1;
+
+  const trackSnippet = (i: number) => {
+    if (snippetStart === -1) snippetStart = Math.max(0, i - 1);
+    snippetEnd = Math.max(snippetEnd, Math.min(lines.length, i + 4));
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (!l) continue;
+
+    // Additional benchmark — record but never promote to primary.
+    if (
+      !additional &&
+      (RE_ADDITIONAL_MARKER.test(l) || RE_LEGACY_ADDITIONAL.test(l))
+    ) {
+      const stripped = RE_ADDITIONAL_MARKER.test(l)
+        ? l.replace(RE_ADDITIONAL_MARKER, "")
+        : l.replace(/^##\s+/, "");
+      additional = extractBenchmarkAfterMarker(stripped, lines, i);
+      trackSnippet(i);
+      continue;
+    }
+
+    // Primary benchmark.
+    if (!primary) {
+      let stripped: string | null = null;
+      if (RE_PRIMARY_MARKER.test(l)) {
+        stripped = l.replace(RE_PRIMARY_MARKER, "");
+      } else if (RE_LEGACY_PRIMARY.test(l)) {
+        stripped = l.replace(/^#\s+/, "");
+      } else if (RE_PROSE_PRIMARY.test(l)) {
+        stripped = l.replace(RE_PROSE_PRIMARY, "");
+      }
+      if (stripped !== null) {
+        primary = extractBenchmarkAfterMarker(stripped, lines, i);
+        trackSnippet(i);
+      }
+    }
+
+    if (primary && additional) break;
+  }
+
+  const headerSnippet =
+    snippetStart === -1
+      ? ""
+      : lines.slice(snippetStart, snippetEnd).join("\n").slice(0, 600);
+
+  return { primary, additional, headerSnippet };
+}
+
+/** Helper for detectBenchmarkName: given a line where the marker
+ *  prefix has already been stripped, find the actual benchmark name
+ *  either inline (rest of the line) or on one of the next 1-3
+ *  lines. Stops at the next marker line ("#..."). */
+function extractBenchmarkAfterMarker(
+  inline: string,
+  lines: string[],
+  idx: number
+): string | null {
+  // Strip a trailing "##..." in case both markers are on one line
+  // (some factsheet months smash the legend block onto one line).
+  const inlineRest = inline.replace(/##.*$/, "").replace(/[:\-]\s*/, "").trim();
+  if (inlineRest && RE_BENCHMARK_TOKEN.test(inlineRest)) {
+    return cleanBenchmarkLabel(inlineRest);
+  }
+  for (let j = idx + 1; j < Math.min(idx + 4, lines.length); j++) {
+    const next = lines[j];
+    if (!next) continue;
+    if (/^#/.test(next)) break; // hit next marker
+    if (RE_BENCHMARK_TOKEN.test(next)) {
+      return cleanBenchmarkLabel(next);
+    }
   }
   return null;
+}
+
+function cleanBenchmarkLabel(s: string): string {
+  return s
+    .replace(/^[-–:]\s*/, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /** Reject HDFC strings that start with "HDFC " but are not scheme
@@ -692,7 +845,14 @@ function outperformed(
   return scheme > benchmark;
 }
 
-function dedupeRows(rows: ParsedSchemeRow[]): ParsedSchemeRow[] {
+interface ParsedSchemeRowWithContext {
+  row: ParsedSchemeRow;
+  context: SectionContext;
+}
+
+function dedupeRows(
+  entries: ParsedSchemeRowWithContext[]
+): ParsedSchemeRowWithContext[] {
   // Direct + Regular plans share the same scheme + benchmark returns
   // (rounded). Keep one row per "scheme stem" — i.e. drop the trailing
   // "- Direct"/"- Regular" + "Growth"/"IDCW" suffixes for the dedup key.
@@ -703,14 +863,14 @@ function dedupeRows(rows: ParsedSchemeRow[]): ParsedSchemeRow[] {
       .replace(/\s+/g, " ")
       .trim()
       .toLowerCase();
-  const seen = new Map<string, ParsedSchemeRow>();
-  for (const r of rows) {
-    const stem = stemFor(r.schemeName);
+  const seen = new Map<string, ParsedSchemeRowWithContext>();
+  for (const entry of entries) {
+    const stem = stemFor(entry.row.schemeName);
     // Keep the row with the most non-null returns; tie-break on Direct
     // (since SEBI's preferred default for performance reporting).
     const prev = seen.get(stem);
     if (!prev) {
-      seen.set(stem, r);
+      seen.set(stem, entry);
       continue;
     }
     const score = (x: ParsedSchemeRow) =>
@@ -718,7 +878,7 @@ function dedupeRows(rows: ParsedSchemeRow[]): ParsedSchemeRow[] {
         (v) => v !== null
       ).length +
       (/\bDirect\b/i.test(x.schemeName) ? 0.5 : 0);
-    if (score(r) > score(prev)) seen.set(stem, r);
+    if (score(entry.row) > score(prev.row)) seen.set(stem, entry);
   }
   return Array.from(seen.values());
 }
@@ -1040,7 +1200,7 @@ export async function ingestHdfcFactsheetPoc(): Promise<void> {
   // and rejects "SIP PERFORMANCE" siblings before parsing — both
   // signals are stable across HDFC factsheet months.
   const sections = findPerformanceSections(pages);
-  const allRows: ParsedSchemeRow[] = [];
+  const allEntries: ParsedSchemeRowWithContext[] = [];
   const allWarnings: ParseWarning[] = [];
   const rejectedCandidateSamples: RejectedCandidate[] = [];
   const performancePages = new Set<number>();
@@ -1048,8 +1208,8 @@ export async function ingestHdfcFactsheetPoc(): Promise<void> {
   for (const section of sections) {
     candidateBlocksScanned += 1;
     const parsed = parsePerformanceSection(section);
-    if (parsed.row) {
-      allRows.push(parsed.row);
+    if (parsed.row && parsed.context) {
+      allEntries.push({ row: parsed.row, context: parsed.context });
       performancePages.add(section.pageNum);
       continue;
     }
@@ -1065,12 +1225,13 @@ export async function ingestHdfcFactsheetPoc(): Promise<void> {
   // Cap diagnostic samples so the audit JSON stays small.
   const rejectedCandidateSamplesCapped = rejectedCandidateSamples.slice(0, 20);
 
-  const deduped = dedupeRows(allRows);
+  const dedupedEntries = dedupeRows(allEntries);
 
   // ---- Eligibility filter + period-specific denominators ----
   const included: ParsedSchemeRow[] = [];
   const excluded: ExcludedScheme[] = [];
-  for (const r of deduped) {
+  for (const entry of dedupedEntries) {
+    const r = entry.row;
     if (!r.categorySlug) {
       excluded.push({
         schemeName: r.schemeName,
@@ -1090,12 +1251,23 @@ export async function ingestHdfcFactsheetPoc(): Promise<void> {
       continue;
     }
     if (!r.benchmarkName) {
+      // Promote the section context onto the exclusion entry so the
+      // next iteration can see exactly what the benchmark walker saw
+      // vs what it expected (per the workflow audit spec).
       excluded.push({
         schemeName: r.schemeName,
         reason: "missing-benchmark",
         categorySlug: r.categorySlug,
         category: r.category ?? undefined,
         pageNum: r.pageNum,
+        detectedSchemeTitleCandidate:
+          entry.context.detectedSchemeTitleCandidate ?? undefined,
+        pageHeaderSnippet: entry.context.pageHeaderSnippet,
+        benchmarkHeaderSnippet: entry.context.benchmarkHeaderSnippet,
+        detectedPrimaryBenchmarkCandidate:
+          entry.context.detectedPrimaryBenchmarkCandidate,
+        detectedAdditionalBenchmarkCandidate:
+          entry.context.detectedAdditionalBenchmarkCandidate,
       });
       continue;
     }
@@ -1169,7 +1341,7 @@ export async function ingestHdfcFactsheetPoc(): Promise<void> {
     sourceFile: fetched.sourceFile,
     periodEnd: periodEnd ?? null,
     fetchedAt,
-    parsedSchemeCount: deduped.length,
+    parsedSchemeCount: dedupedEntries.length,
     eligibleSchemeCount1Y: e1.eligibleN,
     eligibleSchemeCount3Y: e3.eligibleN,
     eligibleSchemeCount5Y: e5.eligibleN,
@@ -1190,14 +1362,16 @@ export async function ingestHdfcFactsheetPoc(): Promise<void> {
       `Eligibility = IIFL active-equity envelope (Sub II + Sub III ex-Arbitrage + Sub IV).`,
       `Outperformance = scheme return > primary benchmark return for the period; null on either side drops the scheme from that period's denominator.`,
       `Direct + Regular plan dedup applied; one row per scheme stem.`,
-      `Parser anchors on HDFC's literal "PERFORMANCE ^" section marker; "SIP PERFORMANCE" siblings are rejected upstream. Scheme title is detected from the page header (above the marker); benchmark name is detected from the page-level "#" legend.`,
+      `Parser anchors on HDFC's literal "PERFORMANCE ^" section marker; "SIP PERFORMANCE" siblings are rejected upstream. Scheme title is detected from the page header (above the marker).`,
+      `Benchmark name is detected from the page-level "#BENCHMARK INDEX" legend (multi-line or inline form); "##ADDL. BENCHMARK INDEX" is captured for diagnostics only and never used as primary.`,
       `Per-row extraction: each table row is a TIME PERIOD ("Last 1 Year" / "Last 3 Years" / "Last 5 Years"); the row's first three CAGR numbers are (scheme %, benchmark %, additional %). We keep scheme + benchmark.`,
+      `Category priority: Solution-oriented (retirement, childrens) → ELSS → BAF/DAA (incl. Balanced Advantage) → other hybrid → Growth/Equity → sectoral-thematic last. Avoids "ELSS Tax Saver" leaking into sectoral and "Hybrid Debt Plan" leaking into conservative-hybrid for retirement schemes.`,
     ],
     status,
   };
 
   info(
-    `hdfc-factsheet: parsed=${deduped.length} included=${included.length} excluded=${excluded.length}; ` +
+    `hdfc-factsheet: parsed=${dedupedEntries.length} included=${included.length} excluded=${excluded.length}; ` +
       `1Y ${e1.beatN}/${e1.eligibleN} (${e1.pct ?? "—"}%) · ` +
       `3Y ${e3.beatN}/${e3.eligibleN} (${e3.pct ?? "—"}%) · ` +
       `5Y ${e5.beatN}/${e5.eligibleN} (${e5.pct ?? "—"}%)`
