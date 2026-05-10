@@ -76,6 +76,24 @@ export interface AmcStrategy {
    *  their patterns here so this strategy can find the right
    *  sections without forcing a one-size-fits-all change. */
   performanceMarkerPatterns?: RegExp[];
+  /** How the per-scheme performance table is laid out. Default
+   *  ("row-by-period", HDFC) means each row is a TIME PERIOD and
+   *  the row's first 3 numbers are (scheme%, benchmark%,
+   *  additional%). "row-by-entity" (Nippon) means each row is an
+   *  ENTITY (Fund / Benchmark / Additional) and the row's first 3
+   *  decimal numbers are (1Y%, 3Y%, 5Y%) — periods are the columns. */
+  tableOrientation?: "row-by-period" | "row-by-entity";
+  /** Where the scheme name lives. Default ("page-header", HDFC)
+   *  walks the page text BEFORE the marker. "after-marker" (Nippon)
+   *  takes the first non-header line AFTER the marker that starts
+   *  with the brand prefix. */
+  schemeTitleSource?: "page-header" | "after-marker";
+  /** Optional: extra page range to capture in PdfDiagnostics when
+   *  the parser finds 0 sections. ICICI's regular-plan annexure
+   *  lives at pages 115-125 — including those snippets in the
+   *  diagnostics lets the next strategy iteration target the
+   *  right section without a re-run. */
+  diagnosticsPageRange?: [number, number];
 }
 
 // ---------------------------------------------------------------------------
@@ -484,10 +502,12 @@ function parsePerformanceSection(
     };
   }
 
-  const titleCandidate = detectSchemeTitleCandidate(
-    section.pageHeaderText,
-    strategy
-  );
+  const titleSource = strategy.schemeTitleSource ?? "page-header";
+  const titleCandidate =
+    titleSource === "after-marker"
+      ? detectSchemeTitleAfterMarker(section.text, strategy)
+      : detectSchemeTitleCandidate(section.pageHeaderText, strategy);
+
   const baseRejection = (
     reason: RejectedCandidate["reason"]
   ): RejectedCandidate => ({
@@ -506,45 +526,13 @@ function parsePerformanceSection(
   if (titleCandidate.length > 80) return { rejection: baseRejection("scheme-name-too-long") };
   if (looksLikeParagraph(titleCandidate)) return { rejection: baseRejection("scheme-name-paragraph") };
 
-  const lines = section.text
-    .split(/\n+/)
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0);
-
-  const periodRows: Partial<
-    Record<Period, { line: string; nums: (number | null)[] }>
-  > = {};
-
-  for (let i = 0; i < lines.length; i++) {
-    const l = lines[i];
-    const stripped = l.replace(/^[A-Z][a-z]{2}\s+\d{1,2},\s*\d{2,4}\s+/, "");
-    for (const [period, re] of Object.entries(PERIOD_LABELS) as [
-      Period,
-      RegExp,
-    ][]) {
-      if (periodRows[period]) continue;
-      if (!re.test(stripped)) continue;
-      const merged = [l, lines[i + 1] ?? "", lines[i + 2] ?? ""]
-        .join(" ")
-        .replace(/\s+/g, " ");
-      const nums = extractNumbers(merged);
-      if (nums.length === 0) continue;
-      periodRows[period] = { line: merged, nums };
-      break;
-    }
-  }
-
-  if (!periodRows["1Y"] && !periodRows["3Y"] && !periodRows["5Y"]) {
-    return { rejection: baseRejection("no-period-rows") };
-  }
-
-  const pickPair = (
-    nums: (number | null)[]
-  ): [number | null, number | null] =>
-    nums.length >= 3 ? [nums[0] ?? null, nums[1] ?? null] : [null, null];
-  const [s1Y, b1Y] = pickPair(periodRows["1Y"]?.nums ?? []);
-  const [s3Y, b3Y] = pickPair(periodRows["3Y"]?.nums ?? []);
-  const [s5Y, b5Y] = pickPair(periodRows["5Y"]?.nums ?? []);
+  const orientation = strategy.tableOrientation ?? "row-by-period";
+  const extracted =
+    orientation === "row-by-entity"
+      ? extractRowByEntity(section)
+      : extractRowByPeriod(section);
+  if (!extracted) return { rejection: baseRejection("no-period-rows") };
+  const { s1Y, s3Y, s5Y, b1Y, b3Y, b5Y } = extracted;
 
   if (s1Y === null && s3Y === null && s5Y === null) {
     return { rejection: baseRejection("no-scheme-numbers") };
@@ -584,6 +572,176 @@ function parsePerformanceSection(
     detectedAdditionalBenchmarkCandidate: bench.additional,
   };
   return { row, context };
+}
+
+interface ExtractedReturns {
+  s1Y: number | null;
+  s3Y: number | null;
+  s5Y: number | null;
+  b1Y: number | null;
+  b3Y: number | null;
+  b5Y: number | null;
+}
+
+/** HDFC layout — each table row is a TIME PERIOD ("Last 1 Year",
+ *  "Last 3 Years", "Last 5 Years"); the row's first 3 numbers are
+ *  (scheme%, benchmark%, additional%). Returns null when none of
+ *  the period rows were found. */
+function extractRowByPeriod(
+  section: PerformanceSection
+): ExtractedReturns | null {
+  const lines = section.text
+    .split(/\n+/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+  const periodRows: Partial<
+    Record<Period, { line: string; nums: (number | null)[] }>
+  > = {};
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    const stripped = l.replace(/^[A-Z][a-z]{2}\s+\d{1,2},\s*\d{2,4}\s+/, "");
+    for (const [period, re] of Object.entries(PERIOD_LABELS) as [
+      Period,
+      RegExp,
+    ][]) {
+      if (periodRows[period]) continue;
+      if (!re.test(stripped)) continue;
+      const merged = [l, lines[i + 1] ?? "", lines[i + 2] ?? ""]
+        .join(" ")
+        .replace(/\s+/g, " ");
+      const nums = extractNumbers(merged);
+      if (nums.length === 0) continue;
+      periodRows[period] = { line: merged, nums };
+      break;
+    }
+  }
+  if (!periodRows["1Y"] && !periodRows["3Y"] && !periodRows["5Y"]) {
+    return null;
+  }
+  const pickPair = (
+    nums: (number | null)[]
+  ): [number | null, number | null] =>
+    nums.length >= 3 ? [nums[0] ?? null, nums[1] ?? null] : [null, null];
+  const [s1Y, b1Y] = pickPair(periodRows["1Y"]?.nums ?? []);
+  const [s3Y, b3Y] = pickPair(periodRows["3Y"]?.nums ?? []);
+  const [s5Y, b5Y] = pickPair(periodRows["5Y"]?.nums ?? []);
+  return { s1Y, s3Y, s5Y, b1Y, b3Y, b5Y };
+}
+
+/** Nippon layout — each row is an ENTITY (Fund / Benchmark /
+ *  Additional Benchmark); periods are the COLUMNS. Each period
+ *  column has two sub-columns (Amount in ₹ + Returns %). RE_CAGR
+ *  requires a decimal so amounts (whole-rupee comma figures) are
+ *  filtered out — the first 3 decimal numbers per row are reliably
+ *  (1Y, 3Y, 5Y) returns.
+ *
+ *  Heuristic: walk lines after the section header. The Fund row is
+ *  the first decimal-bearing line whose label-portion contains the
+ *  brand prefix or "Fund" / "Scheme". The Benchmark row is the
+ *  next decimal-bearing line carrying a benchmark token (NIFTY,
+ *  BSE, CRISIL, …) or starting with "Benchmark". "Additional"
+ *  benchmark rows are skipped. */
+function extractRowByEntity(
+  section: PerformanceSection
+): ExtractedReturns | null {
+  const lines = section.text
+    .split(/\n+/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+
+  let fundNums: (number | null)[] = [];
+  let benchmarkNums: (number | null)[] = [];
+  let foundFund = false;
+  let foundBenchmark = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    // Skip column header lines explicitly — they often contain
+    // "1 Year", "3 Year" etc which we don't want to classify as data.
+    if (/Amount\s+in\s+₹|Value\s+of\s+₹\s*10|1\s+Year\s+3\s+Year|Inception\s+Date/i.test(l)) {
+      continue;
+    }
+    // Merge with next line — Nippon often wraps long fund names + numbers.
+    const merged = [l, lines[i + 1] ?? ""].join(" ").replace(/\s+/g, " ");
+    const nums = extractNumbers(merged);
+    if (nums.length < 3) continue;
+
+    const isAdditional =
+      /\bAdditional\s+Benchmark\b/i.test(merged) ||
+      /\bAdd['’]?l\.?\s+Benchmark\b/i.test(merged);
+    if (isAdditional) continue;
+
+    const isBenchmark =
+      !foundFund || foundFund
+        ? /\b(?:Benchmark|S&P|BSE|NIFTY|Nifty|CRISIL|MSCI|FTSE|Sensex|TRI)\b/i.test(
+            merged
+          ) && !/\bFund\s+Manager\b/i.test(merged)
+        : false;
+    const isFundLine =
+      !foundFund &&
+      (/\bNAV\b/i.test(merged) ||
+        /\bFund\b/i.test(merged) ||
+        /\bScheme\b/i.test(merged));
+
+    if (!foundFund && isFundLine && !isBenchmark) {
+      fundNums = nums;
+      foundFund = true;
+      continue;
+    }
+    if (foundFund && !foundBenchmark && isBenchmark) {
+      benchmarkNums = nums;
+      foundBenchmark = true;
+      break;
+    }
+  }
+
+  if (!foundFund && !foundBenchmark) return null;
+
+  return {
+    s1Y: fundNums[0] ?? null,
+    s3Y: fundNums[1] ?? null,
+    s5Y: fundNums[2] ?? null,
+    b1Y: benchmarkNums[0] ?? null,
+    b3Y: benchmarkNums[1] ?? null,
+    b5Y: benchmarkNums[2] ?? null,
+  };
+}
+
+/** Walk the section text from the marker forward and find the
+ *  scheme title — the first non-header line starting with the
+ *  brand prefix that isn't boilerplate. Used by AMCs that print
+ *  the scheme name INSIDE the performance section (Nippon style)
+ *  rather than in the page header (HDFC style). */
+function detectSchemeTitleAfterMarker(
+  sectionText: string,
+  strategy: AmcStrategy
+): string | null {
+  const lines = sectionText
+    .split(/\n+/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+  // Skip the marker line itself (usually first line of the section).
+  for (let i = 1; i < Math.min(lines.length, 12); i++) {
+    const l = lines[i];
+    if (!strategy.schemeBrandPrefix.test(l)) continue;
+    if (strategy.isBoilerplate(l)) continue;
+    if (looksLikeParagraph(l)) continue;
+    const cleaned = l
+      .replace(/\(An\s+open[-\s]ended.*$/i, "")
+      .replace(/\(Open[-\s]ended.*$/i, "")
+      .replace(/[\^*#$]+$/g, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+    if (!cleaned || cleaned.length > 80) continue;
+    if (
+      !/\b(?:Fund|Scheme|Plan|ELSS|Advantage|Opportunit|Saver|Pension|FoF)\b/i.test(
+        cleaned
+      )
+    )
+      continue;
+    return cleaned;
+  }
+  return null;
 }
 
 function detectSchemeTitleCandidate(
@@ -1295,15 +1453,33 @@ function buildPdfDiagnostics(
     if (schemeTitleCandidates.length >= 20) break;
   }
 
+  // First-page snippets — always include the first 3 pages.
   const firstPageSnippets = pages.slice(0, 3).map((p) => ({
     pageNum: p.num,
     snippet: p.text.slice(0, 800),
   }));
+  // Strategy-defined extra range — useful when the AMC's
+  // performance content lives in a known annexure (ICICI: pages
+  // 115-125 hold "Annexure for Returns of all the Schemes"). Each
+  // requested page is captured at 1600 chars (longer than the
+  // default 800 since these ARE the interesting pages). Already-
+  // included first-3 pages are deduped.
+  const extraSnippets: { pageNum: number; snippet: string }[] = [];
+  if (strategy.diagnosticsPageRange) {
+    const [start, end] = strategy.diagnosticsPageRange;
+    const seenPageNums = new Set(firstPageSnippets.map((s) => s.pageNum));
+    for (const p of pages) {
+      if (p.num < start || p.num > end) continue;
+      if (seenPageNums.has(p.num)) continue;
+      extraSnippets.push({ pageNum: p.num, snippet: p.text.slice(0, 1600) });
+      seenPageNums.add(p.num);
+    }
+  }
 
   return {
     pageCount: pages.length,
     textExtractionStatus: pages.length > 0 ? "ok" : "empty",
-    firstPageSnippets,
+    firstPageSnippets: [...firstPageSnippets, ...extraSnippets],
     performanceLines,
     benchmarkLines,
     returnsLines,

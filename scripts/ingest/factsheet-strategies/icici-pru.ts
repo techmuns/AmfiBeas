@@ -45,5 +45,14 @@ export const ICICI_PRU_STRATEGY: AmcStrategy = {
     /\bAnnualised\s+Performance\b/g,
     /\bPerformance\s+Report\b/g,
     /\bFund\s+Performance\b/g,
+    /\bAnnexure\s+for\s+Returns\b/g,
   ],
+  // PR #89's diagnostics surfaced "Annexure for Returns of all the
+  // Schemes (Regular Plan) 115-125" — i.e. ICICI consolidates all
+  // scheme returns into a single annexure spanning pages ~115-125
+  // instead of one PERFORMANCE block per scheme. PR #90 captures
+  // those pages in PdfDiagnostics so the next iteration can build
+  // an annexure-mode parser. Until then the diagnostics surface the
+  // real annexure shape.
+  diagnosticsPageRange: [115, 130],
 };
