@@ -1,95 +1,34 @@
 import Link from "next/link";
-import { ArrowRight, BadgeCheck } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
-import { AMCS, amfiNameToSlug, getAMC } from "@/data/amcs";
-import { monthlyForAmc } from "@/data/generator";
-import { quarterlyForAmc } from "@/data/aggregate";
-import { amcMasterSnapshot, dataMode } from "@/data/source";
+import { amcAaumQuarterlySnapshot } from "@/data/source";
+import { amcIndexRows } from "@/data/amc-detail";
 import {
   formatCompactCrSafe,
-  formatIntSafe,
+  formatDelta,
   formatPctSafe,
+  UNAVAILABLE,
 } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
-interface Row {
-  name: string;
-  slug?: string;
-  ticker?: string;
-  listed?: boolean;
-  amcCode?: number;
-  schemeCount?: number;
-  totalAum?: number;
-  activeEquityShare?: number;
-  sipContribution?: number;
-  quarterlyPat?: number;
-  hasProfile: boolean;
-}
+export default function AmcListPage() {
+  const data = amcIndexRows();
+  const fetchedAt = amcAaumQuarterlySnapshot.meta.generatedAt;
+  const fetchedDate = new Date(fetchedAt).toISOString().slice(0, 10);
 
-function buildRows(): { rows: Row[]; mode: "live" | "demo" } {
-  const mode = dataMode().amcMaster;
-
-  if (mode === "live") {
-    const rows: Row[] = amcMasterSnapshot.amcs.map((a) => {
-      const slug = amfiNameToSlug(a.name);
-      const profile = slug ? getAMC(slug) : undefined;
-      const monthly = slug ? monthlyForAmc(slug) : [];
-      const quarterly = slug ? quarterlyForAmc(slug) : [];
-      const latest = monthly[monthly.length - 1];
-      const latestQ = quarterly[quarterly.length - 1];
-      return {
-        name: a.name,
-        slug,
-        ticker: profile?.ticker,
-        listed: profile?.listed,
-        amcCode: a.amcCode,
-        schemeCount: a.schemeCount,
-        totalAum: latest?.totalAum,
-        activeEquityShare:
-          latest && latest.totalAum > 0
-            ? (latest.activeEquityAum / latest.totalAum) * 100
-            : undefined,
-        sipContribution: latest?.sipContribution,
-        quarterlyPat: latestQ?.pat,
-        hasProfile: Boolean(profile),
-      };
-    });
-    return { rows, mode };
+  if (!data) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="AMCs"
+          subtitle="No AMFI Fundwise AAUM data available."
+        />
+      </div>
+    );
   }
 
-  const rows: Row[] = AMCS.map((profile) => {
-    const monthly = monthlyForAmc(profile.slug);
-    const quarterly = quarterlyForAmc(profile.slug);
-    const latest = monthly[monthly.length - 1];
-    const latestQ = quarterly[quarterly.length - 1];
-    return {
-      name: profile.name,
-      slug: profile.slug,
-      ticker: profile.ticker,
-      listed: profile.listed,
-      schemeCount: undefined,
-      totalAum: latest.totalAum,
-      activeEquityShare:
-        latest.totalAum > 0
-          ? (latest.activeEquityAum / latest.totalAum) * 100
-          : undefined,
-      sipContribution: latest.sipContribution,
-      quarterlyPat: latestQ.pat,
-      hasProfile: true,
-    };
-  });
-  return { rows, mode };
-}
-
-export default function AmcListPage() {
-  const { rows, mode } = buildRows();
-  const totalAum = rows.reduce((s, r) => s + (r.totalAum ?? 0), 0);
-
-  const subtitle =
-    mode === "live"
-      ? `${rows.length} AMFI-registered AMCs · live AMC master from amfiindia.com`
-      : `${rows.length} tracked AMCs · demo data`;
+  const subtitle = `${data.rows.length} AMCs · AMFI MF Average AUM, ${data.fiscalLabel} · fetched ${fetchedDate}`;
 
   return (
     <div className="space-y-6">
@@ -100,100 +39,114 @@ export default function AmcListPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+                <th className="py-2 pl-1 pr-3 font-medium tabular">#</th>
                 <th className="py-2 pr-4 font-medium">AMC</th>
                 <th className="py-2 pr-4 text-right font-medium tabular">
-                  {mode === "live" ? "Schemes" : "Listed"}
+                  AAUM
                 </th>
-                <th className="py-2 pr-4 text-right font-medium tabular">AUM</th>
-                <th className="py-2 pr-4 text-right font-medium tabular">Share</th>
-                <th className="py-2 pr-4 text-right font-medium tabular">Active Eq %</th>
-                <th className="py-2 pr-4 text-right font-medium tabular">SIP</th>
-                <th className="py-2 pr-4 text-right font-medium tabular">PAT (Q)</th>
-                <th className="py-2 font-medium" />
+                <th className="py-2 pr-4 text-right font-medium tabular">
+                  Share
+                </th>
+                <th className="py-2 pr-4 text-right font-medium tabular">
+                  QoQ
+                </th>
+                <th className="py-2 pr-4 text-right font-medium tabular">
+                  YoY
+                </th>
+                <th className="py-2 pr-1 font-medium" />
               </tr>
             </thead>
             <tbody>
-              {rows.map((r, i) => {
-                const clickable = r.hasProfile && r.slug;
-                const Wrapper = ({ children }: { children: React.ReactNode }) =>
-                  clickable ? (
-                    <Link
-                      href={`/amc/${r.slug}`}
-                      className="font-medium hover:underline"
-                    >
-                      {children}
-                    </Link>
-                  ) : (
-                    <span className="font-medium">{children}</span>
-                  );
-                return (
-                  <tr
-                    key={(r.slug ?? r.name) + i}
+              {data.rows.map((r) => (
+                <tr
+                  key={r.amcSlug}
+                  className="border-b last:border-0 hover:bg-accent/50"
+                >
+                  <td className="py-3 pl-1 pr-3 text-muted-foreground tabular">
+                    {r.rank}
+                  </td>
+                  <td className="py-3 pr-4">
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/amc/${r.amcSlug}`}
+                        className="font-medium hover:underline"
+                      >
+                        {r.displayName}
+                      </Link>
+                      {r.isTop7 && (
+                        <span className="inline-flex items-center rounded-full border border-positive/40 bg-positive/10 px-1.5 py-0.5 text-[10px] tabular text-positive">
+                          Top 7
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-3 pr-4 text-right tabular text-muted-foreground">
+                    {formatCompactCrSafe(r.avgAum)}
+                  </td>
+                  <td className="py-3 pr-4 text-right tabular text-muted-foreground">
+                    {formatPctSafe(r.marketSharePct, 2)}
+                  </td>
+                  <td
                     className={cn(
-                      "border-b last:border-0",
-                      clickable && "hover:bg-accent/50"
+                      "py-3 pr-4 text-right tabular",
+                      growthClass(r.qoqGrowthPct)
                     )}
                   >
-                    <td className="py-3 pr-4">
-                      <div className="flex items-center gap-2">
-                        <Wrapper>{r.name}</Wrapper>
-                        {r.hasProfile && (
-                          <BadgeCheck
-                            className="h-3.5 w-3.5 text-positive"
-                            aria-label="Has profile data"
-                          />
-                        )}
-                        {r.ticker && (
-                          <span className="text-xs text-muted-foreground">
-                            {r.ticker}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 pr-4 text-right tabular">
-                      {mode === "live"
-                        ? formatIntSafe(r.schemeCount)
-                        : r.listed
-                        ? "Yes"
-                        : "—"}
-                    </td>
-                    <td className="py-3 pr-4 text-right tabular text-muted-foreground">
-                      {formatCompactCrSafe(r.totalAum)}
-                    </td>
-                    <td className="py-3 pr-4 text-right tabular text-muted-foreground">
-                      {formatPctSafe(
-                        r.totalAum && totalAum
-                          ? (r.totalAum / totalAum) * 100
-                          : null
-                      )}
-                    </td>
-                    <td className="py-3 pr-4 text-right tabular text-muted-foreground">
-                      {formatPctSafe(r.activeEquityShare)}
-                    </td>
-                    <td className="py-3 pr-4 text-right tabular text-muted-foreground">
-                      {formatCompactCrSafe(r.sipContribution)}
-                    </td>
-                    <td className="py-3 pr-4 text-right tabular text-muted-foreground">
-                      {formatCompactCrSafe(r.quarterlyPat)}
-                    </td>
-                    <td className="py-3 text-right">
-                      {clickable && (
-                        <Link
-                          href={`/amc/${r.slug}`}
-                          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                          aria-label={`Open ${r.name}`}
-                        >
-                          <ArrowRight className="h-4 w-4" />
-                        </Link>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+                    {r.qoqGrowthPct === null
+                      ? UNAVAILABLE
+                      : formatDelta(r.qoqGrowthPct)}
+                  </td>
+                  <td
+                    className={cn(
+                      "py-3 pr-4 text-right tabular",
+                      growthClass(r.yoyGrowthPct)
+                    )}
+                  >
+                    {r.yoyGrowthPct === null
+                      ? UNAVAILABLE
+                      : formatDelta(r.yoyGrowthPct)}
+                  </td>
+                  <td className="py-3 pr-1 text-right">
+                    <Link
+                      href={`/amc/${r.amcSlug}`}
+                      className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                      aria-label={`Open ${r.displayName}`}
+                    >
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       </Card>
+
+      <Card>
+        <div className="space-y-1 text-xs text-muted-foreground">
+          <div>
+            <strong className="text-foreground">Source:</strong> AMFI Fundwise
+            AAUM disclosure (regulator-mandated, MF-only by construction).
+          </div>
+          <div>
+            <strong className="text-foreground">Universe:</strong> all AMCs
+            with at least one quarter of <code>status=&quot;ok&quot;</code> AAUM
+            data in the snapshot. AMFI does not publish PMS / AIF / offshore /
+            advisory / alternates here.
+          </div>
+          <div>
+            <strong className="text-foreground">Snapshot quarter:</strong>{" "}
+            {data.fiscalLabel} ({data.quarter}) · last fetched {fetchedDate}.
+          </div>
+        </div>
+      </Card>
     </div>
   );
+}
+
+function growthClass(value: number | null): string {
+  if (value === null) return "text-muted-foreground";
+  if (value > 0.5) return "text-positive";
+  if (value < -0.5) return "text-negative";
+  return "text-muted-foreground";
 }
