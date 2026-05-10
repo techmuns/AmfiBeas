@@ -6,6 +6,7 @@ import type { AmcStatus } from "@/components/filters/FilterBar";
 import { QuarterPicker } from "@/components/filters/QuarterPicker";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
+import { cn } from "@/lib/cn";
 import {
   SOURCED_FINANCIALS_SLUGS,
   fixedQuarterWindow,
@@ -205,6 +206,76 @@ export default async function FinancialsPage({
     };
   });
 
+  // ---- Peer comparison rows (PR #96): same quarter, all 5 sourced AMCs ----
+  // Same metrics the KPI cards show for the focused AMC, but laid out as a
+  // compact table so the reader sees how the focused AMC stacks up against
+  // the listed peers in one glance. Drives off the SAME data the KPI cards
+  // and charts use (`liveQuarterlyBySlug` via `quarterlyForAmc`) so peer
+  // numbers cannot drift from the per-AMC numbers above. Missing rows
+  // (e.g. ICICI Pru pre-listing quarters) render "—" rather than fake data.
+  interface PeerRow {
+    amcSlug: string;
+    name: string;
+    ticker: string | null;
+    isFocused: boolean;
+    avgAum: number | null;
+    revenue: number | null;
+    operatingProfit: number | null;
+    pat: number | null;
+    patMargin: number | null;
+    opMargin: number | null;
+    revenueYieldBps: number | null;
+    opYieldBps: number | null;
+    profitYieldBps: number | null;
+    derivedFrom: string | null;
+  }
+  const peerRows: PeerRow[] = Array.from(SOURCED_FINANCIALS_SLUGS).map(
+    (peerSlug) => {
+      const peerProfile = getAMC(peerSlug);
+      const series = quarterlyForAmc(peerSlug);
+      const row = series.find((q) => q.quarter === selectedPeriod);
+      const aaumOk =
+        row &&
+        aaumProvenance(peerSlug, selectedPeriod)?.status === "ok" &&
+        row.avgAum > 0;
+      const yieldFor = (numerator: number) =>
+        aaumOk && row ? Number(((numerator * 4 * 10_000) / row.avgAum).toFixed(1)) : null;
+      return {
+        amcSlug: peerSlug,
+        name: peerProfile?.name ?? peerSlug,
+        ticker: peerProfile?.ticker ?? null,
+        isFocused: peerSlug === slug,
+        avgAum: row && aaumOk ? row.avgAum : null,
+        revenue: row ? row.revenue : null,
+        operatingProfit: row ? row.operatingProfit : null,
+        pat: row ? row.pat : null,
+        patMargin:
+          row && row.revenue > 0
+            ? Number(((row.pat / row.revenue) * 100).toFixed(1))
+            : null,
+        opMargin:
+          row && row.revenue > 0
+            ? Number(((row.operatingProfit / row.revenue) * 100).toFixed(1))
+            : null,
+        revenueYieldBps: row ? yieldFor(row.revenue) : null,
+        opYieldBps: row ? yieldFor(row.operatingProfit) : null,
+        profitYieldBps: row ? yieldFor(row.pat) : null,
+        derivedFrom: row?.derivedFrom ?? null,
+      };
+    }
+  );
+  // Order peers by AAUM descending for the selected quarter; rows with no
+  // AAUM go to the bottom. Stable on AMC name within ties.
+  peerRows.sort((a, b) => {
+    const aHas = a.avgAum !== null;
+    const bHas = b.avgAum !== null;
+    if (aHas && !bHas) return -1;
+    if (!aHas && bHas) return 1;
+    if (aHas && bHas && a.avgAum !== b.avgAum)
+      return (b.avgAum ?? 0) - (a.avgAum ?? 0);
+    return a.name.localeCompare(b.name);
+  });
+
   const subtitle = `${profile.name}${profile.ticker ? ` (${profile.ticker})` : ""} · ${formatQuarterLabelLong(latest.quarter)}`;
 
   // Compact source / provenance line. Hostname only — keeps the line tight
@@ -361,6 +432,105 @@ export default async function FinancialsPage({
           />
         </Card>
       </section>
+
+      <Card
+        title="Listed-AMC Peer Comparison"
+        subtitle={`${peerRows.length} listed AMCs · ${formatQuarterLabelLong(selectedPeriod)} · P&L: screener.in${peerRows.some((p) => p.derivedFrom) ? " / derived where applicable" : ""} · AAUM: AMFI Fundwise AAUM`}
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+                <th className="py-2 pr-3 font-medium">AMC</th>
+                <th className="py-2 pr-3 text-right font-medium tabular">AAUM</th>
+                <th className="py-2 pr-3 text-right font-medium tabular">Revenue</th>
+                <th className="py-2 pr-3 text-right font-medium tabular">Op Profit</th>
+                <th className="py-2 pr-3 text-right font-medium tabular">PAT</th>
+                <th className="py-2 pr-3 text-right font-medium tabular">PAT %</th>
+                <th className="py-2 pr-3 text-right font-medium tabular">Op %</th>
+                <th className="py-2 pr-3 text-right font-medium tabular">Rev Yield</th>
+                <th className="py-2 pr-3 text-right font-medium tabular">Op Yield</th>
+                <th className="py-2 pr-1 text-right font-medium tabular">Profit Yield</th>
+              </tr>
+            </thead>
+            <tbody>
+              {peerRows.map((p) => (
+                <tr
+                  key={p.amcSlug}
+                  className={cn(
+                    "border-b last:border-0",
+                    p.isFocused && "bg-accent/40"
+                  )}
+                >
+                  <td className="py-2 pr-3">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          p.isFocused ? "font-semibold" : "font-medium"
+                        )}
+                      >
+                        {p.name}
+                      </span>
+                      {p.ticker && (
+                        <span className="text-xs text-muted-foreground">
+                          {p.ticker}
+                        </span>
+                      )}
+                      {p.derivedFrom && (
+                        <span
+                          className="inline-flex items-center rounded-full border bg-muted px-1.5 py-0.5 text-[10px] tabular text-muted-foreground"
+                          title={p.derivedFrom}
+                        >
+                          derived
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-2 pr-3 text-right tabular text-muted-foreground">
+                    {formatCompactCrSafe(p.avgAum)}
+                  </td>
+                  <td className="py-2 pr-3 text-right tabular text-muted-foreground">
+                    {formatCompactCrSafe(p.revenue)}
+                  </td>
+                  <td className="py-2 pr-3 text-right tabular text-muted-foreground">
+                    {formatCompactCrSafe(p.operatingProfit)}
+                  </td>
+                  <td className="py-2 pr-3 text-right tabular text-muted-foreground">
+                    {formatCompactCrSafe(p.pat)}
+                  </td>
+                  <td className="py-2 pr-3 text-right tabular text-muted-foreground">
+                    {p.patMargin !== null ? `${p.patMargin.toFixed(1)}%` : "—"}
+                  </td>
+                  <td className="py-2 pr-3 text-right tabular text-muted-foreground">
+                    {p.opMargin !== null ? `${p.opMargin.toFixed(1)}%` : "—"}
+                  </td>
+                  <td className="py-2 pr-3 text-right tabular text-muted-foreground">
+                    {p.revenueYieldBps !== null
+                      ? `${p.revenueYieldBps.toFixed(1)} bps`
+                      : "—"}
+                  </td>
+                  <td className="py-2 pr-3 text-right tabular text-muted-foreground">
+                    {p.opYieldBps !== null
+                      ? `${p.opYieldBps.toFixed(1)} bps`
+                      : "—"}
+                  </td>
+                  <td className="py-2 pr-1 text-right tabular text-muted-foreground">
+                    {p.profitYieldBps !== null
+                      ? `${p.profitYieldBps.toFixed(1)} bps`
+                      : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-[11px] tabular text-muted-foreground">
+          Sorted by AAUM descending. Highlighted row matches the AMC selected
+          above. Yields = quarterly P&L × 4 / same-quarter AMFI MF QAAUM ×
+          10,000. AAUM column shows AMFI Fundwise AAUM (₹ Cr); &quot;—&quot;
+          marks quarters with missing AAUM or P&L source data.
+        </p>
+      </Card>
     </div>
   );
 }
