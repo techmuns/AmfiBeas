@@ -67,7 +67,7 @@
  * old) the scheme is dropped from that period's denominator — never
  * counted as a non-outperformer.
  *
- * ### Parser strategy (PRs #84 → #85 → #86)
+ * ### Parser strategy (PRs #84 → #85 → #86 → #87)
  *
  * Anchor on HDFC's literal section header — "PERFORMANCE ^ -
  * Regular Plan - Growth Option" — and reject "SIP PERFORMANCE"
@@ -354,21 +354,30 @@ interface RejectedCandidate {
 }
 
 // Benchmark index tokens — used to validate the "#" legend hits
-// and to recognise inline benchmark mentions on a page.
-const RE_BENCHMARK_TOKEN = /\b(?:NIFTY|S&P\s*BSE|BSE\s+\d|CRISIL|MSCI|FTSE|Sensex)\b/i;
+// and to recognise inline benchmark mentions on a page. Case-
+// insensitive so "Nifty" / "Sensex" mixed-case forms used in some
+// HDFC factsheet pages also match.
+const RE_BENCHMARK_TOKEN =
+  /\b(?:NIFTY|S&P\s*BSE|BSE\s+\d|BSE\s+(?:100|200|500|TECK|Sensex)|CRISIL|MSCI|FTSE|Sensex|TRI)\b/i;
 
 // CAGR number regex — decimals only. Rejects integer scheme codes
 // ("1", "10") and PIN codes. Accepts "-1.50%" / "12.34" / "1,234.56".
 const RE_CAGR = /-?\d{1,3}(?:,\d{3})*\.\d{1,2}\s*%?/g;
 
-// HDFC's per-scheme PERFORMANCE block is anchored by a literal
-// header line:
+// HDFC's per-scheme PERFORMANCE block is always anchored by the
+// literal phrase
 //   "PERFORMANCE ^ - Regular Plan - Growth Option"
-// and then SIP-PERFORMANCE later on the same page reads
-//   "SIP PERFORMANCE ^ - Regular Plan - Growth Option".
-// We anchor on /\bPERFORMANCE\b/ but reject when the marker is
-// preceded by "SIP" within the prior ~12 chars on the same line.
-const RE_PERFORMANCE_MARKER = /\bPERFORMANCE\s*\^?/g;
+// (with `^` as the SEBI-disclosure footnote marker). The SIP-block
+// twin reads
+//   "SIP PERFORMANCE ^ - Regular Plan - Growth Option"
+// — same marker, with "SIP " prefix.
+//
+// PR #87 tightens the marker to REQUIRE `^` (was optional in #84/#85).
+// This filters out the common HDFC appendix
+//   "PERFORMANCE OF OTHER SCHEMES MANAGED BY <FM Name>"
+// which confused PR #86's parser when SIP rejection fell through —
+// the appendix has no `^`, so the strict regex skips it.
+const RE_PERFORMANCE_MARKER = /\bPERFORMANCE\s*\^/g;
 
 interface PerformanceSection {
   pageNum: number;
@@ -384,11 +393,44 @@ interface PerformanceSection {
   isSip: boolean;
 }
 
-/** Walk every page; for each `PERFORMANCE` marker hit, define a
- *  section that runs until the next marker or the page end. Each
- *  per-scheme HDFC factsheet page typically yields exactly two
- *  sections — the regular performance block and the SIP block —
- *  and we reject the SIP block before parsing. */
+/** Decide if a `PERFORMANCE ^` hit is the SIP variant. Looks at the
+ *  40 chars BEFORE the marker AND the marker line itself. Handles
+ *  three real cases seen in March 2026's HDFC factsheet:
+ *    (a) "SIP PERFORMANCE ^" on a single line — SIP token same line
+ *    (b) "SIP\nPERFORMANCE ^" — pdf-parse split SIP onto prior line
+ *    (c) "IP PERFORMANCE ^" — pdf-parse OCR-dropped the leading S
+ *  In all three, `SIP` (or its OCR-drift form `IP`) appears within
+ *  the 40-char lookback. PR #85's same-line-only check missed (b).
+ */
+function isSipMarker(text: string, idx: number): boolean {
+  // Marker line itself: "SIP PERFORMANCE ^" form (a).
+  const lineStart = text.lastIndexOf("\n", idx) + 1;
+  const lineEndRaw = text.indexOf("\n", idx);
+  const lineEnd = lineEndRaw === -1 ? Math.min(text.length, idx + 80) : lineEndRaw;
+  const markerLine = text.slice(lineStart, lineEnd);
+  if (/\bSIP\s*PERFORMANCE\b/i.test(markerLine)) return true;
+
+  // 40-char lookback — handles (b) cleanly. Tokenise to avoid false
+  // matches on substrings like "SCRIPT" or "EQUIP".
+  const before = text.slice(Math.max(0, idx - 40), idx);
+  const tokens = before.match(/\S+/g) ?? [];
+  const lastToken = tokens[tokens.length - 1] ?? "";
+  if (/^SIP\.?$/i.test(lastToken)) return true;
+  // OCR-dropped S → "IP" as the standalone last token (form c).
+  if (/^IP\.?$/i.test(lastToken)) return true;
+  return false;
+}
+
+/** Walk every page; for each `PERFORMANCE ^` marker hit, define a
+ *  section that runs until the next marker or the page end.
+ *
+ *  PR #87 strategy — only the FIRST non-SIP marker per page is the
+ *  regular performance block. HDFC pages routinely carry a SIP twin
+ *  AND a "PERFORMANCE OF OTHER SCHEMES MANAGED BY..." appendix that
+ *  also matches `PERFORMANCE` but shouldn't be parsed as the page's
+ *  scheme block. The strict marker regex (requires `^`) drops the
+ *  OF-OTHER-SCHEMES appendix; the first-non-SIP-only rule drops any
+ *  remaining secondary blocks. */
 function findPerformanceSections(pages: PdfPage[]): PerformanceSection[] {
   const out: PerformanceSection[] = [];
   for (const p of pages) {
@@ -397,25 +439,24 @@ function findPerformanceSections(pages: PdfPage[]): PerformanceSection[] {
     RE_PERFORMANCE_MARKER.lastIndex = 0;
     let m: RegExpExecArray | null;
     while ((m = RE_PERFORMANCE_MARKER.exec(text)) !== null) {
-      // SIP / SCHEME context check: look at up to 16 chars BEFORE
-      // the marker on the same line. "SIP " = SIP block.
-      const head = text
-        .slice(Math.max(0, m.index - 16), m.index)
-        .replace(/[\r]/g, "")
-        .split("\n")
-        .pop()!;
-      const isSip = /\bSIP\s*$/i.test(head);
-      markers.push({ idx: m.index, isSip });
+      markers.push({ idx: m.index, isSip: isSipMarker(text, m.index) });
     }
+    const firstRegularPos = markers.findIndex((mk) => !mk.isSip);
     for (let i = 0; i < markers.length; i++) {
       const start = markers[i].idx;
       const end = i + 1 < markers.length ? markers[i + 1].idx : text.length;
+      // Only the first non-SIP marker is processed. SIP markers and
+      // any beyond-first-regular marker (e.g. PERFORMANCE OF OTHER
+      // SCHEMES, or a stray duplicate) are flagged isSip so the
+      // parser drops them upstream. They still contribute to
+      // candidateBlocksScanned.
+      const isPrimaryRegular = i === firstRegularPos;
       out.push({
         pageNum: p.num,
         text: text.slice(start, end),
         pageHeaderText: text.slice(0, start),
         pageFullText: text,
-        isSip: markers[i].isSip,
+        isSip: !isPrimaryRegular,
       });
     }
   }
@@ -706,16 +747,25 @@ function detectCategoryHintLine(headerText: string): string | null {
 function detectBenchmarkName(pageText: string): BenchmarkDetection {
   const lines = pageText.split(/\n+/).map((l) => l.trim());
 
-  // Markers (with "BENCHMARK INDEX" keyword)
-  const RE_PRIMARY_MARKER = /^#(?!#)\s*BENCHMARK(?:\s+INDEX)?\b/i;
-  const RE_ADDITIONAL_MARKER =
+  // ---- Marker regexes ----
+  // Primary "#BENCHMARK INDEX" (no space) / "# BENCHMARK INDEX".
+  const RE_PRIMARY_HASH = /^#(?!#)\s*BENCHMARK(?:\s+INDEX)?\b/i;
+  // Primary WITHOUT `#` — pdf-parse occasionally drops the leading
+  // marker char (cf. "Mar et" / "G returns" OCR drift seen in the
+  // March 2026 factsheet). Accept "BENCHMARK INDEX" on its own line.
+  const RE_PRIMARY_NO_HASH = /^BENCHMARK\s+INDEX\b/i;
+  // Additional "##ADDL. BENCHMARK INDEX" / "##ADDITIONAL ...".
+  const RE_ADDITIONAL_HASH =
     /^##\s*(?:ADDL\.?|ADDITIONAL)\s*\.?\s*BENCHMARK(?:\s+INDEX)?\b/i;
+  // Additional WITHOUT `##` — same OCR-drift tolerance as primary.
+  const RE_ADDITIONAL_NO_HASH =
+    /^(?:ADDL\.?|ADDITIONAL)\s*\.?\s*BENCHMARK(?:\s+INDEX)?\b/i;
   // Legacy single-line markers ("# NIFTY ..." with no BENCHMARK
   // keyword — kept for backward compatibility).
   const RE_LEGACY_PRIMARY =
-    /^#(?!#)\s+(?=.*\b(?:NIFTY|S&P|BSE|CRISIL|MSCI|FTSE|Sensex)\b)/i;
+    /^#(?!#)\s+(?=.*\b(?:NIFTY|Nifty|S&P|BSE|CRISIL|MSCI|FTSE|Sensex)\b)/;
   const RE_LEGACY_ADDITIONAL =
-    /^##\s+(?=.*\b(?:NIFTY|S&P|BSE|CRISIL|MSCI|FTSE|Sensex)\b)/i;
+    /^##\s+(?=.*\b(?:NIFTY|Nifty|S&P|BSE|CRISIL|MSCI|FTSE|Sensex)\b)/;
   // Prose form: "Benchmark Index: NIFTY 500 TRI" / "Scheme
   // Benchmark: NIFTY ...".
   const RE_PROSE_PRIMARY =
@@ -731,28 +781,55 @@ function detectBenchmarkName(pageText: string): BenchmarkDetection {
     snippetEnd = Math.max(snippetEnd, Math.min(lines.length, i + 4));
   };
 
+  // PR #87: classify each line as primary / additional / neither.
+  // The "without #" forms can be confused with each other if they
+  // appear back-to-back in pdf-parse output — disambiguate by
+  // checking the prior line(s) for an "ADDL." / "##" cue. If the
+  // PRIOR line on the page already triggered the additional marker
+  // (or contains "ADDL." / "##"), the bare "BENCHMARK INDEX" line
+  // is treated as a CONTINUATION of the additional, not as primary.
+
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i];
     if (!l) continue;
+    const prev1 = lines[i - 1] ?? "";
 
-    // Additional benchmark — record but never promote to primary.
+    // ---- Additional benchmark detection ----
+    // Captured for diagnostics only — never promoted to primary.
     if (
       !additional &&
-      (RE_ADDITIONAL_MARKER.test(l) || RE_LEGACY_ADDITIONAL.test(l))
+      (RE_ADDITIONAL_HASH.test(l) ||
+        RE_LEGACY_ADDITIONAL.test(l) ||
+        RE_ADDITIONAL_NO_HASH.test(l))
     ) {
-      const stripped = RE_ADDITIONAL_MARKER.test(l)
-        ? l.replace(RE_ADDITIONAL_MARKER, "")
-        : l.replace(/^##\s+/, "");
+      let stripped: string;
+      if (RE_ADDITIONAL_HASH.test(l)) stripped = l.replace(RE_ADDITIONAL_HASH, "");
+      else if (RE_ADDITIONAL_NO_HASH.test(l)) stripped = l.replace(RE_ADDITIONAL_NO_HASH, "");
+      else stripped = l.replace(/^##\s+/, "");
       additional = extractBenchmarkAfterMarker(stripped, lines, i);
       trackSnippet(i);
       continue;
     }
 
-    // Primary benchmark.
+    // ---- Primary benchmark detection ----
     if (!primary) {
       let stripped: string | null = null;
-      if (RE_PRIMARY_MARKER.test(l)) {
-        stripped = l.replace(RE_PRIMARY_MARKER, "");
+      if (RE_PRIMARY_HASH.test(l)) {
+        stripped = l.replace(RE_PRIMARY_HASH, "");
+      } else if (RE_PRIMARY_NO_HASH.test(l)) {
+        // No-# primary IS NOT the additional benchmark line whose
+        // `##` got dropped by pdf-parse. Reject this candidate when
+        // an "ADDL." / "##" / "ADDITIONAL" cue appears on the prior
+        // 1-2 lines, which is the smoking gun for that case.
+        const prev2 = lines[i - 2] ?? "";
+        const additionalCueAbove =
+          /^##/.test(prev1) ||
+          /\b(?:ADDL\.?|ADDITIONAL)\b/i.test(prev1) ||
+          /^##/.test(prev2) ||
+          /\b(?:ADDL\.?|ADDITIONAL)\b/i.test(prev2);
+        if (!additionalCueAbove) {
+          stripped = l.replace(RE_PRIMARY_NO_HASH, "");
+        }
       } else if (RE_LEGACY_PRIMARY.test(l)) {
         stripped = l.replace(/^#\s+/, "");
       } else if (RE_PROSE_PRIMARY.test(l)) {
@@ -1228,8 +1305,18 @@ export async function ingestHdfcFactsheetPoc(): Promise<void> {
   const dedupedEntries = dedupeRows(allEntries);
 
   // ---- Eligibility filter + period-specific denominators ----
+  // PR #87 — outperformance % is a math operation over scheme/benchmark
+  // RETURNS, not over the benchmark NAME. So a row whose period rows
+  // populated benchmarkReturn{1Y,3Y,5Y} but whose detectBenchmarkName
+  // walker came up empty (HDFC's "#BENCHMARK INDEX" legend wasn't
+  // matched on this page's text) is still mathematically usable. We
+  // include those rows with a "Primary benchmark" fallback name and
+  // log the substitution count in `notes`. The harder
+  // missing-benchmark case — when the period rows themselves yielded
+  // no benchmark numbers — keeps its exclusion.
   const included: ParsedSchemeRow[] = [];
   const excluded: ExcludedScheme[] = [];
+  let benchmarkNameFallbackCount = 0;
   for (const entry of dedupedEntries) {
     const r = entry.row;
     if (!r.categorySlug) {
@@ -1250,10 +1337,27 @@ export async function ingestHdfcFactsheetPoc(): Promise<void> {
       });
       continue;
     }
-    if (!r.benchmarkName) {
-      // Promote the section context onto the exclusion entry so the
-      // next iteration can see exactly what the benchmark walker saw
-      // vs what it expected (per the workflow audit spec).
+    const hasAnySchemeReturn =
+      r.schemeReturn1Y !== null ||
+      r.schemeReturn3Y !== null ||
+      r.schemeReturn5Y !== null;
+    const hasAnyBenchmarkReturn =
+      r.benchmarkReturn1Y !== null ||
+      r.benchmarkReturn3Y !== null ||
+      r.benchmarkReturn5Y !== null;
+    if (!hasAnySchemeReturn) {
+      excluded.push({
+        schemeName: r.schemeName,
+        reason: "missing-returns",
+        categorySlug: r.categorySlug,
+        category: r.category ?? undefined,
+        pageNum: r.pageNum,
+      });
+      continue;
+    }
+    if (!hasAnyBenchmarkReturn) {
+      // No benchmark returns parsed for any period — truly missing.
+      // Promote section context for next-iter triage.
       excluded.push({
         schemeName: r.schemeName,
         reason: "missing-benchmark",
@@ -1271,19 +1375,12 @@ export async function ingestHdfcFactsheetPoc(): Promise<void> {
       });
       continue;
     }
-    if (
-      r.schemeReturn1Y === null &&
-      r.schemeReturn3Y === null &&
-      r.schemeReturn5Y === null
-    ) {
-      excluded.push({
-        schemeName: r.schemeName,
-        reason: "missing-returns",
-        categorySlug: r.categorySlug,
-        category: r.category ?? undefined,
-        pageNum: r.pageNum,
-      });
-      continue;
+    // Benchmark returns ARE populated. If the legend walker couldn't
+    // find the benchmark NAME on this page's text, fall back to a
+    // generic label — math is unaffected.
+    if (!r.benchmarkName) {
+      benchmarkNameFallbackCount += 1;
+      r.benchmarkName = "Primary benchmark";
     }
     included.push(r);
   }
@@ -1366,6 +1463,11 @@ export async function ingestHdfcFactsheetPoc(): Promise<void> {
       `Benchmark name is detected from the page-level "#BENCHMARK INDEX" legend (multi-line or inline form); "##ADDL. BENCHMARK INDEX" is captured for diagnostics only and never used as primary.`,
       `Per-row extraction: each table row is a TIME PERIOD ("Last 1 Year" / "Last 3 Years" / "Last 5 Years"); the row's first three CAGR numbers are (scheme %, benchmark %, additional %). We keep scheme + benchmark.`,
       `Category priority: Solution-oriented (retirement, childrens) → ELSS → BAF/DAA (incl. Balanced Advantage) → other hybrid → Growth/Equity → sectoral-thematic last. Avoids "ELSS Tax Saver" leaking into sectoral and "Hybrid Debt Plan" leaking into conservative-hybrid for retirement schemes.`,
+      ...(benchmarkNameFallbackCount > 0
+        ? [
+            `${benchmarkNameFallbackCount} scheme(s) included with benchmarkName="Primary benchmark" — period rows yielded scheme + benchmark return numbers, but the page-level "#BENCHMARK INDEX" legend was not detected by the walker. Outperformance math is unaffected.`,
+          ]
+        : []),
     ],
     status,
   };
