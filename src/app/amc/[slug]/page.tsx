@@ -258,8 +258,117 @@ export default async function AmcPage({
           )}
         </Card>
       </section>
+
+      {peer && peer.rows.length > 0 && (
+        <Card
+          title="Peer Comparison Table"
+          subtitle={`Top 7 by AAUM${
+            latest && !latest.isTop7 ? ` + ${detail.displayName}` : ""
+          } · ${peer.fiscalLabel} · Source: AMFI Fundwise AAUM disclosure`}
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <th className="py-2 pl-1 pr-3 font-medium tabular">#</th>
+                  <th className="py-2 pr-3 font-medium">AMC</th>
+                  <th className="py-2 pr-3 text-right font-medium tabular">
+                    AAUM
+                  </th>
+                  <th className="py-2 pr-3 text-right font-medium tabular">
+                    Share
+                  </th>
+                  <th className="py-2 pr-3 text-right font-medium tabular">
+                    QoQ
+                  </th>
+                  <th className="py-2 pr-3 text-right font-medium tabular">
+                    YoY
+                  </th>
+                  <th className="py-2 pr-1 text-right font-medium">Tier</th>
+                </tr>
+              </thead>
+              <tbody>
+                {peer.rows.map((r) => (
+                  <tr
+                    key={r.amcSlug}
+                    className={cn(
+                      "border-b last:border-0",
+                      r.isFocused && "bg-accent/40"
+                    )}
+                  >
+                    <td className="py-2 pl-1 pr-3 tabular text-muted-foreground">
+                      #{r.rank}
+                    </td>
+                    <td className="py-2 pr-3">
+                      <Link
+                        href={`/amc/${r.amcSlug}`}
+                        className={cn(
+                          "hover:underline",
+                          r.isFocused ? "font-semibold" : "font-medium"
+                        )}
+                      >
+                        {r.displayName}
+                      </Link>
+                    </td>
+                    <td className="py-2 pr-3 text-right tabular text-muted-foreground">
+                      {formatCompactCrSafe(r.avgAum)}
+                    </td>
+                    <td className="py-2 pr-3 text-right tabular text-muted-foreground">
+                      {formatPctSafe(r.marketSharePct, 2)}
+                    </td>
+                    <td
+                      className={cn(
+                        "py-2 pr-3 text-right tabular",
+                        growthClass(r.qoqGrowthPct)
+                      )}
+                    >
+                      {r.qoqGrowthPct === null
+                        ? "—"
+                        : formatDelta(r.qoqGrowthPct)}
+                    </td>
+                    <td
+                      className={cn(
+                        "py-2 pr-3 text-right tabular",
+                        growthClass(r.yoyGrowthPct)
+                      )}
+                    >
+                      {r.yoyGrowthPct === null
+                        ? "—"
+                        : formatDelta(r.yoyGrowthPct)}
+                    </td>
+                    <td className="py-2 pr-1 text-right">
+                      {r.isInTop7 ? (
+                        <span className="inline-flex items-center rounded-full border border-positive/40 bg-positive/10 px-1.5 py-0.5 text-[10px] tabular text-positive">
+                          Top 7
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full border bg-muted px-1.5 py-0.5 text-[10px] tabular text-muted-foreground">
+                          Outside top 7
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-3 text-[11px] tabular text-muted-foreground">
+            Sorted by AAUM rank for {peer.fiscalLabel}. Highlighted row =
+            this AMC. Growth columns: QoQ vs prior quarter, YoY vs same
+            quarter one year earlier; “—” when that comparison quarter
+            isn’t in the snapshot.
+          </p>
+        </Card>
+      )}
     </div>
   );
+}
+
+function growthClass(value: number | null): string {
+  if (value === null) return "text-muted-foreground";
+  if (value > 0.5) return "text-positive";
+  if (value < -0.5) return "text-negative";
+  return "text-muted-foreground";
 }
 
 function EmptyChart({ children }: { children: React.ReactNode }) {
