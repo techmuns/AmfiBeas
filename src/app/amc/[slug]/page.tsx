@@ -1,40 +1,31 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { AreaTrend } from "@/components/charts/AreaTrend";
 import { BarSeries } from "@/components/charts/BarSeries";
-import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
-import { AMCS, getAMC } from "@/data/amcs";
-import { monthlyForAmc } from "@/data/generator";
 import {
-  industryByMonth,
-  isLiveQuarterly,
-  momChange,
-  quarterlyForAmc,
-  yieldsForAmc,
-  yoyChangeQuarterly,
-} from "@/data/aggregate";
-import {
-  aaumFor,
-  aaumProvenance,
-  amcAaumQuarterlySnapshot,
-} from "@/data/source";
+  allAaumAmcs,
+  amcAaumSeries,
+  amcDetail,
+  amcGrowthMetrics,
+  amcMarketShareSeries,
+  amcRankSeries,
+  peerComparisonForAmc,
+  resolveAmcSlug,
+} from "@/data/amc-detail";
 import {
   formatCompactCrSafe,
   formatDelta,
   formatPctSafe,
 } from "@/lib/format";
-import {
-  demoNote,
-  liveScreenerNote,
-  pendingFinancialsNote,
-  unlistedFinancialsNote,
-} from "@/lib/provenance";
+import { cn } from "@/lib/cn";
 
 export function generateStaticParams() {
-  return AMCS.map((a) => ({ slug: a.slug }));
+  return allAaumAmcs().map((a) => ({ slug: a.amcSlug }));
 }
 
 export default async function AmcPage({
@@ -42,262 +33,291 @@ export default async function AmcPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
-  const profile = getAMC(slug);
-  if (!profile) notFound();
+  const { slug: rawSlug } = await params;
+  const slug = resolveAmcSlug(rawSlug);
+  if (!slug) notFound();
 
-  const monthly = monthlyForAmc(slug);
-  const quarterly = quarterlyForAmc(slug);
-  const yields = yieldsForAmc(slug);
-  const latest = monthly[monthly.length - 1];
-  const quarterlyLive = isLiveQuarterly(slug);
-  const latestQ = quarterlyLive
-    ? quarterly[quarterly.length - 1]
-    : undefined;
+  const detail = amcDetail(slug);
+  if (!detail) notFound();
 
-  const sipMom = momChange(monthly.map((m) => m.sipContribution));
-  const patYoy = quarterlyLive
-    ? yoyChangeQuarterly(quarterly.map((q) => q.pat))
-    : 0;
+  const aaumSeries = amcAaumSeries(slug);
+  const shareSeries = amcMarketShareSeries(slug);
+  const rankSeries = amcRankSeries(slug);
+  const growth = amcGrowthMetrics(slug);
+  const peer = peerComparisonForAmc(slug);
 
-  const industry = industryByMonth();
-  const industryLatest = industry[industry.length - 1];
-  const aumShare =
-    industryLatest.totalAum > 0
-      ? (latest.totalAum / industryLatest.totalAum) * 100
-      : null;
-  const sipShare =
-    industryLatest.sipContribution > 0
-      ? (latest.sipContribution / industryLatest.sipContribution) * 100
-      : null;
-  const activeEquityShare =
-    industryLatest.activeEquityAum > 0
-      ? (latest.activeEquityAum / industryLatest.activeEquityAum) * 100
-      : null;
-
-  const aumSeries = monthly.map((m) => ({
-    month: m.month,
-    value: m.totalAum,
+  const aaumChart = aaumSeries.map((p) => ({
+    month: p.fiscalLabel,
+    value: p.avgAum,
   }));
-  const sipSeries = monthly.map((m) => ({
-    label: m.month,
-    value: m.sipContribution,
+  const shareChart = shareSeries.map((p) => ({
+    label: p.fiscalLabel,
+    value: p.marketSharePct,
   }));
-  const pnlData = quarterly.map((q) => ({
-    quarter: q.quarter,
-    revenue: q.revenue,
-    op: q.operatingProfit,
-    pat: q.pat,
+  const rankChart = rankSeries.map((p) => ({
+    quarter: p.fiscalLabel,
+    rank: p.rank,
   }));
-  // null (not 0) for quarters where AAUM is missing, so the line renders as
-  // a gap rather than a misleading drop-to-zero.
-  const yieldData = yields.map((y) => {
-    const hasAaum = aaumProvenance(slug, y.quarter)?.status === "ok";
-    return {
-      quarter: y.quarter,
-      revenue: hasAaum ? Number(y.revenueYieldBps.toFixed(1)) : null,
-      op: hasAaum ? Number(y.operatingYieldBps.toFixed(1)) : null,
-      profit: hasAaum ? Number(y.profitYieldBps.toFixed(1)) : null,
-    };
-  });
-  const yieldsAvailable = yieldData.some(
-    (y) => (y.revenue ?? 0) > 0 || (y.op ?? 0) > 0 || (y.profit ?? 0) > 0
-  );
-  const yieldsSubtitle = yieldsAvailable
-    ? `bps of MF QAAUM · quarterly P&L ×4 / same-quarter AMFI MF QAAUM · ${new Date(amcAaumQuarterlySnapshot.meta.generatedAt).toISOString().slice(0, 10)}`
-    : "MF QAAUM not in source";
+  const peerChart =
+    peer?.rows.map((r) => ({
+      label: r.displayName,
+      value: r.avgAum,
+      slug: r.amcSlug,
+      isFocused: r.isFocused,
+    })) ?? [];
 
-  const trend = (n: number) =>
-    n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
+  const trend = (n: number | null | undefined) =>
+    n === null || n === undefined
+      ? undefined
+      : n > 0.5
+        ? ("up" as const)
+        : n < -0.5
+          ? ("down" as const)
+          : ("flat" as const);
 
-  const financialsUnavailableMessage = profile.listed
-    ? "Listed · financials pending source"
-    : "Unlisted · no standalone quarterly financials";
-
-  // Live AMFI AAUM for this AMC's most recent quarter. This is the same
-  // denominator the yield cards use, so the displayed AUM and the yield
-  // calculation can never disagree.
-  const aaumQuarters = amcAaumQuarterlySnapshot.rows
-    .filter((r) => r.amcSlug === slug && r.status === "ok")
-    .map((r) => r.quarter)
-    .sort();
-  const latestAaumQuarter = aaumQuarters[aaumQuarters.length - 1] ?? null;
-  const prevAaumQuarter = aaumQuarters[aaumQuarters.length - 2] ?? null;
-  const latestAaum = latestAaumQuarter
-    ? aaumFor(slug, latestAaumQuarter)
-    : null;
-  const prevAaum = prevAaumQuarter ? aaumFor(slug, prevAaumQuarter) : null;
-  const aaumQoq =
-    latestAaum && prevAaum && prevAaum > 0
-      ? ((latestAaum - prevAaum) / prevAaum) * 100
-      : null;
-  const aaumGeneratedAt = new Date(
-    amcAaumQuarterlySnapshot.meta.generatedAt
-  )
-    .toISOString()
-    .slice(0, 10);
-  const aaumNote = latestAaumQuarter
-    ? `Source: AMFI MF QAAUM · ${aaumGeneratedAt}`
-    : undefined;
-
-  // Per-AMC financials provenance: live screener.in for sourced AMCs,
-  // pending for listed but un-ingested (ICICI Pru), unavailable for unlisted.
-  // When the AMC's latest sourced quarter is a *derived* row (e.g. ICICI's
-  // 2025-Q2 reconstructed from 9M FY26 minus reported quarters), swap the
-  // standard screener note for an explicit "derived" caption so the user
-  // can tell it's not a direct scrape.
-  const derivedHeadline = latestQ?.derivedFrom
-    ? latestQ.derivedFrom.split(".")[0].trim() + "."
-    : null;
-  const financialsNote = quarterlyLive
-    ? derivedHeadline
-      ? `Source: derived · ${derivedHeadline}`
-      : liveScreenerNote()
-    : profile.listed
-      ? pendingFinancialsNote()
-      : unlistedFinancialsNote();
-  const operatingDemoNote = demoNote("operating data not yet sourced");
-  const sipDemoNote = demoNote("SIP not yet sourced");
-  const shareDemoNote = demoNote("share not yet sourced");
+  const fetchedDate = new Date(detail.fetchedAt).toISOString().slice(0, 10);
+  const latest = detail.latest;
+  const sourceCaption = `Source: ${detail.source} · fetched ${fetchedDate}`;
 
   return (
     <div className="space-y-6">
+      <div className="text-sm">
+        <Link
+          href="/amc"
+          className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          All AMCs
+        </Link>
+      </div>
+
       <PageHeader
-        title={profile.name}
+        title={detail.displayName}
         subtitle={
-          [
-            profile.ticker,
-            profile.listed ? "Listed" : "Unlisted",
-          ]
-            .filter(Boolean)
-            .join(" · ") + ` · ${latest.month}`
+          latest
+            ? `${latest.fiscalLabel} · rank #${latest.rank} of ${latest.outOf} · ${formatPctSafe(latest.marketSharePct, 2)} market share`
+            : `${detail.amcNameAsReported}`
         }
         action={
-          quarterlyLive ? (
+          latest?.isTop7 ? (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-positive/40 bg-positive/10 px-2 py-0.5 text-[10px] tabular text-positive">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-positive" />
-              Live financials
+              Top 7 by AAUM
             </span>
-          ) : undefined
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-full border bg-muted px-2 py-0.5 text-[10px] tabular text-muted-foreground">
+              Outside top 7
+            </span>
+          )
         }
       />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="MF Average AUM"
-          value={formatCompactCrSafe(latestAaum)}
-          delta={
-            aaumQoq !== null ? `${formatDelta(aaumQoq)} QoQ` : undefined
+          label="Latest MF Average AUM"
+          value={formatCompactCrSafe(latest?.avgAum ?? null)}
+          note={sourceCaption}
+        />
+        <KpiCard
+          label="Market Share"
+          value={formatPctSafe(latest?.marketSharePct ?? null, 2)}
+          note={
+            latest
+              ? `Within ${latest.outOf} AMCs · ${latest.fiscalLabel}`
+              : sourceCaption
           }
-          trend={aaumQoq !== null ? trend(aaumQoq / 100) : undefined}
-          note={aaumNote}
         />
         <KpiCard
-          label="AUM Share"
-          value={formatPctSafe(aumShare, 2)}
-          note={shareDemoNote}
+          label="Rank by AAUM"
+          value={
+            latest
+              ? `#${latest.rank}`
+              : "—"
+          }
+          note={
+            latest
+              ? `of ${latest.outOf} AMCs · ${latest.fiscalLabel}`
+              : sourceCaption
+          }
         />
         <KpiCard
-          label="Active Equity AUM"
-          value={formatCompactCrSafe(latest.activeEquityAum)}
-          note={operatingDemoNote}
-        />
-        <KpiCard
-          label="SIP Contribution"
-          value={formatCompactCrSafe(latest.sipContribution)}
-          delta={`${formatDelta(sipMom)} MoM`}
-          trend={trend(sipMom)}
-          note={sipDemoNote}
+          label="QoQ AAUM Growth"
+          value={
+            growth?.qoqGrowthPct !== null && growth?.qoqGrowthPct !== undefined
+              ? formatDelta(growth.qoqGrowthPct)
+              : "—"
+          }
+          trend={trend(growth?.qoqGrowthPct)}
+          note={
+            growth?.prevQuarter
+              ? `vs ${detail.latest?.fiscalLabel} → prior quarter`
+              : "Insufficient history"
+          }
         />
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="Active Equity Share"
-          value={formatPctSafe(activeEquityShare, 2)}
-          note={shareDemoNote}
-        />
-        <KpiCard
-          label="SIP Share"
-          value={formatPctSafe(sipShare, 2)}
-          note={shareDemoNote}
-        />
-        <KpiCard
-          label="Revenue from Operations (Q)"
+          label="YoY AAUM Growth"
           value={
-            quarterlyLive && latestQ
-              ? formatCompactCrSafe(latestQ.revenue)
+            growth?.yoyGrowthPct !== null && growth?.yoyGrowthPct !== undefined
+              ? formatDelta(growth.yoyGrowthPct)
               : "—"
           }
-          note={financialsNote}
+          trend={trend(growth?.yoyGrowthPct)}
+          note={
+            growth?.yoyQuarter
+              ? `Same quarter last year`
+              : "Insufficient history (need 4 quarters)"
+          }
         />
         <KpiCard
-          label="PAT"
-          value={
-            quarterlyLive && latestQ ? formatCompactCrSafe(latestQ.pat) : "—"
+          label="Quarters Tracked"
+          value={String(aaumSeries.length)}
+          note={
+            aaumSeries.length > 0
+              ? `${aaumSeries[0].fiscalLabel} → ${aaumSeries[aaumSeries.length - 1].fiscalLabel}`
+              : sourceCaption
           }
-          delta={quarterlyLive ? `${formatDelta(patYoy)} YoY` : undefined}
-          trend={quarterlyLive ? trend(patYoy) : undefined}
-          note={financialsNote}
+        />
+        <KpiCard
+          label="Mapping"
+          value={
+            detail.mappingStatus === "mapped"
+              ? "Curated"
+              : detail.mappingStatus === "auto_slug"
+                ? "Auto-mapped"
+                : (detail.mappingStatus ?? "—")
+          }
+          note={detail.amcNameAsReported}
+        />
+        <KpiCard
+          label="Source"
+          value="AMFI Fundwise"
+          note={`MF QAAUM · fetched ${fetchedDate}`}
         />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card title="AUM Trend" subtitle="Demo · 24-month series · operating AUM not yet sourced">
-          <AreaTrend data={aumSeries} name="AUM" />
-        </Card>
-        <Card title="SIP Flow" subtitle="Demo · monthly inflows · SIP not yet sourced">
-          <BarSeries data={sipSeries} name="SIP" />
-        </Card>
         <Card
-          title="Quarterly P&L"
-          subtitle={
-            quarterlyLive
-              ? "Revenue from Ops / Op Profit / PAT · ₹ Cr"
-              : financialsUnavailableMessage
-          }
+          title="AAUM Trend"
+          subtitle={`MF QAAUM · ₹ Cr · ${aaumSeries.length} quarter${aaumSeries.length === 1 ? "" : "s"}`}
         >
-          {quarterlyLive ? (
-            <GroupedBars
-              data={pnlData}
-              xKey="quarter"
-              bars={[
-                { key: "revenue", name: "Revenue from Ops", color: "hsl(var(--chart-1))" },
-                { key: "op", name: "Op Profit", color: "hsl(var(--chart-2))" },
-                { key: "pat", name: "PAT", color: "hsl(var(--chart-3))" },
-              ]}
-            />
+          {aaumChart.length > 0 ? (
+            <AreaTrend data={aaumChart} name="AAUM" />
           ) : (
-            <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-              —
-            </div>
+            <EmptyChart>No AAUM history</EmptyChart>
           )}
         </Card>
         <Card
-          title="Yields (bps of MF QAAUM)"
-          subtitle={
-            quarterlyLive ? yieldsSubtitle : financialsUnavailableMessage
-          }
+          title="Market Share Trend"
+          subtitle="% of industry MF AAUM"
         >
-          {quarterlyLive && yieldsAvailable ? (
+          {shareChart.length > 0 ? (
+            <BarSeries data={shareChart} name="Market share" valueFormat="pct" />
+          ) : (
+            <EmptyChart>No market-share history</EmptyChart>
+          )}
+        </Card>
+        <Card
+          title="Rank Trend"
+          subtitle="Position by AAUM (lower number = larger AMC)"
+        >
+          {rankChart.length > 0 ? (
             <MultiLine
-              data={yieldData}
+              data={rankChart}
               xKey="quarter"
-              valueFormat="bps"
-              axisFormat="bps"
+              valueFormat="count"
+              axisFormat="count"
               lines={[
-                { key: "revenue", name: "Revenue realization", color: "hsl(var(--chart-1))" },
-                { key: "op", name: "Operating", color: "hsl(var(--chart-2))" },
-                { key: "profit", name: "Profit", color: "hsl(var(--chart-3))" },
+                {
+                  key: "rank",
+                  name: "Rank",
+                  color: "hsl(var(--chart-1))",
+                },
               ]}
             />
           ) : (
-            <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-              —
-            </div>
+            <EmptyChart>No rank history</EmptyChart>
+          )}
+        </Card>
+        <Card
+          title="Peer Comparison"
+          subtitle={
+            peer
+              ? `Top 7 by AAUM · ${peer.fiscalLabel}${
+                  latest && !latest.isTop7 ? ` + ${detail.displayName}` : ""
+                }`
+              : "Latest quarter"
+          }
+        >
+          {peerChart.length > 0 ? (
+            <FocusedBarChart rows={peerChart} />
+          ) : (
+            <EmptyChart>No peer data</EmptyChart>
           )}
         </Card>
       </section>
+    </div>
+  );
+}
+
+function EmptyChart({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+      {children}
+    </div>
+  );
+}
+
+/** Compact peer-comparison bar chart that highlights the focused AMC.
+ *  We render this inline (rather than reuse BarSeries) so the focused
+ *  AMC stands out without forking the shared chart components. */
+function FocusedBarChart({
+  rows,
+}: {
+  rows: { label: string; value: number; slug: string; isFocused: boolean }[];
+}) {
+  const max = Math.max(...rows.map((r) => r.value), 1);
+  return (
+    <div className="space-y-2">
+      {rows.map((r) => {
+        const widthPct = (r.value / max) * 100;
+        return (
+          <div key={r.slug} className="flex items-center gap-3 text-xs">
+            <div
+              className={cn(
+                "w-40 truncate",
+                r.isFocused ? "font-semibold" : "text-muted-foreground"
+              )}
+              title={r.label}
+            >
+              {r.label}
+            </div>
+            <div className="flex-1">
+              <div className="h-5 rounded bg-muted">
+                <div
+                  className={cn(
+                    "h-5 rounded",
+                    r.isFocused
+                      ? "bg-positive/70"
+                      : "bg-foreground/20"
+                  )}
+                  style={{ width: `${widthPct}%` }}
+                />
+              </div>
+            </div>
+            <div
+              className={cn(
+                "w-24 text-right tabular",
+                r.isFocused ? "font-semibold" : "text-muted-foreground"
+              )}
+            >
+              {formatCompactCrSafe(r.value)}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
