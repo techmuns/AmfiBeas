@@ -194,6 +194,17 @@ export interface PeerComparisonRow {
   /** 1 = highest AAUM in this quarter. */
   rank: number;
   isFocused: boolean;
+  /** Whether this peer falls within the top 7 by latest AAUM. The
+   *  focused AMC may carry isInTop7=false when it's been appended
+   *  to the table because the user opened a long-tail AMC's page. */
+  isInTop7: boolean;
+  /** QoQ AAUM growth % for this peer. null when the prior quarter
+   *  isn't in the snapshot for this peer. */
+  qoqGrowthPct: number | null;
+  /** YoY AAUM growth % for this peer (latest vs. same calendar
+   *  quarter one year earlier). null when that quarter isn't in
+   *  the snapshot for this peer. */
+  yoyGrowthPct: number | null;
 }
 
 /** Peer-comparison rows for the AMC's latest quarter. Returns the
@@ -211,6 +222,7 @@ export function peerComparisonForAmc(slug: string): {
   if (ranking.length === 0) return null;
   const total = ranking.reduce((s, r) => s + r.avgAum, 0);
   const top7 = topAumAmcSlugs(7);
+  const top7Set = new Set(top7);
   const focusedIdx = ranking.findIndex((r) => r.amcSlug === slug);
   // If the AMC is OUTSIDE the top 7, append it; otherwise top 7 already
   // includes it.
@@ -218,16 +230,21 @@ export function peerComparisonForAmc(slug: string): {
   if (focusedIdx >= 0) includeSlugs.add(slug);
   const rows: PeerComparisonRow[] = ranking
     .filter((r) => includeSlugs.has(r.amcSlug))
-    .map((r) => ({
-      amcSlug: r.amcSlug,
-      displayName: r.displayName ?? r.amcNameAsReported,
-      avgAum: r.avgAum,
-      marketSharePct:
-        total > 0 ? Number(((r.avgAum / total) * 100).toFixed(3)) : 0,
-      rank:
-        ranking.findIndex((row) => row.amcSlug === r.amcSlug) + 1,
-      isFocused: r.amcSlug === slug,
-    }))
+    .map((r) => {
+      const growth = amcGrowthMetrics(r.amcSlug);
+      return {
+        amcSlug: r.amcSlug,
+        displayName: r.displayName ?? r.amcNameAsReported,
+        avgAum: r.avgAum,
+        marketSharePct:
+          total > 0 ? Number(((r.avgAum / total) * 100).toFixed(3)) : 0,
+        rank: ranking.findIndex((row) => row.amcSlug === r.amcSlug) + 1,
+        isFocused: r.amcSlug === slug,
+        isInTop7: top7Set.has(r.amcSlug),
+        qoqGrowthPct: growth?.qoqGrowthPct ?? null,
+        yoyGrowthPct: growth?.yoyGrowthPct ?? null,
+      };
+    })
     .sort((a, b) => a.rank - b.rank);
   return {
     quarter: q,
