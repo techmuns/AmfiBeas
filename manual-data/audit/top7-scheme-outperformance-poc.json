@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-05-10T10:18:30.849Z",
+    "generatedAt": "2026-05-10T10:54:24.756Z",
     "source": "AMC factsheets",
     "periodEnd": "2026-03",
     "notes": [
@@ -19,7 +19,7 @@
       "sourceUrl": "https://www.sbimf.com/factsheets",
       "sourceFile": null,
       "periodEnd": null,
-      "fetchedAt": "2026-05-10T10:18:30.849Z",
+      "fetchedAt": "2026-05-10T10:54:24.756Z",
       "status": "failed",
       "parsedSchemeCount": 0,
       "eligibleSchemeCount1Y": 0,
@@ -49,7 +49,7 @@
       "sourceUrl": "https://digitalfactsheet.icicipruamc.com/fact/pdf/fund-factsheet-for-march-2026.pdf",
       "sourceFile": "/home/runner/work/AmfiBeas/AmfiBeas/manual-data/factsheets/icici-pru/2026-03.pdf",
       "periodEnd": "2026-03",
-      "fetchedAt": "2026-05-10T10:18:30.849Z",
+      "fetchedAt": "2026-05-10T10:54:24.756Z",
       "status": "failed",
       "parsedSchemeCount": 0,
       "eligibleSchemeCount1Y": 0,
@@ -92,7 +92,7 @@
       "sourceUrl": "https://files.hdfcfund.com/s3fs-public/2026-04/HDFC%20MF%20Factsheet%20-%20March%202026.pdf",
       "sourceFile": "/home/runner/work/AmfiBeas/AmfiBeas/manual-data/factsheets/hdfc/2026-04.pdf",
       "periodEnd": "2026-03",
-      "fetchedAt": "2026-05-10T10:18:30.849Z",
+      "fetchedAt": "2026-05-10T10:54:24.756Z",
       "status": "ok",
       "parsedSchemeCount": 48,
       "eligibleSchemeCount1Y": 30,
@@ -880,18 +880,18 @@
       "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheets/NipponIndia-Factsheet-July-2025.pdf",
       "sourceFile": "/home/runner/work/AmfiBeas/AmfiBeas/manual-data/factsheets/nippon/2025-07.pdf",
       "periodEnd": "2025-07",
-      "fetchedAt": "2026-05-10T10:18:30.849Z",
+      "fetchedAt": "2026-05-10T10:54:24.756Z",
       "status": "partial",
-      "parsedSchemeCount": 10,
-      "eligibleSchemeCount1Y": 3,
-      "eligibleSchemeCount3Y": 3,
-      "eligibleSchemeCount5Y": 3,
-      "outperformingSchemeCount1Y": 2,
-      "outperformingSchemeCount3Y": 0,
-      "outperformingSchemeCount5Y": 0,
-      "outperformancePct1Y": 66.7,
-      "outperformancePct3Y": 0,
-      "outperformancePct5Y": 0,
+      "parsedSchemeCount": 13,
+      "eligibleSchemeCount1Y": 4,
+      "eligibleSchemeCount3Y": 4,
+      "eligibleSchemeCount5Y": 4,
+      "outperformingSchemeCount1Y": 1,
+      "outperformingSchemeCount3Y": 2,
+      "outperformingSchemeCount5Y": 1,
+      "outperformancePct1Y": 25,
+      "outperformancePct3Y": 50,
+      "outperformancePct5Y": 25,
       "candidateBlocksScanned": 24,
       "performancePagesDetected": [
         108,
@@ -903,7 +903,10 @@
         115,
         117,
         118,
-        127
+        119,
+        120,
+        127,
+        128
       ],
       "rejectedCandidateSamples": [
         {
@@ -914,24 +917,6 @@
           "textBeforePerformance": " Gold BeES \t93\nFUND OF FUND (FOF)\nFoF -Domestic \tNippon India Gold Savings Fund \t94\nFoF -Domestic \tNippon India Nifty Next 50 Junior BeES FoF \t95\nFoF -Domestic \tNippon India Diversified Equity Flexicap Passive FoF \t96\nFoF -Domestic \tNippon India Multi Asset Active FoF \t97\nFoF -Domestic \tNippon India Income Plus Arbitrage Active Fund of Fund \t98\nFoF -Domestic \tNippon India Silver ETF Fund of Fund (FOF) \t99\nSOLUTION ORIENTED\nRetirement Fund \tNippon India Retirement Fund - Income Generation\nScheme \t100\nRetirement Fund \tNippon India Retirement Fund - Wealth Creation\nScheme \t101\nDebt Snapshot \t102\nSIP Returns of Select Schemes (Regular Schemes) \t103\nBrief on New Securities included in the Portfolio of Debt Funds \t103\nSIP Returns of Select Schemes (Direct Schemes) \t104\nFund Management Team \t107\n",
           "detectedSchemeTitleCandidate": null,
           "detectedCategoryCandidate": null
-        },
-        {
-          "pageNum": 119,
-          "reason": "no-period-rows",
-          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Nifty Alpha Low Volatility 30 Index Fund\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%",
-          "pageHeaderSnippet": "SCHEME ",
-          "textBeforePerformance": "SCHEME ",
-          "detectedSchemeTitleCandidate": "Nippon India Nifty Alpha Low Volatility 30 Index Fund",
-          "detectedCategoryCandidate": "Index Fund"
-        },
-        {
-          "pageNum": 120,
-          "reason": "no-benchmark-line",
-          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Nifty 500 Momentum 50 Index Fund\nFund / Benchmark(Value of ₹10, 000 invested) 6 Months \tSince Inception\nAmount in ₹ \tReturns (%) \tAmount in ₹ \tReturns (%)\nNAV as on June 30, 2025: ₹8.5786\nNippon I",
-          "pageHeaderSnippet": "SCHEME ",
-          "textBeforePerformance": "SCHEME ",
-          "detectedSchemeTitleCandidate": "Nippon India Nifty 500 Momentum 50 Index Fund",
-          "detectedCategoryCandidate": "Index Fund"
         },
         {
           "pageNum": 121,
@@ -979,15 +964,6 @@
           "detectedCategoryCandidate": null
         },
         {
-          "pageNum": 128,
-          "reason": "no-benchmark-line",
-          "textSnippet": "PERFORMANCE AS ON June 30,2025\nNippon India Retirement Fund - Wealth Creation Plan\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) ",
-          "pageHeaderSnippet": "SCHEME ",
-          "textBeforePerformance": "SCHEME ",
-          "detectedSchemeTitleCandidate": "Nippon India Retirement Fund - Wealth Creation Plan",
-          "detectedCategoryCandidate": "Retirement Fund"
-        },
-        {
           "pageNum": 129,
           "reason": "no-hdfc-scheme-line",
           "textSnippet": "PERFORMANCE - FUND MANAGER WISE AS ON JUNE 30, 2025\nFund Manager: Sailesh Raj Bhan\nScheme Name/s\nCAGR %\n1 Year Return \t3 Years Return \t5 Years Return\nRegular Scheme Direct Scheme Benchmark Regular Scheme Direct Scheme Benchmark Regular Sche",
@@ -1031,17 +1007,41 @@
           "category": "Large Cap Fund",
           "categorySlug": "large-cap",
           "benchmarkName": "Primary benchmark",
-          "schemeReturn1Y": 7,
-          "schemeReturn3Y": 17.85,
-          "schemeReturn5Y": 20.58,
-          "benchmarkReturn1Y": 7.4,
-          "benchmarkReturn3Y": 26.1,
-          "benchmarkReturn5Y": 27.01,
-          "outperformed1Y": false,
-          "outperformed3Y": false,
-          "outperformed5Y": false,
+          "schemeReturn1Y": 6.81,
+          "schemeReturn3Y": 25.19,
+          "schemeReturn5Y": 26.93,
+          "benchmarkReturn1Y": 6.65,
+          "benchmarkReturn3Y": 20.22,
+          "benchmarkReturn5Y": 22.41,
+          "outperformed1Y": true,
+          "outperformed3Y": true,
+          "outperformed5Y": true,
           "pageNum": 108,
-          "textSnippet": "Nippon India Large Cap Fund | PERFORMANCE AS ON June 30,2025\nNippon India Large Cap Fund\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%)\nNAV as on June 30, 2025: ₹91.7879\nNippon India Large Cap Fund - Regular \tIncepti"
+          "textSnippet": "Nippon India Large Cap Fund | PERFORMANCE AS ON June 30,2025\nNippon India Large Cap Fund\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%)\nNAV as on June 30, 2025: ₹91.7879\nNippon India Large Cap Fund - Regular \tIncepti",
+          "parserDebug": {
+            "rawFundLine": "Nippon India Large Cap Fund 10,685 6.81 19,631 25.19 32,970 26.93 91,788 13.18 B:BSE 100 TRI 10,669 6.65 17,386 20.22 27,495 22.41 74,319 11.85",
+            "rawBenchmarkLine": "B:BSE 100 TRI 10,669 6.65 17,386 20.22 27,495 22.41 74,319 11.85 AB:BSE Sensex TRI 10,704 7.00 16,374 17.85 25,506 20.58 69,292 11.42",
+            "fundNumbersRaw": [
+              6.81,
+              25.19,
+              26.93,
+              13.18,
+              6.65,
+              20.22,
+              22.41,
+              11.85
+            ],
+            "benchmarkNumbersRaw": [
+              6.65,
+              20.22,
+              22.41,
+              11.85,
+              7,
+              17.85,
+              20.58,
+              11.42
+            ]
+          }
         },
         {
           "schemeName": "Nippon India Flexi Cap Fund",
@@ -1049,17 +1049,37 @@
           "category": "Flexi Cap Fund",
           "categorySlug": "flexi-cap",
           "benchmarkName": "Primary benchmark",
-          "schemeReturn1Y": 7,
-          "schemeReturn3Y": 17.85,
-          "schemeReturn5Y": 12.54,
-          "benchmarkReturn1Y": 4.22,
-          "benchmarkReturn3Y": 23.04,
-          "benchmarkReturn5Y": 25.78,
-          "outperformed1Y": true,
+          "schemeReturn1Y": 1.45,
+          "schemeReturn3Y": 20.45,
+          "schemeReturn5Y": 14.32,
+          "benchmarkReturn1Y": 5.64,
+          "benchmarkReturn3Y": 21.97,
+          "benchmarkReturn5Y": 15.43,
+          "outperformed1Y": false,
           "outperformed3Y": false,
           "outperformed5Y": false,
           "pageNum": 110,
-          "textSnippet": "Nippon India Flexi Cap Fund | PERFORMANCE AS ON June 30,2025\nNippon India Flexi Cap Fund\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%)\nNAV as on June 30, 2025: ₹16.8102\nNippon India Flexi Cap Fund - Regular \tIncepti"
+          "textSnippet": "Nippon India Flexi Cap Fund | PERFORMANCE AS ON June 30,2025\nNippon India Flexi Cap Fund\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%)\nNAV as on June 30, 2025: ₹16.8102\nNippon India Flexi Cap Fund - Regular \tIncepti",
+          "parserDebug": {
+            "rawFundLine": "Nippon India Flexi Cap Fund 10,146 1.45 17,484 20.45 NA NA 16,810 14.32 B:Nifty 500 TRI 10,568 5.64 18,155 21.97 NA NA 17,453 15.43",
+            "rawBenchmarkLine": "B:Nifty 500 TRI 10,568 5.64 18,155 21.97 NA NA 17,453 15.43 AB:BSE Sensex TRI 10,704 7.00 16,374 17.85 NA NA 15,818 12.54",
+            "fundNumbersRaw": [
+              1.45,
+              20.45,
+              14.32,
+              5.64,
+              21.97,
+              15.43
+            ],
+            "benchmarkNumbersRaw": [
+              5.64,
+              21.97,
+              15.43,
+              7,
+              17.85,
+              12.54
+            ]
+          }
         },
         {
           "schemeName": "Nippon India Pharma Fund",
@@ -1067,17 +1087,83 @@
           "category": "Sectoral / Thematic Fund",
           "categorySlug": "sectoral-thematic",
           "benchmarkName": "Primary benchmark",
-          "schemeReturn1Y": 7,
-          "schemeReturn3Y": 17.85,
-          "schemeReturn5Y": 20.58,
-          "benchmarkReturn1Y": 3.85,
-          "benchmarkReturn3Y": 22.63,
-          "benchmarkReturn5Y": 25.29,
-          "outperformed1Y": true,
+          "schemeReturn1Y": 16.23,
+          "schemeReturn3Y": 25.75,
+          "schemeReturn5Y": 22.41,
+          "benchmarkReturn1Y": 19.86,
+          "benchmarkReturn3Y": 27.81,
+          "benchmarkReturn5Y": 22.91,
+          "outperformed1Y": false,
           "outperformed3Y": false,
           "outperformed5Y": false,
           "pageNum": 111,
-          "textSnippet": "Nippon India Pharma Fund | PERFORMANCE AS ON June 30,2025\nNippon India Pharma Fund\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%)\nNAV as on June 30, 2025: ₹518.9092\nNippon India Pharma Fund - Regular \tInception Da"
+          "textSnippet": "Nippon India Pharma Fund | PERFORMANCE AS ON June 30,2025\nNippon India Pharma Fund\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%)\nNAV as on June 30, 2025: ₹518.9092\nNippon India Pharma Fund - Regular \tInception Da",
+          "parserDebug": {
+            "rawFundLine": "Nippon India Pharma Fund 11,633 16.23 19,898 25.75 27,501 22.41 5,18,912 20.60 B:BSE Healthcare TRI 11,998 19.86 20,890 27.81 28,065 22.91 2,29,158 16.01",
+            "rawBenchmarkLine": "B:BSE Healthcare TRI 11,998 19.86 20,890 27.81 28,065 22.91 2,29,158 16.01 AB:BSE Sensex TRI 10,704 7.00 16,374 17.85 25,506 20.58 2,29,320 16.02",
+            "fundNumbersRaw": [
+              16.23,
+              25.75,
+              22.41,
+              20.6,
+              19.86,
+              27.81,
+              22.91,
+              16.01
+            ],
+            "benchmarkNumbersRaw": [
+              19.86,
+              27.81,
+              22.91,
+              16.01,
+              7,
+              17.85,
+              20.58,
+              16.02
+            ]
+          }
+        },
+        {
+          "schemeName": "Nippon India Retirement Fund - Wealth Creation Plan",
+          "schemeNameRaw": "Nippon India Retirement Fund - Wealth Creation Plan",
+          "category": "Retirement Fund",
+          "categorySlug": "retirement",
+          "benchmarkName": "Primary benchmark",
+          "schemeReturn1Y": 2.93,
+          "schemeReturn3Y": 22.93,
+          "schemeReturn5Y": 23.01,
+          "benchmarkReturn1Y": 5.09,
+          "benchmarkReturn3Y": 21.67,
+          "benchmarkReturn5Y": 24.02,
+          "outperformed1Y": false,
+          "outperformed3Y": true,
+          "outperformed5Y": false,
+          "pageNum": 128,
+          "textSnippet": "Nippon India Retirement Fund - Wealth Creation Plan | PERFORMANCE AS ON June 30,2025\nNippon India Retirement Fund - Wealth Creation Plan\nFund / Benchmark(Value of ₹10, 000 invested) 1 Year \t3 Year \t5 Year \tSince Inception\nAmount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%) Amount in ₹ Returns (%)\nNAV as on June 30, 2025: ₹29.0425\nNippon India Retiremen",
+          "parserDebug": {
+            "rawFundLine": "Nippon India Retirement Fund - Wealth Creation Plan 10,295 2.93 18,585 22.93 28,185 23.01 29,043 10.81 B:BSE 500 TRI 10,512 5.09 18,021 21.67 29,357 24.02 37,950 13.70",
+            "rawBenchmarkLine": "B:BSE 500 TRI 10,512 5.09 18,021 21.67 29,357 24.02 37,950 13.70 AB:BSE Sensex TRI 10,704 7.00 16,374 17.85 25,506 20.58 33,460 12.33",
+            "fundNumbersRaw": [
+              2.93,
+              22.93,
+              23.01,
+              10.81,
+              5.09,
+              21.67,
+              24.02,
+              13.7
+            ],
+            "benchmarkNumbersRaw": [
+              5.09,
+              21.67,
+              24.02,
+              13.7,
+              7,
+              17.85,
+              20.58,
+              12.33
+            ]
+          }
         }
       ],
       "excludedSchemes": [
@@ -1122,6 +1208,20 @@
           "pageNum": 118
         },
         {
+          "schemeName": "Nippon India Nifty Alpha Low Volatility 30 Index Fund",
+          "reason": "category-excluded",
+          "categorySlug": "index-funds",
+          "category": "Index Fund",
+          "pageNum": 119
+        },
+        {
+          "schemeName": "Nippon India Nifty 500 Momentum 50 Index Fund",
+          "reason": "category-excluded",
+          "categorySlug": "index-funds",
+          "category": "Index Fund",
+          "pageNum": 120
+        },
+        {
           "schemeName": "Nippon India Diversified Equity Flexicap Passive FoF",
           "reason": "category-unknown",
           "pageNum": 127
@@ -1134,7 +1234,7 @@
         "Direct + Regular plan dedup applied; one row per scheme stem.",
         "Parser anchors on \"PERFORMANCE ^\" section marker; \"SIP PERFORMANCE\" siblings rejected upstream.",
         "Per-row extraction: each table row is a TIME PERIOD (\"Last 1 Year\" / \"Last 3 Years\" / \"Last 5 Years\"); row's first three CAGR numbers are (scheme %, benchmark %, additional %).",
-        "3 scheme(s) included with benchmarkName=\"Primary benchmark\" — period rows yielded scheme + benchmark return numbers, but the page-level \"#BENCHMARK INDEX\" legend was not detected by the walker. Outperformance math is unaffected."
+        "4 scheme(s) included with benchmarkName=\"Primary benchmark\" — period rows yielded scheme + benchmark return numbers, but the page-level \"#BENCHMARK INDEX\" legend was not detected by the walker. Outperformance math is unaffected."
       ]
     },
     {
@@ -1144,7 +1244,7 @@
       "sourceUrl": "https://www.kotakmf.com/Information/forms-and-downloads",
       "sourceFile": null,
       "periodEnd": null,
-      "fetchedAt": "2026-05-10T10:18:30.849Z",
+      "fetchedAt": "2026-05-10T10:54:24.756Z",
       "status": "failed",
       "parsedSchemeCount": 0,
       "eligibleSchemeCount1Y": 0,
@@ -1174,7 +1274,7 @@
       "sourceUrl": "https://mutualfund.adityabirlacapital.com/forms-and-downloads/factsheets",
       "sourceFile": null,
       "periodEnd": null,
-      "fetchedAt": "2026-05-10T10:18:30.849Z",
+      "fetchedAt": "2026-05-10T10:54:24.756Z",
       "status": "failed",
       "parsedSchemeCount": 0,
       "eligibleSchemeCount1Y": 0,
@@ -1204,7 +1304,7 @@
       "sourceUrl": "https://www.utimf.com/downloads/fact-sheet",
       "sourceFile": null,
       "periodEnd": null,
-      "fetchedAt": "2026-05-10T10:18:30.849Z",
+      "fetchedAt": "2026-05-10T10:54:24.756Z",
       "status": "failed",
       "parsedSchemeCount": 0,
       "eligibleSchemeCount1Y": 0,
