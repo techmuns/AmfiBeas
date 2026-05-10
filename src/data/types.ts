@@ -30,8 +30,6 @@ export interface AMC {
  *  - investorAdditions   New folios added in this month.
  *  - folios              Total folios outstanding at month end.
  *  - uniqueInvestors     PAN-level distinct investor count. Rarely available; left optional.
- *  - schemeOutperformanceRatio  % of schemes beating their benchmark (rolling 3y typical).
- *  - quartileRankSummary        Distribution of an AMC's funds across performance quartiles.
  *  - nfoCount            Number of NFOs launched this month.
  *  - nfoAumCollected     ₹ Cr raised across those NFOs.
  */
@@ -53,18 +51,8 @@ export interface MonthlyOperating {
   folios: number;
   uniqueInvestors?: number;
 
-  schemeOutperformanceRatio?: number;
-  quartileRankSummary?: QuartileRankSummary;
-
   nfoCount: number;
   nfoAumCollected: number;
-}
-
-export interface QuartileRankSummary {
-  q1: number;
-  q2: number;
-  q3: number;
-  q4: number;
 }
 
 export interface QuarterlyFinancial {

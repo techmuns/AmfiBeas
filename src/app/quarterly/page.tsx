@@ -930,22 +930,6 @@ export default async function QuarterlyPage({
         >
           <ChartPlaceholder height={240} />
         </Card>
-        <Card
-          tone="pending"
-          title="Scheme Outperformance"
-          subtitle="Pending · AMC × quarter · % over benchmark"
-          className="lg:col-span-2"
-        >
-          <ChartPlaceholder height={240} />
-        </Card>
-        <Card
-          tone="pending"
-          title="Top Quartile %"
-          subtitle="Pending · share of AMC funds ranked Q1 · latest quarter"
-          className="lg:col-span-2"
-        >
-          <ChartPlaceholder height={120} />
-        </Card>
       </section>
     </div>
   );

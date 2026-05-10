@@ -14,10 +14,7 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "ingest": "tsx scripts/ingest/index.ts",
     "ingest:amfi-pdf": "tsx scripts/ingest/amfi-monthly-pdf.ts",
-    "ingest:amfi-quarterly-pdf": "tsx scripts/ingest/amfi-quarterly-pdf.ts",
-    "audit:hdfc-factsheet": "tsx scripts/ingest/amc-factsheet-hdfc.ts",
-    "audit:top7-factsheets": "tsx scripts/ingest/amc-factsheet-performance.ts",
-    "audit:rupeevest": "tsx scripts/ingest/rupeevest-audit.ts"
+    "ingest:amfi-quarterly-pdf": "tsx scripts/ingest/amfi-quarterly-pdf.ts"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.19.6",

@@ -153,16 +153,6 @@ function buildAmcMonthly(
         ? Math.round(nfoCount * (300 + Math.abs(gaussian(rand, 0, 200))))
         : 0;
 
-    const schemeOutperformanceRatio = Math.max(
-      0,
-      Math.min(100, 50 + gaussian(rand, 0, 12))
-    );
-
-    const q1Pct = Math.max(10, Math.min(60, 30 + gaussian(rand, 0, 8)));
-    const q2Pct = Math.max(10, Math.min(40, 25 + gaussian(rand, 0, 5)));
-    const q3Pct = Math.max(5, Math.min(35, 25 + gaussian(rand, 0, 5)));
-    const q4Pct = Math.max(0, 100 - q1Pct - q2Pct - q3Pct);
-
     return {
       amcSlug: profile.slug,
       month,
@@ -178,13 +168,6 @@ function buildAmcMonthly(
       folios,
       nfoCount,
       nfoAumCollected,
-      schemeOutperformanceRatio: Number(schemeOutperformanceRatio.toFixed(1)),
-      quartileRankSummary: {
-        q1: Number(q1Pct.toFixed(1)),
-        q2: Number(q2Pct.toFixed(1)),
-        q3: Number(q3Pct.toFixed(1)),
-        q4: Number(q4Pct.toFixed(1)),
-      },
     };
   });
 }
