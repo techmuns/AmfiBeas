@@ -7,6 +7,34 @@ const MONTH_TO_NUM: Record<string, number> = {
   january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
   july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
 };
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+const MONTH_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
 export const NIPPON_STRATEGY: AmcStrategy = {
   amcSlug: "nippon",
@@ -72,4 +100,32 @@ export const NIPPON_STRATEGY: AmcStrategy = {
   ],
   tableOrientation: "row-by-entity",
   schemeTitleSource: "after-marker",
+  // PR #92 — direct-URL probing. Nippon's listing-page scrape kept
+  // grabbing July 2025 even after newer factsheets were likely
+  // published (PRs #90/#91 audit). The shared fetcher now tries
+  // the URLs this generator returns BEFORE falling back to the
+  // listing scrape; the first one that returns a real PDF wins.
+  // Variants cover the observed naming patterns:
+  //   - NipponIndia-Factsheet-<Month>-<Year>.pdf  (canonical)
+  //   - NipponIndia-Factsheet-<Mon>-<Year>.pdf    (3-letter)
+  //   - Nippon-India-Factsheet-<Month>-<Year>.pdf (hyphen-brand)
+  //   - NipponIndia-Factsheet-<Month><Year>.pdf   (no separator)
+  //   - lowercase / underscore variants
+  directUrlCandidates: (targetPeriod) => {
+    const [yStr, mStr] = targetPeriod.split("-");
+    const monthNum = Number(mStr);
+    if (!Number.isFinite(monthNum) || monthNum < 1 || monthNum > 12) return [];
+    const month = MONTH_NAMES[monthNum - 1];
+    const monthLower = month.toLowerCase();
+    const monthShort = MONTH_SHORT[monthNum - 1];
+    const base = "https://mf.nipponindiaim.com/InvestorServices/FactSheets/";
+    return [
+      `${base}NipponIndia-Factsheet-${month}-${yStr}.pdf`,
+      `${base}NipponIndia-Factsheet-${monthShort}-${yStr}.pdf`,
+      `${base}NipponIndia_Factsheet_${month}_${yStr}.pdf`,
+      `${base}Nippon-India-Factsheet-${month}-${yStr}.pdf`,
+      `${base}NipponIndia-Factsheet-${month}${yStr}.pdf`,
+      `${base}nipponindia-factsheet-${monthLower}-${yStr}.pdf`,
+    ];
+  },
 };
