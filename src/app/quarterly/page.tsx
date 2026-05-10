@@ -25,7 +25,6 @@ import {
   getQuarterlyKpiValue,
   latestIndustryProvenance,
   latestOpenEndedSchemeCount,
-  latestQuarterlyCategoryProvenance,
   latestQuarterlyFolioAdditions,
   liquidAumForQuarter,
   quarterlyCategoryAumProvenance,
@@ -167,7 +166,7 @@ export default async function QuarterlyPage({
   pushSnapshotCard("grandTotalAum", "Total AUM", formatCompactCrSafe);
 
   const snapshotSubtitle = selectedRow
-    ? `Industry-wide · live from uploaded AMFI Quarterly Report PDFs · ${selectedRow.quarterLabel}`
+    ? `Industry-wide · ${selectedRow.quarterLabel}`
     : "Upload AMFI Quarterly PDFs to manual-data/amfi-quarterly/pdfs/, then run npm run ingest:amfi-quarterly-pdf";
 
   // ---- AMFI Quarterly AUM Mix & Trend -------------------------------
@@ -237,9 +236,6 @@ export default async function QuarterlyPage({
       : mixHasData
         ? `Quarter-end Net AUM · partial breakdown · Other not computed · ${selectedRow?.quarterLabel ?? ""}`
         : "Quarter-end Net AUM not available for the selected quarter";
-  const mixHoverProvenance = formatQuarterlyProvenanceTooltip(
-    getQuarterlyKpiProvenance(selectedRow, "grandTotalAum")
-  );
 
   // Last-month AAUM trend across the full 8-quarter history.
   const aaumTrendData = quarterlyTrend("grandTotalLastMonthAaum", 8);
@@ -262,9 +258,6 @@ export default async function QuarterlyPage({
   const flowsHasData = flowsData.some(
     (r) => r.equity !== null || r.debt !== null || r.liquid !== null
   );
-  const flowsHoverProvenance = formatQuarterlyProvenanceTooltip(
-    latestIndustryProvenance("debtNetInflow")
-  );
 
   // ---- Quarterly Active Equity & Equity Mix -------------------------
   // Mirrors /monthly's Active Equity & Equity Mix section. All three
@@ -284,9 +277,6 @@ export default async function QuarterlyPage({
   const aeAaumHover = formatQuarterlyProvenanceTooltip(
     latestIndustryProvenance("equityLastMonthAaum")
   );
-  const aeBreakdownHover = formatQuarterlyProvenanceTooltip(
-    latestQuarterlyCategoryProvenance("arbitrage", "categoryLastMonthAaum")
-  );
 
   // ---- Folios & Scheme Count ----------------------------------------
   const totalFolios = selectedRow?.grandTotalFolios ?? null;
@@ -298,10 +288,6 @@ export default async function QuarterlyPage({
   const foliosHover = formatQuarterlyProvenanceTooltip(
     getQuarterlyKpiProvenance(selectedRow, "grandTotalFolios")
   );
-  const foliosSourceLine =
-    formatQuarterlyProvenanceLine(
-      getQuarterlyKpiProvenance(selectedRow, "grandTotalFolios")
-    ) ?? "Source: AMFI Quarterly Report";
   const hasAnyFolioKpi =
     totalFolios !== null || folioAdditions !== null || openEndedSchemes !== null;
   const hasAnyFolioTrend =
@@ -397,9 +383,6 @@ export default async function QuarterlyPage({
             <h2 className="text-sm font-medium tracking-tight">
               AMFI Quarterly AUM Mix &amp; Trend
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Live from uploaded AMFI Quarterly Report PDFs
-            </p>
           </div>
           <section className="grid gap-4 lg:grid-cols-2">
             <Card title="Quarter-end AUM Mix" subtitle={mixSubtitle}>
@@ -410,12 +393,6 @@ export default async function QuarterlyPage({
                   Mix unavailable for the selected quarter
                 </div>
               )}
-              <div
-                className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                title={mixHoverProvenance ?? undefined}
-              >
-                Source: AMFI Quarterly Report
-              </div>
             </Card>
             <Card title="Last-month AAUM Trend" subtitle={aaumTrendSubtitle}>
               {aaumTrendHasData ? (
@@ -436,7 +413,7 @@ export default async function QuarterlyPage({
                 className="mt-3 text-[10px] tabular text-muted-foreground/80"
                 title={aaumTrendHoverProvenance ?? undefined}
               >
-                Source: AMFI Quarterly Report · Average Net AUM column
+                Average Net AUM column
                 is last-month only — not a true quarterly average
               </div>
             </Card>
@@ -452,9 +429,6 @@ export default async function QuarterlyPage({
             <h2 className="text-sm font-medium tracking-tight">
               Quarterly Flows
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Live from uploaded AMFI Quarterly Report PDFs
-            </p>
           </div>
           <Card
             title="Equity / Debt / Liquid Quarterly Net Flows"
@@ -484,12 +458,6 @@ export default async function QuarterlyPage({
               Liquid is shown separately; it is part of debt-oriented
               schemes in AMFI classification.
             </p>
-            <div
-              className="mt-2 text-[10px] tabular text-muted-foreground/80"
-              title={flowsHoverProvenance ?? undefined}
-            >
-              Source: AMFI Quarterly Report
-            </div>
           </Card>
         </div>
       )}
@@ -501,9 +469,6 @@ export default async function QuarterlyPage({
             <h2 className="text-sm font-medium tracking-tight">
               Active Equity &amp; Equity Mix
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Live from uploaded AMFI Quarterly Report PDFs
-            </p>
           </div>
 
           <section className="grid gap-4 lg:grid-cols-2">
@@ -525,12 +490,6 @@ export default async function QuarterlyPage({
                   Active Equity Last-month AAUM unavailable
                 </div>
               )}
-              <div
-                className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                title={aeAaumHover ?? undefined}
-              >
-                Source: AMFI Quarterly Report
-              </div>
             </Card>
 
             <Card
@@ -555,7 +514,7 @@ export default async function QuarterlyPage({
                 className="mt-3 text-[10px] tabular text-muted-foreground/80"
                 title={aeAaumHover ?? undefined}
               >
-                Source: AMFI Quarterly Report · last-month AAUM ratio,
+                last-month AAUM ratio,
                 not a true QAAUM share
               </div>
             </Card>
@@ -602,12 +561,6 @@ export default async function QuarterlyPage({
               quarterly Report&rsquo;s last-month AAUM column — not a true
               3-month average.
             </p>
-            <div
-              className="mt-2 text-[10px] tabular text-muted-foreground/80"
-              title={aeBreakdownHover ?? undefined}
-            >
-              Source: AMFI Quarterly Report
-            </div>
           </Card>
         </div>
       )}
@@ -622,22 +575,19 @@ export default async function QuarterlyPage({
             <h2 className="text-sm font-medium tracking-tight">
               Quarterly Folios &amp; Scheme Count
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Live from uploaded AMFI Quarterly Report PDFs
-            </p>
           </div>
 
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <KpiCard
               label="Total Folios"
               value={formatCroreCountSafe(totalFolios)}
-              note={foliosSourceLine}
+              note=""
               noteHover={foliosHover ?? undefined}
             />
             <KpiCard
               label="Folio Additions QoQ"
               value={formatLakhSafe(folioAdditions)}
-              note={foliosSourceLine}
+              note=""
               noteHover={
                 foliosHover
                   ? `${foliosHover} · derived QoQ Δ from grandTotalFolios`
@@ -647,7 +597,7 @@ export default async function QuarterlyPage({
             <KpiCard
               label="Open-Ended Scheme Count"
               value={formatIntSafe(openEndedSchemes)}
-              note="Source: AMFI Quarterly Report"
+              note=""
               noteHover="AMFI Quarterly Report · Sum of categorySchemes across 39 open-ended categories (close-ended + interval excluded)"
             />
           </section>
@@ -672,12 +622,6 @@ export default async function QuarterlyPage({
                     Folios unavailable
                   </div>
                 )}
-                <div
-                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                  title={foliosHover ?? undefined}
-                >
-                  Source: AMFI Quarterly Report
-                </div>
               </Card>
 
               <Card
@@ -702,7 +646,7 @@ export default async function QuarterlyPage({
                   className="mt-3 text-[10px] tabular text-muted-foreground/80"
                   title={foliosHover ?? undefined}
                 >
-                  Source: AMFI Quarterly Report · derived QoQ Δ
+                  derived QoQ Δ
                 </div>
               </Card>
 
@@ -728,7 +672,7 @@ export default async function QuarterlyPage({
                   className="mt-3 text-[10px] tabular text-muted-foreground/80"
                   title="AMFI Quarterly Report · Sum of categorySchemes across 39 open-ended categories"
                 >
-                  Source: AMFI Quarterly Report · derived from categorySchemes
+                  derived from categorySchemes
                 </div>
               </Card>
             </section>
@@ -785,12 +729,6 @@ export default async function QuarterlyPage({
                     Category data unavailable
                   </div>
                 )}
-                <div
-                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                  title={c.aumHover ?? undefined}
-                >
-                  Source: AMFI Monthly Reports · aggregated quarterly
-                </div>
               </Card>
             ))}
           </section>
@@ -843,12 +781,6 @@ export default async function QuarterlyPage({
                           Category data unavailable
                         </div>
                       )}
-                      <div
-                        className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                        title={c.aumHover ?? undefined}
-                      >
-                        Source: AMFI Monthly Reports · aggregated quarterly
-                      </div>
                     </Card>
                   ))}
                 </section>
@@ -877,8 +809,8 @@ export default async function QuarterlyPage({
         title="AUM Market Share"
         subtitle={
           aumMarketShareCoverage
-            ? `Top ${aumMarketShare.topAmcs.length} AMCs + Others · AMFI Fundwise AAUM disclosure · ${aumMarketShareCoverage.quarterLabel}`
-            : `Top ${aumMarketShare.topAmcs.length} AMCs + Others · AMFI Fundwise AAUM disclosure`
+            ? `Top ${aumMarketShare.topAmcs.length} AMCs + Others · ${aumMarketShareCoverage.quarterLabel}`
+            : `Top ${aumMarketShare.topAmcs.length} AMCs + Others`
         }
       >
         {aumMarketShare.rows.length > 0 ? (
@@ -907,19 +839,16 @@ export default async function QuarterlyPage({
         <p className="mt-3 text-[11px] text-muted-foreground">
           Top {aumMarketShare.topAmcs.length} shown by latest AAUM;
           Others includes all remaining AMCs. Denominator is total
-          AAUM of all AMCs in AMFI Fundwise AAUM disclosure.
+          AAUM of all AMCs in the snapshot.
           {aumMarketShareCoverage
             ? ` Top ${aumMarketShare.topAmcs.length} coverage: ` +
               `${aumMarketShareCoverage.topNCoveragePct.toFixed(1)}% ` +
-              `of total AMFI Fundwise AAUM (${aumMarketShareCoverage.storedAmcCount} AMCs in snapshot).`
+              `of total industry AAUM (${aumMarketShareCoverage.storedAmcCount} AMCs in snapshot).`
             : ""}
           {!aumMarketShare.isFullUniverse && aumMarketShareCoverage
             ? ` Snapshot covers ${aumMarketShareCoverage.storedAmcCount} AMCs — below the ~30+ AMC threshold AMFI publishes per quarter; run npm run ingest to refresh to the full ~50-AMC universe.`
             : ""}
         </p>
-        <div className="mt-2 text-[10px] tabular text-muted-foreground/80">
-          Source: AMFI Fundwise AAUM disclosure
-        </div>
       </Card>
 
       <section className="grid gap-4 lg:grid-cols-2">

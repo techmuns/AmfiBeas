@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -138,15 +136,6 @@ export default function HomePage() {
       <Card
         title="Locked Morningstar KPIs"
         subtitle="Requires Morningstar License"
-        action={
-          <Link
-            href="/data-sources"
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-          >
-            View all sources
-            <ArrowUpRight className="h-3 w-3" />
-          </Link>
-        }
       >
         <LockedKpiList items={PAID_LOCKED_KPIS} compact />
       </Card>

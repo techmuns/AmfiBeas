@@ -75,9 +75,7 @@ export default async function AmcPage({
           ? ("down" as const)
           : ("flat" as const);
 
-  const fetchedDate = new Date(detail.fetchedAt).toISOString().slice(0, 10);
   const latest = detail.latest;
-  const sourceCaption = `Source: ${detail.source} · fetched ${fetchedDate}`;
 
   return (
     <div className="space-y-6">
@@ -116,15 +114,13 @@ export default async function AmcPage({
         <KpiCard
           label="Latest MF Average AUM"
           value={formatCompactCrSafe(latest?.avgAum ?? null)}
-          note={sourceCaption}
+          note={latest ? latest.fiscalLabel : ""}
         />
         <KpiCard
           label="Market Share"
           value={formatPctSafe(latest?.marketSharePct ?? null, 2)}
           note={
-            latest
-              ? `Within ${latest.outOf} AMCs · ${latest.fiscalLabel}`
-              : sourceCaption
+            latest ? `Within ${latest.outOf} AMCs · ${latest.fiscalLabel}` : ""
           }
         />
         <KpiCard
@@ -134,11 +130,7 @@ export default async function AmcPage({
               ? `#${latest.rank}`
               : "—"
           }
-          note={
-            latest
-              ? `of ${latest.outOf} AMCs · ${latest.fiscalLabel}`
-              : sourceCaption
-          }
+          note={latest ? `of ${latest.outOf} AMCs · ${latest.fiscalLabel}` : ""}
         />
         <KpiCard
           label="QoQ AAUM Growth"
@@ -156,7 +148,7 @@ export default async function AmcPage({
         />
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-3">
         <KpiCard
           label="YoY AAUM Growth"
           value={
@@ -177,7 +169,7 @@ export default async function AmcPage({
           note={
             aaumSeries.length > 0
               ? `${aaumSeries[0].fiscalLabel} → ${aaumSeries[aaumSeries.length - 1].fiscalLabel}`
-              : sourceCaption
+              : ""
           }
         />
         <KpiCard
@@ -190,11 +182,6 @@ export default async function AmcPage({
                 : (detail.mappingStatus ?? "—")
           }
           note={detail.amcNameAsReported}
-        />
-        <KpiCard
-          label="Source"
-          value="AMFI Fundwise"
-          note={`MF QAAUM · fetched ${fetchedDate}`}
         />
       </section>
 
@@ -264,7 +251,7 @@ export default async function AmcPage({
           title="Peer Comparison Table"
           subtitle={`Top 7 by AAUM${
             latest && !latest.isTop7 ? ` + ${detail.displayName}` : ""
-          } · ${peer.fiscalLabel} · Source: AMFI Fundwise AAUM disclosure`}
+          } · ${peer.fiscalLabel}`}
         >
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

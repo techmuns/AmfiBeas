@@ -175,7 +175,7 @@ export default async function MonthlyPage({
   // Subtitle no longer carries the month; the month picker on the right
   // is the canonical place for period selection.
   const amfiSectionSubtitle = amfiSelected
-    ? "Industry-wide · live from uploaded AMFI PDFs"
+    ? "Industry-wide"
     : "Upload AMFI monthly PDFs to manual-data/amfi-monthly/pdfs/, then run npm run ingest:amfi-pdf";
 
   // ---- AMFI AUM Mix & Trend section -----------------------------------
@@ -269,12 +269,6 @@ export default async function MonthlyPage({
   // the AMFI Monthly Report on the current snapshot, so a single
   // "Source: AMFI Monthly Report" caption is accurate. Hover surfaces
   // the same per-field detail the KPI cards expose.
-  const mixHoverProvenance = formatKpiProvenanceTooltip(
-    getKpiProvenance(amfiSelected, "totalAum")
-  );
-  const trendHoverProvenance = formatKpiProvenanceTooltip(
-    getKpiProvenance(amfiSelected, "totalAaum")
-  );
 
   // ---- SIP Trends section --------------------------------------------
   //
@@ -288,16 +282,6 @@ export default async function MonthlyPage({
   const sipContribTrend = monthlyTrend("sipContribution", 24);
   const sipAumTrend = monthlyTrend("sipAum", 24);
   const sipAccountsTrend = monthlyTrend("sipAccounts", 24);
-
-  const sipContribHover = formatKpiProvenanceTooltip(
-    latestProvenanceFor("sipContribution")
-  );
-  const sipAumHover = formatKpiProvenanceTooltip(
-    latestProvenanceFor("sipAum")
-  );
-  const sipAccountsHover = formatKpiProvenanceTooltip(
-    latestProvenanceFor("sipAccounts")
-  );
 
   const hasAnySipTrend =
     sipContribTrend.length > 0 ||
@@ -319,9 +303,6 @@ export default async function MonthlyPage({
   // Provenance: all three fields come from the AMFI Monthly Report.
   // Use the most-recent debt-net-inflow provenance for the tooltip
   // since the debt row is the most reliable across older Reports.
-  const monthlyFlowsHover = formatKpiProvenanceTooltip(
-    latestProvenanceFor("debtNetInflow")
-  );
 
   // ---- Active Equity & Equity Mix (IIFL Figure 19 / 21) section -----
   //
@@ -341,12 +322,6 @@ export default async function MonthlyPage({
     activeEquityTrend.length > 0 ||
     activeEquityShareTrend.length > 0 ||
     equityBreakdownHasData;
-  const activeEquityHover = formatKpiProvenanceTooltip(
-    latestProvenanceFor("activeEquityAaum")
-  );
-  const etfIndexHover = formatKpiProvenanceTooltip(
-    latestProvenanceFor("etfIndexAaum")
-  );
 
   // ---- Industry Folios & NFO section ---------------------------------
   //
@@ -389,15 +364,10 @@ export default async function MonthlyPage({
   const nfoFundsHover = formatKpiProvenanceTooltip(
     latestProvenanceFor("industryNfoFundsMobilized")
   );
-  const foliosSourceLine =
-    formatKpiProvenanceLine(latestProvenanceFor("industryFolios")) ??
-    "Source: AMFI Monthly Report";
   const nfoCountSourceLine =
-    formatKpiProvenanceLine(latestProvenanceFor("industryNfoCount")) ??
-    "Source: AMFI Monthly Report";
+    formatKpiProvenanceLine(latestProvenanceFor("industryNfoCount")) ?? "";
   const nfoFundsSourceLine =
-    formatKpiProvenanceLine(latestProvenanceFor("industryNfoFundsMobilized")) ??
-    "Source: AMFI Monthly Report";
+    formatKpiProvenanceLine(latestProvenanceFor("industryNfoFundsMobilized")) ?? "";
 
   const hasAnyFolioOrNfo =
     industryFoliosLatest !== null ||
@@ -453,9 +423,6 @@ export default async function MonthlyPage({
   // Hover provenance for the source line — pull a representative
   // category's `categoryNetInflow` provenance (Flexi Cap is dense
   // across all months).
-  const iiflHeatmapHover = formatKpiProvenanceTooltip(
-    latestCategoryProvenance("flexi-cap", "categoryNetInflow")
-  );
 
   // ---- AUM Market Share — live top 7 from AMFI Fundwise AAUM -------
   // Quarterly data on a monthly page: the source is intrinsically
@@ -537,9 +504,6 @@ export default async function MonthlyPage({
             <h2 className="text-sm font-medium tracking-tight">
               AMFI AUM Mix &amp; Trend
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Live from uploaded AMFI PDFs
-            </p>
           </div>
           <section className="grid gap-4 lg:grid-cols-2">
             <Card title="Month-end AUM Mix" subtitle={mixSubtitle}>
@@ -550,12 +514,6 @@ export default async function MonthlyPage({
                   Mix unavailable · sub-category AUM not in uploaded AMFI PDFs
                 </div>
               )}
-              <div
-                className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                title={mixHoverProvenance ?? undefined}
-              >
-                Source: AMFI Monthly Report
-              </div>
             </Card>
             <Card title="Total AAUM Trend" subtitle={aaumTrendSubtitle}>
               {aaumTrendHasData ? (
@@ -569,12 +527,6 @@ export default async function MonthlyPage({
                   AAUM unavailable · totalAaum not in uploaded AMFI PDFs
                 </div>
               )}
-              <div
-                className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                title={trendHoverProvenance ?? undefined}
-              >
-                Source: AMFI Monthly Report
-              </div>
             </Card>
           </section>
         </div>
@@ -584,9 +536,6 @@ export default async function MonthlyPage({
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">SIP Trends</h2>
-            <p className="text-xs text-muted-foreground">
-              Live from uploaded AMFI Monthly Notes
-            </p>
           </div>
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <Card
@@ -607,12 +556,6 @@ export default async function MonthlyPage({
                   No SIP contribution months yet
                 </div>
               )}
-              <div
-                className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                title={sipContribHover ?? undefined}
-              >
-                Source: AMFI Monthly Note
-              </div>
             </Card>
 
             <Card
@@ -633,12 +576,6 @@ export default async function MonthlyPage({
                   No SIP AUM months yet
                 </div>
               )}
-              <div
-                className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                title={sipAumHover ?? undefined}
-              >
-                Source: AMFI Monthly Note
-              </div>
             </Card>
 
             <Card
@@ -659,12 +596,6 @@ export default async function MonthlyPage({
                   No SIP accounts months yet
                 </div>
               )}
-              <div
-                className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                title={sipAccountsHover ?? undefined}
-              >
-                Source: AMFI Monthly Note
-              </div>
             </Card>
           </section>
         </div>
@@ -676,9 +607,6 @@ export default async function MonthlyPage({
             <h2 className="text-sm font-medium tracking-tight">
               Monthly Flows
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Live from uploaded AMFI Monthly Reports
-            </p>
           </div>
           <Card
             title="Equity / Debt / Liquid Monthly Net Flows"
@@ -700,12 +628,6 @@ export default async function MonthlyPage({
               Liquid is shown separately; it is part of debt-oriented
               schemes in AMFI classification.
             </p>
-            <div
-              className="mt-2 text-[10px] tabular text-muted-foreground/80"
-              title={monthlyFlowsHover ?? undefined}
-            >
-              Source: AMFI Monthly Report
-            </div>
           </Card>
         </div>
       )}
@@ -716,9 +638,6 @@ export default async function MonthlyPage({
             <h2 className="text-sm font-medium tracking-tight">
               Active Equity &amp; Equity Mix
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Live from uploaded AMFI Monthly Reports
-            </p>
           </div>
 
           <section className="grid gap-4 lg:grid-cols-2">
@@ -740,12 +659,6 @@ export default async function MonthlyPage({
                   Active Equity AAUM unavailable
                 </div>
               )}
-              <div
-                className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                title={activeEquityHover ?? undefined}
-              >
-                Source: AMFI Monthly Report
-              </div>
             </Card>
 
             <Card
@@ -766,12 +679,6 @@ export default async function MonthlyPage({
                   Active Equity Share unavailable
                 </div>
               )}
-              <div
-                className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                title={activeEquityHover ?? undefined}
-              >
-                Source: AMFI Monthly Report
-              </div>
             </Card>
           </section>
 
@@ -802,12 +709,6 @@ export default async function MonthlyPage({
               Solution-oriented schemes. ETF &amp; Index = Index Funds + Other
               ETFs. Arbitrage shown separately.
             </p>
-            <div
-              className="mt-2 text-[10px] tabular text-muted-foreground/80"
-              title={etfIndexHover ?? undefined}
-            >
-              Source: AMFI Monthly Report
-            </div>
           </Card>
         </div>
       )}
@@ -855,12 +756,6 @@ export default async function MonthlyPage({
                     Category data unavailable
                   </div>
                 )}
-                <div
-                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                  title={c.aumHover ?? undefined}
-                >
-                  Source: AMFI Monthly Report
-                </div>
               </Card>
             ))}
           </section>
@@ -913,12 +808,6 @@ export default async function MonthlyPage({
                           Category data unavailable
                         </div>
                       )}
-                      <div
-                        className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                        title={c.aumHover ?? undefined}
-                      >
-                        Source: AMFI Monthly Report
-                      </div>
                     </Card>
                   ))}
                 </section>
@@ -952,12 +841,6 @@ export default async function MonthlyPage({
             rows={iiflHeatmap.rows}
           />
 
-          <div
-            className="text-[10px] tabular text-muted-foreground/80"
-            title={iiflHeatmapHover ?? undefined}
-          >
-            Source: AMFI Monthly Report
-          </div>
           <p className="text-[11px] text-muted-foreground">
             Note: Share is calculated as category net inflow divided by
             active-equity net inflow. Active equity includes equity-
@@ -973,34 +856,31 @@ export default async function MonthlyPage({
             <h2 className="text-sm font-medium tracking-tight">
               Industry Folios &amp; NFO
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Live from uploaded AMFI Monthly Reports
-            </p>
           </div>
 
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <KpiCard
               label="Folios"
               value={formatCroreCountSafe(industryFoliosLatest)}
-              note={foliosSourceLine}
+              note=""
               noteHover={foliosHover ?? undefined}
             />
             <KpiCard
               label="Folio Additions"
               value={formatLakhSafe(industryFolioAdditionsLatest)}
-              note={foliosSourceLine}
+              note=""
               noteHover={foliosHover ?? undefined}
             />
             <KpiCard
               label="NFO Launches"
               value={formatIntSafe(industryNfoCountLatest)}
-              note={nfoCountSourceLine}
+              note=""
               noteHover={nfoCountHover ?? undefined}
             />
             <KpiCard
               label="NFO Funds Mobilized"
               value={formatCompactCrSafe(industryNfoFundsLatest)}
-              note={nfoFundsSourceLine}
+              note=""
               noteHover={nfoFundsHover ?? undefined}
             />
           </section>
@@ -1029,7 +909,7 @@ export default async function MonthlyPage({
                   className="mt-3 text-[10px] tabular text-muted-foreground/80"
                   title={foliosHover ?? undefined}
                 >
-                  {foliosSourceLine} · derived MoM Δ from industryFolios
+                  derived MoM Δ from industryFolios
                 </div>
               </Card>
 
@@ -1106,8 +986,8 @@ export default async function MonthlyPage({
           title="AUM Market Share"
           subtitle={
             aumMarketShareCoverage
-              ? `Top ${aumMarketShare.topAmcs.length} AMCs + Others · quarterly AMFI Fundwise AAUM · ${aumMarketShareCoverage.quarterLabel}`
-              : `Top ${aumMarketShare.topAmcs.length} AMCs + Others · quarterly AMFI Fundwise AAUM`
+              ? `Top ${aumMarketShare.topAmcs.length} AMCs + Others · ${aumMarketShareCoverage.quarterLabel}`
+              : `Top ${aumMarketShare.topAmcs.length} AMCs + Others`
           }
           className="lg:col-span-2"
         >
@@ -1137,19 +1017,16 @@ export default async function MonthlyPage({
           <p className="mt-3 text-[11px] text-muted-foreground">
             Top {aumMarketShare.topAmcs.length} shown by latest AAUM;
             Others includes all remaining AMCs. Denominator is total
-            AAUM of all AMCs in AMFI Fundwise AAUM disclosure.
+            AAUM of all AMCs in the snapshot.
             {aumMarketShareCoverage
               ? ` Top ${aumMarketShare.topAmcs.length} coverage: ` +
                 `${aumMarketShareCoverage.topNCoveragePct.toFixed(1)}% ` +
-                `of total AMFI Fundwise AAUM (${aumMarketShareCoverage.storedAmcCount} AMCs in snapshot).`
+                `of total industry AAUM (${aumMarketShareCoverage.storedAmcCount} AMCs in snapshot).`
               : ""}
             {!aumMarketShare.isFullUniverse && aumMarketShareCoverage
               ? ` Snapshot covers ${aumMarketShareCoverage.storedAmcCount} AMCs — below the ~30+ AMC threshold AMFI publishes per quarter; run npm run ingest to refresh to the full ~50-AMC universe.`
               : ""}
           </p>
-          <div className="mt-2 text-[10px] tabular text-muted-foreground/80">
-            Source: AMFI Fundwise AAUM disclosure
-          </div>
         </Card>
         <Card
           tone="demo"
