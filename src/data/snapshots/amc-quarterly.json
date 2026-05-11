@@ -2,7 +2,7 @@
   "meta": {
     "generatedAt": "2026-05-09T17:37:21.039Z",
     "source": "https://www.screener.in/company/{ticker}/consolidated/",
-    "notes": "Quarterly P&L for listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC, ICICIAMC standalone). ICICIAMC uses /company/ICICIAMC/ — the consolidated variant returned an annual/TTM layout. Sanity guards: MIN_QUARTERS_PER_AMC=4, REVENUE_REALIZATION ≤ 90 bps, OP_MARGIN ≤ 75 bps; failures preserve prior history. Source mapping: screener.in 'Sales' row → Revenue from Operations (excludes Other Income); 'Other Income' captured separately for display only; 'Operating Profit' and 'Net Profit' as labelled. revenueFromOperations is what feeds Revenue Realization (bps of MF QAAUM). avgAum not provided by this source. lastSuccessfulFetchAt=2026-05-09T17:37:21.039Z · slugsThisRun=[hdfc, nippon, absl, uti, icici-pru] · failedThisRun=[]. quartersCovered=13 (2023-Q1…2026-Q1) · rowCount=58 · fetchWindow=13."
+    "notes": "Quarterly P&L for listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC, ICICIAMC standalone, CRAMC). ICICIAMC uses /company/ICICIAMC/ \u2014 the consolidated variant returned an annual/TTM layout. CRAMC FY26 rows (4 quarters: 2025-Q2\u20262026-Q1) hand-curated from corporate filings + earnings releases until the next screener.in fetch runs (added with PR adding Canara Robeco to the listed universe). Sanity guards: MIN_QUARTERS_PER_AMC=4, REVENUE_REALIZATION \u2264 90 bps, OP_MARGIN \u2264 75 bps; failures preserve prior history. Source mapping: screener.in 'Sales' row \u2192 Revenue from Operations (excludes Other Income); 'Other Income' captured separately for display only; 'Operating Profit' and 'Net Profit' as labelled. revenueFromOperations is what feeds Revenue Realization (bps of MF QAAUM). avgAum not provided by this source. lastSuccessfulFetchAt=2026-05-09T17:37:21.039Z \u00b7 slugsThisRun=[hdfc, nippon, absl, uti, icici-pru] \u00b7 failedThisRun=[]. quartersCovered=13 (2023-Q1\u20262026-Q1) \u00b7 rowCount=62 \u00b7 fetchWindow=13."
   },
   "rows": [
     {
@@ -396,6 +396,16 @@
       "avgAum": 0
     },
     {
+      "amcSlug": "canara-robeco",
+      "quarter": "2025-Q2",
+      "revenue": 93.3,
+      "revenueFromOperations": 93.3,
+      "otherIncome": 28.04,
+      "operatingProfit": 67.0,
+      "pat": 60.98,
+      "avgAum": 0
+    },
+    {
       "amcSlug": "hdfc",
       "quarter": "2025-Q2",
       "revenue": 968,
@@ -414,7 +424,7 @@
       "operatingProfit": 945.96,
       "pat": 782.32,
       "avgAum": 0,
-      "derivedFrom": "ICICI AMC 9M FY26 (Dec 2025) less Sep 2025 and Dec 2025 quarters. Operating Profit = PBT 1060.41 − Other Income 144.91 + Finance Cost 5.15 + Depreciation 25.31 = 945.96. Source: company financial results."
+      "derivedFrom": "ICICI AMC 9M FY26 (Dec 2025) less Sep 2025 and Dec 2025 quarters. Operating Profit = PBT 1060.41 \u2212 Other Income 144.91 + Finance Cost 5.15 + Depreciation 25.31 = 945.96. Source: company financial results."
     },
     {
       "amcSlug": "nippon",
@@ -444,6 +454,16 @@
       "otherIncome": 0,
       "operatingProfit": 283,
       "pat": 241,
+      "avgAum": 0
+    },
+    {
+      "amcSlug": "canara-robeco",
+      "quarter": "2025-Q3",
+      "revenue": 107.65,
+      "revenueFromOperations": 107.65,
+      "otherIncome": 0.35,
+      "operatingProfit": 65.69,
+      "pat": 48.71,
       "avgAum": 0
     },
     {
@@ -497,6 +517,16 @@
       "avgAum": 0
     },
     {
+      "amcSlug": "canara-robeco",
+      "quarter": "2025-Q4",
+      "revenue": 109.8,
+      "revenueFromOperations": 109.8,
+      "otherIncome": 0,
+      "operatingProfit": 58.8,
+      "pat": 52.75,
+      "avgAum": 0
+    },
+    {
       "amcSlug": "hdfc",
       "quarter": "2025-Q4",
       "revenue": 1075,
@@ -544,6 +574,16 @@
       "otherIncome": 0,
       "operatingProfit": 266,
       "pat": 187,
+      "avgAum": 0
+    },
+    {
+      "amcSlug": "canara-robeco",
+      "quarter": "2026-Q1",
+      "revenue": 114.2,
+      "revenueFromOperations": 114.2,
+      "otherIncome": 0,
+      "operatingProfit": 60.45,
+      "pat": 41.36,
       "avgAum": 0
     },
     {
