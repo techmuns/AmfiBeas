@@ -2,6 +2,7 @@ import { BarSeries } from "@/components/charts/BarSeries";
 import { Donut, type DonutSlice } from "@/components/charts/Donut";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
+import { StackedArea } from "@/components/charts/StackedArea";
 import { Card } from "@/components/ui/Card";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { FilterBar } from "@/components/filters/FilterBar";
@@ -42,6 +43,8 @@ import {
   formatIntSafe,
   formatLakhSafe,
 } from "@/lib/format";
+import { topAumMarketShareSeries } from "@/data/amc-peer-universe";
+import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
 import { cn } from "@/lib/cn";
 
 /** Sign-aware compact ₹ Cr formatter — mirrors the equivalent helper
@@ -291,6 +294,10 @@ export default async function QuarterlyPage({
     folioAdditionsTrend.length > 0 ||
     schemesTrend.length > 0;
 
+  // AUM Market Share — live Top 7 + Others from AMFI Fundwise AAUM.
+  // Same helper as /monthly so the two pages render an identical view.
+  const aumMarketShare = topAumMarketShareSeries(7, 8);
+  const aumMarketShareCoverage = aumMarketShare.coverage;
 
   return (
     <div className="space-y-6">
@@ -302,24 +309,7 @@ export default async function QuarterlyPage({
             : "Industry-wide"
         }
       />
-      <FilterBar showRange="quarterly" />
-
-      {/* Data-status legend — same key as /monthly. */}
-      <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
-        <span className="font-medium text-foreground">Data status:</span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-positive" />
-          Live · sourced data
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-2 w-3 rounded-sm border border-dashed border-muted-foreground/60 bg-muted" />
-          Demo · placeholder
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />
-          Pending · not connected
-        </span>
-      </div>
+      <FilterBar showRange="quarterly" showPeers={false} />
 
       {/* AMFI Quarterly Snapshot — first live section, mirrors /monthly. */}
       <Card
@@ -799,6 +789,45 @@ export default async function QuarterlyPage({
           </p>
         </div>
       ) : null}
+
+      <Card
+        tone={aumMarketShare.isFullUniverse ? undefined : "pending"}
+        title="AUM Market Share"
+        subtitle={
+          aumMarketShareCoverage
+            ? `Top ${aumMarketShare.topAmcs.length} AMCs + Others · ${aumMarketShareCoverage.quarterLabel} · Source: AMFI Fundwise AAUM`
+            : `Top ${aumMarketShare.topAmcs.length} AMCs + Others · Source: AMFI Fundwise AAUM`
+        }
+      >
+        {aumMarketShare.rows.length > 0 ? (
+          <StackedArea
+            data={aumMarketShare.rows}
+            xKey="quarterLabel"
+            labelFormat="none"
+            series={[
+              ...aumMarketShare.topAmcs.map((a) => ({
+                key: a.slug,
+                name: amcLabel(a.slug),
+                color: AMC_COLORS[a.slug] ?? "hsl(var(--muted-foreground))",
+              })),
+              {
+                key: "others",
+                name: "Others",
+                color: "hsl(var(--muted-foreground))",
+              },
+            ]}
+          />
+        ) : (
+          <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+            AAUM disclosure unavailable
+          </div>
+        )}
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          Top {aumMarketShare.topAmcs.length} shown by latest AAUM;
+          Others includes all remaining AMCs. Denominator is total
+          AAUM of all AMCs in the snapshot.
+        </p>
+      </Card>
 
     </div>
   );

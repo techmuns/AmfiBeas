@@ -7,6 +7,7 @@ import { BarSeries } from "@/components/charts/BarSeries";
 import { Donut, type DonutSlice } from "@/components/charts/Donut";
 import { IiflHeatmap } from "@/components/charts/IiflHeatmap";
 import { MultiLine } from "@/components/charts/MultiLine";
+import { StackedArea } from "@/components/charts/StackedArea";
 import {
   industryByMonth,
   latestMonth,
@@ -38,6 +39,8 @@ import {
   iiflActiveEquityTrendCard,
   latestCategoryProvenance,
 } from "@/data/amfi-monthly-category";
+import { topAumMarketShareSeries } from "@/data/amc-peer-universe";
+import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MonthPicker } from "@/components/filters/MonthPicker";
 import {
@@ -407,28 +410,17 @@ export default async function MonthlyPage({
   // category's `categoryNetInflow` provenance (Flexi Cap is dense
   // across all months).
 
+  // AUM Market Share — live Top 7 + Others from AMFI Fundwise AAUM.
+  // Quarterly data on a monthly page: the source is intrinsically
+  // quarterly (AMFI Fundwise AAUM disclosure) so the card label says
+  // so. Same helper is reused on /quarterly.
+  const aumMarketShare = topAumMarketShareSeries(7, 8);
+  const aumMarketShareCoverage = aumMarketShare.coverage;
+
   return (
     <div className="space-y-6">
       <PageHeader title="Monthly Operating" subtitle={subtitle} />
-      <FilterBar showRange="monthly" />
-
-      {/* Data-status legend — quick visual key for the colorful (live)
-          vs muted/dashed (demo) treatments used across the page. */}
-      <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
-        <span className="font-medium text-foreground">Data status:</span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-positive" />
-          Live · sourced data
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-2 w-3 rounded-sm border border-dashed border-muted-foreground/60 bg-muted" />
-          Demo · placeholder
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />
-          Pending · not connected
-        </span>
-      </div>
+      <FilterBar showRange="monthly" showPeers={false} />
 
       <Card
         title="AMFI Monthly Snapshot"
@@ -970,6 +962,45 @@ export default async function MonthlyPage({
           />
         </section>
       )}
+
+      <Card
+        tone={aumMarketShare.isFullUniverse ? undefined : "pending"}
+        title="AUM Market Share"
+        subtitle={
+          aumMarketShareCoverage
+            ? `Top ${aumMarketShare.topAmcs.length} AMCs + Others · ${aumMarketShareCoverage.quarterLabel} · Source: AMFI Fundwise AAUM`
+            : `Top ${aumMarketShare.topAmcs.length} AMCs + Others · Source: AMFI Fundwise AAUM`
+        }
+      >
+        {aumMarketShare.rows.length > 0 ? (
+          <StackedArea
+            data={aumMarketShare.rows}
+            xKey="quarterLabel"
+            labelFormat="none"
+            series={[
+              ...aumMarketShare.topAmcs.map((a) => ({
+                key: a.slug,
+                name: amcLabel(a.slug),
+                color: AMC_COLORS[a.slug] ?? "hsl(var(--muted-foreground))",
+              })),
+              {
+                key: "others",
+                name: "Others",
+                color: "hsl(var(--muted-foreground))",
+              },
+            ]}
+          />
+        ) : (
+          <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+            AAUM disclosure unavailable
+          </div>
+        )}
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          Top {aumMarketShare.topAmcs.length} shown by latest AAUM;
+          Others includes all remaining AMCs. Denominator is total
+          AAUM of all AMCs in the snapshot.
+        </p>
+      </Card>
 
     </div>
   );
