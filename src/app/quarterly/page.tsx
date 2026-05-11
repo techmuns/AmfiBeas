@@ -33,6 +33,7 @@ import {
   quarterlyFolioAdditionsTrend,
   quarterlyOpenEndedSchemeCountTrend,
   quarterlyTrend,
+  categoryHhiSeries,
   resolveSelectedQuarter,
   type AmfiQuarterlyKpiField,
 } from "@/data/amfi-quarterly";
@@ -42,7 +43,10 @@ import {
   formatIntSafe,
   formatLakhSafe,
 } from "@/lib/format";
-import { topAumMarketShareSeries } from "@/data/amc-peer-universe";
+import {
+  amcLevelHhiSeries,
+  topAumMarketShareSeries,
+} from "@/data/amc-peer-universe";
 import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
 import { cn } from "@/lib/cn";
 
@@ -297,6 +301,26 @@ export default async function QuarterlyPage({
   // Same helper as /monthly so the two pages render an identical view.
   const aumMarketShare = topAumMarketShareSeries(7, 8);
   const aumMarketShareCoverage = aumMarketShare.coverage;
+
+  // Concentration tracker — HHI of AMC-level + category-level AUM.
+  const amcHhi = amcLevelHhiSeries(8);
+  const catHhi = categoryHhiSeries(8);
+  const hhiHasData = amcHhi.length > 0 || catHhi.length > 0;
+  const concentrationLabels = Array.from(
+    new Set([
+      ...amcHhi.map((p) => p.quarterLabel),
+      ...catHhi.map((p) => p.quarterLabel),
+    ])
+  );
+  const amcHhiByLabel = new Map(amcHhi.map((p) => [p.quarterLabel, p.hhi]));
+  const catHhiByLabel = new Map(catHhi.map((p) => [p.quarterLabel, p.hhi]));
+  const hhiData = concentrationLabels.map((label) => ({
+    label,
+    amcHhi: amcHhiByLabel.get(label) ?? null,
+    categoryHhi: catHhiByLabel.get(label) ?? null,
+  }));
+  const latestAmcHhi = amcHhi[amcHhi.length - 1] ?? null;
+  const latestCatHhi = catHhi[catHhi.length - 1] ?? null;
 
   return (
     <div className="space-y-6">
@@ -787,6 +811,49 @@ export default async function QuarterlyPage({
           </p>
         </div>
       ) : null}
+
+      {hhiHasData && (
+        <Card
+          title="Industry Concentration · HHI"
+          subtitle={`Herfindahl–Hirschman Index · 0–10,000 · lower = more competitive · Source: AMFI Fundwise AAUM + AMFI Quarterly Report${
+            latestAmcHhi || latestCatHhi
+              ? " · latest "
+              : ""
+          }${latestAmcHhi ? `AMC ${Math.round(latestAmcHhi.hhi)}` : ""}${
+            latestAmcHhi && latestCatHhi ? " · " : ""
+          }${latestCatHhi ? `Category ${Math.round(latestCatHhi.hhi)}` : ""}`}
+        >
+          <MultiLine
+            data={hhiData}
+            xKey="label"
+            valueFormat="count"
+            axisFormat="count"
+            labelFormat="none"
+            lines={[
+              {
+                key: "amcHhi",
+                name: "AMC HHI",
+                color: "hsl(var(--chart-1))",
+              },
+              {
+                key: "categoryHhi",
+                name: "Category HHI",
+                color: "hsl(var(--chart-3))",
+              },
+            ]}
+          />
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            HHI = Σ(share²) × 10,000 across participants in each quarter.
+            AMC HHI uses {latestAmcHhi?.participantCount ?? "—"} AMCs from the AMFI Fundwise AAUM disclosure;
+            Category HHI uses {latestCatHhi?.participantCount ?? "—"} scheme categories from the AMFI
+            Quarterly Report. U.S. DOJ thresholds (general): &lt;1,500 unconcentrated,
+            1,500–2,500 moderately concentrated, &gt;2,500 highly concentrated.
+            {latestAmcHhi
+              ? ` Latest top-AMC share: ${latestAmcHhi.topShareLeaderPct.toFixed(2)}%.`
+              : ""}
+          </p>
+        </Card>
+      )}
 
       <Card
         tone={aumMarketShare.isFullUniverse ? undefined : "pending"}
