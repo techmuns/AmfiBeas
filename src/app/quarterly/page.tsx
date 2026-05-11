@@ -5,7 +5,6 @@ import { MultiLine } from "@/components/charts/MultiLine";
 import { StackedArea } from "@/components/charts/StackedArea";
 import { Card } from "@/components/ui/Card";
 import { KpiCard } from "@/components/ui/KpiCard";
-import { FilterBar } from "@/components/filters/FilterBar";
 import { FiscalQuarterPicker } from "@/components/filters/FiscalQuarterPicker";
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
@@ -309,7 +308,6 @@ export default async function QuarterlyPage({
             : "Industry-wide"
         }
       />
-      <FilterBar showRange="quarterly" showPeers={false} />
 
       {/* AMFI Quarterly Snapshot — first live section, mirrors /monthly. */}
       <Card

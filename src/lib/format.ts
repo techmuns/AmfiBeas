@@ -111,14 +111,18 @@ export function formatQuarterLabelLong(quarter: string) {
  * "K Cr" only used for thousand-Cr range, "L Cr" only for lakh-Cr range.
  */
 export function formatCompactCr(value: number) {
-  if (value >= 1e5) return `₹${(value / 1e5).toFixed(2)}L Cr`;
-  if (value >= 1e3) return `₹${(value / 1e3).toFixed(1)}K Cr`;
-  return `₹${value.toFixed(0)} Cr`;
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "−" : "";
+  if (abs >= 1e5) return `${sign}₹${(abs / 1e5).toFixed(2)}L Cr`;
+  if (abs >= 1e3) return `${sign}₹${(abs / 1e3).toFixed(1)}K Cr`;
+  return `${sign}₹${abs.toFixed(0)} Cr`;
 }
 
 export function formatAxisCr(value: number) {
-  if (value >= 1e5) return `${(value / 1e5).toFixed(1)}L`;
-  if (value >= 1e3) return `${(value / 1e3).toFixed(0)}K`;
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+  if (abs >= 1e5) return `${sign}${(abs / 1e5).toFixed(1)}L`;
+  if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(0)}K`;
   return value.toFixed(0);
 }
 
