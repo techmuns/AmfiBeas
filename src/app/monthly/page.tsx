@@ -1097,6 +1097,7 @@ export default async function MonthlyPage({
             data={aumMarketShare.rows}
             xKey="quarterLabel"
             labelFormat="none"
+            reverseTooltipOrder
             series={[
               ...aumMarketShare.topAmcs.map((a) => ({
                 key: a.slug,

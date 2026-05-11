@@ -30,6 +30,14 @@ interface StackedAreaProps {
    *  Quarterly market-share cards pass "none" because their xKey is
    *  already a display label like "4QFY26". */
   labelFormat?: LabelFormat;
+  /**
+   * When true, render tooltip rows top-to-bottom in stack order (i.e.
+   * reverse the default Recharts payload order). Use for the AUM
+   * Market Share cards where the top visual layer (Others) should
+   * appear first in the tooltip and the bottom layer (largest AMC)
+   * last — matching how the eye reads the stack.
+   */
+  reverseTooltipOrder?: boolean;
 }
 
 export function StackedArea({
@@ -39,6 +47,7 @@ export function StackedArea({
   height = 260,
   showLegend = true,
   labelFormat = "month",
+  reverseTooltipOrder = false,
 }: StackedAreaProps) {
   const fmtLabel = labelFormatter(labelFormat);
   return (
@@ -71,6 +80,7 @@ export function StackedArea({
             <ChartTooltip
               formatValue={(n) => `${n.toFixed(2)}%`}
               labelFormatter={fmtLabel}
+              reverseOrder={reverseTooltipOrder}
             />
           }
         />
