@@ -15,6 +15,7 @@ import {
   yoyChange,
   yoyChangeQuarterly,
 } from "@/data/aggregate";
+import { amfiMonthlyRows } from "@/data/amfi-monthly";
 import { industryNarrative } from "@/data/narrative";
 import {
   formatCompactCrSafe,
@@ -39,14 +40,22 @@ export default function HomePage() {
   const investorsMom = momChange(monthly.map((m) => m.investorAdditions));
   const patYoy = yoyChangeQuarterly(quarterly.map((q) => q.pat));
 
-  const aumSeries = monthly.map((m) => ({
-    month: m.month,
-    value: m.totalAum,
-  }));
-  const sipSeries = monthly.map((m) => ({
-    label: m.month,
-    value: m.sipContribution,
-  }));
+  // AUM Trend + SIP Flows on the Overview now read directly from the
+  // live AMFI Monthly Report snapshot (amfi-monthly-pdf.json via
+  // amfiMonthlyRows). Each chart filters to months where the relevant
+  // field is actually present in the snapshot — no synthetic months
+  // and no fake future ticks.
+  const amfiRows = amfiMonthlyRows();
+  const aumSeries = amfiRows.flatMap((r) =>
+    typeof r.totalAum === "number"
+      ? [{ month: r.month, value: r.totalAum }]
+      : []
+  );
+  const sipSeries = amfiRows.flatMap((r) =>
+    typeof r.sipContribution === "number"
+      ? [{ label: r.month, value: r.sipContribution }]
+      : []
+  );
 
   const trend = (n: number) =>
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
@@ -137,13 +146,13 @@ export default function HomePage() {
       <section className="grid gap-4 lg:grid-cols-2">
         <Card
           title="AUM Trend"
-          subtitle={`Industry total · 24 months · ${AMFI_MONTHLY_SOURCE}`}
+          subtitle={`Industry total · ${aumSeries.length} month${aumSeries.length === 1 ? "" : "s"} · ${AMFI_MONTHLY_SOURCE}`}
         >
           <AreaTrend data={aumSeries} name="AUM" />
         </Card>
         <Card
           title="SIP Flows"
-          subtitle={`Monthly inflows · industry · ${AMFI_MONTHLY_SOURCE}`}
+          subtitle={`Monthly inflows · industry · ${sipSeries.length} month${sipSeries.length === 1 ? "" : "s"} · ${AMFI_MONTHLY_SOURCE}`}
         >
           <BarSeries data={sipSeries} name="SIP" />
         </Card>
