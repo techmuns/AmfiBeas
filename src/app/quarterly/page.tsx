@@ -802,6 +802,7 @@ export default async function QuarterlyPage({
             data={aumMarketShare.rows}
             xKey="quarterLabel"
             labelFormat="none"
+            reverseTooltipOrder
             series={[
               ...aumMarketShare.topAmcs.map((a) => ({
                 key: a.slug,
