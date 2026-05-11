@@ -1,10 +1,10 @@
+import Link from "next/link";
+import { ArrowUpRight, Sparkles } from "lucide-react";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AreaTrend } from "@/components/charts/AreaTrend";
 import { BarSeries } from "@/components/charts/BarSeries";
-import { LockedKpiList } from "@/components/data/LockedKpiList";
-import { PAID_LOCKED_KPIS } from "@/config/morningstar-kpis";
 import {
   industryByMonth,
   industryQuarterly,
@@ -21,10 +21,9 @@ import {
   formatPctSafe,
   formatQuarterLabelLong,
 } from "@/lib/format";
-import {
-  industryMonthlyNote,
-  liveScreenerNote,
-} from "@/lib/provenance";
+
+const AMFI_MONTHLY_SOURCE = "Source: AMFI Monthly Report";
+const SCREENER_SOURCE = "Source: Screener / company filings";
 
 export default function HomePage() {
   const monthly = industryByMonth();
@@ -33,9 +32,7 @@ export default function HomePage() {
   const latestQ = quarterly[quarterly.length - 1];
 
   const aumYoy = yoyChange(monthly.map((m) => m.totalAum));
-  const activeEquityMom = momChange(
-    monthly.map((m) => m.activeEquityAum)
-  );
+  const activeEquityMom = momChange(monthly.map((m) => m.activeEquityAum));
   const sipMom = momChange(monthly.map((m) => m.sipContribution));
   const investorsMom = momChange(monthly.map((m) => m.investorAdditions));
   const patYoy = yoyChangeQuarterly(quarterly.map((q) => q.pat));
@@ -55,9 +52,6 @@ export default function HomePage() {
   const patMargin =
     latestQ.revenue > 0 ? (latestQ.pat / latestQ.revenue) * 100 : null;
 
-  const industryDemoNote = industryMonthlyNote();
-  const pnlNote = liveScreenerNote();
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -71,28 +65,28 @@ export default function HomePage() {
           value={formatCompactCrSafe(latest.totalAum)}
           delta={`${formatDelta(aumYoy)} YoY`}
           trend={trend(aumYoy)}
-          note={industryDemoNote}
+          note={AMFI_MONTHLY_SOURCE}
         />
         <KpiCard
           label="Active Equity AUM"
           value={formatCompactCrSafe(latest.activeEquityAum)}
           delta={`${formatDelta(activeEquityMom)} MoM`}
           trend={trend(activeEquityMom)}
-          note={industryDemoNote}
+          note={AMFI_MONTHLY_SOURCE}
         />
         <KpiCard
           label="Monthly SIP"
           value={formatCompactCrSafe(latest.sipContribution)}
           delta={`${formatDelta(sipMom)} MoM`}
           trend={trend(sipMom)}
-          note={industryDemoNote}
+          note={AMFI_MONTHLY_SOURCE}
         />
         <KpiCard
           label="Investor Additions"
           value={formatLakhSafe(latest.investorAdditions)}
           delta={`${formatDelta(investorsMom)} MoM`}
           trend={trend(investorsMom)}
-          note={industryDemoNote}
+          note={AMFI_MONTHLY_SOURCE}
         />
       </section>
 
@@ -100,44 +94,70 @@ export default function HomePage() {
         <KpiCard
           label="Listed AMC Revenue"
           value={formatCompactCrSafe(latestQ.revenue)}
-          note={pnlNote}
+          note={SCREENER_SOURCE}
         />
         <KpiCard
           label="Listed AMC Op Profit"
           value={formatCompactCrSafe(latestQ.operatingProfit)}
-          note={pnlNote}
+          note={SCREENER_SOURCE}
         />
         <KpiCard
           label="Listed AMC PAT"
           value={formatCompactCrSafe(latestQ.pat)}
           delta={`${formatDelta(patYoy)} YoY`}
           trend={trend(patYoy)}
-          note={pnlNote}
+          note={SCREENER_SOURCE}
         />
         <KpiCard
           label="Listed AMC PAT Margin"
           value={formatPctSafe(patMargin)}
-          note={pnlNote}
+          note={SCREENER_SOURCE}
         />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Card
           title="AUM Trend"
-          subtitle={`Industry total · 24 months · ${industryDemoNote}`}
+          subtitle={`Industry total · 24 months · ${AMFI_MONTHLY_SOURCE}`}
         >
           <AreaTrend data={aumSeries} name="AUM" />
         </Card>
-        <Card title="SIP Flows" subtitle={`Monthly inflows · industry · ${industryDemoNote}`}>
+        <Card
+          title="SIP Flows"
+          subtitle={`Monthly inflows · industry · ${AMFI_MONTHLY_SOURCE}`}
+        >
           <BarSeries data={sipSeries} name="SIP" />
         </Card>
       </section>
 
       <Card
-        title="Locked Morningstar KPIs"
-        subtitle="Requires Morningstar License"
+        title="Premium Data"
+        subtitle="Licensed Morningstar datasets that unlock scheme-level KPIs"
+        action={
+          <Link
+            href="/premium"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          >
+            View licensed data options
+            <ArrowUpRight className="h-3 w-3" />
+          </Link>
+        }
       >
-        <LockedKpiList items={PAID_LOCKED_KPIS} compact />
+        <div className="flex items-start gap-3 text-sm">
+          <Sparkles className="mt-0.5 h-4 w-4 text-muted-foreground" />
+          <div className="text-muted-foreground">
+            Scheme ratings, fund factsheets, holdings, risk metrics, and peer
+            quartiles become available with a Morningstar license. The
+            dashboard does not synthesise these values when no license is
+            connected.{" "}
+            <Link
+              href="/premium"
+              className="text-foreground underline-offset-2 hover:underline"
+            >
+              See the full list →
+            </Link>
+          </div>
+        </div>
       </Card>
     </div>
   );

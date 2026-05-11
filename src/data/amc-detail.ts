@@ -316,6 +316,10 @@ export function amcDetail(slug: string): AmcDetail | null {
 export interface AmcIndexRow {
   amcSlug: string;
   displayName: string;
+  /** Raw AMFI name string (e.g. "Canara Robeco Mutual Fund"). Surfaced so
+   *  the client-side search on /amc can match against the reported name
+   *  even when the curated display name differs. */
+  amcNameAsReported: string;
   rank: number;
   avgAum: number;
   marketSharePct: number;
@@ -340,6 +344,7 @@ export function amcIndexRows(): {
     return {
       amcSlug: r.amcSlug,
       displayName: r.displayName ?? r.amcNameAsReported,
+      amcNameAsReported: r.amcNameAsReported,
       rank: idx + 1,
       avgAum: r.avgAum,
       marketSharePct:

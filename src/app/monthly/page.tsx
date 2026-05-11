@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FilterBar } from "@/components/filters/FilterBar";
 import { BarSeries } from "@/components/charts/BarSeries";
-import { StackedArea } from "@/components/charts/StackedArea";
 import { Donut, type DonutSlice } from "@/components/charts/Donut";
 import { IiflHeatmap } from "@/components/charts/IiflHeatmap";
 import { MultiLine } from "@/components/charts/MultiLine";
@@ -12,9 +11,7 @@ import {
   industryByMonth,
   latestMonth,
   marketShare,
-  shareSeries,
 } from "@/data/aggregate";
-import { MONTHS_LIST } from "@/data/generator";
 import {
   amfiMonthlyRows,
   availableMonthsDesc,
@@ -41,7 +38,6 @@ import {
   iiflActiveEquityTrendCard,
   latestCategoryProvenance,
 } from "@/data/amfi-monthly-category";
-import { topAumMarketShareSeries } from "@/data/amc-peer-universe";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MonthPicker } from "@/components/filters/MonthPicker";
 import {
@@ -51,9 +47,8 @@ import {
   formatLakhSafe,
   formatPctSafe,
 } from "@/lib/format";
-import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
 import { cn } from "@/lib/cn";
-import { parseFilters, selectedSlugs, trimMonths } from "@/lib/filter";
+import { parseFilters, selectedSlugs } from "@/lib/filter";
 
 export default async function MonthlyPage({
   searchParams,
@@ -68,18 +63,6 @@ export default async function MonthlyPage({
   // only when peer filter is active so we can compute market share %.
   const fullSeries = industryByMonth(slugs);
   const industrySeries = slugs ? industryByMonth(null) : fullSeries;
-  // AUM Market Share is now sourced live from AMFI Fundwise AAUM via
-  // amc-peer-universe.ts (see aumMarketShare below) — `shareSeries
-  // ("totalAum", …)` is no longer needed because that demo card was
-  // replaced with a live top-7 quarterly chart. The Active Equity
-  // Market Share card was also removed (no clean AMC × category
-  // AAUM source — see PR #80 audit).
-  const fullShareSip = shareSeries("sipContribution", 6, slugs);
-
-  const trimmedMonths = new Set(trimMonths(MONTHS_LIST, filters.range));
-  const sipShareRows = fullShareSip.rows.filter((r) =>
-    trimmedMonths.has(r.month as string)
-  );
 
   const latest = fullSeries[fullSeries.length - 1];
   const industryLatest = industrySeries[industrySeries.length - 1];
@@ -175,7 +158,7 @@ export default async function MonthlyPage({
   // Subtitle no longer carries the month; the month picker on the right
   // is the canonical place for period selection.
   const amfiSectionSubtitle = amfiSelected
-    ? "Industry-wide"
+    ? "Industry-wide · Source: AMFI Monthly Report"
     : "Upload AMFI monthly PDFs to manual-data/amfi-monthly/pdfs/, then run npm run ingest:amfi-pdf";
 
   // ---- AMFI AUM Mix & Trend section -----------------------------------
@@ -424,14 +407,6 @@ export default async function MonthlyPage({
   // category's `categoryNetInflow` provenance (Flexi Cap is dense
   // across all months).
 
-  // ---- AUM Market Share — live top 7 from AMFI Fundwise AAUM -------
-  // Quarterly data on a monthly page: the source is intrinsically
-  // quarterly (AMFI Fundwise AAUM disclosure) so the card label says
-  // so. Same chart + helper are reused on /quarterly so the two
-  // pages render an identical view.
-  const aumMarketShare = topAumMarketShareSeries(7, 8);
-  const aumMarketShareCoverage = aumMarketShare.coverage;
-
   return (
     <div className="space-y-6">
       <PageHeader title="Monthly Operating" subtitle={subtitle} />
@@ -504,6 +479,9 @@ export default async function MonthlyPage({
             <h2 className="text-sm font-medium tracking-tight">
               AMFI AUM Mix &amp; Trend
             </h2>
+            <p className="text-xs text-muted-foreground">
+              Source: AMFI Monthly Report
+            </p>
           </div>
           <section className="grid gap-4 lg:grid-cols-2">
             <Card title="Month-end AUM Mix" subtitle={mixSubtitle}>
@@ -536,6 +514,9 @@ export default async function MonthlyPage({
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">SIP Trends</h2>
+            <p className="text-xs text-muted-foreground">
+              Source: AMFI Monthly Report
+            </p>
           </div>
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <Card
@@ -607,6 +588,9 @@ export default async function MonthlyPage({
             <h2 className="text-sm font-medium tracking-tight">
               Monthly Flows
             </h2>
+            <p className="text-xs text-muted-foreground">
+              Source: AMFI Monthly Report
+            </p>
           </div>
           <Card
             title="Equity / Debt / Liquid Monthly Net Flows"
@@ -638,12 +622,15 @@ export default async function MonthlyPage({
             <h2 className="text-sm font-medium tracking-tight">
               Active Equity &amp; Equity Mix
             </h2>
+            <p className="text-xs text-muted-foreground">
+              Source: AMFI Monthly Report
+            </p>
           </div>
 
           <section className="grid gap-4 lg:grid-cols-2">
             <Card
               title="Active Equity AAUM Trend"
-              subtitle={`${activeEquityTrend.length} month${activeEquityTrend.length === 1 ? "" : "s"} · ₹ Cr · IIFL Figure 21-style (period-average)`}
+              subtitle={`${activeEquityTrend.length} month${activeEquityTrend.length === 1 ? "" : "s"} · ₹ Cr · period-average`}
             >
               {activeEquityTrend.length > 0 ? (
                 <BarSeries
@@ -717,10 +704,11 @@ export default async function MonthlyPage({
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
-              IIFL Active-Equity Category Trends
+              Active-Equity Category Trends
             </h2>
             <p className="text-xs text-muted-foreground">
-              QAAUM share vs net inflow share · active-equity envelope
+              QAAUM share vs net inflow share · active-equity envelope ·
+              Source: AMFI Monthly Report
             </p>
           </div>
 
@@ -828,11 +816,11 @@ export default async function MonthlyPage({
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
-              IIFL Active-Equity Heatmap
+              Active-Equity Category Heatmap
             </h2>
             <p className="text-xs text-muted-foreground">
               Net inflow share of active equity categories · past 12
-              months
+              months · Source: AMFI Monthly Report
             </p>
           </div>
 
@@ -856,6 +844,9 @@ export default async function MonthlyPage({
             <h2 className="text-sm font-medium tracking-tight">
               Industry Folios &amp; NFO
             </h2>
+            <p className="text-xs text-muted-foreground">
+              Source: AMFI Monthly Report
+            </p>
           </div>
 
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -980,70 +971,6 @@ export default async function MonthlyPage({
         </section>
       )}
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        <Card
-          tone={aumMarketShare.isFullUniverse ? undefined : "pending"}
-          title="AUM Market Share"
-          subtitle={
-            aumMarketShareCoverage
-              ? `Top ${aumMarketShare.topAmcs.length} AMCs + Others · ${aumMarketShareCoverage.quarterLabel}`
-              : `Top ${aumMarketShare.topAmcs.length} AMCs + Others`
-          }
-          className="lg:col-span-2"
-        >
-          {aumMarketShare.rows.length > 0 ? (
-            <StackedArea
-              data={aumMarketShare.rows}
-              xKey="quarterLabel"
-              labelFormat="none"
-              series={[
-                ...aumMarketShare.topAmcs.map((a) => ({
-                  key: a.slug,
-                  name: amcLabel(a.slug),
-                  color: AMC_COLORS[a.slug] ?? "hsl(var(--muted-foreground))",
-                })),
-                {
-                  key: "others",
-                  name: "Others",
-                  color: "hsl(var(--muted-foreground))",
-                },
-              ]}
-            />
-          ) : (
-            <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-              AAUM disclosure unavailable
-            </div>
-          )}
-          <p className="mt-3 text-[11px] text-muted-foreground">
-            Top {aumMarketShare.topAmcs.length} shown by latest AAUM;
-            Others includes all remaining AMCs. Denominator is total
-            AAUM of all AMCs in the snapshot.
-            {aumMarketShareCoverage
-              ? ` Top ${aumMarketShare.topAmcs.length} coverage: ` +
-                `${aumMarketShareCoverage.topNCoveragePct.toFixed(1)}% ` +
-                `of total industry AAUM (${aumMarketShareCoverage.storedAmcCount} AMCs in snapshot).`
-              : ""}
-            {!aumMarketShare.isFullUniverse && aumMarketShareCoverage
-              ? ` Snapshot covers ${aumMarketShareCoverage.storedAmcCount} AMCs — below the ~30+ AMC threshold AMFI publishes per quarter; run npm run ingest to refresh to the full ~50-AMC universe.`
-              : ""}
-          </p>
-        </Card>
-        <Card
-          tone="demo"
-          title="SIP Market Share"
-          subtitle={slugs ? "Within selected peers" : "Top 6 + Others"}
-        >
-          <StackedArea
-            data={sipShareRows}
-            xKey="month"
-            series={fullShareSip.keys.map((k) => ({
-              key: k,
-              name: amcLabel(k),
-              color: AMC_COLORS[k] ?? "hsl(var(--muted-foreground))",
-            }))}
-          />
-        </Card>
-      </section>
     </div>
   );
 }

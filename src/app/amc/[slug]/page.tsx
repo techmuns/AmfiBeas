@@ -93,8 +93,8 @@ export default async function AmcPage({
         title={detail.displayName}
         subtitle={
           latest
-            ? `${latest.fiscalLabel} · rank #${latest.rank} of ${latest.outOf} · ${formatPctSafe(latest.marketSharePct, 2)} market share`
-            : `${detail.amcNameAsReported}`
+            ? `${latest.fiscalLabel} · rank #${latest.rank} of ${latest.outOf} · ${formatPctSafe(latest.marketSharePct, 2)} market share · Source: AMFI Fundwise AAUM`
+            : `${detail.amcNameAsReported} · Source: AMFI Fundwise AAUM`
         }
         action={
           latest?.isTop7 ? (
@@ -188,7 +188,7 @@ export default async function AmcPage({
       <section className="grid gap-4 lg:grid-cols-2">
         <Card
           title="AAUM Trend"
-          subtitle={`MF QAAUM · ₹ Cr · ${aaumSeries.length} quarter${aaumSeries.length === 1 ? "" : "s"}`}
+          subtitle={`MF QAAUM · ₹ Cr · ${aaumSeries.length} quarter${aaumSeries.length === 1 ? "" : "s"} · Source: AMFI Fundwise AAUM`}
         >
           {aaumChart.length > 0 ? (
             <AreaTrend data={aaumChart} name="AAUM" />
@@ -198,7 +198,7 @@ export default async function AmcPage({
         </Card>
         <Card
           title="Market Share Trend"
-          subtitle="% of industry MF AAUM"
+          subtitle="% of industry MF AAUM · Source: AMFI Fundwise AAUM"
         >
           {shareChart.length > 0 ? (
             <BarSeries data={shareChart} name="Market share" valueFormat="pct" />
@@ -208,7 +208,7 @@ export default async function AmcPage({
         </Card>
         <Card
           title="Rank Trend"
-          subtitle="Position by AAUM (lower number = larger AMC)"
+          subtitle="Position by AAUM (lower number = larger AMC) · Source: AMFI Fundwise AAUM"
         >
           {rankChart.length > 0 ? (
             <MultiLine
@@ -234,8 +234,8 @@ export default async function AmcPage({
             peer
               ? `Top 7 by AAUM · ${peer.fiscalLabel}${
                   latest && !latest.isTop7 ? ` + ${detail.displayName}` : ""
-                }`
-              : "Latest quarter"
+                } · Source: AMFI Fundwise AAUM`
+              : "Latest quarter · Source: AMFI Fundwise AAUM"
           }
         >
           {peerChart.length > 0 ? (
@@ -251,7 +251,7 @@ export default async function AmcPage({
           title="Peer Comparison Table"
           subtitle={`Top 7 by AAUM${
             latest && !latest.isTop7 ? ` + ${detail.displayName}` : ""
-          } · ${peer.fiscalLabel}`}
+          } · ${peer.fiscalLabel} · Source: AMFI Fundwise AAUM`}
         >
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
