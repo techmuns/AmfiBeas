@@ -320,3 +320,119 @@ export function monthlyEquityBreakdown(
     arbitrage: typeof r.arbitrageAaum === "number" ? r.arbitrageAaum : null,
   }));
 }
+
+/**
+ * Active-equity envelope net inflow trend (₹ Cr; signed) for the
+ * latest `lastN` months. Returns chronological `{ label, value }` rows
+ * compatible with the existing BarSeries chart. Months where
+ * `activeEquityNetInflow` is missing are omitted — never zero-filled.
+ *
+ * The envelope itself is defined on the AmfiMonthlyPdfRow type:
+ *   Sub Total - II                          (equity-oriented)
+ *   + (Sub Total - III − Arbitrage Fund)    (active hybrid, ex-arbitrage)
+ *   + Sub Total - IV                        (solution-oriented)
+ */
+export function monthlyActiveEquityNetInflowTrend(
+  lastN = 24
+): { label: string; value: number }[] {
+  const rows = amfiMonthlyRows().slice(-lastN);
+  return rows.flatMap((r) =>
+    typeof r.activeEquityNetInflow === "number"
+      ? [{ label: r.month, value: r.activeEquityNetInflow }]
+      : []
+  );
+}
+
+/**
+ * Trailing N-month average of `activeEquityNetInflow` evaluated AT
+ * the latest available month. Defaults to a 12-month window. Returns
+ * null when fewer than `window` months of data are available so the
+ * UI can hide the reference line gracefully rather than rendering a
+ * partial-window average.
+ */
+export function trailingActiveEquityNetInflowAverage(
+  window = 12
+): number | null {
+  const rows = amfiMonthlyRows();
+  const series = rows
+    .map((r) => r.activeEquityNetInflow)
+    .filter((v): v is number => typeof v === "number");
+  if (series.length < window) return null;
+  const tail = series.slice(-window);
+  const sum = tail.reduce((s, v) => s + v, 0);
+  return sum / tail.length;
+}
+
+/**
+ * Active-equity AUM bridge trend. For every pair of consecutive
+ * months where both `activeEquityAum` values AND the current month's
+ * `activeEquityNetInflow` are available, emit:
+ *
+ *   netInflow        = activeEquityNetInflow_t              (₹ Cr, signed)
+ *   marketResidual   = (activeEquityAum_t − activeEquityAum_t-1)
+ *                      − activeEquityNetInflow_t            (₹ Cr, signed)
+ *
+ * `marketResidual` captures everything that moves AUM between two
+ * month-end snapshots other than net flow — primarily mark-to-market
+ * but also small reclassification effects. Months without a prior
+ * row or without `activeEquityNetInflow` are skipped; no fake zeros.
+ *
+ * Uses CLOSING-balance `activeEquityAum` (month-end Net AUM) so the
+ * identity (ΔAUM = flow + market) holds against the disclosed flow
+ * field. The period-average `activeEquityAaum` is not appropriate
+ * here because it averages over the month rather than measuring
+ * end-of-period stock change.
+ */
+export function monthlyActiveEquityAumBridge(
+  lastN = 24
+): {
+  month: string;
+  netInflow: number;
+  marketResidual: number;
+}[] {
+  const rows = amfiMonthlyRows();
+  const out: {
+    month: string;
+    netInflow: number;
+    marketResidual: number;
+  }[] = [];
+  for (let i = 1; i < rows.length; i++) {
+    const cur = rows[i];
+    const prev = rows[i - 1];
+    if (
+      typeof cur.activeEquityAum !== "number" ||
+      typeof prev.activeEquityAum !== "number" ||
+      typeof cur.activeEquityNetInflow !== "number"
+    ) {
+      continue;
+    }
+    const delta = cur.activeEquityAum - prev.activeEquityAum;
+    out.push({
+      month: cur.month,
+      netInflow: cur.activeEquityNetInflow,
+      marketResidual: delta - cur.activeEquityNetInflow,
+    });
+  }
+  return out.slice(-lastN);
+}
+
+/**
+ * SIP AUM as a % share of Total AUM for the latest `lastN` months.
+ *
+ *   sipAumSharePct = sipAum / totalAum × 100
+ *
+ * Uses closing-balance `totalAum` to match `sipAum` (also a press-
+ * release closing figure). Months missing either field are omitted.
+ */
+export function monthlySipAumShareTrend(
+  lastN = 24
+): { label: string; value: number }[] {
+  const rows = amfiMonthlyRows().slice(-lastN);
+  return rows.flatMap((r) => {
+    if (typeof r.sipAum !== "number" || typeof r.totalAum !== "number") {
+      return [];
+    }
+    if (r.totalAum <= 0) return [];
+    return [{ label: r.month, value: (r.sipAum / r.totalAum) * 100 }];
+  });
+}
