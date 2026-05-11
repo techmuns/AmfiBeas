@@ -6,7 +6,7 @@ import type { AmcStatus } from "@/components/filters/FilterBar";
 import { QuarterPicker } from "@/components/filters/QuarterPicker";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
-import { DownloadCsvButton } from "@/components/data/DownloadCsvButton";
+import { FinancialsPeerCsvButton } from "@/components/data/FinancialsPeerCsvButton";
 import { cn } from "@/lib/cn";
 import {
   SOURCED_FINANCIALS_SLUGS,
@@ -422,67 +422,8 @@ export default async function FinancialsPage({
         title="Listed-AMC Peer Comparison"
         subtitle={`${peerRows.length} listed AMCs · ${formatQuarterLabelLong(selectedPeriod)}${peerRows.some((p) => p.derivedFrom) ? " · derived rows flagged inline" : ""} · Source: Screener / company filings · AMFI Fundwise AAUM`}
         action={
-          <DownloadCsvButton
+          <FinancialsPeerCsvButton
             rows={peerRows}
-            columns={[
-              { key: "name", header: "AMC" },
-              { key: "ticker", header: "Ticker" },
-              {
-                key: "avgAum",
-                header: "AAUM (Cr)",
-                format: (v) =>
-                  typeof v === "number" ? Number(v.toFixed(2)) : "",
-              },
-              {
-                key: "revenue",
-                header: "Revenue (Cr)",
-                format: (v) =>
-                  typeof v === "number" ? Number(v.toFixed(2)) : "",
-              },
-              {
-                key: "operatingProfit",
-                header: "Operating profit (Cr)",
-                format: (v) =>
-                  typeof v === "number" ? Number(v.toFixed(2)) : "",
-              },
-              {
-                key: "pat",
-                header: "PAT (Cr)",
-                format: (v) =>
-                  typeof v === "number" ? Number(v.toFixed(2)) : "",
-              },
-              {
-                key: "patMargin",
-                header: "PAT margin (%)",
-                format: (v) =>
-                  typeof v === "number" ? Number(v.toFixed(2)) : "",
-              },
-              {
-                key: "opMargin",
-                header: "Op margin (%)",
-                format: (v) =>
-                  typeof v === "number" ? Number(v.toFixed(2)) : "",
-              },
-              {
-                key: "revenueYieldBps",
-                header: "Revenue yield (bps)",
-                format: (v) =>
-                  typeof v === "number" ? Number(v.toFixed(1)) : "",
-              },
-              {
-                key: "opYieldBps",
-                header: "Op yield (bps)",
-                format: (v) =>
-                  typeof v === "number" ? Number(v.toFixed(1)) : "",
-              },
-              {
-                key: "profitYieldBps",
-                header: "Profit yield (bps)",
-                format: (v) =>
-                  typeof v === "number" ? Number(v.toFixed(1)) : "",
-              },
-              { key: "derivedFrom", header: "Derived from" },
-            ]}
             filename={`financials-peer-${selectedPeriod}.csv`}
           />
         }
