@@ -307,6 +307,7 @@ export default async function FinancialsPage({
         amcMode="single"
         amcStatus={status}
         defaultSlug={DEFAULT_SLUG}
+        amcs={LISTED_AMC_SLUGS}
       />
 
       <QuarterPicker
