@@ -17,6 +17,7 @@ import {
   peerComparisonForAmc,
   resolveAmcSlug,
 } from "@/data/amc-detail";
+import { latestQoqAnomalies } from "@/data/amc-peer-universe";
 import {
   formatCompactCrSafe,
   formatDelta,
@@ -77,6 +78,11 @@ export default async function AmcPage({
 
   const latest = detail.latest;
 
+  // Anomaly: is this AMC an outlier on QoQ growth in the latest quarter?
+  const anomalyReport = latestQoqAnomalies(2);
+  const thisAmcAnomaly =
+    anomalyReport?.outliers.find((o) => o.amcSlug === slug) ?? null;
+
   return (
     <div className="space-y-6">
       <div className="text-sm">
@@ -97,16 +103,32 @@ export default async function AmcPage({
             : `${detail.amcNameAsReported} · Source: AMFI Fundwise AAUM`
         }
         action={
-          latest?.isTop7 ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-positive/40 bg-positive/10 px-2 py-0.5 text-[10px] tabular text-positive">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-positive" />
-              Top 7 by AAUM
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full border bg-muted px-2 py-0.5 text-[10px] tabular text-muted-foreground">
-              Outside top 7
-            </span>
-          )
+          <div className="flex flex-wrap items-center gap-2">
+            {thisAmcAnomaly && (
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] tabular",
+                  thisAmcAnomaly.direction === "up"
+                    ? "border-positive/40 bg-positive/10 text-positive"
+                    : "border-negative/40 bg-negative/10 text-negative"
+                )}
+                title={`QoQ ${thisAmcAnomaly.qoqGrowthPct.toFixed(2)}% — ${thisAmcAnomaly.zScore >= 0 ? "+" : ""}${thisAmcAnomaly.zScore.toFixed(2)}σ from cohort median ${anomalyReport?.medianQoqPct.toFixed(2) ?? "?"}%`}
+              >
+                ⚠ Outlier · {thisAmcAnomaly.zScore >= 0 ? "+" : ""}
+                {thisAmcAnomaly.zScore.toFixed(1)}σ QoQ
+              </span>
+            )}
+            {latest?.isTop7 ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-positive/40 bg-positive/10 px-2 py-0.5 text-[10px] tabular text-positive">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-positive" />
+                Top 7 by AAUM
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded-full border bg-muted px-2 py-0.5 text-[10px] tabular text-muted-foreground">
+                Outside top 7
+              </span>
+            )}
+          </div>
         }
       />
 

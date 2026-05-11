@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AreaTrend } from "@/components/charts/AreaTrend";
 import { BarSeries } from "@/components/charts/BarSeries";
+import { IndustryNarrative } from "@/components/data/IndustryNarrative";
 import {
   industryByMonth,
   industryQuarterly,
@@ -14,6 +15,7 @@ import {
   yoyChange,
   yoyChangeQuarterly,
 } from "@/data/aggregate";
+import { industryNarrative } from "@/data/narrative";
 import {
   formatCompactCrSafe,
   formatDelta,
@@ -52,12 +54,29 @@ export default function HomePage() {
   const patMargin =
     latestQ.revenue > 0 ? (latestQ.pat / latestQ.revenue) * 100 : null;
 
+  const narrative = industryNarrative(6);
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Overview"
         subtitle={`Industry snapshot · ${latestMonth()} (operating) · ${formatQuarterLabelLong(latestQuarter())} (financial)`}
       />
+
+      {narrative.length > 0 && (
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight">
+              What changed this month
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Rule-based facts derived from the latest snapshot · sorted by
+              significance · top {narrative.length}
+            </p>
+          </div>
+          <IndustryNarrative facts={narrative} />
+        </section>
+      )}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
