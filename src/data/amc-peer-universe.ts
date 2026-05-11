@@ -343,3 +343,161 @@ export function topAumMarketShareSeries(
     },
   };
 }
+
+// =============================================================
+// AMC Health Heatmap data
+// =============================================================
+
+export interface AmcHealthRow {
+  amcSlug: string;
+  displayName: string;
+  values: (number | null)[];
+}
+
+export interface AmcHealthMatrix {
+  quarters: string[];          // calendar quarters in chronological order
+  quarterLabels: string[];     // matching fiscal-quarter display labels
+  rows: AmcHealthRow[];
+}
+
+/**
+ * Per-AMC QoQ AAUM growth matrix for a /amc-style heatmap. Returns
+ * the latest `lastN` quarters (chronological) and, for each AMC that
+ * has at least one ok row in the window, the QoQ growth % at each
+ * quarter relative to the prior quarter's AAUM for that same AMC.
+ *
+ *   growthPct_q = (aaum_q − aaum_{q-1}) / aaum_{q-1} × 100
+ *
+ * Cells where the prior quarter is missing (e.g. a new AMC that
+ * only entered the AAUM disclosure recently) render `null`, which
+ * the Heatmap component shows as a muted "—" cell. No fake zeros.
+ *
+ * AMCs sorted by latest-quarter AAUM descending so the largest
+ * AMCs render at the top of the heatmap.
+ */
+export function amcHealthGrowthMatrix(lastN = 8): AmcHealthMatrix {
+  // Build the chronological quarter window.
+  const allQuarters = Array.from(
+    new Set(
+      amcAaumQuarterlySnapshot.rows
+        .filter((r) => r.status === "ok")
+        .map((r) => r.quarter)
+    )
+  ).sort();
+  const quarters = allQuarters.slice(-lastN);
+  if (quarters.length === 0) {
+    return { quarters: [], quarterLabels: [], rows: [] };
+  }
+
+  // We need one prior quarter beyond the visible window to compute
+  // the QoQ growth for the very first visible quarter. If there is
+  // no quarter before `quarters[0]`, that cell will be null.
+  const priorQuarter =
+    allQuarters.indexOf(quarters[0]) > 0
+      ? allQuarters[allQuarters.indexOf(quarters[0]) - 1]
+      : null;
+  const computeWindow = priorQuarter ? [priorQuarter, ...quarters] : quarters;
+
+  // Build a slug → quarter → avgAum map for fast lookup, only for
+  // rows that fall inside the compute window.
+  const aaumBySlug = new Map<string, Map<string, number>>();
+  const displayBySlug = new Map<string, string>();
+  for (const r of amcAaumQuarterlySnapshot.rows) {
+    if (r.status !== "ok") continue;
+    if (!computeWindow.includes(r.quarter)) continue;
+    const inner = aaumBySlug.get(r.amcSlug) ?? new Map<string, number>();
+    inner.set(r.quarter, r.avgAum);
+    aaumBySlug.set(r.amcSlug, inner);
+    if (r.displayName && !displayBySlug.has(r.amcSlug)) {
+      displayBySlug.set(r.amcSlug, r.displayName);
+    } else if (!displayBySlug.has(r.amcSlug)) {
+      displayBySlug.set(r.amcSlug, r.amcNameAsReported);
+    }
+  }
+
+  // Build rows.
+  const latestQ = quarters[quarters.length - 1];
+  const rows: AmcHealthRow[] = [];
+  for (const [amcSlug, inner] of aaumBySlug) {
+    const values: (number | null)[] = quarters.map((q, i) => {
+      const cur = inner.get(q);
+      const priorQ = i === 0 ? priorQuarter : quarters[i - 1];
+      if (cur === undefined || priorQ === null) return null;
+      const prior = inner.get(priorQ);
+      if (prior === undefined || prior <= 0) return null;
+      return ((cur - prior) / prior) * 100;
+    });
+    rows.push({
+      amcSlug,
+      displayName: displayBySlug.get(amcSlug) ?? amcSlug,
+      values,
+    });
+  }
+
+  // Sort by latest-quarter AAUM descending (largest AMC on top).
+  rows.sort((a, b) => {
+    const aLatest = aaumBySlug.get(a.amcSlug)?.get(latestQ) ?? 0;
+    const bLatest = aaumBySlug.get(b.amcSlug)?.get(latestQ) ?? 0;
+    return bLatest - aLatest;
+  });
+
+  return {
+    quarters,
+    quarterLabels: quarters.map(fiscalLabelFromCalendarQuarter),
+    rows,
+  };
+}
+
+// =============================================================
+// Concentration tracker — HHI (Herfindahl–Hirschman Index)
+// =============================================================
+
+export interface HhiPoint {
+  quarter: string;
+  quarterLabel: string;
+  hhi: number;             // 0..10_000 (sum of share² × 10_000)
+  participantCount: number;
+  topShareLeaderPct: number;
+}
+
+/**
+ * AMC-level HHI per quarter. Computed as Σ((avgAum_i / totalAaum)²)
+ * × 10,000 across every AMC with a `status==='ok'` row in that
+ * quarter. Range: 0 (perfectly competitive) to 10,000 (monopoly).
+ * U.S. DOJ thresholds: <1,500 unconcentrated, 1,500–2,500 moderate,
+ * >2,500 highly concentrated.
+ *
+ * Returns the latest `lastN` quarters in chronological order.
+ */
+export function amcLevelHhiSeries(lastN = 8): HhiPoint[] {
+  const quarters = Array.from(
+    new Set(
+      amcAaumQuarterlySnapshot.rows
+        .filter((r) => r.status === "ok")
+        .map((r) => r.quarter)
+    )
+  )
+    .sort()
+    .slice(-lastN);
+
+  return quarters.map((q) => {
+    const rows = allAmcAaumRowsForQuarter(q);
+    const total = rows.reduce((s, r) => s + r.avgAum, 0);
+    let hhi = 0;
+    let topShare = 0;
+    if (total > 0) {
+      for (const r of rows) {
+        const share = (r.avgAum / total) * 100;
+        hhi += share * share;
+        if (share > topShare) topShare = share;
+      }
+    }
+    return {
+      quarter: q,
+      quarterLabel: fiscalLabelFromCalendarQuarter(q),
+      hhi,
+      participantCount: rows.length,
+      topShareLeaderPct: topShare,
+    };
+  });
+}

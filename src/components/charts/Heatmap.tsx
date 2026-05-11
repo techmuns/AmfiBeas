@@ -1,7 +1,5 @@
 "use client";
 
-import { formatMonthLabel } from "@/lib/format";
-
 export interface HeatmapRow {
   label: string;
   values: (number | null)[];
@@ -9,11 +7,22 @@ export interface HeatmapRow {
 
 interface HeatmapProps {
   rows: HeatmapRow[];
+  /**
+   * Column display strings. The caller is expected to pass the
+   * already-formatted labels (e.g. "Sep '25", "4QFY26") so the
+   * component stays serialisable across the server/client
+   * boundary — no formatter functions need to be passed in.
+   */
   columns: string[];
   min?: number;
   max?: number;
   height?: number;
   cellMinWidth?: number;
+  /** When true, every column header renders its label (no
+   *  every-third sampling). Use for short axes like 8 quarters. */
+  showAllColumnLabels?: boolean;
+  /** Suffix appended to cell values + title (defaults to "%"). */
+  valueSuffix?: string;
 }
 
 function cellColor(v: number, min: number, max: number) {
@@ -39,6 +48,8 @@ export function Heatmap({
   min = -3,
   max = 3,
   cellMinWidth = 28,
+  showAllColumnLabels = false,
+  valueSuffix = "%",
 }: HeatmapProps) {
   return (
     <div className="overflow-x-auto">
@@ -47,14 +58,18 @@ export function Heatmap({
           <tr>
             <th className="sticky left-0 bg-card pr-2 text-left font-medium text-muted-foreground" />
             {columns.map((col, i) => {
-              const showLabel = i === 0 || i === columns.length - 1 || i % 3 === 0;
+              const showLabel =
+                showAllColumnLabels ||
+                i === 0 ||
+                i === columns.length - 1 ||
+                i % 3 === 0;
               return (
                 <th
-                  key={col}
+                  key={`${col}-${i}`}
                   className="px-1 pb-1 text-center font-normal text-muted-foreground"
                   style={{ minWidth: cellMinWidth }}
                 >
-                  {showLabel ? formatMonthLabel(col) : ""}
+                  {showLabel ? col : ""}
                 </th>
               );
             })}
@@ -81,7 +96,9 @@ export function Heatmap({
                     minWidth: cellMinWidth,
                   }}
                   title={
-                    v === null ? "—" : `${row.label} · ${columns[i]}: ${v.toFixed(2)}%`
+                    v === null
+                      ? "—"
+                      : `${row.label} · ${columns[i]}: ${v.toFixed(2)}${valueSuffix}`
                   }
                 >
                   <span className="block text-center">

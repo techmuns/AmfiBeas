@@ -7,6 +7,7 @@ import { Donut, type DonutSlice } from "@/components/charts/Donut";
 import { IiflHeatmap } from "@/components/charts/IiflHeatmap";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { StackedArea } from "@/components/charts/StackedArea";
+import { Waterfall } from "@/components/charts/Waterfall";
 import {
   industryByMonth,
   latestMonth,
@@ -19,12 +20,14 @@ import {
   formatKpiProvenanceTooltip,
   getKpiProvenance,
   getKpiValue,
+  industryFlowWaterfall,
   latestAmfiMonthlyRow,
   latestIndustryFolioAdditions,
   latestProvenanceFor,
   monthlyActiveEquityAumBridge,
   monthlyActiveEquityNetInflowTrend,
   monthlyActiveEquityShareTrend,
+  monthlyActivePassiveTrend,
   monthlyEquityBreakdown,
   monthlyFlowsData,
   monthlyIndustryFolioAdditionsTrend,
@@ -437,6 +440,10 @@ export default async function MonthlyPage({
     activeEquityBridge.length > 0 ||
     sipAumShareTrend.length > 0;
 
+  // ---- 12-month Industry Flow Waterfall + Active vs Passive ---------
+  const flowWaterfall = industryFlowWaterfall(12);
+  const activePassiveTrend = monthlyActivePassiveTrend(24);
+
   return (
     <div className="space-y-6">
       <PageHeader title="Monthly Operating" subtitle={subtitle} />
@@ -812,6 +819,90 @@ export default async function MonthlyPage({
         </div>
       )}
 
+      {activePassiveTrend && activePassiveTrend.history.length > 0 && (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight">
+              Active vs Passive
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Active equity AUM vs ETF &amp; Index AUM · passive share trend
+              {activePassiveTrend.forecastMonths > 0
+                ? " + simple linear forecast"
+                : ""}{" "}
+              · Source: AMFI Monthly Report
+            </p>
+          </div>
+
+          <section className="grid gap-4 lg:grid-cols-2">
+            <Card
+              title="Active Equity vs ETF &amp; Index AUM"
+              subtitle={`${activePassiveTrend.history.length} month${activePassiveTrend.history.length === 1 ? "" : "s"} · month-end Net AUM · ₹ Cr`}
+            >
+              <MultiLine
+                data={activePassiveTrend.history.map((p) => ({
+                  month: p.month,
+                  active: p.activeEquityAum,
+                  passive: p.etfIndexAum,
+                }))}
+                xKey="month"
+                labelFormat="month"
+                valueFormat="cr"
+                axisFormat="cr"
+                lines={[
+                  {
+                    key: "active",
+                    name: "Active equity",
+                    color: "hsl(var(--chart-1))",
+                  },
+                  {
+                    key: "passive",
+                    name: "ETF & Index",
+                    color: "hsl(var(--chart-5))",
+                  },
+                ]}
+              />
+              <p className="mt-3 text-[11px] text-muted-foreground">
+                Active equity = equity-oriented + hybrid (ex-arbitrage) +
+                solution-oriented. ETF &amp; Index = Index Funds + Other
+                ETFs (excludes Gold ETFs).
+              </p>
+            </Card>
+
+            <Card
+              title="Passive Share of Equity AUM"
+              subtitle={
+                activePassiveTrend.forecastMonths > 0 &&
+                activePassiveTrend.endOfFyProjectionPct !== null
+                  ? `Latest ${activePassiveTrend.latestSharePct.toFixed(2)}% · projected FY-end ${activePassiveTrend.endOfFyProjectionPct.toFixed(2)}% · slope ${activePassiveTrend.trendSlopePctPerMonth >= 0 ? "+" : ""}${activePassiveTrend.trendSlopePctPerMonth.toFixed(3)} pp/mo`
+                  : `Latest ${activePassiveTrend.latestSharePct.toFixed(2)}%`
+              }
+            >
+              <MultiLine
+                data={activePassiveTrend.share}
+                xKey="month"
+                labelFormat="month"
+                valueFormat="pct"
+                axisFormat="pct"
+                lines={[
+                  {
+                    key: "passiveSharePct",
+                    name: "Passive share",
+                    color: "hsl(var(--chart-5))",
+                  },
+                ]}
+              />
+              <p className="mt-3 text-[11px] text-muted-foreground">
+                passiveShare = ETF&amp;Index ÷ (Active equity + ETF&amp;Index) ×
+                100. Forecast (when shown) is an OLS extrapolation of the
+                historical slope to the upcoming fiscal-year-end (March).
+                Not a model — a directional reference.
+              </p>
+            </Card>
+          </section>
+        </div>
+      )}
+
       {iiflTrendHasAny && (
         <div className="space-y-3">
           <div>
@@ -1081,6 +1172,24 @@ export default async function MonthlyPage({
             note={demoIndustryNote}
           />
         </section>
+      )}
+
+      {flowWaterfall && (
+        <Card
+          title="Industry AUM Bridge — 12-month flow decomposition"
+          subtitle={`Opening ${flowWaterfall.startMonth} → Closing ${flowWaterfall.endMonth} · SIP + Lump sum + Market = ΔAUM · Source: AMFI Monthly Report`}
+        >
+          <Waterfall data={flowWaterfall.steps} valueFormat="cr" axisFormat="cr" />
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            Splits the change in industry closing AUM into three drivers:
+            (1) cumulative SIP contributions, (2) lump sum / other net
+            flow = total industry net inflow − SIP, (3) market /
+            residual impact = ΔAUM − total net inflow (mark-to-market +
+            reclassification). SIP contributions and total net inflow
+            come straight from the AMFI Monthly Report; the market
+            residual is derived.
+          </p>
+        </Card>
       )}
 
       <Card

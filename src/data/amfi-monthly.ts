@@ -436,3 +436,263 @@ export function monthlySipAumShareTrend(
     return [{ label: r.month, value: (r.sipAum / r.totalAum) * 100 }];
   });
 }
+
+// =============================================================
+// Industry flow-decomposition waterfall (12-month bridge)
+// =============================================================
+
+export interface FlowWaterfallStep {
+  key: "openingAum" | "sipContribution" | "lumpSum" | "marketImpact" | "closingAum";
+  label: string;
+  value: number;          // ₹ Cr
+  cumulative: number;     // ₹ Cr — running total of the bridge
+  delta: number;          // ₹ Cr — signed magnitude (positive for adds; opening/closing reuse value)
+  type: "total" | "up" | "down";
+}
+
+export interface FlowWaterfall {
+  startMonth: string;
+  endMonth: string;
+  windowMonths: number;
+  steps: FlowWaterfallStep[];
+  /** Sum of SIP contribution + lump sum (industry net flow) over the
+   *  window. Equal to `closingAum − openingAum − marketImpact`. */
+  netFlowTotal: number;
+}
+
+/**
+ * Industry AUM bridge over the most recent `windowMonths` (default
+ * 12). Decomposes the change in `totalAum` into:
+ *
+ *   SIP contribution   = Σ sipContribution_m              (₹ Cr, positive)
+ *   Lump sum / other   = Σ netInflow_m − Σ sipContribution_m
+ *                        (the residual flow component; signed —
+ *                        equity outflows + debt inflows still net
+ *                        to industry netInflow)
+ *   Market / residual  = (totalAum_end − totalAum_start) − Σ netInflow_m
+ *                        (mark-to-market + minor reclassification)
+ *
+ * Returns `null` when the snapshot doesn't carry both bookend
+ * `totalAum` rows OR when fewer than `windowMonths` months exist
+ * with `sipContribution` + `netInflow` — we avoid a partial-window
+ * bridge that would mis-state the contribution split.
+ */
+export function industryFlowWaterfall(
+  windowMonths = 12
+): FlowWaterfall | null {
+  const rows = amfiMonthlyRows();
+  if (rows.length < windowMonths + 1) return null;
+  const endRow = rows[rows.length - 1];
+  const startRow = rows[rows.length - 1 - windowMonths];
+  if (typeof endRow.totalAum !== "number") return null;
+  if (typeof startRow.totalAum !== "number") return null;
+
+  const window = rows.slice(rows.length - windowMonths);
+  let sipSum = 0;
+  let netFlowSum = 0;
+  for (const r of window) {
+    if (typeof r.sipContribution === "number") sipSum += r.sipContribution;
+    if (typeof r.netInflow === "number") netFlowSum += r.netInflow;
+  }
+  const lumpSum = netFlowSum - sipSum;
+  const marketImpact = endRow.totalAum - startRow.totalAum - netFlowSum;
+
+  const opening = startRow.totalAum;
+  const afterSip = opening + sipSum;
+  const afterLump = afterSip + lumpSum;
+  const afterMarket = afterLump + marketImpact;
+
+  const steps: FlowWaterfallStep[] = [
+    {
+      key: "openingAum",
+      label: `Opening AUM (${startRow.month})`,
+      value: opening,
+      cumulative: opening,
+      delta: opening,
+      type: "total",
+    },
+    {
+      key: "sipContribution",
+      label: "SIP contributions",
+      value: sipSum,
+      cumulative: afterSip,
+      delta: sipSum,
+      type: sipSum >= 0 ? "up" : "down",
+    },
+    {
+      key: "lumpSum",
+      label: "Lump sum / other flows",
+      value: lumpSum,
+      cumulative: afterLump,
+      delta: lumpSum,
+      type: lumpSum >= 0 ? "up" : "down",
+    },
+    {
+      key: "marketImpact",
+      label: "Market / residual impact",
+      value: marketImpact,
+      cumulative: afterMarket,
+      delta: marketImpact,
+      type: marketImpact >= 0 ? "up" : "down",
+    },
+    {
+      key: "closingAum",
+      label: `Closing AUM (${endRow.month})`,
+      value: endRow.totalAum,
+      cumulative: endRow.totalAum,
+      delta: endRow.totalAum,
+      type: "total",
+    },
+  ];
+
+  return {
+    startMonth: startRow.month,
+    endMonth: endRow.month,
+    windowMonths,
+    steps,
+    netFlowTotal: netFlowSum,
+  };
+}
+
+// =============================================================
+// Active vs Passive monthly trend (+ simple linear forecast)
+// =============================================================
+
+export interface ActivePassivePoint {
+  month: string;
+  activeEquityAum: number;
+  etfIndexAum: number;
+  passiveSharePct: number;   // etf+index / (active + etf+index) × 100
+}
+
+export interface ActivePassiveForecastPoint {
+  month: string;
+  passiveSharePct: number;
+  /** Numeric index signature so the type is assignable to
+   *  `Record<string, string | number | null>` used by MultiLine.
+   *  `forecast` was previously a boolean flag but is omitted from
+   *  this type — callers can detect forecast points by month-string
+   *  comparison against `history` if dashed-styling is needed. */
+  [key: string]: string | number | null;
+}
+
+export interface ActivePassiveTrend {
+  history: ActivePassivePoint[];
+  /** Combined history + forecast points for charting. Forecast
+   *  rows carry `forecast=true` so the renderer can dash the
+   *  extrapolated portion. */
+  share: ActivePassiveForecastPoint[];
+  /** Last historical share %; useful for KPI display. */
+  latestSharePct: number;
+  /** OLS slope over the historical window (percentage-points per
+   *  month). Positive = passive gaining share. */
+  trendSlopePctPerMonth: number;
+  /** Number of months extrapolated. 0 when fewer than 6 historical
+   *  points exist (slope too noisy). */
+  forecastMonths: number;
+  /** End-of-FY (Mar) projection from the latest historical point.
+   *  Null when extrapolation is suppressed. */
+  endOfFyProjectionPct: number | null;
+}
+
+/**
+ * Active equity AUM vs ETF & Index AUM over the most recent
+ * `historyMonths` months, with a simple linear (OLS) forecast of
+ * the passive-share line out to the next fiscal-year end.
+ *
+ *   passiveSharePct = etfIndexAum / (activeEquityAum + etfIndexAum) × 100
+ *
+ * Rows where either field is missing are skipped — no fake zeros.
+ * Forecast suppressed when fewer than 6 historical points exist
+ * (slope unstable).
+ */
+export function monthlyActivePassiveTrend(
+  historyMonths = 24
+): ActivePassiveTrend | null {
+  const rows = amfiMonthlyRows().slice(-historyMonths);
+  const history: ActivePassivePoint[] = [];
+  for (const r of rows) {
+    if (
+      typeof r.activeEquityAum !== "number" ||
+      typeof r.etfIndexAum !== "number"
+    ) {
+      continue;
+    }
+    const denom = r.activeEquityAum + r.etfIndexAum;
+    if (denom <= 0) continue;
+    history.push({
+      month: r.month,
+      activeEquityAum: r.activeEquityAum,
+      etfIndexAum: r.etfIndexAum,
+      passiveSharePct: (r.etfIndexAum / denom) * 100,
+    });
+  }
+  if (history.length === 0) return null;
+
+  // OLS slope on (monthIndex, passiveSharePct). monthIndex is the
+  // 0-based position within `history`, so the slope is in
+  // %-points-per-month.
+  const n = history.length;
+  const xs = history.map((_, i) => i);
+  const ys = history.map((h) => h.passiveSharePct);
+  const xBar = xs.reduce((s, v) => s + v, 0) / n;
+  const yBar = ys.reduce((s, v) => s + v, 0) / n;
+  let num = 0;
+  let den = 0;
+  for (let i = 0; i < n; i++) {
+    num += (xs[i] - xBar) * (ys[i] - yBar);
+    den += (xs[i] - xBar) ** 2;
+  }
+  const slope = den === 0 ? 0 : num / den;
+  const intercept = yBar - slope * xBar;
+
+  // Forecast horizon: from the latest historical month out to the
+  // next FY-end (March of the next fiscal-year boundary). For a
+  // history ending in Mar-2026 we extend to Mar-2027.
+  const last = history[history.length - 1];
+  let forecastMonths = 0;
+  let endOfFy: number | null = null;
+  const shareSeries: ActivePassiveForecastPoint[] = history.map((h) => ({
+    month: h.month,
+    passiveSharePct: h.passiveSharePct,
+  }));
+
+  if (history.length >= 6) {
+    const [yyyy, mm] = last.month.split("-").map((s) => parseInt(s, 10));
+    // Next FY end: the upcoming March-31. If the current month is
+    // before March of the current calendar year, target this March;
+    // otherwise target next March.
+    let targetYear = yyyy;
+    if (mm >= 3) targetYear = yyyy + 1;
+    const targetMonth = 3;
+    let cy = yyyy;
+    let cm = mm;
+    while (cy < targetYear || (cy === targetYear && cm < targetMonth)) {
+      cm += 1;
+      if (cm > 12) {
+        cm = 1;
+        cy += 1;
+      }
+      forecastMonths += 1;
+      const fcastIdx = history.length - 1 + forecastMonths;
+      const fcastValue = intercept + slope * fcastIdx;
+      const monthStr = `${cy}-${String(cm).padStart(2, "0")}`;
+      shareSeries.push({
+        month: monthStr,
+        passiveSharePct: fcastValue,
+      });
+      if (cy === targetYear && cm === targetMonth) {
+        endOfFy = fcastValue;
+      }
+    }
+  }
+
+  return {
+    history,
+    share: shareSeries,
+    latestSharePct: last.passiveSharePct,
+    trendSlopePctPerMonth: slope,
+    forecastMonths,
+    endOfFyProjectionPct: endOfFy,
+  };
+}

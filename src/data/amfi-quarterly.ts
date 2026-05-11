@@ -23,6 +23,7 @@
  */
 import quarterlyIndustryRaw from "./snapshots/amfi-quarterly-industry.json";
 import quarterlyCategoryRaw from "./snapshots/amfi-quarterly-category.json";
+import { fiscalLabelFromCalendarQuarter } from "./amc-peer-universe";
 import type {
   AmfiMonthlyCategorySlug,
   AmfiQuarterlyCategoryFieldSources,
@@ -737,4 +738,69 @@ export function quarterlyCategoryAumProvenance(
 ): AmfiQuarterlyFieldSource | null {
   const r = amfiQuarterlyCategoryRows(slug).find((x) => x.quarter === quarterId);
   return r?.fieldSources?.categoryAum ?? null;
+}
+
+// =============================================================
+// Category-level HHI (concentration tracker)
+// =============================================================
+
+export interface CategoryHhiPoint {
+  quarter: string;
+  quarterLabel: string;
+  hhi: number;
+  participantCount: number;
+  topCategorySharePct: number;
+  topCategorySlug: string | null;
+}
+
+/**
+ * Industry concentration measured across SEBI/AMFI scheme
+ * categories. For each quarter we treat every category as a
+ * "participant," compute its share of the closing industry AUM,
+ * and emit HHI = Σ(share²) × 10,000.
+ *
+ *   share_c = categoryAum_c / Σ categoryAum_*
+ *
+ * The denominator is the sum of categories present in the quarter
+ * (not `grandTotalAum`), so absent categories don't artificially
+ * deflate the index. Quarters with zero categories are skipped.
+ *
+ * Returned series is chronological, latest `lastN` quarters.
+ */
+export function categoryHhiSeries(lastN = 8): CategoryHhiPoint[] {
+  const rows = quarterlyCategoryRaw.rows;
+  const byQuarter = new Map<string, { slug: string; aum: number }[]>();
+  for (const r of rows) {
+    if (typeof r.categoryAum !== "number") continue;
+    const arr = byQuarter.get(r.quarter) ?? [];
+    arr.push({ slug: r.categorySlug, aum: r.categoryAum });
+    byQuarter.set(r.quarter, arr);
+  }
+  const quarters = Array.from(byQuarter.keys()).sort().slice(-lastN);
+
+  return quarters.map((q) => {
+    const entries = byQuarter.get(q) ?? [];
+    const total = entries.reduce((s, e) => s + e.aum, 0);
+    let hhi = 0;
+    let topShare = 0;
+    let topSlug: string | null = null;
+    if (total > 0) {
+      for (const e of entries) {
+        const share = (e.aum / total) * 100;
+        hhi += share * share;
+        if (share > topShare) {
+          topShare = share;
+          topSlug = e.slug;
+        }
+      }
+    }
+    return {
+      quarter: q,
+      quarterLabel: fiscalLabelFromCalendarQuarter(q),
+      hhi,
+      participantCount: entries.length,
+      topCategorySharePct: topShare,
+      topCategorySlug: topSlug,
+    };
+  });
 }
