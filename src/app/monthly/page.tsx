@@ -1,4 +1,3 @@
-import { industryMonthlyNote } from "@/lib/provenance";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -8,11 +7,7 @@ import { IiflHeatmap } from "@/components/charts/IiflHeatmap";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { StackedArea } from "@/components/charts/StackedArea";
 import { Waterfall } from "@/components/charts/Waterfall";
-import {
-  industryByMonth,
-  latestMonth,
-  marketShare,
-} from "@/data/aggregate";
+import { latestMonth } from "@/data/aggregate";
 import {
   amfiMonthlyRows,
   availableMonthsDesc,
@@ -54,39 +49,15 @@ import {
   formatCroreCountSafe,
   formatIntSafe,
   formatLakhSafe,
-  formatPctSafe,
 } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import { parseFilters, selectedSlugs } from "@/lib/filter";
-
 export default async function MonthlyPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const filters = parseFilters(sp);
-  const slugs = selectedSlugs(filters);
-
-  // Filtered series (peer subset). Unfiltered industry series is needed
-  // only when peer filter is active so we can compute market share %.
-  const fullSeries = industryByMonth(slugs);
-  const industrySeries = slugs ? industryByMonth(null) : fullSeries;
-
-  const latest = fullSeries[fullSeries.length - 1];
-  const industryLatest = industrySeries[industrySeries.length - 1];
-
-  // Peer-vs-industry market share KPIs (only meaningful when filtered).
-  // Currently only sipShareTotal feeds a still-rendered demo card; the
-  // AUM- and active-equity-share KPIs were retired with their cards.
-  const sipShareTotal = slugs
-    ? marketShare(latest.sipContribution, industryLatest.sipContribution)
-    : null;
-
-  const subtitle = slugs
-    ? `${slugs.length} peer${slugs.length > 1 ? "s" : ""} · ${latestMonth()}`
-    : `Industry-wide · ${latestMonth()}`;
-  const demoIndustryNote = industryMonthlyNote();
+  const subtitle = `Industry-wide · ${latestMonth()}`;
 
   // AMFI Monthly Snapshot — first live AMFI widget. Reads directly from
   // the manually-uploaded-PDF snapshot. The selected row is whichever
@@ -1161,17 +1132,6 @@ export default async function MonthlyPage({
             </section>
           )}
         </div>
-      )}
-
-      {slugs && (
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <KpiCard
-            tone="demo"
-            label="SIP Share"
-            value={formatPctSafe(sipShareTotal, 2)}
-            note={demoIndustryNote}
-          />
-        </section>
       )}
 
       {flowWaterfall && (
