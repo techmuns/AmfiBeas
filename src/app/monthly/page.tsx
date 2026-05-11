@@ -22,12 +22,16 @@ import {
   latestAmfiMonthlyRow,
   latestIndustryFolioAdditions,
   latestProvenanceFor,
+  monthlyActiveEquityAumBridge,
+  monthlyActiveEquityNetInflowTrend,
   monthlyActiveEquityShareTrend,
   monthlyEquityBreakdown,
   monthlyFlowsData,
   monthlyIndustryFolioAdditionsTrend,
+  monthlySipAumShareTrend,
   monthlyTrend,
   resolveSelectedRow,
+  trailingActiveEquityNetInflowAverage,
   type AmfiMonthlyKpiField,
 } from "@/data/amfi-monthly";
 import {
@@ -416,6 +420,23 @@ export default async function MonthlyPage({
   const aumMarketShare = topAumMarketShareSeries(7, 8);
   const aumMarketShareCoverage = aumMarketShare.coverage;
 
+  // ---- Active Equity Flow Diagnostics ------------------------------
+  // Three derived views sitting on top of the existing AMFI Monthly
+  // Report fields. No new ingestion / no new categories — just
+  // active-equity envelope flow vs. trailing-average, an AUM bridge
+  // (Δ closing AAUM split into net flow + market-residual), and SIP
+  // AUM as a % of Total AUM. Gross-inflow share is intentionally
+  // dropped: the monthly snapshot only carries net flow, gross
+  // (Funds Mobilized) lives on the quarterly snapshot.
+  const activeEquityFlowTrend = monthlyActiveEquityNetInflowTrend(24);
+  const activeEquityFlowAvg = trailingActiveEquityNetInflowAverage(12);
+  const activeEquityBridge = monthlyActiveEquityAumBridge(24);
+  const sipAumShareTrend = monthlySipAumShareTrend(24);
+  const hasActiveEquityFlowDiagnostics =
+    activeEquityFlowTrend.length > 0 ||
+    activeEquityBridge.length > 0 ||
+    sipAumShareTrend.length > 0;
+
   return (
     <div className="space-y-6">
       <PageHeader title="Monthly Operating" subtitle={subtitle} />
@@ -603,6 +624,107 @@ export default async function MonthlyPage({
               schemes in AMFI classification.
             </p>
           </Card>
+        </div>
+      )}
+
+      {hasActiveEquityFlowDiagnostics && (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight">
+              Active Equity Flow Diagnostics
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Source: AMFI Monthly Report
+            </p>
+          </div>
+
+          <section className="grid gap-4 lg:grid-cols-2">
+            {activeEquityFlowTrend.length > 0 && (
+              <Card
+                title="Active Equity Net Inflows vs TTM Average"
+                subtitle={`Monthly net inflow · ${activeEquityFlowTrend.length} month${activeEquityFlowTrend.length === 1 ? "" : "s"}${
+                  activeEquityFlowAvg !== null
+                    ? ` · trailing 12M avg ${formatCompactCrSafe(activeEquityFlowAvg)}`
+                    : ""
+                } · ₹ Cr`}
+              >
+                <BarSeries
+                  data={activeEquityFlowTrend}
+                  name="Active Equity Net Inflow"
+                  color="hsl(var(--chart-1))"
+                  valueFormat="cr"
+                  axisFormat="cr"
+                  labelFormat="month"
+                  referenceValue={activeEquityFlowAvg}
+                  referenceLabel={
+                    activeEquityFlowAvg !== null ? "TTM avg" : undefined
+                  }
+                />
+                <p className="mt-3 text-[11px] text-muted-foreground">
+                  Active-equity envelope = equity-oriented schemes + hybrid
+                  schemes excluding arbitrage + solution-oriented schemes.
+                  Dashed line = trailing 12-month average of the
+                  envelope&apos;s net inflow.
+                </p>
+              </Card>
+            )}
+
+            {activeEquityBridge.length > 0 && (
+              <Card
+                title="Active Equity AUM Bridge"
+                subtitle={`${activeEquityBridge.length} month${activeEquityBridge.length === 1 ? "" : "s"} · ₹ Cr · net inflow vs market / residual impact`}
+              >
+                <GroupedBars
+                  data={activeEquityBridge}
+                  xKey="month"
+                  labelFormat="month"
+                  valueFormat="cr"
+                  axisFormat="cr"
+                  bars={[
+                    {
+                      key: "netInflow",
+                      name: "Net inflow",
+                      color: "hsl(var(--chart-1))",
+                    },
+                    {
+                      key: "marketResidual",
+                      name: "Market / residual impact",
+                      color: "hsl(var(--chart-3))",
+                    },
+                  ]}
+                />
+                <p className="mt-3 text-[11px] text-muted-foreground">
+                  Market / residual impact is derived as change in active
+                  equity AUM (month-end Net AUM) minus net inflow for the
+                  month. Captures mark-to-market and minor reclassification
+                  effects.
+                </p>
+              </Card>
+            )}
+
+            {sipAumShareTrend.length > 0 && (
+              <Card
+                title="SIP AUM as % of Total AUM"
+                subtitle={`${sipAumShareTrend.length} month${sipAumShareTrend.length === 1 ? "" : "s"} · sipAum / totalAum × 100`}
+              >
+                <BarSeries
+                  data={sipAumShareTrend}
+                  name="SIP AUM share"
+                  color="hsl(var(--chart-2))"
+                  valueFormat="pct"
+                  axisFormat="pct"
+                  labelFormat="month"
+                />
+                <p className="mt-3 text-[11px] text-muted-foreground">
+                  SIP AUM as a share of total industry AUM. SIP
+                  contribution share of gross inflows is intentionally
+                  omitted — gross inflows (Funds Mobilized) are only
+                  available on the quarterly disclosure, not in the
+                  monthly snapshot.
+                </p>
+              </Card>
+            )}
+          </section>
         </div>
       )}
 

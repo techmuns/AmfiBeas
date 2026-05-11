@@ -4,6 +4,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -27,6 +28,14 @@ interface BarSeriesProps {
   axisFormat?: AxisFormat;
   labelFormat?: LabelFormat;
   name?: string;
+  /**
+   * Optional horizontal reference line. Set when callers want to
+   * overlay a trailing-N-month average, target, or threshold on top
+   * of the bar series. `referenceLabel` renders inline on the line.
+   * Omit `referenceValue` to disable.
+   */
+  referenceValue?: number | null;
+  referenceLabel?: string;
 }
 
 export function BarSeries({
@@ -37,10 +46,14 @@ export function BarSeries({
   axisFormat = "cr",
   labelFormat = "month",
   name = "Value",
+  referenceValue,
+  referenceLabel,
 }: BarSeriesProps) {
   const fmtValue = valueFormatter(valueFormat);
   const fmtAxis = axisFormatter(axisFormat);
   const fmtLabel = labelFormatter(labelFormat);
+  const hasRef =
+    typeof referenceValue === "number" && Number.isFinite(referenceValue);
 
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -71,6 +84,23 @@ export function BarSeries({
           }
         />
         <Bar dataKey="value" name={name} fill={color} radius={[3, 3, 0, 0]} />
+        {hasRef && (
+          <ReferenceLine
+            y={referenceValue as number}
+            stroke="hsl(var(--muted-foreground))"
+            strokeDasharray="4 4"
+            label={
+              referenceLabel
+                ? {
+                    value: referenceLabel,
+                    position: "right",
+                    fontSize: 10,
+                    fill: "hsl(var(--muted-foreground))",
+                  }
+                : undefined
+            }
+          />
+        )}
       </BarChart>
     </ResponsiveContainer>
   );
