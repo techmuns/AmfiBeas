@@ -417,7 +417,7 @@ export default async function MonthlyPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Monthly Operating" subtitle={subtitle} />
+      <PageHeader title="Monthly Operating KPIs" subtitle={subtitle} />
 
       <Card
         title="AMFI Monthly Snapshot"
