@@ -7,7 +7,6 @@ import { AreaTrend } from "@/components/charts/AreaTrend";
 import { BarSeries } from "@/components/charts/BarSeries";
 import { IndustryNarrative } from "@/components/data/IndustryNarrative";
 import {
-  industryByMonth,
   industryQuarterly,
   latestMonth,
   latestQuarter,
@@ -15,7 +14,11 @@ import {
   yoyChange,
   yoyChangeQuarterly,
 } from "@/data/aggregate";
-import { amfiMonthlyRows } from "@/data/amfi-monthly";
+import {
+  amfiMonthlyRows,
+  latestIndustryFolioAdditions,
+  monthlyIndustryFolioAdditionsTrend,
+} from "@/data/amfi-monthly";
 import { industryNarrative } from "@/data/narrative";
 import {
   formatCompactCrSafe,
@@ -29,23 +32,59 @@ const AMFI_MONTHLY_SOURCE = "Source: AMFI Monthly Report";
 const SCREENER_SOURCE = "Source: Screener / company filings";
 
 export default function HomePage() {
-  const monthly = industryByMonth();
-  const quarterly = industryQuarterly();
-  const latest = monthly[monthly.length - 1];
-  const latestQ = quarterly[quarterly.length - 1];
+  // Live industry monthly snapshot (amfi-monthly-pdf.json) is now the
+  // source of truth for every industry-level KPI on the Overview. The
+  // synthetic `industryByMonth()` helper is no longer called here —
+  // each KPI builds its own per-field series and drops months where the
+  // field is absent in the snapshot. Demo April-2026 ticks gone.
+  const amfiRows = amfiMonthlyRows();
+  const totalAumSeries = amfiRows
+    .filter((r): r is typeof r & { totalAum: number } => typeof r.totalAum === "number")
+    .map((r) => r.totalAum);
+  const activeEquityAumSeries = amfiRows
+    .filter(
+      (r): r is typeof r & { activeEquityAum: number } =>
+        typeof r.activeEquityAum === "number"
+    )
+    .map((r) => r.activeEquityAum);
+  const sipContribSeries = amfiRows
+    .filter(
+      (r): r is typeof r & { sipContribution: number } =>
+        typeof r.sipContribution === "number"
+    )
+    .map((r) => r.sipContribution);
 
-  const aumYoy = yoyChange(monthly.map((m) => m.totalAum));
-  const activeEquityMom = momChange(monthly.map((m) => m.activeEquityAum));
-  const sipMom = momChange(monthly.map((m) => m.sipContribution));
-  const investorsMom = momChange(monthly.map((m) => m.investorAdditions));
+  const aumLatest =
+    totalAumSeries.length > 0 ? totalAumSeries[totalAumSeries.length - 1] : null;
+  const activeEquityLatest =
+    activeEquityAumSeries.length > 0
+      ? activeEquityAumSeries[activeEquityAumSeries.length - 1]
+      : null;
+  const sipLatest =
+    sipContribSeries.length > 0
+      ? sipContribSeries[sipContribSeries.length - 1]
+      : null;
+
+  const aumYoy = yoyChange(totalAumSeries);
+  const activeEquityMom = momChange(activeEquityAumSeries);
+  const sipMom = momChange(sipContribSeries);
+
+  // Folio Additions replaces the previously-synthetic "Investor Additions"
+  // tile. Value = latest month's industryFolios − previous month's
+  // industryFolios (lakh scale). MoM delta compares that to the prior
+  // month's additions so the tile reads as "how much did this month's
+  // pace change vs last month's pace."
+  const folioAdditionsTrend = monthlyIndustryFolioAdditionsTrend(24);
+  const folioAdditionsLatest = latestIndustryFolioAdditions();
+  const folioAdditionsMom =
+    folioAdditionsTrend.length >= 2
+      ? momChange(folioAdditionsTrend.map((r) => r.value))
+      : 0;
+
+  const quarterly = industryQuarterly();
+  const latestQ = quarterly[quarterly.length - 1];
   const patYoy = yoyChangeQuarterly(quarterly.map((q) => q.pat));
 
-  // AUM Trend + SIP Flows on the Overview now read directly from the
-  // live AMFI Monthly Report snapshot (amfi-monthly-pdf.json via
-  // amfiMonthlyRows). Each chart filters to months where the relevant
-  // field is actually present in the snapshot — no synthetic months
-  // and no fake future ticks.
-  const amfiRows = amfiMonthlyRows();
   const aumSeries = amfiRows.flatMap((r) =>
     typeof r.totalAum === "number"
       ? [{ month: r.month, value: r.totalAum }]
@@ -90,30 +129,30 @@ export default function HomePage() {
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label="Industry AUM"
-          value={formatCompactCrSafe(latest.totalAum)}
+          value={formatCompactCrSafe(aumLatest)}
           delta={`${formatDelta(aumYoy)} YoY`}
           trend={trend(aumYoy)}
           note={AMFI_MONTHLY_SOURCE}
         />
         <KpiCard
           label="Active Equity AUM"
-          value={formatCompactCrSafe(latest.activeEquityAum)}
+          value={formatCompactCrSafe(activeEquityLatest)}
           delta={`${formatDelta(activeEquityMom)} MoM`}
           trend={trend(activeEquityMom)}
           note={AMFI_MONTHLY_SOURCE}
         />
         <KpiCard
           label="Monthly SIP"
-          value={formatCompactCrSafe(latest.sipContribution)}
+          value={formatCompactCrSafe(sipLatest)}
           delta={`${formatDelta(sipMom)} MoM`}
           trend={trend(sipMom)}
           note={AMFI_MONTHLY_SOURCE}
         />
         <KpiCard
-          label="Investor Additions"
-          value={formatLakhSafe(latest.investorAdditions)}
-          delta={`${formatDelta(investorsMom)} MoM`}
-          trend={trend(investorsMom)}
+          label="Industry Folio Additions"
+          value={formatLakhSafe(folioAdditionsLatest)}
+          delta={`${formatDelta(folioAdditionsMom)} MoM`}
+          trend={trend(folioAdditionsMom)}
           note={AMFI_MONTHLY_SOURCE}
         />
       </section>
