@@ -10,6 +10,8 @@ import {
   UNAVAILABLE,
 } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { DownloadCsvButton } from "@/components/data/DownloadCsvButton";
+import type { CsvColumn } from "@/lib/csv";
 
 export interface AmcSearchRow {
   amcSlug: string;
@@ -34,6 +36,38 @@ function growthClass(value: number | null): string {
   return "text-muted-foreground";
 }
 
+const CSV_COLUMNS: CsvColumn<AmcSearchRow>[] = [
+  { key: "rank", header: "Rank" },
+  { key: "displayName", header: "AMC" },
+  { key: "amcSlug", header: "Slug" },
+  { key: "amcNameAsReported", header: "AMFI name" },
+  {
+    key: "avgAum",
+    header: "AAUM (Cr)",
+    format: (v) => (typeof v === "number" ? Number(v.toFixed(2)) : ""),
+  },
+  {
+    key: "marketSharePct",
+    header: "Market share (%)",
+    format: (v) => (typeof v === "number" ? Number(v.toFixed(4)) : ""),
+  },
+  {
+    key: "qoqGrowthPct",
+    header: "QoQ growth (%)",
+    format: (v) => (typeof v === "number" ? Number(v.toFixed(2)) : ""),
+  },
+  {
+    key: "yoyGrowthPct",
+    header: "YoY growth (%)",
+    format: (v) => (typeof v === "number" ? Number(v.toFixed(2)) : ""),
+  },
+  {
+    key: "isTop7",
+    header: "Top 7",
+    format: (v) => (v ? "Y" : "N"),
+  },
+];
+
 export function AmcSearchTable({ rows }: Props) {
   const [query, setQuery] = useState("");
 
@@ -50,26 +84,33 @@ export function AmcSearchTable({ rows }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search AMCs by name or slug…"
-          aria-label="Search AMCs"
-          className="w-full rounded-md border bg-background py-2 pl-9 pr-9 text-sm placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search AMCs by name or slug…"
+            aria-label="Search AMCs"
+            className="w-full rounded-md border bg-background py-2 pl-9 pr-9 text-sm placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              aria-label="Clear search"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <DownloadCsvButton
+          rows={filtered}
+          columns={CSV_COLUMNS}
+          filename={`amc-aaum-${new Date().toISOString().slice(0, 10)}.csv`}
         />
-        {query && (
-          <button
-            type="button"
-            onClick={() => setQuery("")}
-            aria-label="Clear search"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
       </div>
 
       {filtered.length === 0 ? (

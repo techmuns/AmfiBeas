@@ -460,6 +460,123 @@ export interface HhiPoint {
   topShareLeaderPct: number;
 }
 
+// =============================================================
+// Anomaly detection — latest-quarter QoQ growth z-score
+// =============================================================
+
+export interface AmcAnomaly {
+  amcSlug: string;
+  displayName: string;
+  qoqGrowthPct: number;
+  zScore: number;
+  direction: "up" | "down";
+}
+
+export interface AmcAnomalyReport {
+  quarter: string;
+  quarterLabel: string;
+  medianQoqPct: number;
+  stdDevPct: number;
+  participantCount: number;
+  outliers: AmcAnomaly[];
+}
+
+/**
+ * Flags AMCs whose latest-quarter QoQ AAUM growth is more than
+ * `threshold` standard deviations away from the universe median.
+ *
+ * Method:
+ *   1. Compute QoQ growth % for every AMC that has both the latest
+ *      quarter AND the prior quarter present in the AAUM snapshot
+ *      (status="ok", avgAum > 0). Missing-row AMCs are excluded;
+ *      they're not "outliers," just unmeasured.
+ *   2. Compute the median + standard deviation across that set.
+ *   3. Return AMCs with |growth − median| / stdDev ≥ `threshold`.
+ *
+ * Median (not mean) avoids letting a single outlier inflate the
+ * threshold. StdDev is still population-style for simplicity.
+ *
+ * Returns `null` when fewer than 10 AMCs have a measurable QoQ
+ * — the cohort is too small for a meaningful z-score.
+ */
+export function latestQoqAnomalies(threshold = 2): AmcAnomalyReport | null {
+  const allQuarters = Array.from(
+    new Set(
+      amcAaumQuarterlySnapshot.rows
+        .filter((r) => r.status === "ok")
+        .map((r) => r.quarter)
+    )
+  ).sort();
+  if (allQuarters.length < 2) return null;
+  const latestQ = allQuarters[allQuarters.length - 1];
+  const priorQ = allQuarters[allQuarters.length - 2];
+
+  // Build slug → { latest, prior } lookup.
+  const latestBySlug = new Map<string, { aum: number; displayName: string }>();
+  const priorBySlug = new Map<string, number>();
+  for (const r of amcAaumQuarterlySnapshot.rows) {
+    if (r.status !== "ok") continue;
+    if (r.quarter === latestQ) {
+      latestBySlug.set(r.amcSlug, {
+        aum: r.avgAum,
+        displayName: r.displayName ?? r.amcNameAsReported,
+      });
+    } else if (r.quarter === priorQ) {
+      priorBySlug.set(r.amcSlug, r.avgAum);
+    }
+  }
+
+  const cohort: { slug: string; displayName: string; growth: number }[] = [];
+  for (const [slug, latest] of latestBySlug) {
+    const prior = priorBySlug.get(slug);
+    if (prior === undefined || prior <= 0) continue;
+    cohort.push({
+      slug,
+      displayName: latest.displayName,
+      growth: ((latest.aum - prior) / prior) * 100,
+    });
+  }
+  if (cohort.length < 10) return null;
+
+  const sorted = cohort.map((c) => c.growth).sort((a, b) => a - b);
+  const median =
+    sorted.length % 2 === 0
+      ? (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
+      : sorted[(sorted.length - 1) / 2];
+
+  const mean = sorted.reduce((s, v) => s + v, 0) / sorted.length;
+  const variance =
+    sorted.reduce((s, v) => s + (v - mean) ** 2, 0) / sorted.length;
+  const stdDev = Math.sqrt(variance);
+
+  const outliers: AmcAnomaly[] = [];
+  if (stdDev > 0) {
+    for (const c of cohort) {
+      const z = (c.growth - median) / stdDev;
+      if (Math.abs(z) >= threshold) {
+        outliers.push({
+          amcSlug: c.slug,
+          displayName: c.displayName,
+          qoqGrowthPct: Number(c.growth.toFixed(2)),
+          zScore: Number(z.toFixed(2)),
+          direction: z >= 0 ? "up" : "down",
+        });
+      }
+    }
+  }
+  // Sort by absolute z descending — most striking first.
+  outliers.sort((a, b) => Math.abs(b.zScore) - Math.abs(a.zScore));
+
+  return {
+    quarter: latestQ,
+    quarterLabel: fiscalLabelFromCalendarQuarter(latestQ),
+    medianQoqPct: Number(median.toFixed(2)),
+    stdDevPct: Number(stdDev.toFixed(2)),
+    participantCount: cohort.length,
+    outliers,
+  };
+}
+
 /**
  * AMC-level HHI per quarter. Computed as Σ((avgAum_i / totalAaum)²)
  * × 10,000 across every AMC with a `status==='ok'` row in that

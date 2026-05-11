@@ -1,11 +1,15 @@
 import Link from "next/link";
-import { ArrowLeftRight } from "lucide-react";
+import { ArrowLeftRight, AlertTriangle, TrendingUp, TrendingDown } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Heatmap } from "@/components/charts/Heatmap";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
 import { amcIndexRows } from "@/data/amc-detail";
-import { amcHealthGrowthMatrix } from "@/data/amc-peer-universe";
+import {
+  amcHealthGrowthMatrix,
+  latestQoqAnomalies,
+} from "@/data/amc-peer-universe";
+import { cn } from "@/lib/cn";
 
 export default function AmcListPage() {
   const data = amcIndexRows();
@@ -24,6 +28,7 @@ export default function AmcListPage() {
     label: r.displayName,
     values: r.values,
   }));
+  const anomalies = latestQoqAnomalies(2);
 
   return (
     <div className="space-y-6">
@@ -40,6 +45,53 @@ export default function AmcListPage() {
           </Link>
         }
       />
+
+      {anomalies && anomalies.outliers.length > 0 && (
+        <Card
+          title="Outliers this quarter"
+          subtitle={`${anomalies.outliers.length} AMC${anomalies.outliers.length === 1 ? "" : "s"} with QoQ AAUM growth ≥2σ from the cohort median in ${anomalies.quarterLabel} · ${anomalies.participantCount} AMCs measured · Source: AMFI Fundwise AAUM`}
+        >
+          <ul className="flex flex-wrap gap-2">
+            {anomalies.outliers.map((a) => {
+              const Icon = a.direction === "up" ? TrendingUp : TrendingDown;
+              return (
+                <li key={a.amcSlug}>
+                  <Link
+                    href={`/amc/${a.amcSlug}`}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors hover:bg-accent",
+                      a.direction === "up"
+                        ? "border-positive/40 bg-positive/10 text-positive"
+                        : "border-negative/40 bg-negative/10 text-negative"
+                    )}
+                    title={`QoQ ${a.qoqGrowthPct.toFixed(2)}% · ${a.zScore >= 0 ? "+" : ""}${a.zScore.toFixed(2)}σ from median ${anomalies.medianQoqPct.toFixed(2)}%`}
+                  >
+                    <Icon className="h-3 w-3" />
+                    <span className="font-medium">{a.displayName}</span>
+                    <span className="tabular">
+                      {a.qoqGrowthPct >= 0 ? "+" : ""}
+                      {a.qoqGrowthPct.toFixed(1)}%
+                    </span>
+                    <span className="text-[10px] tabular opacity-75">
+                      {a.zScore >= 0 ? "+" : ""}
+                      {a.zScore.toFixed(1)}σ
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            <AlertTriangle className="mr-1 inline h-3 w-3 align-[-2px]" />
+            Cohort median QoQ growth: {anomalies.medianQoqPct.toFixed(2)}% ·
+            stdDev {anomalies.stdDevPct.toFixed(2)} pp. Outliers are AMCs
+            whose latest QoQ growth sits ≥2 standard deviations from the
+            median — investigate before drawing conclusions; could be a
+            new AMC ramping up, a one-off reclassification, or a
+            structural shift.
+          </p>
+        </Card>
+      )}
 
       {health.rows.length > 0 && (
         <Card
