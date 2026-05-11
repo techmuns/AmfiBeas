@@ -325,7 +325,7 @@ export default async function QuarterlyPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Quarterly Operating"
+        title="Quarterly Operating KPIs"
         subtitle={
           selectedRow
             ? `Industry-wide · ${selectedRow.quarterLabel}`
