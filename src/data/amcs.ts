@@ -175,6 +175,27 @@ export const AMCS: AMCProfile[] = [
     nfoLambda: 0.9,
     seed: 10,
   },
+  {
+    slug: "canara-robeco",
+    name: "Canara Robeco AMC",
+    // Listed on NSE/BSE (NSE: CRAMC, BSE: 544580). Quarterly P&L sourced
+    // from https://www.screener.in/company/CRAMC/consolidated/ (or the
+    // standalone /company/CRAMC/ variant — the ingester picks whichever
+    // returns the standard Quarterly Results table and rejects layouts
+    // that would produce out-of-envelope yields).
+    ticker: "CRAMC",
+    listed: true,
+    baseAum: 117_000,
+    aumCagr: 0.18,
+    equityPct: 0.6,
+    sipShare: 0.04,
+    newInvestorShare: 0.05,
+    revenueYieldBps: 38,
+    opMargin: 0.58,
+    patMargin: 0.48,
+    nfoLambda: 0.8,
+    seed: 11,
+  },
 ];
 
 export const OTHERS_BASE_AUM = 1_400_000;
@@ -197,6 +218,7 @@ const AMFI_NAME_TO_SLUG: Record<string, string> = {
   "Axis Mutual Fund": "axis",
   "Mirae Asset Mutual Fund": "mirae",
   "DSP Mutual Fund": "dsp",
+  "Canara Robeco Mutual Fund": "canara-robeco",
 };
 
 export function amfiNameToSlug(name: string): string | undefined {

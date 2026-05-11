@@ -59,6 +59,17 @@ const LISTED: ListedAmc[] = [
     sourceUrl: "https://www.screener.in/company/ICICIAMC/",
     consolidated: false,
   },
+  // Canara Robeco Asset Management Company Ltd — listed on NSE (CRAMC)
+  // and BSE (544580). Default to the consolidated page; the standalone
+  // /company/CRAMC/ path is used as automatic fallback when consolidated
+  // returns a non-quarterly layout. Sanity guards
+  // (MIN_QUARTERS_PER_AMC + realization/margin caps) keep us safe if
+  // the layout drifts.
+  {
+    slug: "canara-robeco",
+    ticker: "CRAMC",
+    amfiName: "Canara Robeco Mutual Fund",
+  },
 ];
 
 /**
