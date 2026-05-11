@@ -57,12 +57,13 @@ export function StackedArea({
         />
         <YAxis
           domain={[0, 100]}
+          ticks={[0, 25, 50, 75, 100]}
           tickFormatter={(v) => `${v}%`}
           stroke="hsl(var(--muted-foreground))"
           fontSize={11}
           tickLine={false}
           axisLine={false}
-          width={36}
+          width={44}
         />
         <Tooltip
           cursor={{ stroke: "hsl(var(--border))" }}

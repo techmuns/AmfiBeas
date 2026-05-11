@@ -2,7 +2,6 @@ import { industryMonthlyNote } from "@/lib/provenance";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { FilterBar } from "@/components/filters/FilterBar";
 import { BarSeries } from "@/components/charts/BarSeries";
 import { Donut, type DonutSlice } from "@/components/charts/Donut";
 import { IiflHeatmap } from "@/components/charts/IiflHeatmap";
@@ -420,7 +419,6 @@ export default async function MonthlyPage({
   return (
     <div className="space-y-6">
       <PageHeader title="Monthly Operating" subtitle={subtitle} />
-      <FilterBar showRange="monthly" showPeers={false} />
 
       <Card
         title="AMFI Monthly Snapshot"
@@ -553,7 +551,7 @@ export default async function MonthlyPage({
 
             <Card
               title="SIP Contributing Accounts Trend"
-              subtitle={`Active SIP accounts · ${sipAccountsTrend.length} month${sipAccountsTrend.length === 1 ? "" : "s"} · crore accounts`}
+              subtitle={`Active SIP accounts · ${sipAccountsTrend.length} month${sipAccountsTrend.length === 1 ? "" : "s"} · ₹ Cr`}
             >
               {sipAccountsTrend.length > 0 ? (
                 <BarSeries
