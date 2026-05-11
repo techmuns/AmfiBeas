@@ -8,6 +8,7 @@ import {
   CalendarRange,
   FileBarChart,
   Building2,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -15,8 +16,9 @@ const nav = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
   { href: "/monthly", label: "Monthly", icon: CalendarDays },
   { href: "/quarterly", label: "Quarterly", icon: CalendarRange },
-  { href: "/financials", label: "Financials", icon: FileBarChart },
   { href: "/amc", label: "AMCs", icon: Building2 },
+  { href: "/financials", label: "Financials", icon: FileBarChart },
+  { href: "/premium", label: "Premium", icon: Sparkles },
 ];
 
 function isActive(pathname: string, href: string) {

@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useTransition } from "react";
 import { Check, RotateCcw } from "lucide-react";
-import { AMCS } from "@/data/amcs";
+import { AMCS, type AMCProfile } from "@/data/amcs";
 import { cn } from "@/lib/cn";
 import type { DateRange } from "@/lib/filter";
 
@@ -21,6 +21,13 @@ interface FilterBarProps {
   amcStatus?: Record<string, AmcStatus>;
   /** Single-mode default slug used when the URL has no valid selection. */
   defaultSlug?: string;
+  /**
+   * Optional subset of AMC slugs to display. When set, the bar shows
+   * only AMCs whose slug appears in this list (in AMCS order). When
+   * omitted the full AMCS list renders. Used by /financials to narrow
+   * the bar to listed AMCs only.
+   */
+  amcs?: readonly string[];
 }
 
 export function FilterBar({
@@ -28,7 +35,13 @@ export function FilterBar({
   amcMode = "multi",
   amcStatus,
   defaultSlug,
+  amcs,
 }: FilterBarProps) {
+  const baseAmcs: AMCProfile[] = useMemo(() => {
+    if (!amcs) return AMCS;
+    const allow = new Set(amcs);
+    return AMCS.filter((a) => allow.has(a.slug));
+  }, [amcs]);
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -108,20 +121,20 @@ export function FilterBar({
   }, [amcMode, selected, amcStatus, defaultSlug]);
 
   // Single-mode rendering order: live first, then pending, then unavailable.
-  // Multi-mode keeps the original AMCS order untouched.
+  // Multi-mode keeps the original (filtered) AMCS order untouched.
   const orderedAmcs = useMemo(() => {
-    if (amcMode !== "single") return AMCS;
+    if (amcMode !== "single") return baseAmcs;
     const rank: Record<AmcStatus, number> = {
       live: 0,
       pending: 1,
       unavailable: 2,
     };
-    return [...AMCS].sort((a, b) => {
+    return [...baseAmcs].sort((a, b) => {
       const sa: AmcStatus = amcStatus?.[a.slug] ?? "live";
       const sb: AmcStatus = amcStatus?.[b.slug] ?? "live";
       return rank[sa] - rank[sb];
     });
-  }, [amcMode, amcStatus]);
+  }, [amcMode, amcStatus, baseAmcs]);
 
   const allSelected = selected.size === 0;
   const isDirty =

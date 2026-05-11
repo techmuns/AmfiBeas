@@ -1,9 +1,7 @@
 import { BarSeries } from "@/components/charts/BarSeries";
-import { ChartPlaceholder } from "@/components/ui/ChartPlaceholder";
 import { Donut, type DonutSlice } from "@/components/charts/Donut";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
-import { StackedArea } from "@/components/charts/StackedArea";
 import { Card } from "@/components/ui/Card";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { FilterBar } from "@/components/filters/FilterBar";
@@ -44,8 +42,6 @@ import {
   formatIntSafe,
   formatLakhSafe,
 } from "@/lib/format";
-import { topAumMarketShareSeries } from "@/data/amc-peer-universe";
-import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
 import { cn } from "@/lib/cn";
 
 /** Sign-aware compact ₹ Cr formatter — mirrors the equivalent helper
@@ -166,7 +162,7 @@ export default async function QuarterlyPage({
   pushSnapshotCard("grandTotalAum", "Total AUM", formatCompactCrSafe);
 
   const snapshotSubtitle = selectedRow
-    ? `Industry-wide · ${selectedRow.quarterLabel}`
+    ? `Industry-wide · ${selectedRow.quarterLabel} · Source: AMFI Quarterly Report`
     : "Upload AMFI Quarterly PDFs to manual-data/amfi-quarterly/pdfs/, then run npm run ingest:amfi-quarterly-pdf";
 
   // ---- AMFI Quarterly AUM Mix & Trend -------------------------------
@@ -295,12 +291,6 @@ export default async function QuarterlyPage({
     folioAdditionsTrend.length > 0 ||
     schemesTrend.length > 0;
 
-  // ---- AUM Market Share — live top 7 from AMFI Fundwise AAUM -------
-  // Same chart and helper as /monthly so the two pages render an
-  // identical live view of the top 7. Source is AMFI Fundwise AAUM
-  // disclosure (the only AMC-wise share source we have).
-  const aumMarketShare = topAumMarketShareSeries(7, 8);
-  const aumMarketShareCoverage = aumMarketShare.coverage;
 
   return (
     <div className="space-y-6">
@@ -383,6 +373,9 @@ export default async function QuarterlyPage({
             <h2 className="text-sm font-medium tracking-tight">
               AMFI Quarterly AUM Mix &amp; Trend
             </h2>
+            <p className="text-xs text-muted-foreground">
+              Source: AMFI Quarterly Report
+            </p>
           </div>
           <section className="grid gap-4 lg:grid-cols-2">
             <Card title="Quarter-end AUM Mix" subtitle={mixSubtitle}>
@@ -429,6 +422,9 @@ export default async function QuarterlyPage({
             <h2 className="text-sm font-medium tracking-tight">
               Quarterly Flows
             </h2>
+            <p className="text-xs text-muted-foreground">
+              Source: AMFI Quarterly Report
+            </p>
           </div>
           <Card
             title="Equity / Debt / Liquid Quarterly Net Flows"
@@ -469,6 +465,9 @@ export default async function QuarterlyPage({
             <h2 className="text-sm font-medium tracking-tight">
               Active Equity &amp; Equity Mix
             </h2>
+            <p className="text-xs text-muted-foreground">
+              Source: AMFI Quarterly Report
+            </p>
           </div>
 
           <section className="grid gap-4 lg:grid-cols-2">
@@ -575,6 +574,9 @@ export default async function QuarterlyPage({
             <h2 className="text-sm font-medium tracking-tight">
               Quarterly Folios &amp; Scheme Count
             </h2>
+            <p className="text-xs text-muted-foreground">
+              Source: AMFI Quarterly Report
+            </p>
           </div>
 
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -689,11 +691,11 @@ export default async function QuarterlyPage({
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
-              IIFL Active-Equity Category Trends
+              Active-Equity Category Trends
             </h2>
             <p className="text-xs text-muted-foreground">
-              QAAUM share vs net inflow share · aggregated from AMFI
-              Monthly Reports
+              QAAUM share vs net inflow share · Source: AMFI Monthly
+              Reports, aggregated quarterly
             </p>
           </div>
 
@@ -798,68 +800,6 @@ export default async function QuarterlyPage({
         </div>
       ) : null}
 
-      {/* Demo · per-AMC market-share + scheme outperformance + top
-          quartile widgets, mirroring /monthly's bottom demo section.
-          SIP operational metrics are intentionally NOT shown here:
-          AMFI Quarterly Report has no SIP rows, and the source-
-          discipline rule for /quarterly forbids substituting AMFI
-          Monthly Note data. */}
-      <Card
-        tone={aumMarketShare.isFullUniverse ? undefined : "pending"}
-        title="AUM Market Share"
-        subtitle={
-          aumMarketShareCoverage
-            ? `Top ${aumMarketShare.topAmcs.length} AMCs + Others · ${aumMarketShareCoverage.quarterLabel}`
-            : `Top ${aumMarketShare.topAmcs.length} AMCs + Others`
-        }
-      >
-        {aumMarketShare.rows.length > 0 ? (
-          <StackedArea
-            data={aumMarketShare.rows}
-            xKey="quarterLabel"
-            labelFormat="none"
-            series={[
-              ...aumMarketShare.topAmcs.map((a) => ({
-                key: a.slug,
-                name: amcLabel(a.slug),
-                color: AMC_COLORS[a.slug] ?? "hsl(var(--muted-foreground))",
-              })),
-              {
-                key: "others",
-                name: "Others",
-                color: "hsl(var(--muted-foreground))",
-              },
-            ]}
-          />
-        ) : (
-          <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-            AAUM disclosure unavailable
-          </div>
-        )}
-        <p className="mt-3 text-[11px] text-muted-foreground">
-          Top {aumMarketShare.topAmcs.length} shown by latest AAUM;
-          Others includes all remaining AMCs. Denominator is total
-          AAUM of all AMCs in the snapshot.
-          {aumMarketShareCoverage
-            ? ` Top ${aumMarketShare.topAmcs.length} coverage: ` +
-              `${aumMarketShareCoverage.topNCoveragePct.toFixed(1)}% ` +
-              `of total industry AAUM (${aumMarketShareCoverage.storedAmcCount} AMCs in snapshot).`
-            : ""}
-          {!aumMarketShare.isFullUniverse && aumMarketShareCoverage
-            ? ` Snapshot covers ${aumMarketShareCoverage.storedAmcCount} AMCs — below the ~30+ AMC threshold AMFI publishes per quarter; run npm run ingest to refresh to the full ~50-AMC universe.`
-            : ""}
-        </p>
-      </Card>
-
-      <section className="grid gap-4 lg:grid-cols-2">
-        <Card
-          tone="pending"
-          title="SIP Market Share"
-          subtitle="Pending · per-AMC quarterly SIP share"
-        >
-          <ChartPlaceholder height={240} />
-        </Card>
-      </section>
     </div>
   );
 }

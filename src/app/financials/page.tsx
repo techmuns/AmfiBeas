@@ -17,6 +17,12 @@ import {
 } from "@/data/aggregate";
 import { aaumProvenance } from "@/data/source";
 import { AMCS, getAMC } from "@/data/amcs";
+
+// /financials renders only AMCs flagged listed=true in the AMC registry.
+// Unlisted AMCs (SBI, Kotak, Axis, DSP, Mirae, …) don't publish standalone
+// quarterly financials, so showing them as pending/disabled chips just adds
+// noise on the client-facing view.
+const LISTED_AMC_SLUGS = AMCS.filter((a) => a.listed).map((a) => a.slug);
 import {
   formatCompactCrSafe,
   formatDelta,
@@ -29,9 +35,8 @@ const DEFAULT_SLUG = "hdfc";
 function buildAmcStatus(): Record<string, AmcStatus> {
   const out: Record<string, AmcStatus> = {};
   for (const a of AMCS) {
-    if (SOURCED_FINANCIALS_SLUGS.has(a.slug)) out[a.slug] = "live";
-    else if (a.listed) out[a.slug] = "pending";
-    else out[a.slug] = "unavailable";
+    if (!a.listed) continue;
+    out[a.slug] = SOURCED_FINANCIALS_SLUGS.has(a.slug) ? "live" : "pending";
   }
   return out;
 }
@@ -105,6 +110,7 @@ export default async function FinancialsPage({
           amcMode="single"
           amcStatus={status}
           defaultSlug={DEFAULT_SLUG}
+          amcs={LISTED_AMC_SLUGS}
         />
         <Card
           title="Financials unavailable"
@@ -277,17 +283,20 @@ export default async function FinancialsPage({
 
   const subtitle = `${profile.name}${profile.ticker ? ` (${profile.ticker})` : ""} · ${formatQuarterLabelLong(latest.quarter)}`;
 
-  // PR #98: visible "Source: ..." captions and the top-of-page
-  // provenance line were retired from /financials. We keep the
-  // derivedHeadline computation so a derived row (e.g. ICICI Pru
-  // 2025-Q2 reconstructed from 9M FY26 minus reported quarters)
-  // still carries a "Derived · <reason>" methodology note on the
-  // KPI caption — that's a data-quality flag, not a source label.
+  // KPI cards on /financials carry a short source caption + an optional
+  // "Derived · ..." prefix for rows reconstructed from multi-quarter
+  // disclosures (e.g. ICICI Pru 2025-Q2 from 9M FY26 minus reported quarters).
   const derivedHeadline = latest.derivedFrom
     ? latest.derivedFrom.split(".")[0].trim() + "."
     : null;
-  const pnlNote = derivedHeadline ? `Derived · ${derivedHeadline}` : "";
-  const yieldNote = derivedHeadline ? `Derived · ${derivedHeadline}` : "";
+  const pnlSource = "Source: Screener / company filings";
+  const yieldSource = "Source: Screener / company filings · AMFI Fundwise AAUM";
+  const pnlNote = derivedHeadline
+    ? `Derived · ${derivedHeadline} · ${pnlSource}`
+    : pnlSource;
+  const yieldNote = derivedHeadline
+    ? `Derived · ${derivedHeadline} · ${yieldSource}`
+    : yieldSource;
 
   return (
     <div className="space-y-6">
@@ -410,7 +419,7 @@ export default async function FinancialsPage({
 
       <Card
         title="Listed-AMC Peer Comparison"
-        subtitle={`${peerRows.length} listed AMCs · ${formatQuarterLabelLong(selectedPeriod)}${peerRows.some((p) => p.derivedFrom) ? " · derived rows flagged inline" : ""}`}
+        subtitle={`${peerRows.length} listed AMCs · ${formatQuarterLabelLong(selectedPeriod)}${peerRows.some((p) => p.derivedFrom) ? " · derived rows flagged inline" : ""} · Source: Screener / company filings · AMFI Fundwise AAUM`}
       >
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
