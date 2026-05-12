@@ -290,8 +290,8 @@ export default async function FinancialsPage({
   const derivedHeadline = latest.derivedFrom
     ? latest.derivedFrom.split(".")[0].trim() + "."
     : null;
-  const pnlSource = "Source: Screener / company filings";
-  const yieldSource = "Source: Screener / company filings · AMFI Fundwise AAUM";
+  const pnlSource = "Source: Company filings";
+  const yieldSource = "Source: Company filings · AMFI Fundwise AAUM";
   const pnlNote = derivedHeadline
     ? `Derived · ${derivedHeadline} · ${pnlSource}`
     : pnlSource;
@@ -421,7 +421,7 @@ export default async function FinancialsPage({
 
       <Card
         title="Listed-AMC Peer Comparison"
-        subtitle={`${peerRows.length} listed AMCs · ${formatQuarterLabelLong(selectedPeriod)}${peerRows.some((p) => p.derivedFrom) ? " · derived rows flagged inline" : ""} · Source: Screener / company filings · AMFI Fundwise AAUM`}
+        subtitle={`${peerRows.length} listed AMCs · ${formatQuarterLabelLong(selectedPeriod)}${peerRows.some((p) => p.derivedFrom) ? " · derived rows flagged inline" : ""} · Source: Company filings · AMFI Fundwise AAUM`}
         action={
           <FinancialsPeerCsvButton
             rows={peerRows}

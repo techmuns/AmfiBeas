@@ -29,7 +29,7 @@ import {
 } from "@/lib/format";
 
 const AMFI_MONTHLY_SOURCE = "Source: AMFI Monthly Report";
-const SCREENER_SOURCE = "Source: Screener / company filings";
+const SCREENER_SOURCE = "Source: Company filings";
 
 export default function HomePage() {
   // Live industry monthly snapshot (amfi-monthly-pdf.json) is now the
