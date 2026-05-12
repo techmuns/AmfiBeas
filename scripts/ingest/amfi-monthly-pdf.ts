@@ -1210,6 +1210,67 @@ function parseMonthlyReport(pages: PdfPage[]): {
     pagesUsed.add(page.num);
   }
 
+  // ---- New Schemes Report fallback ---------------------------------
+  //
+  // April 2026's Monthly Report PDF (and likely later AMFI vintages)
+  // splits the New Schemes table across separate text objects, so
+  // pdf-parse no longer extracts "Grand Total (A+B+C) <count> <funds>"
+  // on a single line. The label arrives without numbers, and the
+  // per-section sub-totals + the grand total emerge later as
+  // stand-alone "<count> <funds>" lines.
+  //
+  // When the inline regex above didn't fire but the page is clearly a
+  // New-Schemes-Report page, fall back to scanning the page for line-
+  // shaped digit pairs and picking the one with the highest count.
+  // Per-scheme rows (count=1) are filtered out so single-scheme rows
+  // don't masquerade as the grand total — the genuine grand total has
+  // count = sum-of-sub-totals which is strictly > each individual
+  // scheme's count of 1 for any month with multiple NFOs.
+  if (!hits.industryNfoCount || !hits.industryNfoFundsMobilized) {
+    const NEW_SCHEMES_ANCHOR = /NEW\s+SCHEMES\s+REPORT|New\s+Schemes\s+Report/;
+    // Multiline mode so `^` / `$` anchor at line boundaries without
+    // consuming the newline between consecutive matches.
+    const PAIR_LINE = /^\s*(\d{1,4})\s+(\d[\d,]+)\s*$/gm;
+    for (const page of pages) {
+      if (hits.industryNfoCount && hits.industryNfoFundsMobilized) break;
+      if (!NEW_SCHEMES_ANCHOR.test(page.text)) continue;
+      let bestCount = 0;
+      let bestFunds = 0;
+      let match: RegExpExecArray | null;
+      const re = new RegExp(PAIR_LINE.source, PAIR_LINE.flags);
+      while ((match = re.exec(page.text)) !== null) {
+        const count = Number(match[1]);
+        const funds = Number(match[2].replace(/,/g, ""));
+        if (!Number.isFinite(count) || !Number.isFinite(funds)) continue;
+        // Drop per-scheme single-row entries (count=1) that aren't
+        // aggregated totals.
+        if (count <= 1) continue;
+        if (count > bestCount) {
+          bestCount = count;
+          bestFunds = funds;
+        }
+      }
+      if (bestCount === 0) continue;
+      if (!hits.industryNfoCount) {
+        hits.industryNfoCount = {
+          value: bestCount,
+          page: page.num,
+          label:
+            "New Schemes Report · Grand Total row (fallback · largest count pair)",
+        };
+      }
+      if (!hits.industryNfoFundsMobilized) {
+        hits.industryNfoFundsMobilized = {
+          value: bestFunds,
+          page: page.num,
+          label:
+            "New Schemes Report · Grand Total row (fallback · largest count pair)",
+        };
+      }
+      pagesUsed.add(page.num);
+    }
+  }
+
   return { hits, pagesUsed };
 }
 
