@@ -71,6 +71,54 @@ interface QuarterId {
  *  year of the quarter's start date (vol24 = FY25, which begins Apr
  *  2024); issue I-IV are the fiscal quarters Q1-Q4. */
 const FILENAME_QUARTER_MAP: Record<string, QuarterId> = {
+  "aqu-vol22-issueI.pdf": {
+    quarter: "FY23-Q1",
+    quarterLabel: "1QFY23",
+    quarterStart: "2022-04",
+    quarterEnd: "2022-06",
+  },
+  "aqu-vol22-issueII.pdf": {
+    quarter: "FY23-Q2",
+    quarterLabel: "2QFY23",
+    quarterStart: "2022-07",
+    quarterEnd: "2022-09",
+  },
+  "aqu-vol22-issueIII.pdf": {
+    quarter: "FY23-Q3",
+    quarterLabel: "3QFY23",
+    quarterStart: "2022-10",
+    quarterEnd: "2022-12",
+  },
+  "aqu-vol22-issueIV.pdf": {
+    quarter: "FY23-Q4",
+    quarterLabel: "4QFY23",
+    quarterStart: "2023-01",
+    quarterEnd: "2023-03",
+  },
+  "aqu-vol23-issueI.pdf": {
+    quarter: "FY24-Q1",
+    quarterLabel: "1QFY24",
+    quarterStart: "2023-04",
+    quarterEnd: "2023-06",
+  },
+  "aqu-vol23-issueII.pdf": {
+    quarter: "FY24-Q2",
+    quarterLabel: "2QFY24",
+    quarterStart: "2023-07",
+    quarterEnd: "2023-09",
+  },
+  "aqu-vol23-issueIII.pdf": {
+    quarter: "FY24-Q3",
+    quarterLabel: "3QFY24",
+    quarterStart: "2023-10",
+    quarterEnd: "2023-12",
+  },
+  "aqu-vol23-issueIV.pdf": {
+    quarter: "FY24-Q4",
+    quarterLabel: "4QFY24",
+    quarterStart: "2024-01",
+    quarterEnd: "2024-03",
+  },
   "aqu-vol24-issueI.pdf": {
     quarter: "FY25-Q1",
     quarterLabel: "1QFY25",
