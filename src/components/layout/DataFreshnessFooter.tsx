@@ -33,7 +33,7 @@ export function DataFreshnessFooter() {
         <span>
           Data as of <span className="text-foreground">{formatIsoDate(iso)}</span>{" "}
           · AMFI Fundwise AAUM + AMFI Monthly &amp; Quarterly Reports +
-          Screener / company filings
+          listed-AMC company filings
         </span>
         <span>AmfiBeas</span>
       </div>
