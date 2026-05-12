@@ -635,7 +635,7 @@ export function quarterlyActiveEquityLastMonthShareTrend(
   lastN = 8
 ): { label: string; value: number }[] {
   const aeByQuarter = new Map<string, number>(
-    quarterlyActiveEquityLastMonthAaumTrend(8).map(
+    quarterlyActiveEquityLastMonthAaumTrend(lastN).map(
       (e) => [labelToQuarter(e.label), e.value] as [string, number]
     )
   );
@@ -706,7 +706,7 @@ export function quarterlyEquityLastMonthAaumBreakdown(
     )
   );
   const aeByQuarter = new Map<string, number>();
-  for (const e of quarterlyActiveEquityLastMonthAaumTrend(8)) {
+  for (const e of quarterlyActiveEquityLastMonthAaumTrend(lastN)) {
     aeByQuarter.set(labelToQuarter(e.label), e.value);
   }
   return amfiQuarterlyIndustryRows()
