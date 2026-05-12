@@ -239,8 +239,8 @@ export default async function QuarterlyPage({
         ? `Quarter-end Net AUM · partial breakdown · Other not computed · ${selectedRow?.quarterLabel ?? ""}`
         : "Quarter-end Net AUM not available for the selected quarter";
 
-  // Last-month AAUM trend across the full 8-quarter history.
-  const aaumTrendData = quarterlyTrend("grandTotalLastMonthAaum", 8);
+  // Last-month AAUM trend across the full AMFI quarterly history.
+  const aaumTrendData = quarterlyTrend("grandTotalLastMonthAaum", 16);
   const aaumTrendHasData = aaumTrendData.length > 0;
   const aaumTrendSubtitle = aaumTrendHasData
     ? `Last-month AAUM · ${aaumTrendData.length} quarter${aaumTrendData.length === 1 ? "" : "s"} · ₹ Cr`
@@ -256,7 +256,7 @@ export default async function QuarterlyPage({
   // Liquid = chart-4 purple). Liquid is shown separately for chart
   // parity with /monthly even though debtNetInflow already includes
   // it on the AMFI classification.
-  const flowsData = quarterlyFlowsData(8);
+  const flowsData = quarterlyFlowsData(16);
   const flowsHasData = flowsData.some(
     (r) => r.equity !== null || r.debt !== null || r.liquid !== null
   );
@@ -265,9 +265,9 @@ export default async function QuarterlyPage({
   // Mirrors /monthly's Active Equity & Equity Mix section. All three
   // cards use LAST-MONTH AAUM (not true QAAUM) — labelled explicitly
   // so the methodology is unambiguous.
-  const aeAaumTrend = quarterlyActiveEquityLastMonthAaumTrend(8);
-  const aeShareTrend = quarterlyActiveEquityLastMonthShareTrend(8);
-  const aeBreakdown = quarterlyEquityLastMonthAaumBreakdown(8);
+  const aeAaumTrend = quarterlyActiveEquityLastMonthAaumTrend(16);
+  const aeShareTrend = quarterlyActiveEquityLastMonthShareTrend(16);
+  const aeBreakdown = quarterlyEquityLastMonthAaumBreakdown(16);
   const aeBreakdownHasData = aeBreakdown.some(
     (r) =>
       r.activeEquity !== null || r.etfIndex !== null || r.arbitrage !== null
@@ -284,9 +284,9 @@ export default async function QuarterlyPage({
   const totalFolios = selectedRow?.grandTotalFolios ?? null;
   const folioAdditions = latestQuarterlyFolioAdditions();
   const openEndedSchemes = latestOpenEndedSchemeCount();
-  const foliosTrend = quarterlyTrend("grandTotalFolios", 8);
-  const folioAdditionsTrend = quarterlyFolioAdditionsTrend(8);
-  const schemesTrend = quarterlyOpenEndedSchemeCountTrend(8);
+  const foliosTrend = quarterlyTrend("grandTotalFolios", 16);
+  const folioAdditionsTrend = quarterlyFolioAdditionsTrend(16);
+  const schemesTrend = quarterlyOpenEndedSchemeCountTrend(16);
   const foliosHover = formatQuarterlyProvenanceTooltip(
     getQuarterlyKpiProvenance(selectedRow, "grandTotalFolios")
   );
@@ -304,7 +304,7 @@ export default async function QuarterlyPage({
 
   // Concentration tracker — HHI of AMC-level + category-level AUM.
   const amcHhi = amcLevelHhiSeries(8);
-  const catHhi = categoryHhiSeries(8);
+  const catHhi = categoryHhiSeries(16);
   const hhiHasData = amcHhi.length > 0 || catHhi.length > 0;
   const concentrationLabels = Array.from(
     new Set([
