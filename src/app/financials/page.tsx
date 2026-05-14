@@ -1,5 +1,6 @@
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FilterBar } from "@/components/filters/FilterBar";
 import type { AmcStatus } from "@/components/filters/FilterBar";
@@ -92,7 +93,7 @@ export default async function FinancialsPage({
   // captions retired in PR #98; the formula stays so the user knows what's
   // being charted.
   const yieldsSubtitle =
-    "bps of MF QAAUM · quarterly P&L ×4 / same-quarter MF QAAUM";
+    "bps of MF QAAUM · annualised P&L (quarterly × 4) ÷ same-quarter MF QAAUM";
 
   const trend = (n: number) =>
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
@@ -317,7 +318,7 @@ export default async function FinancialsPage({
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="Revenue from Operations"
+          label="Operating Revenue"
           value={formatCompactCrSafe(latest.revenue)}
           delta={`${formatDelta(revenueYoy)} YoY`}
           trend={trend(revenueYoy)}
@@ -353,14 +354,14 @@ export default async function FinancialsPage({
           note={pnlNote}
         />
         <KpiCard
-          label="Revenue Realization (bps of MF QAAUM)"
+          label="Revenue Yield (bps of MF QAAUM)"
           value={
             latest.avgAum > 0 ? revenueYieldBps.toFixed(1) + " bps" : "—"
           }
           note={yieldNote}
         />
         <KpiCard
-          label="Operating Margin (bps of MF QAAUM)"
+          label="Operating Yield (bps of MF QAAUM)"
           value={latest.avgAum > 0 ? opYieldBps.toFixed(1) + " bps" : "—"}
           note={yieldNote}
         />
@@ -375,25 +376,27 @@ export default async function FinancialsPage({
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Card
-          title="Revenue / Op Profit / PAT"
-          subtitle="Quarterly · ₹ Cr · Revenue = Revenue from Operations (excludes Other Income)"
+          title="Operating Revenue / Operating Profit / PAT"
+          subtitle="Quarterly · ₹ Cr · Operating Revenue from standalone P&L (all operating segments, excludes Other Income)"
         >
           <GroupedBars
             data={pnlData}
             xKey="quarter"
             bars={[
-              { key: "revenue", name: "Revenue from Ops", color: "hsl(var(--chart-1))" },
-              { key: "op", name: "Op Profit", color: "hsl(var(--chart-2))" },
+              { key: "revenue", name: "Operating Revenue", color: "hsl(var(--chart-1))" },
+              { key: "op", name: "Operating Profit", color: "hsl(var(--chart-2))" },
               { key: "pat", name: "PAT", color: "hsl(var(--chart-3))" },
             ]}
           />
         </Card>
-        <Card title="Margin Trend" subtitle="PAT & Operating margin · %">
+        <Card title="Margin Trend" subtitle="PAT & Operating margin · % of Operating Revenue">
           <MultiLine
             data={marginData}
             xKey="quarter"
             valueFormat="pct"
             axisFormat="pct"
+            showDots
+            dynamicYDomain
             lines={[
               { key: "patMargin", name: "PAT margin", color: "hsl(var(--chart-3))" },
               { key: "opMargin", name: "Operating margin", color: "hsl(var(--chart-2))" },
@@ -410,8 +413,10 @@ export default async function FinancialsPage({
             xKey="quarter"
             valueFormat="bps"
             axisFormat="bps"
+            showDots
+            dynamicYDomain
             lines={[
-              { key: "revenue", name: "Revenue realization", color: "hsl(var(--chart-1))" },
+              { key: "revenue", name: "Revenue yield", color: "hsl(var(--chart-1))" },
               { key: "op", name: "Operating yield", color: "hsl(var(--chart-2))" },
               { key: "profit", name: "Profit yield", color: "hsl(var(--chart-3))" },
             ]}
@@ -435,7 +440,7 @@ export default async function FinancialsPage({
               <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <th className="py-2 pr-3 font-medium">AMC</th>
                 <th className="py-2 pr-3 text-right font-medium tabular">AAUM</th>
-                <th className="py-2 pr-3 text-right font-medium tabular">Revenue</th>
+                <th className="py-2 pr-3 text-right font-medium tabular">Op Revenue</th>
                 <th className="py-2 pr-3 text-right font-medium tabular">Op Profit</th>
                 <th className="py-2 pr-3 text-right font-medium tabular">PAT</th>
                 <th className="py-2 pr-3 text-right font-medium tabular">PAT %</th>
@@ -516,11 +521,10 @@ export default async function FinancialsPage({
             </tbody>
           </table>
         </div>
-        <p className="mt-3 text-[11px] tabular text-muted-foreground">
+        <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] tabular text-muted-foreground">
           Sorted by AAUM descending. Highlighted row matches the AMC
-          selected above. Yields = quarterly P&L × 4 / same-quarter MF
-          AAUM × 10,000. AAUM column in ₹ Cr; &quot;—&quot; marks
-          quarters with missing AAUM or P&L data.
+          selected above.
+          <InfoTooltip label="Yields = annualised P&L (quarterly × 4) ÷ same-quarter MF AAUM, expressed in bps (× 10,000). AAUM column in ₹ Cr; &quot;—&quot; marks quarters with missing AAUM or P&L data." />
         </p>
       </Card>
     </div>

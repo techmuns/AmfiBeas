@@ -15,6 +15,7 @@ import {
   latestCategoryProvenance,
 } from "@/data/amfi-monthly-category";
 import { formatKpiProvenanceTooltip } from "@/data/amfi-monthly";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import {
   availableQuartersDesc,
   formatQuarterlyProvenanceLine,
@@ -234,10 +235,10 @@ export default async function QuarterlyPage({
   const mixHasData = mixSlices.length > 0;
   const mixSubtitle =
     mixHasData && mixOther !== null
-      ? `Quarter-end Net AUM · share of Total AUM (residual = Other) · ${selectedRow?.quarterLabel ?? ""}`
+      ? `Quarter-end AUM · share of Total AUM (residual = Other) · ${selectedRow?.quarterLabel ?? ""}`
       : mixHasData
-        ? `Quarter-end Net AUM · partial breakdown · Other not computed · ${selectedRow?.quarterLabel ?? ""}`
-        : "Quarter-end Net AUM not available for the selected quarter";
+        ? `Quarter-end AUM · partial breakdown · Other not computed · ${selectedRow?.quarterLabel ?? ""}`
+        : "Quarter-end AUM not available for the selected quarter";
 
   // Last-month AAUM trend across the full AMFI quarterly history.
   const aaumTrendData = quarterlyTrend("grandTotalLastMonthAaum", 16);
@@ -279,6 +280,30 @@ export default async function QuarterlyPage({
   const aeAaumHover = formatQuarterlyProvenanceTooltip(
     latestIndustryProvenance("equityLastMonthAaum")
   );
+  // Latest active/etf/arbitrage mix — proportion-first read for the
+  // breakdown subtitle.
+  const latestQuarterlyEquityMix = (() => {
+    for (let i = aeBreakdown.length - 1; i >= 0; i--) {
+      const r = aeBreakdown[i];
+      const a = r.activeEquity;
+      const e = r.etfIndex;
+      const x = r.arbitrage;
+      if (typeof a === "number" && typeof e === "number" && typeof x === "number") {
+        const total = a + e + x;
+        if (total > 0) {
+          return {
+            activePct: (a / total) * 100,
+            etfPct: (e / total) * 100,
+            arbPct: (x / total) * 100,
+          };
+        }
+      }
+    }
+    return null;
+  })();
+  const aeBreakdownSubtitle = latestQuarterlyEquityMix
+    ? `${aeBreakdown.length} quarter${aeBreakdown.length === 1 ? "" : "s"} · ₹ Cr · latest mix ${latestQuarterlyEquityMix.activePct.toFixed(1)}% Active / ${latestQuarterlyEquityMix.etfPct.toFixed(1)}% ETF & Index / ${latestQuarterlyEquityMix.arbPct.toFixed(1)}% Arbitrage`
+    : `${aeBreakdown.length} quarter${aeBreakdown.length === 1 ? "" : "s"} · ₹ Cr · grouped bars · last-month AAUM`;
 
   // ---- Folios & Scheme Count ----------------------------------------
   const totalFolios = selectedRow?.grandTotalFolios ?? null;
@@ -418,8 +443,7 @@ export default async function QuarterlyPage({
                 className="mt-3 text-[10px] tabular text-muted-foreground/80"
                 title={aaumTrendHoverProvenance ?? undefined}
               >
-                Average Net AUM column
-                is last-month only — not a true quarterly average
+                Average AUM column is last-month only — not a true quarterly average
               </div>
             </Card>
           </section>
@@ -462,9 +486,9 @@ export default async function QuarterlyPage({
                 },
               ]}
             />
-            <p className="mt-3 text-[11px] text-muted-foreground">
-              Liquid is shown separately; it is part of debt-oriented
-              schemes in AMFI classification.
+            <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              Liquid is shown separately for readability.
+              <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes." />
             </p>
           </Card>
         </div>
@@ -505,7 +529,7 @@ export default async function QuarterlyPage({
 
             <Card
               title="Active Equity Share of Total Last-month AAUM"
-              subtitle={`${aeShareTrend.length} quarter${aeShareTrend.length === 1 ? "" : "s"} · % of grandTotalLastMonthAaum`}
+              subtitle={`${aeShareTrend.length} quarter${aeShareTrend.length === 1 ? "" : "s"} · % of total last-month AAUM`}
             >
               {aeShareTrend.length > 0 ? (
                 <BarSeries
@@ -525,15 +549,14 @@ export default async function QuarterlyPage({
                 className="mt-3 text-[10px] tabular text-muted-foreground/80"
                 title={aeAaumHover ?? undefined}
               >
-                last-month AAUM ratio,
-                not a true QAAUM share
+                Last-month AAUM ratio — not a true QAAUM share
               </div>
             </Card>
           </section>
 
           <Card
             title="Equity Last-month AAUM Breakdown"
-            subtitle={`${aeBreakdown.length} quarter${aeBreakdown.length === 1 ? "" : "s"} · ₹ Cr · grouped bars · last-month AAUM`}
+            subtitle={aeBreakdownSubtitle}
           >
             {aeBreakdownHasData ? (
               <GroupedBars
@@ -565,12 +588,10 @@ export default async function QuarterlyPage({
                 Equity breakdown unavailable
               </div>
             )}
-            <p className="mt-3 text-[11px] text-muted-foreground">
-              Active Equity = Growth/Equity schemes + Hybrid ex-Arbitrage +
-              Solution-oriented schemes. ETF &amp; Index = Index Funds +
-              Other ETFs. Arbitrage shown separately. All values are the
-              quarterly Report&rsquo;s last-month AAUM column — not a true
-              3-month average.
+            <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              Active Equity, ETF &amp; Index, and Arbitrage shown separately.
+              All values use last-month AAUM, not a true 3-month average.
+              <InfoTooltip label="Active Equity = Growth/Equity schemes + Hybrid ex-Arbitrage + Solution-oriented schemes. ETF & Index = Index Funds + Other ETFs. Source: AMFI Quarterly Report's last-month AAUM column." />
             </p>
           </Card>
         </div>
@@ -725,6 +746,7 @@ export default async function QuarterlyPage({
                     labelFormat="none"
                     valueFormat="pct"
                     axisFormat="pct"
+                    dynamicYDomain
                     lines={[
                       {
                         key: "aumSharePct",
@@ -802,12 +824,10 @@ export default async function QuarterlyPage({
             </details>
           )}
 
-          <p className="text-[11px] text-muted-foreground">
-            QAAUM share = avg(categoryAaum) / avg(activeEquityAaum) over
-            the months in each fiscal quarter. Net inflow share =
-            sum(categoryNetInflow) / sum(activeEquityNetInflow) over
-            the same months. Active equity = Growth/Equity schemes +
-            Hybrid ex-Arbitrage + Solution-Oriented schemes.
+          <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            QAAUM share and net inflow share, aggregated monthly into
+            fiscal quarters.
+            <InfoTooltip label="QAAUM share = avg(category AAUM) ÷ avg(active-equity AAUM) over the months in each fiscal quarter. Net inflow share = sum(category net inflow) ÷ sum(active-equity net inflow) over the same months. Active equity = Growth/Equity schemes + Hybrid ex-Arbitrage + Solution-Oriented schemes." />
           </p>
         </div>
       ) : null}
@@ -842,15 +862,14 @@ export default async function QuarterlyPage({
               },
             ]}
           />
-          <p className="mt-3 text-[11px] text-muted-foreground">
+          <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
             HHI = Σ(share²) × 10,000 across participants in each quarter.
-            AMC HHI uses {latestAmcHhi?.participantCount ?? "—"} AMCs from the AMFI Fundwise AAUM disclosure;
-            Category HHI uses {latestCatHhi?.participantCount ?? "—"} scheme categories from the AMFI
-            Quarterly Report. U.S. DOJ thresholds (general): &lt;1,500 unconcentrated,
-            1,500–2,500 moderately concentrated, &gt;2,500 highly concentrated.
             {latestAmcHhi
               ? ` Latest top-AMC share: ${latestAmcHhi.topShareLeaderPct.toFixed(2)}%.`
               : ""}
+            <InfoTooltip
+              label={`AMC HHI uses ${latestAmcHhi?.participantCount ?? "—"} AMCs from the AMFI Fundwise AAUM disclosure. Category HHI uses ${latestCatHhi?.participantCount ?? "—"} scheme categories from the AMFI Quarterly Report. U.S. DOJ thresholds: <1,500 unconcentrated, 1,500–2,500 moderately concentrated, >2,500 highly concentrated.`}
+            />
           </p>
         </Card>
       )}
@@ -888,10 +907,10 @@ export default async function QuarterlyPage({
             AAUM disclosure unavailable
           </div>
         )}
-        <p className="mt-3 text-[11px] text-muted-foreground">
-          Top {aumMarketShare.topAmcs.length} shown by latest AAUM;
-          Others includes all remaining AMCs. Denominator is total
-          AAUM of all AMCs in the snapshot.
+        <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          Top {aumMarketShare.topAmcs.length} AMCs by latest AAUM;
+          Others includes all remaining AMCs.
+          <InfoTooltip label="Denominator is total AAUM of all AMCs in the snapshot." />
         </p>
       </Card>
 

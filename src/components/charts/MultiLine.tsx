@@ -35,6 +35,14 @@ interface MultiLineProps {
   axisFormat?: AxisFormat;
   labelFormat?: LabelFormat;
   showLegend?: boolean;
+  /** When true, render small markers at each data point so individual
+   *  quarters/months are visible on the line. Useful on financial
+   *  margin charts where readers want to read specific period values. */
+  showDots?: boolean;
+  /** When true, derive a tight y-axis domain from the data with a
+   *  small padding band so narrow-range percent series don't render
+   *  as a near-flat line. Pure presentation — data is unchanged. */
+  dynamicYDomain?: boolean;
 }
 
 export function MultiLine({
@@ -46,10 +54,33 @@ export function MultiLine({
   axisFormat = "count",
   labelFormat = "quarter",
   showLegend = true,
+  showDots = false,
+  dynamicYDomain = false,
 }: MultiLineProps) {
   const fmtValue = valueFormatter(valueFormat);
   const fmtAxis = axisFormatter(axisFormat);
   const fmtLabel = labelFormatter(labelFormat);
+
+  // Compute a padded y-axis domain from the rendered series. The
+  // padding band is 10% of the visible range with a minimum so a
+  // single-quarter series still renders cleanly.
+  let yDomain: [number | "auto", number | "auto"] | undefined;
+  if (dynamicYDomain) {
+    const values: number[] = [];
+    for (const row of data) {
+      for (const l of lines) {
+        const v = row[l.key];
+        if (typeof v === "number" && Number.isFinite(v)) values.push(v);
+      }
+    }
+    if (values.length > 0) {
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const range = max - min;
+      const pad = Math.max(range * 0.1, range === 0 ? Math.abs(max) * 0.05 || 1 : 0);
+      yDomain = [min - pad, max + pad];
+    }
+  }
 
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -72,6 +103,7 @@ export function MultiLine({
           tickLine={false}
           axisLine={false}
           width={48}
+          domain={yDomain}
         />
         <Tooltip
           cursor={{ stroke: "hsl(var(--border))" }}
@@ -94,7 +126,7 @@ export function MultiLine({
             name={l.name}
             stroke={l.color}
             strokeWidth={2}
-            dot={false}
+            dot={showDots ? { r: 2.5, fill: l.color, strokeWidth: 0 } : false}
             activeDot={{ r: 3 }}
           />
         ))}

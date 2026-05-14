@@ -134,7 +134,7 @@ export default async function AmcPage({
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="Latest MF Average AUM"
+          label="Latest MF AAUM"
           value={formatCompactCrSafe(latest?.avgAum ?? null)}
           note={latest ? latest.fiscalLabel : ""}
         />
