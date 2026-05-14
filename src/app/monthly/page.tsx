@@ -43,6 +43,7 @@ import {
 import { topAumMarketShareSeries } from "@/data/amc-peer-universe";
 import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
 import { GroupedBars } from "@/components/charts/GroupedBars";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { MonthPicker } from "@/components/filters/MonthPicker";
 import {
   formatCompactCrSafe,
@@ -209,10 +210,10 @@ export default async function MonthlyPage({
   // missing or sub-categories were incomplete), say so plainly.
   const mixSubtitle =
     mixHasData && mixOther !== null
-      ? "Month-end Net AUM · share of Total AUM (residual = Other)"
+      ? "Month-end AUM · share of Total AUM (residual = Other)"
       : mixHasData
-        ? "Month-end Net AUM · partial breakdown · Other not computed"
-        : "Month-end Net AUM not available for this month";
+        ? "Month-end AUM · partial breakdown · Other not computed"
+        : "Month-end AUM not available for this month";
 
   // AAUM Trend across all available months. We use totalAaum (period
   // average) because that's the disclosure-comparable headline; falling
@@ -285,6 +286,32 @@ export default async function MonthlyPage({
     activeEquityTrend.length > 0 ||
     activeEquityShareTrend.length > 0 ||
     equityBreakdownHasData;
+
+  // Latest active/passive/arbitrage share of equity AAUM — surfaces the
+  // proportion-first read at a glance in the breakdown subtitle.
+  const latestEquityMix = (() => {
+    for (let i = equityBreakdown.length - 1; i >= 0; i--) {
+      const r = equityBreakdown[i];
+      const a = r.activeEquity;
+      const e = r.etfIndex;
+      const x = r.arbitrage;
+      if (typeof a === "number" && typeof e === "number" && typeof x === "number") {
+        const total = a + e + x;
+        if (total > 0) {
+          return {
+            month: r.month,
+            activePct: (a / total) * 100,
+            etfPct: (e / total) * 100,
+            arbPct: (x / total) * 100,
+          };
+        }
+      }
+    }
+    return null;
+  })();
+  const equityBreakdownSubtitle = latestEquityMix
+    ? `${equityBreakdown.length} month${equityBreakdown.length === 1 ? "" : "s"} · ₹ Cr · latest mix ${latestEquityMix.activePct.toFixed(1)}% Active / ${latestEquityMix.etfPct.toFixed(1)}% ETF & Index / ${latestEquityMix.arbPct.toFixed(1)}% Arbitrage`
+    : `${equityBreakdown.length} month${equityBreakdown.length === 1 ? "" : "s"} · ₹ Cr · period-average · grouped bars`;
 
   // ---- Industry Folios & NFO section ---------------------------------
   //
@@ -597,9 +624,9 @@ export default async function MonthlyPage({
                 { key: "liquid", name: "Liquid", color: "hsl(var(--chart-4))" },
               ]}
             />
-            <p className="mt-3 text-[11px] text-muted-foreground">
-              Liquid is shown separately; it is part of debt-oriented
-              schemes in AMFI classification.
+            <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              Liquid is shown separately for readability.
+              <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes." />
             </p>
           </Card>
         </div>
@@ -638,11 +665,9 @@ export default async function MonthlyPage({
                     activeEquityFlowAvg !== null ? "TTM avg" : undefined
                   }
                 />
-                <p className="mt-3 text-[11px] text-muted-foreground">
-                  Active-equity envelope = equity-oriented schemes + hybrid
-                  schemes excluding arbitrage + solution-oriented schemes.
-                  Dashed line = trailing 12-month average of the
-                  envelope&apos;s net inflow.
+                <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  Dashed line = trailing 12-month average of net inflow.
+                  <InfoTooltip label="Active-equity envelope = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
                 </p>
               </Card>
             )}
@@ -650,7 +675,7 @@ export default async function MonthlyPage({
             {activeEquityBridge.length > 0 && (
               <Card
                 title="Active Equity AUM Bridge"
-                subtitle={`${activeEquityBridge.length} month${activeEquityBridge.length === 1 ? "" : "s"} · ₹ Cr · net inflow vs market / residual impact`}
+                subtitle={`${activeEquityBridge.length} month${activeEquityBridge.length === 1 ? "" : "s"} · ₹ Cr · net inflow vs market impact`}
               >
                 <GroupedBars
                   data={activeEquityBridge}
@@ -666,16 +691,14 @@ export default async function MonthlyPage({
                     },
                     {
                       key: "marketResidual",
-                      name: "Market / residual impact",
+                      name: "Market impact",
                       color: "hsl(var(--chart-3))",
                     },
                   ]}
                 />
-                <p className="mt-3 text-[11px] text-muted-foreground">
-                  Market / residual impact is derived as change in active
-                  equity AUM (month-end Net AUM) minus net inflow for the
-                  month. Captures mark-to-market and minor reclassification
-                  effects.
+                <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  Market impact = ΔAUM − net inflow for the month.
+                  <InfoTooltip label="Captures mark-to-market and minor reclassification effects on the active-equity envelope. AUM uses month-end values." />
                 </p>
               </Card>
             )}
@@ -683,7 +706,7 @@ export default async function MonthlyPage({
             {sipAumShareTrend.length > 0 && (
               <Card
                 title="SIP AUM as % of Total AUM"
-                subtitle={`${sipAumShareTrend.length} month${sipAumShareTrend.length === 1 ? "" : "s"} · sipAum / totalAum × 100`}
+                subtitle={`${sipAumShareTrend.length} month${sipAumShareTrend.length === 1 ? "" : "s"} · SIP AUM ÷ Total AUM`}
               >
                 <BarSeries
                   data={sipAumShareTrend}
@@ -693,12 +716,9 @@ export default async function MonthlyPage({
                   axisFormat="pct"
                   labelFormat="month"
                 />
-                <p className="mt-3 text-[11px] text-muted-foreground">
-                  SIP AUM as a share of total industry AUM. SIP
-                  contribution share of gross inflows is intentionally
-                  omitted — gross inflows (Funds Mobilized) are only
-                  available on the quarterly disclosure, not in the
-                  monthly snapshot.
+                <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  SIP AUM as a share of total industry AUM.
+                  <InfoTooltip label="SIP contribution share of gross inflows is intentionally omitted — gross inflows (Funds Mobilized) are only available on the quarterly disclosure, not in the monthly snapshot." />
                 </p>
               </Card>
             )}
@@ -761,7 +781,7 @@ export default async function MonthlyPage({
 
           <Card
             title="Equity AAUM Breakdown"
-            subtitle={`${equityBreakdown.length} month${equityBreakdown.length === 1 ? "" : "s"} · ₹ Cr · period-average · grouped bars`}
+            subtitle={equityBreakdownSubtitle}
           >
             {equityBreakdownHasData ? (
               <GroupedBars
@@ -781,10 +801,9 @@ export default async function MonthlyPage({
                 Equity breakdown unavailable
               </div>
             )}
-            <p className="mt-3 text-[11px] text-muted-foreground">
-              Active Equity = Growth/Equity schemes + Hybrid ex-Arbitrage +
-              Solution-oriented schemes. ETF &amp; Index = Index Funds + Other
-              ETFs. Arbitrage shown separately.
+            <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              Active Equity, ETF &amp; Index, and Arbitrage shown separately.
+              <InfoTooltip label="Active Equity = Growth/Equity schemes + Hybrid ex-Arbitrage + Solution-oriented schemes. ETF & Index = Index Funds + Other ETFs." />
             </p>
           </Card>
         </div>
@@ -799,7 +818,7 @@ export default async function MonthlyPage({
             <p className="text-xs text-muted-foreground">
               Active equity AUM vs ETF &amp; Index AUM · passive share trend
               {activePassiveTrend.forecastMonths > 0
-                ? " + simple linear forecast"
+                ? " + simple trend projection"
                 : ""}{" "}
               · Source: AMFI Monthly Report
             </p>
@@ -808,7 +827,7 @@ export default async function MonthlyPage({
           <section className="grid gap-4 lg:grid-cols-2">
             <Card
               title="Active Equity vs ETF &amp; Index AUM"
-              subtitle={`${activePassiveTrend.history.length} month${activePassiveTrend.history.length === 1 ? "" : "s"} · month-end Net AUM · ₹ Cr`}
+              subtitle={`${activePassiveTrend.history.length} month${activePassiveTrend.history.length === 1 ? "" : "s"} · month-end AUM · ₹ Cr`}
             >
               <MultiLine
                 data={activePassiveTrend.history.map((p) => ({
@@ -833,10 +852,9 @@ export default async function MonthlyPage({
                   },
                 ]}
               />
-              <p className="mt-3 text-[11px] text-muted-foreground">
-                Active equity = equity-oriented + hybrid (ex-arbitrage) +
-                solution-oriented. ETF &amp; Index = Index Funds + Other
-                ETFs (excludes Gold ETFs).
+              <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                Active equity vs ETF &amp; Index AUM.
+                <InfoTooltip label="Active equity = equity-oriented + hybrid (ex-arbitrage) + solution-oriented. ETF & Index = Index Funds + Other ETFs (excludes Gold ETFs)." />
               </p>
             </Card>
 
@@ -855,6 +873,8 @@ export default async function MonthlyPage({
                 labelFormat="month"
                 valueFormat="pct"
                 axisFormat="pct"
+                showDots
+                dynamicYDomain
                 lines={[
                   {
                     key: "passiveSharePct",
@@ -863,11 +883,9 @@ export default async function MonthlyPage({
                   },
                 ]}
               />
-              <p className="mt-3 text-[11px] text-muted-foreground">
-                passiveShare = ETF&amp;Index ÷ (Active equity + ETF&amp;Index) ×
-                100. Forecast (when shown) is an OLS extrapolation of the
-                historical slope to the upcoming fiscal-year-end (March).
-                Not a model — a directional reference.
+              <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                Passive share = ETF &amp; Index ÷ (Active equity + ETF &amp; Index).
+                <InfoTooltip label="Forecast (when shown) is a simple trend projection of the historical slope to the upcoming fiscal-year-end (March). Not a predictive model — a directional reference." />
               </p>
             </Card>
           </section>
@@ -900,6 +918,7 @@ export default async function MonthlyPage({
                     labelFormat="month"
                     valueFormat="pct"
                     axisFormat="pct"
+                    dynamicYDomain
                     lines={[
                       {
                         key: "aumSharePct",
@@ -977,11 +996,10 @@ export default async function MonthlyPage({
             </details>
           )}
 
-          <p className="text-[11px] text-muted-foreground">
-            QAAUM share uses active-equity AAUM. Net inflow share uses
-            active-equity net inflow. Active equity includes equity-
-            oriented schemes, hybrid schemes excluding arbitrage, and
-            solution-oriented schemes.
+          <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            QAAUM share and net inflow share, both within the
+            active-equity envelope.
+            <InfoTooltip label="Active equity = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
           </p>
         </div>
       )}
@@ -1003,11 +1021,9 @@ export default async function MonthlyPage({
             rows={iiflHeatmap.rows}
           />
 
-          <p className="text-[11px] text-muted-foreground">
-            Note: Share is calculated as category net inflow divided by
-            active-equity net inflow. Active equity includes equity-
-            oriented schemes, hybrid schemes excluding arbitrage, and
-            solution-oriented schemes.
+          <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            Share = category net inflow ÷ active-equity net inflow.
+            <InfoTooltip label="Active equity = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
           </p>
         </div>
       )}
@@ -1140,14 +1156,9 @@ export default async function MonthlyPage({
           subtitle={`Opening ${flowWaterfall.startMonth} → Closing ${flowWaterfall.endMonth} · SIP + Lump sum + Market = ΔAUM · Source: AMFI Monthly Report`}
         >
           <Waterfall data={flowWaterfall.steps} valueFormat="cr" axisFormat="cr" />
-          <p className="mt-3 text-[11px] text-muted-foreground">
-            Splits the change in industry closing AUM into three drivers:
-            (1) cumulative SIP contributions, (2) lump sum / other net
-            flow = total industry net inflow − SIP, (3) market /
-            residual impact = ΔAUM − total net inflow (mark-to-market +
-            reclassification). SIP contributions and total net inflow
-            come straight from the AMFI Monthly Report; the market
-            residual is derived.
+          <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            ΔAUM split into SIP, lump sum, and market / residual impact.
+            <InfoTooltip label="(1) Cumulative SIP contributions. (2) Lump sum / other net flow = total industry net inflow − SIP. (3) Market / residual impact = ΔAUM − total net inflow (captures mark-to-market and reclassification). SIP and total net inflow come from the AMFI Monthly Report; the market residual is derived." />
           </p>
         </Card>
       )}
@@ -1185,10 +1196,10 @@ export default async function MonthlyPage({
             AAUM disclosure unavailable
           </div>
         )}
-        <p className="mt-3 text-[11px] text-muted-foreground">
-          Top {aumMarketShare.topAmcs.length} shown by latest AAUM;
-          Others includes all remaining AMCs. Denominator is total
-          AAUM of all AMCs in the snapshot.
+        <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          Top {aumMarketShare.topAmcs.length} AMCs by latest AAUM;
+          Others includes all remaining AMCs.
+          <InfoTooltip label="Denominator is total AAUM of all AMCs in the snapshot." />
         </p>
       </Card>
 

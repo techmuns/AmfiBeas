@@ -30,7 +30,7 @@ const COLUMNS: CsvColumn<PeerRow>[] = [
   },
   {
     key: "revenue",
-    header: "Revenue (Cr)",
+    header: "Operating revenue (Cr)",
     format: (v) => (typeof v === "number" ? Number(v.toFixed(2)) : ""),
   },
   {

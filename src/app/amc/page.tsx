@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeftRight, AlertTriangle, TrendingUp, TrendingDown } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { Heatmap } from "@/components/charts/Heatmap";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
 import { amcIndexRows } from "@/data/amc-detail";
@@ -81,14 +82,11 @@ export default function AmcListPage() {
               );
             })}
           </ul>
-          <p className="mt-3 text-[11px] text-muted-foreground">
+          <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <AlertTriangle className="mr-1 inline h-3 w-3 align-[-2px]" />
             Cohort median QoQ growth: {anomalies.medianQoqPct.toFixed(2)}% ·
-            stdDev {anomalies.stdDevPct.toFixed(2)} pp. Outliers are AMCs
-            whose latest QoQ growth sits ≥2 standard deviations from the
-            median — investigate before drawing conclusions; could be a
-            new AMC ramping up, a one-off reclassification, or a
-            structural shift.
+            stdDev {anomalies.stdDevPct.toFixed(2)} pp.
+            <InfoTooltip label="Outliers are AMCs whose latest QoQ growth sits ≥2 standard deviations from the cohort median — investigate before drawing conclusions; could be a new AMC ramping up, a one-off reclassification, or a structural shift." />
           </p>
         </Card>
       )}
@@ -106,12 +104,11 @@ export default function AmcListPage() {
             cellMinWidth={44}
             showAllColumnLabels
           />
-          <p className="mt-3 text-[11px] text-muted-foreground">
-            Each cell = QoQ AAUM growth for that AMC (in %). Cells are{" "}
-            <span className="text-positive">green</span> for growth and{" "}
-            <span className="text-negative">red</span> for contraction; muted
-            cells indicate the AMC didn&apos;t have a prior-quarter AAUM row.
-            AMCs sorted by latest-quarter AAUM (largest at top).
+          <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            Each cell = QoQ AAUM growth (%).
+            <span className="text-positive">Green</span> = growth,{" "}
+            <span className="text-negative">red</span> = contraction.
+            <InfoTooltip label="Muted cells indicate the AMC didn't have a prior-quarter AAUM row. AMCs sorted by latest-quarter AAUM (largest at top)." />
           </p>
         </Card>
       )}
