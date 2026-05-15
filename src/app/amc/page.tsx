@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { AmcQuadrantChart } from "@/components/charts/AmcQuadrantChart";
 import { Heatmap } from "@/components/charts/Heatmap";
+import { SkyscraperCity } from "@/components/charts/SkyscraperCity";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
 import { amcIndexRows } from "@/data/amc-detail";
 import {
@@ -47,6 +48,19 @@ export default async function AmcListPage({
   }));
   const anomalies = latestQoqAnomalies(2);
   const quadrant = amcTrajectoryQuadrant(30);
+  // Skyscraper City buildings — top 15 AMCs by latest market share
+  // (constrained so the row stays visually clean).
+  const skyscraperBuildings = quadrant
+    ? [...quadrant.points]
+        .sort((a, b) => b.marketSharePct - a.marketSharePct)
+        .slice(0, 15)
+        .map((p) => ({
+          slug: p.slug,
+          displayName: p.displayName,
+          marketSharePct: p.marketSharePct,
+          qoqGrowthPct: p.qoqGrowthPct,
+        }))
+    : [];
 
   return (
     <div className="space-y-6">
@@ -104,6 +118,29 @@ export default async function AmcListPage({
             Cohort median QoQ growth: {anomalies.medianQoqPct.toFixed(2)}% ·
             stdDev {anomalies.stdDevPct.toFixed(2)} pp.
             <InfoTooltip label="Outliers are AMCs whose latest QoQ growth sits ≥2 standard deviations from the cohort median — investigate before drawing conclusions; could be a new AMC ramping up, a one-off reclassification, or a structural shift." />
+          </p>
+        </Card>
+      )}
+
+      {skyscraperBuildings.length >= 4 && (
+        <Card
+          title="AMC Skyscraper City"
+          subtitle="Each building = one AMC · height = market share · colour tint = QoQ growth"
+        >
+          <SkyscraperCity buildings={skyscraperBuildings} />
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            Tap a building to open the AMC&rsquo;s detail page.
+            <span className="ml-2 inline-flex items-center gap-3">
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-sm bg-positive" /> Growing
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-sm bg-[hsl(var(--chart-1))]" /> Steady
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-sm bg-negative" /> Contracting
+              </span>
+            </span>
           </p>
         </Card>
       )}

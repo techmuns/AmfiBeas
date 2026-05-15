@@ -68,6 +68,7 @@ import {
   type MarketStressSignal,
 } from "@/data/market-indices";
 import { FlowStressHistoryChart } from "@/components/charts/FlowStressHistoryChart";
+import { SankeyFlow } from "@/components/charts/SankeyFlow";
 import { CalendarHeatGrid } from "@/components/ui/CalendarHeatGrid";
 import { CalloutCard } from "@/components/ui/CalloutCard";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
@@ -701,6 +702,72 @@ export default async function MonthlyPage({
   const sipSparkline = sipStickinessSparkline(24);
   const latestNifty = latestNifty500Row();
   const cyclePhasePoints = cyclePhaseHistory();
+  // Sankey data — composes SIP vs Lump-sum on the source side, and
+  // Equity / Debt / Liquid / Other on the target side, all from the
+  // latest month with usable totals. Links are proportional shares
+  // (source-pct × target-pct × total).
+  const sankeyData: {
+    month: string;
+    sources: { id: string; label: string; tone?: "positive" | "negative" | "neutral" }[];
+    targets: { id: string; label: string; tone?: "positive" | "negative" | "neutral" }[];
+    links: { source: string; target: string; value: number }[];
+  } | null = (() => {
+    const latestRow = latestAmfiMonthlyRow();
+    if (
+      !latestRow ||
+      typeof latestRow.netInflow !== "number" ||
+      typeof latestRow.equityNetInflow !== "number" ||
+      typeof latestRow.debtNetInflow !== "number" ||
+      typeof latestRow.liquidNetInflow !== "number" ||
+      typeof latestRow.sipContribution !== "number"
+    )
+      return null;
+    const total = latestRow.netInflow;
+    if (total <= 0) return null;
+    const sip = Math.max(0, latestRow.sipContribution);
+    const lumpSum = Math.max(0, total - sip);
+    const equity = Math.max(0, latestRow.equityNetInflow);
+    const debtPure = Math.max(0, latestRow.debtNetInflow - latestRow.liquidNetInflow);
+    const liquid = Math.max(0, latestRow.liquidNetInflow);
+    const other = Math.max(0, total - equity - debtPure - liquid);
+    const targetTotals: Record<string, number> = {
+      equity,
+      debt: debtPure,
+      liquid,
+      other,
+    };
+    const sourceTotals: Record<string, number> = { sip, lumpSum };
+    const sourceSum = sip + lumpSum;
+    const targetSum = equity + debtPure + liquid + other;
+    if (sourceSum === 0 || targetSum === 0) return null;
+    const links: { source: string; target: string; value: number }[] = [];
+    for (const [sId, sVal] of Object.entries(sourceTotals)) {
+      if (sVal <= 0) continue;
+      for (const [tId, tVal] of Object.entries(targetTotals)) {
+        if (tVal <= 0) continue;
+        links.push({
+          source: sId,
+          target: tId,
+          // Proportional split — share of source × share of target × total.
+          value: (sVal / sourceSum) * tVal,
+        });
+      }
+    }
+    return {
+      month: latestRow.month,
+      sources: [
+        { id: "sip", label: "SIP", tone: "positive" },
+        { id: "lumpSum", label: "Lump sum", tone: "neutral" },
+      ],
+      targets: [
+        { id: "equity", label: "Equity", tone: "positive" },
+        { id: "debt", label: "Debt", tone: "neutral" },
+        { id: "liquid", label: "Liquid", tone: "neutral" },
+        { id: "other", label: "Other", tone: "neutral" },
+      ],
+      links,
+    };
+  })();
   // Calendar heat grid cells: every month in the active-equity
   // history, value = z-score of that month's flow vs the full
   // distribution. Drives the "7-year calendar" surface below.
@@ -924,6 +991,27 @@ export default async function MonthlyPage({
             saturationBound={2}
             caption="Active-equity net inflow z-score per month"
           />
+        </Card>
+      )}
+
+      {sankeyData && (
+        <Card
+          title="Where the Money Went · Latest Month"
+          subtitle={`Industry net flow split by source × destination · ${sankeyData.month}`}
+        >
+          <SankeyFlow
+            sources={sankeyData.sources}
+            targets={sankeyData.targets}
+            links={sankeyData.links}
+            formatValue={(v) => `₹${formatCompactCrSafe(v)}`}
+            height={320}
+          />
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            Source widths show SIP vs lump-sum split of net inflow.
+            Destination widths show Equity / Debt / Liquid / Other shares.
+            Source-to-destination ribbons are proportional approximations
+            (the AMFI release does not split SIP destinations by category).
+          </p>
         </Card>
       )}
 
