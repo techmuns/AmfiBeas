@@ -696,3 +696,102 @@ export function monthlyActivePassiveTrend(
     endOfFyProjectionPct: endOfFy,
   };
 }
+
+/**
+ * Historical-context signal for the active-equity envelope net inflow.
+ *
+ * Compares the latest available month's `activeEquityNetInflow` against
+ * the full available history (from April 2019 onwards on the current
+ * snapshot). Surfaces five outputs the dashboard binds to the signal
+ * card:
+ *
+ *   - latest          : month + value for the most recent observation
+ *   - mean            : arithmetic mean of every prior month with a value
+ *   - stdDev          : population standard deviation of the same set
+ *   - zScore          : (latest − mean) / stdDev
+ *   - percentileRank  : share of months ≤ latest, expressed in %
+ *
+ * Population (not sample) standard deviation is used to keep the
+ * z-score stable when the history is small — the dashboard surfaces
+ * "Insufficient history" when stdDev is zero or undefined, which
+ * itself only happens if fewer than two data points exist.
+ *
+ * Returns null when the snapshot has no `activeEquityNetInflow` rows
+ * at all, so the UI can short-circuit cleanly.
+ */
+export type ActiveEquitySignalLabel =
+  | "Very strong"
+  | "Strong"
+  | "Normal"
+  | "Weak"
+  | "Very weak"
+  | "Insufficient history";
+
+export interface ActiveEquityNetInflowSignal {
+  latestMonth: string;
+  latestValue: number;
+  historyMonths: number;
+  mean: number;
+  stdDev: number | null;
+  zScore: number | null;
+  percentileRank: number | null;
+  label: ActiveEquitySignalLabel;
+  historyStart: string;
+  historyEnd: string;
+}
+
+function labelFromZScore(z: number | null): ActiveEquitySignalLabel {
+  if (z === null || !Number.isFinite(z)) return "Insufficient history";
+  if (z >= 2) return "Very strong";
+  if (z >= 1) return "Strong";
+  if (z <= -2) return "Very weak";
+  if (z <= -1) return "Weak";
+  return "Normal";
+}
+
+export function activeEquityNetInflowSignal(): ActiveEquityNetInflowSignal | null {
+  const rows = amfiMonthlyRows();
+  const withValue = rows.flatMap((r) =>
+    typeof r.activeEquityNetInflow === "number"
+      ? [{ month: r.month, value: r.activeEquityNetInflow }]
+      : []
+  );
+  if (withValue.length === 0) return null;
+
+  const latest = withValue[withValue.length - 1];
+  const historyStart = withValue[0].month;
+  const historyEnd = latest.month;
+
+  const values = withValue.map((p) => p.value);
+  const n = values.length;
+  const mean = values.reduce((s, v) => s + v, 0) / n;
+
+  // Population standard deviation: stable when the history is short
+  // (sample stdev divides by n-1 and blows up for n=2).
+  const variance = values.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
+  const stdDev = n >= 2 && variance > 0 ? Math.sqrt(variance) : null;
+
+  const zScore =
+    stdDev !== null && Number.isFinite(stdDev) && stdDev > 0
+      ? (latest.value - mean) / stdDev
+      : null;
+
+  // Percentile rank uses ≤ so the latest observation gets credit for
+  // ties — matches the natural reading "this month is in the top X%
+  // of history".
+  const lessOrEqual = values.filter((v) => v <= latest.value).length;
+  const percentileRank = n > 0 ? (lessOrEqual / n) * 100 : null;
+
+  return {
+    latestMonth: latest.month,
+    latestValue: latest.value,
+    historyMonths: n,
+    mean,
+    stdDev,
+    zScore,
+    percentileRank,
+    label: labelFromZScore(zScore),
+    historyStart,
+    historyEnd,
+  };
+}
