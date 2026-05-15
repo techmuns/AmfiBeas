@@ -76,7 +76,10 @@ import { CalloutCard } from "@/components/ui/CalloutCard";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { EpisodeReplayStrip } from "@/components/ui/EpisodeReplayStrip";
 import { HeadlineCard } from "@/components/ui/HeadlineCard";
+import { MarketTape } from "@/components/ui/MarketTape";
 import { NarrativeBlock } from "@/components/ui/NarrativeBlock";
+import { StickyContextFooter } from "@/components/ui/StickyContextFooter";
+import { TwinScopeCard } from "@/components/ui/TwinScopeCard";
 import { LensToggle } from "@/components/ui/LensToggle";
 import { MoodGauge } from "@/components/ui/MoodGauge";
 import { Sparkline } from "@/components/charts/Sparkline";
@@ -706,6 +709,24 @@ export default async function MonthlyPage({
   const sipSparkline = sipStickinessSparkline(24);
   const latestNifty = latestNifty500Row();
   const cyclePhasePoints = cyclePhaseHistory();
+  const tapeCells = cyclePhasePoints.map((p) => ({
+    month: p.month,
+    phase: p.phase,
+    flowZScore: p.flowZScore,
+    drawdownPct: p.drawdownPct,
+  }));
+  // Twin scope: compare trailing 12M of active-equity flow with the
+  // 12M immediately before that.
+  const twinScopeData = (() => {
+    const series = amfiMonthlyRows()
+      .filter((r) => typeof r.activeEquityNetInflow === "number")
+      .map((r) => ({ label: r.month, value: r.activeEquityNetInflow as number }));
+    if (series.length < 13) return null;
+    const current = series.slice(-12);
+    const prior = series.slice(-24, -12);
+    if (current.length === 0 || prior.length === 0) return null;
+    return { current, prior };
+  })();
   const episodes = historicalEpisodes();
   const latestCyclePhaseForNarrative =
     cyclePhasePoints.length > 0
@@ -1030,11 +1051,23 @@ export default async function MonthlyPage({
 
       {cyclePhasePoints.length > 0 && (
         <Card
-          title="Cycle Regime"
-          subtitle={`Per-month cycle phase since ${cyclePhasePoints[0].month} · derived from active-equity flow z-score + Nifty 500 drawdown`}
+          title="Market Tape · 7-year regime + flow"
+          subtitle={`Background colour = cycle phase · bar height = active-equity flow z-score · since ${cyclePhasePoints[0].month}`}
         >
-          <CycleRibbon points={cyclePhasePoints} lastN={84} />
+          <MarketTape cells={tapeCells} lastN={84} height={72} />
+          <div className="mt-3">
+            <CycleRibbon points={cyclePhasePoints} lastN={84} />
+          </div>
         </Card>
+      )}
+
+      {twinScopeData && (
+        <TwinScopeCard
+          label="Active Equity Net Inflow"
+          current={twinScopeData.current}
+          prior={twinScopeData.prior}
+          formatValue={(v) => `₹${formatCompactCrSafe(v)}`}
+        />
       )}
 
       {flowHeatCells.length > 0 && (
@@ -2043,6 +2076,12 @@ export default async function MonthlyPage({
         </p>
       </Card>
 
+      <StickyContextFooter
+        cyclePhase={latestCyclePhase}
+        flowZScore={activeEquitySignal?.zScore ?? null}
+        drawdownPct={latestNifty?.drawdownPct ?? null}
+        latestMonth={activeEquitySignal?.latestMonth ?? null}
+      />
     </div>
   );
 }
