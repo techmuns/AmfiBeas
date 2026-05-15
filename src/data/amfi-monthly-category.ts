@@ -686,3 +686,62 @@ export function iiflActiveEquityQuarterlyTrendCard(
 
   return { series, hasData };
 }
+
+/**
+ * Z-score lens for the active-equity category heatmap. For each
+ * (month, category) cell in the same 12-month window the share
+ * heatmap uses, compute:
+ *
+ *   z_c,m = (categoryNetInflow_c,m − μ_c) / σ_c
+ *
+ * where μ_c and σ_c are the mean and population standard deviation
+ * of `categoryNetInflow` for category c across ALL months in the
+ * snapshot (not just the window). This answers "is this category
+ * running hot vs its OWN history?" rather than "what share of the
+ * envelope did it take this month?". Cells with no flow or where the
+ * category has no usable history are null (rendered as "—"), never
+ * fabricated.
+ */
+export function iiflActiveEquityHeatmapZScoreData(): {
+  months: string[];
+  rows: {
+    slug: AmfiMonthlyCategorySlug;
+    label: string;
+    values: (number | null)[];
+  }[];
+} {
+  const windowMonths = iiflActiveEquityWindowMonths();
+  if (windowMonths.length === 0) return { months: [], rows: [] };
+
+  const rows = IIFL_HEATMAP_CATEGORIES.map((c) => {
+    // Build full history of this category's net inflow across the
+    // snapshot — null months are dropped, never zero-padded.
+    const history = amfiMonthlyCategorySnapshot.rows
+      .filter((r) => r.categorySlug === c.slug)
+      .filter((r): r is typeof r & { categoryNetInflow: number } =>
+        typeof r.categoryNetInflow === "number"
+      )
+      .map((r) => ({ month: r.month, value: r.categoryNetInflow }));
+    if (history.length < 2) {
+      return {
+        slug: c.slug,
+        label: c.label,
+        values: windowMonths.map(() => null),
+      };
+    }
+    const values = history.map((p) => p.value);
+    const mean = values.reduce((s, v) => s + v, 0) / values.length;
+    const variance =
+      values.reduce((s, v) => s + (v - mean) ** 2, 0) / values.length;
+    const stdDev = variance > 0 ? Math.sqrt(variance) : null;
+    const byMonth = new Map(history.map((p) => [p.month, p.value]));
+    const cellValues: (number | null)[] = windowMonths.map((m) => {
+      if (stdDev === null) return null;
+      const v = byMonth.get(m);
+      if (typeof v !== "number") return null;
+      return (v - mean) / stdDev;
+    });
+    return { slug: c.slug, label: c.label, values: cellValues };
+  });
+  return { months: windowMonths, rows };
+}
