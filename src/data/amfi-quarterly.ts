@@ -804,3 +804,43 @@ export function categoryHhiSeries(lastN = 8): CategoryHhiPoint[] {
     };
   });
 }
+
+/** Category-level HHI percentile read for the latest quarter against
+ *  a trailing window. Mirrors `amcLevelHhiPercentileRead`. */
+export interface CategoryHhiPercentileRead {
+  latestHhi: number;
+  latestQuarter: string;
+  latestQuarterLabel: string;
+  windowQuarters: number;
+  percentile: number;
+  changeVsAnchor: number | null;
+  anchorQuarterLabel: string | null;
+}
+
+export function categoryHhiPercentileRead(
+  windowQuarters = 20,
+  compareQuartersBack = 20
+): CategoryHhiPercentileRead | null {
+  const series = categoryHhiSeries(windowQuarters);
+  if (series.length < 4) return null;
+  const latest = series[series.length - 1];
+  const lessOrEqual = series.filter((p) => p.hhi <= latest.hhi).length;
+  const percentile = (lessOrEqual / series.length) * 100;
+  const full = categoryHhiSeries(1000);
+  const latestIdx = full.findIndex((p) => p.quarter === latest.quarter);
+  const anchor =
+    latestIdx >= compareQuartersBack
+      ? full[latestIdx - compareQuartersBack]
+      : full.length > 1
+        ? full[0]
+        : null;
+  return {
+    latestHhi: latest.hhi,
+    latestQuarter: latest.quarter,
+    latestQuarterLabel: latest.quarterLabel,
+    windowQuarters: series.length,
+    percentile,
+    changeVsAnchor: anchor ? latest.hhi - anchor.hhi : null,
+    anchorQuarterLabel: anchor ? anchor.quarterLabel : null,
+  };
+}

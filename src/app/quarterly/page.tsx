@@ -34,6 +34,7 @@ import {
   quarterlyFolioAdditionsTrend,
   quarterlyOpenEndedSchemeCountTrend,
   quarterlyTrend,
+  categoryHhiPercentileRead,
   categoryHhiSeries,
   resolveSelectedQuarter,
   type AmfiQuarterlyKpiField,
@@ -45,6 +46,7 @@ import {
   formatLakhSafe,
 } from "@/lib/format";
 import {
+  amcLevelHhiPercentileRead,
   amcLevelHhiSeries,
   topAumMarketShareSeries,
 } from "@/data/amc-peer-universe";
@@ -330,6 +332,10 @@ export default async function QuarterlyPage({
   // Concentration tracker — HHI of AMC-level + category-level AUM.
   const amcHhi = amcLevelHhiSeries(8);
   const catHhi = categoryHhiSeries(16);
+  // HHI percentile reads vs the trailing 5 years of history, with
+  // change vs the anchor quarter exactly 20 quarters back (= 5Y).
+  const amcHhiPercentile = amcLevelHhiPercentileRead(20, 20);
+  const catHhiPercentile = categoryHhiPercentileRead(20, 20);
   const hhiHasData = amcHhi.length > 0 || catHhi.length > 0;
   const concentrationLabels = Array.from(
     new Set([
@@ -862,6 +868,22 @@ export default async function QuarterlyPage({
               },
             ]}
           />
+          {(amcHhiPercentile || catHhiPercentile) && (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {amcHhiPercentile && (
+                <HhiPercentileBlock
+                  label="AMC concentration"
+                  read={amcHhiPercentile}
+                />
+              )}
+              {catHhiPercentile && (
+                <HhiPercentileBlock
+                  label="Category concentration"
+                  read={catHhiPercentile}
+                />
+              )}
+            </div>
+          )}
           <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
             HHI = Σ(share²) × 10,000 across participants in each quarter.
             {latestAmcHhi
@@ -914,6 +936,56 @@ export default async function QuarterlyPage({
         </p>
       </Card>
 
+    </div>
+  );
+}
+
+/** Compact percentile-vs-history read for an HHI series. Renders the
+ *  trailing-window percentile of the latest reading plus the absolute
+ *  HHI change vs an anchor quarter (default 5 years back). Visual
+ *  shorthand for "is the industry more or less concentrated than its
+ *  recent norm?" */
+function HhiPercentileBlock({
+  label,
+  read,
+}: {
+  label: string;
+  read: { latestHhi: number; latestQuarterLabel: string; windowQuarters: number; percentile: number; changeVsAnchor: number | null; anchorQuarterLabel: string | null };
+}) {
+  const pct = read.percentile;
+  const change = read.changeVsAnchor;
+  const arrow = change === null ? "" : change > 50 ? "↑" : change < -50 ? "↓" : "→";
+  const direction =
+    change === null
+      ? null
+      : change > 50
+        ? "industry more concentrated"
+        : change < -50
+          ? "industry less concentrated"
+          : "broadly unchanged";
+  const interpret =
+    pct >= 80
+      ? "near the high end of recent history"
+      : pct <= 20
+        ? "near the low end of recent history"
+        : "in line with recent history";
+  return (
+    <div className="rounded-md border bg-muted/30 p-3">
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+        {label} · {read.latestQuarterLabel}
+      </div>
+      <div className="mt-1 text-lg font-semibold tabular tracking-tight">
+        HHI {Math.round(read.latestHhi)}
+        <span className="ml-2 text-[11px] font-medium text-muted-foreground">
+          {pct.toFixed(0)}th percentile · {interpret}
+        </span>
+      </div>
+      {change !== null && read.anchorQuarterLabel && (
+        <div className="mt-1 text-[11px] tabular text-muted-foreground">
+          {arrow} {Math.abs(Math.round(change))} pts vs {read.anchorQuarterLabel}
+          {direction ? ` · ${direction}` : ""}
+        </div>
+      )}
     </div>
   );
 }
