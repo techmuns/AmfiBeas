@@ -866,3 +866,97 @@ export function amcLevelHhiPercentileRead(
     anchorQuarterLabel: anchor ? anchor.quarterLabel : null,
   };
 }
+
+/**
+ * Cohort Journey — for each AMC, compute its (market share, AAUM)
+ * position both at the EARLIEST quarter on record AND at the
+ * latest. The chart can then draw an arrow from the start point
+ * to the end point per AMC, visualising the structural shift
+ * across the available history.
+ *
+ * Returns top-N AMCs by latest AAUM that have BOTH a start and an
+ * end position. AMCs without a start point (because they didn't
+ * exist 5Y ago) are dropped — the journey map only shows AMCs with
+ * a complete trail.
+ */
+export interface CohortJourneyPoint {
+  amcSlug: string;
+  displayName: string;
+  startMarketSharePct: number;
+  endMarketSharePct: number;
+  startQuarter: string;
+  endQuarter: string;
+  startQuarterLabel: string;
+  endQuarterLabel: string;
+  /** Latest AAUM (₹ Cr) — used to size the dot on the chart. */
+  latestAum: number;
+  /** Δ market share over the journey (pp). */
+  shareDeltaPp: number;
+}
+
+export function cohortJourneyMap(topN = 20): CohortJourneyPoint[] | null {
+  const allQuarters = Array.from(
+    new Set(
+      amcAaumQuarterlySnapshot.rows
+        .filter((r) => r.status === "ok")
+        .map((r) => r.quarter)
+    )
+  ).sort();
+  if (allQuarters.length < 2) return null;
+  const startQ = allQuarters[0];
+  const endQ = allQuarters[allQuarters.length - 1];
+
+  // Per-quarter total AAUM (denominator for share).
+  const totalByQuarter = new Map<string, number>();
+  for (const r of amcAaumQuarterlySnapshot.rows) {
+    if (r.status !== "ok") continue;
+    totalByQuarter.set(
+      r.quarter,
+      (totalByQuarter.get(r.quarter) ?? 0) + r.avgAum
+    );
+  }
+  const startTotal = totalByQuarter.get(startQ) ?? 0;
+  const endTotal = totalByQuarter.get(endQ) ?? 0;
+  if (startTotal <= 0 || endTotal <= 0) return null;
+
+  // Per-AMC start + end AAUM.
+  const aaumByAmcQuarter = new Map<string, Map<string, number>>();
+  const displayBySlug = new Map<string, string>();
+  for (const r of amcAaumQuarterlySnapshot.rows) {
+    if (r.status !== "ok") continue;
+    const inner = aaumByAmcQuarter.get(r.amcSlug) ?? new Map<string, number>();
+    inner.set(r.quarter, r.avgAum);
+    aaumByAmcQuarter.set(r.amcSlug, inner);
+    if (!displayBySlug.has(r.amcSlug)) {
+      displayBySlug.set(
+        r.amcSlug,
+        r.displayName ?? r.amcNameAsReported
+      );
+    }
+  }
+
+  const points: CohortJourneyPoint[] = [];
+  for (const [slug, inner] of aaumByAmcQuarter) {
+    const startAum = inner.get(startQ);
+    const endAum = inner.get(endQ);
+    if (typeof startAum !== "number" || typeof endAum !== "number") continue;
+    if (startAum <= 0 || endAum <= 0) continue;
+    const startSharePct = (startAum / startTotal) * 100;
+    const endSharePct = (endAum / endTotal) * 100;
+    points.push({
+      amcSlug: slug,
+      displayName: displayBySlug.get(slug) ?? slug,
+      startMarketSharePct: startSharePct,
+      endMarketSharePct: endSharePct,
+      startQuarter: startQ,
+      endQuarter: endQ,
+      startQuarterLabel: fiscalLabelFromCalendarQuarter(startQ),
+      endQuarterLabel: fiscalLabelFromCalendarQuarter(endQ),
+      latestAum: endAum,
+      shareDeltaPp: endSharePct - startSharePct,
+    });
+  }
+  return points
+    .sort((a, b) => b.latestAum - a.latestAum)
+    .slice(0, topN);
+}

@@ -3,15 +3,18 @@ import { ArrowLeftRight, AlertTriangle, TrendingUp, TrendingDown } from "lucide-
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
+import { AmcBattleCard } from "@/components/ui/AmcBattleCard";
 import { AmcQuadrantChart } from "@/components/charts/AmcQuadrantChart";
+import { CohortJourneyMap } from "@/components/charts/CohortJourneyMap";
 import { Heatmap } from "@/components/charts/Heatmap";
 import { SkyscraperCity } from "@/components/charts/SkyscraperCity";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
-import { amcIndexRows } from "@/data/amc-detail";
+import { amcAaumSeries, amcIndexRows } from "@/data/amc-detail";
 import {
   amcHealthGrowthMatrix,
   amcHealthGrowthZScoreMatrix,
   amcTrajectoryQuadrant,
+  cohortJourneyMap,
   latestQoqAnomalies,
   type AmcQuadrant,
   type AmcQuadrantPoint,
@@ -60,6 +63,35 @@ export default async function AmcListPage({
           marketSharePct: p.marketSharePct,
           qoqGrowthPct: p.qoqGrowthPct,
         }))
+    : [];
+
+  // Cohort journey arrows (5Y / full-history span).
+  const journeyPoints = cohortJourneyMap(20) ?? [];
+
+  // Battle-cards rolodex — top 12 AMCs by AAUM, with their AAUM
+  // sparkline pulled from amc-detail. The card grid replaces the
+  // tabular row scan with a visual scan.
+  const battleCards = quadrant
+    ? [...quadrant.points]
+        .slice(0, 12)
+        .map((p) => {
+          const indexRow = data.rows.find((r) => r.amcSlug === p.slug);
+          const series = amcAaumSeries(p.slug);
+          return {
+            slug: p.slug,
+            displayName: p.displayName,
+            rank: indexRow?.rank ?? 0,
+            outOf: data.rows.length,
+            marketSharePct: p.marketSharePct,
+            qoqGrowthPct: p.qoqGrowthPct,
+            yoyGrowthPct: indexRow?.yoyGrowthPct ?? null,
+            isTop7: indexRow?.isTop7 ?? false,
+            sparkline: series.map((s) => ({
+              label: s.fiscalLabel,
+              value: s.avgAum,
+            })),
+          };
+        })
     : [];
 
   return (
@@ -118,6 +150,46 @@ export default async function AmcListPage({
             Cohort median QoQ growth: {anomalies.medianQoqPct.toFixed(2)}% ·
             stdDev {anomalies.stdDevPct.toFixed(2)} pp.
             <InfoTooltip label="Outliers are AMCs whose latest QoQ growth sits ≥2 standard deviations from the cohort median — investigate before drawing conclusions; could be a new AMC ramping up, a one-off reclassification, or a structural shift." />
+          </p>
+        </Card>
+      )}
+
+      {battleCards.length > 0 && (
+        <Card
+          title="AMC Roster · Battle Cards"
+          subtitle="Each card is one AMC · rank, tier, share, growth and trailing AAUM at a glance"
+        >
+          <div className="overflow-x-auto">
+            <div className="flex gap-3" style={{ minWidth: "max-content" }}>
+              {battleCards.map((c) => (
+                <div key={c.slug} className="w-[200px] shrink-0">
+                  <AmcBattleCard
+                    slug={c.slug}
+                    displayName={c.displayName}
+                    rank={c.rank}
+                    outOf={c.outOf}
+                    marketSharePct={c.marketSharePct}
+                    qoqGrowthPct={c.qoqGrowthPct}
+                    yoyGrowthPct={c.yoyGrowthPct}
+                    isTop7={c.isTop7}
+                    sparkline={c.sparkline}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {journeyPoints.length >= 4 && (
+        <Card
+          title="Cohort Journey Map"
+          subtitle={`Each arrow = one AMC's market-share journey from ${journeyPoints[0].startQuarterLabel} to ${journeyPoints[0].endQuarterLabel}`}
+        >
+          <CohortJourneyMap points={journeyPoints} />
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            Green arrows = share gainers · red = share losers · grey = roughly flat.
+            Hover an arrow for the precise pp move.
           </p>
         </Card>
       )}
