@@ -32,6 +32,7 @@ import {
   quarterlyEquityLastMonthAaumBreakdown,
   quarterlyFlowsData,
   quarterlyFolioAdditionsTrend,
+  quarterlyKpiContext,
   quarterlyOpenEndedSchemeCountTrend,
   quarterlyTrend,
   categoryHhiPercentileRead,
@@ -124,16 +125,24 @@ export default async function QuarterlyPage({
     formatted: string;
     note: string;
     noteHover?: string;
+    sparkline?: { label: string; value: number }[];
+    sparklineColor?: string;
+    yoyPct?: number | null;
+    percentile?: number | null;
+    ratio?: string;
   };
   const SNAPSHOT_KPI_CARDS: SnapshotCardSpec[] = [];
   const pushSnapshotCard = (
     field: AmfiQuarterlyKpiField,
     label: string,
-    format: (v: number | null) => string
+    format: (v: number | null) => string,
+    sparklineColor?: string,
+    ratio?: string
   ) => {
     const value = getQuarterlyKpiValue(selectedRow, field);
     if (value === null) return;
     const provenance = getQuarterlyKpiProvenance(selectedRow, field);
+    const ctx = quarterlyKpiContext(field, 16);
     SNAPSHOT_KPI_CARDS.push({
       key: field,
       label,
@@ -141,15 +150,43 @@ export default async function QuarterlyPage({
       formatted: format(value),
       note: formatQuarterlyProvenanceLine(provenance) ?? "",
       noteHover: formatQuarterlyProvenanceTooltip(provenance) ?? undefined,
+      sparkline: ctx.sparkline,
+      sparklineColor,
+      yoyPct: ctx.yoyPct,
+      percentile: ctx.percentile,
+      ratio,
     });
+  };
+  // Per-AUM ratios anchored on the selected row's grandTotalAum.
+  const ratioOfTotalAum = (numerator: number | null | undefined): string | undefined => {
+    if (
+      typeof numerator !== "number" ||
+      typeof selectedRow?.grandTotalAum !== "number" ||
+      selectedRow.grandTotalAum <= 0
+    )
+      return undefined;
+    return `${((numerator / selectedRow.grandTotalAum) * 100).toFixed(1)}% of total AUM`;
   };
   pushSnapshotCard(
     "grandTotalLastMonthAaum",
     "Last-month AAUM",
-    formatCompactCrSafe
+    formatCompactCrSafe,
+    "hsl(var(--chart-1))"
   );
-  pushSnapshotCard("equityAum", "Equity AUM", formatCompactCrSafe);
-  pushSnapshotCard("debtAum", "Debt AUM", formatCompactCrSafe);
+  pushSnapshotCard(
+    "equityAum",
+    "Equity AUM",
+    formatCompactCrSafe,
+    "hsl(var(--chart-1))",
+    ratioOfTotalAum(selectedRow?.equityAum)
+  );
+  pushSnapshotCard(
+    "debtAum",
+    "Debt AUM",
+    formatCompactCrSafe,
+    "hsl(var(--chart-2))",
+    ratioOfTotalAum(selectedRow?.debtAum)
+  );
   if (liquidAum !== null) {
     SNAPSHOT_KPI_CARDS.push({
       key: "liquidAum",
@@ -159,16 +196,29 @@ export default async function QuarterlyPage({
       note: formatQuarterlyProvenanceLine(liquidProvenance) ?? "",
       noteHover:
         formatQuarterlyProvenanceTooltip(liquidProvenance) ?? undefined,
+      sparklineColor: "hsl(var(--chart-4))",
+      ratio: ratioOfTotalAum(liquidAum),
     });
   }
   pushSnapshotCard(
     "grandTotalNetInflow",
     "Net Inflow",
-    formatSignedCompactCrSafe
+    formatSignedCompactCrSafe,
+    "hsl(var(--chart-3))",
+    typeof selectedRow?.grandTotalNetInflow === "number" &&
+      typeof selectedRow?.grandTotalAum === "number" &&
+      selectedRow.grandTotalAum > 0
+      ? `${((selectedRow.grandTotalNetInflow / selectedRow.grandTotalAum) * 100).toFixed(2)}% of opening AUM`
+      : undefined
   );
   // Total AUM rounds out the row to a clean grid; comes last so the
   // AAUM-driven cards lead.
-  pushSnapshotCard("grandTotalAum", "Total AUM", formatCompactCrSafe);
+  pushSnapshotCard(
+    "grandTotalAum",
+    "Total AUM",
+    formatCompactCrSafe,
+    "hsl(var(--chart-1))"
+  );
 
   const snapshotSubtitle = selectedRow
     ? `Industry-wide · ${selectedRow.quarterLabel} · Source: AMFI Quarterly Report`
@@ -310,6 +360,7 @@ export default async function QuarterlyPage({
   // ---- Folios & Scheme Count ----------------------------------------
   const totalFolios = selectedRow?.grandTotalFolios ?? null;
   const folioAdditions = latestQuarterlyFolioAdditions();
+  const foliosCtx = quarterlyKpiContext("grandTotalFolios", 16);
   const openEndedSchemes = latestOpenEndedSchemeCount();
   const foliosTrend = quarterlyTrend("grandTotalFolios", 16);
   const folioAdditionsTrend = quarterlyFolioAdditionsTrend(16);
@@ -398,6 +449,11 @@ export default async function QuarterlyPage({
                 value={c.formatted}
                 note={c.note}
                 noteHover={c.noteHover}
+                sparkline={c.sparkline}
+                sparklineColor={c.sparklineColor}
+                yoyPct={c.yoyPct ?? undefined}
+                percentile={c.percentile ?? undefined}
+                ratio={c.ratio}
               />
             ))}
           </div>
@@ -624,6 +680,17 @@ export default async function QuarterlyPage({
               value={formatCroreCountSafe(totalFolios)}
               note=""
               noteHover={foliosHover ?? undefined}
+              sparkline={foliosCtx.sparkline}
+              sparklineColor="hsl(var(--chart-1))"
+              yoyPct={foliosCtx.yoyPct ?? undefined}
+              percentile={foliosCtx.percentile ?? undefined}
+              ratio={
+                typeof totalFolios === "number" &&
+                typeof selectedRow?.grandTotalAum === "number" &&
+                selectedRow.grandTotalAum > 0
+                  ? `${(totalFolios / selectedRow.grandTotalAum).toFixed(1)} folios per ₹ Cr AUM`
+                  : undefined
+              }
             />
             <KpiCard
               label="Folio Additions QoQ"
@@ -634,12 +701,16 @@ export default async function QuarterlyPage({
                   ? `${foliosHover} · derived QoQ Δ from grandTotalFolios`
                   : undefined
               }
+              sparkline={folioAdditionsTrend}
+              sparklineColor="hsl(var(--chart-4))"
             />
             <KpiCard
               label="Open-Ended Scheme Count"
               value={formatIntSafe(openEndedSchemes)}
               note=""
               noteHover="AMFI Quarterly Report · Sum of categorySchemes across 39 open-ended categories (close-ended + interval excluded)"
+              sparkline={schemesTrend}
+              sparklineColor="hsl(var(--chart-5))"
             />
           </section>
 

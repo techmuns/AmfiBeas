@@ -424,6 +424,71 @@ export function quarterlyTrend(
   return all.slice(-lastN);
 }
 
+/**
+ * Unified historical context for a quarterly KPI field. Mirrors the
+ * monthly `kpiContext` helper — returns trailing sparkline, YoY%
+ * (vs same quarter 4 quarters ago), percentile, and z-score across
+ * the full available quarterly history.
+ */
+export interface QuarterlyKpiContext {
+  latest: number | null;
+  latestQuarter: string | null;
+  sparkline: { label: string; value: number }[];
+  yoyPct: number | null;
+  percentile: number | null;
+  zScore: number | null;
+}
+
+export function quarterlyKpiContext(
+  field: AmfiQuarterlyKpiField,
+  lastN = 16
+): QuarterlyKpiContext {
+  const rows = amfiQuarterlyIndustryRows();
+  const series = rows.flatMap((r) => {
+    const v = (r as unknown as Record<string, unknown>)[field];
+    if (typeof v !== "number") return [];
+    return [{ quarter: r.quarter, label: r.quarterLabel, value: v }];
+  });
+  if (series.length === 0) {
+    return {
+      latest: null,
+      latestQuarter: null,
+      sparkline: [],
+      yoyPct: null,
+      percentile: null,
+      zScore: null,
+    };
+  }
+  const latest = series[series.length - 1];
+  const sparkline = series
+    .slice(-lastN)
+    .map((p) => ({ label: p.label, value: p.value }));
+  // YoY = vs the row 4 quarters back (same fiscal quarter, prior year).
+  const yearAgoIdx = series.length - 1 - 4;
+  const yearAgo = yearAgoIdx >= 0 ? series[yearAgoIdx] : null;
+  const yoyPct =
+    yearAgo && yearAgo.value !== 0
+      ? ((latest.value - yearAgo.value) / Math.abs(yearAgo.value)) * 100
+      : null;
+  const values = series.map((p) => p.value);
+  const n = values.length;
+  const mean = values.reduce((s, v) => s + v, 0) / n;
+  const variance = values.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
+  const stdDev = n >= 2 && variance > 0 ? Math.sqrt(variance) : null;
+  const zScore =
+    stdDev !== null && stdDev > 0 ? (latest.value - mean) / stdDev : null;
+  const lessOrEqual = values.filter((v) => v <= latest.value).length;
+  const percentile = (lessOrEqual / n) * 100;
+  return {
+    latest: latest.value,
+    latestQuarter: latest.quarter,
+    sparkline,
+    yoyPct,
+    percentile,
+    zScore,
+  };
+}
+
 /** Quarter-over-quarter net additions to industry folios. Computed at
  *  render time as `current.grandTotalFolios − previous.grandTotalFolios`
  *  labelled with the CURRENT quarter (i.e. additions DURING that

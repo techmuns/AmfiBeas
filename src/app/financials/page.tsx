@@ -300,6 +300,57 @@ export default async function FinancialsPage({
     ? `Derived · ${derivedHeadline} · ${yieldSource}`
     : yieldSource;
 
+  // ---- KPI-card sparklines + peer-median deltas ----
+  // 8Q sparkline values for the focused AMC. Each strips nulls so the
+  // sparkline stays bounded; if there are < 2 points we don't render.
+  const revenueSparkline = pnlData
+    .filter((p): p is typeof p & { revenue: number } => typeof p.revenue === "number")
+    .map((p) => ({ label: p.quarter, value: p.revenue }));
+  const opSparkline = pnlData
+    .filter((p): p is typeof p & { op: number } => typeof p.op === "number")
+    .map((p) => ({ label: p.quarter, value: p.op }));
+  const patSparkline = pnlData
+    .filter((p): p is typeof p & { pat: number } => typeof p.pat === "number")
+    .map((p) => ({ label: p.quarter, value: p.pat }));
+  const patMarginSparkline = marginData
+    .filter((p): p is typeof p & { patMargin: number } => typeof p.patMargin === "number")
+    .map((p) => ({ label: p.quarter, value: p.patMargin }));
+  const opMarginSparkline = marginData
+    .filter((p): p is typeof p & { opMargin: number } => typeof p.opMargin === "number")
+    .map((p) => ({ label: p.quarter, value: p.opMargin }));
+  const revenueYieldSparkline = yieldData
+    .filter((p): p is typeof p & { revenue: number } => typeof p.revenue === "number")
+    .map((p) => ({ label: p.quarter, value: p.revenue }));
+  const opYieldSparkline = yieldData
+    .filter((p): p is typeof p & { op: number } => typeof p.op === "number")
+    .map((p) => ({ label: p.quarter, value: p.op }));
+  const profitYieldSparkline = yieldData
+    .filter((p): p is typeof p & { profit: number } => typeof p.profit === "number")
+    .map((p) => ({ label: p.quarter, value: p.profit }));
+
+  // Peer-median context: drives the "vs peer median" ratio pills on
+  // margin / yield KPIs so the reader sees competitive position at a
+  // glance. Computed off `peerRows` (the same data the table below
+  // uses) so peer numbers can't drift between cards and table.
+  const peerMedianHelper = (values: (number | null)[]): number | null => {
+    const xs = values.filter((v): v is number => typeof v === "number");
+    if (xs.length === 0) return null;
+    const sorted = [...xs].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 1
+      ? sorted[mid]
+      : (sorted[mid - 1] + sorted[mid]) / 2;
+  };
+  const peerMedianPatMargin = peerMedianHelper(peerRows.map((p) => p.patMargin));
+  const peerMedianOpMargin = peerMedianHelper(peerRows.map((p) => p.opMargin));
+  const peerMedianRevenueYield = peerMedianHelper(
+    peerRows.map((p) => p.revenueYieldBps)
+  );
+  const peerMedianOpYield = peerMedianHelper(peerRows.map((p) => p.opYieldBps));
+  const peerMedianProfitYield = peerMedianHelper(
+    peerRows.map((p) => p.profitYieldBps)
+  );
+
   return (
     <div className="space-y-6">
       <PageHeader title="Financials" subtitle={subtitle} />
@@ -323,6 +374,9 @@ export default async function FinancialsPage({
           delta={`${formatDelta(revenueYoy)} YoY`}
           trend={trend(revenueYoy)}
           note={pnlNote}
+          sparkline={revenueSparkline}
+          sparklineColor="hsl(var(--chart-1))"
+          yoyPct={revenueYoy}
         />
         <KpiCard
           label="Operating Profit"
@@ -330,6 +384,9 @@ export default async function FinancialsPage({
           delta={`${formatDelta(opYoy)} YoY`}
           trend={trend(opYoy)}
           note={pnlNote}
+          sparkline={opSparkline}
+          sparklineColor="hsl(var(--chart-2))"
+          yoyPct={opYoy}
         />
         <KpiCard
           label="PAT"
@@ -337,6 +394,9 @@ export default async function FinancialsPage({
           delta={`${formatDelta(patYoy)} YoY`}
           trend={trend(patYoy)}
           note={pnlNote}
+          sparkline={patSparkline}
+          sparklineColor="hsl(var(--chart-3))"
+          yoyPct={patYoy}
         />
         <KpiCard
           label="PAT Margin"
@@ -344,6 +404,13 @@ export default async function FinancialsPage({
           delta={`${formatDelta(patMarginQoq)} QoQ`}
           trend={trend(patMarginQoq)}
           note={pnlNote}
+          sparkline={patMarginSparkline}
+          sparklineColor="hsl(var(--chart-3))"
+          ratio={
+            peerMedianPatMargin !== null
+              ? `${(patMargin - peerMedianPatMargin) >= 0 ? "+" : ""}${(patMargin - peerMedianPatMargin).toFixed(1)}pp vs peer median`
+              : undefined
+          }
         />
       </section>
 
@@ -352,6 +419,13 @@ export default async function FinancialsPage({
           label="Operating Margin (% of revenue)"
           value={opMargin.toFixed(1) + "%"}
           note={pnlNote}
+          sparkline={opMarginSparkline}
+          sparklineColor="hsl(var(--chart-2))"
+          ratio={
+            peerMedianOpMargin !== null
+              ? `${(opMargin - peerMedianOpMargin) >= 0 ? "+" : ""}${(opMargin - peerMedianOpMargin).toFixed(1)}pp vs peer median`
+              : undefined
+          }
         />
         <KpiCard
           label="Revenue Yield (bps of MF QAAUM)"
@@ -359,11 +433,25 @@ export default async function FinancialsPage({
             latest.avgAum > 0 ? revenueYieldBps.toFixed(1) + " bps" : "—"
           }
           note={yieldNote}
+          sparkline={revenueYieldSparkline}
+          sparklineColor="hsl(var(--chart-1))"
+          ratio={
+            peerMedianRevenueYield !== null && latest.avgAum > 0
+              ? `${(revenueYieldBps - peerMedianRevenueYield) >= 0 ? "+" : ""}${(revenueYieldBps - peerMedianRevenueYield).toFixed(1)} bps vs peer median`
+              : undefined
+          }
         />
         <KpiCard
           label="Operating Yield (bps of MF QAAUM)"
           value={latest.avgAum > 0 ? opYieldBps.toFixed(1) + " bps" : "—"}
           note={yieldNote}
+          sparkline={opYieldSparkline}
+          sparklineColor="hsl(var(--chart-2))"
+          ratio={
+            peerMedianOpYield !== null && latest.avgAum > 0
+              ? `${(opYieldBps - peerMedianOpYield) >= 0 ? "+" : ""}${(opYieldBps - peerMedianOpYield).toFixed(1)} bps vs peer median`
+              : undefined
+          }
         />
         <KpiCard
           label="Profit Yield (bps of MF QAAUM)"
@@ -371,6 +459,13 @@ export default async function FinancialsPage({
             latest.avgAum > 0 ? profitYieldBps.toFixed(1) + " bps" : "—"
           }
           note={yieldNote}
+          sparkline={profitYieldSparkline}
+          sparklineColor="hsl(var(--chart-3))"
+          ratio={
+            peerMedianProfitYield !== null && latest.avgAum > 0
+              ? `${(profitYieldBps - peerMedianProfitYield) >= 0 ? "+" : ""}${(profitYieldBps - peerMedianProfitYield).toFixed(1)} bps vs peer median`
+              : undefined
+          }
         />
       </section>
 

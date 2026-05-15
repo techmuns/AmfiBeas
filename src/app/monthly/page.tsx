@@ -20,6 +20,7 @@ import {
   getKpiValue,
   industryFlowWaterfall,
   investorRead,
+  kpiContext,
   latestAmfiMonthlyRow,
   latestIndustryFolioAdditions,
   latestProvenanceFor,
@@ -117,11 +118,52 @@ export default async function MonthlyPage({
     field: AmfiMonthlyKpiField;
     label: string;
     format: (v: number) => string;
+    sparklineColor?: string;
+    /** Optional ratio caption derived from the selected row (e.g. "20.6% of total AUM"). */
+    ratio?: (row: NonNullable<typeof amfiSelected>) => string | undefined;
   }[] = [
-    { field: "totalAaum", label: "Total AAUM", format: formatCompactCrSafe },
-    { field: "equityAum", label: "Equity AUM", format: formatCompactCrSafe },
-    { field: "debtAum", label: "Debt AUM", format: formatCompactCrSafe },
-    { field: "liquidAum", label: "Liquid AUM", format: formatCompactCrSafe },
+    {
+      field: "totalAaum",
+      label: "Total AAUM",
+      format: formatCompactCrSafe,
+      sparklineColor: "hsl(var(--chart-1))",
+    },
+    {
+      field: "equityAum",
+      label: "Equity AUM",
+      format: formatCompactCrSafe,
+      sparklineColor: "hsl(var(--chart-1))",
+      ratio: (r) => {
+        if (typeof r.equityAum !== "number" || typeof r.totalAum !== "number")
+          return undefined;
+        if (r.totalAum <= 0) return undefined;
+        return `${((r.equityAum / r.totalAum) * 100).toFixed(1)}% of total AUM`;
+      },
+    },
+    {
+      field: "debtAum",
+      label: "Debt AUM",
+      format: formatCompactCrSafe,
+      sparklineColor: "hsl(var(--chart-2))",
+      ratio: (r) => {
+        if (typeof r.debtAum !== "number" || typeof r.totalAum !== "number")
+          return undefined;
+        if (r.totalAum <= 0) return undefined;
+        return `${((r.debtAum / r.totalAum) * 100).toFixed(1)}% of total AUM`;
+      },
+    },
+    {
+      field: "liquidAum",
+      label: "Liquid AUM",
+      format: formatCompactCrSafe,
+      sparklineColor: "hsl(var(--chart-4))",
+      ratio: (r) => {
+        if (typeof r.liquidAum !== "number" || typeof r.totalAum !== "number")
+          return undefined;
+        if (r.totalAum <= 0) return undefined;
+        return `${((r.liquidAum / r.totalAum) * 100).toFixed(1)}% of total AUM`;
+      },
+    },
     {
       field: "netInflow",
       label: "Net Inflow",
@@ -132,19 +174,55 @@ export default async function MonthlyPage({
         if (v >= 0) return formatCompactCrSafe(v);
         return "−" + formatCompactCrSafe(-v);
       },
+      sparklineColor: "hsl(var(--chart-3))",
+      ratio: (r) => {
+        if (typeof r.netInflow !== "number" || typeof r.totalAum !== "number")
+          return undefined;
+        if (r.totalAum <= 0) return undefined;
+        return `${((r.netInflow / r.totalAum) * 100).toFixed(2)}% of opening AUM`;
+      },
     },
     {
       field: "sipContribution",
       label: "SIP Contribution",
       format: formatCompactCrSafe,
+      sparklineColor: "hsl(var(--chart-1))",
+      ratio: (r) => {
+        if (
+          typeof r.sipContribution !== "number" ||
+          typeof r.netInflow !== "number" ||
+          r.netInflow <= 0
+        )
+          return undefined;
+        return `${((r.sipContribution / r.netInflow) * 100).toFixed(0)}% of net inflow`;
+      },
     },
-    { field: "sipAum", label: "SIP AUM", format: formatCompactCrSafe },
+    {
+      field: "sipAum",
+      label: "SIP AUM",
+      format: formatCompactCrSafe,
+      sparklineColor: "hsl(var(--chart-2))",
+      ratio: (r) => {
+        if (typeof r.sipAum !== "number" || typeof r.totalAum !== "number")
+          return undefined;
+        if (r.totalAum <= 0) return undefined;
+        return `${((r.sipAum / r.totalAum) * 100).toFixed(1)}% of total AUM`;
+      },
+    },
     {
       field: "sipAccounts",
       label: "SIP Accounts",
       // SIP accounts are stored as a raw count (e.g. 97,200,000); the
       // safe formatter divides by 1e7 and emits "9.72 Cr".
       format: (v: number) => formatCroreCountSafe(v),
+      sparklineColor: "hsl(var(--chart-3))",
+      ratio: (r) => {
+        if (typeof r.sipAccounts !== "number" || typeof r.totalAum !== "number")
+          return undefined;
+        if (r.totalAum <= 0) return undefined;
+        // Accounts per ₹ Cr of AUM — investor density.
+        return `${(r.sipAccounts / r.totalAum).toFixed(1)} per ₹ Cr AUM`;
+      },
     },
   ];
 
@@ -152,6 +230,7 @@ export default async function MonthlyPage({
     const value = getKpiValue(amfiSelected, spec.field);
     if (value === null) return [];
     const provenance = getKpiProvenance(amfiSelected, spec.field);
+    const ctx = kpiContext(spec.field, 24);
     return [
       {
         ...spec,
@@ -163,6 +242,10 @@ export default async function MonthlyPage({
         // (row.fieldSources[field].sourcePdf) regardless.
         note: formatKpiProvenanceLine(provenance) ?? "",
         noteHover: formatKpiProvenanceTooltip(provenance) ?? undefined,
+        sparkline: ctx.sparkline,
+        yoyPct: ctx.yoyPct,
+        percentile: ctx.percentile,
+        ratioLine: amfiSelected ? spec.ratio?.(amfiSelected) : undefined,
       },
     ];
   });
@@ -375,6 +458,9 @@ export default async function MonthlyPage({
   const folioAdditionsTrend = monthlyIndustryFolioAdditionsTrend(24);
   const nfoCountTrend = monthlyTrend("industryNfoCount", 24);
   const nfoFundsTrend = monthlyTrend("industryNfoFundsMobilized", 24);
+  const foliosCtx = kpiContext("industryFolios", 24);
+  const nfoCountCtx = kpiContext("industryNfoCount", 24);
+  const nfoFundsCtx = kpiContext("industryNfoFundsMobilized", 24);
 
   const foliosHover = formatKpiProvenanceTooltip(
     latestProvenanceFor("industryFolios")
@@ -570,6 +656,11 @@ export default async function MonthlyPage({
                 value={c.formatted}
                 note={c.note}
                 noteHover={c.noteHover}
+                sparkline={c.sparkline}
+                sparklineColor={c.sparklineColor}
+                yoyPct={c.yoyPct}
+                percentile={c.percentile}
+                ratio={c.ratioLine}
               />
             ))}
           </div>
@@ -1234,24 +1325,61 @@ export default async function MonthlyPage({
               value={formatCroreCountSafe(industryFoliosLatest)}
               note=""
               noteHover={foliosHover ?? undefined}
+              sparkline={foliosCtx.sparkline}
+              sparklineColor="hsl(var(--chart-4))"
+              yoyPct={foliosCtx.yoyPct}
+              percentile={foliosCtx.percentile}
+              ratio={
+                folioLatestRow &&
+                typeof folioLatestRow.industryFolios === "number" &&
+                typeof folioLatestRow.totalAum === "number" &&
+                folioLatestRow.totalAum > 0
+                  ? `${(folioLatestRow.industryFolios / folioLatestRow.totalAum).toFixed(1)} folios per ₹ Cr AUM`
+                  : undefined
+              }
             />
             <KpiCard
               label="Folio Additions"
               value={formatLakhSafe(industryFolioAdditionsLatest)}
               note=""
               noteHover={foliosHover ?? undefined}
+              sparkline={folioAdditionsTrend}
+              sparklineColor="hsl(var(--chart-4))"
             />
             <KpiCard
               label="NFO Launches"
               value={formatIntSafe(industryNfoCountLatest)}
               note=""
               noteHover={nfoCountHover ?? undefined}
+              sparkline={nfoCountCtx.sparkline}
+              sparklineColor="hsl(var(--chart-5))"
+              yoyPct={nfoCountCtx.yoyPct}
+              percentile={nfoCountCtx.percentile}
+              ratio={
+                typeof industryNfoFundsLatest === "number" &&
+                typeof industryNfoCountLatest === "number" &&
+                industryNfoCountLatest > 0
+                  ? `${formatCompactCrSafe(industryNfoFundsLatest / industryNfoCountLatest)} per launch`
+                  : undefined
+              }
             />
             <KpiCard
               label="NFO Funds Mobilized"
               value={formatCompactCrSafe(industryNfoFundsLatest)}
               note=""
               noteHover={nfoFundsHover ?? undefined}
+              sparkline={nfoFundsCtx.sparkline}
+              sparklineColor="hsl(var(--chart-2))"
+              yoyPct={nfoFundsCtx.yoyPct}
+              percentile={nfoFundsCtx.percentile}
+              ratio={
+                folioLatestRow &&
+                typeof folioLatestRow.industryNfoFundsMobilized === "number" &&
+                typeof folioLatestRow.netInflow === "number" &&
+                folioLatestRow.netInflow > 0
+                  ? `${((folioLatestRow.industryNfoFundsMobilized / folioLatestRow.netInflow) * 100).toFixed(1)}% of net inflow`
+                  : undefined
+              }
             />
           </section>
 

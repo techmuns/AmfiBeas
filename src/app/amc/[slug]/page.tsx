@@ -59,6 +59,47 @@ export default async function AmcPage({
     quarter: p.fiscalLabel,
     rank: p.rank,
   }));
+
+  // KPI-card contexts: percentile-vs-own-history readings + 4Q / 5Y deltas.
+  const aaumValues = aaumSeries.map((p) => p.avgAum);
+  const aaumLatest = aaumValues[aaumValues.length - 1];
+  const aaumPercentile =
+    typeof aaumLatest === "number" && aaumValues.length > 0
+      ? (aaumValues.filter((v) => v <= aaumLatest).length / aaumValues.length) * 100
+      : null;
+  const shareValues = shareSeries.map((p) => p.marketSharePct);
+  const shareLatest = shareValues[shareValues.length - 1];
+  const shareOwnPercentile =
+    typeof shareLatest === "number" && shareValues.length > 0
+      ? (shareValues.filter((v) => v <= shareLatest).length / shareValues.length) * 100
+      : null;
+  // YoY shift in market share in percentage points (vs same quarter
+  // 4 quarters back).
+  const marketShareYoyPpDelta =
+    shareSeries.length >= 5
+      ? shareSeries[shareSeries.length - 1].marketSharePct -
+        shareSeries[shareSeries.length - 5].marketSharePct
+      : null;
+  // 5Y shift in market share in percentage points (≥ 20 quarters back).
+  const shareDelta5Y =
+    shareSeries.length >= 21
+      ? shareSeries[shareSeries.length - 1].marketSharePct -
+        shareSeries[shareSeries.length - 21].marketSharePct
+      : shareSeries.length >= 2
+        ? shareSeries[shareSeries.length - 1].marketSharePct - shareSeries[0].marketSharePct
+        : null;
+  // 4-quarter rank movement (positive number = moved DOWN in rank).
+  const rankDelta4Q =
+    rankSeries.length >= 5
+      ? rankSeries[rankSeries.length - 1].rank -
+        rankSeries[rankSeries.length - 5].rank
+      : null;
+  // Cohort median QoQ growth this quarter — for the "vs cohort median"
+  // pill on the QoQ KPI.
+  const anomalyReport = latestQoqAnomalies(2);
+  const cohortMedianQoq = anomalyReport?.medianQoqPct ?? null;
+  const thisAmcAnomaly =
+    anomalyReport?.outliers.find((o) => o.amcSlug === slug) ?? null;
   const peerChart =
     peer?.rows.map((r) => ({
       label: r.displayName,
@@ -77,11 +118,6 @@ export default async function AmcPage({
           : ("flat" as const);
 
   const latest = detail.latest;
-
-  // Anomaly: is this AMC an outlier on QoQ growth in the latest quarter?
-  const anomalyReport = latestQoqAnomalies(2);
-  const thisAmcAnomaly =
-    anomalyReport?.outliers.find((o) => o.amcSlug === slug) ?? null;
 
   return (
     <div className="space-y-6">
@@ -137,12 +173,30 @@ export default async function AmcPage({
           label="Latest MF AAUM"
           value={formatCompactCrSafe(latest?.avgAum ?? null)}
           note={latest ? latest.fiscalLabel : ""}
+          sparkline={aaumChart.map((p) => ({ label: p.month, value: p.value }))}
+          sparklineColor="hsl(var(--chart-1))"
+          yoyPct={growth?.yoyGrowthPct ?? undefined}
+          percentile={aaumPercentile ?? undefined}
+          ratio={
+            latest
+              ? `${formatPctSafe(latest.marketSharePct, 2)} of industry AAUM`
+              : undefined
+          }
         />
         <KpiCard
           label="Market Share"
           value={formatPctSafe(latest?.marketSharePct ?? null, 2)}
           note={
             latest ? `Within ${latest.outOf} AMCs · ${latest.fiscalLabel}` : ""
+          }
+          sparkline={shareChart}
+          sparklineColor="hsl(var(--chart-3))"
+          yoyPct={marketShareYoyPpDelta ?? undefined}
+          percentile={shareOwnPercentile ?? undefined}
+          ratio={
+            shareDelta5Y !== null
+              ? `${shareDelta5Y >= 0 ? "+" : ""}${shareDelta5Y.toFixed(2)} pp vs 5Y ago`
+              : undefined
           }
         />
         <KpiCard
@@ -153,6 +207,15 @@ export default async function AmcPage({
               : "—"
           }
           note={latest ? `of ${latest.outOf} AMCs · ${latest.fiscalLabel}` : ""}
+          ratio={
+            rankDelta4Q !== null
+              ? rankDelta4Q === 0
+                ? "Unchanged vs 4Q ago"
+                : rankDelta4Q < 0
+                  ? `▲ ${Math.abs(rankDelta4Q)} vs 4Q ago`
+                  : `▼ ${rankDelta4Q} vs 4Q ago`
+              : undefined
+          }
         />
         <KpiCard
           label="QoQ AAUM Growth"
@@ -166,6 +229,11 @@ export default async function AmcPage({
             growth?.prevQuarter
               ? `vs ${detail.latest?.fiscalLabel} → prior quarter`
               : "Insufficient history"
+          }
+          ratio={
+            cohortMedianQoq !== null && growth?.qoqGrowthPct !== undefined && growth?.qoqGrowthPct !== null
+              ? `${(growth.qoqGrowthPct - cohortMedianQoq) >= 0 ? "+" : ""}${(growth.qoqGrowthPct - cohortMedianQoq).toFixed(2)}pp vs cohort median`
+              : undefined
           }
         />
       </section>
