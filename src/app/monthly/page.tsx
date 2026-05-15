@@ -29,12 +29,24 @@ import {
   monthlyIndustryFolioAdditionsTrend,
   monthlySipAumShareTrend,
   monthlyTrend,
+  nfoHeatSignal,
+  passiveShiftSignal,
   resolveSelectedRow,
+  sipStickinessSignal,
   trailingActiveEquityNetInflowAverage,
   type ActiveEquityNetInflowSignal,
   type ActiveEquitySignalLabel,
   type AmfiMonthlyKpiField,
+  type NfoHeatSignal,
+  type PassiveShiftLabel,
+  type PassiveShiftSignal,
+  type SipStickinessSignal,
 } from "@/data/amfi-monthly";
+import {
+  marketStressFlowSignal,
+  type MarketStressLabel,
+  type MarketStressSignal,
+} from "@/data/market-indices";
 import {
   IIFL_ACTIVE_EQUITY_CATEGORIES,
   IIFL_TREND_EXPANDED_SLUGS,
@@ -436,12 +448,30 @@ export default async function MonthlyPage({
   const activeEquityFlowAvg = trailingActiveEquityNetInflowAverage(12);
   const activeEquityBridge = monthlyActiveEquityAumBridge(24);
   const sipAumShareTrend = monthlySipAumShareTrend(24);
-  const activeEquitySignal = activeEquityNetInflowSignal();
   const hasActiveEquityFlowDiagnostics =
     activeEquityFlowTrend.length > 0 ||
     activeEquityBridge.length > 0 ||
-    sipAumShareTrend.length > 0 ||
-    activeEquitySignal !== null;
+    sipAumShareTrend.length > 0;
+
+  // ---- Investor Signals Panel --------------------------------------
+  // Five historical-context signals computed off the existing AMFI
+  // monthly + market-indices snapshots. No new ingestion. The Equity
+  // Flow Share signal is intentionally omitted — 20 / 62 monthly rows
+  // carry a non-positive total net inflow, which would make the
+  // (equityNetInflow ÷ totalNetInflow) ratio fragile.
+  const activeEquitySignal = activeEquityNetInflowSignal();
+  const nfoSignal = nfoHeatSignal();
+  const passiveSignal = passiveShiftSignal();
+  const sipStickiness = sipStickinessSignal();
+  const marketStress = marketStressFlowSignal();
+  const investorSignals = [
+    activeEquitySignal,
+    nfoSignal,
+    passiveSignal,
+    sipStickiness,
+    marketStress,
+  ].filter((s): s is NonNullable<typeof s> => s !== null);
+  const hasInvestorSignals = investorSignals.length > 0;
 
   // ---- 12-month Industry Flow Waterfall + Active vs Passive ---------
   const flowWaterfall = industryFlowWaterfall(12);
@@ -493,6 +523,23 @@ export default async function MonthlyPage({
           </div>
         )}
       </Card>
+
+      {hasInvestorSignals && (
+        <Card
+          title="Investor Signals"
+          subtitle="Historical context from AMFI monthly data"
+        >
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {activeEquitySignal && (
+              <ActiveEquityFlowTile signal={activeEquitySignal} />
+            )}
+            {nfoSignal && <NfoHeatTile signal={nfoSignal} />}
+            {passiveSignal && <PassiveShiftTile signal={passiveSignal} />}
+            {sipStickiness && <SipStickinessTile signal={sipStickiness} />}
+            {marketStress && <MarketStressTile signal={marketStress} />}
+          </div>
+        </Card>
+      )}
 
       {amfiSelected && (
         <div className="space-y-3">
@@ -647,10 +694,6 @@ export default async function MonthlyPage({
               Source: AMFI Monthly Report
             </p>
           </div>
-
-          {activeEquitySignal && (
-            <ActiveEquityNetInflowSignalCard signal={activeEquitySignal} />
-          )}
 
           <section className="grid gap-4 lg:grid-cols-2">
             {activeEquityFlowTrend.length > 0 && (
@@ -1238,98 +1281,274 @@ function signalToneClass(label: ActiveEquitySignalLabel): string {
   }
 }
 
-function ActiveEquityNetInflowSignalCard({
+function passiveToneClass(label: PassiveShiftLabel): string {
+  // "Passive gaining share" and "Active-heavy" are structural reads,
+  // not directional good/bad — keep both on a muted style so the
+  // panel doesn't suggest a winner.
+  switch (label) {
+    case "Passive gaining share":
+      return "border-foreground/30 bg-muted text-foreground";
+    case "Active-heavy":
+      return "border-foreground/30 bg-muted text-foreground";
+    case "Insufficient history":
+    default:
+      return "border-border bg-muted text-muted-foreground";
+  }
+}
+
+function marketStressToneClass(label: MarketStressLabel): string {
+  switch (label) {
+    case "Buy-the-dip flow":
+      return "border-positive/40 bg-positive/10 text-positive";
+    case "Flow stress":
+      return "border-negative/40 bg-negative/10 text-negative";
+    case "Insufficient history":
+      return "border-border bg-muted text-muted-foreground";
+    default:
+      return "border-border bg-muted text-muted-foreground";
+  }
+}
+
+/** Shared compact tile used by every signal in the Investor Signals
+ *  panel. Keeps spacing and typography consistent across signals. */
+function SignalTile({
+  name,
+  primary,
+  primaryNote,
+  badge,
+  badgeClass,
+  metrics,
+  read,
+  infoLabel,
+}: {
+  name: string;
+  primary: string;
+  primaryNote?: string;
+  badge: string;
+  badgeClass: string;
+  metrics: { key: string; label: string; value: string }[];
+  read: string;
+  infoLabel: string;
+}) {
+  return (
+    <div className="flex flex-col gap-3 rounded-md border bg-card p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          {name}
+          <InfoTooltip label={infoLabel} />
+        </div>
+        <span
+          className={cn(
+            "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-tight whitespace-nowrap",
+            badgeClass
+          )}
+        >
+          {badge}
+        </span>
+      </div>
+      <div>
+        <div className="text-xl font-semibold tabular tracking-tight">
+          {primary}
+        </div>
+        {primaryNote && (
+          <div className="text-[10px] tabular text-muted-foreground/80">
+            {primaryNote}
+          </div>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {metrics.map((m) => (
+          <div key={m.key}>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              {m.label}
+            </div>
+            <div className="text-sm font-medium tabular">{m.value}</div>
+          </div>
+        ))}
+      </div>
+      <p className="text-[11px] text-muted-foreground">{read}</p>
+    </div>
+  );
+}
+
+function ActiveEquityFlowTile({
   signal,
 }: {
   signal: ActiveEquityNetInflowSignal;
 }) {
-  const insufficient = signal.label === "Insufficient history";
-  const zScoreText =
-    signal.zScore !== null ? signal.zScore.toFixed(2) + "σ" : "—";
-  const percentileText =
-    signal.percentileRank !== null
-      ? signal.percentileRank.toFixed(0) + "th"
-      : "—";
-  const meanText = formatSignedCompactCr(signal.mean);
-  const latestText = formatSignedCompactCr(signal.latestValue);
-  const stdDevText =
-    signal.stdDev !== null ? formatSignedCompactCr(signal.stdDev) : "—";
+  const z = signal.zScore;
+  const pct = signal.percentileRank;
+  const read =
+    signal.label === "Insufficient history"
+      ? "Not enough history yet to score the latest month."
+      : signal.label === "Very strong" || signal.label === "Strong"
+        ? `Active-equity inflow is in the top ${pct !== null ? (100 - pct).toFixed(0) : "—"}% of months on record.`
+        : signal.label === "Weak" || signal.label === "Very weak"
+          ? `Active-equity inflow is in the bottom ${pct !== null ? pct.toFixed(0) : "—"}% of months on record.`
+          : "Active-equity inflow is broadly in line with the historical norm.";
   return (
-    <Card
-      title="Active Equity Net Inflow Signal"
-      subtitle={`Latest ${signal.latestMonth} · history since ${signal.historyStart} (${signal.historyMonths} months)`}
-      action={
-        <span
-          className={cn(
-            "shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium tracking-tight",
-            signalToneClass(signal.label)
-          )}
-        >
-          {signal.label}
-        </span>
-      }
-    >
-      <div className="grid gap-4 sm:grid-cols-4">
-        <div>
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-            Latest
-          </div>
-          <div className="mt-1 text-2xl font-semibold tabular tracking-tight">
-            {latestText}
-          </div>
-          <div className="mt-1 text-[10px] tabular text-muted-foreground/80">
-            Net inflow · {signal.latestMonth}
-          </div>
-        </div>
-        <div>
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-            Historical average
-          </div>
-          <div className="mt-1 text-xl font-semibold tabular tracking-tight">
-            {meanText}
-          </div>
-          <div className="mt-1 text-[10px] tabular text-muted-foreground/80">
-            σ = {stdDevText}
-          </div>
-        </div>
-        <div>
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-            Z-score
-          </div>
-          <div
-            className={cn(
-              "mt-1 text-xl font-semibold tabular tracking-tight",
-              insufficient && "text-muted-foreground"
-            )}
-          >
-            {zScoreText}
-          </div>
-          <div className="mt-1 text-[10px] tabular text-muted-foreground/80">
-            vs historical mean
-          </div>
-        </div>
-        <div>
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-            Percentile
-          </div>
-          <div
-            className={cn(
-              "mt-1 text-xl font-semibold tabular tracking-tight",
-              insufficient && "text-muted-foreground"
-            )}
-          >
-            {percentileText}
-          </div>
-          <div className="mt-1 text-[10px] tabular text-muted-foreground/80">
-            of months ≤ latest
-          </div>
-        </div>
-      </div>
-      <p className="mt-4 text-[11px] text-muted-foreground">
-        Signal compares latest monthly active-equity net inflow with
-        available history since {signal.historyStart}. Historical
-        context only — not a prediction.
-      </p>
-    </Card>
+    <SignalTile
+      name="Active Equity Flow"
+      primary={formatSignedCompactCr(signal.latestValue)}
+      primaryNote={`Net inflow · ${signal.latestMonth}`}
+      badge={signal.label}
+      badgeClass={signalToneClass(signal.label)}
+      metrics={[
+        {
+          key: "z",
+          label: "Z-score",
+          value: z !== null ? z.toFixed(2) + "σ" : "—",
+        },
+        {
+          key: "pct",
+          label: "Percentile",
+          value: pct !== null ? pct.toFixed(0) + "th" : "—",
+        },
+      ]}
+      read={read}
+      infoLabel={`zScore = (latest − mean) ÷ stdDev. Percentile = % of months with value ≤ latest. History: ${signal.historyStart} → ${signal.historyEnd} (${signal.historyMonths} months).`}
+    />
+  );
+}
+
+function NfoHeatTile({ signal }: { signal: NfoHeatSignal }) {
+  const z = signal.zScore;
+  const pct = signal.percentileRank;
+  const read =
+    signal.label === "Insufficient history"
+      ? "Not enough history yet to score the latest month."
+      : signal.label === "Very strong" || signal.label === "Strong"
+        ? "NFO mobilisation is unusually high vs the historical norm."
+        : signal.label === "Weak" || signal.label === "Very weak"
+          ? "NFO mobilisation is unusually low vs the historical norm."
+          : "NFO mobilisation is broadly in line with the historical norm.";
+  return (
+    <SignalTile
+      name="NFO Heat"
+      primary={formatSignedCompactCr(signal.latestValue)}
+      primaryNote={`NFO funds mobilised · ${signal.latestMonth}`}
+      badge={signal.label}
+      badgeClass={signalToneClass(signal.label)}
+      metrics={[
+        {
+          key: "z",
+          label: "Z-score",
+          value: z !== null ? z.toFixed(2) + "σ" : "—",
+        },
+        {
+          key: "pct",
+          label: "Percentile",
+          value: pct !== null ? pct.toFixed(0) + "th" : "—",
+        },
+      ]}
+      read={read}
+      infoLabel={`zScore = (latest NFO mobilisation − mean) ÷ stdDev. Percentile = % of months with value ≤ latest. History from ${signal.historyStart} (${signal.historyMonths} months).`}
+    />
+  );
+}
+
+function PassiveShiftTile({ signal }: { signal: PassiveShiftSignal }) {
+  const pct = signal.percentileRank;
+  const read =
+    signal.label === "Passive gaining share"
+      ? `Passive share of equity AUM is in the top ${pct !== null ? (100 - pct).toFixed(0) : "—"}% of months on record.`
+      : signal.label === "Active-heavy"
+        ? `Passive share of equity AUM is in the bottom ${pct !== null ? pct.toFixed(0) : "—"}% of months on record.`
+        : signal.label === "Insufficient history"
+          ? "Not enough history yet to score the latest month."
+          : "Passive share is broadly in line with the historical norm.";
+  return (
+    <SignalTile
+      name="Passive Shift"
+      primary={signal.latestSharePct.toFixed(2) + "%"}
+      primaryNote={`Passive share · ${signal.latestMonth}`}
+      badge={signal.label}
+      badgeClass={passiveToneClass(signal.label)}
+      metrics={[
+        {
+          key: "mean",
+          label: "Historical avg",
+          value: signal.mean.toFixed(2) + "%",
+        },
+        {
+          key: "pct",
+          label: "Percentile",
+          value: pct !== null ? pct.toFixed(0) + "th" : "—",
+        },
+      ]}
+      read={read}
+      infoLabel={`passiveShare = ETF & Index AUM ÷ (Active Equity AUM + ETF & Index AUM) × 100. Percentile uses ${signal.historyMonths} months of history since ${signal.historyStart}.`}
+    />
+  );
+}
+
+function SipStickinessTile({ signal }: { signal: SipStickinessSignal }) {
+  const z = signal.zScore;
+  const pct = signal.percentileRank;
+  const read =
+    signal.label === "Insufficient history"
+      ? "Not enough SIP history yet to score the latest month."
+      : signal.label === "Very strong" || signal.label === "Strong"
+        ? "SIP-anchored AUM share is at the high end of the available history."
+        : signal.label === "Weak" || signal.label === "Very weak"
+          ? "SIP-anchored AUM share is at the low end of the available history."
+          : "SIP-anchored AUM share is broadly in line with the historical norm.";
+  return (
+    <SignalTile
+      name="SIP Stickiness"
+      primary={signal.latestSharePct.toFixed(2) + "%"}
+      primaryNote={`SIP AUM share · ${signal.latestMonth}`}
+      badge={signal.label}
+      badgeClass={signalToneClass(signal.label)}
+      metrics={[
+        {
+          key: "z",
+          label: "Z-score",
+          value: z !== null ? z.toFixed(2) + "σ" : "—",
+        },
+        {
+          key: "pct",
+          label: "Percentile",
+          value: pct !== null ? pct.toFixed(0) + "th" : "—",
+        },
+      ]}
+      read={read}
+      infoLabel={`SIP stickiness = SIP AUM ÷ Total AUM × 100. Available SIP history starts from ${signal.historyStart} (${signal.historyMonths} months).`}
+    />
+  );
+}
+
+function MarketStressTile({ signal }: { signal: MarketStressSignal }) {
+  const pct = signal.flowPercentileRank;
+  const read =
+    signal.label === "Buy-the-dip flow"
+      ? "Nifty 500 is in drawdown and active-equity flows are running high."
+      : signal.label === "Flow stress"
+        ? "Nifty 500 is in drawdown and active-equity flows are running low."
+        : signal.label === "Insufficient history"
+          ? "Not enough overlapping history yet to score the latest month."
+          : "No combined drawdown / flow stress signal on the latest aligned month.";
+  return (
+    <SignalTile
+      name="Market Stress Flow"
+      primary={signal.drawdownPct.toFixed(2) + "%"}
+      primaryNote={`Nifty 500 drawdown · ${signal.alignedMonth}`}
+      badge={signal.label}
+      badgeClass={marketStressToneClass(signal.label)}
+      metrics={[
+        {
+          key: "flow",
+          label: "Active-equity flow",
+          value: formatSignedCompactCr(signal.flowValue),
+        },
+        {
+          key: "pct",
+          label: "Flow percentile",
+          value: pct !== null ? pct.toFixed(0) + "th" : "—",
+        },
+      ]}
+      read={read}
+      infoLabel={`Drawdown = Nifty 500 month-end vs rolling all-time high. Flow percentile = % of months with active-equity net inflow ≤ aligned month. "Buy-the-dip flow" when drawdown ≤ −10% and flow percentile ≥ 60; "Flow stress" when drawdown ≤ −10% and flow percentile ≤ 40.`}
+    />
   );
 }

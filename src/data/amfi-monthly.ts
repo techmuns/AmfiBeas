@@ -727,6 +727,54 @@ export type ActiveEquitySignalLabel =
   | "Very weak"
   | "Insufficient history";
 
+export interface HistoricalSignalStats {
+  /** Arithmetic mean of `values`. */
+  mean: number;
+  /** Population standard deviation (n divisor). Null when n < 2 or
+   *  variance is zero — both cases would produce a divide-by-zero in
+   *  the z-score. */
+  stdDev: number | null;
+  /** (latest − mean) / stdDev. Null when stdDev is null. */
+  zScore: number | null;
+  /** Share of observations with value ≤ latest, in %. Null when the
+   *  series is empty. */
+  percentileRank: number | null;
+}
+
+/** Generic historical-context stats for any monthly numeric series.
+ *  Mean is arithmetic; standard deviation is population (n divisor)
+ *  so a short series still produces a usable z-score. Percentile
+ *  rank uses `≤` so ties give the latest observation credit. */
+export function historicalSignalStats(
+  values: number[],
+  latest: number
+): HistoricalSignalStats {
+  const n = values.length;
+  if (n === 0) {
+    return { mean: latest, stdDev: null, zScore: null, percentileRank: null };
+  }
+  const mean = values.reduce((s, v) => s + v, 0) / n;
+  const variance = values.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
+  const stdDev = n >= 2 && variance > 0 ? Math.sqrt(variance) : null;
+  const zScore =
+    stdDev !== null && Number.isFinite(stdDev) && stdDev > 0
+      ? (latest - mean) / stdDev
+      : null;
+  const lessOrEqual = values.filter((v) => v <= latest).length;
+  const percentileRank = (lessOrEqual / n) * 100;
+  return { mean, stdDev, zScore, percentileRank };
+}
+
+/** Map a z-score to the standard 5-bucket label. */
+export function zScoreLabel(z: number | null): ActiveEquitySignalLabel {
+  if (z === null || !Number.isFinite(z)) return "Insufficient history";
+  if (z >= 2) return "Very strong";
+  if (z >= 1) return "Strong";
+  if (z <= -2) return "Very weak";
+  if (z <= -1) return "Weak";
+  return "Normal";
+}
+
 export interface ActiveEquityNetInflowSignal {
   latestMonth: string;
   latestValue: number;
@@ -740,15 +788,6 @@ export interface ActiveEquityNetInflowSignal {
   historyEnd: string;
 }
 
-function labelFromZScore(z: number | null): ActiveEquitySignalLabel {
-  if (z === null || !Number.isFinite(z)) return "Insufficient history";
-  if (z >= 2) return "Very strong";
-  if (z >= 1) return "Strong";
-  if (z <= -2) return "Very weak";
-  if (z <= -1) return "Weak";
-  return "Normal";
-}
-
 export function activeEquityNetInflowSignal(): ActiveEquityNetInflowSignal | null {
   const rows = amfiMonthlyRows();
   const withValue = rows.flatMap((r) =>
@@ -757,41 +796,163 @@ export function activeEquityNetInflowSignal(): ActiveEquityNetInflowSignal | nul
       : []
   );
   if (withValue.length === 0) return null;
-
   const latest = withValue[withValue.length - 1];
-  const historyStart = withValue[0].month;
-  const historyEnd = latest.month;
-
   const values = withValue.map((p) => p.value);
-  const n = values.length;
-  const mean = values.reduce((s, v) => s + v, 0) / n;
-
-  // Population standard deviation: stable when the history is short
-  // (sample stdev divides by n-1 and blows up for n=2).
-  const variance = values.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
-  const stdDev = n >= 2 && variance > 0 ? Math.sqrt(variance) : null;
-
-  const zScore =
-    stdDev !== null && Number.isFinite(stdDev) && stdDev > 0
-      ? (latest.value - mean) / stdDev
-      : null;
-
-  // Percentile rank uses ≤ so the latest observation gets credit for
-  // ties — matches the natural reading "this month is in the top X%
-  // of history".
-  const lessOrEqual = values.filter((v) => v <= latest.value).length;
-  const percentileRank = n > 0 ? (lessOrEqual / n) * 100 : null;
-
+  const stats = historicalSignalStats(values, latest.value);
   return {
     latestMonth: latest.month,
     latestValue: latest.value,
-    historyMonths: n,
-    mean,
-    stdDev,
-    zScore,
-    percentileRank,
-    label: labelFromZScore(zScore),
-    historyStart,
-    historyEnd,
+    historyMonths: values.length,
+    mean: stats.mean,
+    stdDev: stats.stdDev,
+    zScore: stats.zScore,
+    percentileRank: stats.percentileRank,
+    label: zScoreLabel(stats.zScore),
+    historyStart: withValue[0].month,
+    historyEnd: latest.month,
+  };
+}
+
+/** NFO Heat: z-score / percentile of latest `industryNfoFundsMobilized`. */
+export interface NfoHeatSignal {
+  latestMonth: string;
+  latestValue: number;
+  historyMonths: number;
+  mean: number;
+  stdDev: number | null;
+  zScore: number | null;
+  percentileRank: number | null;
+  label: ActiveEquitySignalLabel;
+  historyStart: string;
+}
+
+export function nfoHeatSignal(): NfoHeatSignal | null {
+  const rows = amfiMonthlyRows();
+  const withValue = rows.flatMap((r) =>
+    typeof r.industryNfoFundsMobilized === "number"
+      ? [{ month: r.month, value: r.industryNfoFundsMobilized }]
+      : []
+  );
+  if (withValue.length === 0) return null;
+  const latest = withValue[withValue.length - 1];
+  const values = withValue.map((p) => p.value);
+  const stats = historicalSignalStats(values, latest.value);
+  return {
+    latestMonth: latest.month,
+    latestValue: latest.value,
+    historyMonths: values.length,
+    mean: stats.mean,
+    stdDev: stats.stdDev,
+    zScore: stats.zScore,
+    percentileRank: stats.percentileRank,
+    label: zScoreLabel(stats.zScore),
+    historyStart: withValue[0].month,
+  };
+}
+
+/** Passive Shift: latest passive share % vs history.
+ *
+ *   passiveShare = etfIndexAum ÷ (activeEquityAum + etfIndexAum) × 100
+ *
+ * Uses closing-balance AUM so the share is comparable across months.
+ * Direction-aware label:
+ *   - percentile ≥ 80 → "Passive gaining share"
+ *   - percentile ≤ 20 → "Active-heavy"
+ *   - else            → "Normal"
+ */
+export type PassiveShiftLabel =
+  | "Passive gaining share"
+  | "Active-heavy"
+  | "Normal"
+  | "Insufficient history";
+
+export interface PassiveShiftSignal {
+  latestMonth: string;
+  latestSharePct: number;
+  historyMonths: number;
+  mean: number;
+  stdDev: number | null;
+  zScore: number | null;
+  percentileRank: number | null;
+  label: PassiveShiftLabel;
+  historyStart: string;
+}
+
+export function passiveShiftSignal(): PassiveShiftSignal | null {
+  const rows = amfiMonthlyRows();
+  const series = rows.flatMap((r) => {
+    if (
+      typeof r.activeEquityAum !== "number" ||
+      typeof r.etfIndexAum !== "number"
+    ) {
+      return [];
+    }
+    const denom = r.activeEquityAum + r.etfIndexAum;
+    if (denom <= 0) return [];
+    return [{ month: r.month, value: (r.etfIndexAum / denom) * 100 }];
+  });
+  if (series.length === 0) return null;
+  const latest = series[series.length - 1];
+  const values = series.map((p) => p.value);
+  const stats = historicalSignalStats(values, latest.value);
+  let label: PassiveShiftLabel = "Normal";
+  if (stats.percentileRank === null) {
+    label = "Insufficient history";
+  } else if (stats.percentileRank >= 80) {
+    label = "Passive gaining share";
+  } else if (stats.percentileRank <= 20) {
+    label = "Active-heavy";
+  }
+  return {
+    latestMonth: latest.month,
+    latestSharePct: latest.value,
+    historyMonths: values.length,
+    mean: stats.mean,
+    stdDev: stats.stdDev,
+    zScore: stats.zScore,
+    percentileRank: stats.percentileRank,
+    label,
+    historyStart: series[0].month,
+  };
+}
+
+/** SIP Stickiness: latest (sipAum ÷ totalAum) × 100 vs history.
+ *  SIP press-release history is shorter than the AMFI Monthly Report
+ *  history — `historyStart` lets the caller surface the limitation. */
+export interface SipStickinessSignal {
+  latestMonth: string;
+  latestSharePct: number;
+  historyMonths: number;
+  mean: number;
+  stdDev: number | null;
+  zScore: number | null;
+  percentileRank: number | null;
+  label: ActiveEquitySignalLabel;
+  historyStart: string;
+}
+
+export function sipStickinessSignal(): SipStickinessSignal | null {
+  const rows = amfiMonthlyRows();
+  const series = rows.flatMap((r) => {
+    if (typeof r.sipAum !== "number" || typeof r.totalAum !== "number") {
+      return [];
+    }
+    if (r.totalAum <= 0) return [];
+    return [{ month: r.month, value: (r.sipAum / r.totalAum) * 100 }];
+  });
+  if (series.length === 0) return null;
+  const latest = series[series.length - 1];
+  const values = series.map((p) => p.value);
+  const stats = historicalSignalStats(values, latest.value);
+  return {
+    latestMonth: latest.month,
+    latestSharePct: latest.value,
+    historyMonths: values.length,
+    mean: stats.mean,
+    stdDev: stats.stdDev,
+    zScore: stats.zScore,
+    percentileRank: stats.percentileRank,
+    label: zScoreLabel(stats.zScore),
+    historyStart: series[0].month,
   };
 }
