@@ -448,6 +448,58 @@ export function amcHealthGrowthMatrix(lastN = 8): AmcHealthMatrix {
   };
 }
 
+/**
+ * Z-score lens for the AMC Health Heatmap.
+ *
+ * For every AMC × quarter cell in the SAME window as
+ * `amcHealthGrowthMatrix`, compute:
+ *
+ *   z_a,q = (qoqGrowth_a,q − μ_q) / σ_q
+ *
+ * where μ_q and σ_q are the mean and population standard deviation
+ * of the COHORT's QoQ AAUM growth in quarter q. Answers "how
+ * unusual is this AMC's growth versus the rest of the cohort this
+ * quarter?". Cells with no growth value, or quarters where stdDev
+ * is zero / only one AMC has a value, return null.
+ */
+export function amcHealthGrowthZScoreMatrix(lastN = 8): AmcHealthMatrix {
+  const base = amcHealthGrowthMatrix(lastN);
+  if (base.rows.length === 0) return base;
+  // For each visible quarter index, gather the cohort's growth
+  // values and compute mean / pop. stdDev.
+  const cohortMean: (number | null)[] = base.quarters.map(() => null);
+  const cohortStdDev: (number | null)[] = base.quarters.map(() => null);
+  for (let qi = 0; qi < base.quarters.length; qi++) {
+    const values: number[] = [];
+    for (const row of base.rows) {
+      const v = row.values[qi];
+      if (typeof v === "number" && Number.isFinite(v)) values.push(v);
+    }
+    if (values.length < 2) continue;
+    const mean = values.reduce((s, v) => s + v, 0) / values.length;
+    const variance =
+      values.reduce((s, v) => s + (v - mean) ** 2, 0) / values.length;
+    cohortMean[qi] = mean;
+    cohortStdDev[qi] = variance > 0 ? Math.sqrt(variance) : null;
+  }
+  const rows: AmcHealthRow[] = base.rows.map((row) => ({
+    amcSlug: row.amcSlug,
+    displayName: row.displayName,
+    values: row.values.map((v, qi) => {
+      if (typeof v !== "number") return null;
+      const mean = cohortMean[qi];
+      const sd = cohortStdDev[qi];
+      if (mean === null || sd === null || sd === 0) return null;
+      return (v - mean) / sd;
+    }),
+  }));
+  return {
+    quarters: base.quarters,
+    quarterLabels: base.quarterLabels,
+    rows,
+  };
+}
+
 // =============================================================
 // Concentration tracker — HHI (Herfindahl–Hirschman Index)
 // =============================================================
