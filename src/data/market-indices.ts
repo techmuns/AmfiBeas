@@ -16,7 +16,9 @@ import type { MarketIndexMonthlySnapshot } from "./snapshots/types";
 import {
   activeEquityNetInflowSignal,
   amfiMonthlyRows,
+  classifyPhase,
   historicalSignalStats,
+  type CyclePhase,
 } from "./amfi-monthly";
 
 const snapshot = marketIndicesRaw as MarketIndexMonthlySnapshot;
@@ -187,4 +189,116 @@ export function flowStressHistory(): FlowStressHistoryPoint[] {
     });
   }
   return out;
+}
+
+/**
+ * Per-month cycle-phase history.
+ *
+ * For every month with both an active-equity net inflow and a Nifty
+ * 500 drawdown reading we classify the phase using the same
+ * rule-based `classifyPhase` engine the Investor Read uses. The
+ * monthly active-equity flow's z-score is computed against the FULL
+ * available active-equity series (so the labelling at any given
+ * month uses the same statistical lens as the rest of the panel).
+ *
+ * Returned in chronological order. Months without overlap are
+ * skipped — never imputed. Used by the Cycle Ribbon to colour
+ * time-series charts and section headers by regime.
+ */
+export interface CyclePhasePoint {
+  month: string;
+  phase: CyclePhase;
+  drawdownPct: number;
+  flowZScore: number | null;
+}
+
+export function cyclePhaseHistory(): CyclePhasePoint[] {
+  const marketRows = marketIndexRows(NIFTY_500);
+  if (marketRows.length === 0) return [];
+  const flowByMonth = new Map<string, number>();
+  for (const r of amfiMonthlyRows()) {
+    if (typeof r.activeEquityNetInflow === "number") {
+      flowByMonth.set(r.month, r.activeEquityNetInflow);
+    }
+  }
+  if (flowByMonth.size === 0) return [];
+  // NFO mobilisation z-score is also part of the classifier so the
+  // Peak label can fire. Look up by month with a sanity-filtered
+  // history (same filter the NFO Heat signal uses).
+  const nfoValues: number[] = [];
+  const nfoByMonth = new Map<string, number>();
+  for (const r of amfiMonthlyRows()) {
+    if (
+      typeof r.industryNfoFundsMobilized === "number" &&
+      r.industryNfoFundsMobilized <= 50_000
+    ) {
+      nfoByMonth.set(r.month, r.industryNfoFundsMobilized);
+      nfoValues.push(r.industryNfoFundsMobilized);
+    }
+  }
+  const allFlows = Array.from(flowByMonth.values());
+  const out: CyclePhasePoint[] = [];
+  for (const r of marketRows) {
+    const flow = flowByMonth.get(r.month);
+    if (typeof flow !== "number" || typeof r.drawdownPct !== "number") continue;
+    const flowStats = historicalSignalStats(allFlows, flow);
+    const nfoVal = nfoByMonth.get(r.month);
+    const nfoStats =
+      typeof nfoVal === "number" && nfoValues.length > 0
+        ? historicalSignalStats(nfoValues, nfoVal)
+        : null;
+    const phase = classifyPhase({
+      activeEquityZ: flowStats.zScore,
+      activeEquityPercentile: flowStats.percentileRank,
+      nfoZ: nfoStats?.zScore ?? null,
+      passivePercentile: null,
+      passiveLatestSharePct: null,
+      sipPercentile: null,
+      drawdownPct: r.drawdownPct,
+      marketMonth: r.month,
+    });
+    out.push({
+      month: r.month,
+      phase,
+      drawdownPct: r.drawdownPct,
+      flowZScore: flowStats.zScore,
+    });
+  }
+  return out;
+}
+
+/** Compact run-length encoding of the phase history for chart
+ *  overlays. Adjacent same-phase months are merged into a single
+ *  `{ startMonth, endMonth, phase }` run so a ribbon can render a
+ *  small number of ReferenceArea/segment bands instead of one
+ *  per month. */
+export interface CyclePhaseRun {
+  startMonth: string;
+  endMonth: string;
+  phase: CyclePhase;
+}
+
+export function cyclePhaseRuns(): CyclePhaseRun[] {
+  const points = cyclePhaseHistory();
+  if (points.length === 0) return [];
+  const runs: CyclePhaseRun[] = [];
+  let current: CyclePhaseRun = {
+    startMonth: points[0].month,
+    endMonth: points[0].month,
+    phase: points[0].phase,
+  };
+  for (let i = 1; i < points.length; i++) {
+    if (points[i].phase === current.phase) {
+      current.endMonth = points[i].month;
+    } else {
+      runs.push(current);
+      current = {
+        startMonth: points[i].month,
+        endMonth: points[i].month,
+        phase: points[i].phase,
+      };
+    }
+  }
+  runs.push(current);
+  return runs;
 }

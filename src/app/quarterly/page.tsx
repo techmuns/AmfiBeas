@@ -15,6 +15,8 @@ import {
   latestCategoryProvenance,
 } from "@/data/amfi-monthly-category";
 import { formatKpiProvenanceTooltip } from "@/data/amfi-monthly";
+import { cyclePhaseHistory } from "@/data/market-indices";
+import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import {
   availableQuartersDesc,
@@ -32,8 +34,11 @@ import {
   quarterlyEquityLastMonthAaumBreakdown,
   quarterlyFlowsData,
   quarterlyFolioAdditionsTrend,
+  quarterlyFlowsSectionRead,
+  quarterlyFoliosSectionRead,
   quarterlyKpiContext,
   quarterlyOpenEndedSchemeCountTrend,
+  quarterlySnapshotSectionRead,
   quarterlyTrend,
   categoryHhiPercentileRead,
   categoryHhiSeries,
@@ -380,6 +385,12 @@ export default async function QuarterlyPage({
   const aumMarketShare = topAumMarketShareSeries(7, 8);
   const aumMarketShareCoverage = aumMarketShare.coverage;
 
+  // Cycle regime + section reads.
+  const cyclePhasePoints = cyclePhaseHistory();
+  const quarterlySnapshotRead = quarterlySnapshotSectionRead();
+  const quarterlyFlowsRead = quarterlyFlowsSectionRead();
+  const quarterlyFoliosRead = quarterlyFoliosSectionRead();
+
   // Concentration tracker — HHI of AMC-level + category-level AUM.
   const amcHhi = amcLevelHhiSeries(8);
   const catHhi = categoryHhiSeries(16);
@@ -415,10 +426,23 @@ export default async function QuarterlyPage({
         }
       />
 
+      {cyclePhasePoints.length > 0 && (
+        <Card
+          title="Cycle Regime"
+          subtitle={`Per-month cycle phase since ${cyclePhasePoints[0].month} · derived from active-equity flow z-score + Nifty 500 drawdown`}
+        >
+          <CycleRibbon points={cyclePhasePoints} lastN={84} />
+        </Card>
+      )}
+
       {/* AMFI Quarterly Snapshot — first live section, mirrors /monthly. */}
       <Card
         title="AMFI Quarterly Snapshot"
-        subtitle={snapshotSubtitle}
+        subtitle={
+          quarterlySnapshotRead && selectedRow
+            ? `${snapshotSubtitle} · ${quarterlySnapshotRead}`
+            : snapshotSubtitle
+        }
         action={
           <div className="flex flex-col items-end gap-2">
             <span
@@ -522,6 +546,7 @@ export default async function QuarterlyPage({
             </h2>
             <p className="text-xs text-muted-foreground">
               Source: AMFI Quarterly Report
+              {quarterlyFlowsRead ? ` · ${quarterlyFlowsRead}` : ""}
             </p>
           </div>
           <Card
@@ -671,6 +696,7 @@ export default async function QuarterlyPage({
             </h2>
             <p className="text-xs text-muted-foreground">
               Source: AMFI Quarterly Report
+              {quarterlyFoliosRead ? ` · ${quarterlyFoliosRead}` : ""}
             </p>
           </div>
 

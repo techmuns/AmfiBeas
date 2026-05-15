@@ -1,6 +1,7 @@
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { Sparkline } from "@/components/charts/Sparkline";
 import { cn } from "@/lib/cn";
+import { ordinalSuffix } from "@/lib/format";
 
 interface KpiCardProps {
   label: string;
@@ -139,7 +140,8 @@ export function KpiCard({
           )}
           {typeof percentile === "number" && (
             <span className="inline-flex items-center rounded-full border border-border bg-muted px-1.5 py-0 text-[10px] tabular font-medium text-muted-foreground">
-              {percentile.toFixed(0)}th pct
+              {Math.round(percentile)}
+              {ordinalSuffix(Math.round(percentile))} pct
             </span>
           )}
         </div>
