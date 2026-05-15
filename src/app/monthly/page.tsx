@@ -18,10 +18,15 @@ import {
   formatKpiProvenanceTooltip,
   getKpiProvenance,
   getKpiValue,
+  activeEquityMixSectionRead,
+  foliosNfoSectionRead,
   industryFlowWaterfall,
   investorRead,
   kpiContext,
   latestAmfiMonthlyRow,
+  monthlyFlowsSectionRead,
+  sipTrendsSectionRead,
+  snapshotSectionRead,
   latestIndustryFolioAdditions,
   latestProvenanceFor,
   monthlyActiveEquityAumBridge,
@@ -53,6 +58,7 @@ import {
   type SparklinePoint,
 } from "@/data/amfi-monthly";
 import {
+  cyclePhaseHistory,
   flowStressHistory,
   latestNifty500Row,
   marketStressFlowSignal,
@@ -60,6 +66,7 @@ import {
   type MarketStressSignal,
 } from "@/data/market-indices";
 import { FlowStressHistoryChart } from "@/components/charts/FlowStressHistoryChart";
+import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { Sparkline } from "@/components/charts/Sparkline";
 import {
   IIFL_ACTIVE_EQUITY_CATEGORIES,
@@ -599,6 +606,14 @@ export default async function MonthlyPage({
   const passiveSparkline = passiveShareSparkline(24);
   const sipSparkline = sipStickinessSparkline(24);
   const latestNifty = latestNifty500Row();
+  const cyclePhasePoints = cyclePhaseHistory();
+  // Section reads — short data-driven 1-liners surfaced under
+  // each section title.
+  const snapshotRead = snapshotSectionRead();
+  const sipTrendsRead = sipTrendsSectionRead();
+  const monthlyFlowsRead = monthlyFlowsSectionRead();
+  const activeEquityMixRead = activeEquityMixSectionRead();
+  const foliosNfoRead = foliosNfoSectionRead();
   // Historical Flow Stress timeline — drawdown line + Buy-the-dip /
   // Flow stress markers across the full overlapping history.
   const flowStress = flowStressHistory();
@@ -623,9 +638,22 @@ export default async function MonthlyPage({
     <div className="space-y-6">
       <PageHeader title="Monthly Operating KPIs" subtitle={subtitle} />
 
+      {cyclePhasePoints.length > 0 && (
+        <Card
+          title="Cycle Regime"
+          subtitle={`Per-month cycle phase since ${cyclePhasePoints[0].month} · derived from active-equity flow z-score + Nifty 500 drawdown`}
+        >
+          <CycleRibbon points={cyclePhasePoints} lastN={84} />
+        </Card>
+      )}
+
       <Card
         title="AMFI Monthly Snapshot"
-        subtitle={amfiSectionSubtitle}
+        subtitle={
+          snapshotRead && amfiSelected
+            ? `${amfiSectionSubtitle} · ${snapshotRead}`
+            : amfiSectionSubtitle
+        }
         action={
           <div className="flex flex-col items-end gap-2">
             <span
@@ -777,6 +805,7 @@ export default async function MonthlyPage({
             <h2 className="text-sm font-medium tracking-tight">SIP Trends</h2>
             <p className="text-xs text-muted-foreground">
               Source: AMFI Monthly Report
+              {sipTrendsRead ? ` · ${sipTrendsRead}` : ""}
             </p>
           </div>
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -851,6 +880,7 @@ export default async function MonthlyPage({
             </h2>
             <p className="text-xs text-muted-foreground">
               Source: AMFI Monthly Report
+              {monthlyFlowsRead ? ` · ${monthlyFlowsRead}` : ""}
             </p>
           </div>
           <Card
@@ -999,6 +1029,7 @@ export default async function MonthlyPage({
             </h2>
             <p className="text-xs text-muted-foreground">
               Source: AMFI Monthly Report
+              {activeEquityMixRead ? ` · ${activeEquityMixRead}` : ""}
             </p>
           </div>
 
@@ -1316,6 +1347,7 @@ export default async function MonthlyPage({
             </h2>
             <p className="text-xs text-muted-foreground">
               Source: AMFI Monthly Report
+              {foliosNfoRead ? ` · ${foliosNfoRead}` : ""}
             </p>
           </div>
 

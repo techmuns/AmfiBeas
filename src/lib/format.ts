@@ -182,3 +182,27 @@ export function formatCompactCrSafe(
 ): string {
   return formatOrUnavailable(value, (v) => formatCompactCr(v));
 }
+
+/** Grammatically correct ordinal suffix for an integer (1 → "1st",
+ *  2 → "2nd", 21 → "21st", 11 → "11th"). */
+export function ordinalSuffix(n: number): string {
+  const v = Math.abs(n) % 100;
+  if (v >= 11 && v <= 13) return "th";
+  switch (v % 10) {
+    case 1:
+      return "st";
+    case 2:
+      return "nd";
+    case 3:
+      return "rd";
+    default:
+      return "th";
+  }
+}
+
+/** Format a 0-100 percentile as "Xst/Xnd/Xrd/Xth pct". */
+export function formatPercentile(pct: number | null | undefined): string {
+  if (typeof pct !== "number" || !Number.isFinite(pct)) return "—";
+  const rounded = Math.round(pct);
+  return `${rounded}${ordinalSuffix(rounded)} pct`;
+}

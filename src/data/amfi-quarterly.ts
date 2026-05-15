@@ -909,3 +909,66 @@ export function categoryHhiPercentileRead(
     anchorQuarterLabel: anchor ? anchor.quarterLabel : null,
   };
 }
+
+// ---- Per-section 1-line narrative reads for /quarterly ---------------
+
+function pctLabel(p: number | null): string {
+  if (p === null || !Number.isFinite(p)) return "—";
+  const r = Math.round(p);
+  const v = Math.abs(r) % 100;
+  const suffix =
+    v >= 11 && v <= 13
+      ? "th"
+      : r % 10 === 1
+        ? "st"
+        : r % 10 === 2
+          ? "nd"
+          : r % 10 === 3
+            ? "rd"
+            : "th";
+  return `${r}${suffix} pct`;
+}
+
+function yoyText(p: number | null): string {
+  if (p === null || !Number.isFinite(p)) return "—";
+  const sign = p >= 0 ? "+" : "";
+  return `${sign}${p.toFixed(1)}% YoY`;
+}
+
+/** Quarterly Snapshot 1-liner — total AUM YoY + net inflow percentile. */
+export function quarterlySnapshotSectionRead(): string | null {
+  const aum = quarterlyKpiContext("grandTotalAum", 16);
+  const flow = quarterlyKpiContext("grandTotalNetInflow", 16);
+  const parts: string[] = [];
+  if (aum.yoyPct !== null) parts.push(`Total AUM ${yoyText(aum.yoyPct)}`);
+  if (flow.percentile !== null) parts.push(`Net inflow ${pctLabel(flow.percentile)}`);
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+/** Quarterly Flows 1-liner — equity / debt flow percentiles. */
+export function quarterlyFlowsSectionRead(): string | null {
+  const eq = quarterlyKpiContext("equityNetInflow", 16);
+  const dbt = quarterlyKpiContext("debtNetInflow", 16);
+  const parts: string[] = [];
+  if (eq.percentile !== null) parts.push(`Equity flow ${pctLabel(eq.percentile)}`);
+  if (dbt.percentile !== null) parts.push(`Debt flow ${pctLabel(dbt.percentile)}`);
+  if (eq.percentile !== null && dbt.percentile !== null) {
+    const cue =
+      eq.percentile >= 60 && dbt.percentile <= 40
+        ? "risk-on"
+        : eq.percentile <= 40 && dbt.percentile >= 60
+          ? "risk-off"
+          : "mixed";
+    parts.push(cue);
+  }
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+/** Folios 1-liner — total folios YoY + open-ended scheme count growth. */
+export function quarterlyFoliosSectionRead(): string | null {
+  const folios = quarterlyKpiContext("grandTotalFolios", 16);
+  const parts: string[] = [];
+  if (folios.yoyPct !== null) parts.push(`Folios ${yoyText(folios.yoyPct)}`);
+  if (folios.percentile !== null) parts.push(pctLabel(folios.percentile));
+  return parts.length > 0 ? parts.join(" · ") : null;
+}

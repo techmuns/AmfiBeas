@@ -1160,7 +1160,7 @@ export interface InvestorRead {
   methodologyTooltip: string;
 }
 
-function classifyPhase(input: InvestorReadInput): CyclePhase {
+export function classifyPhase(input: InvestorReadInput): CyclePhase {
   const { activeEquityZ, nfoZ, drawdownPct } = input;
   if (activeEquityZ === null && drawdownPct === null) {
     return "Insufficient data";
@@ -1318,4 +1318,116 @@ export function nfoDragTrend(months = 24): NfoDragTrend | null {
     percentile,
     isHeavy: percentile >= NFO_HEAVY_PERCENTILE,
   };
+}
+
+// ---- Per-section 1-line narrative reads -------------------------------
+//
+// Each section header gets an optional 1-sentence summary computed from
+// the same kpiContext helpers the KPI cards already use. Output is a
+// short, factual English sentence — never speculative, never multi-line.
+// Returns null when the section's primary inputs are missing.
+
+function percentileLabel(pct: number | null): string {
+  if (pct === null || !Number.isFinite(pct)) return "—";
+  const r = Math.round(pct);
+  // Inline ordinal suffix — avoids a cross-module import for this
+  // tiny formatting helper.
+  const v = Math.abs(r) % 100;
+  const suffix =
+    v >= 11 && v <= 13
+      ? "th"
+      : r % 10 === 1
+        ? "st"
+        : r % 10 === 2
+          ? "nd"
+          : r % 10 === 3
+            ? "rd"
+            : "th";
+  return `${r}${suffix} pct`;
+}
+
+function yoyLabel(pct: number | null): string {
+  if (pct === null || !Number.isFinite(pct)) return "—";
+  const sign = pct >= 0 ? "+" : "";
+  return `${sign}${pct.toFixed(1)}% YoY`;
+}
+
+/** "AMFI Monthly Snapshot" 1-liner: Total AAUM YoY + Net Inflow
+ *  percentile context. */
+export function snapshotSectionRead(): string | null {
+  const aaum = kpiContext("totalAaum");
+  const flow = kpiContext("netInflow");
+  if (aaum.latest === null && flow.latest === null) return null;
+  const parts: string[] = [];
+  if (aaum.yoyPct !== null) {
+    parts.push(`Total AAUM ${yoyLabel(aaum.yoyPct)}`);
+  }
+  if (flow.percentile !== null) {
+    parts.push(`Net inflow ${percentileLabel(flow.percentile)}`);
+  }
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+/** "SIP Trends" 1-liner: SIP contribution + SIP AUM percentile reads. */
+export function sipTrendsSectionRead(): string | null {
+  const contrib = kpiContext("sipContribution");
+  const sipAum = kpiContext("sipAum");
+  const parts: string[] = [];
+  if (contrib.yoyPct !== null && contrib.percentile !== null) {
+    parts.push(
+      `SIP contribution ${yoyLabel(contrib.yoyPct)} · ${percentileLabel(contrib.percentile)}`
+    );
+  }
+  if (sipAum.yoyPct !== null) {
+    parts.push(`SIP AUM ${yoyLabel(sipAum.yoyPct)}`);
+  }
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+/** "Monthly Flows" 1-liner: equity / debt percentiles. Risk-on vs
+ *  risk-off cue based on relative percentile of equity to debt. */
+export function monthlyFlowsSectionRead(): string | null {
+  const equity = kpiContext("equityNetInflow");
+  const debt = kpiContext("debtNetInflow");
+  if (equity.percentile === null && debt.percentile === null) return null;
+  const parts: string[] = [];
+  if (equity.percentile !== null) {
+    parts.push(`Equity flow ${percentileLabel(equity.percentile)}`);
+  }
+  if (debt.percentile !== null) {
+    parts.push(`Debt flow ${percentileLabel(debt.percentile)}`);
+  }
+  if (equity.percentile !== null && debt.percentile !== null) {
+    const cue =
+      equity.percentile >= 60 && debt.percentile <= 40
+        ? "risk-on"
+        : equity.percentile <= 40 && debt.percentile >= 60
+          ? "risk-off"
+          : "mixed";
+    parts.push(cue);
+  }
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+/** "Industry Folios & NFO" 1-liner: folio growth + NFO percentile. */
+export function foliosNfoSectionRead(): string | null {
+  const folios = kpiContext("industryFolios");
+  const nfo = kpiContext("industryNfoFundsMobilized");
+  const parts: string[] = [];
+  if (folios.yoyPct !== null) parts.push(`Folios ${yoyLabel(folios.yoyPct)}`);
+  if (nfo.percentile !== null) parts.push(`NFO ${percentileLabel(nfo.percentile)}`);
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+/** "Active Equity & Equity Mix" 1-liner: active-equity share of AAUM. */
+export function activeEquityMixSectionRead(): string | null {
+  const ae = kpiContext("activeEquityAaum");
+  const ttl = kpiContext("totalAaum");
+  if (ae.latest === null || ttl.latest === null || ttl.latest <= 0) return null;
+  const share = (ae.latest / ttl.latest) * 100;
+  const parts: string[] = [
+    `Active-equity share ${share.toFixed(1)}% of AAUM`,
+  ];
+  if (ae.yoyPct !== null) parts.push(`Active AAUM ${yoyLabel(ae.yoyPct)}`);
+  return parts.join(" · ");
 }
