@@ -131,3 +131,60 @@ export function marketStressFlowSignal(): MarketStressSignal | null {
     historyStart: sig?.historyStart ?? marketRows[0].month,
   };
 }
+
+/**
+ * Replay the Market Stress Flow rule across the full overlapping
+ * history so the dashboard can visualise the signal across cycles
+ * rather than as a single-month read. For every month where BOTH a
+ * Nifty 500 drawdown and an active-equity net inflow are present,
+ * emit:
+ *
+ *   { month, drawdownPct, flowValue, flowPercentile, label }
+ *
+ * Flow percentile is computed against the FULL series each month
+ * (not a trailing window) so a month's label here matches the panel
+ * tile's reading for that month exactly. The label uses the same
+ * thresholds as `marketStressFlowSignal`.
+ *
+ * Returns null when there's no overlap at all.
+ */
+export interface FlowStressHistoryPoint {
+  month: string;
+  drawdownPct: number;
+  flowValue: number;
+  flowPercentile: number;
+  label: MarketStressLabel;
+}
+
+export function flowStressHistory(): FlowStressHistoryPoint[] {
+  const marketRows = marketIndexRows(NIFTY_500);
+  if (marketRows.length === 0) return [];
+  const flowByMonth = new Map<string, number>();
+  for (const r of amfiMonthlyRows()) {
+    if (typeof r.activeEquityNetInflow === "number") {
+      flowByMonth.set(r.month, r.activeEquityNetInflow);
+    }
+  }
+  if (flowByMonth.size === 0) return [];
+  const allFlows = Array.from(flowByMonth.values());
+  const out: FlowStressHistoryPoint[] = [];
+  for (const r of marketRows) {
+    const flow = flowByMonth.get(r.month);
+    if (typeof flow !== "number" || typeof r.drawdownPct !== "number") continue;
+    const stats = historicalSignalStats(allFlows, flow);
+    const pct = stats.percentileRank ?? 50;
+    let label: MarketStressLabel = "Normal";
+    if (r.drawdownPct <= MARKET_STRESS_DRAWDOWN_THRESHOLD_PCT) {
+      if (pct >= HIGH_FLOW_PERCENTILE) label = "Buy-the-dip flow";
+      else if (pct <= LOW_FLOW_PERCENTILE) label = "Flow stress";
+    }
+    out.push({
+      month: r.month,
+      drawdownPct: r.drawdownPct,
+      flowValue: flow,
+      flowPercentile: pct,
+      label,
+    });
+  }
+  return out;
+}

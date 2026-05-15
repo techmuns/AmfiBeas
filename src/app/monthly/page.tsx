@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -50,17 +51,20 @@ import {
   type SparklinePoint,
 } from "@/data/amfi-monthly";
 import {
+  flowStressHistory,
   latestNifty500Row,
   marketStressFlowSignal,
   type MarketStressLabel,
   type MarketStressSignal,
 } from "@/data/market-indices";
+import { FlowStressHistoryChart } from "@/components/charts/FlowStressHistoryChart";
 import { Sparkline } from "@/components/charts/Sparkline";
 import {
   IIFL_ACTIVE_EQUITY_CATEGORIES,
   IIFL_TREND_EXPANDED_SLUGS,
   IIFL_TREND_FEATURED_SLUGS,
   iiflActiveEquityHeatmapData,
+  iiflActiveEquityHeatmapZScoreData,
   iiflActiveEquityTrendCard,
   latestCategoryProvenance,
 } from "@/data/amfi-monthly-category";
@@ -431,6 +435,17 @@ export default async function MonthlyPage({
   // are null when either side is missing; the heatmap renders a
   // muted "—", never a fake zero.
   const iiflHeatmap = iiflActiveEquityHeatmapData();
+  const iiflHeatmapZScore = iiflActiveEquityHeatmapZScoreData();
+  // Heatmap lens toggle (?heatmap=share|zscore). Server-rendered — no
+  // client state. Defaults to share so the existing experience is
+  // unchanged when no param is present.
+  const heatmapLensRaw = sp.heatmap;
+  const heatmapLens: "share" | "zscore" =
+    typeof heatmapLensRaw === "string" && heatmapLensRaw === "zscore"
+      ? "zscore"
+      : "share";
+  const heatmapActive =
+    heatmapLens === "zscore" ? iiflHeatmapZScore : iiflHeatmap;
   const iiflHeatmapHasData = iiflHeatmap.rows.some((r) =>
     r.values.some((v) => v !== null)
   );
@@ -488,6 +503,10 @@ export default async function MonthlyPage({
   const passiveSparkline = passiveShareSparkline(24);
   const sipSparkline = sipStickinessSparkline(24);
   const latestNifty = latestNifty500Row();
+  // Historical Flow Stress timeline — drawdown line + Buy-the-dip /
+  // Flow stress markers across the full overlapping history.
+  const flowStress = flowStressHistory();
+  const flowStressHasEvents = flowStress.some((p) => p.label !== "Normal");
   // Build the Investor Read composite from the five signals + Nifty 500.
   const read = investorRead({
     activeEquityZ: activeEquitySignal?.zScore ?? null,
@@ -581,6 +600,36 @@ export default async function MonthlyPage({
             )}
             {marketStress && <MarketStressTile signal={marketStress} />}
           </div>
+          {flowStress.length > 0 && (
+            <div className="mt-4 rounded-md border bg-card/50 p-4 shadow-sm">
+              <div className="flex flex-wrap items-end justify-between gap-2">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-foreground">
+                    Flow Stress History
+                    <InfoTooltip label="For every month with both a Nifty 500 drawdown and an active-equity net inflow, the Market Stress Flow rule is replayed. Green dots = Buy-the-dip flow (drawdown ≤ −10% with active-equity flow in the top 40% of history). Red dots = Flow stress (drawdown ≤ −10% with active-equity flow in the bottom 40%). Dashed line marks the −10% drawdown threshold. Historical context only — not a market-bottom model." />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    {flowStressHasEvents
+                      ? "Buy-the-dip and Flow stress events overlaid on the Nifty 500 drawdown timeline."
+                      : "No drawdown / flow stress events on record over the available history."}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 text-[10px] tabular text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-positive" />
+                    Buy-the-dip
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-negative" />
+                    Flow stress
+                  </span>
+                </div>
+              </div>
+              <div className="mt-2">
+                <FlowStressHistoryChart data={flowStress} />
+              </div>
+            </div>
+          )}
         </Card>
       )}
 
@@ -1101,24 +1150,39 @@ export default async function MonthlyPage({
 
       {iiflHeatmapHasData && (
         <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-medium tracking-tight">
-              Active-Equity Category Heatmap
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Net inflow share of active equity categories · past 12
-              months · Source: AMFI Monthly Report
-            </p>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-medium tracking-tight">
+                Active-Equity Category Heatmap
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {heatmapLens === "zscore"
+                  ? "Net inflow z-score vs each category's own history · past 12 months · Source: AMFI Monthly Report"
+                  : "Net inflow share of active equity categories · past 12 months · Source: AMFI Monthly Report"}
+              </p>
+            </div>
+            <HeatmapLensToggle lens={heatmapLens} />
           </div>
 
           <IiflHeatmap
-            months={iiflHeatmap.months}
-            rows={iiflHeatmap.rows}
+            months={heatmapActive.months}
+            rows={heatmapActive.rows}
+            lens={heatmapLens}
           />
 
           <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            Share = category net inflow ÷ active-equity net inflow.
-            <InfoTooltip label="Active equity = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
+            {heatmapLens === "zscore" ? (
+              <>
+                Cell = (month value − category mean) ÷ category stdDev.
+                Saturates at ±2σ.
+                <InfoTooltip label="z-score is computed per category over its full available monthly history. Active equity = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
+              </>
+            ) : (
+              <>
+                Share = category net inflow ÷ active-equity net inflow.
+                <InfoTooltip label="Active equity = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
+              </>
+            )}
           </p>
         </div>
       )}
@@ -1304,6 +1368,37 @@ export default async function MonthlyPage({
 
 /** Sign-aware compact ₹ Cr — local helper so a negative active-equity
  *  net inflow renders as "−₹32.4K Cr" rather than the unsigned value. */
+/** Heatmap lens toggle — pure-server segmented control rendered as
+ *  two <a> tags so server routing handles state. No client component
+ *  overhead. Each link preserves the rest of the URL params we care
+ *  about (currently just `?month=`, which the heatmap window doesn't
+ *  use, so we keep it simple and reset to a single param). */
+function HeatmapLensToggle({ lens }: { lens: "share" | "zscore" }) {
+  const baseClass =
+    "rounded-md border px-2.5 py-1 text-[11px] font-medium tracking-tight transition-colors";
+  const activeClass = "border-foreground/40 bg-foreground/5 text-foreground";
+  const inactiveClass =
+    "border-border text-muted-foreground hover:bg-accent hover:text-foreground";
+  return (
+    <div className="inline-flex items-center gap-1 rounded-md border bg-card p-0.5 shadow-sm">
+      <Link
+        href={{ pathname: "/monthly" }}
+        scroll={false}
+        className={cn(baseClass, lens === "share" ? activeClass : inactiveClass)}
+      >
+        Share
+      </Link>
+      <Link
+        href={{ pathname: "/monthly", query: { heatmap: "zscore" } }}
+        scroll={false}
+        className={cn(baseClass, lens === "zscore" ? activeClass : inactiveClass)}
+      >
+        Z-score
+      </Link>
+    </div>
+  );
+}
+
 function formatSignedCompactCr(v: number): string {
   if (v >= 0) return formatCompactCrSafe(v);
   return "−" + formatCompactCrSafe(-v);

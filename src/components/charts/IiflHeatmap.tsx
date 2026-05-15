@@ -28,52 +28,60 @@ export interface IiflHeatmapRow {
   values: (number | null)[];
 }
 
+/** Lens controls cell formatting and the saturation band of the
+ *  diverging colour ramp.
+ *
+ *   - "share"  : cells are % share values (clamped at ±25% for the
+ *                ramp). Same look the chart shipped with originally.
+ *   - "zscore" : cells are standard-deviation deviations from each
+ *                category's own historical mean. Saturated at ±2σ
+ *                (i.e. anything beyond ±2 reads as deep red / green).
+ */
+export type IiflHeatmapLens = "share" | "zscore";
+
 interface IiflHeatmapProps {
   months: string[];
   rows: IiflHeatmapRow[];
+  lens?: IiflHeatmapLens;
 }
 
-/**
- * Pick a cell background colour mirroring the IIFL report's flow
- * heatmap: deep red for strongly negative, pale yellow around zero,
- * deep green for strongly positive. Saturates around ±25% which
- * covers the typical range of category net-flow share within the
- * active-equity envelope.
- */
-function cellBackground(v: number): string {
-  // Clamp to a ±25% range — values beyond saturate at the most
-  // intense colour. Anchored to that span because category flow
-  // shares cluster between -10% and 25% on the AMFI series.
-  const SAT = 25;
+function saturationBound(lens: IiflHeatmapLens): number {
+  return lens === "zscore" ? 2 : 25;
+}
+
+function cellBackground(v: number, lens: IiflHeatmapLens): string {
+  const SAT = saturationBound(lens);
   const r = Math.max(-1, Math.min(1, v / SAT));
   const intensity = Math.abs(r);
-  // L (lightness) goes from 96 (very pale) at intensity 0 to 38
-  // (saturated) at intensity 1. S held at 65–70 for institutional
-  // saturation without pastel softness.
   const lightness = Math.round(94 - intensity * 56);
   if (r >= 0) {
-    // green-yellow band; hue tilts from yellow (60) at low intensity
-    // to deep green (138) at high intensity for an IIFL-like ramp.
     const hue = 60 + Math.round(intensity * 78);
     return `hsl(${hue} 65% ${lightness}%)`;
   }
-  // negative: orange (32) at low intensity → red (8) at high intensity.
   const hue = 32 - Math.round(intensity * 24);
   return `hsl(${hue} 75% ${lightness}%)`;
 }
 
-/** Black for pale cells, white for saturated dark cells. */
-function cellTextColor(v: number): string {
-  const SAT = 25;
+function cellTextColor(v: number, lens: IiflHeatmapLens): string {
+  const SAT = saturationBound(lens);
   const r = Math.max(-1, Math.min(1, v / SAT));
   return Math.abs(r) > 0.6 ? "#ffffff" : "#0f172a";
 }
 
-/** Format the cell content as a rounded whole percent (e.g. "21%",
- *  "-2%"). The hover title surfaces the precise 1-dp value. */
-function formatCell(v: number): string {
-  const rounded = Math.round(v);
-  return `${rounded}%`;
+function formatCell(v: number, lens: IiflHeatmapLens): string {
+  if (lens === "zscore") {
+    const sign = v >= 0 ? "+" : "";
+    return `${sign}${v.toFixed(1)}σ`;
+  }
+  return `${Math.round(v)}%`;
+}
+
+function formatCellHover(v: number, lens: IiflHeatmapLens): string {
+  if (lens === "zscore") {
+    const sign = v >= 0 ? "+" : "";
+    return `${sign}${v.toFixed(2)}σ vs own history`;
+  }
+  return `${v.toFixed(1)}%`;
 }
 
 /**
@@ -87,7 +95,7 @@ function formatCell(v: number): string {
  * allows horizontal scroll on very small screens where the labels
  * cannot be made any narrower without becoming unreadable.
  */
-export function IiflHeatmap({ months, rows }: IiflHeatmapProps) {
+export function IiflHeatmap({ months, rows, lens = "share" }: IiflHeatmapProps) {
   const monthColPct = months.length > 0 ? 76 / months.length : 0;
   return (
     <div className="overflow-x-auto rounded-md border border-border md:overflow-x-visible">
@@ -148,12 +156,12 @@ export function IiflHeatmap({ months, rows }: IiflHeatmapProps) {
                     key={i}
                     className="border-l border-background px-0.5 py-1 text-center font-medium"
                     style={{
-                      backgroundColor: cellBackground(v),
-                      color: cellTextColor(v),
+                      backgroundColor: cellBackground(v, lens),
+                      color: cellTextColor(v, lens),
                     }}
-                    title={`${row.label} · ${formatHeatmapMonth(months[i])}: ${v.toFixed(1)}%`}
+                    title={`${row.label} · ${formatHeatmapMonth(months[i])}: ${formatCellHover(v, lens)}`}
                   >
-                    {formatCell(v)}
+                    {formatCell(v, lens)}
                   </td>
                 );
               })}
