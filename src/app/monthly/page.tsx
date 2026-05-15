@@ -527,9 +527,9 @@ export default async function MonthlyPage({
       {hasInvestorSignals && (
         <Card
           title="Investor Signals"
-          subtitle="Historical context from AMFI monthly data"
+          subtitle="Historical context · AMFI monthly + Nifty 500 since Apr 2019"
         >
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {activeEquitySignal && (
               <ActiveEquityFlowTile signal={activeEquitySignal} />
             )}
@@ -1281,6 +1281,18 @@ function signalToneClass(label: ActiveEquitySignalLabel): string {
   }
 }
 
+/** NFO Heat is a *contextual* indicator: high readings often coincide
+ *  with bullish, NFO-heavy phases of the cycle (think 2021, late 2024)
+ *  — historically interesting, not directly "good" for investors.
+ *  Keep all bands on a muted tone so the panel doesn't imply that a
+ *  Strong / Very strong NFO reading is a positive signal. */
+function nfoToneClass(label: ActiveEquitySignalLabel): string {
+  if (label === "Insufficient history") {
+    return "border-border bg-muted text-muted-foreground";
+  }
+  return "border-foreground/30 bg-muted text-foreground";
+}
+
 function passiveToneClass(label: PassiveShiftLabel): string {
   // "Passive gaining share" and "Active-heavy" are structural reads,
   // not directional good/bad — keep both on a muted style so the
@@ -1331,9 +1343,9 @@ function SignalTile({
   infoLabel: string;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-md border bg-card p-4">
+    <div className="flex flex-col gap-3 rounded-md border bg-card p-4 shadow-sm">
       <div className="flex items-start justify-between gap-2">
-        <div className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-foreground">
           {name}
           <InfoTooltip label={infoLabel} />
         </div>
@@ -1406,7 +1418,7 @@ function ActiveEquityFlowTile({
         },
       ]}
       read={read}
-      infoLabel={`zScore = (latest − mean) ÷ stdDev. Percentile = % of months with value ≤ latest. History: ${signal.historyStart} → ${signal.historyEnd} (${signal.historyMonths} months).`}
+      infoLabel={`Z-score = how many standard deviations the latest active-equity net inflow sits from the historical mean. Percentile = share of months with value ≤ latest. High readings = inflows running above the long-run norm. History: ${signal.historyStart} → ${signal.historyEnd} (${signal.historyMonths} months).`}
     />
   );
 }
@@ -1418,17 +1430,17 @@ function NfoHeatTile({ signal }: { signal: NfoHeatSignal }) {
     signal.label === "Insufficient history"
       ? "Not enough history yet to score the latest month."
       : signal.label === "Very strong" || signal.label === "Strong"
-        ? "NFO mobilisation is unusually high vs the historical norm."
+        ? "NFO activity is at the high end of history — often a bull-market cue, not a buy signal."
         : signal.label === "Weak" || signal.label === "Very weak"
-          ? "NFO mobilisation is unusually low vs the historical norm."
-          : "NFO mobilisation is broadly in line with the historical norm.";
+          ? "NFO activity is at the low end of history — fewer new fund launches than usual."
+          : "NFO activity is broadly in line with the historical norm.";
   return (
     <SignalTile
       name="NFO Heat"
       primary={formatSignedCompactCr(signal.latestValue)}
       primaryNote={`NFO funds mobilised · ${signal.latestMonth}`}
       badge={signal.label}
-      badgeClass={signalToneClass(signal.label)}
+      badgeClass={nfoToneClass(signal.label)}
       metrics={[
         {
           key: "z",
@@ -1442,7 +1454,7 @@ function NfoHeatTile({ signal }: { signal: NfoHeatSignal }) {
         },
       ]}
       read={read}
-      infoLabel={`zScore = (latest NFO mobilisation − mean) ÷ stdDev. Percentile = % of months with value ≤ latest. History from ${signal.historyStart} (${signal.historyMonths} months).`}
+      infoLabel={`Z-score = how many standard deviations the latest NFO mobilisation sits from the historical mean. Percentile = share of months with value ≤ latest. High readings often coincide with bullish, NFO-heavy phases — context, not a buy/sell call. History: ${signal.historyStart} onwards (${signal.historyMonths} months).`}
     />
   );
 }
@@ -1477,7 +1489,7 @@ function PassiveShiftTile({ signal }: { signal: PassiveShiftSignal }) {
         },
       ]}
       read={read}
-      infoLabel={`passiveShare = ETF & Index AUM ÷ (Active Equity AUM + ETF & Index AUM) × 100. Percentile uses ${signal.historyMonths} months of history since ${signal.historyStart}.`}
+      infoLabel={`Passive share = ETF & Index AUM ÷ (Active Equity AUM + ETF & Index AUM) × 100. Percentile shows where the latest reading sits in the slowly-rising passive trend. History: ${signal.historyStart} onwards (${signal.historyMonths} months).`}
     />
   );
 }
@@ -1489,10 +1501,10 @@ function SipStickinessTile({ signal }: { signal: SipStickinessSignal }) {
     signal.label === "Insufficient history"
       ? "Not enough SIP history yet to score the latest month."
       : signal.label === "Very strong" || signal.label === "Strong"
-        ? "SIP-anchored AUM share is at the high end of the available history."
+        ? "SIP-based AUM share is at the high end of the available history."
         : signal.label === "Weak" || signal.label === "Very weak"
-          ? "SIP-anchored AUM share is at the low end of the available history."
-          : "SIP-anchored AUM share is broadly in line with the historical norm.";
+          ? "SIP-based AUM share is at the low end of the available history."
+          : "SIP-based AUM share is broadly in line with the historical norm.";
   return (
     <SignalTile
       name="SIP Stickiness"
@@ -1513,7 +1525,7 @@ function SipStickinessTile({ signal }: { signal: SipStickinessSignal }) {
         },
       ]}
       read={read}
-      infoLabel={`SIP stickiness = SIP AUM ÷ Total AUM × 100. Available SIP history starts from ${signal.historyStart} (${signal.historyMonths} months).`}
+      infoLabel={`SIP stickiness = SIP AUM ÷ Total AUM × 100. Captures the structural, recurring portion of industry AUM. AMFI's SIP press-release coverage starts later than the Monthly Report — available SIP history starts from ${signal.historyStart} (${signal.historyMonths} months).`}
     />
   );
 }
@@ -1548,7 +1560,7 @@ function MarketStressTile({ signal }: { signal: MarketStressSignal }) {
         },
       ]}
       read={read}
-      infoLabel={`Drawdown = Nifty 500 month-end vs rolling all-time high. Flow percentile = % of months with active-equity net inflow ≤ aligned month. "Buy-the-dip flow" when drawdown ≤ −10% and flow percentile ≥ 60; "Flow stress" when drawdown ≤ −10% and flow percentile ≤ 40.`}
+      infoLabel={`Drawdown = Nifty 500 month-end vs its rolling all-time high. Flow percentile = share of months with active-equity net inflow ≤ aligned month. Labels: "Buy-the-dip flow" when drawdown ≤ −10% and flow percentile ≥ 60; "Flow stress" when drawdown ≤ −10% and flow percentile ≤ 40. Historical context only — not a market-bottom model.`}
     />
   );
 }
