@@ -18,6 +18,7 @@ import { formatKpiProvenanceTooltip } from "@/data/amfi-monthly";
 import { cyclePhaseHistory } from "@/data/market-indices";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
+import { LensToggle } from "@/components/ui/LensToggle";
 import {
   availableQuartersDesc,
   formatQuarterlyProvenanceLine,
@@ -74,6 +75,42 @@ export default async function QuarterlyPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
+
+  // ---- Lens toggles (parsed up-front) ----
+  const quarterlyFlowsLens: "absolute" | "share" =
+    sp.qFlowsLens === "share" ? "share" : "absolute";
+  const equityMixLens: "absolute" | "share" =
+    sp.qEquityMixLens === "share" ? "share" : "absolute";
+  // Pass-through params for every LensToggle on this page.
+  const preservedQueryParams: Record<string, string | undefined> = {
+    quarter: typeof sp.quarter === "string" ? sp.quarter : undefined,
+    qFlowsLens:
+      typeof sp.qFlowsLens === "string" ? sp.qFlowsLens : undefined,
+    qEquityMixLens:
+      typeof sp.qEquityMixLens === "string" ? sp.qEquityMixLens : undefined,
+  };
+
+  // Share-mode transform helper for grouped-bar series.
+  const toShareRow = (
+    row: Record<string, number | null | string>,
+    keys: string[]
+  ): Record<string, number | null | string> => {
+    const total = keys.reduce((s, k) => {
+      const v = row[k];
+      return s + (typeof v === "number" ? Math.abs(v) : 0);
+    }, 0);
+    if (total === 0) {
+      const out = { ...row };
+      for (const k of keys) out[k] = null;
+      return out;
+    }
+    const out = { ...row };
+    for (const k of keys) {
+      const v = row[k];
+      out[k] = typeof v === "number" ? (v / total) * 100 : null;
+    }
+    return out;
+  };
 
   // Quarter selector — `?quarter=FY26-Q4` resolves to the matching
   // row when valid; otherwise we fall back to the latest available
@@ -315,6 +352,16 @@ export default async function QuarterlyPage({
   // parity with /monthly even though debtNetInflow already includes
   // it on the AMFI classification.
   const flowsData = quarterlyFlowsData(16);
+  const flowsDataDisplay =
+    quarterlyFlowsLens === "share"
+      ? flowsData.map((r) =>
+          toShareRow(r as Record<string, number | null | string>, [
+            "equity",
+            "debt",
+            "liquid",
+          ])
+        )
+      : flowsData;
   const flowsHasData = flowsData.some(
     (r) => r.equity !== null || r.debt !== null || r.liquid !== null
   );
@@ -326,6 +373,16 @@ export default async function QuarterlyPage({
   const aeAaumTrend = quarterlyActiveEquityLastMonthAaumTrend(16);
   const aeShareTrend = quarterlyActiveEquityLastMonthShareTrend(16);
   const aeBreakdown = quarterlyEquityLastMonthAaumBreakdown(16);
+  const aeBreakdownDisplay =
+    equityMixLens === "share"
+      ? aeBreakdown.map((r) =>
+          toShareRow(r as Record<string, number | null | string>, [
+            "activeEquity",
+            "etfIndex",
+            "arbitrage",
+          ])
+        )
+      : aeBreakdown;
   const aeBreakdownHasData = aeBreakdown.some(
     (r) =>
       r.activeEquity !== null || r.etfIndex !== null || r.arbitrage !== null
@@ -551,14 +608,31 @@ export default async function QuarterlyPage({
           </div>
           <Card
             title="Equity / Debt / Liquid Quarterly Net Flows"
-            subtitle={`${flowsData.length} quarter${flowsData.length === 1 ? "" : "s"} · ₹ Cr · positive = inflow, negative = outflow`}
+            subtitle={
+              quarterlyFlowsLens === "share"
+                ? `${flowsData.length} quarter${flowsData.length === 1 ? "" : "s"} · % of quarterly flow magnitude (signs preserved)`
+                : `${flowsData.length} quarter${flowsData.length === 1 ? "" : "s"} · ₹ Cr · positive = inflow, negative = outflow`
+            }
+            action={
+              <LensToggle
+                basePath="/quarterly"
+                paramName="qFlowsLens"
+                defaultValue="absolute"
+                lenses={[
+                  { value: "absolute", label: "₹ Cr" },
+                  { value: "share", label: "Share %" },
+                ]}
+                active={quarterlyFlowsLens}
+                preserveParams={preservedQueryParams}
+              />
+            }
           >
             <GroupedBars
-              data={flowsData}
+              data={flowsDataDisplay}
               xKey="quarterLabel"
               labelFormat="none"
-              valueFormat="cr"
-              axisFormat="cr"
+              valueFormat={quarterlyFlowsLens === "share" ? "pct" : "cr"}
+              axisFormat={quarterlyFlowsLens === "share" ? "pct" : "cr"}
               bars={[
                 {
                   key: "equity",
@@ -575,7 +649,7 @@ export default async function QuarterlyPage({
             />
             <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
               Liquid is shown separately for readability.
-              <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes." />
+              <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes. Share view divides each value by the quarter's sum of absolute flow magnitudes so signs (inflow vs outflow) stay intact." />
             </p>
           </Card>
         </div>
@@ -643,15 +717,32 @@ export default async function QuarterlyPage({
 
           <Card
             title="Equity Last-month AAUM Breakdown"
-            subtitle={aeBreakdownSubtitle}
+            subtitle={
+              equityMixLens === "share"
+                ? `${aeBreakdown.length} quarter${aeBreakdown.length === 1 ? "" : "s"} · stacked share of equity AAUM (last-month basis)`
+                : aeBreakdownSubtitle
+            }
+            action={
+              <LensToggle
+                basePath="/quarterly"
+                paramName="qEquityMixLens"
+                defaultValue="absolute"
+                lenses={[
+                  { value: "absolute", label: "₹ Cr" },
+                  { value: "share", label: "Share %" },
+                ]}
+                active={equityMixLens}
+                preserveParams={preservedQueryParams}
+              />
+            }
           >
             {aeBreakdownHasData ? (
               <GroupedBars
-                data={aeBreakdown}
+                data={aeBreakdownDisplay}
                 xKey="quarterLabel"
                 labelFormat="none"
-                valueFormat="cr"
-                axisFormat="cr"
+                valueFormat={equityMixLens === "share" ? "pct" : "cr"}
+                axisFormat={equityMixLens === "share" ? "pct" : "cr"}
                 bars={[
                   {
                     key: "activeEquity",
@@ -678,7 +769,7 @@ export default async function QuarterlyPage({
             <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
               Active Equity, ETF &amp; Index, and Arbitrage shown separately.
               All values use last-month AAUM, not a true 3-month average.
-              <InfoTooltip label="Active Equity = Growth/Equity schemes + Hybrid ex-Arbitrage + Solution-oriented schemes. ETF & Index = Index Funds + Other ETFs. Source: AMFI Quarterly Report's last-month AAUM column." />
+              <InfoTooltip label="Active Equity = Growth/Equity schemes + Hybrid ex-Arbitrage + Solution-oriented schemes. ETF & Index = Index Funds + Other ETFs. Source: AMFI Quarterly Report's last-month AAUM column. Share view divides each by the quarter's sum of all three segments." />
             </p>
           </Card>
         </div>

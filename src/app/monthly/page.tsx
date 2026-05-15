@@ -67,6 +67,7 @@ import {
 } from "@/data/market-indices";
 import { FlowStressHistoryChart } from "@/components/charts/FlowStressHistoryChart";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
+import { LensToggle } from "@/components/ui/LensToggle";
 import { Sparkline } from "@/components/charts/Sparkline";
 import {
   IIFL_ACTIVE_EQUITY_CATEGORIES,
@@ -98,6 +99,32 @@ export default async function MonthlyPage({
 }) {
   const sp = await searchParams;
   const subtitle = `Industry-wide · ${latestMonth()}`;
+
+  // ---- Lens toggles (parsed up-front so any chart below can read them).
+  // Each chart owns its own URL param so the toggles don't collide.
+  const heatmapLens: "share" | "zscore" =
+    typeof sp.heatmap === "string" && sp.heatmap === "zscore"
+      ? "zscore"
+      : "share";
+  const monthlyFlowsLens: "absolute" | "share" =
+    sp.flowsLens === "share" ? "share" : "absolute";
+  const equityBreakdownLens: "absolute" | "share" =
+    sp.equityMixLens === "share" ? "share" : "absolute";
+  const activePassiveLens: "absolute" | "share" =
+    sp.activePassiveLens === "share" ? "share" : "absolute";
+  // Pass-through params for every LensToggle so toggling A doesn't
+  // lose B (or the selected month).
+  const preservedQueryParams: Record<string, string | undefined> = {
+    month: typeof sp.month === "string" ? sp.month : undefined,
+    heatmap: typeof sp.heatmap === "string" ? sp.heatmap : undefined,
+    flowsLens: typeof sp.flowsLens === "string" ? sp.flowsLens : undefined,
+    equityMixLens:
+      typeof sp.equityMixLens === "string" ? sp.equityMixLens : undefined,
+    activePassiveLens:
+      typeof sp.activePassiveLens === "string"
+        ? sp.activePassiveLens
+        : undefined,
+  };
 
   // AMFI Monthly Snapshot — first live AMFI widget. Reads directly from
   // the manually-uploaded-PDF snapshot. The selected row is whichever
@@ -382,6 +409,40 @@ export default async function MonthlyPage({
   // skips null cells, which honours the "no fake zero" rule while
   // still rendering the other categories on the same x-axis.
   const monthlyFlowsRows = monthlyFlowsData(24);
+  // Transform flows to share view when the lens is set. Denominator is
+  // the sum of ABSOLUTE per-series values so signs (inflow vs outflow)
+  // stay readable; the bar heights now represent each segment's share
+  // of the month's total flow magnitude.
+  const toShareRow = (
+    row: Record<string, number | null | string>,
+    keys: string[]
+  ): Record<string, number | null | string> => {
+    const total = keys.reduce((s, k) => {
+      const v = row[k];
+      return s + (typeof v === "number" ? Math.abs(v) : 0);
+    }, 0);
+    if (total === 0) {
+      const out = { ...row };
+      for (const k of keys) out[k] = null;
+      return out;
+    }
+    const out = { ...row };
+    for (const k of keys) {
+      const v = row[k];
+      out[k] = typeof v === "number" ? (v / total) * 100 : null;
+    }
+    return out;
+  };
+  const monthlyFlowsDisplay =
+    monthlyFlowsLens === "share"
+      ? monthlyFlowsRows.map((r) =>
+          toShareRow(r as Record<string, number | null | string>, [
+            "equity",
+            "debt",
+            "liquid",
+          ])
+        )
+      : monthlyFlowsRows;
   const monthlyFlowsHasData = monthlyFlowsRows.some(
     (r) => r.equity !== null || r.debt !== null || r.liquid !== null
   );
@@ -430,6 +491,19 @@ export default async function MonthlyPage({
     }
     return null;
   })();
+  // Share-mode equity breakdown: each segment as % of the month's
+  // sum of Active + ETF & Index + Arbitrage. Months missing any
+  // segment render that segment as null.
+  const equityBreakdownDisplay =
+    equityBreakdownLens === "share"
+      ? equityBreakdown.map((r) =>
+          toShareRow(r as Record<string, number | null | string>, [
+            "activeEquity",
+            "etfIndex",
+            "arbitrage",
+          ])
+        )
+      : equityBreakdown;
   const equityBreakdownSubtitle = latestEquityMix
     ? `${equityBreakdown.length} month${equityBreakdown.length === 1 ? "" : "s"} · ₹ Cr · latest mix ${latestEquityMix.activePct.toFixed(1)}% Active / ${latestEquityMix.etfPct.toFixed(1)}% ETF & Index / ${latestEquityMix.arbPct.toFixed(1)}% Arbitrage`
     : `${equityBreakdown.length} month${equityBreakdown.length === 1 ? "" : "s"} · ₹ Cr · period-average · grouped bars`;
@@ -532,14 +606,6 @@ export default async function MonthlyPage({
   // muted "—", never a fake zero.
   const iiflHeatmap = iiflActiveEquityHeatmapData();
   const iiflHeatmapZScore = iiflActiveEquityHeatmapZScoreData();
-  // Heatmap lens toggle (?heatmap=share|zscore). Server-rendered — no
-  // client state. Defaults to share so the existing experience is
-  // unchanged when no param is present.
-  const heatmapLensRaw = sp.heatmap;
-  const heatmapLens: "share" | "zscore" =
-    typeof heatmapLensRaw === "string" && heatmapLensRaw === "zscore"
-      ? "zscore"
-      : "share";
   const heatmapActive =
     heatmapLens === "zscore" ? iiflHeatmapZScore : iiflHeatmap;
   const iiflHeatmapHasData = iiflHeatmap.rows.some((r) =>
@@ -885,14 +951,31 @@ export default async function MonthlyPage({
           </div>
           <Card
             title="Equity / Debt / Liquid Monthly Net Flows"
-            subtitle={`${monthlyFlowsRows.length} month${monthlyFlowsRows.length === 1 ? "" : "s"} · ₹ Cr · positive = inflow, negative = outflow`}
+            subtitle={
+              monthlyFlowsLens === "share"
+                ? `${monthlyFlowsRows.length} month${monthlyFlowsRows.length === 1 ? "" : "s"} · % of monthly flow magnitude (signs preserved)`
+                : `${monthlyFlowsRows.length} month${monthlyFlowsRows.length === 1 ? "" : "s"} · ₹ Cr · positive = inflow, negative = outflow`
+            }
+            action={
+              <LensToggle
+                basePath="/monthly"
+                paramName="flowsLens"
+                defaultValue="absolute"
+                lenses={[
+                  { value: "absolute", label: "₹ Cr" },
+                  { value: "share", label: "Share %" },
+                ]}
+                active={monthlyFlowsLens}
+                preserveParams={preservedQueryParams}
+              />
+            }
           >
             <GroupedBars
-              data={monthlyFlowsRows}
+              data={monthlyFlowsDisplay}
               xKey="month"
               labelFormat="month"
-              valueFormat="cr"
-              axisFormat="cr"
+              valueFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
+              axisFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
               bars={[
                 { key: "equity", name: "Equity", color: "hsl(var(--chart-1))" },
                 { key: "debt", name: "Debt", color: "hsl(var(--chart-2))" },
@@ -901,7 +984,7 @@ export default async function MonthlyPage({
             />
             <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
               Liquid is shown separately for readability.
-              <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes." />
+              <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes. In share view, each value is divided by the sum of absolute flow magnitudes in that month, so signs (inflow vs outflow) stay intact." />
             </p>
           </Card>
         </div>
@@ -1077,15 +1160,32 @@ export default async function MonthlyPage({
 
           <Card
             title="Equity AAUM Breakdown"
-            subtitle={equityBreakdownSubtitle}
+            subtitle={
+              equityBreakdownLens === "share"
+                ? `${equityBreakdown.length} month${equityBreakdown.length === 1 ? "" : "s"} · stacked share of equity AAUM`
+                : equityBreakdownSubtitle
+            }
+            action={
+              <LensToggle
+                basePath="/monthly"
+                paramName="equityMixLens"
+                defaultValue="absolute"
+                lenses={[
+                  { value: "absolute", label: "₹ Cr" },
+                  { value: "share", label: "Share %" },
+                ]}
+                active={equityBreakdownLens}
+                preserveParams={preservedQueryParams}
+              />
+            }
           >
             {equityBreakdownHasData ? (
               <GroupedBars
-                data={equityBreakdown}
+                data={equityBreakdownDisplay}
                 xKey="month"
                 labelFormat="month"
-                valueFormat="cr"
-                axisFormat="cr"
+                valueFormat={equityBreakdownLens === "share" ? "pct" : "cr"}
+                axisFormat={equityBreakdownLens === "share" ? "pct" : "cr"}
                 bars={[
                   { key: "activeEquity", name: "Active Equity", color: "hsl(var(--chart-1))" },
                   { key: "etfIndex", name: "ETF & Index", color: "hsl(var(--chart-5))" },
@@ -1099,7 +1199,7 @@ export default async function MonthlyPage({
             )}
             <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
               Active Equity, ETF &amp; Index, and Arbitrage shown separately.
-              <InfoTooltip label="Active Equity = Growth/Equity schemes + Hybrid ex-Arbitrage + Solution-oriented schemes. ETF & Index = Index Funds + Other ETFs." />
+              <InfoTooltip label="Active Equity = Growth/Equity schemes + Hybrid ex-Arbitrage + Solution-oriented schemes. ETF & Index = Index Funds + Other ETFs. Share view divides each segment by the sum of all three for that month." />
             </p>
           </Card>
         </div>
@@ -1123,18 +1223,45 @@ export default async function MonthlyPage({
           <section className="grid gap-4 lg:grid-cols-2">
             <Card
               title="Active Equity vs ETF &amp; Index AUM"
-              subtitle={`${activePassiveTrend.history.length} month${activePassiveTrend.history.length === 1 ? "" : "s"} · month-end AUM · ₹ Cr`}
+              subtitle={
+                activePassiveLens === "share"
+                  ? `${activePassiveTrend.history.length} month${activePassiveTrend.history.length === 1 ? "" : "s"} · share of total equity AUM`
+                  : `${activePassiveTrend.history.length} month${activePassiveTrend.history.length === 1 ? "" : "s"} · month-end AUM · ₹ Cr`
+              }
+              action={
+                <LensToggle
+                  basePath="/monthly"
+                  paramName="activePassiveLens"
+                  defaultValue="absolute"
+                  lenses={[
+                    { value: "absolute", label: "₹ Cr" },
+                    { value: "share", label: "Share %" },
+                  ]}
+                  active={activePassiveLens}
+                  preserveParams={preservedQueryParams}
+                />
+              }
             >
               <MultiLine
-                data={activePassiveTrend.history.map((p) => ({
-                  month: p.month,
-                  active: p.activeEquityAum,
-                  passive: p.etfIndexAum,
-                }))}
+                data={activePassiveTrend.history.map((p) => {
+                  const denom = p.activeEquityAum + p.etfIndexAum;
+                  if (activePassiveLens === "share") {
+                    return {
+                      month: p.month,
+                      active: denom > 0 ? (p.activeEquityAum / denom) * 100 : null,
+                      passive: denom > 0 ? (p.etfIndexAum / denom) * 100 : null,
+                    };
+                  }
+                  return {
+                    month: p.month,
+                    active: p.activeEquityAum,
+                    passive: p.etfIndexAum,
+                  };
+                })}
                 xKey="month"
                 labelFormat="month"
-                valueFormat="cr"
-                axisFormat="cr"
+                valueFormat={activePassiveLens === "share" ? "pct" : "cr"}
+                axisFormat={activePassiveLens === "share" ? "pct" : "cr"}
                 lines={[
                   {
                     key: "active",
@@ -1150,7 +1277,7 @@ export default async function MonthlyPage({
               />
               <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
                 Active equity vs ETF &amp; Index AUM.
-                <InfoTooltip label="Active equity = equity-oriented + hybrid (ex-arbitrage) + solution-oriented. ETF & Index = Index Funds + Other ETFs (excludes Gold ETFs)." />
+                <InfoTooltip label="Active equity = equity-oriented + hybrid (ex-arbitrage) + solution-oriented. ETF & Index = Index Funds + Other ETFs (excludes Gold ETFs). Share view divides each by their sum so the two lines always add to 100%." />
               </p>
             </Card>
 
