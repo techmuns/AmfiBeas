@@ -4,9 +4,8 @@ import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { KpiCard } from "@/components/ui/KpiCard";
-import { AreaTrend } from "@/components/charts/AreaTrend";
-import { BarSeries } from "@/components/charts/BarSeries";
 import { MultiLine } from "@/components/charts/MultiLine";
+import { RankTrendChart } from "@/components/charts/RankTrendChart";
 import {
   allAaumAmcs,
   amcAaumSeries,
@@ -14,6 +13,8 @@ import {
   amcGrowthMetrics,
   amcMarketShareSeries,
   amcRankSeries,
+  cohortMedianMarketShareSeries,
+  industryAaumSeries,
   peerComparisonForAmc,
   resolveAmcSlug,
 } from "@/data/amc-detail";
@@ -58,6 +59,47 @@ export default async function AmcPage({
   const rankChart = rankSeries.map((p) => ({
     quarter: p.fiscalLabel,
     rank: p.rank,
+  }));
+
+  // ---- Peer-context overlays for the AMC detail charts ----
+  // AAUM rebased to 100 at the start of the AMC's series. Industry
+  // total is reindexed using the SAME first-quarter anchor so both
+  // lines start at 100 and diverge / converge as the AMC out- or
+  // under-performs the industry. Quarters where either side is
+  // missing are dropped to keep the lines aligned.
+  const industryAaum = industryAaumSeries();
+  const industryByQuarter = new Map(
+    industryAaum.map((p) => [p.quarter, p.avgAum])
+  );
+  const baselineAmc = aaumSeries[0]?.avgAum ?? null;
+  const baselineIndustry =
+    aaumSeries[0] !== undefined
+      ? industryByQuarter.get(aaumSeries[0].quarter) ?? null
+      : null;
+  const aaumRebased =
+    baselineAmc !== null && baselineIndustry !== null && baselineAmc > 0 && baselineIndustry > 0
+      ? aaumSeries.flatMap((p) => {
+          const ind = industryByQuarter.get(p.quarter);
+          if (typeof ind !== "number" || ind <= 0) return [];
+          return [
+            {
+              label: p.fiscalLabel,
+              amc: Number(((p.avgAum / baselineAmc) * 100).toFixed(2)),
+              industry: Number(((ind / baselineIndustry) * 100).toFixed(2)),
+            },
+          ];
+        })
+      : [];
+
+  // Market share trend with cohort-median overlay.
+  const cohortMedianShare = cohortMedianMarketShareSeries();
+  const cohortMedianByQuarter = new Map(
+    cohortMedianShare.map((p) => [p.quarter, p.marketSharePct])
+  );
+  const shareWithMedian = shareSeries.map((p) => ({
+    label: p.fiscalLabel,
+    amc: p.marketSharePct,
+    median: cohortMedianByQuarter.get(p.quarter) ?? null,
   }));
 
   // KPI-card contexts: percentile-vs-own-history readings + 4Q / 5Y deltas.
@@ -278,42 +320,67 @@ export default async function AmcPage({
       <section className="grid gap-4 lg:grid-cols-2">
         <Card
           title="AAUM Trend"
-          subtitle={`MF QAAUM · ₹ Cr · ${aaumSeries.length} quarter${aaumSeries.length === 1 ? "" : "s"} · Source: AMFI Fundwise AAUM`}
+          subtitle={`Rebased to 100 at start · ${aaumSeries.length} quarter${aaumSeries.length === 1 ? "" : "s"} · this AMC vs industry total · Source: AMFI Fundwise AAUM`}
         >
-          {aaumChart.length > 0 ? (
-            <AreaTrend data={aaumChart} name="AAUM" />
+          {aaumRebased.length > 0 ? (
+            <MultiLine
+              data={aaumRebased}
+              xKey="label"
+              labelFormat="none"
+              valueFormat="count"
+              axisFormat="count"
+              lines={[
+                {
+                  key: "amc",
+                  name: detail.displayName,
+                  color: "hsl(var(--chart-1))",
+                },
+                {
+                  key: "industry",
+                  name: "Industry total",
+                  color: "hsl(var(--muted-foreground))",
+                },
+              ]}
+            />
           ) : (
             <EmptyChart>No AAUM history</EmptyChart>
           )}
         </Card>
         <Card
           title="Market Share Trend"
-          subtitle="% of industry MF AAUM · Source: AMFI Fundwise AAUM"
+          subtitle="% of industry MF AAUM · cohort median overlay · Source: AMFI Fundwise AAUM"
         >
           {shareChart.length > 0 ? (
-            <BarSeries data={shareChart} name="Market share" valueFormat="pct" />
+            <MultiLine
+              data={shareWithMedian}
+              xKey="label"
+              labelFormat="none"
+              valueFormat="pct"
+              axisFormat="pct"
+              dynamicYDomain
+              lines={[
+                {
+                  key: "amc",
+                  name: detail.displayName,
+                  color: "hsl(var(--chart-3))",
+                },
+                {
+                  key: "median",
+                  name: "Cohort median",
+                  color: "hsl(var(--muted-foreground))",
+                },
+              ]}
+            />
           ) : (
             <EmptyChart>No market-share history</EmptyChart>
           )}
         </Card>
         <Card
           title="Rank Trend"
-          subtitle="Position by AAUM (lower number = larger AMC) · Source: AMFI Fundwise AAUM"
+          subtitle="Position by AAUM (lower number = larger AMC) · tier bands shown · Source: AMFI Fundwise AAUM"
         >
           {rankChart.length > 0 ? (
-            <MultiLine
-              data={rankChart}
-              xKey="quarter"
-              valueFormat="count"
-              axisFormat="count"
-              lines={[
-                {
-                  key: "rank",
-                  name: "Rank",
-                  color: "hsl(var(--chart-1))",
-                },
-              ]}
-            />
+            <RankTrendChart data={rankChart} />
           ) : (
             <EmptyChart>No rank history</EmptyChart>
           )}

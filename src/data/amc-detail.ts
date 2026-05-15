@@ -356,3 +356,59 @@ export function amcIndexRows(): {
   });
   return { quarter: q, fiscalLabel: fiscalLabelFromCalendarQuarter(q), rows };
 }
+
+/** Industry-total AAUM per quarter, used as a reference line when an
+ *  AMC's AAUM trend is rebased so the reader can compare the AMC's
+ *  growth trajectory against the industry's. */
+export function industryAaumSeries(): QuarterPoint[] {
+  const byQuarter = new Map<string, number>();
+  for (const r of amcAaumQuarterlySnapshot.rows) {
+    if (r.status !== "ok") continue;
+    byQuarter.set(r.quarter, (byQuarter.get(r.quarter) ?? 0) + r.avgAum);
+  }
+  const quarters = Array.from(byQuarter.keys()).sort();
+  return quarters.map((q) => ({
+    quarter: q,
+    fiscalLabel: fiscalLabelFromCalendarQuarter(q),
+    avgAum: byQuarter.get(q)!,
+  }));
+}
+
+export interface CohortMedianSharePoint {
+  quarter: string;
+  fiscalLabel: string;
+  marketSharePct: number;
+}
+
+/** Per-quarter MEDIAN market-share across the cohort. Used as a
+ *  reference line on the per-AMC Market Share Trend chart so the
+ *  reader can see whether the AMC is above / below the typical
+ *  AMC's share. */
+export function cohortMedianMarketShareSeries(): CohortMedianSharePoint[] {
+  const byQuarter = new Map<string, number[]>();
+  for (const r of amcAaumQuarterlySnapshot.rows) {
+    if (r.status !== "ok") continue;
+    const arr = byQuarter.get(r.quarter) ?? [];
+    arr.push(r.avgAum);
+    byQuarter.set(r.quarter, arr);
+  }
+  const out: CohortMedianSharePoint[] = [];
+  const quarters = Array.from(byQuarter.keys()).sort();
+  for (const q of quarters) {
+    const aums = byQuarter.get(q) ?? [];
+    const total = aums.reduce((s, v) => s + v, 0);
+    if (total <= 0) continue;
+    const shares = aums.map((v) => (v / total) * 100).sort((a, b) => a - b);
+    const mid = Math.floor(shares.length / 2);
+    const median =
+      shares.length % 2 === 1
+        ? shares[mid]
+        : (shares[mid - 1] + shares[mid]) / 2;
+    out.push({
+      quarter: q,
+      fiscalLabel: fiscalLabelFromCalendarQuarter(q),
+      marketSharePct: Number(median.toFixed(3)),
+    });
+  }
+  return out;
+}
