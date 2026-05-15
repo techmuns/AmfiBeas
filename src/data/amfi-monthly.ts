@@ -956,3 +956,202 @@ export function sipStickinessSignal(): SipStickinessSignal | null {
     historyStart: series[0].month,
   };
 }
+
+// -------- Sparkline series for Investor Signals tiles -------------------
+//
+// Each signal in the Investor Signals panel renders a 24-month sparkline
+// at the foot of its tile so the latest reading is visible in context.
+// The helpers below return a chronological { label, value } array — same
+// shape the MultiLine chart consumes. Months without a value are
+// dropped, not zero-filled.
+
+export interface SparklinePoint {
+  label: string;
+  value: number;
+}
+
+/** Trailing 24-month series of active-equity net inflow (₹ Cr). */
+export function activeEquityNetInflowSparkline(months = 24): SparklinePoint[] {
+  return amfiMonthlyRows()
+    .flatMap((r) =>
+      typeof r.activeEquityNetInflow === "number"
+        ? [{ label: r.month, value: r.activeEquityNetInflow }]
+        : []
+    )
+    .slice(-months);
+}
+
+/** Trailing 24-month series of industry NFO funds mobilised (₹ Cr). */
+export function nfoMobilisationSparkline(months = 24): SparklinePoint[] {
+  return amfiMonthlyRows()
+    .flatMap((r) =>
+      typeof r.industryNfoFundsMobilized === "number"
+        ? [{ label: r.month, value: r.industryNfoFundsMobilized }]
+        : []
+    )
+    .slice(-months);
+}
+
+/** Trailing 24-month series of passive share of equity AUM (%). */
+export function passiveShareSparkline(months = 24): SparklinePoint[] {
+  return amfiMonthlyRows()
+    .flatMap((r) => {
+      if (
+        typeof r.activeEquityAum !== "number" ||
+        typeof r.etfIndexAum !== "number"
+      ) {
+        return [];
+      }
+      const denom = r.activeEquityAum + r.etfIndexAum;
+      if (denom <= 0) return [];
+      return [{ label: r.month, value: (r.etfIndexAum / denom) * 100 }];
+    })
+    .slice(-months);
+}
+
+/** Trailing N-month series of SIP AUM ÷ Total AUM (%). Defaults to 24
+ *  but the underlying SIP history is shorter; callers should treat the
+ *  series as best-effort. */
+export function sipStickinessSparkline(months = 24): SparklinePoint[] {
+  return amfiMonthlyRows()
+    .flatMap((r) => {
+      if (typeof r.sipAum !== "number" || typeof r.totalAum !== "number") {
+        return [];
+      }
+      if (r.totalAum <= 0) return [];
+      return [{ label: r.month, value: (r.sipAum / r.totalAum) * 100 }];
+    })
+    .slice(-months);
+}
+
+// -------- Cycle Phase classifier ----------------------------------------
+//
+// Synthesises the five Investor Signals into a single human-readable
+// "cycle phase" tag plus a 1-2 sentence English narrative. Rules are
+// explicit so the InfoTooltip can surface them — this is NOT a model.
+//
+// Inputs (all optional — the classifier degrades gracefully when a
+// signal is null):
+//   - activeEquityZ      : z-score from activeEquityNetInflowSignal()
+//   - nfoZ               : z-score from nfoHeatSignal()
+//   - passivePercentile  : 0-100 percentile from passiveShiftSignal()
+//   - drawdownPct        : latest Nifty 500 drawdown vs rolling peak
+//
+// Phase rules (evaluated in order):
+//   - drawdown ≤ −10% AND flowZ ≥ 0      → "Recovery"        (buy-the-dip)
+//   - drawdown ≤ −10% AND flowZ <  0     → "Correction"      (flow stress)
+//   - drawdown >  −3% AND flowZ ≥ 1.5
+//                       AND nfoZ ≥ 1.0   → "Peak"            (frothy)
+//   - drawdown >  −3% AND flowZ ≥ 0      → "Expansion"
+//   - drawdown ≤ −3% AND drawdown > −10% AND flowZ < 0
+//                                        → "Base"
+//   - else                                → "Expansion"
+//
+// The thresholds are documented in the tooltip; tweaking them is a
+// trivial edit here.
+
+export type CyclePhase =
+  | "Expansion"
+  | "Peak"
+  | "Correction"
+  | "Recovery"
+  | "Base"
+  | "Insufficient data";
+
+export interface InvestorReadInput {
+  activeEquityZ: number | null;
+  activeEquityPercentile: number | null;
+  nfoZ: number | null;
+  passivePercentile: number | null;
+  passiveLatestSharePct: number | null;
+  sipPercentile: number | null;
+  drawdownPct: number | null;
+  marketMonth: string | null;
+}
+
+export interface InvestorRead {
+  phase: CyclePhase;
+  narrative: string;
+  /** Plain-English breakdown of the rules used. Surfaced behind an
+   *  InfoTooltip so the classifier never feels like a black box. */
+  methodologyTooltip: string;
+}
+
+function classifyPhase(input: InvestorReadInput): CyclePhase {
+  const { activeEquityZ, nfoZ, drawdownPct } = input;
+  if (activeEquityZ === null && drawdownPct === null) {
+    return "Insufficient data";
+  }
+  const z = activeEquityZ ?? 0;
+  const nfo = nfoZ ?? 0;
+  const dd = drawdownPct ?? 0;
+  if (dd <= -10 && z >= 0) return "Recovery";
+  if (dd <= -10 && z < 0) return "Correction";
+  if (dd > -3 && z >= 1.5 && nfo >= 1) return "Peak";
+  if (dd > -3 && z >= 0) return "Expansion";
+  if (dd <= -3 && dd > -10 && z < 0) return "Base";
+  return "Expansion";
+}
+
+function describeFlowLevel(z: number | null, pct: number | null): string {
+  if (z === null || pct === null) return "with limited flow history";
+  if (z >= 2) return `with active-equity inflows running unusually high (${pct.toFixed(0)}th percentile)`;
+  if (z >= 1) return `with active-equity inflows in the top ${(100 - pct).toFixed(0)}% of months`;
+  if (z <= -2) return `with active-equity inflows running unusually low (${pct.toFixed(0)}th percentile)`;
+  if (z <= -1) return `with active-equity inflows in the bottom ${pct.toFixed(0)}% of months`;
+  return `with active-equity inflows close to the long-run average`;
+}
+
+function describeDrawdown(dd: number | null): string {
+  if (dd === null) return "Market drawdown not available";
+  if (dd >= -3) return `Nifty 500 is within ${Math.abs(dd).toFixed(1)}% of its all-time peak`;
+  if (dd >= -10) return `Nifty 500 is ${Math.abs(dd).toFixed(1)}% off its peak`;
+  return `Nifty 500 is in drawdown (${dd.toFixed(1)}% off its peak)`;
+}
+
+function describePassiveAndSip(input: InvestorReadInput): string {
+  const parts: string[] = [];
+  if (input.passivePercentile !== null && input.passiveLatestSharePct !== null) {
+    if (input.passivePercentile >= 80) {
+      parts.push(`passive share at ${input.passiveLatestSharePct.toFixed(1)}% (top quintile of history)`);
+    } else if (input.passivePercentile <= 20) {
+      parts.push(`passive share subdued at ${input.passiveLatestSharePct.toFixed(1)}%`);
+    } else {
+      parts.push(`passive share at ${input.passiveLatestSharePct.toFixed(1)}%`);
+    }
+  }
+  if (input.sipPercentile !== null && input.sipPercentile >= 70) {
+    parts.push("SIP base near recent highs");
+  } else if (input.sipPercentile !== null && input.sipPercentile <= 30) {
+    parts.push("SIP base near recent lows");
+  }
+  return parts.join("; ");
+}
+
+/** Build the Investor Read narrative + cycle phase from the panel
+ *  signals. The narrative reads as a 1-2 sentence summary; the phase
+ *  badge is the at-a-glance tag. */
+export function investorRead(input: InvestorReadInput): InvestorRead {
+  const phase = classifyPhase(input);
+  const drawdownSentence = describeDrawdown(input.drawdownPct);
+  const flowSentence = describeFlowLevel(
+    input.activeEquityZ,
+    input.activeEquityPercentile
+  );
+  const supplement = describePassiveAndSip(input);
+  const narrative =
+    phase === "Insufficient data"
+      ? "Not enough overlapping AMFI + Nifty 500 history yet to build a cycle read."
+      : `${drawdownSentence}, ${flowSentence}.` +
+        (supplement ? ` ${capitalise(supplement)}.` : "");
+  return {
+    phase,
+    narrative,
+    methodologyTooltip:
+      "Cycle phase is rule-based, not a model. Recovery: Nifty 500 drawdown ≤ −10% and active-equity flow z ≥ 0. Correction: drawdown ≤ −10% and flow z < 0. Peak: drawdown > −3% and flow z ≥ 1.5 and NFO z ≥ 1.0 (frothy). Expansion: drawdown > −3% and flow z ≥ 0. Base: drawdown between −3% and −10% with flow z < 0. Inputs from the existing Investor Signals panel; thresholds visible here.",
+  };
+}
+
+function capitalise(s: string): string {
+  return s.length === 0 ? s : s[0].toUpperCase() + s.slice(1);
+}

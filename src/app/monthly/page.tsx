@@ -10,6 +10,7 @@ import { Waterfall } from "@/components/charts/Waterfall";
 import { latestMonth } from "@/data/aggregate";
 import {
   activeEquityNetInflowSignal,
+  activeEquityNetInflowSparkline,
   amfiMonthlyRows,
   availableMonthsDesc,
   formatKpiProvenanceLine,
@@ -17,6 +18,7 @@ import {
   getKpiProvenance,
   getKpiValue,
   industryFlowWaterfall,
+  investorRead,
   latestAmfiMonthlyRow,
   latestIndustryFolioAdditions,
   latestProvenanceFor,
@@ -30,23 +32,30 @@ import {
   monthlySipAumShareTrend,
   monthlyTrend,
   nfoHeatSignal,
+  nfoMobilisationSparkline,
+  passiveShareSparkline,
   passiveShiftSignal,
   resolveSelectedRow,
   sipStickinessSignal,
+  sipStickinessSparkline,
   trailingActiveEquityNetInflowAverage,
   type ActiveEquityNetInflowSignal,
   type ActiveEquitySignalLabel,
   type AmfiMonthlyKpiField,
+  type CyclePhase,
   type NfoHeatSignal,
   type PassiveShiftLabel,
   type PassiveShiftSignal,
   type SipStickinessSignal,
+  type SparklinePoint,
 } from "@/data/amfi-monthly";
 import {
+  latestNifty500Row,
   marketStressFlowSignal,
   type MarketStressLabel,
   type MarketStressSignal,
 } from "@/data/market-indices";
+import { Sparkline } from "@/components/charts/Sparkline";
 import {
   IIFL_ACTIVE_EQUITY_CATEGORIES,
   IIFL_TREND_EXPANDED_SLUGS,
@@ -472,6 +481,24 @@ export default async function MonthlyPage({
     marketStress,
   ].filter((s): s is NonNullable<typeof s> => s !== null);
   const hasInvestorSignals = investorSignals.length > 0;
+  // Sparkline series per tile — trailing 24 months unless the series
+  // itself is shorter (e.g. SIP). Sparkline component handles empty.
+  const activeEquitySparkline = activeEquityNetInflowSparkline(24);
+  const nfoSparkline = nfoMobilisationSparkline(24);
+  const passiveSparkline = passiveShareSparkline(24);
+  const sipSparkline = sipStickinessSparkline(24);
+  const latestNifty = latestNifty500Row();
+  // Build the Investor Read composite from the five signals + Nifty 500.
+  const read = investorRead({
+    activeEquityZ: activeEquitySignal?.zScore ?? null,
+    activeEquityPercentile: activeEquitySignal?.percentileRank ?? null,
+    nfoZ: nfoSignal?.zScore ?? null,
+    passivePercentile: passiveSignal?.percentileRank ?? null,
+    passiveLatestSharePct: passiveSignal?.latestSharePct ?? null,
+    sipPercentile: sipStickiness?.percentileRank ?? null,
+    drawdownPct: latestNifty?.drawdownPct ?? null,
+    marketMonth: latestNifty?.month ?? null,
+  });
 
   // ---- 12-month Industry Flow Waterfall + Active vs Passive ---------
   const flowWaterfall = industryFlowWaterfall(12);
@@ -529,13 +556,29 @@ export default async function MonthlyPage({
           title="Investor Signals"
           subtitle="Historical context · AMFI monthly + Nifty 500 since Apr 2019"
         >
+          <InvestorReadStrip read={read} />
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {activeEquitySignal && (
-              <ActiveEquityFlowTile signal={activeEquitySignal} />
+              <ActiveEquityFlowTile
+                signal={activeEquitySignal}
+                sparkline={activeEquitySparkline}
+              />
             )}
-            {nfoSignal && <NfoHeatTile signal={nfoSignal} />}
-            {passiveSignal && <PassiveShiftTile signal={passiveSignal} />}
-            {sipStickiness && <SipStickinessTile signal={sipStickiness} />}
+            {nfoSignal && (
+              <NfoHeatTile signal={nfoSignal} sparkline={nfoSparkline} />
+            )}
+            {passiveSignal && (
+              <PassiveShiftTile
+                signal={passiveSignal}
+                sparkline={passiveSparkline}
+              />
+            )}
+            {sipStickiness && (
+              <SipStickinessTile
+                signal={sipStickiness}
+                sparkline={sipSparkline}
+              />
+            )}
             {marketStress && <MarketStressTile signal={marketStress} />}
           </div>
         </Card>
@@ -1332,6 +1375,8 @@ function SignalTile({
   metrics,
   read,
   infoLabel,
+  sparkline,
+  sparklineColor,
 }: {
   name: string;
   primary: string;
@@ -1341,6 +1386,8 @@ function SignalTile({
   metrics: { key: string; label: string; value: string }[];
   read: string;
   infoLabel: string;
+  sparkline?: SparklinePoint[];
+  sparklineColor?: string;
 }) {
   return (
     <div className="flex flex-col gap-3 rounded-md border bg-card p-4 shadow-sm">
@@ -1379,14 +1426,75 @@ function SignalTile({
         ))}
       </div>
       <p className="text-[11px] text-muted-foreground">{read}</p>
+      {sparkline && sparkline.length > 1 && (
+        <div className="mt-1 -mx-1">
+          <Sparkline data={sparkline} color={sparklineColor} height={32} />
+          <div className="mt-0.5 flex items-center justify-between text-[9px] tabular text-muted-foreground/70">
+            <span>{sparkline[0].label}</span>
+            <span className="uppercase tracking-wide">
+              {sparkline.length}m trend
+            </span>
+            <span>{sparkline[sparkline.length - 1].label}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function cyclePhaseToneClass(phase: CyclePhase): string {
+  switch (phase) {
+    case "Recovery":
+    case "Expansion":
+      return "border-positive/40 bg-positive/10 text-positive";
+    case "Correction":
+      return "border-negative/40 bg-negative/10 text-negative";
+    case "Peak":
+      return "border-foreground/40 bg-muted text-foreground";
+    case "Base":
+      return "border-foreground/30 bg-muted text-foreground";
+    case "Insufficient data":
+    default:
+      return "border-border bg-muted text-muted-foreground";
+  }
+}
+
+/** Composite Investor Read strip rendered at the top of the Investor
+ *  Signals panel. Synthesises the five signals into a 1-2 sentence
+ *  English narrative plus a Cycle Phase pill. Methodology lives behind
+ *  the InfoTooltip so the strip itself stays compact. */
+function InvestorReadStrip({
+  read,
+}: {
+  read: ReturnType<typeof investorRead>;
+}) {
+  return (
+    <div className="mb-4 rounded-md border bg-card/50 p-3 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-foreground">
+          Investor Read
+          <InfoTooltip label={read.methodologyTooltip} />
+        </div>
+        <span
+          className={cn(
+            "shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold tracking-tight whitespace-nowrap",
+            cyclePhaseToneClass(read.phase)
+          )}
+        >
+          Cycle phase · {read.phase}
+        </span>
+      </div>
+      <p className="mt-2 text-sm text-foreground/90">{read.narrative}</p>
     </div>
   );
 }
 
 function ActiveEquityFlowTile({
   signal,
+  sparkline,
 }: {
   signal: ActiveEquityNetInflowSignal;
+  sparkline?: SparklinePoint[];
 }) {
   const z = signal.zScore;
   const pct = signal.percentileRank;
@@ -1419,11 +1527,19 @@ function ActiveEquityFlowTile({
       ]}
       read={read}
       infoLabel={`Z-score = how many standard deviations the latest active-equity net inflow sits from the historical mean. Percentile = share of months with value ≤ latest. High readings = inflows running above the long-run norm. History: ${signal.historyStart} → ${signal.historyEnd} (${signal.historyMonths} months).`}
+      sparkline={sparkline}
+      sparklineColor="hsl(var(--chart-1))"
     />
   );
 }
 
-function NfoHeatTile({ signal }: { signal: NfoHeatSignal }) {
+function NfoHeatTile({
+  signal,
+  sparkline,
+}: {
+  signal: NfoHeatSignal;
+  sparkline?: SparklinePoint[];
+}) {
   const z = signal.zScore;
   const pct = signal.percentileRank;
   const read =
@@ -1455,11 +1571,19 @@ function NfoHeatTile({ signal }: { signal: NfoHeatSignal }) {
       ]}
       read={read}
       infoLabel={`Z-score = how many standard deviations the latest NFO mobilisation sits from the historical mean. Percentile = share of months with value ≤ latest. High readings often coincide with bullish, NFO-heavy phases — context, not a buy/sell call. History: ${signal.historyStart} onwards (${signal.historyMonths} months).`}
+      sparkline={sparkline}
+      sparklineColor="hsl(var(--chart-2))"
     />
   );
 }
 
-function PassiveShiftTile({ signal }: { signal: PassiveShiftSignal }) {
+function PassiveShiftTile({
+  signal,
+  sparkline,
+}: {
+  signal: PassiveShiftSignal;
+  sparkline?: SparklinePoint[];
+}) {
   const pct = signal.percentileRank;
   const read =
     signal.label === "Passive gaining share"
@@ -1490,11 +1614,19 @@ function PassiveShiftTile({ signal }: { signal: PassiveShiftSignal }) {
       ]}
       read={read}
       infoLabel={`Passive share = ETF & Index AUM ÷ (Active Equity AUM + ETF & Index AUM) × 100. Percentile shows where the latest reading sits in the slowly-rising passive trend. History: ${signal.historyStart} onwards (${signal.historyMonths} months).`}
+      sparkline={sparkline}
+      sparklineColor="hsl(var(--chart-5))"
     />
   );
 }
 
-function SipStickinessTile({ signal }: { signal: SipStickinessSignal }) {
+function SipStickinessTile({
+  signal,
+  sparkline,
+}: {
+  signal: SipStickinessSignal;
+  sparkline?: SparklinePoint[];
+}) {
   const z = signal.zScore;
   const pct = signal.percentileRank;
   const read =
@@ -1526,6 +1658,8 @@ function SipStickinessTile({ signal }: { signal: SipStickinessSignal }) {
       ]}
       read={read}
       infoLabel={`SIP stickiness = SIP AUM ÷ Total AUM × 100. Captures the structural, recurring portion of industry AUM. AMFI's SIP press-release coverage starts later than the Monthly Report — available SIP history starts from ${signal.historyStart} (${signal.historyMonths} months).`}
+      sparkline={sparkline}
+      sparklineColor="hsl(var(--chart-3))"
     />
   );
 }

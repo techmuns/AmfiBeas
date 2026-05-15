@@ -618,3 +618,58 @@ export function amcLevelHhiSeries(lastN = 8): HhiPoint[] {
     };
   });
 }
+
+/** HHI percentile read for the latest quarter against a trailing
+ *  window (default 5 years = 20 quarters). Returned percentile uses
+ *  ≤ semantics: it answers "what share of the trailing window had an
+ *  HHI ≤ today's value?" → low percentile = industry currently more
+ *  competitive / less concentrated than typical recent history.
+ *
+ *  Returns null when fewer than 4 quarters of history are available
+ *  (i.e. the window is too short for a percentile to be meaningful).
+ */
+export interface HhiPercentileRead {
+  latestHhi: number;
+  latestQuarter: string;
+  latestQuarterLabel: string;
+  windowQuarters: number;
+  percentile: number;
+  /** HHI change versus the row exactly `compareQuartersBack` quarters
+   *  prior to the latest, in absolute HHI points (positive = more
+   *  concentrated). Null when that anchor row is missing. */
+  changeVsAnchor: number | null;
+  anchorQuarterLabel: string | null;
+}
+
+export function amcLevelHhiPercentileRead(
+  windowQuarters = 20,
+  compareQuartersBack = 20
+): HhiPercentileRead | null {
+  const series = amcLevelHhiSeries(windowQuarters);
+  if (series.length < 4) return null;
+  const latest = series[series.length - 1];
+  const lessOrEqual = series.filter((p) => p.hhi <= latest.hhi).length;
+  const percentile = (lessOrEqual / series.length) * 100;
+  // Anchor: prefer the row exactly `compareQuartersBack` before the
+  // latest. When the available history is shorter than that, fall back
+  // to the earliest quarter on record so the read still surfaces a
+  // direction-of-change comparison (clearly labelled with the anchor's
+  // quarter so the reader knows the window).
+  const full = amcLevelHhiSeries(1000);
+  const latestIdx = full.findIndex((p) => p.quarter === latest.quarter);
+  const anchor =
+    latestIdx >= compareQuartersBack
+      ? full[latestIdx - compareQuartersBack]
+      : full.length > 1
+        ? full[0]
+        : null;
+  return {
+    latestHhi: latest.hhi,
+    latestQuarter: latest.quarter,
+    latestQuarterLabel: latest.quarterLabel,
+    windowQuarters: series.length,
+    percentile,
+    changeVsAnchor: anchor ? latest.hhi - anchor.hhi : null,
+    anchorQuarterLabel: anchor ? anchor.quarterLabel : null,
+  };
+}
