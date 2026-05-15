@@ -60,9 +60,11 @@ import {
 import {
   cyclePhaseHistory,
   flowStressHistory,
+  historicalEpisodes,
   investorMood,
   latestNifty500Row,
   marketStressFlowSignal,
+  narrativeComposer,
   weatherBadge,
   type MarketStressLabel,
   type MarketStressSignal,
@@ -72,7 +74,9 @@ import { SankeyFlow } from "@/components/charts/SankeyFlow";
 import { CalendarHeatGrid } from "@/components/ui/CalendarHeatGrid";
 import { CalloutCard } from "@/components/ui/CalloutCard";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
+import { EpisodeReplayStrip } from "@/components/ui/EpisodeReplayStrip";
 import { HeadlineCard } from "@/components/ui/HeadlineCard";
+import { NarrativeBlock } from "@/components/ui/NarrativeBlock";
 import { LensToggle } from "@/components/ui/LensToggle";
 import { MoodGauge } from "@/components/ui/MoodGauge";
 import { Sparkline } from "@/components/charts/Sparkline";
@@ -702,6 +706,38 @@ export default async function MonthlyPage({
   const sipSparkline = sipStickinessSparkline(24);
   const latestNifty = latestNifty500Row();
   const cyclePhasePoints = cyclePhaseHistory();
+  const episodes = historicalEpisodes();
+  const latestCyclePhaseForNarrative =
+    cyclePhasePoints.length > 0
+      ? cyclePhasePoints[cyclePhasePoints.length - 1].phase
+      : null;
+  const narrative = narrativeComposer({
+    latestMonth: activeEquitySignal?.latestMonth ?? null,
+    activeEquity: activeEquitySignal
+      ? {
+          value: activeEquitySignal.latestValue,
+          zScore: activeEquitySignal.zScore,
+          percentile: activeEquitySignal.percentileRank,
+        }
+      : null,
+    nfo: nfoSignal
+      ? { zScore: nfoSignal.zScore, percentile: nfoSignal.percentileRank }
+      : null,
+    passive: passiveSignal
+      ? {
+          latestSharePct: passiveSignal.latestSharePct,
+          percentile: passiveSignal.percentileRank,
+        }
+      : null,
+    sip: sipStickiness
+      ? {
+          latestSharePct: sipStickiness.latestSharePct,
+          percentile: sipStickiness.percentileRank,
+        }
+      : null,
+    drawdownPct: latestNifty?.drawdownPct ?? null,
+    cyclePhase: latestCyclePhaseForNarrative,
+  });
   // Sankey data — composes SIP vs Lump-sum on the source side, and
   // Equity / Debt / Liquid / Other on the target side, all from the
   // latest month with usable totals. Links are proportional shares
@@ -970,6 +1006,26 @@ export default async function MonthlyPage({
             />
           ))}
         </section>
+      )}
+
+      {narrative && (
+        <NarrativeBlock
+          eyebrow={`Markets column · ${activeEquitySignal?.latestMonth ?? ""}`}
+          strapline={`The ${read.phase.toLowerCase()} read`}
+          paragraphs={narrative}
+        />
+      )}
+
+      {episodes.length > 0 && (
+        <Card
+          title="Cycle Replay · How investors behaved in past drawdowns"
+          subtitle="Each card is a distinct drawdown episode — colour pill captures the average flow z-score during the episode"
+        >
+          <EpisodeReplayStrip
+            episodes={episodes}
+            formatValue={(v) => `₹${formatCompactCrSafe(v)}`}
+          />
+        </Card>
       )}
 
       {cyclePhasePoints.length > 0 && (

@@ -417,3 +417,287 @@ export function weatherBadge(input: {
   }
   return { headline: `Overcast · Mixed · ${phase ?? "Base"}`, tone: "neutral" };
 }
+
+// ---- Historical Episodes (Cycle Replay) -------------------------------
+//
+// Mines the overlapping AMFI + Nifty 500 history for distinct
+// drawdown "episodes": contiguous stretches where the rolling
+// drawdown stayed below a threshold (default −7%). Each episode is
+// summarised with depth, length, and the active-equity flow
+// behaviour during it. Used by the replay strip to show how
+// investors behaved across multiple cycles in a single image.
+
+export interface HistoricalEpisode {
+  /** Friendly title (e.g. "COVID 2020"). */
+  title: string;
+  startMonth: string;
+  endMonth: string;
+  /** Months covered by the episode (length of the contiguous stretch). */
+  monthCount: number;
+  /** Maximum drawdown (most negative) reached during the episode. */
+  maxDrawdownPct: number;
+  /** Sum of active-equity net inflows during the episode (₹ Cr). */
+  totalActiveEquityFlow: number;
+  /** Average active-equity flow z-score during the episode. */
+  avgFlowZScore: number | null;
+  /** One-line investor-behaviour read. */
+  read: string;
+}
+
+const KNOWN_EPISODE_TITLES: { startMonth: string; title: string }[] = [
+  { startMonth: "2020-02", title: "COVID 2020" },
+  { startMonth: "2020-03", title: "COVID 2020" },
+  { startMonth: "2022-04", title: "FY23 correction" },
+  { startMonth: "2022-05", title: "FY23 correction" },
+  { startMonth: "2022-06", title: "FY23 correction" },
+  { startMonth: "2024-08", title: "FY25 mid-cycle" },
+  { startMonth: "2024-09", title: "FY25 mid-cycle" },
+  { startMonth: "2024-10", title: "FY25 mid-cycle" },
+  { startMonth: "2025-12", title: "FY26 correction" },
+  { startMonth: "2026-01", title: "FY26 correction" },
+  { startMonth: "2026-02", title: "FY26 correction" },
+  { startMonth: "2026-03", title: "FY26 correction" },
+];
+
+function defaultEpisodeTitle(start: string, end: string): string {
+  const [y1] = start.split("-");
+  const [y2] = end.split("-");
+  return y1 === y2 ? `Drawdown ${y1}` : `Drawdown ${y1}–${y2}`;
+}
+
+/**
+ * Slice the cycle-phase history into contiguous "drawdown episodes"
+ * — stretches where the Nifty 500 drawdown stayed at or below the
+ * threshold for at least `minLength` months.
+ */
+export function historicalEpisodes(
+  thresholdPct = -7,
+  minLength = 2
+): HistoricalEpisode[] {
+  const points = cyclePhaseHistory();
+  if (points.length === 0) return [];
+  // Build a quick map of active-equity flow z-score per month.
+  const zByMonth = new Map<string, number | null>();
+  for (const p of points) zByMonth.set(p.month, p.flowZScore);
+  // Also pull raw active-equity flow values for the totals column.
+  const flowByMonth = new Map<string, number>();
+  for (const r of amfiMonthlyRows()) {
+    if (typeof r.activeEquityNetInflow === "number") {
+      flowByMonth.set(r.month, r.activeEquityNetInflow);
+    }
+  }
+
+  const episodes: HistoricalEpisode[] = [];
+  let runStart: number | null = null;
+  for (let i = 0; i < points.length; i++) {
+    const p = points[i];
+    const inDrawdown = p.drawdownPct <= thresholdPct;
+    if (inDrawdown && runStart === null) {
+      runStart = i;
+    } else if (!inDrawdown && runStart !== null) {
+      const slice = points.slice(runStart, i);
+      if (slice.length >= minLength) {
+        episodes.push(buildEpisode(slice, flowByMonth, zByMonth));
+      }
+      runStart = null;
+    }
+  }
+  // Close trailing run.
+  if (runStart !== null) {
+    const slice = points.slice(runStart);
+    if (slice.length >= minLength) {
+      episodes.push(buildEpisode(slice, flowByMonth, zByMonth));
+    }
+  }
+  // Sort by max drawdown (deepest first), keep top 6.
+  episodes.sort((a, b) => a.maxDrawdownPct - b.maxDrawdownPct);
+  return episodes.slice(0, 6);
+}
+
+function buildEpisode(
+  slice: CyclePhasePoint[],
+  flowByMonth: Map<string, number>,
+  zByMonth: Map<string, number | null>
+): HistoricalEpisode {
+  const startMonth = slice[0].month;
+  const endMonth = slice[slice.length - 1].month;
+  const maxDrawdownPct = slice.reduce(
+    (acc, p) => (p.drawdownPct < acc ? p.drawdownPct : acc),
+    0
+  );
+  const totalFlow = slice.reduce(
+    (s, p) => s + (flowByMonth.get(p.month) ?? 0),
+    0
+  );
+  const zValues = slice
+    .map((p) => zByMonth.get(p.month))
+    .filter((v): v is number => typeof v === "number");
+  const avgZ =
+    zValues.length > 0
+      ? zValues.reduce((s, v) => s + v, 0) / zValues.length
+      : null;
+  const knownTitle = KNOWN_EPISODE_TITLES.find(
+    (k) => k.startMonth === startMonth
+  );
+  const title = knownTitle
+    ? knownTitle.title
+    : defaultEpisodeTitle(startMonth, endMonth);
+  // Behavioural read.
+  let read: string;
+  if (avgZ !== null && avgZ >= 0.5) {
+    read = "Investors leaned in — flows above norm despite the drawdown";
+  } else if (avgZ !== null && avgZ <= -0.5) {
+    read = "Investors pulled back — flows ran below norm during the drawdown";
+  } else {
+    read = "Investors stayed steady — flows close to long-run norm";
+  }
+  return {
+    title,
+    startMonth,
+    endMonth,
+    monthCount: slice.length,
+    maxDrawdownPct,
+    totalActiveEquityFlow: totalFlow,
+    avgFlowZScore: avgZ,
+    read,
+  };
+}
+
+// ---- Live Narrative Composer ------------------------------------------
+//
+// Three-paragraph executive summary generated from the same five
+// signals + cycle phase the rest of the dashboard already uses. No
+// model — just rules. Designed to read like a markets column
+// opening: what changed, what it means, what to watch.
+
+export interface ComposedNarrative {
+  /** Opening paragraph: what changed this month. */
+  opening: string;
+  /** Middle paragraph: what it means in context (cycle, history). */
+  middle: string;
+  /** Closing paragraph: what to watch next. */
+  closing: string;
+}
+
+export function narrativeComposer(input: {
+  latestMonth: string | null;
+  activeEquity: { value: number | null; zScore: number | null; percentile: number | null } | null;
+  nfo: { zScore: number | null; percentile: number | null } | null;
+  passive: { latestSharePct: number | null; percentile: number | null } | null;
+  sip: { latestSharePct: number | null; percentile: number | null } | null;
+  drawdownPct: number | null;
+  cyclePhase: CyclePhase | null;
+}): ComposedNarrative | null {
+  if (!input.latestMonth) return null;
+  const ae = input.activeEquity;
+  const nfo = input.nfo;
+  const passive = input.passive;
+  const sip = input.sip;
+  const dd = input.drawdownPct;
+  const phase = input.cyclePhase;
+
+  // Opening: lead with the active-equity flow + cycle headline.
+  const open: string[] = [];
+  if (ae && ae.value !== null && ae.percentile !== null) {
+    const flowStrength =
+      ae.percentile >= 90
+        ? "ran exceptionally hot"
+        : ae.percentile >= 70
+          ? "ran above the long-run norm"
+          : ae.percentile <= 10
+            ? "ran exceptionally cold"
+            : ae.percentile <= 30
+              ? "ran below the long-run norm"
+              : "stayed close to its historical norm";
+    open.push(
+      `In ${input.latestMonth}, active-equity inflows ${flowStrength}` +
+        (ae.percentile !== null
+          ? ` — ${ae.percentile.toFixed(0)}th percentile of months on record.`
+          : ".")
+    );
+  }
+  if (dd !== null) {
+    if (dd <= -10) {
+      open.push(
+        `Markets entered the month under pressure, with the Nifty 500 ${Math.abs(dd).toFixed(1)}% off its peak.`
+      );
+    } else if (dd <= -3) {
+      open.push(
+        `The Nifty 500 sat ${Math.abs(dd).toFixed(1)}% off its all-time high, hovering between expansion and pullback.`
+      );
+    } else {
+      open.push(
+        `The Nifty 500 traded within ${Math.abs(dd).toFixed(1)}% of its all-time high.`
+      );
+    }
+  }
+  if (open.length === 0) {
+    open.push(`Latest data point: ${input.latestMonth}.`);
+  }
+
+  // Middle: historical context + secondary signals.
+  const mid: string[] = [];
+  if (phase) {
+    mid.push(`The composite rules place the cycle in **${phase}** territory.`);
+  }
+  if (passive && passive.latestSharePct !== null && passive.percentile !== null) {
+    if (passive.percentile >= 80) {
+      mid.push(
+        `Passive funds command ${passive.latestSharePct.toFixed(1)}% of equity AUM — near the high end of the available history.`
+      );
+    } else if (passive.percentile <= 20) {
+      mid.push(
+        `Passive funds account for ${passive.latestSharePct.toFixed(1)}% of equity AUM — toward the low end of recent history.`
+      );
+    } else {
+      mid.push(
+        `Passive funds command ${passive.latestSharePct.toFixed(1)}% of equity AUM, broadly in line with recent norms.`
+      );
+    }
+  }
+  if (nfo && nfo.percentile !== null) {
+    if (nfo.percentile >= 80) {
+      mid.push(
+        "NFO mobilisation is at the high end of history — historically a bull-market cue, not a buy signal in itself."
+      );
+    } else if (nfo.percentile <= 20) {
+      mid.push(
+        "NFO mobilisation is subdued — investors are favouring existing schemes over new launches."
+      );
+    }
+  }
+  if (sip && sip.percentile !== null && sip.percentile >= 70) {
+    mid.push(
+      `SIP-anchored AUM share continues to grind higher (${sip.percentile.toFixed(0)}th percentile of available history) — the structural base keeps strengthening.`
+    );
+  }
+  if (mid.length === 0) {
+    mid.push("Secondary signals were close to historical norms this month.");
+  }
+
+  // Closing: forward-looking watch list.
+  const close: string[] = [];
+  if (dd !== null && dd <= -10 && ae && ae.zScore !== null && ae.zScore >= 0) {
+    close.push(
+      "Watch for the duration of the inflow strength: sustained buying through a drawdown is a positive structural signal, but the market needs to confirm with a recovery."
+    );
+  } else if (dd !== null && dd <= -10) {
+    close.push(
+      "Watch for the next month's flow read: if active-equity flows turn higher while the index remains under pressure, that flips the signal toward Recovery."
+    );
+  } else if (ae && ae.zScore !== null && ae.zScore >= 1.5 && nfo && nfo.zScore !== null && nfo.zScore >= 1) {
+    close.push(
+      "Watch for froth signs: when both flow and NFO sit above +1σ simultaneously, the cycle has historically been close to a peak."
+    );
+  } else {
+    close.push(
+      "Watch for cross-signal moves next month: a flip in flow direction or a step-change in passive share would be the first cue that the cycle is rotating."
+    );
+  }
+
+  return {
+    opening: open.join(" "),
+    middle: mid.join(" "),
+    closing: close.join(" "),
+  };
+}
