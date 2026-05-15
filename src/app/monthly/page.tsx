@@ -68,12 +68,14 @@ import {
   type MarketStressSignal,
 } from "@/data/market-indices";
 import { FlowStressHistoryChart } from "@/components/charts/FlowStressHistoryChart";
+import { CalendarHeatGrid } from "@/components/ui/CalendarHeatGrid";
 import { CalloutCard } from "@/components/ui/CalloutCard";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { HeadlineCard } from "@/components/ui/HeadlineCard";
 import { LensToggle } from "@/components/ui/LensToggle";
 import { MoodGauge } from "@/components/ui/MoodGauge";
 import { Sparkline } from "@/components/charts/Sparkline";
+import { VolatilityRibbon } from "@/components/ui/VolatilityRibbon";
 import { WeatherBadge } from "@/components/ui/WeatherBadge";
 import { ordinalSuffix } from "@/lib/format";
 import {
@@ -699,6 +701,30 @@ export default async function MonthlyPage({
   const sipSparkline = sipStickinessSparkline(24);
   const latestNifty = latestNifty500Row();
   const cyclePhasePoints = cyclePhaseHistory();
+  // Calendar heat grid cells: every month in the active-equity
+  // history, value = z-score of that month's flow vs the full
+  // distribution. Drives the "7-year calendar" surface below.
+  const flowHeatCells: { month: string; value: number | null; hoverDetail?: string }[] = (() => {
+    const rows = amfiMonthlyRows();
+    const series = rows
+      .filter((r) => typeof r.activeEquityNetInflow === "number")
+      .map((r) => ({ month: r.month, value: r.activeEquityNetInflow as number }));
+    if (series.length === 0) return [];
+    const values = series.map((p) => p.value);
+    const n = values.length;
+    const mean = values.reduce((s, v) => s + v, 0) / n;
+    const variance = values.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
+    const stdDev = n >= 2 && variance > 0 ? Math.sqrt(variance) : null;
+    return series.map((p) => ({
+      month: p.month,
+      value: stdDev !== null ? (p.value - mean) / stdDev : null,
+      hoverDetail: `₹${formatCompactCrSafe(p.value)} · ${
+        stdDev !== null
+          ? `${((p.value - mean) / stdDev).toFixed(2)}σ`
+          : "—"
+      }`,
+    }));
+  })();
   const latestCyclePhase =
     cyclePhasePoints.length > 0
       ? cyclePhasePoints[cyclePhasePoints.length - 1].phase
@@ -885,6 +911,19 @@ export default async function MonthlyPage({
           subtitle={`Per-month cycle phase since ${cyclePhasePoints[0].month} · derived from active-equity flow z-score + Nifty 500 drawdown`}
         >
           <CycleRibbon points={cyclePhasePoints} lastN={84} />
+        </Card>
+      )}
+
+      {flowHeatCells.length > 0 && (
+        <Card
+          title="Active Equity Flow · 7-year Calendar"
+          subtitle="Each cell = one month · colour = z-score vs full history"
+        >
+          <CalendarHeatGrid
+            cells={flowHeatCells}
+            saturationBound={2}
+            caption="Active-equity net inflow z-score per month"
+          />
         </Card>
       )}
 
@@ -1198,8 +1237,12 @@ export default async function MonthlyPage({
                     activeEquityFlowAvg !== null ? "TTM avg" : undefined
                   }
                 />
+                <div className="mt-2">
+                  <VolatilityRibbon series={activeEquityFlowTrend} />
+                </div>
                 <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
                   Dashed line = trailing 12-month average of net inflow.
+                  Strip below = ≥ ±2σ MoM moves shaded green / red.
                   <InfoTooltip label="Active-equity envelope = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
                 </p>
               </Card>

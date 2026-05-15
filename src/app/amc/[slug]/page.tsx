@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
+import { DistributionStrip } from "@/components/ui/DistributionStrip";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { RankTrendChart } from "@/components/charts/RankTrendChart";
@@ -140,6 +141,16 @@ export default async function AmcPage({
   // pill on the QoQ KPI.
   const anomalyReport = latestQoqAnomalies(2);
   const cohortMedianQoq = anomalyReport?.medianQoqPct ?? null;
+  // Peer distribution arrays for the DistributionStrip — every AMC's
+  // latest market share + QoQ growth, used to render the dot strip.
+  const peerDistributionShares: number[] = peer
+    ? peer.rows.map((r) => r.marketSharePct)
+    : [];
+  const peerDistributionGrowth: number[] = peer
+    ? peer.rows
+        .map((r) => r.qoqGrowthPct)
+        .filter((v): v is number => typeof v === "number")
+    : [];
   const thisAmcAnomaly =
     anomalyReport?.outliers.find((o) => o.amcSlug === slug) ?? null;
   const peerChart =
@@ -316,6 +327,34 @@ export default async function AmcPage({
           note={detail.amcNameAsReported}
         />
       </section>
+
+      {peerDistributionShares.length > 1 && latest && (
+        <Card
+          title="Peer Position"
+          subtitle="Where this AMC sits on the cohort distribution for each metric"
+        >
+          <div className="space-y-3">
+            <DistributionStrip
+              label="Market share"
+              values={peerDistributionShares}
+              focused={latest.marketSharePct}
+              format={(v) => `${v.toFixed(2)}%`}
+            />
+            {peerDistributionGrowth.length > 1 && growth?.qoqGrowthPct !== null && growth?.qoqGrowthPct !== undefined && (
+              <DistributionStrip
+                label="QoQ growth"
+                values={peerDistributionGrowth}
+                focused={growth.qoqGrowthPct}
+                format={(v) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`}
+              />
+            )}
+          </div>
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            Each dot = one AMC in the cohort. The filled dot is{" "}
+            {detail.displayName}.
+          </p>
+        </Card>
+      )}
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Card
