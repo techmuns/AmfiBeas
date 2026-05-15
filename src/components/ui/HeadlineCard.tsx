@@ -1,8 +1,10 @@
 import { cn } from "@/lib/cn";
 
 interface HeadlineCardProps {
-  /** Big headline number — caller pre-formats (e.g. "₹47.0K Cr"). */
-  headline: string;
+  /** Big headline number — caller pre-formats (e.g. "₹47.0K Cr").
+   *  Accepts a ReactNode so callers can drop in animated counters
+   *  or custom layouts. */
+  headline: React.ReactNode;
   /** Short eyebrow text rendered above the headline (small caps). */
   eyebrow: string;
   /** Plain-English context line (e.g. "Top 4% of months · Cycle: Recovery"). */
