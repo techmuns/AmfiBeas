@@ -9,6 +9,7 @@ import { StackedArea } from "@/components/charts/StackedArea";
 import { Waterfall } from "@/components/charts/Waterfall";
 import { latestMonth } from "@/data/aggregate";
 import {
+  activeEquityNetInflowSignal,
   amfiMonthlyRows,
   availableMonthsDesc,
   formatKpiProvenanceLine,
@@ -30,6 +31,8 @@ import {
   monthlyTrend,
   resolveSelectedRow,
   trailingActiveEquityNetInflowAverage,
+  type ActiveEquityNetInflowSignal,
+  type ActiveEquitySignalLabel,
   type AmfiMonthlyKpiField,
 } from "@/data/amfi-monthly";
 import {
@@ -433,10 +436,12 @@ export default async function MonthlyPage({
   const activeEquityFlowAvg = trailingActiveEquityNetInflowAverage(12);
   const activeEquityBridge = monthlyActiveEquityAumBridge(24);
   const sipAumShareTrend = monthlySipAumShareTrend(24);
+  const activeEquitySignal = activeEquityNetInflowSignal();
   const hasActiveEquityFlowDiagnostics =
     activeEquityFlowTrend.length > 0 ||
     activeEquityBridge.length > 0 ||
-    sipAumShareTrend.length > 0;
+    sipAumShareTrend.length > 0 ||
+    activeEquitySignal !== null;
 
   // ---- 12-month Industry Flow Waterfall + Active vs Passive ---------
   const flowWaterfall = industryFlowWaterfall(12);
@@ -642,6 +647,10 @@ export default async function MonthlyPage({
               Source: AMFI Monthly Report
             </p>
           </div>
+
+          {activeEquitySignal && (
+            <ActiveEquityNetInflowSignalCard signal={activeEquitySignal} />
+          )}
 
           <section className="grid gap-4 lg:grid-cols-2">
             {activeEquityFlowTrend.length > 0 && (
@@ -1204,5 +1213,123 @@ export default async function MonthlyPage({
       </Card>
 
     </div>
+  );
+}
+
+/** Sign-aware compact ₹ Cr — local helper so a negative active-equity
+ *  net inflow renders as "−₹32.4K Cr" rather than the unsigned value. */
+function formatSignedCompactCr(v: number): string {
+  if (v >= 0) return formatCompactCrSafe(v);
+  return "−" + formatCompactCrSafe(-v);
+}
+
+function signalToneClass(label: ActiveEquitySignalLabel): string {
+  switch (label) {
+    case "Very strong":
+    case "Strong":
+      return "border-positive/40 bg-positive/10 text-positive";
+    case "Weak":
+    case "Very weak":
+      return "border-negative/40 bg-negative/10 text-negative";
+    case "Insufficient history":
+      return "border-border bg-muted text-muted-foreground";
+    default:
+      return "border-border bg-muted text-muted-foreground";
+  }
+}
+
+function ActiveEquityNetInflowSignalCard({
+  signal,
+}: {
+  signal: ActiveEquityNetInflowSignal;
+}) {
+  const insufficient = signal.label === "Insufficient history";
+  const zScoreText =
+    signal.zScore !== null ? signal.zScore.toFixed(2) + "σ" : "—";
+  const percentileText =
+    signal.percentileRank !== null
+      ? signal.percentileRank.toFixed(0) + "th"
+      : "—";
+  const meanText = formatSignedCompactCr(signal.mean);
+  const latestText = formatSignedCompactCr(signal.latestValue);
+  const stdDevText =
+    signal.stdDev !== null ? formatSignedCompactCr(signal.stdDev) : "—";
+  return (
+    <Card
+      title="Active Equity Net Inflow Signal"
+      subtitle={`Latest ${signal.latestMonth} · history since ${signal.historyStart} (${signal.historyMonths} months)`}
+      action={
+        <span
+          className={cn(
+            "shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium tracking-tight",
+            signalToneClass(signal.label)
+          )}
+        >
+          {signal.label}
+        </span>
+      }
+    >
+      <div className="grid gap-4 sm:grid-cols-4">
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            Latest
+          </div>
+          <div className="mt-1 text-2xl font-semibold tabular tracking-tight">
+            {latestText}
+          </div>
+          <div className="mt-1 text-[10px] tabular text-muted-foreground/80">
+            Net inflow · {signal.latestMonth}
+          </div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            Historical average
+          </div>
+          <div className="mt-1 text-xl font-semibold tabular tracking-tight">
+            {meanText}
+          </div>
+          <div className="mt-1 text-[10px] tabular text-muted-foreground/80">
+            σ = {stdDevText}
+          </div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            Z-score
+          </div>
+          <div
+            className={cn(
+              "mt-1 text-xl font-semibold tabular tracking-tight",
+              insufficient && "text-muted-foreground"
+            )}
+          >
+            {zScoreText}
+          </div>
+          <div className="mt-1 text-[10px] tabular text-muted-foreground/80">
+            vs historical mean
+          </div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            Percentile
+          </div>
+          <div
+            className={cn(
+              "mt-1 text-xl font-semibold tabular tracking-tight",
+              insufficient && "text-muted-foreground"
+            )}
+          >
+            {percentileText}
+          </div>
+          <div className="mt-1 text-[10px] tabular text-muted-foreground/80">
+            of months ≤ latest
+          </div>
+        </div>
+      </div>
+      <p className="mt-4 text-[11px] text-muted-foreground">
+        Signal compares latest monthly active-equity net inflow with
+        available history since {signal.historyStart}. Historical
+        context only — not a prediction.
+      </p>
+    </Card>
   );
 }
