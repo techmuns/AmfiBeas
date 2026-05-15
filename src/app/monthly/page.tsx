@@ -60,15 +60,22 @@ import {
 import {
   cyclePhaseHistory,
   flowStressHistory,
+  investorMood,
   latestNifty500Row,
   marketStressFlowSignal,
+  weatherBadge,
   type MarketStressLabel,
   type MarketStressSignal,
 } from "@/data/market-indices";
 import { FlowStressHistoryChart } from "@/components/charts/FlowStressHistoryChart";
+import { CalloutCard } from "@/components/ui/CalloutCard";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
+import { HeadlineCard } from "@/components/ui/HeadlineCard";
 import { LensToggle } from "@/components/ui/LensToggle";
+import { MoodGauge } from "@/components/ui/MoodGauge";
 import { Sparkline } from "@/components/charts/Sparkline";
+import { WeatherBadge } from "@/components/ui/WeatherBadge";
+import { ordinalSuffix } from "@/lib/format";
 import {
   IIFL_ACTIVE_EQUITY_CATEGORIES,
   IIFL_TREND_EXPANDED_SLUGS,
@@ -692,6 +699,114 @@ export default async function MonthlyPage({
   const sipSparkline = sipStickinessSparkline(24);
   const latestNifty = latestNifty500Row();
   const cyclePhasePoints = cyclePhaseHistory();
+  const latestCyclePhase =
+    cyclePhasePoints.length > 0
+      ? cyclePhasePoints[cyclePhasePoints.length - 1].phase
+      : null;
+  // Mood + weather + headline takeaway need active-equity / NFO / passive
+  // / SIP percentile inputs. The signals are computed below — but mood
+  // depends only on percentile fields which we can fetch directly here.
+  const mood = investorMood({
+    activeEquityPercentile: activeEquitySignal?.percentileRank ?? null,
+    nfoPercentile: nfoSignal?.percentileRank ?? null,
+    passivePercentile: passiveSignal?.percentileRank ?? null,
+    sipPercentile: sipStickiness?.percentileRank ?? null,
+    drawdownPct: latestNifty?.drawdownPct ?? null,
+  });
+  const weather = weatherBadge({
+    drawdownPct: latestNifty?.drawdownPct ?? null,
+    flowZScore: activeEquitySignal?.zScore ?? null,
+    cyclePhase: latestCyclePhase,
+  });
+  // ---- Headline-style "callout" cards just below the hero ----
+  // Editorial statements (not KPI tiles). Each card presents one
+  // notable finding from the existing helpers in plain English.
+  type Callout = {
+    id: string;
+    statement: string;
+    context?: string;
+    tone: "positive" | "negative" | "neutral";
+    accentNumber?: string;
+  };
+  const topCallouts: Callout[] = [];
+  if (
+    activeEquitySignal &&
+    activeEquitySignal.percentileRank !== null &&
+    activeEquitySignal.percentileRank >= 90
+  ) {
+    topCallouts.push({
+      id: "ae-flow-hot",
+      tone: "positive",
+      accentNumber:
+        activeEquitySignal.percentileRank.toFixed(0) +
+        ordinalSuffix(Math.round(activeEquitySignal.percentileRank)),
+      statement: `Active-equity inflow in the top ${(100 - activeEquitySignal.percentileRank).toFixed(0)}% of months on record`,
+      context: `Latest ${activeEquitySignal.latestMonth} · ₹${formatCompactCrSafe(activeEquitySignal.latestValue)} vs historical mean ₹${formatCompactCrSafe(activeEquitySignal.mean)}`,
+    });
+  } else if (
+    activeEquitySignal &&
+    activeEquitySignal.percentileRank !== null &&
+    activeEquitySignal.percentileRank <= 10
+  ) {
+    topCallouts.push({
+      id: "ae-flow-cold",
+      tone: "negative",
+      accentNumber: activeEquitySignal.percentileRank.toFixed(0) + "th",
+      statement: `Active-equity inflow in the bottom ${activeEquitySignal.percentileRank.toFixed(0)}% of months on record`,
+      context: `Latest ${activeEquitySignal.latestMonth} · ₹${formatCompactCrSafe(activeEquitySignal.latestValue)} vs historical mean ₹${formatCompactCrSafe(activeEquitySignal.mean)}`,
+    });
+  }
+  if (
+    nfoSignal &&
+    nfoSignal.percentileRank !== null &&
+    nfoSignal.percentileRank <= 15
+  ) {
+    topCallouts.push({
+      id: "nfo-cold",
+      tone: "neutral",
+      accentNumber: `${nfoSignal.percentileRank.toFixed(0)}${ordinalSuffix(Math.round(nfoSignal.percentileRank))}`,
+      statement: `NFO mobilisation at the low end of history — investors prefer existing schemes`,
+      context: `Latest ${nfoSignal.latestMonth} · ₹${formatCompactCrSafe(nfoSignal.latestValue)} vs ₹${formatCompactCrSafe(nfoSignal.mean)} historical mean`,
+    });
+  } else if (
+    nfoSignal &&
+    nfoSignal.percentileRank !== null &&
+    nfoSignal.percentileRank >= 80
+  ) {
+    topCallouts.push({
+      id: "nfo-hot",
+      tone: "neutral",
+      accentNumber: `${nfoSignal.percentileRank.toFixed(0)}${ordinalSuffix(Math.round(nfoSignal.percentileRank))}`,
+      statement: "NFO mobilisation at the high end of history — bull-market cue",
+      context: `Latest ${nfoSignal.latestMonth} · ₹${formatCompactCrSafe(nfoSignal.latestValue)}`,
+    });
+  }
+  if (passiveSignal && passiveSignal.latestSharePct !== null) {
+    topCallouts.push({
+      id: "passive-share",
+      tone: "neutral",
+      accentNumber: `${passiveSignal.latestSharePct.toFixed(1)}%`,
+      statement: `Passive funds command ${passiveSignal.latestSharePct.toFixed(1)}% of equity AUM — ${
+        passiveSignal.percentileRank !== null && passiveSignal.percentileRank >= 80
+          ? "near recent highs"
+          : passiveSignal.percentileRank !== null && passiveSignal.percentileRank <= 20
+            ? "near recent lows"
+            : "in line with history"
+      }`,
+      context: `Latest ${passiveSignal.latestMonth} · historical avg ${passiveSignal.mean.toFixed(1)}%`,
+    });
+  }
+  if (latestNifty && latestNifty.drawdownPct !== null && latestNifty.drawdownPct <= -5) {
+    topCallouts.push({
+      id: "drawdown",
+      tone: latestNifty.drawdownPct <= -10 ? "negative" : "neutral",
+      accentNumber: `${latestNifty.drawdownPct.toFixed(1)}%`,
+      statement: `Nifty 500 ${Math.abs(latestNifty.drawdownPct).toFixed(1)}% off its all-time peak`,
+      context: `As of ${latestNifty.month} · level ${latestNifty.level.toLocaleString("en-IN")}`,
+    });
+  }
+  // Cap at 3 callouts to keep the hero zone tight.
+  if (topCallouts.length > 3) topCallouts.length = 3;
   // Section reads — short data-driven 1-liners surfaced under
   // each section title.
   const snapshotRead = snapshotSectionRead();
@@ -721,7 +836,48 @@ export default async function MonthlyPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Monthly Operating KPIs" subtitle={subtitle} />
+      <PageHeader
+        title="Monthly Operating KPIs"
+        subtitle={subtitle}
+        action={<WeatherBadge headline={weather.headline} tone={weather.tone} />}
+      />
+
+      {activeEquitySignal && (
+        <HeadlineCard
+          eyebrow={`AMFI · ${activeEquitySignal.latestMonth}`}
+          headline={formatSignedCompactCr(activeEquitySignal.latestValue)}
+          context={
+            activeEquitySignal.percentileRank !== null
+              ? `Active-equity inflow · ${
+                  activeEquitySignal.percentileRank >= 50
+                    ? `top ${(100 - activeEquitySignal.percentileRank).toFixed(0)}%`
+                    : `bottom ${activeEquitySignal.percentileRank.toFixed(0)}%`
+                } of months on record · Cycle: ${read.phase}`
+              : `Active-equity inflow · Cycle: ${read.phase}`
+          }
+          takeaway={read.narrative}
+          accent={
+            <MoodGauge
+              index={mood.index}
+              label={mood.label}
+            />
+          }
+        />
+      )}
+
+      {topCallouts.length > 0 && (
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {topCallouts.map((c) => (
+            <CalloutCard
+              key={c.id}
+              statement={c.statement}
+              context={c.context}
+              tone={c.tone}
+              accentNumber={c.accentNumber}
+            />
+          ))}
+        </section>
+      )}
 
       {cyclePhasePoints.length > 0 && (
         <Card

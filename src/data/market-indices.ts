@@ -302,3 +302,118 @@ export function cyclePhaseRuns(): CyclePhaseRun[] {
   runs.push(current);
   return runs;
 }
+
+// ---- Mood Gauge + Weather Badge ---------------------------------------
+//
+// Two compact composite indicators built from the same five Investor
+// Signals + Nifty 500 drawdown the rest of the dashboard already
+// uses. The mood index returns a 0-100 value that the gauge renders
+// as a needle position; the weather badge emits a 1-3 word forecast.
+// Both are rule-based — no model.
+
+export interface InvestorMood {
+  /** 0 = maximally fearful, 50 = neutral, 100 = maximally greedy. */
+  index: number;
+  /** Plain-English label tied to the index band. */
+  label:
+    | "Extreme Fear"
+    | "Fear"
+    | "Neutral"
+    | "Greed"
+    | "Extreme Greed"
+    | "Insufficient data";
+  /** Tooltip-grade explainer. */
+  methodology: string;
+}
+
+function clamp(v: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, v));
+}
+
+/**
+ * Composite Investor Mood index (0-100).
+ *
+ * Inputs (each contributes one of five sub-scores in 0-100):
+ *   1. Active-equity flow percentile (0-100)            — direct
+ *   2. NFO Heat percentile  (0-100)                     — direct (high = greedy)
+ *   3. Passive Shift percentile (0-100)                 — direct
+ *   4. Nifty 500 drawdown                               — mapped:
+ *        0% drawdown        → 100  (max greed)
+ *        −20% drawdown      → 0    (max fear)
+ *        linear in between
+ *   5. SIP Stickiness percentile (0-100)                — direct
+ *
+ * The composite is the equal-weight average of the available
+ * sub-scores. Returns "Insufficient data" if no sub-score is
+ * available.
+ *
+ * Bands:
+ *   ≤ 20: Extreme Fear     21-40: Fear     41-60: Neutral
+ *   61-80: Greed           ≥ 81: Extreme Greed
+ */
+export function investorMood(input: {
+  activeEquityPercentile: number | null;
+  nfoPercentile: number | null;
+  passivePercentile: number | null;
+  sipPercentile: number | null;
+  drawdownPct: number | null;
+}): InvestorMood {
+  const subs: number[] = [];
+  if (input.activeEquityPercentile !== null) subs.push(input.activeEquityPercentile);
+  if (input.nfoPercentile !== null) subs.push(input.nfoPercentile);
+  if (input.passivePercentile !== null) subs.push(input.passivePercentile);
+  if (input.sipPercentile !== null) subs.push(input.sipPercentile);
+  if (input.drawdownPct !== null) {
+    // 0% drawdown → 100, −20% → 0, clamp anywhere outside.
+    const dd = clamp(input.drawdownPct, -20, 0);
+    subs.push(((dd + 20) / 20) * 100);
+  }
+  if (subs.length === 0) {
+    return {
+      index: 50,
+      label: "Insufficient data",
+      methodology: "Not enough data yet to score the mood index.",
+    };
+  }
+  const index = Math.round(subs.reduce((s, v) => s + v, 0) / subs.length);
+  let label: InvestorMood["label"];
+  if (index <= 20) label = "Extreme Fear";
+  else if (index <= 40) label = "Fear";
+  else if (index <= 60) label = "Neutral";
+  else if (index <= 80) label = "Greed";
+  else label = "Extreme Greed";
+  return {
+    index,
+    label,
+    methodology:
+      "Equal-weight composite of: active-equity flow percentile · NFO Heat percentile · Passive Shift percentile · SIP Stickiness percentile · Nifty 500 drawdown (0% = 100, −20% = 0). Bands: ≤20 Extreme Fear · 21-40 Fear · 41-60 Neutral · 61-80 Greed · ≥81 Extreme Greed.",
+  };
+}
+
+/** Three-word weather-style forecast for the page header. */
+export function weatherBadge(input: {
+  drawdownPct: number | null;
+  flowZScore: number | null;
+  cyclePhase: CyclePhase | null;
+}): { headline: string; tone: "sunny" | "stormy" | "neutral" } {
+  const dd = input.drawdownPct;
+  const z = input.flowZScore;
+  const phase = input.cyclePhase;
+  if (dd === null && z === null) {
+    return { headline: "Awaiting data", tone: "neutral" };
+  }
+  // Stormy: meaningful drawdown OR weak flow.
+  if ((dd !== null && dd <= -10) && (z !== null && z < 0)) {
+    return { headline: `Stormy · Risk-off · ${phase ?? "Correction"}`, tone: "stormy" };
+  }
+  if ((dd !== null && dd <= -10) && (z !== null && z >= 0)) {
+    return { headline: `Cloudy · Buying the dip · ${phase ?? "Recovery"}`, tone: "neutral" };
+  }
+  if (z !== null && z >= 1.5) {
+    return { headline: `Sunny · Risk-on · ${phase ?? "Expansion"}`, tone: "sunny" };
+  }
+  if (z !== null && z >= 0) {
+    return { headline: `Fair · Steady · ${phase ?? "Expansion"}`, tone: "sunny" };
+  }
+  return { headline: `Overcast · Mixed · ${phase ?? "Base"}`, tone: "neutral" };
+}
