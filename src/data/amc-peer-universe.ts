@@ -641,6 +641,147 @@ export interface HhiPercentileRead {
   anchorQuarterLabel: string | null;
 }
 
+/**
+ * AMC Trajectory Quadrant.
+ *
+ * Plots AMCs in a 2×2 quadrant chart driven by:
+ *   - X axis  : latest QoQ AAUM growth (%)
+ *   - Y axis  : latest market share (%)
+ *
+ * The quadrants are split at the cohort MEDIAN of each axis, not zero
+ * — that way "Leaders / Gainers / Defenders / Laggards" stay
+ * meaningful even when the whole industry is growing or contracting.
+ *   - Leaders   : share ≥ median AND growth ≥ median
+ *   - Gainers   : share < median AND growth ≥ median
+ *   - Defenders : share ≥ median AND growth < median
+ *   - Laggards  : share < median AND growth < median
+ *
+ * Returns null when fewer than 2 AMCs have both a latest and a prior
+ * quarter, or when median can't be computed.
+ */
+export type AmcQuadrant = "Leaders" | "Gainers" | "Defenders" | "Laggards";
+
+export interface AmcQuadrantPoint {
+  slug: string;
+  displayName: string;
+  marketSharePct: number;
+  qoqGrowthPct: number;
+  avgAum: number;
+  quadrant: AmcQuadrant;
+}
+
+export interface AmcQuadrantData {
+  latestQuarter: string;
+  latestQuarterLabel: string;
+  medianSharePct: number;
+  medianGrowthPct: number;
+  points: AmcQuadrantPoint[];
+  buckets: Record<AmcQuadrant, AmcQuadrantPoint[]>;
+}
+
+function median(values: number[]): number | null {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 1
+    ? sorted[mid]
+    : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+export function amcTrajectoryQuadrant(
+  topN = 30
+): AmcQuadrantData | null {
+  const allQuarters = Array.from(
+    new Set(
+      amcAaumQuarterlySnapshot.rows
+        .filter((r) => r.status === "ok")
+        .map((r) => r.quarter)
+    )
+  ).sort();
+  if (allQuarters.length < 2) return null;
+  const latestQ = allQuarters[allQuarters.length - 1];
+  const priorQ = allQuarters[allQuarters.length - 2];
+
+  // Latest cohort + prior AAUM lookup.
+  const latestRows: { slug: string; displayName: string; aum: number }[] = [];
+  const priorBySlug = new Map<string, number>();
+  for (const r of amcAaumQuarterlySnapshot.rows) {
+    if (r.status !== "ok") continue;
+    if (r.quarter === latestQ) {
+      latestRows.push({
+        slug: r.amcSlug,
+        displayName: r.displayName ?? r.amcNameAsReported,
+        aum: r.avgAum,
+      });
+    } else if (r.quarter === priorQ) {
+      priorBySlug.set(r.amcSlug, r.avgAum);
+    }
+  }
+  const totalLatestAum = latestRows.reduce((s, r) => s + r.aum, 0);
+  if (totalLatestAum <= 0) return null;
+
+  // Compose per-AMC points where prior-quarter AAUM exists.
+  const eligible: Omit<AmcQuadrantPoint, "quadrant">[] = [];
+  for (const r of latestRows) {
+    const prior = priorBySlug.get(r.slug);
+    if (prior === undefined || prior <= 0) continue;
+    const share = (r.aum / totalLatestAum) * 100;
+    const growth = ((r.aum - prior) / prior) * 100;
+    eligible.push({
+      slug: r.slug,
+      displayName: r.displayName,
+      marketSharePct: share,
+      qoqGrowthPct: growth,
+      avgAum: r.aum,
+    });
+  }
+  if (eligible.length < 2) return null;
+  // Keep the top-N by latest AAUM so the chart doesn't degrade into a
+  // long-tail dust cloud. The medians use the same top-N cohort for
+  // visual consistency.
+  const ranked = [...eligible]
+    .sort((a, b) => b.avgAum - a.avgAum)
+    .slice(0, topN);
+  const medShare = median(ranked.map((p) => p.marketSharePct));
+  const medGrowth = median(ranked.map((p) => p.qoqGrowthPct));
+  if (medShare === null || medGrowth === null) return null;
+
+  const classify = (
+    share: number,
+    growth: number
+  ): AmcQuadrant => {
+    if (share >= medShare && growth >= medGrowth) return "Leaders";
+    if (share < medShare && growth >= medGrowth) return "Gainers";
+    if (share >= medShare && growth < medGrowth) return "Defenders";
+    return "Laggards";
+  };
+
+  const points: AmcQuadrantPoint[] = ranked.map((p) => ({
+    ...p,
+    quadrant: classify(p.marketSharePct, p.qoqGrowthPct),
+  }));
+  const buckets: Record<AmcQuadrant, AmcQuadrantPoint[]> = {
+    Leaders: [],
+    Gainers: [],
+    Defenders: [],
+    Laggards: [],
+  };
+  for (const p of points) buckets[p.quadrant].push(p);
+  // Sort each bucket by market share descending so list views read
+  // largest-first.
+  for (const k of Object.keys(buckets) as AmcQuadrant[]) {
+    buckets[k].sort((a, b) => b.marketSharePct - a.marketSharePct);
+  }
+  return {
+    latestQuarter: latestQ,
+    latestQuarterLabel: fiscalLabelFromCalendarQuarter(latestQ),
+    medianSharePct: medShare,
+    medianGrowthPct: medGrowth,
+    points,
+    buckets,
+  };
+}
+
 export function amcLevelHhiPercentileRead(
   windowQuarters = 20,
   compareQuartersBack = 20
