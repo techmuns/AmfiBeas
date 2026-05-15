@@ -745,3 +745,208 @@ export function iiflActiveEquityHeatmapZScoreData(): {
   });
   return { months: windowMonths, rows };
 }
+
+/**
+ * Category Rotation Tracker.
+ *
+ * For each category in the IIFL active-equity envelope, compute its
+ * AVERAGE net-inflow share within the envelope over the latest N
+ * months ("current window") and the N months immediately before
+ * ("prior window"). The Δ between the two answers "which categories
+ * are gaining or losing share in the rotation right now?".
+ *
+ * Share denominator each month is the active-equity envelope's net
+ * inflow (the same denominator the heatmap uses). Months where
+ * either side is null are skipped per category — averages use only
+ * the months a category has data for. Categories with no data in
+ * either window are dropped.
+ *
+ * Returns null when fewer than 2 × `window` months of usable data
+ * exist.
+ */
+export interface CategoryRotationEntry {
+  slug: AmfiMonthlyCategorySlug;
+  label: string;
+  currentSharePct: number;
+  priorSharePct: number;
+  deltaSharePct: number;
+}
+
+export interface CategoryRotation {
+  windowMonths: number;
+  currentRange: { start: string; end: string };
+  priorRange: { start: string; end: string };
+  gainers: CategoryRotationEntry[];
+  losers: CategoryRotationEntry[];
+}
+
+export function categoryRotation(
+  window = 3,
+  top = 5
+): CategoryRotation | null {
+  // Build per-month denominator (active-equity envelope flow).
+  const denomByMonth = new Map<string, number>();
+  for (const r of amfiMonthlyRows()) {
+    if (typeof r.activeEquityNetInflow === "number") {
+      denomByMonth.set(r.month, r.activeEquityNetInflow);
+    }
+  }
+  const monthsWithDenom = Array.from(denomByMonth.keys()).sort();
+  if (monthsWithDenom.length < 2 * window) return null;
+  const currentMonths = monthsWithDenom.slice(-window);
+  const priorMonths = monthsWithDenom.slice(-2 * window, -window);
+
+  // Build per-category share series indexed by month.
+  const sharesBySlug = new Map<string, Map<string, number>>();
+  for (const c of IIFL_ACTIVE_EQUITY_CATEGORIES) {
+    sharesBySlug.set(c.slug, new Map());
+  }
+  for (const r of amfiMonthlyCategorySnapshot.rows) {
+    if (typeof r.categoryNetInflow !== "number") continue;
+    const denom = denomByMonth.get(r.month);
+    if (typeof denom !== "number" || denom === 0) continue;
+    const map = sharesBySlug.get(r.categorySlug);
+    if (!map) continue;
+    map.set(r.month, (r.categoryNetInflow / denom) * 100);
+  }
+
+  const avgOverMonths = (
+    months: string[],
+    map: Map<string, number>
+  ): number | null => {
+    const values: number[] = [];
+    for (const m of months) {
+      const v = map.get(m);
+      if (typeof v === "number") values.push(v);
+    }
+    if (values.length === 0) return null;
+    return values.reduce((s, v) => s + v, 0) / values.length;
+  };
+
+  const entries: CategoryRotationEntry[] = [];
+  for (const c of IIFL_ACTIVE_EQUITY_CATEGORIES) {
+    const map = sharesBySlug.get(c.slug)!;
+    const current = avgOverMonths(currentMonths, map);
+    const prior = avgOverMonths(priorMonths, map);
+    if (current === null || prior === null) continue;
+    entries.push({
+      slug: c.slug,
+      label: c.label,
+      currentSharePct: current,
+      priorSharePct: prior,
+      deltaSharePct: current - prior,
+    });
+  }
+  if (entries.length === 0) return null;
+  const byDeltaDesc = [...entries].sort(
+    (a, b) => b.deltaSharePct - a.deltaSharePct
+  );
+  const gainers = byDeltaDesc.filter((e) => e.deltaSharePct > 0).slice(0, top);
+  const losers = byDeltaDesc
+    .filter((e) => e.deltaSharePct < 0)
+    .slice(-top)
+    .reverse();
+  return {
+    windowMonths: window,
+    currentRange: {
+      start: currentMonths[0],
+      end: currentMonths[currentMonths.length - 1],
+    },
+    priorRange: {
+      start: priorMonths[0],
+      end: priorMonths[priorMonths.length - 1],
+    },
+    gainers,
+    losers,
+  };
+}
+
+/**
+ * Passive Flow Share trend.
+ *
+ *   passiveFlow_m = categoryNetInflow_index-funds_m
+ *                 + categoryNetInflow_other-etfs_m
+ *   activeFlow_m  = activeEquityNetInflow_m   (from the AMFI Monthly Report)
+ *   share_m       = passiveFlow_m / (passiveFlow_m + activeFlow_m) × 100
+ *
+ * Months where any of the three inputs is missing OR where the
+ * denominator is non-positive are dropped — no fake zeros, no flipped
+ * signs. Returns null when no usable months exist.
+ *
+ * A leading indicator of where the active-vs-passive AUM mix is heading
+ * — passive share of NEW MONEY tends to move months before passive
+ * share of AUM does.
+ */
+export interface PassiveFlowSharePoint {
+  month: string;
+  passiveSharePct: number;
+  passiveFlow: number;
+  activeFlow: number;
+}
+
+export interface PassiveFlowShareTrend {
+  history: PassiveFlowSharePoint[];
+  latestMonth: string;
+  latestSharePct: number;
+  mean: number;
+  percentile: number | null;
+}
+
+export function passiveFlowShareTrend(
+  months = 24
+): PassiveFlowShareTrend | null {
+  const activeFlowByMonth = new Map<string, number>();
+  for (const r of amfiMonthlyRows()) {
+    if (typeof r.activeEquityNetInflow === "number") {
+      activeFlowByMonth.set(r.month, r.activeEquityNetInflow);
+    }
+  }
+  const indexByMonth = new Map<string, number>();
+  const etfByMonth = new Map<string, number>();
+  for (const r of amfiMonthlyCategorySnapshot.rows) {
+    if (typeof r.categoryNetInflow !== "number") continue;
+    if (r.categorySlug === "index-funds") {
+      indexByMonth.set(r.month, r.categoryNetInflow);
+    } else if (r.categorySlug === "other-etfs") {
+      etfByMonth.set(r.month, r.categoryNetInflow);
+    }
+  }
+  const allMonths = Array.from(
+    new Set([
+      ...activeFlowByMonth.keys(),
+      ...indexByMonth.keys(),
+      ...etfByMonth.keys(),
+    ])
+  ).sort();
+  const history: PassiveFlowSharePoint[] = [];
+  for (const m of allMonths) {
+    const idx = indexByMonth.get(m);
+    const etf = etfByMonth.get(m);
+    const active = activeFlowByMonth.get(m);
+    if (typeof idx !== "number" || typeof etf !== "number" || typeof active !== "number") {
+      continue;
+    }
+    const passive = idx + etf;
+    const denom = passive + active;
+    if (denom <= 0) continue;
+    history.push({
+      month: m,
+      passiveSharePct: (passive / denom) * 100,
+      passiveFlow: passive,
+      activeFlow: active,
+    });
+  }
+  if (history.length === 0) return null;
+  const trimmed = history.slice(-months);
+  const latest = history[history.length - 1];
+  const values = history.map((p) => p.passiveSharePct);
+  const mean = values.reduce((s, v) => s + v, 0) / values.length;
+  const lessOrEqual = values.filter((v) => v <= latest.passiveSharePct).length;
+  return {
+    history: trimmed,
+    latestMonth: latest.month,
+    latestSharePct: latest.passiveSharePct,
+    mean,
+    percentile: values.length > 0 ? (lessOrEqual / values.length) * 100 : null,
+  };
+}

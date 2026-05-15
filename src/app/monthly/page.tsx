@@ -32,6 +32,7 @@ import {
   monthlyIndustryFolioAdditionsTrend,
   monthlySipAumShareTrend,
   monthlyTrend,
+  nfoDragTrend,
   nfoHeatSignal,
   nfoMobilisationSparkline,
   passiveShareSparkline,
@@ -63,10 +64,12 @@ import {
   IIFL_ACTIVE_EQUITY_CATEGORIES,
   IIFL_TREND_EXPANDED_SLUGS,
   IIFL_TREND_FEATURED_SLUGS,
+  categoryRotation,
   iiflActiveEquityHeatmapData,
   iiflActiveEquityHeatmapZScoreData,
   iiflActiveEquityTrendCard,
   latestCategoryProvenance,
+  passiveFlowShareTrend,
 } from "@/data/amfi-monthly-category";
 import { topAumMarketShareSeries } from "@/data/amc-peer-universe";
 import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
@@ -477,6 +480,13 @@ export default async function MonthlyPage({
     activeEquityBridge.length > 0 ||
     sipAumShareTrend.length > 0;
 
+  // Proportion diagnostics: category rotation, NFO drag, passive flow share.
+  const rotation = categoryRotation(3, 5);
+  const nfoDrag = nfoDragTrend(24);
+  const passiveFlowShare = passiveFlowShareTrend(24);
+  const hasProportionDiagnostics =
+    rotation !== null || nfoDrag !== null || passiveFlowShare !== null;
+
   // ---- Investor Signals Panel --------------------------------------
   // Five historical-context signals computed off the existing AMFI
   // monthly + market-indices snapshots. No new ingestion. The Equity
@@ -865,6 +875,26 @@ export default async function MonthlyPage({
                   <InfoTooltip label="SIP contribution share of gross inflows is intentionally omitted — gross inflows (Funds Mobilized) are only available on the quarterly disclosure, not in the monthly snapshot." />
                 </p>
               </Card>
+            )}
+          </section>
+        </div>
+      )}
+
+      {hasProportionDiagnostics && (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight">
+              Proportion Diagnostics
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Rotation, NFO drag, and where new money is going · Source: AMFI Monthly Report
+            </p>
+          </div>
+          {rotation && <CategoryRotationCard rotation={rotation} />}
+          <section className="grid gap-4 lg:grid-cols-2">
+            {nfoDrag && <NfoDragCard trend={nfoDrag} />}
+            {passiveFlowShare && (
+              <PassiveFlowShareCard trend={passiveFlowShare} />
             )}
           </section>
         </div>
@@ -1396,6 +1426,161 @@ function HeatmapLensToggle({ lens }: { lens: "share" | "zscore" }) {
         Z-score
       </Link>
     </div>
+  );
+}
+
+/** Two-column compact rotation card: top gainers (green) on the left,
+ *  top losers (red) on the right. Δ shown in percentage points. */
+function CategoryRotationCard({
+  rotation,
+}: {
+  rotation: NonNullable<ReturnType<typeof categoryRotation>>;
+}) {
+  return (
+    <Card
+      title="Category Rotation"
+      subtitle={`${rotation.windowMonths}M avg vs prior ${rotation.windowMonths}M · share of active-equity net inflow`}
+      action={
+        <InfoTooltip
+          label={`For each category in the active-equity envelope, the trailing ${rotation.windowMonths}-month average net-inflow share (${rotation.currentRange.start} → ${rotation.currentRange.end}) is compared to the prior ${rotation.windowMonths}-month window (${rotation.priorRange.start} → ${rotation.priorRange.end}). Δ is the difference in percentage points. Active equity = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes.`}
+        />
+      }
+    >
+      <div className="grid gap-4 sm:grid-cols-2">
+        <RotationList
+          title="Gaining flow share"
+          entries={rotation.gainers}
+          accent="positive"
+        />
+        <RotationList
+          title="Losing flow share"
+          entries={rotation.losers}
+          accent="negative"
+        />
+      </div>
+    </Card>
+  );
+}
+
+function RotationList({
+  title,
+  entries,
+  accent,
+}: {
+  title: string;
+  entries: NonNullable<ReturnType<typeof categoryRotation>>["gainers"];
+  accent: "positive" | "negative";
+}) {
+  if (entries.length === 0) {
+    return (
+      <div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {title}
+        </div>
+        <div className="mt-2 text-xs text-muted-foreground">
+          No category moved meaningfully in this window.
+        </div>
+      </div>
+    );
+  }
+  const deltaClass =
+    accent === "positive" ? "text-positive" : "text-negative";
+  return (
+    <div>
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}
+      </div>
+      <ul className="mt-2 space-y-1.5">
+        {entries.map((e) => (
+          <li
+            key={e.slug}
+            className="flex items-center justify-between gap-3 text-xs"
+          >
+            <span className="truncate" title={e.label}>
+              {e.label}
+            </span>
+            <span className="shrink-0 inline-flex items-center gap-2 text-[11px] tabular">
+              <span className="text-muted-foreground">
+                {e.priorSharePct.toFixed(1)}% → {e.currentSharePct.toFixed(1)}%
+              </span>
+              <span className={cn("font-semibold", deltaClass)}>
+                {e.deltaSharePct >= 0 ? "+" : ""}
+                {e.deltaSharePct.toFixed(2)}pp
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function NfoDragCard({
+  trend,
+}: {
+  trend: NonNullable<ReturnType<typeof nfoDragTrend>>;
+}) {
+  const data = trend.history.map((p) => ({
+    label: p.month,
+    value: p.ratioPct,
+  }));
+  return (
+    <Card
+      title="NFO Drag Ratio"
+      subtitle={`NFO mobilisation ÷ industry net inflow · ${trend.history.length} months · ₹ Cr`}
+      action={
+        trend.isHeavy ? (
+          <span className="shrink-0 rounded-full border border-foreground/30 bg-muted px-2 py-0.5 text-[10px] font-medium tracking-tight text-foreground">
+            NFO heavy
+          </span>
+        ) : undefined
+      }
+    >
+      <BarSeries
+        data={data}
+        name="NFO drag"
+        color="hsl(var(--chart-2))"
+        valueFormat="pct"
+        axisFormat="pct"
+        labelFormat="month"
+      />
+      <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        Latest {trend.latestRatioPct.toFixed(1)}% · {trend.percentile?.toFixed(0) ?? "—"}th
+        percentile of available history. Mean {trend.mean.toFixed(1)}%.
+        <InfoTooltip label="Ratio = industryNfoFundsMobilized ÷ netInflow × 100. Months with non-positive total industry net inflow are skipped (the ratio is undefined). Bars cap at 200% for readability; raw values preserved in the percentile read. High ratios = NFOs absorbing more of the month's industry net inflow than usual — historically a froth cue, not a buy/sell call." />
+      </p>
+    </Card>
+  );
+}
+
+function PassiveFlowShareCard({
+  trend,
+}: {
+  trend: NonNullable<ReturnType<typeof passiveFlowShareTrend>>;
+}) {
+  const data = trend.history.map((p) => ({
+    label: p.month,
+    value: p.passiveSharePct,
+  }));
+  return (
+    <Card
+      title="Passive Share of New Equity Flow"
+      subtitle={`Where the latest month's equity money is going · ${trend.history.length} months`}
+    >
+      <BarSeries
+        data={data}
+        name="Passive flow share"
+        color="hsl(var(--chart-5))"
+        valueFormat="pct"
+        axisFormat="pct"
+        labelFormat="month"
+      />
+      <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        Latest {trend.latestSharePct.toFixed(1)}% · {trend.percentile?.toFixed(0) ?? "—"}th
+        percentile of available history. Mean {trend.mean.toFixed(1)}%.
+        <InfoTooltip label="Passive flow share = (Index Funds + Other ETFs net inflow) ÷ (Index Funds + Other ETFs + active-equity net inflow) × 100. Leading indicator of where the active-vs-passive AUM mix is heading — passive share of NEW money tends to move months before passive share of AUM. Gold ETFs are excluded. Months with non-positive denominator are skipped." />
+      </p>
+    </Card>
   );
 }
 

@@ -826,10 +826,20 @@ export interface NfoHeatSignal {
   historyStart: string;
 }
 
+// Sanity cap on monthly industry NFO mobilization in ₹ Cr. India's
+// largest single-month NFO mobilization on record is ~₹15-20K Cr; the
+// 2019-era press-release ingestion stored a handful of months in
+// pre-divided units (~88 million), which corrupt any mean / stdDev /
+// percentile read built on the raw field. Rows above this cap are
+// excluded from the statistical helpers below; the snapshot itself is
+// untouched.
+const NFO_MONTHLY_PLAUSIBLE_CAP_CR = 50_000;
+
 export function nfoHeatSignal(): NfoHeatSignal | null {
   const rows = amfiMonthlyRows();
   const withValue = rows.flatMap((r) =>
-    typeof r.industryNfoFundsMobilized === "number"
+    typeof r.industryNfoFundsMobilized === "number" &&
+    r.industryNfoFundsMobilized <= NFO_MONTHLY_PLAUSIBLE_CAP_CR
       ? [{ month: r.month, value: r.industryNfoFundsMobilized }]
       : []
   );
@@ -981,11 +991,14 @@ export function activeEquityNetInflowSparkline(months = 24): SparklinePoint[] {
     .slice(-months);
 }
 
-/** Trailing 24-month series of industry NFO funds mobilised (₹ Cr). */
+/** Trailing 24-month series of industry NFO funds mobilised (₹ Cr).
+ *  Skips months where the stored value exceeds the plausible monthly
+ *  cap — 2019-era ingestion has a handful of unit-bugged rows. */
 export function nfoMobilisationSparkline(months = 24): SparklinePoint[] {
   return amfiMonthlyRows()
     .flatMap((r) =>
-      typeof r.industryNfoFundsMobilized === "number"
+      typeof r.industryNfoFundsMobilized === "number" &&
+      r.industryNfoFundsMobilized <= NFO_MONTHLY_PLAUSIBLE_CAP_CR
         ? [{ label: r.month, value: r.industryNfoFundsMobilized }]
         : []
     )
@@ -1154,4 +1167,85 @@ export function investorRead(input: InvestorReadInput): InvestorRead {
 
 function capitalise(s: string): string {
   return s.length === 0 ? s : s[0].toUpperCase() + s.slice(1);
+}
+
+/**
+ * NFO Drag Ratio trend.
+ *
+ *   ratio_m = industryNfoFundsMobilized_m  ÷  netInflow_m  × 100
+ *
+ * Answers "how much of the industry's net inflow this month was
+ * absorbed by new fund launches?". A high ratio means new money is
+ * being captured by NFOs rather than flowing to existing schemes —
+ * historically a marker of frothy markets.
+ *
+ * Safety guards (denominator is fragile):
+ *   - `netInflow` ≤ 0 → ratio undefined (industry outflow makes the
+ *     concept meaningless). Returned as null.
+ *   - `industryNfoFundsMobilized` missing → null.
+ *   - Cap visible ratio at 200% to keep the chart bounded; clamping
+ *     is purely a display-side limit, the underlying figure is
+ *     preserved on the point.
+ *
+ * Returns null when no usable months exist.
+ */
+export interface NfoDragPoint {
+  month: string;
+  ratioPct: number;
+  rawRatioPct: number;
+  nfo: number;
+  netInflow: number;
+}
+
+export interface NfoDragTrend {
+  history: NfoDragPoint[];
+  latestMonth: string;
+  latestRatioPct: number;
+  mean: number;
+  percentile: number | null;
+  /** True when the latest ratio is in the top quartile of the full
+   *  available history — a small "NFO heavy" pill on the chart. */
+  isHeavy: boolean;
+}
+
+const NFO_DRAG_DISPLAY_CAP_PCT = 200;
+const NFO_HEAVY_PERCENTILE = 75;
+
+export function nfoDragTrend(months = 24): NfoDragTrend | null {
+  const all: NfoDragPoint[] = [];
+  for (const r of amfiMonthlyRows()) {
+    if (
+      typeof r.industryNfoFundsMobilized !== "number" ||
+      typeof r.netInflow !== "number" ||
+      r.netInflow <= 0
+    ) {
+      continue;
+    }
+    // Skip rows where the NFO value exceeds the plausible monthly
+    // cap — these are unit-bugged in the older ingestion and would
+    // poison every downstream statistic.
+    if (r.industryNfoFundsMobilized > NFO_MONTHLY_PLAUSIBLE_CAP_CR) continue;
+    const raw = (r.industryNfoFundsMobilized / r.netInflow) * 100;
+    all.push({
+      month: r.month,
+      ratioPct: Math.min(raw, NFO_DRAG_DISPLAY_CAP_PCT),
+      rawRatioPct: raw,
+      nfo: r.industryNfoFundsMobilized,
+      netInflow: r.netInflow,
+    });
+  }
+  if (all.length === 0) return null;
+  const latest = all[all.length - 1];
+  const ratios = all.map((p) => p.rawRatioPct);
+  const mean = ratios.reduce((s, v) => s + v, 0) / ratios.length;
+  const lessOrEqual = ratios.filter((v) => v <= latest.rawRatioPct).length;
+  const percentile = (lessOrEqual / ratios.length) * 100;
+  return {
+    history: all.slice(-months),
+    latestMonth: latest.month,
+    latestRatioPct: latest.rawRatioPct,
+    mean,
+    percentile,
+    isHeavy: percentile >= NFO_HEAVY_PERCENTILE,
+  };
 }
