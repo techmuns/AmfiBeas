@@ -777,4 +777,38 @@ export interface AmfiQuarterlyCategorySnapshot {
   rows: AmfiQuarterlyCategoryRow[];
 }
 
+/**
+ * Month-end snapshot of a market index level + derived rolling returns.
+ * Built by `scripts/ingest/market-indices.ts` from manually-uploaded
+ * daily-level CSVs under `manual-data/market/`. Every derived field is
+ * NULL when there isn't enough history for the rolling window — we
+ * never fake a value. Status is "ok" for cleanly parsed rows;
+ * unparseable rows are simply omitted rather than carried as bad data.
+ */
+export interface MarketIndexMonthlyRow {
+  /** Index identifier, e.g. "NIFTY_500". */
+  index: string;
+  /** Month-end the level corresponds to (YYYY-MM). */
+  month: string;
+  /** Closing index level on the last trading day of `month`. */
+  level: number;
+  /** 1-month price return as a percentage. Null when no prior month. */
+  return1mPct: number | null;
+  /** 3-month price return as a percentage. */
+  return3mPct: number | null;
+  /** 6-month price return as a percentage. */
+  return6mPct: number | null;
+  /** 12-month price return as a percentage. */
+  return12mPct: number | null;
+  /** Drawdown from the rolling all-time high of `level` to date (≤ 0). */
+  drawdownPct: number | null;
+  /** Always "ok" when the row is emitted — fragile rows are dropped. */
+  status: "ok";
+  /** Free-form source attribution, e.g. "manual upload". */
+  source: string;
+}
 
+export interface MarketIndexMonthlySnapshot {
+  meta: SnapshotMeta;
+  rows: MarketIndexMonthlyRow[];
+}
