@@ -185,6 +185,76 @@ export function monthlyTrend(
 }
 
 /**
+ * Unified historical context for a KPI field. Used by every `KpiCard`
+ * on `/monthly` to surface a sparkline + YoY% + percentile + a Δ-pp
+ * directional tone without each call site reimplementing the lookup.
+ *
+ *   - sparkline      : trailing-`lastN` { label, value } series (drops
+ *                      months where the field is missing — same shape
+ *                      `<Sparkline />` consumes).
+ *   - latest         : the most recent value (null when no value).
+ *   - yoyPct         : % change vs same calendar month last year, or
+ *                      null when the comparison row is missing or
+ *                      yearAgo ≤ 0 (sign undefined).
+ *   - percentile     : rank of `latest` against the FULL field history
+ *                      using `≤` semantics, in %.
+ *   - zScore         : (latest − mean) / population stdDev across the
+ *                      full field history. Null when stdDev is null.
+ */
+export interface KpiContext {
+  latest: number | null;
+  latestMonth: string | null;
+  sparkline: { label: string; value: number }[];
+  yoyPct: number | null;
+  percentile: number | null;
+  zScore: number | null;
+}
+
+export function kpiContext(
+  field: AmfiMonthlyKpiField,
+  lastN = 24
+): KpiContext {
+  const rows = amfiMonthlyRows();
+  const series = rows
+    .filter((r) => typeof r[field] === "number")
+    .map((r) => ({ month: r.month, value: r[field] as number }));
+  if (series.length === 0) {
+    return {
+      latest: null,
+      latestMonth: null,
+      sparkline: [],
+      yoyPct: null,
+      percentile: null,
+      zScore: null,
+    };
+  }
+  const latest = series[series.length - 1];
+  const sparkline = series.slice(-lastN).map((p) => ({
+    label: p.month,
+    value: p.value,
+  }));
+  const yearAgoMonth = (() => {
+    const [y, m] = latest.month.split("-").map(Number);
+    return `${y - 1}-${String(m).padStart(2, "0")}`;
+  })();
+  const yearAgoRow = series.find((p) => p.month === yearAgoMonth);
+  const yoyPct =
+    yearAgoRow && yearAgoRow.value !== 0
+      ? ((latest.value - yearAgoRow.value) / Math.abs(yearAgoRow.value)) * 100
+      : null;
+  const values = series.map((p) => p.value);
+  const stats = historicalSignalStats(values, latest.value);
+  return {
+    latest: latest.value,
+    latestMonth: latest.month,
+    sparkline,
+    yoyPct,
+    percentile: stats.percentileRank,
+    zScore: stats.zScore,
+  };
+}
+
+/**
  * Resolve the freshest per-field provenance for a field across the
  * entire snapshot, used as a single source caption for a trend chart
  * that may span months from multiple PDFs. Returns the provenance of

@@ -1,4 +1,5 @@
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { Sparkline } from "@/components/charts/Sparkline";
 import { cn } from "@/lib/cn";
 
 interface KpiCardProps {
@@ -21,6 +22,31 @@ interface KpiCardProps {
    * cards from the older generated/demo KPI cards.
    */
   tone?: "live" | "demo" | "pending";
+  /** Optional trailing-24M sparkline data (chronological, oldest →
+   *  newest). When provided, a compact area chart renders at the
+   *  bottom of the card. */
+  sparkline?: { label: string; value: number }[];
+  /** Optional colour token for the sparkline curve. Defaults to chart-1. */
+  sparklineColor?: string;
+  /** Optional "vs same period last year" delta in percent. Renders as a
+   *  small pill below the headline with directional tone (green = up,
+   *  red = down, grey near zero). When `delta` is also set, the pill is
+   *  rendered AFTER the delta line so cards can show both deltas. */
+  yoyPct?: number | null;
+  /** Optional 0-100 percentile rank of the latest value vs the
+   *  historical series. Renders as a compact pill ("87th pct"). */
+  percentile?: number | null;
+  /** Optional ratio / context line ("20.6% of total AUM"). Rendered
+   *  with subtle styling between the headline and the sparkline. */
+  ratio?: string;
+}
+
+const YOY_FLAT_THRESHOLD = 0.5;
+
+function yoyTone(pct: number): "up" | "down" | "flat" {
+  if (pct > YOY_FLAT_THRESHOLD) return "up";
+  if (pct < -YOY_FLAT_THRESHOLD) return "down";
+  return "flat";
 }
 
 export function KpiCard({
@@ -31,12 +57,19 @@ export function KpiCard({
   note,
   noteHover,
   tone,
+  sparkline,
+  sparklineColor,
+  yoyPct,
+  percentile,
+  ratio,
 }: KpiCardProps) {
   const Icon =
     trend === "up" ? ArrowUpRight : trend === "down" ? ArrowDownRight : null;
   const isDemo = tone === "demo" || tone === "pending";
   const toneBadge =
     tone === "demo" ? "Demo" : tone === "pending" ? "Pending" : null;
+  const yoyDir =
+    typeof yoyPct === "number" ? yoyTone(yoyPct) : null;
 
   return (
     <div
@@ -63,6 +96,11 @@ export function KpiCard({
       >
         {value}
       </div>
+      {ratio && (
+        <div className="mt-0.5 text-[11px] tabular text-foreground/70">
+          {ratio}
+        </div>
+      )}
       {delta && (
         <div
           className={cn(
@@ -76,9 +114,44 @@ export function KpiCard({
           {delta}
         </div>
       )}
+      {(yoyDir !== null || typeof percentile === "number") && (
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+          {yoyDir !== null && (
+            <span
+              className={cn(
+                "inline-flex items-center rounded-full border px-1.5 py-0 text-[10px] tabular font-medium",
+                yoyDir === "up" &&
+                  !isDemo &&
+                  "border-positive/40 bg-positive/10 text-positive",
+                yoyDir === "down" &&
+                  !isDemo &&
+                  "border-negative/40 bg-negative/10 text-negative",
+                (yoyDir === "flat" || isDemo) &&
+                  "border-border bg-muted text-muted-foreground"
+              )}
+            >
+              {yoyPct !== null && yoyPct !== undefined && yoyPct >= 0 ? "+" : ""}
+              {yoyPct !== null && yoyPct !== undefined
+                ? yoyPct.toFixed(1)
+                : "—"}
+              % YoY
+            </span>
+          )}
+          {typeof percentile === "number" && (
+            <span className="inline-flex items-center rounded-full border border-border bg-muted px-1.5 py-0 text-[10px] tabular font-medium text-muted-foreground">
+              {percentile.toFixed(0)}th pct
+            </span>
+          )}
+        </div>
+      )}
+      {sparkline && sparkline.length > 1 && !isDemo && (
+        <div className="mt-2 -mx-1">
+          <Sparkline data={sparkline} color={sparklineColor} height={28} />
+        </div>
+      )}
       {note && (
         <div
-          className="mt-1 text-[10px] tabular text-muted-foreground/80"
+          className="mt-1.5 text-[10px] tabular text-muted-foreground/80"
           title={noteHover}
         >
           {note}
