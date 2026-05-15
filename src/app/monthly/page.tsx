@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TrendingUp } from "lucide-react";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -63,6 +64,7 @@ import {
   historicalEpisodes,
   investorMood,
   latestNifty500Row,
+  marketIndexRows,
   marketStressFlowSignal,
   narrativeComposer,
   weatherBadge,
@@ -71,13 +73,17 @@ import {
 } from "@/data/market-indices";
 import { FlowStressHistoryChart } from "@/components/charts/FlowStressHistoryChart";
 import { SankeyFlow } from "@/components/charts/SankeyFlow";
+import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CalendarHeatGrid } from "@/components/ui/CalendarHeatGrid";
 import { CalloutCard } from "@/components/ui/CalloutCard";
+import { CoachPill } from "@/components/ui/CoachPill";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { EpisodeReplayStrip } from "@/components/ui/EpisodeReplayStrip";
 import { HeadlineCard } from "@/components/ui/HeadlineCard";
 import { MarketTape } from "@/components/ui/MarketTape";
 import { NarrativeBlock } from "@/components/ui/NarrativeBlock";
+import { SandboxCard } from "@/components/ui/SandboxCard";
+import { SectionDivider } from "@/components/ui/SectionDivider";
 import { StickyContextFooter } from "@/components/ui/StickyContextFooter";
 import { TwinScopeCard } from "@/components/ui/TwinScopeCard";
 import { LensToggle } from "@/components/ui/LensToggle";
@@ -709,6 +715,58 @@ export default async function MonthlyPage({
   const sipSparkline = sipStickinessSparkline(24);
   const latestNifty = latestNifty500Row();
   const cyclePhasePoints = cyclePhaseHistory();
+  // Investor Sandbox: ₹10,000 invested in the Nifty 500 at the
+  // earliest available month-end vs today (latest month-end). Uses
+  // the index level as a clean proxy for "average market return"
+  // before fees.
+  const sandboxScenario: {
+    startLabel: string;
+    endLabel: string;
+    startAmount: number;
+    endAmount: number;
+    cagrPct: number | null;
+    caveat?: string;
+  } | null = (() => {
+    const niftyRows = marketIndexRows("NIFTY_500");
+    if (niftyRows.length < 13) return null;
+    const start = niftyRows[0];
+    const end = niftyRows[niftyRows.length - 1];
+    if (!start || !end || start.level <= 0) return null;
+    const seed = 10_000;
+    const multiple = end.level / start.level;
+    const finalValue = seed * multiple;
+    const [sy, sm] = start.month.split("-").map(Number);
+    const [ey, em] = end.month.split("-").map(Number);
+    const yrs = Math.max(0.1, ey - sy + (em - sm) / 12);
+    const cagrPct = (Math.pow(multiple, 1 / yrs) - 1) * 100;
+    return {
+      startLabel: start.month,
+      endLabel: end.month,
+      startAmount: seed,
+      endAmount: finalValue,
+      cagrPct,
+      caveat:
+        "Uses the Nifty 500 index level as a clean pre-fee proxy. Active-equity fund returns vary by scheme; this is a sandbox illustration, not a fund recommendation.",
+    };
+  })();
+  // Coach message: surfaces the single most striking signal on the page.
+  const coachMessage = (() => {
+    const stress = marketStressFlowSignal();
+    if (stress?.label === "Buy-the-dip flow") {
+      return `Nifty 500 is in a ${Math.abs(stress.drawdownPct).toFixed(1)}% drawdown but active-equity flow sits in the ${stress.flowPercentileRank?.toFixed(0) ?? "—"}th percentile — investors are buying the dip.`;
+    }
+    if (stress?.label === "Flow stress") {
+      return `Nifty 500 is in drawdown AND flow is at the bottom decile — historically a stress signal.`;
+    }
+    if (
+      activeEquitySignal &&
+      activeEquitySignal.percentileRank !== null &&
+      activeEquitySignal.percentileRank >= 95
+    ) {
+      return `Active-equity flow is in the ${activeEquitySignal.percentileRank.toFixed(0)}th percentile — a top-decile inflow month.`;
+    }
+    return null;
+  })();
   const tapeCells = cyclePhasePoints.map((p) => ({
     month: p.month,
     phase: p.phase,
@@ -995,7 +1053,20 @@ export default async function MonthlyPage({
       {activeEquitySignal && (
         <HeadlineCard
           eyebrow={`AMFI · ${activeEquitySignal.latestMonth}`}
-          headline={formatSignedCompactCr(activeEquitySignal.latestValue)}
+          headline={
+            <span>
+              <span className="text-3xl font-medium text-foreground/80 sm:text-4xl">
+                ₹
+              </span>
+              <AnimatedNumber
+                value={Math.abs(activeEquitySignal.latestValue)}
+                format={(v) => formatCompactCrSafe(v).replace("₹", "").trim()}
+              />
+              <span className="ml-1 text-3xl font-medium text-foreground/80 sm:text-4xl">
+                Cr
+              </span>
+            </span>
+          }
           context={
             activeEquitySignal.percentileRank !== null
               ? `Active-equity inflow · ${
@@ -1014,6 +1085,8 @@ export default async function MonthlyPage({
           }
         />
       )}
+
+      {coachMessage && <CoachPill message={coachMessage} />}
 
       {topCallouts.length > 0 && (
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -1069,6 +1142,15 @@ export default async function MonthlyPage({
           formatValue={(v) => `₹${formatCompactCrSafe(v)}`}
         />
       )}
+
+      {sandboxScenario && <SandboxCard scenario={sandboxScenario} />}
+
+      <SectionDivider
+        eyebrow="Section II"
+        label="AMFI Industry Snapshot"
+        icon={<TrendingUp className="h-3.5 w-3.5" />}
+        context="Live KPIs from the latest AMFI Monthly Report — totals, mix, and flow."
+      />
 
       {flowHeatCells.length > 0 && (
         <Card
