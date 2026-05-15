@@ -217,7 +217,7 @@ function quarterIdFromStart(
   }
   const fyShort = String(fyYear).slice(-2);
   return {
-    quarter: `FY${fyYear}-Q${fyQ}`,
+    quarter: `FY${fyShort}-Q${fyQ}`,
     quarterLabel: `${fyQ}QFY${fyShort}`,
     quarterStart: `${startYear}-${String(startMonth).padStart(2, "0")}`,
     quarterEnd: `${endYear}-${String(endMonth).padStart(2, "0")}`,

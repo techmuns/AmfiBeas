@@ -14,7 +14,8 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "ingest": "tsx scripts/ingest/index.ts",
     "ingest:amfi-pdf": "tsx scripts/ingest/amfi-monthly-pdf.ts",
-    "ingest:amfi-quarterly-pdf": "tsx scripts/ingest/amfi-quarterly-pdf.ts"
+    "ingest:amfi-quarterly-pdf": "tsx scripts/ingest/amfi-quarterly-pdf.ts",
+    "ingest:market-indices": "tsx scripts/ingest/market-indices.ts"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.19.6",
