@@ -950,3 +950,68 @@ export function passiveFlowShareTrend(
     percentile: values.length > 0 ? (lessOrEqual / values.length) * 100 : null,
   };
 }
+
+/** Latest-month flow z-score per active-equity category. For each
+ *  IIFL active-equity slug we replay the full historical series of
+ *  `categoryNetInflow` and compute the z-score of the latest value
+ *  vs its own history. Used to sort + colour the category trend
+ *  cards on /monthly and /quarterly so the "hot" categories surface
+ *  first. */
+export interface CategoryFlowZScorePoint {
+  slug: AmfiMonthlyCategorySlug;
+  latestMonth: string | null;
+  latestValue: number | null;
+  mean: number | null;
+  stdDev: number | null;
+  zScore: number | null;
+  percentile: number | null;
+}
+
+export function categoryFlowZScoreMap(): Map<
+  AmfiMonthlyCategorySlug,
+  CategoryFlowZScorePoint
+> {
+  const out = new Map<AmfiMonthlyCategorySlug, CategoryFlowZScorePoint>();
+  for (const c of IIFL_ACTIVE_EQUITY_CATEGORIES) {
+    const series = amfiMonthlyCategorySnapshot.rows
+      .filter((r) => r.categorySlug === c.slug)
+      .filter((r): r is typeof r & { categoryNetInflow: number } =>
+        typeof r.categoryNetInflow === "number"
+      )
+      .map((r) => ({ month: r.month, value: r.categoryNetInflow }))
+      .sort((a, b) => a.month.localeCompare(b.month));
+    if (series.length === 0) {
+      out.set(c.slug, {
+        slug: c.slug,
+        latestMonth: null,
+        latestValue: null,
+        mean: null,
+        stdDev: null,
+        zScore: null,
+        percentile: null,
+      });
+      continue;
+    }
+    const latest = series[series.length - 1];
+    const values = series.map((p) => p.value);
+    const n = values.length;
+    const mean = values.reduce((s, v) => s + v, 0) / n;
+    const variance = values.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
+    const stdDev = n >= 2 && variance > 0 ? Math.sqrt(variance) : null;
+    const zScore = stdDev !== null && stdDev > 0
+      ? (latest.value - mean) / stdDev
+      : null;
+    const lessOrEqual = values.filter((v) => v <= latest.value).length;
+    const percentile = (lessOrEqual / n) * 100;
+    out.set(c.slug, {
+      slug: c.slug,
+      latestMonth: latest.month,
+      latestValue: latest.value,
+      mean,
+      stdDev,
+      zScore,
+      percentile,
+    });
+  }
+  return out;
+}

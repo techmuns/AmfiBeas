@@ -73,6 +73,7 @@ import {
   IIFL_ACTIVE_EQUITY_CATEGORIES,
   IIFL_TREND_EXPANDED_SLUGS,
   IIFL_TREND_FEATURED_SLUGS,
+  categoryFlowZScoreMap,
   categoryRotation,
   iiflActiveEquityHeatmapData,
   iiflActiveEquityHeatmapZScoreData,
@@ -577,20 +578,38 @@ export default async function MonthlyPage({
   // trailing 12 months as the heatmap — anchored on latest, never
   // on `?month=`. Featured 4 cards render inline; the remaining 8
   // sit behind a "Show more" details element.
+  const flowZScoreBySlug = categoryFlowZScoreMap();
   const iiflTrendCards = IIFL_ACTIVE_EQUITY_CATEGORIES.map((c) => {
     const { series, hasData } = iiflActiveEquityTrendCard(c.slug);
     const aumHover = formatKpiProvenanceTooltip(
       latestCategoryProvenance(c.slug, "categoryAaum")
     );
-    return { ...c, series, hasData, aumHover };
+    const z = flowZScoreBySlug.get(c.slug);
+    return {
+      ...c,
+      series,
+      hasData,
+      aumHover,
+      latestZ: z?.zScore ?? null,
+      latestPercentile: z?.percentile ?? null,
+    };
   });
   const iiflTrendBySlug = new Map(iiflTrendCards.map((c) => [c.slug, c]));
-  const featuredTrendCards = IIFL_TREND_FEATURED_SLUGS.map(
-    (s) => iiflTrendBySlug.get(s)!
-  );
-  const expandedTrendCards = IIFL_TREND_EXPANDED_SLUGS.map(
-    (s) => iiflTrendBySlug.get(s)!
-  );
+  // Sort featured + expanded card lists by latest z-score (hottest
+  // categories first). Cards with null z-score sink to the bottom.
+  const sortByZ = (slugs: typeof IIFL_TREND_FEATURED_SLUGS) =>
+    [...slugs]
+      .map((s) => iiflTrendBySlug.get(s)!)
+      .sort((a, b) => {
+        const az = a.latestZ;
+        const bz = b.latestZ;
+        if (az === null && bz === null) return 0;
+        if (az === null) return 1;
+        if (bz === null) return -1;
+        return bz - az;
+      });
+  const featuredTrendCards = sortByZ(IIFL_TREND_FEATURED_SLUGS);
+  const expandedTrendCards = sortByZ(IIFL_TREND_EXPANDED_SLUGS);
   const iiflTrendHasAny = iiflTrendCards.some((c) => c.hasData);
   const iiflTrendHasExpanded = expandedTrendCards.some((c) => c.hasData);
 
@@ -1333,6 +1352,7 @@ export default async function MonthlyPage({
                 key={c.slug}
                 title={c.label}
                 subtitle={`${c.series.length} month${c.series.length === 1 ? "" : "s"} · % of active-equity envelope`}
+                action={<CategoryHeatPill z={c.latestZ} />}
               >
                 {c.hasData ? (
                   <MultiLine
@@ -1386,6 +1406,7 @@ export default async function MonthlyPage({
                       key={c.slug}
                       title={c.label}
                       subtitle={`${c.series.length} month${c.series.length === 1 ? "" : "s"} · % of active-equity envelope`}
+                      action={<CategoryHeatPill z={c.latestZ} />}
                     >
                       {c.hasData ? (
                         <MultiLine
@@ -1837,6 +1858,32 @@ function NfoDragCard({
         <InfoTooltip label="Ratio = industryNfoFundsMobilized ÷ netInflow × 100. Months with non-positive total industry net inflow are skipped (the ratio is undefined). Bars cap at 200% for readability; raw values preserved in the percentile read. High ratios = NFOs absorbing more of the month's industry net inflow than usual — historically a froth cue, not a buy/sell call." />
       </p>
     </Card>
+  );
+}
+
+/** Compact pill rendered in the action slot of each category-trend
+ *  card: shows the category's latest-flow z-score with a tone
+ *  indicator. Hot categories surface a positive green pill; cold
+ *  categories a negative red pill; near-norm cards get a neutral
+ *  pill. Null z-score → no pill. */
+function CategoryHeatPill({ z }: { z: number | null }) {
+  if (z === null || !Number.isFinite(z)) return null;
+  const tone =
+    z >= 1
+      ? "border-positive/40 bg-positive/10 text-positive"
+      : z <= -1
+        ? "border-negative/40 bg-negative/10 text-negative"
+        : "border-border bg-muted text-muted-foreground";
+  return (
+    <span
+      className={cn(
+        "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium tabular tracking-tight whitespace-nowrap",
+        tone
+      )}
+    >
+      {z >= 0 ? "+" : ""}
+      {z.toFixed(2)}σ
+    </span>
   );
 }
 

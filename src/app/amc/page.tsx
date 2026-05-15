@@ -9,14 +9,23 @@ import { AmcSearchTable } from "@/components/data/AmcSearchTable";
 import { amcIndexRows } from "@/data/amc-detail";
 import {
   amcHealthGrowthMatrix,
+  amcHealthGrowthZScoreMatrix,
   amcTrajectoryQuadrant,
   latestQoqAnomalies,
   type AmcQuadrant,
   type AmcQuadrantPoint,
 } from "@/data/amc-peer-universe";
+import { LensToggle } from "@/components/ui/LensToggle";
 import { cn } from "@/lib/cn";
 
-export default function AmcListPage() {
+export default async function AmcListPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const healthLens: "growth" | "zscore" =
+    sp.healthLens === "zscore" ? "zscore" : "growth";
   const data = amcIndexRows();
 
   if (!data) {
@@ -28,8 +37,11 @@ export default function AmcListPage() {
   }
 
   const subtitle = `${data.rows.length} AMCs · ${data.fiscalLabel}`;
-  const health = amcHealthGrowthMatrix(8);
-  const healthRows = health.rows.map((r) => ({
+  const health =
+    healthLens === "zscore"
+      ? amcHealthGrowthZScoreMatrix(8)
+      : amcHealthGrowthMatrix(8);
+  const healthDisplayRows = health.rows.map((r) => ({
     label: r.displayName,
     values: r.values,
   }));
@@ -123,21 +135,48 @@ export default function AmcListPage() {
       {health.rows.length > 0 && (
         <Card
           title="AMC Health Heatmap"
-          subtitle={`QoQ AAUM growth · ${health.quarterLabels[0]} → ${health.quarterLabels[health.quarterLabels.length - 1]} · Source: AMFI Fundwise AAUM`}
+          subtitle={
+            healthLens === "zscore"
+              ? `QoQ growth z-score vs cohort each quarter · ${health.quarterLabels[0]} → ${health.quarterLabels[health.quarterLabels.length - 1]} · Source: AMFI Fundwise AAUM`
+              : `QoQ AAUM growth · ${health.quarterLabels[0]} → ${health.quarterLabels[health.quarterLabels.length - 1]} · Source: AMFI Fundwise AAUM`
+          }
+          action={
+            <LensToggle
+              basePath="/amc"
+              paramName="healthLens"
+              defaultValue="growth"
+              lenses={[
+                { value: "growth", label: "Growth %" },
+                { value: "zscore", label: "Z-score" },
+              ]}
+              active={healthLens}
+            />
+          }
         >
           <Heatmap
-            rows={healthRows}
+            rows={healthDisplayRows}
             columns={health.quarterLabels}
-            min={-6}
-            max={12}
+            min={healthLens === "zscore" ? -2 : -6}
+            max={healthLens === "zscore" ? 2 : 12}
             cellMinWidth={44}
             showAllColumnLabels
+            valueSuffix={healthLens === "zscore" ? "σ" : "%"}
           />
           <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            Each cell = QoQ AAUM growth (%).
-            <span className="text-positive">Green</span> = growth,{" "}
-            <span className="text-negative">red</span> = contraction.
-            <InfoTooltip label="Muted cells indicate the AMC didn't have a prior-quarter AAUM row. AMCs sorted by latest-quarter AAUM (largest at top)." />
+            {healthLens === "zscore" ? (
+              <>
+                Each cell = AMC&rsquo;s QoQ growth z-score vs the cohort&rsquo;s
+                mean that quarter. Saturates at ±2σ.
+                <InfoTooltip label="z = (AMC's QoQ growth − cohort mean) ÷ cohort stdDev (population). Quarters where the cohort has fewer than 2 AMCs with a growth value, or where stdDev is zero, render as muted." />
+              </>
+            ) : (
+              <>
+                Each cell = QoQ AAUM growth (%).
+                <span className="text-positive">Green</span> = growth,{" "}
+                <span className="text-negative">red</span> = contraction.
+                <InfoTooltip label="Muted cells indicate the AMC didn't have a prior-quarter AAUM row. AMCs sorted by latest-quarter AAUM (largest at top)." />
+              </>
+            )}
           </p>
         </Card>
       )}
