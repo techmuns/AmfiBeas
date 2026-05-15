@@ -1,5 +1,6 @@
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
+import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FilterBar } from "@/components/filters/FilterBar";
@@ -8,6 +9,7 @@ import { QuarterPicker } from "@/components/filters/QuarterPicker";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { FinancialsPeerCsvButton } from "@/components/data/FinancialsPeerCsvButton";
+import { cyclePhaseHistory } from "@/data/market-indices";
 import { cn } from "@/lib/cn";
 import {
   SOURCED_FINANCIALS_SLUGS,
@@ -213,6 +215,104 @@ export default async function FinancialsPage({
     };
   });
 
+  // ---- Peer-median time series for Margin & Yields charts ----
+  // For each quarter in the window, compute the median margin / yield
+  // across every sourced AMC. Drawn as muted reference lines on the
+  // two charts so the reader sees outperformance vs the cohort at a
+  // glance.
+  const medianHelper = (values: (number | null)[]): number | null => {
+    const xs = values.filter((v): v is number => typeof v === "number");
+    if (xs.length === 0) return null;
+    const sorted = [...xs].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 1
+      ? sorted[mid]
+      : (sorted[mid - 1] + sorted[mid]) / 2;
+  };
+  const peerSeriesBySlug = new Map<string, Map<string, ReturnType<typeof quarterlyForAmc>[number]>>();
+  for (const peerSlug of SOURCED_FINANCIALS_SLUGS) {
+    const map = new Map<string, ReturnType<typeof quarterlyForAmc>[number]>();
+    for (const r of quarterlyForAmc(peerSlug)) {
+      map.set(r.quarter, r);
+    }
+    peerSeriesBySlug.set(peerSlug, map);
+  }
+  const peerMarginByQuarter = new Map<
+    string,
+    { patMargin: number | null; opMargin: number | null }
+  >();
+  const peerYieldByQuarter = new Map<
+    string,
+    {
+      revenue: number | null;
+      op: number | null;
+      profit: number | null;
+    }
+  >();
+  for (const quarter of fixedWindow) {
+    const patMargins: (number | null)[] = [];
+    const opMargins: (number | null)[] = [];
+    const revenueYields: (number | null)[] = [];
+    const opYields: (number | null)[] = [];
+    const profitYields: (number | null)[] = [];
+    for (const peerSlug of SOURCED_FINANCIALS_SLUGS) {
+      const r = peerSeriesBySlug.get(peerSlug)?.get(quarter);
+      if (!r) continue;
+      if (r.revenue > 0) {
+        patMargins.push((r.pat / r.revenue) * 100);
+        opMargins.push((r.operatingProfit / r.revenue) * 100);
+      }
+      const peerAaumOk =
+        aaumProvenance(peerSlug, quarter)?.status === "ok" && r.avgAum > 0;
+      if (peerAaumOk) {
+        revenueYields.push((r.revenue * 4 * 10_000) / r.avgAum);
+        opYields.push((r.operatingProfit * 4 * 10_000) / r.avgAum);
+        profitYields.push((r.pat * 4 * 10_000) / r.avgAum);
+      }
+    }
+    peerMarginByQuarter.set(quarter, {
+      patMargin: medianHelper(patMargins),
+      opMargin: medianHelper(opMargins),
+    });
+    peerYieldByQuarter.set(quarter, {
+      revenue: medianHelper(revenueYields),
+      op: medianHelper(opYields),
+      profit: medianHelper(profitYields),
+    });
+  }
+  const marginDataWithPeer = marginData.map((p) => {
+    const peer = peerMarginByQuarter.get(p.quarter);
+    return {
+      ...p,
+      patMedian:
+        peer?.patMargin !== undefined && peer.patMargin !== null
+          ? Number(peer.patMargin.toFixed(2))
+          : null,
+      opMedian:
+        peer?.opMargin !== undefined && peer.opMargin !== null
+          ? Number(peer.opMargin.toFixed(2))
+          : null,
+    };
+  });
+  const yieldDataWithPeer = yieldData.map((p) => {
+    const peer = peerYieldByQuarter.get(p.quarter);
+    return {
+      ...p,
+      revenueMedian:
+        peer?.revenue !== undefined && peer.revenue !== null
+          ? Number(peer.revenue.toFixed(1))
+          : null,
+      opMedian:
+        peer?.op !== undefined && peer.op !== null
+          ? Number(peer.op.toFixed(1))
+          : null,
+      profitMedian:
+        peer?.profit !== undefined && peer.profit !== null
+          ? Number(peer.profit.toFixed(1))
+          : null,
+    };
+  });
+
   // ---- Peer comparison rows (PR #96): same quarter, all 5 sourced AMCs ----
   // Same metrics the KPI cards show for the focused AMC, but laid out as a
   // compact table so the reader sees how the focused AMC stacks up against
@@ -299,6 +399,7 @@ export default async function FinancialsPage({
   const yieldNote = derivedHeadline
     ? `Derived · ${derivedHeadline} · ${yieldSource}`
     : yieldSource;
+  const cyclePhasePoints = cyclePhaseHistory();
 
   // ---- KPI-card sparklines + peer-median deltas ----
   // 8Q sparkline values for the focused AMC. Each strips nulls so the
@@ -361,6 +462,15 @@ export default async function FinancialsPage({
         defaultSlug={DEFAULT_SLUG}
         amcs={LISTED_AMC_SLUGS}
       />
+
+      {cyclePhasePoints.length > 0 && (
+        <Card
+          title="Cycle Regime"
+          subtitle="Per-month cycle phase · helps contextualise the quarters below"
+        >
+          <CycleRibbon points={cyclePhasePoints} lastN={84} />
+        </Card>
+      )}
 
       <QuarterPicker
         availableQuarters={availableQuarters}
@@ -484,9 +594,12 @@ export default async function FinancialsPage({
             ]}
           />
         </Card>
-        <Card title="Margin Trend" subtitle="PAT & Operating margin · % of Operating Revenue">
+        <Card
+          title="Margin Trend"
+          subtitle="PAT & Operating margin · % of Operating Revenue · peer-median overlay"
+        >
           <MultiLine
-            data={marginData}
+            data={marginDataWithPeer}
             xKey="quarter"
             valueFormat="pct"
             axisFormat="pct"
@@ -495,16 +608,26 @@ export default async function FinancialsPage({
             lines={[
               { key: "patMargin", name: "PAT margin", color: "hsl(var(--chart-3))" },
               { key: "opMargin", name: "Operating margin", color: "hsl(var(--chart-2))" },
+              {
+                key: "patMedian",
+                name: "Peer median PAT",
+                color: "hsl(var(--muted-foreground))",
+              },
+              {
+                key: "opMedian",
+                name: "Peer median Op",
+                color: "hsl(var(--muted-foreground))",
+              },
             ]}
           />
         </Card>
         <Card
           title="Yields (bps of MF QAAUM)"
-          subtitle={yieldsSubtitle}
+          subtitle={`${yieldsSubtitle} · peer-median overlay`}
           className="lg:col-span-2"
         >
           <MultiLine
-            data={yieldData}
+            data={yieldDataWithPeer}
             xKey="quarter"
             valueFormat="bps"
             axisFormat="bps"
@@ -514,6 +637,21 @@ export default async function FinancialsPage({
               { key: "revenue", name: "Revenue yield", color: "hsl(var(--chart-1))" },
               { key: "op", name: "Operating yield", color: "hsl(var(--chart-2))" },
               { key: "profit", name: "Profit yield", color: "hsl(var(--chart-3))" },
+              {
+                key: "revenueMedian",
+                name: "Peer median revenue",
+                color: "hsl(var(--muted-foreground))",
+              },
+              {
+                key: "opMedian",
+                name: "Peer median op",
+                color: "hsl(var(--muted-foreground))",
+              },
+              {
+                key: "profitMedian",
+                name: "Peer median profit",
+                color: "hsl(var(--muted-foreground))",
+              },
             ]}
           />
         </Card>
@@ -591,25 +729,49 @@ export default async function FinancialsPage({
                     {formatCompactCrSafe(p.pat)}
                   </td>
                   <td className="py-2 pr-3 text-right tabular text-muted-foreground">
-                    {p.patMargin !== null ? `${p.patMargin.toFixed(1)}%` : "—"}
+                    <PeerMetricCell
+                      value={p.patMargin}
+                      median={peerMedianPatMargin}
+                      suffix="%"
+                      digits={1}
+                      deltaSuffix="pp"
+                    />
                   </td>
                   <td className="py-2 pr-3 text-right tabular text-muted-foreground">
-                    {p.opMargin !== null ? `${p.opMargin.toFixed(1)}%` : "—"}
+                    <PeerMetricCell
+                      value={p.opMargin}
+                      median={peerMedianOpMargin}
+                      suffix="%"
+                      digits={1}
+                      deltaSuffix="pp"
+                    />
                   </td>
                   <td className="py-2 pr-3 text-right tabular text-muted-foreground">
-                    {p.revenueYieldBps !== null
-                      ? `${p.revenueYieldBps.toFixed(1)} bps`
-                      : "—"}
+                    <PeerMetricCell
+                      value={p.revenueYieldBps}
+                      median={peerMedianRevenueYield}
+                      suffix=" bps"
+                      digits={1}
+                      deltaSuffix="bps"
+                    />
                   </td>
                   <td className="py-2 pr-3 text-right tabular text-muted-foreground">
-                    {p.opYieldBps !== null
-                      ? `${p.opYieldBps.toFixed(1)} bps`
-                      : "—"}
+                    <PeerMetricCell
+                      value={p.opYieldBps}
+                      median={peerMedianOpYield}
+                      suffix=" bps"
+                      digits={1}
+                      deltaSuffix="bps"
+                    />
                   </td>
                   <td className="py-2 pr-1 text-right tabular text-muted-foreground">
-                    {p.profitYieldBps !== null
-                      ? `${p.profitYieldBps.toFixed(1)} bps`
-                      : "—"}
+                    <PeerMetricCell
+                      value={p.profitYieldBps}
+                      median={peerMedianProfitYield}
+                      suffix=" bps"
+                      digits={1}
+                      deltaSuffix="bps"
+                    />
                   </td>
                 </tr>
               ))}
@@ -622,6 +784,45 @@ export default async function FinancialsPage({
           <InfoTooltip label="Yields = annualised P&L (quarterly × 4) ÷ same-quarter MF AAUM, expressed in bps (× 10,000). AAUM column in ₹ Cr; &quot;—&quot; marks quarters with missing AAUM or P&L data." />
         </p>
       </Card>
+    </div>
+  );
+}
+
+/** Compact peer-comparison table cell: shows the value + a small
+ *  "vs median" Δ pill underneath, tone-coloured for direction. */
+function PeerMetricCell({
+  value,
+  median,
+  suffix,
+  digits = 1,
+  deltaSuffix,
+}: {
+  value: number | null;
+  median: number | null;
+  suffix: string;
+  digits?: number;
+  deltaSuffix: string;
+}) {
+  if (value === null) {
+    return <span>—</span>;
+  }
+  const display = `${value.toFixed(digits)}${suffix}`;
+  if (median === null) return <span>{display}</span>;
+  const delta = value - median;
+  // Small dead zone so cells near the median don't all glow.
+  const tone =
+    Math.abs(delta) < 0.1
+      ? "text-muted-foreground"
+      : delta > 0
+        ? "text-positive"
+        : "text-negative";
+  return (
+    <div className="inline-flex flex-col items-end leading-tight">
+      <span>{display}</span>
+      <span className={cn("text-[10px] tabular", tone)}>
+        {delta >= 0 ? "+" : ""}
+        {delta.toFixed(digits)} {deltaSuffix}
+      </span>
     </div>
   );
 }
