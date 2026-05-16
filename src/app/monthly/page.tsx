@@ -1053,20 +1053,36 @@ export default async function MonthlyPage({
       {activeEquitySignal && (
         <HeadlineCard
           eyebrow={`AMFI · ${activeEquitySignal.latestMonth}`}
-          headline={
-            <span>
-              <span className="text-3xl font-medium text-foreground/80 sm:text-4xl">
-                ₹
+          headline={(() => {
+            const v = Math.abs(activeEquitySignal.latestValue);
+            // Pick a compact scale + suffix on the server so we can
+            // pass a SERIALISABLE numeric value to the AnimatedNumber
+            // client component. Functions can't cross the server →
+            // client boundary in RSC.
+            let scaled = v;
+            let suffix = "Cr";
+            let decimals = 0;
+            if (v >= 1e5) {
+              scaled = v / 1e5;
+              suffix = "L Cr";
+              decimals = 2;
+            } else if (v >= 1e3) {
+              scaled = v / 1e3;
+              suffix = "K Cr";
+              decimals = 1;
+            }
+            return (
+              <span>
+                <span className="text-3xl font-medium text-foreground/80 sm:text-4xl">
+                  {activeEquitySignal.latestValue < 0 ? "−₹" : "₹"}
+                </span>
+                <AnimatedNumber value={scaled} decimals={decimals} />
+                <span className="ml-1 text-3xl font-medium text-foreground/80 sm:text-4xl">
+                  {suffix}
+                </span>
               </span>
-              <AnimatedNumber
-                value={Math.abs(activeEquitySignal.latestValue)}
-                format={(v) => formatCompactCrSafe(v).replace("₹", "").trim()}
-              />
-              <span className="ml-1 text-3xl font-medium text-foreground/80 sm:text-4xl">
-                Cr
-              </span>
-            </span>
-          }
+            );
+          })()}
           context={
             activeEquitySignal.percentileRank !== null
               ? `Active-equity inflow · ${
