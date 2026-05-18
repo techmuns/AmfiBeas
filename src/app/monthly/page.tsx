@@ -27,7 +27,6 @@ import {
   investorRead,
   kpiContext,
   latestAmfiMonthlyRow,
-  monthlyFlowsSectionRead,
   sipTrendsSectionRead,
   snapshotSectionRead,
   latestIndustryFolioAdditions,
@@ -1408,7 +1407,6 @@ export default async function MonthlyPage({
   // each section title.
   const snapshotRead = snapshotSectionRead();
   const sipTrendsRead = sipTrendsSectionRead();
-  const monthlyFlowsRead = monthlyFlowsSectionRead();
   const activeEquityMixRead = activeEquityMixSectionRead();
   const foliosNfoRead = foliosNfoSectionRead();
   // Historical Flow Stress timeline — drawdown line + Buy-the-dip /
@@ -1791,6 +1789,55 @@ export default async function MonthlyPage({
         </div>
       )}
 
+      {monthlyFlowsHasData && (
+        <ChartWithContext
+          title="Equity / Debt / Liquid Monthly Net Flows"
+          subtitle={
+            monthlyFlowsLens === "share"
+              ? `${monthlyFlowsRows.length} month${monthlyFlowsRows.length === 1 ? "" : "s"} · % of monthly flow magnitude (signs preserved)`
+              : `${monthlyFlowsRows.length} month${monthlyFlowsRows.length === 1 ? "" : "s"} · ₹ Cr · positive = inflow, negative = outflow`
+          }
+          flowKind="net"
+          denominatorCaption={monthlyFlowsDenomCaption}
+          denominatorTooltip="Latest month's per-segment share of total flow magnitude — the headline read for 'where did the month's flow go?'."
+          insights={monthlyFlowsInsights}
+          yoyBadge={(() => {
+            const v = latestYoyPct(equityFlowFromRows, 12);
+            return v === null ? undefined : { label: "Equity YoY", pct: v };
+          })()}
+          action={
+            <LensToggle
+              basePath="/monthly"
+              paramName="flowsLens"
+              defaultValue="absolute"
+              lenses={[
+                { value: "absolute", label: "₹ Cr" },
+                { value: "share", label: "Share %" },
+              ]}
+              active={monthlyFlowsLens}
+              preserveParams={preservedQueryParams}
+            />
+          }
+        >
+          <GroupedBars
+            data={monthlyFlowsDisplay}
+            xKey="month"
+            labelFormat="month"
+            valueFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
+            axisFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
+            bars={[
+              { key: "equity", name: "Equity", color: "hsl(var(--chart-1))" },
+              { key: "debt", name: "Debt", color: "hsl(var(--chart-2))" },
+              { key: "liquid", name: "Liquid", color: "hsl(var(--chart-4))" },
+            ]}
+          />
+          <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            Liquid is shown separately for readability.
+            <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes. In share view, each value is divided by the sum of absolute flow magnitudes in that month, so signs (inflow vs outflow) stay intact." />
+          </p>
+        </ChartWithContext>
+      )}
+
       <SectionDivider
         eyebrow="Section 3"
         label="Retail / SIP pulse"
@@ -1894,66 +1941,6 @@ export default async function MonthlyPage({
               )}
             </ChartWithContext>
           </section>
-        </div>
-      )}
-
-      {monthlyFlowsHasData && (
-        <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-medium tracking-tight">
-              Monthly Flows
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Source: AMFI Monthly Report
-              {monthlyFlowsRead ? ` · ${monthlyFlowsRead}` : ""}
-            </p>
-          </div>
-          <ChartWithContext
-            title="Equity / Debt / Liquid Monthly Net Flows"
-            subtitle={
-              monthlyFlowsLens === "share"
-                ? `${monthlyFlowsRows.length} month${monthlyFlowsRows.length === 1 ? "" : "s"} · % of monthly flow magnitude (signs preserved)`
-                : `${monthlyFlowsRows.length} month${monthlyFlowsRows.length === 1 ? "" : "s"} · ₹ Cr · positive = inflow, negative = outflow`
-            }
-            flowKind="net"
-            denominatorCaption={monthlyFlowsDenomCaption}
-            denominatorTooltip="Latest month's per-segment share of total flow magnitude — the headline read for 'where did the month's flow go?'."
-            insights={monthlyFlowsInsights}
-            yoyBadge={(() => {
-              const v = latestYoyPct(equityFlowFromRows, 12);
-              return v === null ? undefined : { label: "Equity YoY", pct: v };
-            })()}
-            action={
-              <LensToggle
-                basePath="/monthly"
-                paramName="flowsLens"
-                defaultValue="absolute"
-                lenses={[
-                  { value: "absolute", label: "₹ Cr" },
-                  { value: "share", label: "Share %" },
-                ]}
-                active={monthlyFlowsLens}
-                preserveParams={preservedQueryParams}
-              />
-            }
-          >
-            <GroupedBars
-              data={monthlyFlowsDisplay}
-              xKey="month"
-              labelFormat="month"
-              valueFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
-              axisFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
-              bars={[
-                { key: "equity", name: "Equity", color: "hsl(var(--chart-1))" },
-                { key: "debt", name: "Debt", color: "hsl(var(--chart-2))" },
-                { key: "liquid", name: "Liquid", color: "hsl(var(--chart-4))" },
-              ]}
-            />
-            <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              Liquid is shown separately for readability.
-              <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes. In share view, each value is divided by the sum of absolute flow magnitudes in that month, so signs (inflow vs outflow) stay intact." />
-            </p>
-          </ChartWithContext>
         </div>
       )}
 
@@ -2098,6 +2085,175 @@ export default async function MonthlyPage({
             </section>
           </div>
         </details>
+      )}
+
+      {hasAnyFolioOrNfo && (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight">
+              Industry Folios &amp; NFO
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Source: AMFI Monthly Report
+              {foliosNfoRead ? ` · ${foliosNfoRead}` : ""}
+            </p>
+          </div>
+
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <KpiCard
+              label="Folios"
+              value={formatCroreCountSafe(industryFoliosLatest)}
+              note=""
+              noteHover={foliosHover ?? undefined}
+              sparkline={foliosCtx.sparkline}
+              sparklineColor="hsl(var(--chart-4))"
+              yoyPct={foliosCtx.yoyPct}
+              percentile={foliosCtx.percentile}
+              ratio={
+                folioLatestRow &&
+                typeof folioLatestRow.industryFolios === "number" &&
+                typeof folioLatestRow.totalAum === "number" &&
+                folioLatestRow.totalAum > 0
+                  ? `${(folioLatestRow.industryFolios / folioLatestRow.totalAum).toFixed(1)} folios per ₹ Cr AUM`
+                  : undefined
+              }
+            />
+            <KpiCard
+              label="Folio Additions"
+              value={formatLakhSafe(industryFolioAdditionsLatest)}
+              note=""
+              noteHover={foliosHover ?? undefined}
+              sparkline={folioAdditionsTrend}
+              sparklineColor="hsl(var(--chart-4))"
+            />
+            <KpiCard
+              label="NFO Launches"
+              value={formatIntSafe(industryNfoCountLatest)}
+              note=""
+              noteHover={nfoCountHover ?? undefined}
+              sparkline={nfoCountCtx.sparkline}
+              sparklineColor="hsl(var(--chart-5))"
+              yoyPct={nfoCountCtx.yoyPct}
+              percentile={nfoCountCtx.percentile}
+              ratio={
+                typeof industryNfoFundsLatest === "number" &&
+                typeof industryNfoCountLatest === "number" &&
+                industryNfoCountLatest > 0
+                  ? `${formatCompactCrSafe(industryNfoFundsLatest / industryNfoCountLatest)} per launch`
+                  : undefined
+              }
+            />
+            <KpiCard
+              label="NFO Funds Mobilized"
+              value={formatCompactCrSafe(industryNfoFundsLatest)}
+              note=""
+              noteHover={nfoFundsHover ?? undefined}
+              sparkline={nfoFundsCtx.sparkline}
+              sparklineColor="hsl(var(--chart-2))"
+              yoyPct={nfoFundsCtx.yoyPct}
+              percentile={nfoFundsCtx.percentile}
+              ratio={
+                folioLatestRow &&
+                typeof folioLatestRow.industryNfoFundsMobilized === "number" &&
+                typeof folioLatestRow.netInflow === "number" &&
+                folioLatestRow.netInflow > 0
+                  ? `${((folioLatestRow.industryNfoFundsMobilized / folioLatestRow.netInflow) * 100).toFixed(1)}% of net inflow`
+                  : undefined
+              }
+            />
+          </section>
+
+          {hasAnyFolioOrNfoTrend && folioAdditionsTrend.length > 0 && (
+            <ChartWithContext
+              title="Folio Additions Trend"
+              subtitle={`Net new folios per month · ${folioAdditionsTrend.length} month${folioAdditionsTrend.length === 1 ? "" : "s"} · lakh · ${foliosHover ?? ""}`}
+              flowKind="net"
+              denominatorCaption={folioAdditionsDenomCaption}
+              denominatorTooltip="Monthly folio additions expressed as basis points of the existing folio base. The bps view normalises growth against the (large, growing) base so the trend is comparable across years."
+              insights={folioAdditionsInsights}
+              yoyBadge={(() => {
+                const v = latestYoyPct(folioAdditionsTrend, 12);
+                return v === null ? undefined : { label: "YoY", pct: v };
+              })()}
+            >
+              <BarSeries
+                data={folioAdditionsTrend}
+                name="Folio Additions"
+                color="hsl(var(--chart-4))"
+                valueFormat="lakh"
+                axisFormat="lakh"
+                labelFormat="month"
+                trendline={movingAverage(folioAdditionsTrend, 12)}
+              />
+            </ChartWithContext>
+          )}
+
+          {hasAnyFolioOrNfoTrend &&
+            (nfoCountTrend.length > 0 || nfoFundsTrend.length > 0) && (
+              <details className="group">
+                <summary className="cursor-pointer list-none rounded-md border border-dashed border-border bg-muted/20 px-4 py-2.5 text-sm font-medium tracking-tight marker:hidden hover:bg-muted/30">
+                  <span className="inline-flex items-center gap-2">
+                    <span className="text-foreground">
+                      Show NFO launch + funds-mobilised trends
+                    </span>
+                    <span className="text-muted-foreground transition-transform group-open:rotate-90">
+                      ›
+                    </span>
+                  </span>
+                </summary>
+                <section className="mt-3 grid gap-4 md:grid-cols-2">
+                  {nfoCountTrend.length > 0 && (
+                    <ChartWithContext
+                      title="NFO Launches Trend"
+                      subtitle={`Open + close-ended schemes · ${nfoCountTrend.length} month${nfoCountTrend.length === 1 ? "" : "s"} · ${nfoCountSourceLine}`}
+                      flowKind="stock"
+                      denominatorCaption={nfoCountDenomCaption}
+                      denominatorTooltip="Monthly NFO launches as a % of the trailing 5-year monthly average. Values above 100% = launch activity hotter than the 5Y norm (often coincides with bullish market regimes)."
+                      insights={nfoCountInsights}
+                      yoyBadge={(() => {
+                        const v = latestYoyPct(nfoCountTrend, 12);
+                        return v === null ? undefined : { label: "YoY", pct: v };
+                      })()}
+                    >
+                      <BarSeries
+                        data={nfoCountTrend}
+                        name="NFO Launches"
+                        color="hsl(var(--chart-5))"
+                        valueFormat="count"
+                        axisFormat="count"
+                        labelFormat="month"
+                        trendline={movingAverage(nfoCountTrend, 12)}
+                      />
+                    </ChartWithContext>
+                  )}
+                  {nfoFundsTrend.length > 0 && (
+                    <ChartWithContext
+                      title="NFO Funds Mobilised Trend"
+                      subtitle={`Gross funds raised during NFOs · ${nfoFundsTrend.length} month${nfoFundsTrend.length === 1 ? "" : "s"} · ₹ Cr · no redemptions netted · ${nfoFundsSourceLine}`}
+                      flowKind="gross"
+                      denominatorCaption={nfoFundsDenomCaption}
+                      denominatorTooltip="NFO gross funds mobilised as a % of industry net inflow that month — i.e., how much of the month's net flow was absorbed by new fund launches vs going to existing schemes."
+                      insights={nfoFundsInsights}
+                      yoyBadge={(() => {
+                        const v = latestYoyPct(nfoFundsTrend, 12);
+                        return v === null ? undefined : { label: "YoY", pct: v };
+                      })()}
+                    >
+                      <BarSeries
+                        data={nfoFundsTrend}
+                        name="NFO Funds"
+                        color="hsl(var(--chart-2))"
+                        valueFormat="cr"
+                        axisFormat="cr"
+                        labelFormat="month"
+                        trendline={movingAverage(nfoFundsTrend, 12)}
+                      />
+                    </ChartWithContext>
+                  )}
+                </section>
+              </details>
+            )}
+        </div>
       )}
 
       <SectionDivider
@@ -2527,175 +2683,6 @@ export default async function MonthlyPage({
               </>
             )}
           </p>
-        </div>
-      )}
-
-      {hasAnyFolioOrNfo && (
-        <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-medium tracking-tight">
-              Industry Folios &amp; NFO
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Source: AMFI Monthly Report
-              {foliosNfoRead ? ` · ${foliosNfoRead}` : ""}
-            </p>
-          </div>
-
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <KpiCard
-              label="Folios"
-              value={formatCroreCountSafe(industryFoliosLatest)}
-              note=""
-              noteHover={foliosHover ?? undefined}
-              sparkline={foliosCtx.sparkline}
-              sparklineColor="hsl(var(--chart-4))"
-              yoyPct={foliosCtx.yoyPct}
-              percentile={foliosCtx.percentile}
-              ratio={
-                folioLatestRow &&
-                typeof folioLatestRow.industryFolios === "number" &&
-                typeof folioLatestRow.totalAum === "number" &&
-                folioLatestRow.totalAum > 0
-                  ? `${(folioLatestRow.industryFolios / folioLatestRow.totalAum).toFixed(1)} folios per ₹ Cr AUM`
-                  : undefined
-              }
-            />
-            <KpiCard
-              label="Folio Additions"
-              value={formatLakhSafe(industryFolioAdditionsLatest)}
-              note=""
-              noteHover={foliosHover ?? undefined}
-              sparkline={folioAdditionsTrend}
-              sparklineColor="hsl(var(--chart-4))"
-            />
-            <KpiCard
-              label="NFO Launches"
-              value={formatIntSafe(industryNfoCountLatest)}
-              note=""
-              noteHover={nfoCountHover ?? undefined}
-              sparkline={nfoCountCtx.sparkline}
-              sparklineColor="hsl(var(--chart-5))"
-              yoyPct={nfoCountCtx.yoyPct}
-              percentile={nfoCountCtx.percentile}
-              ratio={
-                typeof industryNfoFundsLatest === "number" &&
-                typeof industryNfoCountLatest === "number" &&
-                industryNfoCountLatest > 0
-                  ? `${formatCompactCrSafe(industryNfoFundsLatest / industryNfoCountLatest)} per launch`
-                  : undefined
-              }
-            />
-            <KpiCard
-              label="NFO Funds Mobilized"
-              value={formatCompactCrSafe(industryNfoFundsLatest)}
-              note=""
-              noteHover={nfoFundsHover ?? undefined}
-              sparkline={nfoFundsCtx.sparkline}
-              sparklineColor="hsl(var(--chart-2))"
-              yoyPct={nfoFundsCtx.yoyPct}
-              percentile={nfoFundsCtx.percentile}
-              ratio={
-                folioLatestRow &&
-                typeof folioLatestRow.industryNfoFundsMobilized === "number" &&
-                typeof folioLatestRow.netInflow === "number" &&
-                folioLatestRow.netInflow > 0
-                  ? `${((folioLatestRow.industryNfoFundsMobilized / folioLatestRow.netInflow) * 100).toFixed(1)}% of net inflow`
-                  : undefined
-              }
-            />
-          </section>
-
-          {hasAnyFolioOrNfoTrend && (
-            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <ChartWithContext
-                title="Folio Additions Trend"
-                subtitle={`Net new folios per month · ${folioAdditionsTrend.length} month${folioAdditionsTrend.length === 1 ? "" : "s"} · lakh · ${foliosHover ?? ""}`}
-                flowKind="net"
-                denominatorCaption={folioAdditionsDenomCaption}
-                denominatorTooltip="Monthly folio additions expressed as basis points of the existing folio base. The bps view normalises growth against the (large, growing) base so the trend is comparable across years."
-                insights={folioAdditionsInsights}
-                yoyBadge={(() => {
-                  const v = latestYoyPct(folioAdditionsTrend, 12);
-                  return v === null ? undefined : { label: "YoY", pct: v };
-                })()}
-              >
-                {folioAdditionsTrend.length > 0 ? (
-                  <BarSeries
-                    data={folioAdditionsTrend}
-                    name="Folio Additions"
-                    color="hsl(var(--chart-4))"
-                    valueFormat="lakh"
-                    axisFormat="lakh"
-                    labelFormat="month"
-                    trendline={movingAverage(folioAdditionsTrend, 12)}
-                  />
-                ) : (
-                  <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                    Need at least two consecutive months of folios
-                  </div>
-                )}
-              </ChartWithContext>
-
-              <ChartWithContext
-                title="NFO Launches Trend"
-                subtitle={`Open + close-ended schemes · ${nfoCountTrend.length} month${nfoCountTrend.length === 1 ? "" : "s"} · ${nfoCountSourceLine}`}
-                flowKind="stock"
-                denominatorCaption={nfoCountDenomCaption}
-                denominatorTooltip="Monthly NFO launches as a % of the trailing 5-year monthly average. Values above 100% = launch activity hotter than the 5Y norm (often coincides with bullish market regimes)."
-                insights={nfoCountInsights}
-                yoyBadge={(() => {
-                  const v = latestYoyPct(nfoCountTrend, 12);
-                  return v === null ? undefined : { label: "YoY", pct: v };
-                })()}
-              >
-                {nfoCountTrend.length > 0 ? (
-                  <BarSeries
-                    data={nfoCountTrend}
-                    name="NFO Launches"
-                    color="hsl(var(--chart-5))"
-                    valueFormat="count"
-                    axisFormat="count"
-                    labelFormat="month"
-                    trendline={movingAverage(nfoCountTrend, 12)}
-                  />
-                ) : (
-                  <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                    No NFO count months yet
-                  </div>
-                )}
-              </ChartWithContext>
-
-              <ChartWithContext
-                title="NFO Funds Mobilised Trend"
-                subtitle={`Gross funds raised during NFOs · ${nfoFundsTrend.length} month${nfoFundsTrend.length === 1 ? "" : "s"} · ₹ Cr · no redemptions netted · ${nfoFundsSourceLine}`}
-                flowKind="gross"
-                denominatorCaption={nfoFundsDenomCaption}
-                denominatorTooltip="NFO gross funds mobilised as a % of industry net inflow that month — i.e., how much of the month's net flow was absorbed by new fund launches vs going to existing schemes."
-                insights={nfoFundsInsights}
-                yoyBadge={(() => {
-                  const v = latestYoyPct(nfoFundsTrend, 12);
-                  return v === null ? undefined : { label: "YoY", pct: v };
-                })()}
-              >
-                {nfoFundsTrend.length > 0 ? (
-                  <BarSeries
-                    data={nfoFundsTrend}
-                    name="NFO Funds"
-                    color="hsl(var(--chart-2))"
-                    valueFormat="cr"
-                    axisFormat="cr"
-                    labelFormat="month"
-                    trendline={movingAverage(nfoFundsTrend, 12)}
-                  />
-                ) : (
-                  <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                    No NFO funds months yet
-                  </div>
-                )}
-              </ChartWithContext>
-            </section>
-          )}
         </div>
       )}
 

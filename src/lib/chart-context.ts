@@ -155,7 +155,7 @@ export function chartInsights(
   if (latest.value === max && values.filter((v) => v === max).length === 1) {
     isAth = true;
     out.push(
-      `${cap(name)} at an all-time high on the available window — ${formatValue(latest.value, unit)}.`
+      `${cap(name)} at an all-time high — ${formatValue(latest.value, unit)}.`
     );
   } else if (
     latest.value === min &&
@@ -163,7 +163,7 @@ export function chartInsights(
   ) {
     isAtl = true;
     out.push(
-      `${cap(name)} at an all-time low on the available window — ${formatValue(latest.value, unit)}.`
+      `${cap(name)} at an all-time low — ${formatValue(latest.value, unit)}.`
     );
   }
 
@@ -181,7 +181,7 @@ export function chartInsights(
       if (Math.abs(z) >= 2) {
         const sign = lastMove >= 0 ? "+" : "";
         out.push(
-          `Latest MoM change ${sign}${formatValue(lastMove, unit)} is ${z >= 0 ? "+" : ""}${z.toFixed(1)}σ vs the typical period change — an unusual move.`
+          `${sign}${formatValue(lastMove, unit)} MoM — biggest move in recent history (${z >= 0 ? "+" : ""}${z.toFixed(1)}σ vs typical).`
         );
       }
     }
@@ -227,8 +227,8 @@ export function chartInsights(
       const gap = lastIdx - priorIdx;
       out.push(
         extremeKind === "high"
-          ? `${cap(name)} at its highest in ${gap} periods (last matched ${series[priorIdx].label}).`
-          : `${cap(name)} at its lowest in ${gap} periods (last matched ${series[priorIdx].label}).`
+          ? `Highest in ${gap} periods — last topped ${series[priorIdx].label}.`
+          : `Lowest in ${gap} periods — last dipped ${series[priorIdx].label}.`
       );
     }
   }
@@ -263,12 +263,12 @@ export function chartInsights(
         latest.value === sliceMax &&
         sliceValues.filter((v) => v === sliceMax).length === 1
       ) {
-        out.push(`${cap(name)} at its highest since the ${anchorTitle}.`);
+        out.push(`Highest since the ${anchorTitle}.`);
       } else if (
         latest.value === sliceMin &&
         sliceValues.filter((v) => v === sliceMin).length === 1
       ) {
-        out.push(`${cap(name)} at its lowest since the ${anchorTitle}.`);
+        out.push(`Lowest since the ${anchorTitle}.`);
       }
     }
   }
@@ -306,8 +306,8 @@ export function chartInsights(
       if (selfDir !== 0 && peerDir !== 0 && selfDir !== peerDir && selfMaterial && peerMaterial) {
         out.push(
           selfDir > 0
-            ? `${cap(name)} rose while ${opts.peer.name} fell — a divergent move.`
-            : `${cap(name)} fell while ${opts.peer.name} rose — a divergent move.`
+            ? `Rose while ${opts.peer.name} fell — flow divergence.`
+            : `Fell while ${opts.peer.name} rose — flow divergence.`
         );
       }
     }
@@ -332,8 +332,8 @@ export function chartInsights(
   if (runLen >= 2) {
     out.push(
       runDir > 0
-        ? `${cap(name)} has risen for ${runLen} consecutive periods.`
-        : `${cap(name)} has fallen for ${runLen} consecutive periods.`
+        ? `Up for ${runLen} straight periods.`
+        : `Down for ${runLen} straight periods.`
     );
   }
 
@@ -359,13 +359,13 @@ export function chartInsights(
           if (Math.abs(delta) >= 1) {
             accelTag =
               delta > 0
-                ? ` · accelerating from ${prevYoy >= 0 ? "+" : ""}${prevYoy.toFixed(1)}% last period`
-                : ` · decelerating from ${prevYoy >= 0 ? "+" : ""}${prevYoy.toFixed(1)}% last period`;
+                ? ` — accelerating from ${prevYoy >= 0 ? "+" : ""}${prevYoy.toFixed(1)}% last period`
+                : ` — decelerating from ${prevYoy >= 0 ? "+" : ""}${prevYoy.toFixed(1)}% last period`;
           }
         }
       }
       out.push(
-        `${cap(name)} ${yoy >= 0 ? "+" : ""}${yoy.toFixed(1)}% YoY${accelTag}.`
+        `${yoy >= 0 ? "+" : ""}${yoy.toFixed(1)}% YoY${accelTag}.`
       );
     }
   }
@@ -379,8 +379,8 @@ export function chartInsights(
     if (phase === "Correction" || phase === "Peak") {
       out.push(
         phase === "Correction"
-          ? `Latest reading sits inside a Correction cycle phase (Nifty 500 in drawdown).`
-          : `Latest reading sits inside a Peak cycle phase (flows / NFOs running hot).`
+          ? `Reading lands inside the current Correction phase.`
+          : `Reading lands inside the current Peak phase.`
       );
     }
   }
@@ -390,7 +390,7 @@ export function chartInsights(
     const dd = opts.drawdownByLabel.get(latest.label);
     if (typeof dd === "number" && dd <= -10) {
       out.push(
-        `Coincides with Nifty 500 in a ${Math.abs(dd).toFixed(1)}% drawdown.`
+        `Reads against a Nifty 500 down ${Math.abs(dd).toFixed(1)}%.`
       );
     }
   }
@@ -405,12 +405,10 @@ export function chartInsights(
       const pctVsTrend = ((latest.value - avg) / Math.abs(avg)) * 100;
       if (Math.abs(pctVsTrend) >= 2) {
         out.push(
-          `Latest reading is ${pctVsTrend >= 0 ? "+" : ""}${pctVsTrend.toFixed(1)}% vs the trailing 12-period average (${formatValue(avg, unit)}).`
+          `${pctVsTrend >= 0 ? "+" : ""}${pctVsTrend.toFixed(1)}% vs trailing 12-period average.`
         );
       } else {
-        out.push(
-          `Latest reading is within ±2% of the trailing 12-period average — running in line with trend.`
-        );
+        out.push(`Running in line with the trailing 12-period trend.`);
       }
     }
   }
