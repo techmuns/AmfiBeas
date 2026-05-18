@@ -83,7 +83,7 @@ export function ChartWithContext({
       className={className}
     >
       {denominatorCaption && (
-        <div className="mb-2 inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/30 px-2 py-1 text-[11px] tabular text-foreground/80">
+        <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-border/60 bg-muted/30 px-2.5 py-1.5 text-[11.5px] tabular text-foreground/80">
           <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
             In proportion to
           </span>
@@ -93,13 +93,13 @@ export function ChartWithContext({
       )}
       {children}
       {insights && insights.length > 0 && (
-        <ul className="mt-3 space-y-1 border-t border-border/40 pt-2">
+        <ul className="mt-4 space-y-1.5 border-t border-border/40 pt-3">
           {insights.map((line, i) => (
             <li
               key={i}
-              className="flex items-start gap-1.5 text-[11px] italic text-muted-foreground"
+              className="flex items-start gap-2 text-[12px] italic text-muted-foreground"
             >
-              <span aria-hidden className="mt-1 inline-block h-1 w-1 shrink-0 rounded-full bg-foreground/40" />
+              <span aria-hidden className="mt-1.5 inline-block h-1 w-1 shrink-0 rounded-full bg-foreground/40" />
               <span>{line}</span>
             </li>
           ))}

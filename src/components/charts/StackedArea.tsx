@@ -44,7 +44,7 @@ export function StackedArea({
   data,
   xKey,
   series,
-  height = 260,
+  height = 300,
   showLegend = true,
   labelFormat = "month",
   reverseTooltipOrder = false,

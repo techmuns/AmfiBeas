@@ -473,7 +473,7 @@ export default async function QuarterlyPage({
   const latestCatHhi = catHhi[catHhi.length - 1] ?? null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title="Quarterly Operating KPIs"
         subtitle={
