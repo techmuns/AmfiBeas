@@ -784,6 +784,10 @@ export default async function QuarterlyPage({
               denominatorCaption={lastMonthAaumDenomCaption}
               denominatorTooltip="Latest last-month AAUM as a % of the trailing 4-quarter average — separates structural growth from quarter-to-quarter mean-reversion."
               insights={lastMonthAaumInsights}
+              yoyBadge={(() => {
+                const v = latestYoyPct(aaumTrendData, 4);
+                return v === null ? undefined : { label: "YoY", pct: v };
+              })()}
             >
               {aaumTrendHasData ? (
                 <BarSeries
@@ -898,6 +902,10 @@ export default async function QuarterlyPage({
               denominatorCaption={aeAaumDenomCaption}
               denominatorTooltip="Latest active-equity AAUM as a % of total industry last-month AAUM — separates absolute scale growth from share capture against other segments."
               insights={aeAaumInsights}
+              yoyBadge={(() => {
+                const v = latestYoyPct(aeAaumTrend, 4);
+                return v === null ? undefined : { label: "YoY", pct: v };
+              })()}
             >
               {aeAaumTrend.length > 0 ? (
                 <BarSeries
@@ -924,6 +932,10 @@ export default async function QuarterlyPage({
               denominatorCaption={aeShareDenomCaption}
               denominatorTooltip="Latest share minus the trailing 4-quarter average, in percentage points — the absolute share moves slowly so the pp delta is the more informative read."
               insights={aeShareInsights}
+              yoyBadge={(() => {
+                const v = latestYoyPct(aeShareTrend, 4);
+                return v === null ? undefined : { label: "YoY", pct: v };
+              })()}
             >
               {aeShareTrend.length > 0 ? (
                 <BarSeries
@@ -1085,6 +1097,10 @@ export default async function QuarterlyPage({
                 denominatorCaption={foliosTrendDenomCaption}
                 denominatorTooltip="Latest folio base as a % of the trailing 4-quarter average — separates a fresh wave of investor onboarding from a flat shelf."
                 insights={foliosTrendInsights}
+                yoyBadge={(() => {
+                  const v = latestYoyPct(foliosTrend, 4);
+                  return v === null ? undefined : { label: "YoY", pct: v };
+                })()}
               >
                 {foliosTrend.length > 0 ? (
                   <BarSeries
@@ -1111,6 +1127,10 @@ export default async function QuarterlyPage({
                 denominatorCaption={folioAdditionsDenomCaption}
                 denominatorTooltip="Latest quarterly net adds expressed in basis points of the total folio base — strips out base-rate growth so different years are comparable."
                 insights={folioAdditionsInsights}
+                yoyBadge={(() => {
+                  const v = latestYoyPct(folioAdditionsTrend, 4);
+                  return v === null ? undefined : { label: "YoY", pct: v };
+                })()}
               >
                 {folioAdditionsTrend.length > 0 ? (
                   <BarSeries
@@ -1143,6 +1163,10 @@ export default async function QuarterlyPage({
                 denominatorCaption={schemesTrendDenomCaption}
                 denominatorTooltip="Latest open-ended scheme count as a % of the trailing 4-quarter average — captures shelf expansion (NFOs net of mergers / closures) without the line going flat at this slow-moving scale."
                 insights={schemesTrendInsights}
+                yoyBadge={(() => {
+                  const v = latestYoyPct(schemesTrend, 4);
+                  return v === null ? undefined : { label: "YoY", pct: v };
+                })()}
               >
                 {schemesTrend.length > 0 ? (
                   <BarSeries

@@ -1768,6 +1768,10 @@ export default async function MonthlyPage({
               denominatorCaption={totalAaumDenomCaption}
               denominatorTooltip="Each month's total AAUM expressed as a % of the trailing 12-month average AAUM. Helps separate cyclical mean-reversion from structural growth."
               insights={totalAaumInsights}
+              yoyBadge={(() => {
+                const v = latestYoyPct(aaumTrendData, 12);
+                return v === null ? undefined : { label: "YoY", pct: v };
+              })()}
             >
               {aaumTrendHasData ? (
                 <BarSeries
@@ -1803,6 +1807,10 @@ export default async function MonthlyPage({
               denominatorCaption={sipContribLatestDenomCaption}
               denominatorTooltip="SIP gross contribution as a share of the industry's net inflow that month. When the share trends up, retail systematic flow is doing more of the heavy lifting; when it falls, lump-sum / institutional money dominates."
               insights={sipContribInsights}
+              yoyBadge={(() => {
+                const v = latestYoyPct(sipContribTrend, 12);
+                return v === null ? undefined : { label: "YoY", pct: v };
+              })()}
             >
               {sipContribTrend.length > 0 ? (
                 <BarSeries
@@ -1828,6 +1836,10 @@ export default async function MonthlyPage({
               denominatorCaption={sipAumDenomCaption}
               denominatorTooltip="SIP AUM as a % of total industry AUM. Captures how much of the industry's asset base sits in committed, recurring flows — a structural-stability indicator."
               insights={sipAumInsights}
+              yoyBadge={(() => {
+                const v = latestYoyPct(sipAumTrend, 12);
+                return v === null ? undefined : { label: "YoY", pct: v };
+              })()}
             >
               {sipAumTrend.length > 0 ? (
                 <BarSeries
@@ -1853,6 +1865,10 @@ export default async function MonthlyPage({
               denominatorCaption={sipAccountsDenomCaption}
               denominatorTooltip="SIP accounts per ₹ Cr of industry AUM — a density measure of investor participation per unit of capital. Rising = more retail-density per Cr; falling = AUM growing faster than account base."
               insights={sipAccountsInsights}
+              yoyBadge={(() => {
+                const v = latestYoyPct(sipAccountsTrend, 12);
+                return v === null ? undefined : { label: "YoY", pct: v };
+              })()}
             >
               {sipAccountsTrend.length > 0 ? (
                 <BarSeries
@@ -1958,6 +1974,10 @@ export default async function MonthlyPage({
                 denominatorCaption={activeEquityFlowDenomCaption}
                 denominatorTooltip="Latest active-equity net inflow as a % of industry net inflow for the same month — captures how much of the month's flow ended up in the active-equity envelope."
                 insights={activeEquityFlowInsights}
+                yoyBadge={(() => {
+                  const v = latestYoyPct(activeEquityFlowTrend, 12);
+                  return v === null ? undefined : { label: "YoY", pct: v };
+                })()}
               >
                 <BarSeries
                   data={activeEquityFlowTrend}
@@ -2027,6 +2047,10 @@ export default async function MonthlyPage({
                 denominatorCaption={sipAumShareDenomCaption}
                 denominatorTooltip="Latest SIP-AUM share minus the trailing 12-month average, in percentage points — separates structural drift from MoM noise on a metric that barely moves."
                 insights={sipAumShareInsights}
+                yoyBadge={(() => {
+                  const v = latestYoyPct(sipAumShareTrend, 12);
+                  return v === null ? undefined : { label: "YoY", pct: v };
+                })()}
               >
                 <BarSeries
                   data={sipAumShareTrend}
@@ -2088,6 +2112,10 @@ export default async function MonthlyPage({
               denominatorCaption={activeEquityAaumDenomCaption}
               denominatorTooltip="Latest active-equity AAUM as a % of total industry AAUM — separates absolute scale growth from share capture vs other segments."
               insights={activeEquityAaumInsights}
+              yoyBadge={(() => {
+                const v = latestYoyPct(activeEquityTrend, 12);
+                return v === null ? undefined : { label: "YoY", pct: v };
+              })()}
             >
               {activeEquityTrend.length > 0 ? (
                 <BarSeries
@@ -2114,6 +2142,10 @@ export default async function MonthlyPage({
               denominatorCaption={activeEquityShareDenomCaption}
               denominatorTooltip="Latest share minus the trailing 12-month average, in percentage points — the absolute share moves slowly so the pp delta is the more informative read."
               insights={activeEquityShareInsights}
+              yoyBadge={(() => {
+                const v = latestYoyPct(activeEquityShareTrend, 12);
+                return v === null ? undefined : { label: "YoY", pct: v };
+              })()}
             >
               {activeEquityShareTrend.length > 0 ? (
                 <BarSeries
@@ -2563,6 +2595,10 @@ export default async function MonthlyPage({
                 denominatorCaption={folioAdditionsDenomCaption}
                 denominatorTooltip="Monthly folio additions expressed as basis points of the existing folio base. The bps view normalises growth against the (large, growing) base so the trend is comparable across years."
                 insights={folioAdditionsInsights}
+                yoyBadge={(() => {
+                  const v = latestYoyPct(folioAdditionsTrend, 12);
+                  return v === null ? undefined : { label: "YoY", pct: v };
+                })()}
               >
                 {folioAdditionsTrend.length > 0 ? (
                   <BarSeries
@@ -2588,6 +2624,10 @@ export default async function MonthlyPage({
                 denominatorCaption={nfoCountDenomCaption}
                 denominatorTooltip="Monthly NFO launches as a % of the trailing 5-year monthly average. Values above 100% = launch activity hotter than the 5Y norm (often coincides with bullish market regimes)."
                 insights={nfoCountInsights}
+                yoyBadge={(() => {
+                  const v = latestYoyPct(nfoCountTrend, 12);
+                  return v === null ? undefined : { label: "YoY", pct: v };
+                })()}
               >
                 {nfoCountTrend.length > 0 ? (
                   <BarSeries
@@ -2613,6 +2653,10 @@ export default async function MonthlyPage({
                 denominatorCaption={nfoFundsDenomCaption}
                 denominatorTooltip="NFO gross funds mobilised as a % of industry net inflow that month — i.e., how much of the month's net flow was absorbed by new fund launches vs going to existing schemes."
                 insights={nfoFundsInsights}
+                yoyBadge={(() => {
+                  const v = latestYoyPct(nfoFundsTrend, 12);
+                  return v === null ? undefined : { label: "YoY", pct: v };
+                })()}
               >
                 {nfoFundsTrend.length > 0 ? (
                   <BarSeries
