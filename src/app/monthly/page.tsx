@@ -1489,6 +1489,12 @@ export default async function MonthlyPage({
 
       <MarketWrapCard wrap={marketWrapData} />
 
+      <SectionDivider
+        eyebrow="Section 1"
+        label="Today's read"
+        context="The single-glance regime call, headline signal and any newsworthy anomaly."
+      />
+
       {activeEquitySignal && (
         <HeadlineCard
           eyebrow={`AMFI · ${activeEquitySignal.latestMonth}`}
@@ -1557,92 +1563,58 @@ export default async function MonthlyPage({
         </section>
       )}
 
-      {narrative && (
-        <NarrativeBlock
-          eyebrow={`Markets column · ${activeEquitySignal?.latestMonth ?? ""}`}
-          strapline={`The ${read.phase.toLowerCase()} read`}
-          paragraphs={narrative}
-        />
-      )}
-
-      {episodes.length > 0 && (
-        <Card
-          title="Cycle Replay · How investors behaved in past drawdowns"
-          subtitle="Each card is a distinct drawdown episode — colour pill captures the average flow z-score during the episode"
-        >
-          <EpisodeReplayStrip
-            episodes={episodes}
-            formatValue={(v) => `₹${formatCompactCrSafe(v)}`}
-          />
-        </Card>
-      )}
-
-      {episodeRecoveryData.length > 0 && (
-        <EpisodeRecoveryCard rows={episodeRecoveryData} />
-      )}
-
-      {cyclePhasePoints.length > 0 && (
-        <Card
-          title="Market Tape · 7-year regime + flow"
-          subtitle={`Background colour = cycle phase · bar height = active-equity flow z-score · since ${cyclePhasePoints[0].month}`}
-        >
-          <MarketTape cells={tapeCells} lastN={84} height={72} />
-          <div className="mt-3">
-            <CycleRibbon points={cyclePhasePoints} lastN={84} />
-          </div>
-        </Card>
-      )}
-
-      {twinScopeData && (
-        <TwinScopeCard
-          label="Active Equity Net Inflow"
-          current={twinScopeData.current}
-          prior={twinScopeData.prior}
-          formatValue={(v) => `₹${formatCompactCrSafe(v)}`}
-        />
-      )}
-
-      {sandboxScenario && <SandboxCard scenario={sandboxScenario} />}
-
       <SectionDivider
-        eyebrow="Section II"
-        label="AMFI Industry Snapshot"
+        eyebrow="Section 2"
+        label="Industry flow"
         icon={<TrendingUp className="h-3.5 w-3.5" />}
-        context="Live KPIs from the latest AMFI Monthly Report — totals, mix, and flow."
+        context="What's happening with industry-wide assets and the latest month's net flow."
       />
 
-      {flowHeatCells.length > 0 && (
-        <Card
-          title="Active Equity Flow · 7-year Calendar"
-          subtitle="Each cell = one month · colour = z-score vs full history"
-        >
-          <CalendarHeatGrid
-            cells={flowHeatCells}
-            saturationBound={2}
-            caption="Active-equity net inflow z-score per month"
-          />
-        </Card>
-      )}
-
-      {sankeyData && (
-        <Card
-          title="Where the Money Went · Latest Month"
-          subtitle={`Industry net flow split by source × destination · ${sankeyData.month}`}
-        >
-          <SankeyFlow
-            sources={sankeyData.sources}
-            targets={sankeyData.targets}
-            links={sankeyData.links}
-            formatValue={(v) => `₹${formatCompactCrSafe(v)}`}
-            height={320}
-          />
-          <p className="mt-3 text-[11px] text-muted-foreground">
-            Source widths show SIP vs lump-sum split of net inflow.
-            Destination widths show Equity / Debt / Liquid / Other shares.
-            Source-to-destination ribbons are proportional approximations
-            (the AMFI release does not split SIP destinations by category).
-          </p>
-        </Card>
+      {(flowHeatCells.length > 0 || sankeyData) && (
+        <details className="group">
+          <summary className="cursor-pointer list-none rounded-md border border-dashed border-border bg-muted/20 px-4 py-2.5 text-sm font-medium tracking-tight marker:hidden hover:bg-muted/30">
+            <span className="inline-flex items-center gap-2">
+              <span className="text-foreground">
+                Show detailed industry views (7-year calendar + Sankey)
+              </span>
+              <span className="text-muted-foreground transition-transform group-open:rotate-90">›</span>
+            </span>
+          </summary>
+          <div className="mt-3 space-y-4">
+            {flowHeatCells.length > 0 && (
+              <Card
+                title="Active Equity Flow · 7-year Calendar"
+                subtitle="Each cell = one month · colour = z-score vs full history"
+              >
+                <CalendarHeatGrid
+                  cells={flowHeatCells}
+                  saturationBound={2}
+                  caption="Active-equity net inflow z-score per month"
+                />
+              </Card>
+            )}
+            {sankeyData && (
+              <Card
+                title="Where the Money Went · Latest Month"
+                subtitle={`Industry net flow split by source × destination · ${sankeyData.month}`}
+              >
+                <SankeyFlow
+                  sources={sankeyData.sources}
+                  targets={sankeyData.targets}
+                  links={sankeyData.links}
+                  formatValue={(v) => `₹${formatCompactCrSafe(v)}`}
+                  height={320}
+                />
+                <p className="mt-3 text-[11px] text-muted-foreground">
+                  Source widths show SIP vs lump-sum split of net inflow.
+                  Destination widths show Equity / Debt / Liquid / Other shares.
+                  Source-to-destination ribbons are proportional approximations
+                  (the AMFI release does not split SIP destinations by category).
+                </p>
+              </Card>
+            )}
+          </div>
+        </details>
       )}
 
       <Card
@@ -1698,6 +1670,14 @@ export default async function MonthlyPage({
       </Card>
 
       {hasInvestorSignals && (
+        <details className="group">
+          <summary className="cursor-pointer list-none rounded-md border border-dashed border-border bg-muted/20 px-4 py-2.5 text-sm font-medium tracking-tight marker:hidden hover:bg-muted/30">
+            <span className="inline-flex items-center gap-2">
+              <span className="text-foreground">Show 5 investor signals</span>
+              <span className="text-muted-foreground transition-transform group-open:rotate-90">›</span>
+            </span>
+          </summary>
+          <div className="mt-3">
         <Card
           title="Investor Signals"
           subtitle="Historical context · AMFI monthly + Nifty 500 since Apr 2019"
@@ -1758,6 +1738,8 @@ export default async function MonthlyPage({
             </div>
           )}
         </Card>
+          </div>
+        </details>
       )}
 
       {amfiSelected && (
@@ -1808,6 +1790,12 @@ export default async function MonthlyPage({
           </section>
         </div>
       )}
+
+      <SectionDivider
+        eyebrow="Section 3"
+        label="Retail / SIP pulse"
+        context="Are systematic flows holding up, slowing, or accelerating? Folio growth read."
+      />
 
       {hasAnySipTrend && (
         <div className="space-y-3">
@@ -1970,17 +1958,16 @@ export default async function MonthlyPage({
       )}
 
       {hasActiveEquityFlowDiagnostics && (
-        <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-medium tracking-tight">
-              Active Equity Flow Diagnostics
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Source: AMFI Monthly Report
-            </p>
-          </div>
-
-          <section className="grid gap-4 lg:grid-cols-2">
+        <details className="group">
+          <summary className="cursor-pointer list-none rounded-md border border-dashed border-border bg-muted/20 px-4 py-2.5 text-sm font-medium tracking-tight marker:hidden hover:bg-muted/30">
+            <span className="inline-flex items-center gap-2">
+              <span className="text-foreground">
+                Show active equity flow diagnostics
+              </span>
+              <span className="text-muted-foreground transition-transform group-open:rotate-90">›</span>
+            </span>
+          </summary>
+          <section className="mt-3 grid gap-4 lg:grid-cols-2">
             {activeEquityFlowTrend.length > 0 && (
               <ChartWithContext
                 title="Active Equity Net Inflows"
@@ -2088,28 +2075,36 @@ export default async function MonthlyPage({
               </ChartWithContext>
             )}
           </section>
-        </div>
+        </details>
       )}
 
       {hasProportionDiagnostics && (
-        <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-medium tracking-tight">
-              Proportion Diagnostics
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Rotation, NFO drag, and where new money is going · Source: AMFI Monthly Report
-            </p>
+        <details className="group">
+          <summary className="cursor-pointer list-none rounded-md border border-dashed border-border bg-muted/20 px-4 py-2.5 text-sm font-medium tracking-tight marker:hidden hover:bg-muted/30">
+            <span className="inline-flex items-center gap-2">
+              <span className="text-foreground">
+                Show rotation, NFO drag and passive flow share
+              </span>
+              <span className="text-muted-foreground transition-transform group-open:rotate-90">›</span>
+            </span>
+          </summary>
+          <div className="mt-3 space-y-3">
+            {rotation && <CategoryRotationCard rotation={rotation} />}
+            <section className="grid gap-4 lg:grid-cols-2">
+              {nfoDrag && <NfoDragCard trend={nfoDrag} />}
+              {passiveFlowShare && (
+                <PassiveFlowShareCard trend={passiveFlowShare} />
+              )}
+            </section>
           </div>
-          {rotation && <CategoryRotationCard rotation={rotation} />}
-          <section className="grid gap-4 lg:grid-cols-2">
-            {nfoDrag && <NfoDragCard trend={nfoDrag} />}
-            {passiveFlowShare && (
-              <PassiveFlowShareCard trend={passiveFlowShare} />
-            )}
-          </section>
-        </div>
+        </details>
       )}
+
+      <SectionDivider
+        eyebrow="Section 4"
+        label="Active vs Passive"
+        context="Where new equity money is going and whether the passive shift is accelerating."
+      />
 
       {hasAnyEquityMix && (
         <div className="space-y-3">
@@ -2371,6 +2366,12 @@ export default async function MonthlyPage({
           </section>
         </div>
       )}
+
+      <SectionDivider
+        eyebrow="Section 5"
+        label="Category rotation"
+        context="Which categories are winning flow share and which categories investors trust through drawdowns."
+      />
 
       {iiflTrendHasAny && (
         <div className="space-y-3">
@@ -2699,16 +2700,26 @@ export default async function MonthlyPage({
       )}
 
       {flowWaterfall && (
-        <Card
-          title="Industry AUM Bridge — 12-month flow decomposition"
-          subtitle={`Opening ${flowWaterfall.startMonth} → Closing ${flowWaterfall.endMonth} · SIP + Lump sum + Market = ΔAUM · Source: AMFI Monthly Report`}
-        >
-          <Waterfall data={flowWaterfall.steps} valueFormat="cr" axisFormat="cr" />
-          <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            ΔAUM split into SIP, lump sum, and market / residual impact.
-            <InfoTooltip label="(1) Cumulative SIP contributions. (2) Lump sum / other net flow = total industry net inflow − SIP. (3) Market / residual impact = ΔAUM − total net inflow (captures mark-to-market and reclassification). SIP and total net inflow come from the AMFI Monthly Report; the market residual is derived." />
-          </p>
-        </Card>
+        <details className="group">
+          <summary className="cursor-pointer list-none rounded-md border border-dashed border-border bg-muted/20 px-4 py-2.5 text-sm font-medium tracking-tight marker:hidden hover:bg-muted/30">
+            <span className="inline-flex items-center gap-2">
+              <span className="text-foreground">Show 12-month flow waterfall</span>
+              <span className="text-muted-foreground transition-transform group-open:rotate-90">›</span>
+            </span>
+          </summary>
+          <div className="mt-3">
+            <Card
+              title="Industry AUM Bridge — 12-month flow decomposition"
+              subtitle={`Opening ${flowWaterfall.startMonth} → Closing ${flowWaterfall.endMonth} · SIP + Lump sum + Market = ΔAUM · Source: AMFI Monthly Report`}
+            >
+              <Waterfall data={flowWaterfall.steps} valueFormat="cr" axisFormat="cr" />
+              <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                ΔAUM split into SIP, lump sum, and market / residual impact.
+                <InfoTooltip label="(1) Cumulative SIP contributions. (2) Lump sum / other net flow = total industry net inflow − SIP. (3) Market / residual impact = ΔAUM − total net inflow (captures mark-to-market and reclassification). SIP and total net inflow come from the AMFI Monthly Report; the market residual is derived." />
+              </p>
+            </Card>
+          </div>
+        </details>
       )}
 
       <Card
@@ -2750,6 +2761,68 @@ export default async function MonthlyPage({
           <InfoTooltip label="Denominator is total AAUM of all AMCs in the snapshot." />
         </p>
       </Card>
+
+      <SectionDivider
+        eyebrow="Section 6"
+        label="Historical context"
+        context="When did this happen before? Cycle replay, episode recovery latencies, and the regime narrative."
+      />
+
+      {episodeRecoveryData.length > 0 && (
+        <EpisodeRecoveryCard rows={episodeRecoveryData} />
+      )}
+
+      {episodes.length > 0 && (
+        <Card
+          title="Cycle Replay · How investors behaved in past drawdowns"
+          subtitle="Each card is a distinct drawdown episode — colour pill captures the average flow z-score during the episode"
+        >
+          <EpisodeReplayStrip
+            episodes={episodes}
+            formatValue={(v) => `₹${formatCompactCrSafe(v)}`}
+          />
+        </Card>
+      )}
+
+      <details className="group">
+        <summary className="cursor-pointer list-none rounded-md border border-dashed border-border bg-muted/20 px-4 py-2.5 text-sm font-medium tracking-tight marker:hidden hover:bg-muted/30">
+          <span className="inline-flex items-center gap-2">
+            <span className="text-foreground">
+              Show regime narrative, market tape, twin-scope and sandbox views
+            </span>
+            <span className="text-muted-foreground transition-transform group-open:rotate-90">›</span>
+          </span>
+        </summary>
+        <div className="mt-3 space-y-4">
+          {narrative && (
+            <NarrativeBlock
+              eyebrow={`Markets column · ${activeEquitySignal?.latestMonth ?? ""}`}
+              strapline={`The ${read.phase.toLowerCase()} read`}
+              paragraphs={narrative}
+            />
+          )}
+          {cyclePhasePoints.length > 0 && (
+            <Card
+              title="Market Tape · 7-year regime + flow"
+              subtitle={`Background colour = cycle phase · bar height = active-equity flow z-score · since ${cyclePhasePoints[0].month}`}
+            >
+              <MarketTape cells={tapeCells} lastN={84} height={72} />
+              <div className="mt-3">
+                <CycleRibbon points={cyclePhasePoints} lastN={84} />
+              </div>
+            </Card>
+          )}
+          {twinScopeData && (
+            <TwinScopeCard
+              label="Active Equity Net Inflow"
+              current={twinScopeData.current}
+              prior={twinScopeData.prior}
+              formatValue={(v) => `₹${formatCompactCrSafe(v)}`}
+            />
+          )}
+          {sandboxScenario && <SandboxCard scenario={sandboxScenario} />}
+        </div>
+      </details>
 
       <StickyContextFooter
         cyclePhase={latestCyclePhase}
