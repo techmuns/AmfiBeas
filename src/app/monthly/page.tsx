@@ -78,6 +78,8 @@ import { SankeyFlow } from "@/components/charts/SankeyFlow";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CalendarHeatGrid } from "@/components/ui/CalendarHeatGrid";
 import { CalloutCard } from "@/components/ui/CalloutCard";
+import { CategoryResilienceCard } from "@/components/ui/CategoryResilienceCard";
+import { categoryDrawdownResilience } from "@/data/category-resilience";
 import { CoachPill } from "@/components/ui/CoachPill";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { EpisodeReplayStrip } from "@/components/ui/EpisodeReplayStrip";
@@ -918,6 +920,12 @@ export default async function MonthlyPage({
   const expandedTrendCards = sortByZ(IIFL_TREND_EXPANDED_SLUGS);
   const iiflTrendHasAny = iiflTrendCards.some((c) => c.hasData);
   const iiflTrendHasExpanded = expandedTrendCards.some((c) => c.hasData);
+
+  // Category Resilience Through Drawdowns — derived view that
+  // crosses each IIFL active-equity category against the cycle-phase
+  // classifier to surface "did investors keep buying X during the
+  // last drawdown, or did they bail?".
+  const categoryResilienceRows = categoryDrawdownResilience();
 
   // ---- Category Flow Share (IIFL Figure 31-34) section ---------------
   //
@@ -2425,6 +2433,10 @@ export default async function MonthlyPage({
             <InfoTooltip label="Active equity = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
           </p>
         </div>
+      )}
+
+      {categoryResilienceRows.length > 0 && (
+        <CategoryResilienceCard rows={categoryResilienceRows} />
       )}
 
       {iiflHeatmapHasData && (
