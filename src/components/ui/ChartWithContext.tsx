@@ -9,24 +9,25 @@ interface ChartWithContextProps {
    *  "stock" means an AUM / level / count — no flow direction
    *  applies (no pill rendered in that case). */
   flowKind?: "net" | "gross" | "stock";
-  /** One-liner that names the analytical denominator the chart is
-   *  expressed against. Examples:
-   *    "X% of total net inflow"
-   *    "X bps of envelope AUM"
-   *    "X% of trailing 5Y avg"
-   *  Rendered as a subtle caption between the header and the chart. */
+  /** Analytical denominator the chart is expressed against. Examples:
+   *    "67% of industry net inflow · latest 2026-04"
+   *    "120 bps of total folio base"
+   *    "98% of trailing 12M avg"
+   *  Folded inline into the subtitle so the chart header stays a
+   *  single, scannable line instead of an extra labelled pill. */
   denominatorCaption?: string;
   /** Optional info-button tooltip explaining the denominator more
-   *  fully (formula + source). */
+   *  fully (formula + source). Renders an (i) icon next to the
+   *  subtitle when provided. */
   denominatorTooltip?: string;
-  /** Insight lines rendered as an italic strip beneath the chart.
-   *  Caller-supplied — usually from `chartInsights(series, ...)`. */
+  /** Insight lines from `chartInsights(...)`. ONLY the first line is
+   *  rendered — as a single italic headline above the chart — so the
+   *  card reads "title → headline → chart" instead of stacking a
+   *  three-bullet strip below the chart. The downstream array is
+   *  still accepted for forward compatibility with detail views. */
   insights?: string[];
   /** Optional YoY / QoQ growth badge rendered in the header.
-   *  Green if positive, red if negative. The badge serves as the
-   *  literal "every chart shows YoY/QoQ growth %" visual — most
-   *  useful on grouped / multi-line charts where a trendline overlay
-   *  doesn't fit cleanly. `label` defaults to "YoY". */
+   *  Green if positive, red if negative. */
   yoyBadge?: { pct: number; label?: string };
   /** Action slot — same as Card. */
   action?: React.ReactNode;
@@ -41,18 +42,20 @@ const FLOW_PILL_CLASS: Record<"net" | "gross", string> = {
 };
 
 /**
- * Standardised chart container that bundles the four-part template
- * the dashboard uses for every analytical chart:
+ * Re-designed (Phase 0 of the cleanup): the wrapper now reads as
+ * one quick scan — title, one-sentence headline insight, then the
+ * chart. Denominator text rides inside the subtitle line; there's
+ * no extra "In proportion to …" pill or three-bullet strip.
  *
- *   1. Title + Net/Gross pill in the header
- *   2. Subtitle (axis units, time span)
- *   3. Denominator caption above the chart — names the analytical
- *      base the values are expressed against
- *   4. Chart itself (callers pass their `BarSeries` / `MultiLine` etc.)
- *   5. Insight strip below — auto-generated narrative pattern lines
+ * Render order:
+ *   1. Card header: title + subtitle (subtitle absorbs the
+ *      denominator caption + optional info-tooltip).
+ *   2. Headline: a single italic prose line above the chart — the
+ *      highest-priority insight from `chartInsights()`. Drops the
+ *      previous three-bullet block.
+ *   3. Chart itself.
  *
- * Every "trends + proportions + insights" chart on the dashboard
- * goes through this wrapper so the visual grammar is consistent.
+ * Callers don't need to change — the previous API is preserved.
  */
 export function ChartWithContext({
   title,
@@ -99,36 +102,37 @@ export function ChartWithContext({
       {action}
     </div>
   );
+  // Subtitle absorbs the denominator caption. Both pieces are read
+  // as one line so the eye doesn't bounce between header → pill →
+  // chart.
+  const subtitleNode =
+    subtitle || denominatorCaption || denominatorTooltip ? (
+      <>
+        {subtitle}
+        {subtitle && denominatorCaption ? " · " : ""}
+        {denominatorCaption}
+        {denominatorTooltip ? (
+          <span className="ml-1 align-middle">
+            <InfoTooltip label={denominatorTooltip} />
+          </span>
+        ) : null}
+      </>
+    ) : undefined;
+  // Single headline line — the engine's highest-priority insight.
+  const headline = insights && insights.length > 0 ? insights[0] : null;
   return (
     <Card
       title={title}
-      subtitle={subtitle}
+      subtitleNode={subtitleNode}
       action={pillKind || yoyOk || action ? headerAction : undefined}
       className={className}
     >
-      {denominatorCaption && (
-        <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-border/60 bg-muted/30 px-2.5 py-1.5 text-[11.5px] tabular text-foreground/80">
-          <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
-            In proportion to
-          </span>
-          {denominatorCaption}
-          {denominatorTooltip && <InfoTooltip label={denominatorTooltip} />}
-        </div>
+      {headline && (
+        <p className="mb-3 text-[12.5px] italic leading-snug text-foreground/85">
+          {headline}
+        </p>
       )}
       {children}
-      {insights && insights.length > 0 && (
-        <ul className="mt-4 space-y-1.5 border-t border-border/40 pt-3">
-          {insights.map((line, i) => (
-            <li
-              key={i}
-              className="flex items-start gap-2 text-[12px] italic text-muted-foreground"
-            >
-              <span aria-hidden className="mt-1.5 inline-block h-1 w-1 shrink-0 rounded-full bg-foreground/40" />
-              <span>{line}</span>
-            </li>
-          ))}
-        </ul>
-      )}
     </Card>
   );
 }
