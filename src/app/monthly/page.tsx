@@ -80,6 +80,8 @@ import { CalendarHeatGrid } from "@/components/ui/CalendarHeatGrid";
 import { CalloutCard } from "@/components/ui/CalloutCard";
 import { CategoryResilienceCard } from "@/components/ui/CategoryResilienceCard";
 import { categoryDrawdownResilience } from "@/data/category-resilience";
+import { EpisodeRecoveryCard } from "@/components/ui/EpisodeRecoveryCard";
+import { episodeRecoveryRows } from "@/data/episode-recovery";
 import { CoachPill } from "@/components/ui/CoachPill";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { EpisodeReplayStrip } from "@/components/ui/EpisodeReplayStrip";
@@ -1162,6 +1164,11 @@ export default async function MonthlyPage({
     return { current, prior };
   })();
   const episodes = historicalEpisodes();
+  // Recovery-tracker rows derived from the same episode list — for
+  // each episode, compute the pre-baseline / trough / recovery
+  // metrics so we can render "how long did it take investors to
+  // come back?".
+  const episodeRecoveryData = episodeRecoveryRows();
   const latestCyclePhaseForNarrative =
     cyclePhasePoints.length > 0
       ? cyclePhasePoints[cyclePhasePoints.length - 1].phase
@@ -1560,6 +1567,10 @@ export default async function MonthlyPage({
             formatValue={(v) => `₹${formatCompactCrSafe(v)}`}
           />
         </Card>
+      )}
+
+      {episodeRecoveryData.length > 0 && (
+        <EpisodeRecoveryCard rows={episodeRecoveryData} />
       )}
 
       {cyclePhasePoints.length > 0 && (
