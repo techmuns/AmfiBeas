@@ -8,7 +8,7 @@ import { DistributionStrip } from "@/components/ui/DistributionStrip";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { RankTrendChart } from "@/components/charts/RankTrendChart";
-import { chartInsights } from "@/lib/chart-context";
+import { chartInsights, latestYoyPct } from "@/lib/chart-context";
 import {
   allAaumAmcs,
   amcAaumSeries,
@@ -426,6 +426,10 @@ export default async function AmcPage({
           denominatorCaption={aaumDenomCaption}
           denominatorTooltip="Latest AMC AAUM as a percentage of industry total — the cleanest peer benchmark for 'is this AMC pulling ahead of the industry?'."
           insights={aaumInsights}
+          yoyBadge={(() => {
+            const v = latestYoyPct(aaumInsightSeries, 4);
+            return v === null ? undefined : { label: "YoY", pct: v };
+          })()}
         >
           {aaumRebased.length > 0 ? (
             <MultiLine
@@ -458,6 +462,10 @@ export default async function AmcPage({
           denominatorCaption={shareDenomCaption}
           denominatorTooltip="Latest market share minus the share four quarters back, in percentage points — share moves slowly, so the YoY pp delta is the more informative read."
           insights={shareInsights}
+          yoyBadge={(() => {
+            const v = latestYoyPct(shareInsightSeries, 4);
+            return v === null ? undefined : { label: "YoY", pct: v };
+          })()}
         >
           {shareChart.length > 0 ? (
             <MultiLine
