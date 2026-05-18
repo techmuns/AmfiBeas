@@ -414,6 +414,7 @@ export default async function MonthlyPage({
   const totalAaumInsights = chartInsights(aaumTrendData, {
     metricName: "total AAUM",
     unitSuffix: "₹ Cr",
+    yoyLag: 12,
   });
 
   // Provenance captions for the section. All four contributing fields
@@ -458,10 +459,21 @@ export default async function MonthlyPage({
     }
     return m;
   })();
+  // Shared peer series for cross-chart divergence rules — industry
+  // net inflow keyed by month. Used by SIP / NFO insight calls so the
+  // engine can call out "SIP rose while industry flow fell" patterns.
+  const industryNetInflowPeerSeries = amfiMonthlyRows()
+    .filter((r) => typeof r.netInflow === "number")
+    .map((r) => ({ label: r.month, value: r.netInflow as number }));
   const sipContribInsights = chartInsights(sipContribTrend, {
     metricName: "SIP contribution",
     unitSuffix: "₹ Cr",
     drawdownByLabel: ddByMonthForInsights,
+    yoyLag: 12,
+    peer: {
+      name: "industry net inflow",
+      data: industryNetInflowPeerSeries,
+    },
   });
   const sipAumTrend = monthlyTrend("sipAum", 24);
   const sipAccountsTrend = monthlyTrend("sipAccounts", 24);
@@ -486,6 +498,7 @@ export default async function MonthlyPage({
     metricName: "SIP AUM",
     unitSuffix: "₹ Cr",
     drawdownByLabel: ddByMonthForInsights,
+    yoyLag: 12,
   });
 
   // SIP accounts denominator caption: accounts per ₹ Cr AUM (density).
@@ -507,6 +520,7 @@ export default async function MonthlyPage({
   const sipAccountsInsights = chartInsights(sipAccountsTrend, {
     metricName: "SIP accounts",
     drawdownByLabel: ddByMonthForInsights,
+    yoyLag: 12,
   });
 
   const hasAnySipTrend =
@@ -673,6 +687,7 @@ export default async function MonthlyPage({
   const folioAdditionsInsights = chartInsights(folioAdditionsTrend, {
     metricName: "folio additions",
     drawdownByLabel: ddByMonthForInsights,
+    yoyLag: 12,
   });
 
   // NFO count denominator: latest as % of trailing 5Y (60M) average.
@@ -697,6 +712,7 @@ export default async function MonthlyPage({
   const nfoCountInsights = chartInsights(nfoCountTrend, {
     metricName: "NFO launches",
     drawdownByLabel: ddByMonthForInsights,
+    yoyLag: 12,
   });
 
   // NFO funds denominator: latest as % of industry net inflow that month.
@@ -717,6 +733,11 @@ export default async function MonthlyPage({
     metricName: "NFO funds mobilised",
     unitSuffix: "₹ Cr",
     drawdownByLabel: ddByMonthForInsights,
+    yoyLag: 12,
+    peer: {
+      name: "industry net inflow",
+      data: industryNetInflowPeerSeries,
+    },
   });
 
   const foliosHover = formatKpiProvenanceTooltip(
