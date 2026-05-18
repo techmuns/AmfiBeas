@@ -433,6 +433,80 @@ export default async function QuarterlyPage({
     ? `${aeBreakdown.length} quarter${aeBreakdown.length === 1 ? "" : "s"} · ₹ Cr · latest mix ${latestQuarterlyEquityMix.activePct.toFixed(1)}% Active / ${latestQuarterlyEquityMix.etfPct.toFixed(1)}% ETF & Index / ${latestQuarterlyEquityMix.arbPct.toFixed(1)}% Arbitrage`
     : `${aeBreakdown.length} quarter${aeBreakdown.length === 1 ? "" : "s"} · ₹ Cr · grouped bars · last-month AAUM`;
 
+  // Quarterly Flows denominator: latest quarter's per-segment share
+  // of total flow magnitude — mirrors /monthly's headline read.
+  const quarterlyFlowsDenomCaption = (() => {
+    if (flowsData.length === 0) return undefined;
+    const latest = flowsData[flowsData.length - 1];
+    const e = typeof latest.equity === "number" ? latest.equity : 0;
+    const d = typeof latest.debt === "number" ? latest.debt : 0;
+    const l = typeof latest.liquid === "number" ? latest.liquid : 0;
+    const total = Math.abs(e) + Math.abs(d) + Math.abs(l);
+    if (total === 0) return undefined;
+    return `Equity = ${((Math.abs(e) / total) * 100).toFixed(0)}% / Debt = ${((Math.abs(d) / total) * 100).toFixed(0)}% / Liquid = ${((Math.abs(l) / total) * 100).toFixed(0)}% of latest flow magnitude · ${latest.quarterLabel}`;
+  })();
+  const equityFlowFromQuarterly = flowsData
+    .filter((r) => typeof r.equity === "number")
+    .map((r) => ({ label: r.quarterLabel, value: r.equity as number }));
+  const quarterlyFlowsInsights = chartInsights(equityFlowFromQuarterly, {
+    metricName: "equity net inflow",
+    unitSuffix: "₹ Cr",
+  });
+
+  // Active Equity Last-month AAUM denominator: latest as % of total
+  // industry last-month AAUM — same framing as /monthly but on the
+  // quarterly basis.
+  const aeAaumDenomCaption = (() => {
+    if (aeAaumTrend.length === 0) return undefined;
+    const latest = aeAaumTrend[aeAaumTrend.length - 1];
+    // Pull the matching quarter's grandTotalLastMonthAaum from
+    // aaumTrendData computed earlier in the page.
+    const totalRow = aaumTrendData.find((p) => p.label === latest.label);
+    if (!totalRow || totalRow.value <= 0) return undefined;
+    const pct = (latest.value / totalRow.value) * 100;
+    return `${pct.toFixed(1)}% of total industry last-month AAUM · latest ${latest.label}`;
+  })();
+  const aeAaumInsights = chartInsights(aeAaumTrend, {
+    metricName: "active-equity AAUM",
+    unitSuffix: "₹ Cr",
+    yoyLag: 4,
+  });
+
+  // Active Equity Share denominator: pp shift vs trailing 4Q average
+  // — the share moves slowly so the pp delta is the more informative
+  // read.
+  const aeShareDenomCaption = (() => {
+    if (aeShareTrend.length < 4) return undefined;
+    const latest = aeShareTrend[aeShareTrend.length - 1];
+    const trailing4 = aeShareTrend.slice(-4);
+    const avg = trailing4.reduce((s, p) => s + p.value, 0) / trailing4.length;
+    const pp = latest.value - avg;
+    return `${pp >= 0 ? "+" : "−"}${Math.abs(pp).toFixed(2)} pp vs trailing 4Q avg · latest ${latest.label}`;
+  })();
+  const aeShareInsights = chartInsights(aeShareTrend, {
+    metricName: "active-equity share",
+    unitSuffix: "%",
+    yoyLag: 4,
+  });
+
+  // Equity Breakdown denominator: ETF & Index share = passive
+  // penetration — same framing as /monthly so the quarterly read
+  // is comparable.
+  const aeBreakdownDenomCaption = latestQuarterlyEquityMix
+    ? `ETF & Index = ${latestQuarterlyEquityMix.etfPct.toFixed(1)}% of equity AUM · latest available quarter`
+    : undefined;
+  const activeEquityFromQBreakdown = aeBreakdown
+    .filter((r) => typeof r.activeEquity === "number")
+    .map((r) => ({
+      label: r.quarterLabel,
+      value: r.activeEquity as number,
+    }));
+  const aeBreakdownInsights = chartInsights(activeEquityFromQBreakdown, {
+    metricName: "active-equity AAUM",
+    unitSuffix: "₹ Cr",
+    yoyLag: 4,
+  });
+
   // ---- Folios & Scheme Count ----------------------------------------
   const totalFolios = selectedRow?.grandTotalFolios ?? null;
   const folioAdditions = latestQuarterlyFolioAdditions();
@@ -671,13 +745,17 @@ export default async function QuarterlyPage({
               {quarterlyFlowsRead ? ` · ${quarterlyFlowsRead}` : ""}
             </p>
           </div>
-          <Card
+          <ChartWithContext
             title="Equity / Debt / Liquid Quarterly Net Flows"
             subtitle={
               quarterlyFlowsLens === "share"
                 ? `${flowsData.length} quarter${flowsData.length === 1 ? "" : "s"} · % of quarterly flow magnitude (signs preserved)`
                 : `${flowsData.length} quarter${flowsData.length === 1 ? "" : "s"} · ₹ Cr · positive = inflow, negative = outflow`
             }
+            flowKind="net"
+            denominatorCaption={quarterlyFlowsDenomCaption}
+            denominatorTooltip="Latest quarter's per-segment share of total flow magnitude — the headline read for 'where did the quarter's flow go?'."
+            insights={quarterlyFlowsInsights}
             action={
               <LensToggle
                 basePath="/quarterly"
@@ -716,7 +794,7 @@ export default async function QuarterlyPage({
               Liquid is shown separately for readability.
               <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes. Share view divides each value by the quarter's sum of absolute flow magnitudes so signs (inflow vs outflow) stay intact." />
             </p>
-          </Card>
+          </ChartWithContext>
         </div>
       )}
 
@@ -733,9 +811,13 @@ export default async function QuarterlyPage({
           </div>
 
           <section className="grid gap-4 lg:grid-cols-2">
-            <Card
+            <ChartWithContext
               title="Active Equity Last-month AAUM Trend"
               subtitle={`${aeAaumTrend.length} quarter${aeAaumTrend.length === 1 ? "" : "s"} · ₹ Cr · last-month AAUM (not QAAUM)`}
+              flowKind="stock"
+              denominatorCaption={aeAaumDenomCaption}
+              denominatorTooltip="Latest active-equity AAUM as a % of total industry last-month AAUM — separates absolute scale growth from share capture against other segments."
+              insights={aeAaumInsights}
             >
               {aeAaumTrend.length > 0 ? (
                 <BarSeries
@@ -745,17 +827,23 @@ export default async function QuarterlyPage({
                   valueFormat="cr"
                   axisFormat="cr"
                   labelFormat="none"
+                  trendline={movingAverage(aeAaumTrend, 4)}
+                  trendlineName="4Q avg"
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                   Active Equity Last-month AAUM unavailable
                 </div>
               )}
-            </Card>
+            </ChartWithContext>
 
-            <Card
+            <ChartWithContext
               title="Active Equity Share of Total Last-month AAUM"
               subtitle={`${aeShareTrend.length} quarter${aeShareTrend.length === 1 ? "" : "s"} · % of total last-month AAUM`}
+              flowKind="stock"
+              denominatorCaption={aeShareDenomCaption}
+              denominatorTooltip="Latest share minus the trailing 4-quarter average, in percentage points — the absolute share moves slowly so the pp delta is the more informative read."
+              insights={aeShareInsights}
             >
               {aeShareTrend.length > 0 ? (
                 <BarSeries
@@ -765,6 +853,8 @@ export default async function QuarterlyPage({
                   valueFormat="pct"
                   axisFormat="pct"
                   labelFormat="none"
+                  trendline={movingAverage(aeShareTrend, 4)}
+                  trendlineName="4Q avg"
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
@@ -777,16 +867,20 @@ export default async function QuarterlyPage({
               >
                 Last-month AAUM ratio — not a true QAAUM share
               </div>
-            </Card>
+            </ChartWithContext>
           </section>
 
-          <Card
+          <ChartWithContext
             title="Equity Last-month AAUM Breakdown"
             subtitle={
               equityMixLens === "share"
                 ? `${aeBreakdown.length} quarter${aeBreakdown.length === 1 ? "" : "s"} · stacked share of equity AAUM (last-month basis)`
                 : aeBreakdownSubtitle
             }
+            flowKind="stock"
+            denominatorCaption={aeBreakdownDenomCaption}
+            denominatorTooltip="ETF & Index share of equity AUM — the headline passive-penetration number, computed on the last-month-AAUM basis from the quarterly disclosure."
+            insights={aeBreakdownInsights}
             action={
               <LensToggle
                 basePath="/quarterly"
@@ -836,7 +930,7 @@ export default async function QuarterlyPage({
               All values use last-month AAUM, not a true 3-month average.
               <InfoTooltip label="Active Equity = Growth/Equity schemes + Hybrid ex-Arbitrage + Solution-oriented schemes. ETF & Index = Index Funds + Other ETFs. Source: AMFI Quarterly Report's last-month AAUM column. Share view divides each by the quarter's sum of all three segments." />
             </p>
-          </Card>
+          </ChartWithContext>
         </div>
       )}
 
