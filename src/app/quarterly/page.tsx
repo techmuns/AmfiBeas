@@ -17,7 +17,7 @@ import {
   latestCategoryProvenance,
 } from "@/data/amfi-monthly-category";
 import { formatKpiProvenanceTooltip } from "@/data/amfi-monthly";
-import { cyclePhaseHistory } from "@/data/market-indices";
+import { cyclePhaseHistory, historicalEpisodes } from "@/data/market-indices";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { LensToggle } from "@/components/ui/LensToggle";
@@ -342,6 +342,65 @@ export default async function QuarterlyPage({
   const aaumTrendSubtitle = aaumTrendHasData
     ? `Last-month AAUM · ${aaumTrendData.length} quarter${aaumTrendData.length === 1 ? "" : "s"} · ₹ Cr`
     : "Last-month AAUM not available";
+
+  // ---- Shared chart-context helpers (used by every insight call) ----
+  // Convert YYYY-MM → fiscal-quarter display label ("4QFY26") used by
+  // every quarterly chart series. Indian FY ends in March: Apr-Jun =
+  // Q1, Jul-Sep = Q2, Oct-Dec = Q3, Jan-Mar = Q4. FY{YY} is the year
+  // ending in March of that YY.
+  const monthToFiscalQuarterLabel = (month: string): string | null => {
+    const [yStr, mStr] = month.split("-");
+    const y = Number(yStr);
+    const m = Number(mStr);
+    if (!Number.isFinite(y) || !Number.isFinite(m)) return null;
+    let fyYear: number;
+    let fyQ: number;
+    if (m >= 1 && m <= 3) {
+      fyYear = y;
+      fyQ = 4;
+    } else if (m >= 4 && m <= 6) {
+      fyYear = y + 1;
+      fyQ = 1;
+    } else if (m >= 7 && m <= 9) {
+      fyYear = y + 1;
+      fyQ = 2;
+    } else if (m >= 10 && m <= 12) {
+      fyYear = y + 1;
+      fyQ = 3;
+    } else {
+      return null;
+    }
+    return `${fyQ}QFY${String(fyYear).slice(-2)}`;
+  };
+  // Cycle phase by quarter — walking the monthly phase history in
+  // order and overwriting per-quarter means the LAST month of each
+  // quarter wins. That's the most representative read for a
+  // quarter-end snapshot.
+  const cyclePhaseByQuarterLabel: Map<string, string> = (() => {
+    const m = new Map<string, string>();
+    for (const p of cyclePhaseHistory()) {
+      const q = monthToFiscalQuarterLabel(p.month);
+      if (q) m.set(q, p.phase);
+    }
+    return m;
+  })();
+  // Episode anchors translated to fiscal-quarter labels. Multiple
+  // episode months can map to the same quarter (e.g. COVID 2020 spans
+  // Feb-Mar 2020 → both in FY20-Q4) — dedupe so each quarter has one
+  // anchor.
+  const episodeAnchorsForQuarter: { label: string; title: string }[] =
+    (() => {
+      const seen = new Set<string>();
+      const out: { label: string; title: string }[] = [];
+      for (const e of historicalEpisodes()) {
+        const q = monthToFiscalQuarterLabel(e.startMonth);
+        if (!q || seen.has(q)) continue;
+        seen.add(q);
+        out.push({ label: q, title: e.title });
+      }
+      return out;
+    })();
+
   // Last-month AAUM denominator: latest as % of trailing 4Q (1Y) average
   // — separates structural growth from quarter-to-quarter mean reversion.
   const lastMonthAaumDenomCaption = (() => {
@@ -356,6 +415,8 @@ export default async function QuarterlyPage({
   const lastMonthAaumInsights = chartInsights(aaumTrendData, {
     metricName: "last-month AAUM",
     unitSuffix: "₹ Cr",
+    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
+    yoyLag: 4,
   });
 
   // ---- Quarterly Flows ----------------------------------------------
@@ -451,6 +512,9 @@ export default async function QuarterlyPage({
   const quarterlyFlowsInsights = chartInsights(equityFlowFromQuarterly, {
     metricName: "equity net inflow",
     unitSuffix: "₹ Cr",
+    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
+    episodeAnchors: episodeAnchorsForQuarter,
+    yoyLag: 4,
   });
 
   // Active Equity Last-month AAUM denominator: latest as % of total
@@ -469,6 +533,7 @@ export default async function QuarterlyPage({
   const aeAaumInsights = chartInsights(aeAaumTrend, {
     metricName: "active-equity AAUM",
     unitSuffix: "₹ Cr",
+    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
     yoyLag: 4,
   });
 
@@ -486,6 +551,7 @@ export default async function QuarterlyPage({
   const aeShareInsights = chartInsights(aeShareTrend, {
     metricName: "active-equity share",
     unitSuffix: "%",
+    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
     yoyLag: 4,
   });
 
@@ -504,6 +570,7 @@ export default async function QuarterlyPage({
   const aeBreakdownInsights = chartInsights(activeEquityFromQBreakdown, {
     metricName: "active-equity AAUM",
     unitSuffix: "₹ Cr",
+    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
     yoyLag: 4,
   });
 
@@ -539,6 +606,8 @@ export default async function QuarterlyPage({
   })();
   const foliosTrendInsights = chartInsights(foliosTrend, {
     metricName: "folios",
+    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
+    yoyLag: 4,
   });
 
   // Folio additions denominator: latest quarterly net adds as bps of
@@ -555,6 +624,9 @@ export default async function QuarterlyPage({
   })();
   const folioAdditionsInsights = chartInsights(folioAdditionsTrend, {
     metricName: "folio additions",
+    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
+    episodeAnchors: episodeAnchorsForQuarter,
+    yoyLag: 4,
   });
 
   // Scheme count denominator: latest as % of trailing 4Q avg — keeps
@@ -571,6 +643,8 @@ export default async function QuarterlyPage({
   })();
   const schemesTrendInsights = chartInsights(schemesTrend, {
     metricName: "open-ended scheme count",
+    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
+    yoyLag: 4,
   });
 
   // AUM Market Share — live Top 7 + Others from AMFI Fundwise AAUM.
