@@ -6,6 +6,9 @@ import { StackedArea } from "@/components/charts/StackedArea";
 import { Card } from "@/components/ui/Card";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import { KpiCard } from "@/components/ui/KpiCard";
+import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
+import { SectionDivider } from "@/components/ui/SectionDivider";
+import { quarterlyMarketWrap } from "@/data/market-wrap-quarterly";
 import { FiscalQuarterPicker } from "@/components/filters/FiscalQuarterPicker";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { chartInsights, latestYoyPct, movingAverage } from "@/lib/chart-context";
@@ -654,6 +657,8 @@ export default async function QuarterlyPage({
 
   // Cycle regime + section reads.
   const cyclePhasePoints = cyclePhaseHistory();
+  // Three-sentence "today's read" surfaced at the top of the page.
+  const marketWrapData = quarterlyMarketWrap();
   const quarterlySnapshotRead = quarterlySnapshotSectionRead();
   const quarterlyFlowsRead = quarterlyFlowsSectionRead();
   const quarterlyFoliosRead = quarterlyFoliosSectionRead();
@@ -693,6 +698,14 @@ export default async function QuarterlyPage({
         }
       />
 
+      <MarketWrapCard wrap={marketWrapData} />
+
+      <SectionDivider
+        eyebrow="Section 1"
+        label="Today's read"
+        context="The cycle phase the latest quarter sits inside, plus how flow ran vs trend."
+      />
+
       {cyclePhasePoints.length > 0 && (
         <Card
           title="Cycle Regime"
@@ -701,6 +714,12 @@ export default async function QuarterlyPage({
           <CycleRibbon points={cyclePhasePoints} lastN={84} />
         </Card>
       )}
+
+      <SectionDivider
+        eyebrow="Section 2"
+        label="Industry flow"
+        context="Quarterly headline KPIs, AUM mix, last-month AAUM trend, and net flows by category."
+      />
 
       {/* AMFI Quarterly Snapshot — first live section, mirrors /monthly. */}
       <Card
@@ -882,6 +901,12 @@ export default async function QuarterlyPage({
         </div>
       )}
 
+      <SectionDivider
+        eyebrow="Section 3"
+        label="Active vs Passive"
+        context="Where new equity money is going and how the passive share is moving."
+      />
+
       {/* Active Equity & Equity Mix — 3 cards mirroring /monthly. */}
       {hasAnyEquityMix && (
         <div className="space-y-3">
@@ -1031,6 +1056,12 @@ export default async function QuarterlyPage({
           </ChartWithContext>
         </div>
       )}
+
+      <SectionDivider
+        eyebrow="Section 4"
+        label="Folios & shelf"
+        context="Retail participation depth: total folios, additions per quarter, and the open-ended scheme shelf."
+      />
 
       {/* Quarterly Folios & Scheme Count — mirrors /monthly's Industry
           Folios & NFO. NFO Launches / NFO Funds Mobilized are NOT
@@ -1196,6 +1227,12 @@ export default async function QuarterlyPage({
         </div>
       )}
 
+      <SectionDivider
+        eyebrow="Section 5"
+        label="Category rotation"
+        context="QAAUM share vs net-inflow share across active-equity categories — where flow is moving."
+      />
+
       {/* IIFL Active-Equity Category Trends — LIVE. Sourced from
           AMFI Monthly Reports aggregated into fiscal quarters. The
           one section on /quarterly that is allowed to source from
@@ -1312,6 +1349,12 @@ export default async function QuarterlyPage({
           </p>
         </div>
       ) : null}
+
+      <SectionDivider
+        eyebrow="Section 6"
+        label="Concentration & AMC landscape"
+        context="HHI of AMC + category concentration, and Top-7 AMC share of industry AUM."
+      />
 
       {hhiHasData && (
         <Card
