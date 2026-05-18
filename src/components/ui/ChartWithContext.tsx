@@ -22,6 +22,12 @@ interface ChartWithContextProps {
   /** Insight lines rendered as an italic strip beneath the chart.
    *  Caller-supplied — usually from `chartInsights(series, ...)`. */
   insights?: string[];
+  /** Optional YoY / QoQ growth badge rendered in the header.
+   *  Green if positive, red if negative. The badge serves as the
+   *  literal "every chart shows YoY/QoQ growth %" visual — most
+   *  useful on grouped / multi-line charts where a trendline overlay
+   *  doesn't fit cleanly. `label` defaults to "YoY". */
+  yoyBadge?: { pct: number; label?: string };
   /** Action slot — same as Card. */
   action?: React.ReactNode;
   /** The chart itself. */
@@ -55,13 +61,31 @@ export function ChartWithContext({
   denominatorCaption,
   denominatorTooltip,
   insights,
+  yoyBadge,
   action,
   children,
   className,
 }: ChartWithContextProps) {
   const pillKind = flowKind && flowKind !== "stock" ? flowKind : null;
+  const yoyOk =
+    yoyBadge && Number.isFinite(yoyBadge.pct) ? yoyBadge : null;
+  const yoyPositive = yoyOk ? yoyOk.pct >= 0 : false;
   const headerAction = (
     <div className="flex items-center gap-2">
+      {yoyOk && (
+        <span
+          className={cn(
+            "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold tabular",
+            yoyPositive
+              ? "border-positive/40 bg-positive/10 text-positive"
+              : "border-negative/40 bg-negative/10 text-negative"
+          )}
+          title={`${yoyOk.label ?? "YoY"} ${yoyOk.pct >= 0 ? "+" : ""}${yoyOk.pct.toFixed(1)}%`}
+        >
+          {yoyOk.label ?? "YoY"} {yoyOk.pct >= 0 ? "+" : ""}
+          {yoyOk.pct.toFixed(1)}%
+        </span>
+      )}
       {pillKind && (
         <span
           className={cn(
@@ -79,7 +103,7 @@ export function ChartWithContext({
     <Card
       title={title}
       subtitle={subtitle}
-      action={pillKind || action ? headerAction : undefined}
+      action={pillKind || yoyOk || action ? headerAction : undefined}
       className={className}
     >
       {denominatorCaption && (
