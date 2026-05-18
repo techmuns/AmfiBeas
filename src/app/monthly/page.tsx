@@ -613,6 +613,8 @@ export default async function MonthlyPage({
     metricName: "equity net inflow",
     unitSuffix: "₹ Cr",
     drawdownByLabel: ddByMonthForInsights,
+    cyclePhaseByLabel: cyclePhaseByMonth,
+    episodeAnchors: episodeAnchorsForInsights,
   });
 
   // Provenance: all three fields come from the AMFI Monthly Report.
@@ -697,6 +699,7 @@ export default async function MonthlyPage({
     metricName: "active-equity AAUM",
     unitSuffix: "₹ Cr",
     drawdownByLabel: ddByMonthForInsights,
+    cyclePhaseByLabel: cyclePhaseByMonth,
     yoyLag: 12,
   });
 
@@ -715,6 +718,7 @@ export default async function MonthlyPage({
     metricName: "active-equity share",
     unitSuffix: "%",
     drawdownByLabel: ddByMonthForInsights,
+    cyclePhaseByLabel: cyclePhaseByMonth,
     yoyLag: 12,
   });
 
@@ -733,6 +737,7 @@ export default async function MonthlyPage({
   const equityBreakdownInsights = chartInsights(activeEquityFromBreakdown, {
     metricName: "active-equity AAUM",
     unitSuffix: "₹ Cr",
+    cyclePhaseByLabel: cyclePhaseByMonth,
     yoyLag: 12,
   });
 
@@ -980,6 +985,8 @@ export default async function MonthlyPage({
     metricName: "active-equity net inflow",
     unitSuffix: "₹ Cr",
     drawdownByLabel: ddByMonthForInsights,
+    cyclePhaseByLabel: cyclePhaseByMonth,
+    episodeAnchors: episodeAnchorsForInsights,
     yoyLag: 12,
     peer: {
       name: "industry net inflow",
@@ -1018,6 +1025,8 @@ export default async function MonthlyPage({
       metricName: "ΔAUM",
       unitSuffix: "₹ Cr",
       drawdownByLabel: ddByMonthForInsights,
+      cyclePhaseByLabel: cyclePhaseByMonth,
+      episodeAnchors: episodeAnchorsForInsights,
     }
   );
 
@@ -1036,6 +1045,7 @@ export default async function MonthlyPage({
     metricName: "SIP AUM share",
     unitSuffix: "%",
     drawdownByLabel: ddByMonthForInsights,
+    cyclePhaseByLabel: cyclePhaseByMonth,
     yoyLag: 12,
   });
 
@@ -1421,6 +1431,7 @@ export default async function MonthlyPage({
   const activeVsEtfInsights = chartInsights(activeVsEtfPassiveSeries, {
     metricName: "ETF & Index AUM",
     unitSuffix: "₹ Cr",
+    cyclePhaseByLabel: cyclePhaseByMonth,
     yoyLag: 12,
   });
 
@@ -1443,6 +1454,7 @@ export default async function MonthlyPage({
   const passiveShareInsights = chartInsights(passiveShareHistorySeries, {
     metricName: "passive share",
     unitSuffix: "%",
+    cyclePhaseByLabel: cyclePhaseByMonth,
     yoyLag: 12,
   });
 
