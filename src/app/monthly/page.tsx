@@ -82,6 +82,8 @@ import { CategoryResilienceCard } from "@/components/ui/CategoryResilienceCard";
 import { categoryDrawdownResilience } from "@/data/category-resilience";
 import { EpisodeRecoveryCard } from "@/components/ui/EpisodeRecoveryCard";
 import { episodeRecoveryRows } from "@/data/episode-recovery";
+import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
+import { marketWrap } from "@/data/market-wrap";
 import { CoachPill } from "@/components/ui/CoachPill";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { EpisodeReplayStrip } from "@/components/ui/EpisodeReplayStrip";
@@ -1169,6 +1171,10 @@ export default async function MonthlyPage({
   // metrics so we can render "how long did it take investors to
   // come back?".
   const episodeRecoveryData = episodeRecoveryRows();
+  // Market Wrap — the three-sentence "today's read" surfaced at
+  // the top of the page. Composed off cycle phase, SIP, and an
+  // anomaly scan across headline series.
+  const marketWrapData = marketWrap();
   const latestCyclePhaseForNarrative =
     cyclePhasePoints.length > 0
       ? cyclePhasePoints[cyclePhasePoints.length - 1].phase
@@ -1480,6 +1486,8 @@ export default async function MonthlyPage({
         subtitle={subtitle}
         action={<WeatherBadge headline={weather.headline} tone={weather.tone} />}
       />
+
+      <MarketWrapCard wrap={marketWrapData} />
 
       {activeEquitySignal && (
         <HeadlineCard
