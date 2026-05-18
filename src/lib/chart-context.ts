@@ -51,6 +51,16 @@ function popStdDev(values: number[]): number | null {
   return variance > 0 ? Math.sqrt(variance) : null;
 }
 
+export interface PeerSeriesContext {
+  /** Display name for the peer series — used in divergence text (e.g.
+   *  "industry net inflow"). */
+  name: string;
+  /** Peer time series — must use the SAME labels as the primary series
+   *  so the engine can align by `latest.label`. Missing labels are
+   *  silently skipped. */
+  data: SeriesPoint[];
+}
+
 export interface ChartInsightOpts {
   /** Optional name to use in the generated text (e.g. "SIP contribution"). */
   metricName?: string;
@@ -64,6 +74,15 @@ export interface ChartInsightOpts {
    *  used in `series`. Lets the insight engine emit "coincides with
    *  Nifty −10% drawdown" callouts when relevant. */
   drawdownByLabel?: Map<string, number>;
+  /** Lookback for YoY-style comparisons (12 for monthly, 4 for
+   *  quarterly). When set, the engine emits a "YoY +X%" line — and an
+   *  "accelerating / decelerating" tag if the prior period's YoY was
+   *  also computable. */
+  yoyLag?: number;
+  /** Paired comparison series. Enables a "divergent from {peer}" line
+   *  when the latest move signs differ — useful for SIP-vs-net-flow
+   *  or active-vs-passive cross-reads. */
+  peer?: PeerSeriesContext;
 }
 
 /**
@@ -71,11 +90,17 @@ export interface ChartInsightOpts {
  * lines for a time series. Designed to feed the per-chart insight
  * strip under every chart. Pure rules — no model.
  *
- * The engine looks for, in order of priority:
- *   - all-time high / low at the latest point
- *   - consecutive directional runs (≥ 2 same-direction MoM moves)
- *   - σ-spikes (latest MoM Δ > ±2σ of historical MoM changes)
- *   - coincidence with a meaningful Nifty 500 drawdown
+ * The engine looks for, in priority order:
+ *   1. all-time high / low at the latest point
+ *   2. σ-spikes (latest MoM Δ > ±2σ of historical MoM changes)
+ *   3. multi-period high / low (e.g. highest in 12 periods) when the
+ *      latest reading isn't an outright ATH
+ *   4. divergence from a paired peer series (when `opts.peer` supplied)
+ *   5. consecutive directional runs (≥ 2 same-direction MoM moves)
+ *   6. YoY change with an "accelerating / decelerating" tag (when
+ *      `opts.yoyLag` supplied)
+ *   7. coincidence with a meaningful Nifty 500 drawdown
+ *   8. fallback: vs trailing-12 average
  *
  * Returns at most 3 strings.
  */
@@ -93,7 +118,10 @@ export function chartInsights(
   const min = Math.min(...values);
 
   // 1. All-time high / low
+  let isAth = false;
+  let isAtl = false;
   if (latest.value === max && values.filter((v) => v === max).length === 1) {
+    isAth = true;
     out.push(
       `${cap(name)} at an all-time high on the available window — ${formatValue(latest.value, unit)}.`
     );
@@ -101,12 +129,119 @@ export function chartInsights(
     latest.value === min &&
     values.filter((v) => v === min).length === 1
   ) {
+    isAtl = true;
     out.push(
       `${cap(name)} at an all-time low on the available window — ${formatValue(latest.value, unit)}.`
     );
   }
 
-  // 2. Consecutive directional run
+  // 2. σ-spike on the latest MoM — promoted ahead of the directional
+  //    run because a single outlier move is more newsworthy than "3
+  //    months up in a row".
+  if (series.length >= 4) {
+    const moves = series
+      .slice(1)
+      .map((p, i) => p.value - series[i].value);
+    const sd = popStdDev(moves);
+    const lastMove = moves[moves.length - 1];
+    if (sd !== null && sd > 0) {
+      const z = lastMove / sd;
+      if (Math.abs(z) >= 2) {
+        const sign = lastMove >= 0 ? "+" : "";
+        out.push(
+          `Latest MoM change ${sign}${formatValue(lastMove, unit)} is ${z >= 0 ? "+" : ""}${z.toFixed(1)}σ vs the typical period change — an unusual move.`
+        );
+      }
+    }
+  }
+
+  // 3. Multi-period high / low — only fires when the latest reading is
+  //    an N-period extreme but NOT an outright ATH/ATL (we already
+  //    emitted that line). Walks back to find the last time the value
+  //    was equal or more extreme, so we can anchor "highest since X".
+  if (!isAth && !isAtl && series.length >= 12) {
+    const lastIdx = series.length - 1;
+    let priorIdx = -1;
+    let extremeKind: "high" | "low" | null = null;
+    // Highest in trailing window
+    if (latest.value > Math.max(...values.slice(0, lastIdx).slice(-11))) {
+      // Find prior occurrence ≥ latest.value, walking back from the
+      // start of that 11-period window.
+      for (let i = lastIdx - 12; i >= 0; i--) {
+        if (series[i].value >= latest.value) {
+          priorIdx = i;
+          extremeKind = "high";
+          break;
+        }
+      }
+      if (extremeKind === null) {
+        priorIdx = 0;
+        extremeKind = "high";
+      }
+    } else if (latest.value < Math.min(...values.slice(0, lastIdx).slice(-11))) {
+      for (let i = lastIdx - 12; i >= 0; i--) {
+        if (series[i].value <= latest.value) {
+          priorIdx = i;
+          extremeKind = "low";
+          break;
+        }
+      }
+      if (extremeKind === null) {
+        priorIdx = 0;
+        extremeKind = "low";
+      }
+    }
+    if (extremeKind && priorIdx >= 0) {
+      const gap = lastIdx - priorIdx;
+      out.push(
+        extremeKind === "high"
+          ? `${cap(name)} at its highest in ${gap} periods (last matched ${series[priorIdx].label}).`
+          : `${cap(name)} at its lowest in ${gap} periods (last matched ${series[priorIdx].label}).`
+      );
+    }
+  }
+
+  // 4. Divergence from a paired peer series — strongest cross-series
+  //    signal we have. Compares the sign of the latest MoM move on
+  //    both series. Only emits when the signs differ AND both moves
+  //    are non-trivial relative to their own series scale.
+  if (opts.peer && series.length >= 2) {
+    const peerByLabel = new Map(opts.peer.data.map((p) => [p.label, p.value]));
+    const latestPeer = peerByLabel.get(latest.label);
+    const prevPeer = peerByLabel.get(series[series.length - 2].label);
+    const latestSelf = latest.value;
+    const prevSelf = series[series.length - 2].value;
+    if (
+      typeof latestPeer === "number" &&
+      typeof prevPeer === "number" &&
+      Number.isFinite(latestPeer) &&
+      Number.isFinite(prevPeer)
+    ) {
+      const selfDelta = latestSelf - prevSelf;
+      const peerDelta = latestPeer - prevPeer;
+      const selfDir = Math.sign(selfDelta);
+      const peerDir = Math.sign(peerDelta);
+      // Both moves must be material relative to their own scale —
+      // tiny noise shouldn't be called divergence.
+      const selfMaterial =
+        Math.abs(prevSelf) > 0
+          ? Math.abs(selfDelta / prevSelf) >= 0.01
+          : Math.abs(selfDelta) > 0;
+      const peerMaterial =
+        Math.abs(prevPeer) > 0
+          ? Math.abs(peerDelta / prevPeer) >= 0.01
+          : Math.abs(peerDelta) > 0;
+      if (selfDir !== 0 && peerDir !== 0 && selfDir !== peerDir && selfMaterial && peerMaterial) {
+        out.push(
+          selfDir > 0
+            ? `${cap(name)} rose while ${opts.peer.name} fell — a divergent move.`
+            : `${cap(name)} fell while ${opts.peer.name} rose — a divergent move.`
+        );
+      }
+    }
+  }
+
+  // 5. Consecutive directional run
   const directions = series
     .slice(1)
     .map((p, i) => Math.sign(p.value - series[i].value));
@@ -130,25 +265,40 @@ export function chartInsights(
     );
   }
 
-  // 3. σ-spike on the latest MoM
-  if (series.length >= 4) {
-    const moves = series
-      .slice(1)
-      .map((p, i) => p.value - series[i].value);
-    const sd = popStdDev(moves);
-    const lastMove = moves[moves.length - 1];
-    if (sd !== null && sd > 0) {
-      const z = lastMove / sd;
-      if (Math.abs(z) >= 2) {
-        const sign = lastMove >= 0 ? "+" : "";
-        out.push(
-          `Latest MoM change ${sign}${formatValue(lastMove, unit)} is ${z >= 0 ? "+" : ""}${z.toFixed(1)}σ vs the typical period change — an unusual move.`
-        );
+  // 6. YoY change + acceleration tag — only fires when caller supplies
+  //    a meaningful lookback (12 for monthly, 4 for quarterly). The
+  //    acceleration tag compares the latest YoY % to the prior point's
+  //    YoY % so the reader sees whether growth is speeding up or
+  //    slowing.
+  if (opts.yoyLag && series.length > opts.yoyLag + 1) {
+    const lag = opts.yoyLag;
+    const lastIdx = series.length - 1;
+    const priorY = series[lastIdx - lag].value;
+    if (priorY !== 0 && Number.isFinite(priorY)) {
+      const yoy = ((latest.value - priorY) / Math.abs(priorY)) * 100;
+      let accelTag = "";
+      const prevIdx = lastIdx - 1;
+      if (prevIdx - lag >= 0) {
+        const prevSelf = series[prevIdx].value;
+        const prevPriorY = series[prevIdx - lag].value;
+        if (prevPriorY !== 0 && Number.isFinite(prevPriorY)) {
+          const prevYoy = ((prevSelf - prevPriorY) / Math.abs(prevPriorY)) * 100;
+          const delta = yoy - prevYoy;
+          if (Math.abs(delta) >= 1) {
+            accelTag =
+              delta > 0
+                ? ` · accelerating from ${prevYoy >= 0 ? "+" : ""}${prevYoy.toFixed(1)}% last period`
+                : ` · decelerating from ${prevYoy >= 0 ? "+" : ""}${prevYoy.toFixed(1)}% last period`;
+          }
+        }
       }
+      out.push(
+        `${cap(name)} ${yoy >= 0 ? "+" : ""}${yoy.toFixed(1)}% YoY${accelTag}.`
+      );
     }
   }
 
-  // 4. Cross-reference with Nifty drawdown if provided
+  // 7. Cross-reference with Nifty drawdown if provided
   if (opts.drawdownByLabel) {
     const dd = opts.drawdownByLabel.get(latest.label);
     if (typeof dd === "number" && dd <= -10) {
@@ -158,7 +308,7 @@ export function chartInsights(
     }
   }
 
-  // 5. Fallback: vs 12-period trend. Always emits when there's enough
+  // 8. Fallback: vs 12-period trend. Always emits when there's enough
   //    history — keeps every chart from going empty if no other rule
   //    fires.
   if (out.length === 0 && series.length >= 12) {
