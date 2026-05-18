@@ -3,6 +3,12 @@ import { cn } from "@/lib/cn";
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string;
   subtitle?: string;
+  /** Optional rich subtitle node — takes precedence over `subtitle`.
+   *  Use when the subtitle needs inline children (e.g. an info
+   *  tooltip or a `<strong>` accent) that a plain string can't
+   *  express. ChartWithContext uses this to fold its denominator
+   *  caption + info-tooltip into the subtitle line. */
+  subtitleNode?: React.ReactNode;
   action?: React.ReactNode;
   /**
    * Visual treatment indicating data status.
@@ -20,6 +26,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 export function Card({
   title,
   subtitle,
+  subtitleNode,
   action,
   className,
   children,
@@ -53,9 +60,11 @@ export function Card({
             {title && (
               <h3 className="text-sm font-medium tracking-tight">{title}</h3>
             )}
-            {subtitle && (
+            {subtitleNode ? (
+              <p className="text-xs text-muted-foreground">{subtitleNode}</p>
+            ) : subtitle ? (
               <p className="text-xs text-muted-foreground">{subtitle}</p>
-            )}
+            ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {action}
