@@ -1,7 +1,9 @@
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
+import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
+import { chartInsights, latestYoyPct } from "@/lib/chart-context";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FilterBar } from "@/components/filters/FilterBar";
 import type { AmcStatus } from "@/components/filters/FilterBar";
@@ -313,6 +315,79 @@ export default async function FinancialsPage({
     };
   });
 
+  // ---- ChartWithContext insight + badge inputs for the three trend
+  //      cards. Each helper produces a typed SeriesPoint[] from the
+  //      already-built display data so the engine can compute YoY,
+  //      σ-spike, run, ATH/ATL rules across quarterly P&L history.
+  const revenueSeries = pnlData
+    .filter((p): p is typeof p & { revenue: number } => typeof p.revenue === "number")
+    .map((p) => ({ label: p.quarter, value: p.revenue }));
+  const pnlInsights = chartInsights(revenueSeries, {
+    metricName: "operating revenue",
+    unitSuffix: "₹ Cr",
+    yoyLag: 4,
+  });
+  // P&L denominator: latest PAT margin (PAT ÷ Revenue) — the single
+  // headline operating-quality number.
+  const pnlDenomCaption = (() => {
+    for (let i = pnlData.length - 1; i >= 0; i--) {
+      const p = pnlData[i];
+      if (
+        typeof p.revenue === "number" &&
+        typeof p.pat === "number" &&
+        p.revenue > 0
+      ) {
+        const m = (p.pat / p.revenue) * 100;
+        return `PAT margin ${m.toFixed(1)}% · ${p.quarter}`;
+      }
+    }
+    return undefined;
+  })();
+
+  const patMarginSeries = marginData
+    .filter((p): p is typeof p & { patMargin: number } => typeof p.patMargin === "number")
+    .map((p) => ({ label: p.quarter, value: p.patMargin }));
+  const marginInsights = chartInsights(patMarginSeries, {
+    metricName: "PAT margin",
+    unitSuffix: "%",
+    yoyLag: 4,
+  });
+  // Margin denominator: latest gap vs peer median PAT margin — answers
+  // "is this AMC running above or below the listed-peer cohort?".
+  const marginDenomCaption = (() => {
+    for (let i = marginDataWithPeer.length - 1; i >= 0; i--) {
+      const p = marginDataWithPeer[i];
+      if (typeof p.patMargin === "number" && typeof p.patMedian === "number") {
+        const gap = p.patMargin - p.patMedian;
+        return `${gap >= 0 ? "+" : "−"}${Math.abs(gap).toFixed(1)} pp vs peer median PAT margin · ${p.quarter}`;
+      }
+    }
+    return undefined;
+  })();
+
+  const revenueYieldSeries = yieldData
+    .filter((p): p is typeof p & { revenue: number } => typeof p.revenue === "number")
+    .map((p) => ({ label: p.quarter, value: p.revenue }));
+  const yieldInsights = chartInsights(revenueYieldSeries, {
+    metricName: "revenue yield",
+    unitSuffix: "bps",
+    yoyLag: 4,
+  });
+  // Yield denominator: latest gap vs peer median revenue yield.
+  const yieldDenomCaption = (() => {
+    for (let i = yieldDataWithPeer.length - 1; i >= 0; i--) {
+      const p = yieldDataWithPeer[i];
+      if (
+        typeof p.revenue === "number" &&
+        typeof p.revenueMedian === "number"
+      ) {
+        const gap = p.revenue - p.revenueMedian;
+        return `${gap >= 0 ? "+" : "−"}${Math.abs(gap).toFixed(1)} bps vs peer median revenue yield · ${p.quarter}`;
+      }
+    }
+    return undefined;
+  })();
+
   // ---- Peer comparison rows (PR #96): same quarter, all 5 sourced AMCs ----
   // Same metrics the KPI cards show for the focused AMC, but laid out as a
   // compact table so the reader sees how the focused AMC stacks up against
@@ -580,9 +655,17 @@ export default async function FinancialsPage({
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card
+        <ChartWithContext
           title="Operating Revenue / Operating Profit / PAT"
           subtitle="Quarterly · ₹ Cr · Operating Revenue from standalone P&L (all operating segments, excludes Other Income)"
+          flowKind="gross"
+          denominatorCaption={pnlDenomCaption}
+          denominatorTooltip="Latest quarter's PAT margin (PAT ÷ Operating Revenue) — the single headline operating-quality number for the AMC."
+          insights={pnlInsights}
+          yoyBadge={(() => {
+            const v = latestYoyPct(revenueSeries, 4);
+            return v === null ? undefined : { label: "Revenue YoY", pct: v };
+          })()}
         >
           <GroupedBars
             data={pnlData}
@@ -593,10 +676,18 @@ export default async function FinancialsPage({
               { key: "pat", name: "PAT", color: "hsl(var(--chart-3))" },
             ]}
           />
-        </Card>
-        <Card
+        </ChartWithContext>
+        <ChartWithContext
           title="Margin Trend"
           subtitle="PAT & Operating margin · % of Operating Revenue · peer-median overlay"
+          flowKind="stock"
+          denominatorCaption={marginDenomCaption}
+          denominatorTooltip="Latest PAT margin minus the listed-peer median PAT margin for the same quarter, in percentage points. Positive = AMC running above the cohort."
+          insights={marginInsights}
+          yoyBadge={(() => {
+            const v = latestYoyPct(patMarginSeries, 4);
+            return v === null ? undefined : { label: "PAT margin YoY", pct: v };
+          })()}
         >
           <MultiLine
             data={marginDataWithPeer}
@@ -620,10 +711,18 @@ export default async function FinancialsPage({
               },
             ]}
           />
-        </Card>
-        <Card
+        </ChartWithContext>
+        <ChartWithContext
           title="Yields (bps of MF QAAUM)"
           subtitle={`${yieldsSubtitle} · peer-median overlay`}
+          flowKind="stock"
+          denominatorCaption={yieldDenomCaption}
+          denominatorTooltip="Latest revenue yield minus the listed-peer median revenue yield for the same quarter, in basis points. Positive = AMC monetises AAUM harder than the cohort."
+          insights={yieldInsights}
+          yoyBadge={(() => {
+            const v = latestYoyPct(revenueYieldSeries, 4);
+            return v === null ? undefined : { label: "Rev yield YoY", pct: v };
+          })()}
           className="lg:col-span-2"
         >
           <MultiLine
@@ -654,7 +753,7 @@ export default async function FinancialsPage({
               },
             ]}
           />
-        </Card>
+        </ChartWithContext>
       </section>
 
       <Card
