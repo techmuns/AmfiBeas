@@ -52,7 +52,7 @@ interface BarSeriesProps {
 
 export function BarSeries({
   data,
-  height = 260,
+  height = 300,
   color = "hsl(var(--chart-2))",
   valueFormat = "cr",
   axisFormat = "cr",
@@ -62,7 +62,7 @@ export function BarSeries({
   referenceLabel,
   trendline,
   trendlineName = "12M avg",
-  barCategoryGap = "28%",
+  barCategoryGap = "32%",
 }: BarSeriesProps) {
   const fmtValue = valueFormatter(valueFormat);
   const fmtAxis = axisFormatter(axisFormat);

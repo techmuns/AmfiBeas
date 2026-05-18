@@ -43,7 +43,7 @@ export function GroupedBars({
   data,
   xKey,
   bars,
-  height = 260,
+  height = 300,
   valueFormat = "cr",
   axisFormat = "cr",
   labelFormat = "quarter",

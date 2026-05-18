@@ -48,7 +48,7 @@ export function Card({
       {...rest}
     >
       {(title || action || toneBadge) && (
-        <div className="flex items-start justify-between gap-4 px-5 pt-4">
+        <div className="flex items-start justify-between gap-4 px-6 pt-5">
           <div>
             {title && (
               <h3 className="text-sm font-medium tracking-tight">{title}</h3>
@@ -67,7 +67,7 @@ export function Card({
           </div>
         </div>
       )}
-      <div className="px-5 pb-5 pt-3">{children}</div>
+      <div className="px-6 pb-6 pt-4">{children}</div>
     </div>
   );
 }

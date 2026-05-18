@@ -49,7 +49,7 @@ export function MultiLine({
   data,
   xKey,
   lines,
-  height = 240,
+  height = 280,
   valueFormat = "count",
   axisFormat = "count",
   labelFormat = "quarter",

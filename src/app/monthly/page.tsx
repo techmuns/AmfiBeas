@@ -1216,7 +1216,7 @@ export default async function MonthlyPage({
   const activePassiveTrend = monthlyActivePassiveTrend(24);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title="Monthly Operating KPIs"
         subtitle={subtitle}
