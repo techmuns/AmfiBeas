@@ -8,7 +8,7 @@ import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { FiscalQuarterPicker } from "@/components/filters/FiscalQuarterPicker";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { chartInsights, movingAverage } from "@/lib/chart-context";
+import { chartInsights, latestYoyPct, movingAverage } from "@/lib/chart-context";
 import {
   IIFL_ACTIVE_EQUITY_CATEGORIES,
   IIFL_TREND_EXPANDED_SLUGS,
@@ -830,6 +830,12 @@ export default async function QuarterlyPage({
             denominatorCaption={quarterlyFlowsDenomCaption}
             denominatorTooltip="Latest quarter's per-segment share of total flow magnitude — the headline read for 'where did the quarter's flow go?'."
             insights={quarterlyFlowsInsights}
+            yoyBadge={(() => {
+              const v = latestYoyPct(equityFlowFromQuarterly, 4);
+              return v === null
+                ? undefined
+                : { label: "Equity YoY", pct: v };
+            })()}
             action={
               <LensToggle
                 basePath="/quarterly"
@@ -955,6 +961,12 @@ export default async function QuarterlyPage({
             denominatorCaption={aeBreakdownDenomCaption}
             denominatorTooltip="ETF & Index share of equity AUM — the headline passive-penetration number, computed on the last-month-AAUM basis from the quarterly disclosure."
             insights={aeBreakdownInsights}
+            yoyBadge={(() => {
+              const v = latestYoyPct(activeEquityFromQBreakdown, 4);
+              return v === null
+                ? undefined
+                : { label: "Active YoY", pct: v };
+            })()}
             action={
               <LensToggle
                 basePath="/quarterly"

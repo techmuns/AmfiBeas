@@ -25,6 +25,25 @@ export function movingAverage(
   });
 }
 
+/** Latest-point YoY % change vs a lag-N prior point. Returns null
+ *  when the series is too short, when either anchor value isn't a
+ *  finite number, or when the prior value is zero (would divide
+ *  by zero). Mirrors the math the chartInsights() YoY rule uses so
+ *  the header badge and the insight line stay in lockstep. */
+export function latestYoyPct(
+  series: SeriesPoint[],
+  lag: number
+): number | null {
+  if (series.length <= lag) return null;
+  const latest = series[series.length - 1];
+  const prior = series[series.length - 1 - lag];
+  if (!Number.isFinite(latest.value) || !Number.isFinite(prior.value)) {
+    return null;
+  }
+  if (prior.value === 0) return null;
+  return ((latest.value - prior.value) / Math.abs(prior.value)) * 100;
+}
+
 /** Year-over-year % change for each point in a monthly series, where
  *  the lookback is 12 entries. Quarterly callers pass `lag = 4`. */
 export function yoyPctSeries(

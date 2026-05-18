@@ -3,7 +3,7 @@ import { TrendingUp } from "lucide-react";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
-import { chartInsights, movingAverage } from "@/lib/chart-context";
+import { chartInsights, latestYoyPct, movingAverage } from "@/lib/chart-context";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BarSeries } from "@/components/charts/BarSeries";
 import { Donut, type DonutSlice } from "@/components/charts/Donut";
@@ -1888,6 +1888,10 @@ export default async function MonthlyPage({
             denominatorCaption={monthlyFlowsDenomCaption}
             denominatorTooltip="Latest month's per-segment share of total flow magnitude — the headline read for 'where did the month's flow go?'."
             insights={monthlyFlowsInsights}
+            yoyBadge={(() => {
+              const v = latestYoyPct(equityFlowFromRows, 12);
+              return v === null ? undefined : { label: "Equity YoY", pct: v };
+            })()}
             action={
               <LensToggle
                 basePath="/monthly"
@@ -1976,6 +1980,10 @@ export default async function MonthlyPage({
                 denominatorCaption={activeEquityBridgeDenomCaption}
                 denominatorTooltip="Latest month's market-impact share of |ΔAUM| — tells you whether MoM AUM change was driven by flow or mark-to-market."
                 insights={activeEquityBridgeInsights}
+                yoyBadge={(() => {
+                  const v = latestYoyPct(activeEquityBridgeDeltaSeries, 12);
+                  return v === null ? undefined : { label: "ΔAUM YoY", pct: v };
+                })()}
               >
                 <GroupedBars
                   data={activeEquityBridge}
@@ -2129,6 +2137,12 @@ export default async function MonthlyPage({
             denominatorCaption={equityBreakdownDenomCaption}
             denominatorTooltip="ETF & Index share of equity AAUM — the headline passive-penetration number tracked across this section."
             insights={equityBreakdownInsights}
+            yoyBadge={(() => {
+              const v = latestYoyPct(activeEquityFromBreakdown, 12);
+              return v === null
+                ? undefined
+                : { label: "Active YoY", pct: v };
+            })()}
             action={
               <LensToggle
                 basePath="/monthly"
@@ -2196,6 +2210,12 @@ export default async function MonthlyPage({
               denominatorCaption={activeVsEtfDenomCaption}
               denominatorTooltip="Latest ETF & Index AUM expressed as a percentage of active-equity AUM — captures how far passive has closed the gap. More discriminating than the symmetric share % which compresses both sides."
               insights={activeVsEtfInsights}
+              yoyBadge={(() => {
+                const v = latestYoyPct(activeVsEtfPassiveSeries, 12);
+                return v === null
+                  ? undefined
+                  : { label: "ETF AUM YoY", pct: v };
+              })()}
               action={
                 <LensToggle
                   basePath="/monthly"
@@ -2261,6 +2281,12 @@ export default async function MonthlyPage({
               denominatorCaption={passiveShareDenomCaption}
               denominatorTooltip="Latest share minus the value 12 months ago, in percentage points — the headline read for passive penetration. Slow-moving, so YoY pp shift is the most informative cut."
               insights={passiveShareInsights}
+              yoyBadge={(() => {
+                const v = latestYoyPct(passiveShareHistorySeries, 12);
+                return v === null
+                  ? undefined
+                  : { label: "YoY", pct: v };
+              })()}
             >
               <MultiLine
                 data={activePassiveTrend.share}
