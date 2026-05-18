@@ -574,6 +574,31 @@ export default async function MonthlyPage({
   const monthlyFlowsHasData = monthlyFlowsRows.some(
     (r) => r.equity !== null || r.debt !== null || r.liquid !== null
   );
+
+  // Monthly Flows denominator: latest month's Equity share of total
+  // flow magnitude — the headline read for "where did the month's
+  // flow go?".
+  const monthlyFlowsDenomCaption = (() => {
+    if (monthlyFlowsRows.length === 0) return undefined;
+    const latest = monthlyFlowsRows[monthlyFlowsRows.length - 1];
+    const e = typeof latest.equity === "number" ? latest.equity : 0;
+    const d = typeof latest.debt === "number" ? latest.debt : 0;
+    const l = typeof latest.liquid === "number" ? latest.liquid : 0;
+    const total = Math.abs(e) + Math.abs(d) + Math.abs(l);
+    if (total === 0) return undefined;
+    return `Equity = ${((Math.abs(e) / total) * 100).toFixed(0)}% / Debt = ${((Math.abs(d) / total) * 100).toFixed(0)}% / Liquid = ${((Math.abs(l) / total) * 100).toFixed(0)}% of latest flow magnitude · ${latest.month}`;
+  })();
+  // Insight strip on the equity series — equity is the headline
+  // segment investors care about most.
+  const equityFlowFromRows = monthlyFlowsRows
+    .filter((r) => typeof r.equity === "number")
+    .map((r) => ({ label: r.month as string, value: r.equity as number }));
+  const monthlyFlowsInsights = chartInsights(equityFlowFromRows, {
+    metricName: "equity net inflow",
+    unitSuffix: "₹ Cr",
+    drawdownByLabel: ddByMonthForInsights,
+  });
+
   // Provenance: all three fields come from the AMFI Monthly Report.
   // Use the most-recent debt-net-inflow provenance for the tooltip
   // since the debt row is the most reliable across older Reports.
@@ -635,6 +660,65 @@ export default async function MonthlyPage({
   const equityBreakdownSubtitle = latestEquityMix
     ? `${equityBreakdown.length} month${equityBreakdown.length === 1 ? "" : "s"} · ₹ Cr · latest mix ${latestEquityMix.activePct.toFixed(1)}% Active / ${latestEquityMix.etfPct.toFixed(1)}% ETF & Index / ${latestEquityMix.arbPct.toFixed(1)}% Arbitrage`
     : `${equityBreakdown.length} month${equityBreakdown.length === 1 ? "" : "s"} · ₹ Cr · period-average · grouped bars`;
+
+  // Active Equity AAUM denominator: latest as % of total industry
+  // AAUM that month — separates absolute scale growth from share
+  // capture vs other segments.
+  const activeEquityAaumDenomCaption = (() => {
+    if (activeEquityTrend.length === 0) return undefined;
+    const latest = activeEquityTrend[activeEquityTrend.length - 1];
+    const peerRow = amfiMonthlyRows().find((r) => r.month === latest.label);
+    if (
+      !peerRow ||
+      typeof peerRow.totalAaum !== "number" ||
+      peerRow.totalAaum <= 0
+    )
+      return undefined;
+    const pct = (latest.value / peerRow.totalAaum) * 100;
+    return `${pct.toFixed(1)}% of total industry AAUM · latest ${latest.label}`;
+  })();
+  const activeEquityAaumInsights = chartInsights(activeEquityTrend, {
+    metricName: "active-equity AAUM",
+    unitSuffix: "₹ Cr",
+    drawdownByLabel: ddByMonthForInsights,
+    yoyLag: 12,
+  });
+
+  // Active Equity Share denominator: pp shift vs trailing 12M average
+  // — the absolute share moves slowly, so the pp delta is the more
+  // informative read.
+  const activeEquityShareDenomCaption = (() => {
+    if (activeEquityShareTrend.length < 12) return undefined;
+    const latest = activeEquityShareTrend[activeEquityShareTrend.length - 1];
+    const trailing12 = activeEquityShareTrend.slice(-12);
+    const avg = trailing12.reduce((s, p) => s + p.value, 0) / trailing12.length;
+    const pp = latest.value - avg;
+    return `${pp >= 0 ? "+" : "−"}${Math.abs(pp).toFixed(2)} pp vs trailing 12M avg · latest ${latest.label}`;
+  })();
+  const activeEquityShareInsights = chartInsights(activeEquityShareTrend, {
+    metricName: "active-equity share",
+    unitSuffix: "%",
+    drawdownByLabel: ddByMonthForInsights,
+    yoyLag: 12,
+  });
+
+  // Equity AAUM Breakdown denominator: ETF & Index share of equity AUM
+  // = passive penetration. Most analytically interesting cross-data
+  // point for this chart since the subtitle already shows the full
+  // mix.
+  const equityBreakdownDenomCaption = latestEquityMix
+    ? `ETF & Index = ${latestEquityMix.etfPct.toFixed(1)}% of equity AUM · ${latestEquityMix.month}`
+    : undefined;
+  // Insight strip on the active-equity AAUM series — the dominant
+  // segment and the one investors care about most.
+  const activeEquityFromBreakdown = equityBreakdown
+    .filter((r) => typeof r.activeEquity === "number")
+    .map((r) => ({ label: r.month, value: r.activeEquity as number }));
+  const equityBreakdownInsights = chartInsights(activeEquityFromBreakdown, {
+    metricName: "active-equity AAUM",
+    unitSuffix: "₹ Cr",
+    yoyLag: 12,
+  });
 
   // ---- Industry Folios & NFO section ---------------------------------
   //
@@ -853,6 +937,86 @@ export default async function MonthlyPage({
     activeEquityFlowTrend.length > 0 ||
     activeEquityBridge.length > 0 ||
     sipAumShareTrend.length > 0;
+
+  // Active Equity Net Inflow denominator: latest month's active-equity
+  // net inflow as a % of industry net inflow that month — answers
+  // "what share of the month's total flow ended up in active equity?".
+  const activeEquityFlowDenomCaption = (() => {
+    if (activeEquityFlowTrend.length === 0) return undefined;
+    const latest = activeEquityFlowTrend[activeEquityFlowTrend.length - 1];
+    const rows = amfiMonthlyRows();
+    const peerRow = rows.find((r) => r.month === latest.label);
+    if (
+      !peerRow ||
+      typeof peerRow.netInflow !== "number" ||
+      peerRow.netInflow === 0
+    )
+      return undefined;
+    const pct = (latest.value / peerRow.netInflow) * 100;
+    return `${pct >= 0 ? "+" : ""}${pct.toFixed(0)}% of industry net inflow · latest ${latest.label}`;
+  })();
+  const activeEquityFlowInsights = chartInsights(activeEquityFlowTrend, {
+    metricName: "active-equity net inflow",
+    unitSuffix: "₹ Cr",
+    drawdownByLabel: ddByMonthForInsights,
+    yoyLag: 12,
+    peer: {
+      name: "industry net inflow",
+      data: industryNetInflowPeerSeries,
+    },
+  });
+
+  // Active Equity AUM Bridge — single-series chartInsights doesn't
+  // map cleanly to a 2-series bridge. We surface the analytical
+  // denominator as "market impact made up X% of the latest ΔAUM"
+  // and run insights on the synthetic ΔAUM series so the strip
+  // still reads as a coherent narrative about the bridge.
+  const activeEquityBridgeDenomCaption = (() => {
+    if (activeEquityBridge.length === 0) return undefined;
+    const latest = activeEquityBridge[activeEquityBridge.length - 1];
+    const net = latest.netInflow;
+    const mkt = latest.marketResidual;
+    if (typeof net !== "number" || typeof mkt !== "number") return undefined;
+    const total = Math.abs(net) + Math.abs(mkt);
+    if (total === 0) return undefined;
+    const mktPct = (Math.abs(mkt) / total) * 100;
+    return `Market impact = ${mktPct.toFixed(0)}% of latest ΔAUM magnitude · ${latest.month}`;
+  })();
+  const activeEquityBridgeDeltaSeries = activeEquityBridge
+    .filter(
+      (r) =>
+        typeof r.netInflow === "number" && typeof r.marketResidual === "number"
+    )
+    .map((r) => ({
+      label: r.month,
+      value: (r.netInflow as number) + (r.marketResidual as number),
+    }));
+  const activeEquityBridgeInsights = chartInsights(
+    activeEquityBridgeDeltaSeries,
+    {
+      metricName: "ΔAUM",
+      unitSuffix: "₹ Cr",
+      drawdownByLabel: ddByMonthForInsights,
+    }
+  );
+
+  // SIP AUM share — already a %. Denominator caption highlights pp
+  // shift vs trailing 12M average, which is more informative than the
+  // % itself (which barely moves MoM).
+  const sipAumShareDenomCaption = (() => {
+    if (sipAumShareTrend.length < 12) return undefined;
+    const latest = sipAumShareTrend[sipAumShareTrend.length - 1];
+    const trailing12 = sipAumShareTrend.slice(-12);
+    const avg = trailing12.reduce((s, p) => s + p.value, 0) / trailing12.length;
+    const pp = latest.value - avg;
+    return `${pp >= 0 ? "+" : "−"}${Math.abs(pp).toFixed(2)} pp vs trailing 12M avg · latest ${latest.label}`;
+  })();
+  const sipAumShareInsights = chartInsights(sipAumShareTrend, {
+    metricName: "SIP AUM share",
+    unitSuffix: "%",
+    drawdownByLabel: ddByMonthForInsights,
+    yoyLag: 12,
+  });
 
   // Proportion diagnostics: category rotation, NFO drag, passive flow share.
   const rotation = categoryRotation(3, 5);
@@ -1214,6 +1378,52 @@ export default async function MonthlyPage({
   // ---- 12-month Industry Flow Waterfall + Active vs Passive ---------
   const flowWaterfall = industryFlowWaterfall(12);
   const activePassiveTrend = monthlyActivePassiveTrend(24);
+
+  // Active vs ETF AUM denominator: latest passive AUM ÷ active AUM
+  // ratio — captures how far passive has closed the gap, more
+  // discriminating than the share % which compresses both sides.
+  const activeVsEtfDenomCaption = (() => {
+    if (!activePassiveTrend) return undefined;
+    const hist = activePassiveTrend.history;
+    if (hist.length === 0) return undefined;
+    const latest = hist[hist.length - 1];
+    if (latest.activeEquityAum <= 0) return undefined;
+    const ratio = latest.etfIndexAum / latest.activeEquityAum;
+    return `Passive = ${(ratio * 100).toFixed(1)}% of active-equity AUM · ${latest.month}`;
+  })();
+  const activeVsEtfPassiveSeries = activePassiveTrend
+    ? activePassiveTrend.history.map((p) => ({
+        label: p.month,
+        value: p.etfIndexAum,
+      }))
+    : [];
+  const activeVsEtfInsights = chartInsights(activeVsEtfPassiveSeries, {
+    metricName: "ETF & Index AUM",
+    unitSuffix: "₹ Cr",
+    yoyLag: 12,
+  });
+
+  // Passive share denominator: pp shift YoY — more useful than the
+  // absolute share since the share moves slowly month-to-month.
+  const passiveShareHistorySeries = activePassiveTrend
+    ? activePassiveTrend.history.map((p) => ({
+        label: p.month,
+        value: p.passiveSharePct,
+      }))
+    : [];
+  const passiveShareDenomCaption = (() => {
+    if (passiveShareHistorySeries.length < 13) return undefined;
+    const latest = passiveShareHistorySeries[passiveShareHistorySeries.length - 1];
+    const prior = passiveShareHistorySeries[passiveShareHistorySeries.length - 13];
+    if (prior === undefined) return undefined;
+    const pp = latest.value - prior.value;
+    return `${pp >= 0 ? "+" : "−"}${Math.abs(pp).toFixed(2)} pp YoY · latest ${latest.label}`;
+  })();
+  const passiveShareInsights = chartInsights(passiveShareHistorySeries, {
+    metricName: "passive share",
+    unitSuffix: "%",
+    yoyLag: 12,
+  });
 
   return (
     <div className="space-y-8">
@@ -1634,13 +1844,17 @@ export default async function MonthlyPage({
               {monthlyFlowsRead ? ` · ${monthlyFlowsRead}` : ""}
             </p>
           </div>
-          <Card
+          <ChartWithContext
             title="Equity / Debt / Liquid Monthly Net Flows"
             subtitle={
               monthlyFlowsLens === "share"
                 ? `${monthlyFlowsRows.length} month${monthlyFlowsRows.length === 1 ? "" : "s"} · % of monthly flow magnitude (signs preserved)`
                 : `${monthlyFlowsRows.length} month${monthlyFlowsRows.length === 1 ? "" : "s"} · ₹ Cr · positive = inflow, negative = outflow`
             }
+            flowKind="net"
+            denominatorCaption={monthlyFlowsDenomCaption}
+            denominatorTooltip="Latest month's per-segment share of total flow magnitude — the headline read for 'where did the month's flow go?'."
+            insights={monthlyFlowsInsights}
             action={
               <LensToggle
                 basePath="/monthly"
@@ -1671,7 +1885,7 @@ export default async function MonthlyPage({
               Liquid is shown separately for readability.
               <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes. In share view, each value is divided by the sum of absolute flow magnitudes in that month, so signs (inflow vs outflow) stay intact." />
             </p>
-          </Card>
+          </ChartWithContext>
         </div>
       )}
 
@@ -1688,13 +1902,17 @@ export default async function MonthlyPage({
 
           <section className="grid gap-4 lg:grid-cols-2">
             {activeEquityFlowTrend.length > 0 && (
-              <Card
-                title="Active Equity Net Inflows vs TTM Average"
+              <ChartWithContext
+                title="Active Equity Net Inflows"
                 subtitle={`Monthly net inflow · ${activeEquityFlowTrend.length} month${activeEquityFlowTrend.length === 1 ? "" : "s"}${
                   activeEquityFlowAvg !== null
                     ? ` · trailing 12M avg ${formatCompactCrSafe(activeEquityFlowAvg)}`
                     : ""
                 } · ₹ Cr`}
+                flowKind="net"
+                denominatorCaption={activeEquityFlowDenomCaption}
+                denominatorTooltip="Latest active-equity net inflow as a % of industry net inflow for the same month — captures how much of the month's flow ended up in the active-equity envelope."
+                insights={activeEquityFlowInsights}
               >
                 <BarSeries
                   data={activeEquityFlowTrend}
@@ -1703,10 +1921,8 @@ export default async function MonthlyPage({
                   valueFormat="cr"
                   axisFormat="cr"
                   labelFormat="month"
-                  referenceValue={activeEquityFlowAvg}
-                  referenceLabel={
-                    activeEquityFlowAvg !== null ? "TTM avg" : undefined
-                  }
+                  trendline={movingAverage(activeEquityFlowTrend, 12)}
+                  trendlineName="12M avg"
                 />
                 <div className="mt-2">
                   <VolatilityRibbon series={activeEquityFlowTrend} />
@@ -1716,13 +1932,17 @@ export default async function MonthlyPage({
                   Strip below = ≥ ±2σ MoM moves shaded green / red.
                   <InfoTooltip label="Active-equity envelope = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
                 </p>
-              </Card>
+              </ChartWithContext>
             )}
 
             {activeEquityBridge.length > 0 && (
-              <Card
+              <ChartWithContext
                 title="Active Equity AUM Bridge"
                 subtitle={`${activeEquityBridge.length} month${activeEquityBridge.length === 1 ? "" : "s"} · ₹ Cr · net inflow vs market impact`}
+                flowKind="gross"
+                denominatorCaption={activeEquityBridgeDenomCaption}
+                denominatorTooltip="Latest month's market-impact share of |ΔAUM| — tells you whether MoM AUM change was driven by flow or mark-to-market."
+                insights={activeEquityBridgeInsights}
               >
                 <GroupedBars
                   data={activeEquityBridge}
@@ -1747,13 +1967,17 @@ export default async function MonthlyPage({
                   Market impact = ΔAUM − net inflow for the month.
                   <InfoTooltip label="Captures mark-to-market and minor reclassification effects on the active-equity envelope. AUM uses month-end values." />
                 </p>
-              </Card>
+              </ChartWithContext>
             )}
 
             {sipAumShareTrend.length > 0 && (
-              <Card
+              <ChartWithContext
                 title="SIP AUM as % of Total AUM"
                 subtitle={`${sipAumShareTrend.length} month${sipAumShareTrend.length === 1 ? "" : "s"} · SIP AUM ÷ Total AUM`}
+                flowKind="stock"
+                denominatorCaption={sipAumShareDenomCaption}
+                denominatorTooltip="Latest SIP-AUM share minus the trailing 12-month average, in percentage points — separates structural drift from MoM noise on a metric that barely moves."
+                insights={sipAumShareInsights}
               >
                 <BarSeries
                   data={sipAumShareTrend}
@@ -1762,12 +1986,14 @@ export default async function MonthlyPage({
                   valueFormat="pct"
                   axisFormat="pct"
                   labelFormat="month"
+                  trendline={movingAverage(sipAumShareTrend, 12)}
+                  trendlineName="12M avg"
                 />
                 <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
                   SIP AUM as a share of total industry AUM.
                   <InfoTooltip label="SIP contribution share of gross inflows is intentionally omitted — gross inflows (Funds Mobilized) are only available on the quarterly disclosure, not in the monthly snapshot." />
                 </p>
-              </Card>
+              </ChartWithContext>
             )}
           </section>
         </div>
@@ -1806,9 +2032,13 @@ export default async function MonthlyPage({
           </div>
 
           <section className="grid gap-4 lg:grid-cols-2">
-            <Card
+            <ChartWithContext
               title="Active Equity AAUM Trend"
               subtitle={`${activeEquityTrend.length} month${activeEquityTrend.length === 1 ? "" : "s"} · ₹ Cr · period-average`}
+              flowKind="stock"
+              denominatorCaption={activeEquityAaumDenomCaption}
+              denominatorTooltip="Latest active-equity AAUM as a % of total industry AAUM — separates absolute scale growth from share capture vs other segments."
+              insights={activeEquityAaumInsights}
             >
               {activeEquityTrend.length > 0 ? (
                 <BarSeries
@@ -1818,17 +2048,23 @@ export default async function MonthlyPage({
                   valueFormat="cr"
                   axisFormat="cr"
                   labelFormat="month"
+                  trendline={movingAverage(activeEquityTrend, 12)}
+                  trendlineName="12M avg"
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                   Active Equity AAUM unavailable
                 </div>
               )}
-            </Card>
+            </ChartWithContext>
 
-            <Card
+            <ChartWithContext
               title="Active Equity Share of Total AAUM"
               subtitle={`${activeEquityShareTrend.length} month${activeEquityShareTrend.length === 1 ? "" : "s"} · % of period-average Total AAUM`}
+              flowKind="stock"
+              denominatorCaption={activeEquityShareDenomCaption}
+              denominatorTooltip="Latest share minus the trailing 12-month average, in percentage points — the absolute share moves slowly so the pp delta is the more informative read."
+              insights={activeEquityShareInsights}
             >
               {activeEquityShareTrend.length > 0 ? (
                 <BarSeries
@@ -1838,22 +2074,28 @@ export default async function MonthlyPage({
                   valueFormat="pct"
                   axisFormat="pct"
                   labelFormat="month"
+                  trendline={movingAverage(activeEquityShareTrend, 12)}
+                  trendlineName="12M avg"
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                   Active Equity Share unavailable
                 </div>
               )}
-            </Card>
+            </ChartWithContext>
           </section>
 
-          <Card
+          <ChartWithContext
             title="Equity AAUM Breakdown"
             subtitle={
               equityBreakdownLens === "share"
                 ? `${equityBreakdown.length} month${equityBreakdown.length === 1 ? "" : "s"} · stacked share of equity AAUM`
                 : equityBreakdownSubtitle
             }
+            flowKind="stock"
+            denominatorCaption={equityBreakdownDenomCaption}
+            denominatorTooltip="ETF & Index share of equity AAUM — the headline passive-penetration number tracked across this section."
+            insights={equityBreakdownInsights}
             action={
               <LensToggle
                 basePath="/monthly"
@@ -1890,7 +2132,7 @@ export default async function MonthlyPage({
               Active Equity, ETF &amp; Index, and Arbitrage shown separately.
               <InfoTooltip label="Active Equity = Growth/Equity schemes + Hybrid ex-Arbitrage + Solution-oriented schemes. ETF & Index = Index Funds + Other ETFs. Share view divides each segment by the sum of all three for that month." />
             </p>
-          </Card>
+          </ChartWithContext>
         </div>
       )}
 
@@ -1910,13 +2152,17 @@ export default async function MonthlyPage({
           </div>
 
           <section className="grid gap-4 lg:grid-cols-2">
-            <Card
+            <ChartWithContext
               title="Active Equity vs ETF &amp; Index AUM"
               subtitle={
                 activePassiveLens === "share"
                   ? `${activePassiveTrend.history.length} month${activePassiveTrend.history.length === 1 ? "" : "s"} · share of total equity AUM`
                   : `${activePassiveTrend.history.length} month${activePassiveTrend.history.length === 1 ? "" : "s"} · month-end AUM · ₹ Cr`
               }
+              flowKind="stock"
+              denominatorCaption={activeVsEtfDenomCaption}
+              denominatorTooltip="Latest ETF & Index AUM expressed as a percentage of active-equity AUM — captures how far passive has closed the gap. More discriminating than the symmetric share % which compresses both sides."
+              insights={activeVsEtfInsights}
               action={
                 <LensToggle
                   basePath="/monthly"
@@ -1968,9 +2214,9 @@ export default async function MonthlyPage({
                 Active equity vs ETF &amp; Index AUM.
                 <InfoTooltip label="Active equity = equity-oriented + hybrid (ex-arbitrage) + solution-oriented. ETF & Index = Index Funds + Other ETFs (excludes Gold ETFs). Share view divides each by their sum so the two lines always add to 100%." />
               </p>
-            </Card>
+            </ChartWithContext>
 
-            <Card
+            <ChartWithContext
               title="Passive Share of Equity AUM"
               subtitle={
                 activePassiveTrend.forecastMonths > 0 &&
@@ -1978,6 +2224,10 @@ export default async function MonthlyPage({
                   ? `Latest ${activePassiveTrend.latestSharePct.toFixed(2)}% · projected FY-end ${activePassiveTrend.endOfFyProjectionPct.toFixed(2)}% · slope ${activePassiveTrend.trendSlopePctPerMonth >= 0 ? "+" : ""}${activePassiveTrend.trendSlopePctPerMonth.toFixed(3)} pp/mo`
                   : `Latest ${activePassiveTrend.latestSharePct.toFixed(2)}%`
               }
+              flowKind="stock"
+              denominatorCaption={passiveShareDenomCaption}
+              denominatorTooltip="Latest share minus the value 12 months ago, in percentage points — the headline read for passive penetration. Slow-moving, so YoY pp shift is the most informative cut."
+              insights={passiveShareInsights}
             >
               <MultiLine
                 data={activePassiveTrend.share}
@@ -1999,7 +2249,7 @@ export default async function MonthlyPage({
                 Passive share = ETF &amp; Index ÷ (Active equity + ETF &amp; Index).
                 <InfoTooltip label="Forecast (when shown) is a simple trend projection of the historical slope to the upcoming fiscal-year-end (March). Not a predictive model — a directional reference." />
               </p>
-            </Card>
+            </ChartWithContext>
           </section>
         </div>
       )}
