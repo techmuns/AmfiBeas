@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
+import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import { DistributionStrip } from "@/components/ui/DistributionStrip";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { RankTrendChart } from "@/components/charts/RankTrendChart";
+import { chartInsights } from "@/lib/chart-context";
 import {
   allAaumAmcs,
   amcAaumSeries,
@@ -102,6 +104,66 @@ export default async function AmcPage({
     amc: p.marketSharePct,
     median: cohortMedianByQuarter.get(p.quarter) ?? null,
   }));
+
+  // ---- ChartWithContext insight inputs for the three trend charts.
+  // Built so each card carries an analytically-distinct denominator
+  // and a rule-based insight strip — matches the /monthly + /quarterly
+  // template.
+  // AAUM Trend insights: run on the AMC's own AAUM series in ₹ Cr so
+  // YoY / multi-period / σ-spike rules read naturally.
+  const aaumInsightSeries = aaumSeries.map((p) => ({
+    label: p.fiscalLabel,
+    value: p.avgAum,
+  }));
+  const aaumInsights = chartInsights(aaumInsightSeries, {
+    metricName: `${detail.displayName} AAUM`,
+    unitSuffix: "₹ Cr",
+    yoyLag: 4,
+  });
+  // AAUM denominator: latest AMC AAUM as % of industry total — the
+  // exact peer benchmark for "is this AMC pulling ahead?".
+  const aaumDenomCaption = (() => {
+    if (aaumSeries.length === 0) return undefined;
+    const latest = aaumSeries[aaumSeries.length - 1];
+    const ind = industryByQuarter.get(latest.quarter);
+    if (typeof ind !== "number" || ind <= 0) return undefined;
+    const pct = (latest.avgAum / ind) * 100;
+    return `${pct.toFixed(2)}% of industry AAUM · latest ${latest.fiscalLabel}`;
+  })();
+
+  // Market Share insights: run on the AMC's share series.
+  const shareInsightSeries = shareSeries.map((p) => ({
+    label: p.fiscalLabel,
+    value: p.marketSharePct,
+  }));
+  const shareInsights = chartInsights(shareInsightSeries, {
+    metricName: `${detail.displayName} market share`,
+    unitSuffix: "%",
+    yoyLag: 4,
+  });
+  // Share denominator: pp shift YoY — slow-moving metric so the
+  // delta is more useful than the absolute share %.
+  const shareDenomCaption = (() => {
+    if (shareSeries.length < 5) return undefined;
+    const latest = shareSeries[shareSeries.length - 1];
+    const prior = shareSeries[shareSeries.length - 5];
+    const pp = latest.marketSharePct - prior.marketSharePct;
+    return `${pp >= 0 ? "+" : "−"}${Math.abs(pp).toFixed(2)} pp YoY · latest ${latest.fiscalLabel}`;
+  })();
+
+  // Rank Trend denominator: rank change vs 4Q back — a single
+  // up-or-down read on whether this AMC is climbing the league
+  // table. Lower rank = larger AMC, so a NEGATIVE delta is an
+  // improvement; we phrase it that way.
+  const rankDenomCaption = (() => {
+    if (rankSeries.length < 5) return undefined;
+    const latest = rankSeries[rankSeries.length - 1];
+    const prior = rankSeries[rankSeries.length - 5];
+    const delta = latest.rank - prior.rank;
+    if (delta === 0)
+      return `Unchanged vs 4Q ago · latest rank ${latest.rank} · ${latest.fiscalLabel}`;
+    return `${delta < 0 ? "↑" : "↓"} ${Math.abs(delta)} rank${Math.abs(delta) === 1 ? "" : "s"} vs 4Q ago · latest ${latest.rank} · ${latest.fiscalLabel}`;
+  })();
 
   // KPI-card contexts: percentile-vs-own-history readings + 4Q / 5Y deltas.
   const aaumValues = aaumSeries.map((p) => p.avgAum);
@@ -357,9 +419,13 @@ export default async function AmcPage({
       )}
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card
+        <ChartWithContext
           title="AAUM Trend"
           subtitle={`Rebased to 100 at start · ${aaumSeries.length} quarter${aaumSeries.length === 1 ? "" : "s"} · this AMC vs industry total · Source: AMFI Fundwise AAUM`}
+          flowKind="stock"
+          denominatorCaption={aaumDenomCaption}
+          denominatorTooltip="Latest AMC AAUM as a percentage of industry total — the cleanest peer benchmark for 'is this AMC pulling ahead of the industry?'."
+          insights={aaumInsights}
         >
           {aaumRebased.length > 0 ? (
             <MultiLine
@@ -384,10 +450,14 @@ export default async function AmcPage({
           ) : (
             <EmptyChart>No AAUM history</EmptyChart>
           )}
-        </Card>
-        <Card
+        </ChartWithContext>
+        <ChartWithContext
           title="Market Share Trend"
           subtitle="% of industry MF AAUM · cohort median overlay · Source: AMFI Fundwise AAUM"
+          flowKind="stock"
+          denominatorCaption={shareDenomCaption}
+          denominatorTooltip="Latest market share minus the share four quarters back, in percentage points — share moves slowly, so the YoY pp delta is the more informative read."
+          insights={shareInsights}
         >
           {shareChart.length > 0 ? (
             <MultiLine
@@ -413,17 +483,20 @@ export default async function AmcPage({
           ) : (
             <EmptyChart>No market-share history</EmptyChart>
           )}
-        </Card>
-        <Card
+        </ChartWithContext>
+        <ChartWithContext
           title="Rank Trend"
           subtitle="Position by AAUM (lower number = larger AMC) · tier bands shown · Source: AMFI Fundwise AAUM"
+          flowKind="stock"
+          denominatorCaption={rankDenomCaption}
+          denominatorTooltip="Change in league-table position vs four quarters ago — a single up-or-down read on whether this AMC is climbing or slipping."
         >
           {rankChart.length > 0 ? (
             <RankTrendChart data={rankChart} />
           ) : (
             <EmptyChart>No rank history</EmptyChart>
           )}
-        </Card>
+        </ChartWithContext>
         <Card
           title="Peer Comparison"
           subtitle={
