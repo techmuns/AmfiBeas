@@ -401,6 +401,20 @@ export default async function MonthlyPage({
   const aaumTrendSubtitle = aaumTrendHasData
     ? `Total AAUM · ${aaumTrendData.length} month${aaumTrendData.length === 1 ? "" : "s"} · ₹ Cr`
     : "Total AAUM not available";
+  // Total AAUM denominator: latest as % of trailing 12M average.
+  const totalAaumDenomCaption = (() => {
+    if (aaumTrendData.length < 12) return undefined;
+    const trailing12 = aaumTrendData.slice(-12);
+    const avg = trailing12.reduce((s, p) => s + p.value, 0) / trailing12.length;
+    const latest = aaumTrendData[aaumTrendData.length - 1];
+    if (avg <= 0) return undefined;
+    const pct = (latest.value / avg) * 100;
+    return `${pct.toFixed(1)}% of trailing 12M avg · latest ${latest.label}`;
+  })();
+  const totalAaumInsights = chartInsights(aaumTrendData, {
+    metricName: "total AAUM",
+    unitSuffix: "₹ Cr",
+  });
 
   // Provenance captions for the section. All four contributing fields
   // (totalAum / equityAum / debtAum / liquidAum / totalAaum) come from
@@ -436,19 +450,64 @@ export default async function MonthlyPage({
     }
     return undefined;
   })();
+  // Shared drawdown lookup for every chart's insight call.
+  const ddByMonthForInsights: Map<string, number> = (() => {
+    const m = new Map<string, number>();
+    for (const r of marketIndexRows("NIFTY_500")) {
+      if (typeof r.drawdownPct === "number") m.set(r.month, r.drawdownPct);
+    }
+    return m;
+  })();
   const sipContribInsights = chartInsights(sipContribTrend, {
     metricName: "SIP contribution",
     unitSuffix: "₹ Cr",
-    drawdownByLabel: (() => {
-      const m = new Map<string, number>();
-      for (const r of marketIndexRows("NIFTY_500")) {
-        if (typeof r.drawdownPct === "number") m.set(r.month, r.drawdownPct);
-      }
-      return m;
-    })(),
+    drawdownByLabel: ddByMonthForInsights,
   });
   const sipAumTrend = monthlyTrend("sipAum", 24);
   const sipAccountsTrend = monthlyTrend("sipAccounts", 24);
+
+  // SIP AUM denominator caption: latest SIP AUM as % of total AUM.
+  const sipAumDenomCaption = (() => {
+    const rows = amfiMonthlyRows();
+    for (let i = rows.length - 1; i >= 0; i--) {
+      const r = rows[i];
+      if (
+        typeof r.sipAum === "number" &&
+        typeof r.totalAum === "number" &&
+        r.totalAum > 0
+      ) {
+        const pct = (r.sipAum / r.totalAum) * 100;
+        return `${pct.toFixed(1)}% of total AUM · latest ${r.month}`;
+      }
+    }
+    return undefined;
+  })();
+  const sipAumInsights = chartInsights(sipAumTrend, {
+    metricName: "SIP AUM",
+    unitSuffix: "₹ Cr",
+    drawdownByLabel: ddByMonthForInsights,
+  });
+
+  // SIP accounts denominator caption: accounts per ₹ Cr AUM (density).
+  const sipAccountsDenomCaption = (() => {
+    const rows = amfiMonthlyRows();
+    for (let i = rows.length - 1; i >= 0; i--) {
+      const r = rows[i];
+      if (
+        typeof r.sipAccounts === "number" &&
+        typeof r.totalAum === "number" &&
+        r.totalAum > 0
+      ) {
+        const density = r.sipAccounts / r.totalAum;
+        return `${density.toFixed(0)} SIP accounts per ₹ Cr AUM · latest ${r.month}`;
+      }
+    }
+    return undefined;
+  })();
+  const sipAccountsInsights = chartInsights(sipAccountsTrend, {
+    metricName: "SIP accounts",
+    drawdownByLabel: ddByMonthForInsights,
+  });
 
   const hasAnySipTrend =
     sipContribTrend.length > 0 ||
@@ -597,6 +656,68 @@ export default async function MonthlyPage({
   const foliosCtx = kpiContext("industryFolios", 24);
   const nfoCountCtx = kpiContext("industryNfoCount", 24);
   const nfoFundsCtx = kpiContext("industryNfoFundsMobilized", 24);
+
+  // Folio additions denominator: latest monthly net add as bps of the
+  // existing folio base. Normalises growth against the (large) base
+  // so the trend is comparable across years.
+  const folioAdditionsDenomCaption = (() => {
+    if (folioAdditionsTrend.length === 0 || industryFoliosLatest === null)
+      return undefined;
+    const latest = folioAdditionsTrend[folioAdditionsTrend.length - 1];
+    if (industryFoliosLatest <= 0) return undefined;
+    // additions in lakh, base in crore — convert: 1 Cr = 100 lakh.
+    const bps =
+      (latest.value / 100 / (industryFoliosLatest / 1e7)) * 10000;
+    return `${bps.toFixed(0)} bps of total folio base · latest ${latest.label}`;
+  })();
+  const folioAdditionsInsights = chartInsights(folioAdditionsTrend, {
+    metricName: "folio additions",
+    drawdownByLabel: ddByMonthForInsights,
+  });
+
+  // NFO count denominator: latest as % of trailing 5Y (60M) average.
+  // 2019-era rows are unit-bugged (1900+ NFOs/month) so we clamp
+  // anything > 200 — well above any plausible monthly count.
+  const NFO_COUNT_PLAUSIBLE_CAP = 200;
+  const nfoCountDenomCaption = (() => {
+    const allNfoMonths = amfiMonthlyRows()
+      .map((r) => r.industryNfoCount)
+      .filter(
+        (v): v is number => typeof v === "number" && v <= NFO_COUNT_PLAUSIBLE_CAP
+      );
+    if (allNfoMonths.length < 12) return undefined;
+    const trailing60 = allNfoMonths.slice(-60);
+    const avg = trailing60.reduce((s, v) => s + v, 0) / trailing60.length;
+    if (avg <= 0) return undefined;
+    const latest = nfoCountTrend[nfoCountTrend.length - 1];
+    if (!latest) return undefined;
+    const pct = (latest.value / avg) * 100;
+    return `${pct.toFixed(0)}% of 5Y monthly avg (${avg.toFixed(0)}/mo) · latest ${latest.label}`;
+  })();
+  const nfoCountInsights = chartInsights(nfoCountTrend, {
+    metricName: "NFO launches",
+    drawdownByLabel: ddByMonthForInsights,
+  });
+
+  // NFO funds denominator: latest as % of industry net inflow that month.
+  const nfoFundsDenomCaption = (() => {
+    if (
+      !folioLatestRow ||
+      typeof folioLatestRow.industryNfoFundsMobilized !== "number" ||
+      typeof folioLatestRow.netInflow !== "number" ||
+      folioLatestRow.netInflow <= 0
+    )
+      return undefined;
+    const pct =
+      (folioLatestRow.industryNfoFundsMobilized / folioLatestRow.netInflow) *
+      100;
+    return `${pct.toFixed(1)}% of industry net inflow · latest ${folioLatestRow.month}`;
+  })();
+  const nfoFundsInsights = chartInsights(nfoFundsTrend, {
+    metricName: "NFO funds mobilised",
+    unitSuffix: "₹ Cr",
+    drawdownByLabel: ddByMonthForInsights,
+  });
 
   const foliosHover = formatKpiProvenanceTooltip(
     latestProvenanceFor("industryFolios")
@@ -1368,19 +1489,27 @@ export default async function MonthlyPage({
                 </div>
               )}
             </Card>
-            <Card title="Total AAUM Trend" subtitle={aaumTrendSubtitle}>
+            <ChartWithContext
+              title="Total AAUM Trend"
+              subtitle={aaumTrendSubtitle}
+              flowKind="stock"
+              denominatorCaption={totalAaumDenomCaption}
+              denominatorTooltip="Each month's total AAUM expressed as a % of the trailing 12-month average AAUM. Helps separate cyclical mean-reversion from structural growth."
+              insights={totalAaumInsights}
+            >
               {aaumTrendHasData ? (
                 <BarSeries
                   data={aaumTrendData}
                   name="AAUM"
                   color="hsl(var(--chart-1))"
+                  trendline={movingAverage(aaumTrendData, 12)}
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                   AAUM unavailable · totalAaum not in uploaded AMFI PDFs
                 </div>
               )}
-            </Card>
+            </ChartWithContext>
           </section>
         </div>
       )}
@@ -1420,9 +1549,13 @@ export default async function MonthlyPage({
               )}
             </ChartWithContext>
 
-            <Card
+            <ChartWithContext
               title="SIP AUM Trend"
               subtitle={`Period-end SIP assets · ${sipAumTrend.length} month${sipAumTrend.length === 1 ? "" : "s"} · ₹ Cr`}
+              flowKind="stock"
+              denominatorCaption={sipAumDenomCaption}
+              denominatorTooltip="SIP AUM as a % of total industry AUM. Captures how much of the industry's asset base sits in committed, recurring flows — a structural-stability indicator."
+              insights={sipAumInsights}
             >
               {sipAumTrend.length > 0 ? (
                 <BarSeries
@@ -1432,17 +1565,22 @@ export default async function MonthlyPage({
                   valueFormat="cr"
                   axisFormat="cr"
                   labelFormat="month"
+                  trendline={movingAverage(sipAumTrend, 12)}
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                   No SIP AUM months yet
                 </div>
               )}
-            </Card>
+            </ChartWithContext>
 
-            <Card
+            <ChartWithContext
               title="SIP Contributing Accounts Trend"
-              subtitle={`Active SIP accounts · ${sipAccountsTrend.length} month${sipAccountsTrend.length === 1 ? "" : "s"} · ₹ Cr`}
+              subtitle={`Active SIP accounts · ${sipAccountsTrend.length} month${sipAccountsTrend.length === 1 ? "" : "s"}`}
+              flowKind="stock"
+              denominatorCaption={sipAccountsDenomCaption}
+              denominatorTooltip="SIP accounts per ₹ Cr of industry AUM — a density measure of investor participation per unit of capital. Rising = more retail-density per Cr; falling = AUM growing faster than account base."
+              insights={sipAccountsInsights}
             >
               {sipAccountsTrend.length > 0 ? (
                 <BarSeries
@@ -1452,13 +1590,14 @@ export default async function MonthlyPage({
                   valueFormat="crore-count"
                   axisFormat="crore-count"
                   labelFormat="month"
+                  trendline={movingAverage(sipAccountsTrend, 12)}
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                   No SIP accounts months yet
                 </div>
               )}
-            </Card>
+            </ChartWithContext>
           </section>
         </div>
       )}
@@ -2075,9 +2214,13 @@ export default async function MonthlyPage({
 
           {hasAnyFolioOrNfoTrend && (
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <Card
+              <ChartWithContext
                 title="Folio Additions Trend"
-                subtitle={`Net new folios per month · ${folioAdditionsTrend.length} month${folioAdditionsTrend.length === 1 ? "" : "s"} · lakh`}
+                subtitle={`Net new folios per month · ${folioAdditionsTrend.length} month${folioAdditionsTrend.length === 1 ? "" : "s"} · lakh · ${foliosHover ?? ""}`}
+                flowKind="net"
+                denominatorCaption={folioAdditionsDenomCaption}
+                denominatorTooltip="Monthly folio additions expressed as basis points of the existing folio base. The bps view normalises growth against the (large, growing) base so the trend is comparable across years."
+                insights={folioAdditionsInsights}
               >
                 {folioAdditionsTrend.length > 0 ? (
                   <BarSeries
@@ -2087,23 +2230,22 @@ export default async function MonthlyPage({
                     valueFormat="lakh"
                     axisFormat="lakh"
                     labelFormat="month"
+                    trendline={movingAverage(folioAdditionsTrend, 12)}
                   />
                 ) : (
                   <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                     Need at least two consecutive months of folios
                   </div>
                 )}
-                <div
-                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                  title={foliosHover ?? undefined}
-                >
-                  derived MoM Δ from industryFolios
-                </div>
-              </Card>
+              </ChartWithContext>
 
-              <Card
+              <ChartWithContext
                 title="NFO Launches Trend"
-                subtitle={`Open + close-ended schemes · ${nfoCountTrend.length} month${nfoCountTrend.length === 1 ? "" : "s"}`}
+                subtitle={`Open + close-ended schemes · ${nfoCountTrend.length} month${nfoCountTrend.length === 1 ? "" : "s"} · ${nfoCountSourceLine}`}
+                flowKind="stock"
+                denominatorCaption={nfoCountDenomCaption}
+                denominatorTooltip="Monthly NFO launches as a % of the trailing 5-year monthly average. Values above 100% = launch activity hotter than the 5Y norm (often coincides with bullish market regimes)."
+                insights={nfoCountInsights}
               >
                 {nfoCountTrend.length > 0 ? (
                   <BarSeries
@@ -2113,23 +2255,22 @@ export default async function MonthlyPage({
                     valueFormat="count"
                     axisFormat="count"
                     labelFormat="month"
+                    trendline={movingAverage(nfoCountTrend, 12)}
                   />
                 ) : (
                   <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                     No NFO count months yet
                   </div>
                 )}
-                <div
-                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                  title={nfoCountHover ?? undefined}
-                >
-                  {nfoCountSourceLine}
-                </div>
-              </Card>
+              </ChartWithContext>
 
-              <Card
-                title="NFO Funds Mobilised Trend (Gross)"
-                subtitle={`Gross funds raised during NFOs · ${nfoFundsTrend.length} month${nfoFundsTrend.length === 1 ? "" : "s"} · ₹ Cr · no redemptions netted`}
+              <ChartWithContext
+                title="NFO Funds Mobilised Trend"
+                subtitle={`Gross funds raised during NFOs · ${nfoFundsTrend.length} month${nfoFundsTrend.length === 1 ? "" : "s"} · ₹ Cr · no redemptions netted · ${nfoFundsSourceLine}`}
+                flowKind="gross"
+                denominatorCaption={nfoFundsDenomCaption}
+                denominatorTooltip="NFO gross funds mobilised as a % of industry net inflow that month — i.e., how much of the month's net flow was absorbed by new fund launches vs going to existing schemes."
+                insights={nfoFundsInsights}
               >
                 {nfoFundsTrend.length > 0 ? (
                   <BarSeries
@@ -2139,19 +2280,14 @@ export default async function MonthlyPage({
                     valueFormat="cr"
                     axisFormat="cr"
                     labelFormat="month"
+                    trendline={movingAverage(nfoFundsTrend, 12)}
                   />
                 ) : (
                   <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                     No NFO funds months yet
                   </div>
                 )}
-                <div
-                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                  title={nfoFundsHover ?? undefined}
-                >
-                  {nfoFundsSourceLine}
-                </div>
-              </Card>
+              </ChartWithContext>
             </section>
           )}
         </div>
