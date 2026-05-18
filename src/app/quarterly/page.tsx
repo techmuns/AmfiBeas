@@ -4,9 +4,11 @@ import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { StackedArea } from "@/components/charts/StackedArea";
 import { Card } from "@/components/ui/Card";
+import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { FiscalQuarterPicker } from "@/components/filters/FiscalQuarterPicker";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { chartInsights, movingAverage } from "@/lib/chart-context";
 import {
   IIFL_ACTIVE_EQUITY_CATEGORIES,
   IIFL_TREND_EXPANDED_SLUGS,
@@ -340,9 +342,21 @@ export default async function QuarterlyPage({
   const aaumTrendSubtitle = aaumTrendHasData
     ? `Last-month AAUM · ${aaumTrendData.length} quarter${aaumTrendData.length === 1 ? "" : "s"} · ₹ Cr`
     : "Last-month AAUM not available";
-  const aaumTrendHoverProvenance = formatQuarterlyProvenanceTooltip(
-    latestIndustryProvenance("grandTotalLastMonthAaum")
-  );
+  // Last-month AAUM denominator: latest as % of trailing 4Q (1Y) average
+  // — separates structural growth from quarter-to-quarter mean reversion.
+  const lastMonthAaumDenomCaption = (() => {
+    if (aaumTrendData.length < 4) return undefined;
+    const trailing4 = aaumTrendData.slice(-4);
+    const avg = trailing4.reduce((s, p) => s + p.value, 0) / trailing4.length;
+    const latest = aaumTrendData[aaumTrendData.length - 1];
+    if (avg <= 0) return undefined;
+    const pct = (latest.value / avg) * 100;
+    return `${pct.toFixed(1)}% of trailing 4Q avg · latest ${latest.label}`;
+  })();
+  const lastMonthAaumInsights = chartInsights(aaumTrendData, {
+    metricName: "last-month AAUM",
+    unitSuffix: "₹ Cr",
+  });
 
   // ---- Quarterly Flows ----------------------------------------------
   // Mirrors /monthly's "Equity / Debt / Liquid Monthly Net Flows"
@@ -436,6 +450,54 @@ export default async function QuarterlyPage({
     foliosTrend.length > 0 ||
     folioAdditionsTrend.length > 0 ||
     schemesTrend.length > 0;
+
+  // Folios denominator: latest as % of trailing 4Q (1Y) average — the
+  // folio base grows monotonically, so the read separates fresh
+  // investor onboarding from a flat shelf.
+  const foliosTrendDenomCaption = (() => {
+    if (foliosTrend.length < 4) return undefined;
+    const trailing4 = foliosTrend.slice(-4);
+    const avg = trailing4.reduce((s, p) => s + p.value, 0) / trailing4.length;
+    const latest = foliosTrend[foliosTrend.length - 1];
+    if (avg <= 0) return undefined;
+    const pct = (latest.value / avg) * 100;
+    return `${pct.toFixed(1)}% of trailing 4Q avg · latest ${latest.label}`;
+  })();
+  const foliosTrendInsights = chartInsights(foliosTrend, {
+    metricName: "folios",
+  });
+
+  // Folio additions denominator: latest quarterly net adds as bps of
+  // the existing folio base — normalises growth against the (large)
+  // base so the trend is comparable across years. additions in lakh,
+  // base in crore — convert: 1 Cr = 100 lakh.
+  const folioAdditionsDenomCaption = (() => {
+    if (folioAdditionsTrend.length === 0) return undefined;
+    const latest = folioAdditionsTrend[folioAdditionsTrend.length - 1];
+    const baseCr = totalFolios;
+    if (typeof baseCr !== "number" || baseCr <= 0) return undefined;
+    const bps = (latest.value / 100 / (baseCr / 1e7)) * 10000;
+    return `${bps.toFixed(0)} bps of total folio base · latest ${latest.label}`;
+  })();
+  const folioAdditionsInsights = chartInsights(folioAdditionsTrend, {
+    metricName: "folio additions",
+  });
+
+  // Scheme count denominator: latest as % of trailing 4Q avg — keeps
+  // an eye on shelf expansion (NFOs net of mergers/closures) without
+  // the chart looking flat at this slow-moving scale.
+  const schemesTrendDenomCaption = (() => {
+    if (schemesTrend.length < 4) return undefined;
+    const trailing4 = schemesTrend.slice(-4);
+    const avg = trailing4.reduce((s, p) => s + p.value, 0) / trailing4.length;
+    const latest = schemesTrend[schemesTrend.length - 1];
+    if (avg <= 0) return undefined;
+    const pct = (latest.value / avg) * 100;
+    return `${pct.toFixed(1)}% of trailing 4Q avg · latest ${latest.label}`;
+  })();
+  const schemesTrendInsights = chartInsights(schemesTrend, {
+    metricName: "open-ended scheme count",
+  });
 
   // AUM Market Share — live Top 7 + Others from AMFI Fundwise AAUM.
   // Same helper as /monthly so the two pages render an identical view.
@@ -567,7 +629,14 @@ export default async function QuarterlyPage({
                 </div>
               )}
             </Card>
-            <Card title="Last-month AAUM Trend" subtitle={aaumTrendSubtitle}>
+            <ChartWithContext
+              title="Last-month AAUM Trend"
+              subtitle={`${aaumTrendSubtitle} · Average AUM column is last-month only — not a true quarterly average`}
+              flowKind="stock"
+              denominatorCaption={lastMonthAaumDenomCaption}
+              denominatorTooltip="Latest last-month AAUM as a % of the trailing 4-quarter average — separates structural growth from quarter-to-quarter mean-reversion."
+              insights={lastMonthAaumInsights}
+            >
               {aaumTrendHasData ? (
                 <BarSeries
                   data={aaumTrendData}
@@ -576,19 +645,15 @@ export default async function QuarterlyPage({
                   valueFormat="cr"
                   axisFormat="cr"
                   labelFormat="none"
+                  trendline={movingAverage(aaumTrendData, 4)}
+                  trendlineName="4Q avg"
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                   Last-month AAUM unavailable
                 </div>
               )}
-              <div
-                className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                title={aaumTrendHoverProvenance ?? undefined}
-              >
-                Average AUM column is last-month only — not a true quarterly average
-              </div>
-            </Card>
+            </ChartWithContext>
           </section>
         </div>
       )}
@@ -833,9 +898,13 @@ export default async function QuarterlyPage({
 
           {hasAnyFolioTrend && (
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <Card
+              <ChartWithContext
                 title="Folios Trend"
                 subtitle={`Industry-wide · ${foliosTrend.length} quarter${foliosTrend.length === 1 ? "" : "s"} · crore folios`}
+                flowKind="stock"
+                denominatorCaption={foliosTrendDenomCaption}
+                denominatorTooltip="Latest folio base as a % of the trailing 4-quarter average — separates a fresh wave of investor onboarding from a flat shelf."
+                insights={foliosTrendInsights}
               >
                 {foliosTrend.length > 0 ? (
                   <BarSeries
@@ -845,17 +914,23 @@ export default async function QuarterlyPage({
                     valueFormat="crore-count"
                     axisFormat="crore-count"
                     labelFormat="none"
+                    trendline={movingAverage(foliosTrend, 4)}
+                    trendlineName="4Q avg"
                   />
                 ) : (
                   <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                     Folios unavailable
                   </div>
                 )}
-              </Card>
+              </ChartWithContext>
 
-              <Card
+              <ChartWithContext
                 title="Folio Additions Trend"
                 subtitle={`Net new folios per quarter · ${folioAdditionsTrend.length} quarter${folioAdditionsTrend.length === 1 ? "" : "s"} · lakh`}
+                flowKind="net"
+                denominatorCaption={folioAdditionsDenomCaption}
+                denominatorTooltip="Latest quarterly net adds expressed in basis points of the total folio base — strips out base-rate growth so different years are comparable."
+                insights={folioAdditionsInsights}
               >
                 {folioAdditionsTrend.length > 0 ? (
                   <BarSeries
@@ -865,6 +940,8 @@ export default async function QuarterlyPage({
                     valueFormat="lakh"
                     axisFormat="lakh"
                     labelFormat="none"
+                    trendline={movingAverage(folioAdditionsTrend, 4)}
+                    trendlineName="4Q avg"
                   />
                 ) : (
                   <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
@@ -877,11 +954,15 @@ export default async function QuarterlyPage({
                 >
                   derived QoQ Δ
                 </div>
-              </Card>
+              </ChartWithContext>
 
-              <Card
+              <ChartWithContext
                 title="Open-Ended Scheme Count Trend"
                 subtitle={`Sum across 39 open-ended categories · ${schemesTrend.length} quarter${schemesTrend.length === 1 ? "" : "s"}`}
+                flowKind="stock"
+                denominatorCaption={schemesTrendDenomCaption}
+                denominatorTooltip="Latest open-ended scheme count as a % of the trailing 4-quarter average — captures shelf expansion (NFOs net of mergers / closures) without the line going flat at this slow-moving scale."
+                insights={schemesTrendInsights}
               >
                 {schemesTrend.length > 0 ? (
                   <BarSeries
@@ -891,6 +972,8 @@ export default async function QuarterlyPage({
                     valueFormat="count"
                     axisFormat="count"
                     labelFormat="none"
+                    trendline={movingAverage(schemesTrend, 4)}
+                    trendlineName="4Q avg"
                   />
                 ) : (
                   <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
@@ -903,7 +986,7 @@ export default async function QuarterlyPage({
                 >
                   derived from categorySchemes
                 </div>
-              </Card>
+              </ChartWithContext>
             </section>
           )}
         </div>
