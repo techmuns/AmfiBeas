@@ -2,6 +2,8 @@ import Link from "next/link";
 import { TrendingUp } from "lucide-react";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
+import { ChartWithContext } from "@/components/ui/ChartWithContext";
+import { chartInsights, movingAverage } from "@/lib/chart-context";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BarSeries } from "@/components/charts/BarSeries";
 import { Donut, type DonutSlice } from "@/components/charts/Donut";
@@ -416,6 +418,35 @@ export default async function MonthlyPage({
   // 2024-12 / 2025-01 because those Notes don't carry the row), but no
   // synthetic data is introduced.
   const sipContribTrend = monthlyTrend("sipContribution", 24);
+  // SIP-contribution-specific context for the ChartWithContext wrapper.
+  // Denominator: industry net inflow that month — answers "what share
+  // of the month's net flow came from systematic SIPs?".
+  const sipContribLatestDenomCaption = (() => {
+    const rows = amfiMonthlyRows();
+    for (let i = rows.length - 1; i >= 0; i--) {
+      const r = rows[i];
+      if (
+        typeof r.sipContribution === "number" &&
+        typeof r.netInflow === "number" &&
+        r.netInflow > 0
+      ) {
+        const pct = (r.sipContribution / r.netInflow) * 100;
+        return `${pct.toFixed(0)}% of industry net inflow · latest ${r.month}`;
+      }
+    }
+    return undefined;
+  })();
+  const sipContribInsights = chartInsights(sipContribTrend, {
+    metricName: "SIP contribution",
+    unitSuffix: "₹ Cr",
+    drawdownByLabel: (() => {
+      const m = new Map<string, number>();
+      for (const r of marketIndexRows("NIFTY_500")) {
+        if (typeof r.drawdownPct === "number") m.set(r.month, r.drawdownPct);
+      }
+      return m;
+    })(),
+  });
   const sipAumTrend = monthlyTrend("sipAum", 24);
   const sipAccountsTrend = monthlyTrend("sipAccounts", 24);
 
@@ -1364,9 +1395,13 @@ export default async function MonthlyPage({
             </p>
           </div>
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <Card
+            <ChartWithContext
               title="SIP Contribution Trend"
-              subtitle={`Monthly inflow · ${sipContribTrend.length} month${sipContribTrend.length === 1 ? "" : "s"} · ₹ Cr`}
+              subtitle={`Monthly gross SIP inflow · ${sipContribTrend.length} month${sipContribTrend.length === 1 ? "" : "s"} · ₹ Cr · no SIP redemptions are netted`}
+              flowKind="gross"
+              denominatorCaption={sipContribLatestDenomCaption}
+              denominatorTooltip="SIP gross contribution as a share of the industry's net inflow that month. When the share trends up, retail systematic flow is doing more of the heavy lifting; when it falls, lump-sum / institutional money dominates."
+              insights={sipContribInsights}
             >
               {sipContribTrend.length > 0 ? (
                 <BarSeries
@@ -1376,13 +1411,14 @@ export default async function MonthlyPage({
                   valueFormat="cr"
                   axisFormat="cr"
                   labelFormat="month"
+                  trendline={movingAverage(sipContribTrend, 12)}
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                   No SIP contribution months yet
                 </div>
               )}
-            </Card>
+            </ChartWithContext>
 
             <Card
               title="SIP AUM Trend"
@@ -2092,8 +2128,8 @@ export default async function MonthlyPage({
               </Card>
 
               <Card
-                title="NFO Funds Mobilized Trend"
-                subtitle={`Funds raised during NFOs · ${nfoFundsTrend.length} month${nfoFundsTrend.length === 1 ? "" : "s"} · ₹ Cr`}
+                title="NFO Funds Mobilised Trend (Gross)"
+                subtitle={`Gross funds raised during NFOs · ${nfoFundsTrend.length} month${nfoFundsTrend.length === 1 ? "" : "s"} · ₹ Cr · no redemptions netted`}
               >
                 {nfoFundsTrend.length > 0 ? (
                   <BarSeries
