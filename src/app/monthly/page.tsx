@@ -401,6 +401,30 @@ export default async function MonthlyPage({
   const aaumTrendSubtitle = aaumTrendHasData
     ? `Total AAUM · ${aaumTrendData.length} month${aaumTrendData.length === 1 ? "" : "s"} · ₹ Cr`
     : "Total AAUM not available";
+
+  // ---- Shared chart-context helpers (used by every insight call) ----
+  // Computed once so we don't recompute the same maps per chart.
+  const ddByMonthForInsights: Map<string, number> = (() => {
+    const m = new Map<string, number>();
+    for (const r of marketIndexRows("NIFTY_500")) {
+      if (typeof r.drawdownPct === "number") m.set(r.month, r.drawdownPct);
+    }
+    return m;
+  })();
+  const industryNetInflowPeerSeries = amfiMonthlyRows()
+    .filter((r) => typeof r.netInflow === "number")
+    .map((r) => ({ label: r.month, value: r.netInflow as number }));
+  const cyclePhaseByMonth: Map<string, string> = (() => {
+    const m = new Map<string, string>();
+    for (const p of cyclePhaseHistory()) m.set(p.month, p.phase);
+    return m;
+  })();
+  const episodeAnchorsForInsights: { label: string; title: string }[] =
+    historicalEpisodes().map((e) => ({
+      label: e.startMonth,
+      title: e.title,
+    }));
+
   // Total AAUM denominator: latest as % of trailing 12M average.
   const totalAaumDenomCaption = (() => {
     if (aaumTrendData.length < 12) return undefined;
@@ -415,6 +439,7 @@ export default async function MonthlyPage({
     metricName: "total AAUM",
     unitSuffix: "₹ Cr",
     yoyLag: 12,
+    cyclePhaseByLabel: cyclePhaseByMonth,
   });
 
   // Provenance captions for the section. All four contributing fields
@@ -451,24 +476,12 @@ export default async function MonthlyPage({
     }
     return undefined;
   })();
-  // Shared drawdown lookup for every chart's insight call.
-  const ddByMonthForInsights: Map<string, number> = (() => {
-    const m = new Map<string, number>();
-    for (const r of marketIndexRows("NIFTY_500")) {
-      if (typeof r.drawdownPct === "number") m.set(r.month, r.drawdownPct);
-    }
-    return m;
-  })();
-  // Shared peer series for cross-chart divergence rules — industry
-  // net inflow keyed by month. Used by SIP / NFO insight calls so the
-  // engine can call out "SIP rose while industry flow fell" patterns.
-  const industryNetInflowPeerSeries = amfiMonthlyRows()
-    .filter((r) => typeof r.netInflow === "number")
-    .map((r) => ({ label: r.month, value: r.netInflow as number }));
   const sipContribInsights = chartInsights(sipContribTrend, {
     metricName: "SIP contribution",
     unitSuffix: "₹ Cr",
     drawdownByLabel: ddByMonthForInsights,
+    cyclePhaseByLabel: cyclePhaseByMonth,
+    episodeAnchors: episodeAnchorsForInsights,
     yoyLag: 12,
     peer: {
       name: "industry net inflow",
@@ -498,6 +511,7 @@ export default async function MonthlyPage({
     metricName: "SIP AUM",
     unitSuffix: "₹ Cr",
     drawdownByLabel: ddByMonthForInsights,
+    cyclePhaseByLabel: cyclePhaseByMonth,
     yoyLag: 12,
   });
 
@@ -520,6 +534,8 @@ export default async function MonthlyPage({
   const sipAccountsInsights = chartInsights(sipAccountsTrend, {
     metricName: "SIP accounts",
     drawdownByLabel: ddByMonthForInsights,
+    cyclePhaseByLabel: cyclePhaseByMonth,
+    episodeAnchors: episodeAnchorsForInsights,
     yoyLag: 12,
   });
 
@@ -771,6 +787,7 @@ export default async function MonthlyPage({
   const folioAdditionsInsights = chartInsights(folioAdditionsTrend, {
     metricName: "folio additions",
     drawdownByLabel: ddByMonthForInsights,
+    cyclePhaseByLabel: cyclePhaseByMonth,
     yoyLag: 12,
   });
 
@@ -796,6 +813,8 @@ export default async function MonthlyPage({
   const nfoCountInsights = chartInsights(nfoCountTrend, {
     metricName: "NFO launches",
     drawdownByLabel: ddByMonthForInsights,
+    cyclePhaseByLabel: cyclePhaseByMonth,
+    episodeAnchors: episodeAnchorsForInsights,
     yoyLag: 12,
   });
 
@@ -817,6 +836,8 @@ export default async function MonthlyPage({
     metricName: "NFO funds mobilised",
     unitSuffix: "₹ Cr",
     drawdownByLabel: ddByMonthForInsights,
+    cyclePhaseByLabel: cyclePhaseByMonth,
+    episodeAnchors: episodeAnchorsForInsights,
     yoyLag: 12,
     peer: {
       name: "industry net inflow",

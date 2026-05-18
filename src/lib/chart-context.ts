@@ -83,6 +83,15 @@ export interface ChartInsightOpts {
    *  when the latest move signs differ — useful for SIP-vs-net-flow
    *  or active-vs-passive cross-reads. */
   peer?: PeerSeriesContext;
+  /** Optional cycle phase keyed by series label. Lets the engine emit
+   *  "Latest reading sits in a Correction cycle phase" callouts so
+   *  charts can be read in regime context without leaving the card. */
+  cyclePhaseByLabel?: Map<string, string>;
+  /** Named historical anchors (e.g. "COVID 2020", "FY23 correction").
+   *  When the latest reading is a new extreme since the most recent
+   *  anchor that's inside the series window, the engine emits a
+   *  "highest / lowest since the {title}" line. */
+  episodeAnchors?: { label: string; title: string }[];
 }
 
 /**
@@ -95,10 +104,14 @@ export interface ChartInsightOpts {
  *   2. σ-spikes (latest MoM Δ > ±2σ of historical MoM changes)
  *   3. multi-period high / low (e.g. highest in 12 periods) when the
  *      latest reading isn't an outright ATH
+ *   3b. extreme since a named historical episode (when
+ *       `opts.episodeAnchors` supplied) — "Lowest since COVID 2020"
  *   4. divergence from a paired peer series (when `opts.peer` supplied)
  *   5. consecutive directional runs (≥ 2 same-direction MoM moves)
  *   6. YoY change with an "accelerating / decelerating" tag (when
  *      `opts.yoyLag` supplied)
+ *   6b. cycle phase coincidence (when `opts.cyclePhaseByLabel`
+ *       supplied) — only fires for "Correction" / "Peak" phases.
  *   7. coincidence with a meaningful Nifty 500 drawdown
  *   8. fallback: vs trailing-12 average
  *
@@ -201,6 +214,46 @@ export function chartInsights(
     }
   }
 
+  // 3b. Episode anchor — when the latest reading is a new extreme
+  //     since the most recent NAMED historical episode that's still
+  //     inside the series window. Skipped when the latest is already
+  //     flagged as ATH/ATL (the all-time line subsumes it).
+  if (
+    !isAth &&
+    !isAtl &&
+    opts.episodeAnchors &&
+    opts.episodeAnchors.length > 0 &&
+    series.length >= 4
+  ) {
+    // Pick the most recent anchor whose label is inside the series and
+    // isn't the latest point itself (latest can't be "since itself").
+    let anchorIdx = -1;
+    let anchorTitle = "";
+    for (const ep of opts.episodeAnchors) {
+      const idx = series.findIndex((p) => p.label === ep.label);
+      if (idx >= 0 && idx < series.length - 1 && idx > anchorIdx) {
+        anchorIdx = idx;
+        anchorTitle = ep.title;
+      }
+    }
+    if (anchorIdx >= 0) {
+      const sliceValues = values.slice(anchorIdx);
+      const sliceMax = Math.max(...sliceValues);
+      const sliceMin = Math.min(...sliceValues);
+      if (
+        latest.value === sliceMax &&
+        sliceValues.filter((v) => v === sliceMax).length === 1
+      ) {
+        out.push(`${cap(name)} at its highest since the ${anchorTitle}.`);
+      } else if (
+        latest.value === sliceMin &&
+        sliceValues.filter((v) => v === sliceMin).length === 1
+      ) {
+        out.push(`${cap(name)} at its lowest since the ${anchorTitle}.`);
+      }
+    }
+  }
+
   // 4. Divergence from a paired peer series — strongest cross-series
   //    signal we have. Compares the sign of the latest MoM move on
   //    both series. Only emits when the signs differ AND both moves
@@ -294,6 +347,21 @@ export function chartInsights(
       }
       out.push(
         `${cap(name)} ${yoy >= 0 ? "+" : ""}${yoy.toFixed(1)}% YoY${accelTag}.`
+      );
+    }
+  }
+
+  // 6b. Cycle phase coincidence — when the latest reading sits in a
+  //     notable regime ("Correction", "Peak"). Skipped for the
+  //     "calmer" phases (Expansion, Recovery, Base) to keep the line
+  //     count tight; those don't add narrative value.
+  if (opts.cyclePhaseByLabel) {
+    const phase = opts.cyclePhaseByLabel.get(latest.label);
+    if (phase === "Correction" || phase === "Peak") {
+      out.push(
+        phase === "Correction"
+          ? `Latest reading sits inside a Correction cycle phase (Nifty 500 in drawdown).`
+          : `Latest reading sits inside a Peak cycle phase (flows / NFOs running hot).`
       );
     }
   }
