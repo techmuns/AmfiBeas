@@ -5,6 +5,7 @@ import {
   CartesianGrid,
   ComposedChart,
   Line,
+  ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -48,6 +49,11 @@ interface BarSeriesProps {
   /** Gap between bar categories — % of the bar width. Default 28%
    *  gives a touch more breathing room than Recharts' default. */
   barCategoryGap?: string | number;
+  /** Optional cycle-phase bands rendered as subtle background
+   *  ReferenceAreas — one band per contiguous "Correction" /
+   *  "Peak" stretch. Labels are matched against `data[].label`
+   *  exactly. Pass [] or omit to hide. */
+  cyclePhaseBands?: { fromLabel: string; toLabel: string; phase: "Correction" | "Peak" }[];
 }
 
 export function BarSeries({
@@ -63,6 +69,7 @@ export function BarSeries({
   trendline,
   trendlineName = "12M avg",
   barCategoryGap = "32%",
+  cyclePhaseBands,
 }: BarSeriesProps) {
   const fmtValue = valueFormatter(valueFormat);
   const fmtAxis = axisFormatter(axisFormat);
@@ -87,6 +94,29 @@ export function BarSeries({
         barCategoryGap={barCategoryGap}
       >
         <CartesianGrid stroke="hsl(var(--border))" vertical={false} strokeDasharray="3 3" />
+        {cyclePhaseBands?.map((b, i) => {
+          // Only render bands whose anchors are inside the visible
+          // x-axis. ReferenceArea silently ignores out-of-range
+          // anchors but a missing one renders the band edge-to-edge,
+          // which looks worse than skipping it.
+          const labels = new Set(data.map((p) => p.label));
+          if (!labels.has(b.fromLabel) || !labels.has(b.toLabel)) return null;
+          const fill =
+            b.phase === "Correction"
+              ? "hsl(var(--negative))"
+              : "hsl(var(--chart-3))";
+          return (
+            <ReferenceArea
+              key={`${b.fromLabel}-${b.toLabel}-${i}`}
+              x1={b.fromLabel}
+              x2={b.toLabel}
+              fill={fill}
+              fillOpacity={0.07}
+              ifOverflow="visible"
+              strokeOpacity={0}
+            />
+          );
+        })}
         <XAxis
           dataKey="label"
           tickFormatter={fmtLabel}
