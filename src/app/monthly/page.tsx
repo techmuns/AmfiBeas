@@ -10,7 +10,6 @@ import { Donut, type DonutSlice } from "@/components/charts/Donut";
 import { IiflHeatmap } from "@/components/charts/IiflHeatmap";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { StackedArea } from "@/components/charts/StackedArea";
-import { Waterfall } from "@/components/charts/Waterfall";
 import { latestMonth } from "@/data/aggregate";
 import {
   activeEquityNetInflowSignal,
@@ -23,7 +22,6 @@ import {
   getKpiValue,
   activeEquityMixSectionRead,
   foliosNfoSectionRead,
-  industryFlowWaterfall,
   investorRead,
   kpiContext,
   latestAmfiMonthlyRow,
@@ -67,7 +65,6 @@ import {
   latestNifty500Row,
   marketIndexRows,
   marketStressFlowSignal,
-  narrativeComposer,
   weatherBadge,
   type MarketStressLabel,
   type MarketStressSignal,
@@ -84,15 +81,10 @@ import { episodeRecoveryRows } from "@/data/episode-recovery";
 import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
 import { marketWrap } from "@/data/market-wrap";
 import { CoachPill } from "@/components/ui/CoachPill";
-import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { EpisodeReplayStrip } from "@/components/ui/EpisodeReplayStrip";
 import { HeadlineCard } from "@/components/ui/HeadlineCard";
-import { MarketTape } from "@/components/ui/MarketTape";
-import { NarrativeBlock } from "@/components/ui/NarrativeBlock";
-import { SandboxCard } from "@/components/ui/SandboxCard";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 import { StickyContextFooter } from "@/components/ui/StickyContextFooter";
-import { TwinScopeCard } from "@/components/ui/TwinScopeCard";
 import { LensToggle } from "@/components/ui/LensToggle";
 import { MoodGauge } from "@/components/ui/MoodGauge";
 import { Sparkline } from "@/components/charts/Sparkline";
@@ -1260,40 +1252,6 @@ export default async function MonthlyPage({
   const sipSparkline = sipStickinessSparkline(24);
   const latestNifty = latestNifty500Row();
   const cyclePhasePoints = cyclePhaseHistory();
-  // Investor Sandbox: ₹10,000 invested in the Nifty 500 at the
-  // earliest available month-end vs today (latest month-end). Uses
-  // the index level as a clean proxy for "average market return"
-  // before fees.
-  const sandboxScenario: {
-    startLabel: string;
-    endLabel: string;
-    startAmount: number;
-    endAmount: number;
-    cagrPct: number | null;
-    caveat?: string;
-  } | null = (() => {
-    const niftyRows = marketIndexRows("NIFTY_500");
-    if (niftyRows.length < 13) return null;
-    const start = niftyRows[0];
-    const end = niftyRows[niftyRows.length - 1];
-    if (!start || !end || start.level <= 0) return null;
-    const seed = 10_000;
-    const multiple = end.level / start.level;
-    const finalValue = seed * multiple;
-    const [sy, sm] = start.month.split("-").map(Number);
-    const [ey, em] = end.month.split("-").map(Number);
-    const yrs = Math.max(0.1, ey - sy + (em - sm) / 12);
-    const cagrPct = (Math.pow(multiple, 1 / yrs) - 1) * 100;
-    return {
-      startLabel: start.month,
-      endLabel: end.month,
-      startAmount: seed,
-      endAmount: finalValue,
-      cagrPct,
-      caveat:
-        "Uses the Nifty 500 index level as a clean pre-fee proxy. Active-equity fund returns vary by scheme; this is a sandbox illustration, not a fund recommendation.",
-    };
-  })();
   // Coach message: surfaces the single most striking signal on the page.
   const coachMessage = (() => {
     const stress = marketStressFlowSignal();
@@ -1312,24 +1270,6 @@ export default async function MonthlyPage({
     }
     return null;
   })();
-  const tapeCells = cyclePhasePoints.map((p) => ({
-    month: p.month,
-    phase: p.phase,
-    flowZScore: p.flowZScore,
-    drawdownPct: p.drawdownPct,
-  }));
-  // Twin scope: compare trailing 12M of active-equity flow with the
-  // 12M immediately before that.
-  const twinScopeData = (() => {
-    const series = amfiMonthlyRows()
-      .filter((r) => typeof r.activeEquityNetInflow === "number")
-      .map((r) => ({ label: r.month, value: r.activeEquityNetInflow as number }));
-    if (series.length < 13) return null;
-    const current = series.slice(-12);
-    const prior = series.slice(-24, -12);
-    if (current.length === 0 || prior.length === 0) return null;
-    return { current, prior };
-  })();
   const episodes = historicalEpisodes();
   // Recovery-tracker rows derived from the same episode list — for
   // each episode, compute the pre-baseline / trough / recovery
@@ -1340,37 +1280,6 @@ export default async function MonthlyPage({
   // the top of the page. Composed off cycle phase, SIP, and an
   // anomaly scan across headline series.
   const marketWrapData = marketWrap();
-  const latestCyclePhaseForNarrative =
-    cyclePhasePoints.length > 0
-      ? cyclePhasePoints[cyclePhasePoints.length - 1].phase
-      : null;
-  const narrative = narrativeComposer({
-    latestMonth: activeEquitySignal?.latestMonth ?? null,
-    activeEquity: activeEquitySignal
-      ? {
-          value: activeEquitySignal.latestValue,
-          zScore: activeEquitySignal.zScore,
-          percentile: activeEquitySignal.percentileRank,
-        }
-      : null,
-    nfo: nfoSignal
-      ? { zScore: nfoSignal.zScore, percentile: nfoSignal.percentileRank }
-      : null,
-    passive: passiveSignal
-      ? {
-          latestSharePct: passiveSignal.latestSharePct,
-          percentile: passiveSignal.percentileRank,
-        }
-      : null,
-    sip: sipStickiness
-      ? {
-          latestSharePct: sipStickiness.latestSharePct,
-          percentile: sipStickiness.percentileRank,
-        }
-      : null,
-    drawdownPct: latestNifty?.drawdownPct ?? null,
-    cyclePhase: latestCyclePhaseForNarrative,
-  });
   // Sankey data — composes SIP vs Lump-sum on the source side, and
   // Equity / Debt / Liquid / Other on the target side, all from the
   // latest month with usable totals. Links are proportional shares
@@ -1591,8 +1500,7 @@ export default async function MonthlyPage({
     marketMonth: latestNifty?.month ?? null,
   });
 
-  // ---- 12-month Industry Flow Waterfall + Active vs Passive ---------
-  const flowWaterfall = industryFlowWaterfall(12);
+  // ---- Active vs Passive series ------------------------------------
   const activePassiveTrend = monthlyActivePassiveTrend(24);
 
   // Active vs ETF AUM denominator: latest passive AUM ÷ active AUM
@@ -2944,29 +2852,6 @@ export default async function MonthlyPage({
         </div>
       )}
 
-      {flowWaterfall && (
-        <details className="group">
-          <summary className="cursor-pointer list-none rounded-md border border-dashed border-border bg-muted/20 px-4 py-2.5 text-sm font-medium tracking-tight marker:hidden hover:bg-muted/30">
-            <span className="inline-flex items-center gap-2">
-              <span className="text-foreground">Show 12-month flow waterfall</span>
-              <span className="text-muted-foreground transition-transform group-open:rotate-90">›</span>
-            </span>
-          </summary>
-          <div className="mt-3">
-            <Card
-              title="Industry AUM Bridge — 12-month flow decomposition"
-              subtitle={`Opening ${flowWaterfall.startMonth} → Closing ${flowWaterfall.endMonth} · SIP + Lump sum + Market = ΔAUM · Source: AMFI Monthly Report`}
-            >
-              <Waterfall data={flowWaterfall.steps} valueFormat="cr" axisFormat="cr" />
-              <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                ΔAUM split into SIP, lump sum, and market / residual impact.
-                <InfoTooltip label="(1) Cumulative SIP contributions. (2) Lump sum / other net flow = total industry net inflow − SIP. (3) Market / residual impact = ΔAUM − total net inflow (captures mark-to-market and reclassification). SIP and total net inflow come from the AMFI Monthly Report; the market residual is derived." />
-              </p>
-            </Card>
-          </div>
-        </details>
-      )}
-
       <Card
         tone={aumMarketShare.isFullUniverse ? undefined : "pending"}
         title="AUM Market Share"
@@ -3028,46 +2913,6 @@ export default async function MonthlyPage({
           />
         </Card>
       )}
-
-      <details className="group">
-        <summary className="cursor-pointer list-none rounded-md border border-dashed border-border bg-muted/20 px-4 py-2.5 text-sm font-medium tracking-tight marker:hidden hover:bg-muted/30">
-          <span className="inline-flex items-center gap-2">
-            <span className="text-foreground">
-              Show regime narrative, market tape, twin-scope and sandbox views
-            </span>
-            <span className="text-muted-foreground transition-transform group-open:rotate-90">›</span>
-          </span>
-        </summary>
-        <div className="mt-3 space-y-4">
-          {narrative && (
-            <NarrativeBlock
-              eyebrow={`Markets column · ${activeEquitySignal?.latestMonth ?? ""}`}
-              strapline={`The ${read.phase.toLowerCase()} read`}
-              paragraphs={narrative}
-            />
-          )}
-          {cyclePhasePoints.length > 0 && (
-            <Card
-              title="Market Tape · 7-year regime + flow"
-              subtitle={`Background colour = cycle phase · bar height = active-equity flow z-score · since ${cyclePhasePoints[0].month}`}
-            >
-              <MarketTape cells={tapeCells} lastN={84} height={72} />
-              <div className="mt-3">
-                <CycleRibbon points={cyclePhasePoints} lastN={84} />
-              </div>
-            </Card>
-          )}
-          {twinScopeData && (
-            <TwinScopeCard
-              label="Active Equity Net Inflow"
-              current={twinScopeData.current}
-              prior={twinScopeData.prior}
-              formatValue={(v) => `₹${formatCompactCrSafe(v)}`}
-            />
-          )}
-          {sandboxScenario && <SandboxCard scenario={sandboxScenario} />}
-        </div>
-      </details>
 
       <StickyContextFooter
         cyclePhase={latestCyclePhase}
