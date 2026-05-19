@@ -6,8 +6,10 @@ import { Card } from "@/components/ui/Card";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import { DistributionStrip } from "@/components/ui/DistributionStrip";
 import { KpiCard } from "@/components/ui/KpiCard";
+import { LensToggle } from "@/components/ui/LensToggle";
 import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
 import { SectionDivider } from "@/components/ui/SectionDivider";
+import { BarSeries } from "@/components/charts/BarSeries";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { RankTrendChart } from "@/components/charts/RankTrendChart";
 import { chartInsights, latestYoyPct } from "@/lib/chart-context";
@@ -38,10 +40,18 @@ export function generateStaticParams() {
 
 export default async function AmcPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { slug: rawSlug } = await params;
+  const sp = await searchParams;
+  const aaumLens: "absolute" | "share" =
+    sp.aaumLens === "share" ? "share" : "absolute";
+  const preservedQueryParams: Record<string, string | undefined> = {
+    aaumLens: typeof sp.aaumLens === "string" ? sp.aaumLens : undefined,
+  };
   const slug = resolveAmcSlug(rawSlug);
   if (!slug) notFound();
 
@@ -441,7 +451,11 @@ export default async function AmcPage({
       <section className="grid gap-4 lg:grid-cols-2">
         <ChartWithContext
           title="AAUM Trend"
-          subtitle={`Rebased to 100 at start · ${aaumSeries.length} quarter${aaumSeries.length === 1 ? "" : "s"} · this AMC vs industry total · Source: AMFI Fundwise AAUM`}
+          subtitle={
+            aaumLens === "share"
+              ? `${aaumSeries.length} quarter${aaumSeries.length === 1 ? "" : "s"} · MF AAUM · ₹ Cr · Source: AMFI Fundwise AAUM`
+              : `Rebased to 100 at start · ${aaumSeries.length} quarter${aaumSeries.length === 1 ? "" : "s"} · this AMC vs industry total · Source: AMFI Fundwise AAUM`
+          }
           flowKind="stock"
           denominatorCaption={aaumDenomCaption}
           denominatorTooltip="Latest AMC AAUM as a percentage of industry total — the cleanest peer benchmark for 'is this AMC pulling ahead of the industry?'."
@@ -450,8 +464,34 @@ export default async function AmcPage({
             const v = latestYoyPct(aaumInsightSeries, 4);
             return v === null ? undefined : { label: "YoY", pct: v };
           })()}
+          action={
+            <LensToggle
+              basePath={`/amc/${slug}`}
+              paramName="aaumLens"
+              defaultValue="absolute"
+              lenses={[
+                { value: "absolute", label: "Indexed" },
+                { value: "share", label: "₹ Cr" },
+              ]}
+              active={aaumLens}
+              preserveParams={preservedQueryParams}
+            />
+          }
         >
-          {aaumRebased.length > 0 ? (
+          {aaumLens === "share" ? (
+            aaumInsightSeries.length > 0 ? (
+              <BarSeries
+                data={aaumInsightSeries}
+                name={detail.displayName}
+                color="hsl(var(--chart-1))"
+                valueFormat="cr"
+                axisFormat="cr"
+                labelFormat="none"
+              />
+            ) : (
+              <EmptyChart>No AAUM history</EmptyChart>
+            )
+          ) : aaumRebased.length > 0 ? (
             <MultiLine
               data={aaumRebased}
               xKey="label"
