@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   amcAaumQuarterlySnapshot,
   amcQuarterlySnapshot,
@@ -35,7 +36,21 @@ export function DataFreshnessFooter() {
           · AMFI Fundwise AAUM + AMFI Monthly &amp; Quarterly Reports +
           listed-AMC company filings
         </span>
-        <span>AmfiBeas</span>
+        <span className="flex items-center gap-3">
+          <Link
+            href="/data-sources"
+            className="hover:text-foreground hover:underline"
+          >
+            Data sources
+          </Link>
+          <Link
+            href="/premium"
+            className="hover:text-foreground hover:underline"
+          >
+            Premium data
+          </Link>
+          <span>AmfiBeas</span>
+        </span>
       </div>
     </footer>
   );
