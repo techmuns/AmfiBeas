@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
+import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
+import { marketWrap } from "@/data/market-wrap";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AreaTrend } from "@/components/charts/AreaTrend";
 import { BarSeries } from "@/components/charts/BarSeries";
@@ -103,6 +105,7 @@ export default function HomePage() {
     latestQ.revenue > 0 ? (latestQ.pat / latestQ.revenue) * 100 : null;
 
   const narrative = industryNarrative(6);
+  const marketWrapData = marketWrap();
 
   return (
     <div className="space-y-6">
@@ -110,6 +113,8 @@ export default function HomePage() {
         title="Overview"
         subtitle={`Industry snapshot · ${latestMonth()} (operating) · ${formatQuarterLabelLong(latestQuarter())} (financial)`}
       />
+
+      <MarketWrapCard wrap={marketWrapData} />
 
       {narrative.length > 0 && (
         <section className="space-y-3">
