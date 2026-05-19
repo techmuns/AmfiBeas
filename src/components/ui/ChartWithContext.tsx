@@ -128,7 +128,7 @@ export function ChartWithContext({
       className={className}
     >
       {headline && (
-        <p className="mb-3 text-[12.5px] italic leading-snug text-foreground/85">
+        <p className="mb-3 border-l-2 border-foreground/40 pl-3 text-[13px] italic leading-snug text-foreground/85">
           {headline}
         </p>
       )}

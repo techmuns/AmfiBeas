@@ -19,25 +19,25 @@ export function MarketWrapCard({ wrap }: MarketWrapCardProps) {
   return (
     <section
       aria-label="Market wrap"
-      className="rounded-lg border border-border bg-gradient-to-br from-muted/40 via-card to-card px-6 py-5 shadow-sm"
+      className="rounded-lg border border-border bg-gradient-to-br from-muted/40 via-card to-card px-7 py-6 shadow-sm"
     >
-      <div className="mb-4 flex items-baseline justify-between gap-3">
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+      <div className="mb-5 flex items-baseline justify-between gap-3 border-b border-border/40 pb-3">
+        <h2 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-foreground/80">
           Market Wrap
         </h2>
         <span className="text-[11px] tabular text-muted-foreground">
           Through {wrap.asOf}
         </span>
       </div>
-      <ul className="space-y-3">
+      <ul className="space-y-3.5">
         {wrap.lines.map((line, i) => (
           <li
             key={i}
-            className="flex items-start gap-3 text-[15px] font-medium leading-snug text-foreground"
+            className="flex items-start gap-3.5 text-[17px] font-medium leading-snug text-foreground"
           >
             <span
               aria-hidden
-              className="mt-1.5 inline-block h-3.5 w-[3px] shrink-0 rounded-sm bg-foreground"
+              className="mt-1.5 inline-block h-5 w-[3px] shrink-0 rounded-sm bg-foreground"
             />
             <span>{line}</span>
           </li>

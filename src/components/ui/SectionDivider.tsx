@@ -28,7 +28,7 @@ export function SectionDivider({
   className,
 }: SectionDividerProps) {
   return (
-    <div className={cn("py-1", className)}>
+    <div className={cn("pt-2 pb-1", className)}>
       <div className="flex items-end justify-between gap-3">
         <div className="flex items-center gap-2.5">
           {icon && (
@@ -42,16 +42,18 @@ export function SectionDivider({
                 {eyebrow}
               </div>
             )}
-            <h2 className="text-base font-semibold tracking-tight">{label}</h2>
+            <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
+              {label}
+            </h2>
           </div>
         </div>
         {context && (
-          <p className="hidden max-w-[40ch] text-[11px] italic text-muted-foreground sm:block">
+          <p className="hidden max-w-[44ch] text-[11px] italic text-muted-foreground sm:block">
             {context}
           </p>
         )}
       </div>
-      <div className="mt-2 h-px w-full bg-gradient-to-r from-foreground/30 via-border to-transparent" />
+      <div className="mt-2.5 h-[2px] w-full rounded-full bg-gradient-to-r from-foreground/40 via-border/60 to-transparent" />
     </div>
   );
 }
