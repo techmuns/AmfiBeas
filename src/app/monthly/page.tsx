@@ -114,6 +114,11 @@ export default async function MonthlyPage({
       : "share";
   const monthlyFlowsLens: "absolute" | "share" =
     sp.flowsLens === "share" ? "share" : "absolute";
+  // Chart-type toggle for the Equity / Debt / Liquid Net Flows card.
+  // Default is "bars" (current grouped-bar view) — only the "trend"
+  // value ever rides in the URL so the default stays URL-clean.
+  const flowsView: "bars" | "trend" =
+    sp.flowsView === "trend" ? "trend" : "bars";
   const equityBreakdownLens: "absolute" | "share" =
     sp.equityMixLens === "share" ? "share" : "absolute";
   const activePassiveLens: "absolute" | "share" =
@@ -169,6 +174,10 @@ export default async function MonthlyPage({
       typeof sp.nfoCountLens === "string" ? sp.nfoCountLens : undefined,
     nfoFundsLens:
       typeof sp.nfoFundsLens === "string" ? sp.nfoFundsLens : undefined,
+    // Only echo `flowsView` when the user has actively picked
+    // "trend" — bars is the default, so omitting it keeps the URL
+    // (and every other LensToggle's link) clean.
+    ...(sp.flowsView === "trend" ? { flowsView: "trend" } : {}),
   };
 
   // AMFI Monthly Snapshot — first live AMFI widget. Reads directly from
@@ -701,6 +710,15 @@ export default async function MonthlyPage({
     cyclePhaseByLabel: cyclePhaseByMonth,
     episodeAnchors: episodeAnchorsForInsights,
   });
+  // Series spec shared by the bars and trend views of the Monthly
+  // Net Flows card. `BarSpec` and `LineSpec` both have shape
+  // `{ key, name, color }` so the same array works as `bars=` on
+  // GroupedBars and `lines=` on MultiLine.
+  const monthlyFlowsSeries = [
+    { key: "equity", name: "Equity", color: "hsl(var(--chart-1))" },
+    { key: "debt", name: "Debt", color: "hsl(var(--chart-2))" },
+    { key: "liquid", name: "Liquid", color: "hsl(var(--chart-4))" },
+  ];
 
   // Provenance: all three fields come from the AMFI Monthly Report.
   // Use the most-recent debt-net-inflow provenance for the tooltip
@@ -1815,31 +1833,51 @@ export default async function MonthlyPage({
             return v === null ? undefined : { label: "Equity YoY", pct: v };
           })()}
           action={
-            <LensToggle
-              basePath="/monthly"
-              paramName="flowsLens"
-              defaultValue="absolute"
-              lenses={[
-                { value: "absolute", label: "₹ Cr" },
-                { value: "share", label: "Share %" },
-              ]}
-              active={monthlyFlowsLens}
-              preserveParams={preservedQueryParams}
-            />
+            <div className="flex items-center gap-2">
+              <LensToggle
+                basePath="/monthly"
+                paramName="flowsLens"
+                defaultValue="absolute"
+                lenses={[
+                  { value: "absolute", label: "₹ Cr" },
+                  { value: "share", label: "Share %" },
+                ]}
+                active={monthlyFlowsLens}
+                preserveParams={preservedQueryParams}
+              />
+              <LensToggle
+                basePath="/monthly"
+                paramName="flowsView"
+                defaultValue="bars"
+                lenses={[
+                  { value: "bars", label: "Bars" },
+                  { value: "trend", label: "Trend" },
+                ]}
+                active={flowsView}
+                preserveParams={preservedQueryParams}
+              />
+            </div>
           }
         >
-          <GroupedBars
-            data={monthlyFlowsDisplay}
-            xKey="month"
-            labelFormat="month"
-            valueFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
-            axisFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
-            bars={[
-              { key: "equity", name: "Equity", color: "hsl(var(--chart-1))" },
-              { key: "debt", name: "Debt", color: "hsl(var(--chart-2))" },
-              { key: "liquid", name: "Liquid", color: "hsl(var(--chart-4))" },
-            ]}
-          />
+          {flowsView === "trend" ? (
+            <MultiLine
+              data={monthlyFlowsDisplay}
+              xKey="month"
+              labelFormat="month"
+              valueFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
+              axisFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
+              lines={monthlyFlowsSeries}
+            />
+          ) : (
+            <GroupedBars
+              data={monthlyFlowsDisplay}
+              xKey="month"
+              labelFormat="month"
+              valueFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
+              axisFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
+              bars={monthlyFlowsSeries}
+            />
+          )}
           <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
             Liquid is shown separately for readability.
             <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes. In share view, each value is divided by the sum of absolute flow magnitudes in that month, so signs (inflow vs outflow) stay intact." />
