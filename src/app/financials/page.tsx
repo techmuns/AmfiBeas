@@ -3,7 +3,10 @@ import { Card } from "@/components/ui/Card";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
+import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
+import { SectionDivider } from "@/components/ui/SectionDivider";
 import { chartInsights, latestYoyPct } from "@/lib/chart-context";
+import { financialsMarketWrap } from "@/data/market-wrap-financials";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FilterBar } from "@/components/filters/FilterBar";
 import type { AmcStatus } from "@/components/filters/FilterBar";
@@ -78,6 +81,9 @@ export default async function FinancialsPage({
   const latest =
     fullSeries.find((q) => q.quarter === selectedPeriod) ??
     fullSeries[fullSeries.length - 1];
+
+  // Three-sentence "today's read" surfaced above the KPI grid.
+  const marketWrapData = financialsMarketWrap(slug, selectedPeriod);
 
   // Fixed-window chart axis. All three chart groups (Revenue/Op/PAT bars,
   // Margin Trend, Yields) share the same x-axis: the latest 8 calendar
@@ -547,9 +553,17 @@ export default async function FinancialsPage({
         </Card>
       )}
 
+      <MarketWrapCard wrap={marketWrapData} />
+
       <QuarterPicker
         availableQuarters={availableQuarters}
         selectedQuarter={selectedPeriod}
+      />
+
+      <SectionDivider
+        eyebrow="Section 1"
+        label="Headline financials"
+        context="Revenue, profit, margins and yields for the selected quarter."
       />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -654,6 +668,12 @@ export default async function FinancialsPage({
         />
       </section>
 
+      <SectionDivider
+        eyebrow="Section 2"
+        label="Trends"
+        context="P&L, margins, and yields over the available quarterly history with peer-median overlays."
+      />
+
       <section className="grid gap-4 lg:grid-cols-2">
         <ChartWithContext
           title="Operating Revenue / Operating Profit / PAT"
@@ -755,6 +775,12 @@ export default async function FinancialsPage({
           />
         </ChartWithContext>
       </section>
+
+      <SectionDivider
+        eyebrow="Section 3"
+        label="Peer comparison"
+        context="Side-by-side with the 5 listed peers for the selected quarter."
+      />
 
       <Card
         title="Listed-AMC Peer Comparison"
