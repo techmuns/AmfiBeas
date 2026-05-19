@@ -92,6 +92,7 @@ import { GroupedBars } from "@/components/charts/GroupedBars";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { MonthPicker } from "@/components/filters/MonthPicker";
 import {
+  formatCompactCr,
   formatCompactCrSafe,
   formatCroreCountSafe,
   formatIntSafe,
@@ -126,8 +127,8 @@ export default async function MonthlyPage({
     sp.aaumLens === "share" ? "share" : "absolute";
   const sipContribLens: "absolute" | "share" =
     sp.sipContribLens === "share" ? "share" : "absolute";
-  const sipAumLens: "absolute" | "share" =
-    sp.sipAumLens === "share" ? "share" : "absolute";
+  const sipAumLens: "absolute" | "vsAvg" =
+    sp.sipAumLens === "vsAvg" ? "vsAvg" : "absolute";
   const sipAccountsLens: "absolute" | "share" =
     sp.sipAccountsLens === "share" ? "share" : "absolute";
   const aeFlowLens: "absolute" | "share" =
@@ -155,8 +156,9 @@ export default async function MonthlyPage({
     aaumLens: typeof sp.aaumLens === "string" ? sp.aaumLens : undefined,
     sipContribLens:
       typeof sp.sipContribLens === "string" ? sp.sipContribLens : undefined,
-    sipAumLens:
-      typeof sp.sipAumLens === "string" ? sp.sipAumLens : undefined,
+    // Only forward known lens values — guards against stale `share`
+    // (the previous "% of total AUM" lens) lingering in shared URLs.
+    sipAumLens: sp.sipAumLens === "vsAvg" ? "vsAvg" : undefined,
     sipAccountsLens:
       typeof sp.sipAccountsLens === "string" ? sp.sipAccountsLens : undefined,
     aeFlowLens:
@@ -525,21 +527,19 @@ export default async function MonthlyPage({
   const sipAumTrend = monthlyTrend("sipAum", 24);
   const sipAccountsTrend = monthlyTrend("sipAccounts", 24);
 
-  // SIP AUM denominator caption: latest SIP AUM as % of total AUM.
+  // SIP AUM denominator caption: latest SIP AUM as % of its trailing
+  // 12-month average. Mirrors the AAUM card's caption so absolute-mode
+  // bars carry the same "is this month hot/cold vs recent trend?"
+  // context the indexed lens makes obvious.
   const sipAumDenomCaption = (() => {
-    const rows = amfiMonthlyRows();
-    for (let i = rows.length - 1; i >= 0; i--) {
-      const r = rows[i];
-      if (
-        typeof r.sipAum === "number" &&
-        typeof r.totalAum === "number" &&
-        r.totalAum > 0
-      ) {
-        const pct = (r.sipAum / r.totalAum) * 100;
-        return `${pct.toFixed(1)}% of total AUM · latest ${r.month}`;
-      }
-    }
-    return undefined;
+    if (sipAumTrend.length < 12) return undefined;
+    const trailing12 = sipAumTrend.slice(-12);
+    const avg =
+      trailing12.reduce((s, p) => s + p.value, 0) / trailing12.length;
+    const latest = sipAumTrend[sipAumTrend.length - 1];
+    if (avg <= 0) return undefined;
+    const pct = (latest.value / avg) * 100;
+    return `${pct.toFixed(1)}% of trailing 12M avg · latest ${latest.label}`;
   })();
   const sipAumInsights = chartInsights(sipAumTrend, {
     metricName: "SIP AUM",
@@ -598,19 +598,62 @@ export default async function MonthlyPage({
   const sipContribDisplay =
     sipContribLens === "share" ? sipContribShare : sipContribTrend;
 
-  const sipAumShare = amfiMonthlyRows()
-    .filter(
-      (r) =>
-        typeof r.sipAum === "number" &&
-        typeof r.totalAum === "number" &&
-        r.totalAum > 0
+  // "vs 12M avg" lens for the SIP AUM card: each month indexed as a
+  // % of its own trailing 12-month average. Built from the full row
+  // history (not the pre-sliced 24-month `sipAumTrend`) so the displayed
+  // window's earliest months still have a valid trailing average. The
+  // display window is sliced to the last 24 AFTER indexing so it matches
+  // the absolute view's width. Tooltip extras (actual ₹ Cr + trailing
+  // average) ride along on each row so the indexed % can be unpacked
+  // back into headline units on hover.
+  const sipAumAll = amfiMonthlyRows()
+    .filter((r): r is typeof r & { sipAum: number } =>
+      Number.isFinite(r.sipAum)
     )
-    .map((r) => ({
-      label: r.month,
-      value: ((r.sipAum as number) / (r.totalAum as number)) * 100,
-    }))
-    .slice(-24);
-  const sipAumDisplay = sipAumLens === "share" ? sipAumShare : sipAumTrend;
+    .map((r) => ({ label: r.month, value: r.sipAum }));
+  const sipAumIndexedFull = sipAumAll
+    .map((p, i, arr) => {
+      if (i + 1 < 12) return null;
+      const slice = arr.slice(i + 1 - 12, i + 1);
+      const avg = slice.reduce((s, q) => s + q.value, 0) / 12;
+      if (avg <= 0) return null;
+      return {
+        label: p.label,
+        value: (p.value / avg) * 100,
+        extras: [
+          { label: "Actual", value: formatCompactCr(p.value) },
+          { label: "Trailing 12M avg", value: formatCompactCr(avg) },
+        ],
+      };
+    })
+    .filter(
+      (
+        p
+      ): p is {
+        label: string;
+        value: number;
+        extras: { label: string; value: string }[];
+      } => p !== null
+    );
+  const sipAumTrendVsAvg = sipAumIndexedFull.slice(-24);
+  const sipAumDisplay =
+    sipAumLens === "vsAvg" ? sipAumTrendVsAvg : sipAumTrend;
+  // Lens-aware headline for the "vs 12M avg" view. The generic
+  // chartInsights engine speaks in absolute terms ("all-time high",
+  // "+21% YoY") which don't apply to an indexed series — so this
+  // bespoke one-liner translates the latest indexed value back into
+  // an above/below/in-line read against trailing 12-month average.
+  // ±0.5% is the "in line" band (anything tighter is noise on the chart).
+  const sipAumVsAvgHeadline: string | null = (() => {
+    if (sipAumTrendVsAvg.length === 0) return null;
+    const latest = sipAumTrendVsAvg[sipAumTrendVsAvg.length - 1];
+    const v = latest.value;
+    let qualifier: string;
+    if (Math.abs(v - 100) < 0.5) qualifier = "in line with average";
+    else if (v > 100) qualifier = "above average";
+    else qualifier = "below average";
+    return `Latest SIP AUM is ${v.toFixed(1)}% of its trailing 12M average — ${qualifier}.`;
+  })();
 
   // SIP accounts density: accounts per ₹ Cr AUM. Accounts come in raw
   // count; totalAum is in ₹ Cr. The ratio is a pure scalar.
@@ -1919,16 +1962,22 @@ export default async function MonthlyPage({
             <ChartWithContext
               title="SIP AUM Trend"
               subtitle={
-                sipAumLens === "share"
-                  ? `${sipAumShare.length} month${sipAumShare.length === 1 ? "" : "s"} · % of total industry AUM`
-                  : `Period-end SIP assets · ${sipAumTrend.length} month${sipAumTrend.length === 1 ? "" : "s"} · ₹ Cr`
+                sipAumLens === "vsAvg"
+                  ? `${sipAumTrendVsAvg.length} month${sipAumTrendVsAvg.length === 1 ? "" : "s"} · indexed to trailing 12M avg`
+                  : `${sipAumTrend.length} month${sipAumTrend.length === 1 ? "" : "s"} · SIP assets`
               }
               flowKind="stock"
               denominatorCaption={
-                sipAumLens === "share" ? undefined : sipAumDenomCaption
+                sipAumLens === "vsAvg" ? undefined : sipAumDenomCaption
               }
-              denominatorTooltip="SIP AUM as a % of total industry AUM. Captures how much of the industry's asset base sits in committed, recurring flows — a structural-stability indicator."
-              insights={sipAumInsights}
+              denominatorTooltip="Each month's SIP AUM expressed as a % of its trailing 12-month average. Helps separate cyclical noise from structural growth in committed, recurring flows."
+              insights={
+                sipAumLens === "vsAvg"
+                  ? sipAumVsAvgHeadline
+                    ? [sipAumVsAvgHeadline]
+                    : []
+                  : sipAumInsights
+              }
               yoyBadge={(() => {
                 const v = latestYoyPct(sipAumTrend, 12);
                 return v === null ? undefined : { label: "YoY", pct: v };
@@ -1940,26 +1989,30 @@ export default async function MonthlyPage({
                   defaultValue="absolute"
                   lenses={[
                     { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "% of total AUM" },
+                    { value: "vsAvg", label: "vs 12M avg" },
                   ]}
                   active={sipAumLens}
                   preserveParams={preservedQueryParams}
                 />
               }
             >
-              {sipAumTrend.length > 0 ? (
+              {sipAumDisplay.length > 0 ? (
                 <BarSeries
                   data={sipAumDisplay}
-                  name="SIP AUM"
+                  name={
+                    sipAumLens === "vsAvg" ? "SIP AUM vs 12M avg" : "SIP AUM"
+                  }
                   color="hsl(var(--chart-2))"
-                  valueFormat={sipAumLens === "share" ? "pct" : "cr"}
-                  axisFormat={sipAumLens === "share" ? "pct" : "cr"}
+                  valueFormat={sipAumLens === "vsAvg" ? "pct" : "cr"}
+                  axisFormat={sipAumLens === "vsAvg" ? "pct" : "cr"}
                   labelFormat="month"
                   trendline={
-                    sipAumLens === "share"
+                    sipAumLens === "vsAvg"
                       ? undefined
                       : movingAverage(sipAumTrend, 12)
                   }
+                  referenceValue={sipAumLens === "vsAvg" ? 100 : undefined}
+                  referenceLabel={sipAumLens === "vsAvg" ? "12M avg" : undefined}
                   cyclePhaseBands={cyclePhaseBands}
                 />
               ) : (

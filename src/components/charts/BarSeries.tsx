@@ -12,7 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ChartTooltip } from "./Tooltip";
+import { ChartTooltip, type TooltipExtraRow } from "./Tooltip";
 import {
   type AxisFormat,
   type LabelFormat,
@@ -23,7 +23,14 @@ import {
 } from "./format";
 
 interface BarSeriesProps {
-  data: { label: string; value: number }[];
+  /**
+   * Each row is plotted as a bar. The optional `extras` field travels
+   * to `ChartTooltip` and renders as a thin "context" section below
+   * the main rows — useful when the bar value is an index (e.g. % of
+   * trailing-12M-avg) that needs the underlying ₹ Cr + reference
+   * value to be readable.
+   */
+  data: { label: string; value: number; extras?: TooltipExtraRow[] }[];
   height?: number;
   color?: string;
   valueFormat?: ValueFormat;
@@ -79,11 +86,14 @@ export function BarSeries({
 
   // Merge trendline values into the data so the ComposedChart can
   // render a `Line` over the bars. Trendline points are aligned by
-  // array index — the caller must ensure parallel arrays.
+  // array index — the caller must ensure parallel arrays. Tooltip
+  // extras ride along under `_extras`; ChartTooltip reads them off
+  // `payload[0].payload._extras` and renders them below the main rows.
   const merged = data.map((p, i) => ({
     label: p.label,
     value: p.value,
     trend: trendline?.[i]?.value ?? null,
+    _extras: p.extras,
   }));
 
   return (
