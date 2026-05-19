@@ -1219,6 +1219,46 @@ export default async function MonthlyPage({
   const sipStickiness = sipStickinessSignal();
   const latestNifty = latestNifty500Row();
   const cyclePhasePoints = cyclePhaseHistory();
+  // Cycle-phase bands — group consecutive months of "Correction" or
+  // "Peak" into runs so any BarSeries on the page can draw a subtle
+  // background tint over those stretches. The other phases stay
+  // unshaded (most of the timeline) so the bands read as ambient
+  // context, not clutter.
+  const cyclePhaseBands: { fromLabel: string; toLabel: string; phase: "Correction" | "Peak" }[] = (() => {
+    const out: { fromLabel: string; toLabel: string; phase: "Correction" | "Peak" }[] = [];
+    let runStart: { idx: number; phase: "Correction" | "Peak" } | null = null;
+    for (let i = 0; i < cyclePhasePoints.length; i++) {
+      const p = cyclePhasePoints[i];
+      const isNotable = p.phase === "Correction" || p.phase === "Peak";
+      if (isNotable) {
+        if (runStart === null || runStart.phase !== p.phase) {
+          if (runStart !== null) {
+            out.push({
+              fromLabel: cyclePhasePoints[runStart.idx].month,
+              toLabel: cyclePhasePoints[i - 1].month,
+              phase: runStart.phase,
+            });
+          }
+          runStart = { idx: i, phase: p.phase as "Correction" | "Peak" };
+        }
+      } else if (runStart !== null) {
+        out.push({
+          fromLabel: cyclePhasePoints[runStart.idx].month,
+          toLabel: cyclePhasePoints[i - 1].month,
+          phase: runStart.phase,
+        });
+        runStart = null;
+      }
+    }
+    if (runStart !== null) {
+      out.push({
+        fromLabel: cyclePhasePoints[runStart.idx].month,
+        toLabel: cyclePhasePoints[cyclePhasePoints.length - 1].month,
+        phase: runStart.phase,
+      });
+    }
+    return out;
+  })();
   // Coach message: surfaces the single most striking signal on the page.
   const coachMessage = (() => {
     const stress = marketStressFlowSignal();
@@ -1746,6 +1786,7 @@ export default async function MonthlyPage({
                   }
                   referenceValue={aaumLens === "share" ? 100 : undefined}
                   referenceLabel={aaumLens === "share" ? "12M avg" : undefined}
+                  cyclePhaseBands={cyclePhaseBands}
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
@@ -1866,6 +1907,7 @@ export default async function MonthlyPage({
                       ? undefined
                       : movingAverage(sipContribTrend, 12)
                   }
+                  cyclePhaseBands={cyclePhaseBands}
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
@@ -1918,6 +1960,7 @@ export default async function MonthlyPage({
                       ? undefined
                       : movingAverage(sipAumTrend, 12)
                   }
+                  cyclePhaseBands={cyclePhaseBands}
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
@@ -1970,6 +2013,7 @@ export default async function MonthlyPage({
                       ? undefined
                       : movingAverage(sipAccountsTrend, 12)
                   }
+                  cyclePhaseBands={cyclePhaseBands}
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
@@ -2041,6 +2085,7 @@ export default async function MonthlyPage({
                       : movingAverage(activeEquityFlowTrend, 12)
                   }
                   trendlineName="12M avg"
+                  cyclePhaseBands={cyclePhaseBands}
                 />
                 {aeFlowLens === "absolute" && (
                   <div className="mt-2">
@@ -2418,6 +2463,7 @@ export default async function MonthlyPage({
                   valueFormat={aeAaumLens === "share" ? "pct" : "cr"}
                   axisFormat={aeAaumLens === "share" ? "pct" : "cr"}
                   labelFormat="month"
+                  cyclePhaseBands={cyclePhaseBands}
                   trendline={
                     aeAaumLens === "share"
                       ? undefined
