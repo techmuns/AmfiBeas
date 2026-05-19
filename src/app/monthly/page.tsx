@@ -829,25 +829,6 @@ export default async function MonthlyPage({
   const activeEquityAaumDisplay =
     aeAaumLens === "share" ? activeEquityAaumShare : activeEquityTrend;
 
-  // Active Equity Share denominator: pp shift vs trailing 12M average
-  // — the absolute share moves slowly, so the pp delta is the more
-  // informative read.
-  const activeEquityShareDenomCaption = (() => {
-    if (activeEquityShareTrend.length < 12) return undefined;
-    const latest = activeEquityShareTrend[activeEquityShareTrend.length - 1];
-    const trailing12 = activeEquityShareTrend.slice(-12);
-    const avg = trailing12.reduce((s, p) => s + p.value, 0) / trailing12.length;
-    const pp = latest.value - avg;
-    return `${pp >= 0 ? "+" : "−"}${Math.abs(pp).toFixed(2)} pp vs trailing 12M avg · latest ${latest.label}`;
-  })();
-  const activeEquityShareInsights = chartInsights(activeEquityShareTrend, {
-    metricName: "active-equity share",
-    unitSuffix: "%",
-    drawdownByLabel: ddByMonthForInsights,
-    cyclePhaseByLabel: cyclePhaseByMonth,
-    yoyLag: 12,
-  });
-
   // Equity AAUM Breakdown denominator: ETF & Index share of equity AUM
   // = passive penetration. Most analytically interesting cross-data
   // point for this chart since the subtitle already shows the full
@@ -1245,25 +1226,6 @@ export default async function MonthlyPage({
     }
   );
 
-  // SIP AUM share — already a %. Denominator caption highlights pp
-  // shift vs trailing 12M average, which is more informative than the
-  // % itself (which barely moves MoM).
-  const sipAumShareDenomCaption = (() => {
-    if (sipAumShareTrend.length < 12) return undefined;
-    const latest = sipAumShareTrend[sipAumShareTrend.length - 1];
-    const trailing12 = sipAumShareTrend.slice(-12);
-    const avg = trailing12.reduce((s, p) => s + p.value, 0) / trailing12.length;
-    const pp = latest.value - avg;
-    return `${pp >= 0 ? "+" : "−"}${Math.abs(pp).toFixed(2)} pp vs trailing 12M avg · latest ${latest.label}`;
-  })();
-  const sipAumShareInsights = chartInsights(sipAumShareTrend, {
-    metricName: "SIP AUM share",
-    unitSuffix: "%",
-    drawdownByLabel: ddByMonthForInsights,
-    cyclePhaseByLabel: cyclePhaseByMonth,
-    yoyLag: 12,
-  });
-
   // Proportion diagnostics: category rotation, NFO drag, passive flow share.
   const rotation = categoryRotation(3, 5);
   const nfoDrag = nfoDragTrend(24);
@@ -1654,29 +1616,6 @@ export default async function MonthlyPage({
   const activeVsEtfInsights = chartInsights(activeVsEtfPassiveSeries, {
     metricName: "ETF & Index AUM",
     unitSuffix: "₹ Cr",
-    cyclePhaseByLabel: cyclePhaseByMonth,
-    yoyLag: 12,
-  });
-
-  // Passive share denominator: pp shift YoY — more useful than the
-  // absolute share since the share moves slowly month-to-month.
-  const passiveShareHistorySeries = activePassiveTrend
-    ? activePassiveTrend.history.map((p) => ({
-        label: p.month,
-        value: p.passiveSharePct,
-      }))
-    : [];
-  const passiveShareDenomCaption = (() => {
-    if (passiveShareHistorySeries.length < 13) return undefined;
-    const latest = passiveShareHistorySeries[passiveShareHistorySeries.length - 1];
-    const prior = passiveShareHistorySeries[passiveShareHistorySeries.length - 13];
-    if (prior === undefined) return undefined;
-    const pp = latest.value - prior.value;
-    return `${pp >= 0 ? "+" : "−"}${Math.abs(pp).toFixed(2)} pp YoY · latest ${latest.label}`;
-  })();
-  const passiveShareInsights = chartInsights(passiveShareHistorySeries, {
-    metricName: "passive share",
-    unitSuffix: "%",
     cyclePhaseByLabel: cyclePhaseByMonth,
     yoyLag: 12,
   });
@@ -2357,36 +2296,6 @@ export default async function MonthlyPage({
                 </p>
               </ChartWithContext>
             )}
-
-            {sipAumShareTrend.length > 0 && (
-              <ChartWithContext
-                title="SIP AUM as % of Total AUM"
-                subtitle={`${sipAumShareTrend.length} month${sipAumShareTrend.length === 1 ? "" : "s"} · SIP AUM ÷ Total AUM`}
-                flowKind="stock"
-                denominatorCaption={sipAumShareDenomCaption}
-                denominatorTooltip="Latest SIP-AUM share minus the trailing 12-month average, in percentage points — separates structural drift from MoM noise on a metric that barely moves."
-                insights={sipAumShareInsights}
-                yoyBadge={(() => {
-                  const v = latestYoyPct(sipAumShareTrend, 12);
-                  return v === null ? undefined : { label: "YoY", pct: v };
-                })()}
-              >
-                <BarSeries
-                  data={sipAumShareTrend}
-                  name="SIP AUM share"
-                  color="hsl(var(--chart-2))"
-                  valueFormat="pct"
-                  axisFormat="pct"
-                  labelFormat="month"
-                  trendline={movingAverage(sipAumShareTrend, 12)}
-                  trendlineName="12M avg"
-                />
-                <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  SIP AUM as a share of total industry AUM.
-                  <InfoTooltip label="SIP contribution share of gross inflows is intentionally omitted — gross inflows (Funds Mobilized) are only available on the quarterly disclosure, not in the monthly snapshot." />
-                </p>
-              </ChartWithContext>
-            )}
           </section>
         </details>
       )}
@@ -2724,36 +2633,6 @@ export default async function MonthlyPage({
                 </div>
               )}
             </ChartWithContext>
-
-            <ChartWithContext
-              title="Active Equity Share of Total AAUM"
-              subtitle={`${activeEquityShareTrend.length} month${activeEquityShareTrend.length === 1 ? "" : "s"} · % of period-average Total AAUM`}
-              flowKind="stock"
-              denominatorCaption={activeEquityShareDenomCaption}
-              denominatorTooltip="Latest share minus the trailing 12-month average, in percentage points — the absolute share moves slowly so the pp delta is the more informative read."
-              insights={activeEquityShareInsights}
-              yoyBadge={(() => {
-                const v = latestYoyPct(activeEquityShareTrend, 12);
-                return v === null ? undefined : { label: "YoY", pct: v };
-              })()}
-            >
-              {activeEquityShareTrend.length > 0 ? (
-                <BarSeries
-                  data={activeEquityShareTrend}
-                  name="Active Equity Share"
-                  color="hsl(var(--chart-3))"
-                  valueFormat="pct"
-                  axisFormat="pct"
-                  labelFormat="month"
-                  trendline={movingAverage(activeEquityShareTrend, 12)}
-                  trendlineName="12M avg"
-                />
-              ) : (
-                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  Active Equity Share unavailable
-                </div>
-              )}
-            </ChartWithContext>
           </section>
 
           <ChartWithContext
@@ -2896,47 +2775,6 @@ export default async function MonthlyPage({
               <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
                 Active equity vs ETF &amp; Index AUM.
                 <InfoTooltip label="Active equity = equity-oriented + hybrid (ex-arbitrage) + solution-oriented. ETF & Index = Index Funds + Other ETFs (excludes Gold ETFs). Share view divides each by their sum so the two lines always add to 100%." />
-              </p>
-            </ChartWithContext>
-
-            <ChartWithContext
-              title="Passive Share of Equity AUM"
-              subtitle={
-                activePassiveTrend.forecastMonths > 0 &&
-                activePassiveTrend.endOfFyProjectionPct !== null
-                  ? `Latest ${activePassiveTrend.latestSharePct.toFixed(2)}% · projected FY-end ${activePassiveTrend.endOfFyProjectionPct.toFixed(2)}% · slope ${activePassiveTrend.trendSlopePctPerMonth >= 0 ? "+" : ""}${activePassiveTrend.trendSlopePctPerMonth.toFixed(3)} pp/mo`
-                  : `Latest ${activePassiveTrend.latestSharePct.toFixed(2)}%`
-              }
-              flowKind="stock"
-              denominatorCaption={passiveShareDenomCaption}
-              denominatorTooltip="Latest share minus the value 12 months ago, in percentage points — the headline read for passive penetration. Slow-moving, so YoY pp shift is the most informative cut."
-              insights={passiveShareInsights}
-              yoyBadge={(() => {
-                const v = latestYoyPct(passiveShareHistorySeries, 12);
-                return v === null
-                  ? undefined
-                  : { label: "YoY", pct: v };
-              })()}
-            >
-              <MultiLine
-                data={activePassiveTrend.share}
-                xKey="month"
-                labelFormat="month"
-                valueFormat="pct"
-                axisFormat="pct"
-                showDots
-                dynamicYDomain
-                lines={[
-                  {
-                    key: "passiveSharePct",
-                    name: "Passive share",
-                    color: "hsl(var(--chart-5))",
-                  },
-                ]}
-              />
-              <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                Passive share = ETF &amp; Index ÷ (Active equity + ETF &amp; Index).
-                <InfoTooltip label="Forecast (when shown) is a simple trend projection of the historical slope to the upcoming fiscal-year-end (March). Not a predictive model — a directional reference." />
               </p>
             </ChartWithContext>
           </section>

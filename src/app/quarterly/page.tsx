@@ -30,7 +30,6 @@ import {
   formatQuarterlyProvenanceTooltip,
   getQuarterlyKpiProvenance,
   getQuarterlyKpiValue,
-  latestIndustryProvenance,
   latestOpenEndedSchemeCount,
   latestQuarterlyFolioAdditions,
   liquidAumForQuarter,
@@ -503,9 +502,6 @@ export default async function QuarterlyPage({
     aeAaumTrend.length > 0 ||
     aeShareTrend.length > 0 ||
     aeBreakdownHasData;
-  const aeAaumHover = formatQuarterlyProvenanceTooltip(
-    latestIndustryProvenance("equityLastMonthAaum")
-  );
   // Latest active/etf/arbitrage mix — proportion-first read for the
   // breakdown subtitle.
   const latestQuarterlyEquityMix = (() => {
@@ -582,24 +578,6 @@ export default async function QuarterlyPage({
     })
     .filter((p): p is { label: string; value: number } => p !== null);
   const aeAaumDisplay = qAeAaumLens === "share" ? aeAaumShare : aeAaumTrend;
-
-  // Active Equity Share denominator: pp shift vs trailing 4Q average
-  // — the share moves slowly so the pp delta is the more informative
-  // read.
-  const aeShareDenomCaption = (() => {
-    if (aeShareTrend.length < 4) return undefined;
-    const latest = aeShareTrend[aeShareTrend.length - 1];
-    const trailing4 = aeShareTrend.slice(-4);
-    const avg = trailing4.reduce((s, p) => s + p.value, 0) / trailing4.length;
-    const pp = latest.value - avg;
-    return `${pp >= 0 ? "+" : "−"}${Math.abs(pp).toFixed(2)} pp vs trailing 4Q avg · latest ${latest.label}`;
-  })();
-  const aeShareInsights = chartInsights(aeShareTrend, {
-    metricName: "active-equity share",
-    unitSuffix: "%",
-    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
-    yoyLag: 4,
-  });
 
   // Equity Breakdown denominator: ETF & Index share = passive
   // penetration — same framing as /monthly so the quarterly read
@@ -1084,42 +1062,6 @@ export default async function QuarterlyPage({
                   Active Equity Last-month AAUM unavailable
                 </div>
               )}
-            </ChartWithContext>
-
-            <ChartWithContext
-              title="Active Equity Share of Total Last-month AAUM"
-              subtitle={`${aeShareTrend.length} quarter${aeShareTrend.length === 1 ? "" : "s"} · % of total last-month AAUM`}
-              flowKind="stock"
-              denominatorCaption={aeShareDenomCaption}
-              denominatorTooltip="Latest share minus the trailing 4-quarter average, in percentage points — the absolute share moves slowly so the pp delta is the more informative read."
-              insights={aeShareInsights}
-              yoyBadge={(() => {
-                const v = latestYoyPct(aeShareTrend, 4);
-                return v === null ? undefined : { label: "YoY", pct: v };
-              })()}
-            >
-              {aeShareTrend.length > 0 ? (
-                <BarSeries
-                  data={aeShareTrend}
-                  name="Active Equity Share"
-                  color="hsl(var(--chart-3))"
-                  valueFormat="pct"
-                  axisFormat="pct"
-                  labelFormat="none"
-                  trendline={movingAverage(aeShareTrend, 4)}
-                  trendlineName="4Q avg"
-                />
-              ) : (
-                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  Active Equity Share unavailable
-                </div>
-              )}
-              <div
-                className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                title={aeAaumHover ?? undefined}
-              >
-                Last-month AAUM ratio — not a true QAAUM share
-              </div>
             </ChartWithContext>
           </section>
 
