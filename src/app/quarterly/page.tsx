@@ -86,6 +86,18 @@ export default async function QuarterlyPage({
     sp.qFlowsLens === "share" ? "share" : "absolute";
   const equityMixLens: "absolute" | "share" =
     sp.qEquityMixLens === "share" ? "share" : "absolute";
+  // Per-card lens toggles for /quarterly. Each one switches a trend
+  // chart between absolute and a card-specific share/ratio view.
+  const qAaumLens: "absolute" | "share" =
+    sp.qAaumLens === "share" ? "share" : "absolute";
+  const qAeAaumLens: "absolute" | "share" =
+    sp.qAeAaumLens === "share" ? "share" : "absolute";
+  const qFoliosLens: "absolute" | "share" =
+    sp.qFoliosLens === "share" ? "share" : "absolute";
+  const qFolioAddLens: "absolute" | "share" =
+    sp.qFolioAddLens === "share" ? "share" : "absolute";
+  const qSchemesLens: "absolute" | "share" =
+    sp.qSchemesLens === "share" ? "share" : "absolute";
   // Pass-through params for every LensToggle on this page.
   const preservedQueryParams: Record<string, string | undefined> = {
     quarter: typeof sp.quarter === "string" ? sp.quarter : undefined,
@@ -93,6 +105,15 @@ export default async function QuarterlyPage({
       typeof sp.qFlowsLens === "string" ? sp.qFlowsLens : undefined,
     qEquityMixLens:
       typeof sp.qEquityMixLens === "string" ? sp.qEquityMixLens : undefined,
+    qAaumLens: typeof sp.qAaumLens === "string" ? sp.qAaumLens : undefined,
+    qAeAaumLens:
+      typeof sp.qAeAaumLens === "string" ? sp.qAeAaumLens : undefined,
+    qFoliosLens:
+      typeof sp.qFoliosLens === "string" ? sp.qFoliosLens : undefined,
+    qFolioAddLens:
+      typeof sp.qFolioAddLens === "string" ? sp.qFolioAddLens : undefined,
+    qSchemesLens:
+      typeof sp.qSchemesLens === "string" ? sp.qSchemesLens : undefined,
   };
 
   // Share-mode transform helper for grouped-bar series.
@@ -421,6 +442,19 @@ export default async function QuarterlyPage({
     cyclePhaseByLabel: cyclePhaseByQuarterLabel,
     yoyLag: 4,
   });
+  // "Share" view: each quarter indexed as a % of its own trailing
+  // 4Q (1Y) moving average. Drops the first 3 points where no
+  // trailing average is available.
+  const aaumTrendShare = aaumTrendData
+    .map((p, i, arr) => {
+      if (i + 1 < 4) return null;
+      const slice = arr.slice(i + 1 - 4, i + 1);
+      const avg = slice.reduce((s, q) => s + q.value, 0) / 4;
+      if (avg <= 0) return null;
+      return { label: p.label, value: (p.value / avg) * 100 };
+    })
+    .filter((p): p is { label: string; value: number } => p !== null);
+  const aaumDisplayData = qAaumLens === "share" ? aaumTrendShare : aaumTrendData;
 
   // ---- Quarterly Flows ----------------------------------------------
   // Mirrors /monthly's "Equity / Debt / Liquid Monthly Net Flows"
@@ -539,6 +573,15 @@ export default async function QuarterlyPage({
     cyclePhaseByLabel: cyclePhaseByQuarterLabel,
     yoyLag: 4,
   });
+  // Active Equity AAUM share: % of total industry last-month AAUM.
+  const aeAaumShare = aeAaumTrend
+    .map((p) => {
+      const totalRow = aaumTrendData.find((q) => q.label === p.label);
+      if (!totalRow || totalRow.value <= 0) return null;
+      return { label: p.label, value: (p.value / totalRow.value) * 100 };
+    })
+    .filter((p): p is { label: string; value: number } => p !== null);
+  const aeAaumDisplay = qAeAaumLens === "share" ? aeAaumShare : aeAaumTrend;
 
   // Active Equity Share denominator: pp shift vs trailing 4Q average
   // — the share moves slowly so the pp delta is the more informative
@@ -649,6 +692,51 @@ export default async function QuarterlyPage({
     cyclePhaseByLabel: cyclePhaseByQuarterLabel,
     yoyLag: 4,
   });
+
+  // ---- "Share" series for each folio + scheme card ----------------
+  // Folios indexed to trailing 4Q (1Y) average — turns the slow
+  // mostly-monotonic line into a meaningful "above/below trend"
+  // read.
+  const foliosTrendShare = foliosTrend
+    .map((p, i, arr) => {
+      if (i + 1 < 4) return null;
+      const slice = arr.slice(i + 1 - 4, i + 1);
+      const avg = slice.reduce((s, q) => s + q.value, 0) / 4;
+      if (avg <= 0) return null;
+      return { label: p.label, value: (p.value / avg) * 100 };
+    })
+    .filter((p): p is { label: string; value: number } => p !== null);
+  const foliosDisplay =
+    qFoliosLens === "share" ? foliosTrendShare : foliosTrend;
+
+  // Folio additions in bps of total folio base. The base value comes
+  // from the matching `quarterlyTrend("grandTotalFolios", 16)` row;
+  // additions are in lakh, base in crore (1 Cr = 100 lakh).
+  const folioAdditionsShare = (() => {
+    const baseByQuarter = new Map<string, number>();
+    for (const p of foliosTrend) baseByQuarter.set(p.label, p.value);
+    return folioAdditionsTrend.flatMap((p) => {
+      const baseCr = baseByQuarter.get(p.label);
+      if (typeof baseCr !== "number" || baseCr <= 0) return [];
+      const bps = (p.value / 100 / (baseCr / 1e7)) * 10000;
+      return [{ label: p.label, value: bps }];
+    });
+  })();
+  const folioAdditionsDisplay =
+    qFolioAddLens === "share" ? folioAdditionsShare : folioAdditionsTrend;
+
+  // Open-ended scheme count: % of trailing 4Q average.
+  const schemesTrendShare = schemesTrend
+    .map((p, i, arr) => {
+      if (i + 1 < 4) return null;
+      const slice = arr.slice(i + 1 - 4, i + 1);
+      const avg = slice.reduce((s, q) => s + q.value, 0) / 4;
+      if (avg <= 0) return null;
+      return { label: p.label, value: (p.value / avg) * 100 };
+    })
+    .filter((p): p is { label: string; value: number } => p !== null);
+  const schemesDisplay =
+    qSchemesLens === "share" ? schemesTrendShare : schemesTrend;
 
   // AUM Market Share — live Top 7 + Others from AMFI Fundwise AAUM.
   // Same helper as /monthly so the two pages render an identical view.
@@ -798,26 +886,51 @@ export default async function QuarterlyPage({
             </Card>
             <ChartWithContext
               title="Last-month AAUM Trend"
-              subtitle={`${aaumTrendSubtitle} · Average AUM column is last-month only — not a true quarterly average`}
+              subtitle={
+                qAaumLens === "share"
+                  ? `${aaumTrendShare.length} quarter${aaumTrendShare.length === 1 ? "" : "s"} · indexed to trailing 4Q avg`
+                  : `${aaumTrendSubtitle} · Average AUM column is last-month only — not a true quarterly average`
+              }
               flowKind="stock"
-              denominatorCaption={lastMonthAaumDenomCaption}
+              denominatorCaption={
+                qAaumLens === "share" ? undefined : lastMonthAaumDenomCaption
+              }
               denominatorTooltip="Latest last-month AAUM as a % of the trailing 4-quarter average — separates structural growth from quarter-to-quarter mean-reversion."
               insights={lastMonthAaumInsights}
               yoyBadge={(() => {
                 const v = latestYoyPct(aaumTrendData, 4);
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
+              action={
+                <LensToggle
+                  basePath="/quarterly"
+                  paramName="qAaumLens"
+                  defaultValue="absolute"
+                  lenses={[
+                    { value: "absolute", label: "₹ Cr" },
+                    { value: "share", label: "vs 4Q avg" },
+                  ]}
+                  active={qAaumLens}
+                  preserveParams={preservedQueryParams}
+                />
+              }
             >
               {aaumTrendHasData ? (
                 <BarSeries
-                  data={aaumTrendData}
+                  data={aaumDisplayData}
                   name="Last-month AAUM"
                   color="hsl(var(--chart-1))"
-                  valueFormat="cr"
-                  axisFormat="cr"
+                  valueFormat={qAaumLens === "share" ? "pct" : "cr"}
+                  axisFormat={qAaumLens === "share" ? "pct" : "cr"}
                   labelFormat="none"
-                  trendline={movingAverage(aaumTrendData, 4)}
+                  trendline={
+                    qAaumLens === "share"
+                      ? undefined
+                      : movingAverage(aaumTrendData, 4)
+                  }
                   trendlineName="4Q avg"
+                  referenceValue={qAaumLens === "share" ? 100 : undefined}
+                  referenceLabel={qAaumLens === "share" ? "4Q avg" : undefined}
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
@@ -922,25 +1035,48 @@ export default async function QuarterlyPage({
           <section className="grid gap-4 lg:grid-cols-2">
             <ChartWithContext
               title="Active Equity Last-month AAUM Trend"
-              subtitle={`${aeAaumTrend.length} quarter${aeAaumTrend.length === 1 ? "" : "s"} · ₹ Cr · last-month AAUM (not QAAUM)`}
+              subtitle={
+                qAeAaumLens === "share"
+                  ? `${aeAaumShare.length} quarter${aeAaumShare.length === 1 ? "" : "s"} · % of total industry last-month AAUM`
+                  : `${aeAaumTrend.length} quarter${aeAaumTrend.length === 1 ? "" : "s"} · ₹ Cr · last-month AAUM (not QAAUM)`
+              }
               flowKind="stock"
-              denominatorCaption={aeAaumDenomCaption}
+              denominatorCaption={
+                qAeAaumLens === "share" ? undefined : aeAaumDenomCaption
+              }
               denominatorTooltip="Latest active-equity AAUM as a % of total industry last-month AAUM — separates absolute scale growth from share capture against other segments."
               insights={aeAaumInsights}
               yoyBadge={(() => {
                 const v = latestYoyPct(aeAaumTrend, 4);
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
+              action={
+                <LensToggle
+                  basePath="/quarterly"
+                  paramName="qAeAaumLens"
+                  defaultValue="absolute"
+                  lenses={[
+                    { value: "absolute", label: "₹ Cr" },
+                    { value: "share", label: "% of total AAUM" },
+                  ]}
+                  active={qAeAaumLens}
+                  preserveParams={preservedQueryParams}
+                />
+              }
             >
               {aeAaumTrend.length > 0 ? (
                 <BarSeries
-                  data={aeAaumTrend}
+                  data={aeAaumDisplay}
                   name="Active Equity Last-month AAUM"
                   color="hsl(var(--chart-1))"
-                  valueFormat="cr"
-                  axisFormat="cr"
+                  valueFormat={qAeAaumLens === "share" ? "pct" : "cr"}
+                  axisFormat={qAeAaumLens === "share" ? "pct" : "cr"}
                   labelFormat="none"
-                  trendline={movingAverage(aeAaumTrend, 4)}
+                  trendline={
+                    qAeAaumLens === "share"
+                      ? undefined
+                      : movingAverage(aeAaumTrend, 4)
+                  }
                   trendlineName="4Q avg"
                 />
               ) : (
@@ -1123,26 +1259,51 @@ export default async function QuarterlyPage({
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               <ChartWithContext
                 title="Folios Trend"
-                subtitle={`Industry-wide · ${foliosTrend.length} quarter${foliosTrend.length === 1 ? "" : "s"} · crore folios`}
+                subtitle={
+                  qFoliosLens === "share"
+                    ? `${foliosTrendShare.length} quarter${foliosTrendShare.length === 1 ? "" : "s"} · indexed to trailing 4Q avg`
+                    : `Industry-wide · ${foliosTrend.length} quarter${foliosTrend.length === 1 ? "" : "s"} · crore folios`
+                }
                 flowKind="stock"
-                denominatorCaption={foliosTrendDenomCaption}
+                denominatorCaption={
+                  qFoliosLens === "share" ? undefined : foliosTrendDenomCaption
+                }
                 denominatorTooltip="Latest folio base as a % of the trailing 4-quarter average — separates a fresh wave of investor onboarding from a flat shelf."
                 insights={foliosTrendInsights}
                 yoyBadge={(() => {
                   const v = latestYoyPct(foliosTrend, 4);
                   return v === null ? undefined : { label: "YoY", pct: v };
                 })()}
+                action={
+                  <LensToggle
+                    basePath="/quarterly"
+                    paramName="qFoliosLens"
+                    defaultValue="absolute"
+                    lenses={[
+                      { value: "absolute", label: "Cr" },
+                      { value: "share", label: "vs 4Q avg" },
+                    ]}
+                    active={qFoliosLens}
+                    preserveParams={preservedQueryParams}
+                  />
+                }
               >
                 {foliosTrend.length > 0 ? (
                   <BarSeries
-                    data={foliosTrend}
+                    data={foliosDisplay}
                     name="Folios"
                     color="hsl(var(--chart-1))"
-                    valueFormat="crore-count"
-                    axisFormat="crore-count"
+                    valueFormat={qFoliosLens === "share" ? "pct" : "crore-count"}
+                    axisFormat={qFoliosLens === "share" ? "pct" : "crore-count"}
                     labelFormat="none"
-                    trendline={movingAverage(foliosTrend, 4)}
+                    trendline={
+                      qFoliosLens === "share"
+                        ? undefined
+                        : movingAverage(foliosTrend, 4)
+                    }
                     trendlineName="4Q avg"
+                    referenceValue={qFoliosLens === "share" ? 100 : undefined}
+                    referenceLabel={qFoliosLens === "share" ? "4Q avg" : undefined}
                   />
                 ) : (
                   <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
@@ -1153,25 +1314,48 @@ export default async function QuarterlyPage({
 
               <ChartWithContext
                 title="Folio Additions Trend"
-                subtitle={`Net new folios per quarter · ${folioAdditionsTrend.length} quarter${folioAdditionsTrend.length === 1 ? "" : "s"} · lakh`}
+                subtitle={
+                  qFolioAddLens === "share"
+                    ? `${folioAdditionsShare.length} quarter${folioAdditionsShare.length === 1 ? "" : "s"} · bps of existing folio base`
+                    : `Net new folios per quarter · ${folioAdditionsTrend.length} quarter${folioAdditionsTrend.length === 1 ? "" : "s"} · lakh`
+                }
                 flowKind="net"
-                denominatorCaption={folioAdditionsDenomCaption}
+                denominatorCaption={
+                  qFolioAddLens === "share" ? undefined : folioAdditionsDenomCaption
+                }
                 denominatorTooltip="Latest quarterly net adds expressed in basis points of the total folio base — strips out base-rate growth so different years are comparable."
                 insights={folioAdditionsInsights}
                 yoyBadge={(() => {
                   const v = latestYoyPct(folioAdditionsTrend, 4);
                   return v === null ? undefined : { label: "YoY", pct: v };
                 })()}
+                action={
+                  <LensToggle
+                    basePath="/quarterly"
+                    paramName="qFolioAddLens"
+                    defaultValue="absolute"
+                    lenses={[
+                      { value: "absolute", label: "Lakh" },
+                      { value: "share", label: "bps of base" },
+                    ]}
+                    active={qFolioAddLens}
+                    preserveParams={preservedQueryParams}
+                  />
+                }
               >
                 {folioAdditionsTrend.length > 0 ? (
                   <BarSeries
-                    data={folioAdditionsTrend}
+                    data={folioAdditionsDisplay}
                     name="Folio Additions"
                     color="hsl(var(--chart-4))"
-                    valueFormat="lakh"
-                    axisFormat="lakh"
+                    valueFormat={qFolioAddLens === "share" ? "bps" : "lakh"}
+                    axisFormat={qFolioAddLens === "share" ? "bps" : "lakh"}
                     labelFormat="none"
-                    trendline={movingAverage(folioAdditionsTrend, 4)}
+                    trendline={
+                      qFolioAddLens === "share"
+                        ? undefined
+                        : movingAverage(folioAdditionsTrend, 4)
+                    }
                     trendlineName="4Q avg"
                   />
                 ) : (
@@ -1189,26 +1373,51 @@ export default async function QuarterlyPage({
 
               <ChartWithContext
                 title="Open-Ended Scheme Count Trend"
-                subtitle={`Sum across 39 open-ended categories · ${schemesTrend.length} quarter${schemesTrend.length === 1 ? "" : "s"}`}
+                subtitle={
+                  qSchemesLens === "share"
+                    ? `${schemesTrendShare.length} quarter${schemesTrendShare.length === 1 ? "" : "s"} · indexed to trailing 4Q avg`
+                    : `Sum across 39 open-ended categories · ${schemesTrend.length} quarter${schemesTrend.length === 1 ? "" : "s"}`
+                }
                 flowKind="stock"
-                denominatorCaption={schemesTrendDenomCaption}
+                denominatorCaption={
+                  qSchemesLens === "share" ? undefined : schemesTrendDenomCaption
+                }
                 denominatorTooltip="Latest open-ended scheme count as a % of the trailing 4-quarter average — captures shelf expansion (NFOs net of mergers / closures) without the line going flat at this slow-moving scale."
                 insights={schemesTrendInsights}
                 yoyBadge={(() => {
                   const v = latestYoyPct(schemesTrend, 4);
                   return v === null ? undefined : { label: "YoY", pct: v };
                 })()}
+                action={
+                  <LensToggle
+                    basePath="/quarterly"
+                    paramName="qSchemesLens"
+                    defaultValue="absolute"
+                    lenses={[
+                      { value: "absolute", label: "Count" },
+                      { value: "share", label: "vs 4Q avg" },
+                    ]}
+                    active={qSchemesLens}
+                    preserveParams={preservedQueryParams}
+                  />
+                }
               >
                 {schemesTrend.length > 0 ? (
                   <BarSeries
-                    data={schemesTrend}
+                    data={schemesDisplay}
                     name="Open-Ended Schemes"
                     color="hsl(var(--chart-5))"
-                    valueFormat="count"
-                    axisFormat="count"
+                    valueFormat={qSchemesLens === "share" ? "pct" : "count"}
+                    axisFormat={qSchemesLens === "share" ? "pct" : "count"}
                     labelFormat="none"
-                    trendline={movingAverage(schemesTrend, 4)}
+                    trendline={
+                      qSchemesLens === "share"
+                        ? undefined
+                        : movingAverage(schemesTrend, 4)
+                    }
                     trendlineName="4Q avg"
+                    referenceValue={qSchemesLens === "share" ? 100 : undefined}
+                    referenceLabel={qSchemesLens === "share" ? "4Q avg" : undefined}
                   />
                 ) : (
                   <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">

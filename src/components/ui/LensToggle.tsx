@@ -46,11 +46,16 @@ export function LensToggle({
     "border-border text-muted-foreground hover:bg-accent hover:text-foreground";
   // Preserve the rest of the URL so the user keeps any other lens
   // toggles + selected month/quarter. Empty values get dropped so
-  // the resulting URL stays tidy.
+  // the resulting URL stays tidy. The toggle's OWN paramName is
+  // skipped here — we set it explicitly below — so the link to the
+  // default lens drops the param entirely (otherwise preserveParams
+  // would re-add the current value and the toggle would refuse to
+  // switch back).
   const buildQuery = (value: string) => {
     const out: Record<string, string> = {};
     if (preserveParams) {
       for (const [k, v] of Object.entries(preserveParams)) {
+        if (k === paramName) continue;
         if (typeof v === "string" && v.length > 0) out[k] = v;
       }
     }
