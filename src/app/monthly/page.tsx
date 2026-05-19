@@ -114,11 +114,34 @@ export default async function MonthlyPage({
       : "share";
   const monthlyFlowsLens: "absolute" | "share" =
     sp.flowsLens === "share" ? "share" : "absolute";
-  // Chart-type toggle for the Equity / Debt / Liquid Net Flows card.
-  // Default is "bars" (current grouped-bar view) — only the "trend"
-  // value ever rides in the URL so the default stays URL-clean.
+  // Chart-type toggles. Each eligible bar-style time-series card on
+  // the page owns its own `<thing>View` URL param. Bars is the
+  // default and is never echoed into the URL — only the "trend"
+  // value rides along so the default page stays URL-clean.
   const flowsView: "bars" | "trend" =
     sp.flowsView === "trend" ? "trend" : "bars";
+  const aaumView: "bars" | "trend" =
+    sp.aaumView === "trend" ? "trend" : "bars";
+  const sipContribView: "bars" | "trend" =
+    sp.sipContribView === "trend" ? "trend" : "bars";
+  const sipAumView: "bars" | "trend" =
+    sp.sipAumView === "trend" ? "trend" : "bars";
+  const sipAccountsView: "bars" | "trend" =
+    sp.sipAccountsView === "trend" ? "trend" : "bars";
+  const aeFlowView: "bars" | "trend" =
+    sp.aeFlowView === "trend" ? "trend" : "bars";
+  const aeBridgeView: "bars" | "trend" =
+    sp.aeBridgeView === "trend" ? "trend" : "bars";
+  const folioAddView: "bars" | "trend" =
+    sp.folioAddView === "trend" ? "trend" : "bars";
+  const nfoCountView: "bars" | "trend" =
+    sp.nfoCountView === "trend" ? "trend" : "bars";
+  const nfoFundsView: "bars" | "trend" =
+    sp.nfoFundsView === "trend" ? "trend" : "bars";
+  const aeAaumView: "bars" | "trend" =
+    sp.aeAaumView === "trend" ? "trend" : "bars";
+  const equityBreakdownView: "bars" | "trend" =
+    sp.equityBreakdownView === "trend" ? "trend" : "bars";
   const equityBreakdownLens: "absolute" | "share" =
     sp.equityMixLens === "share" ? "share" : "absolute";
   const activePassiveLens: "absolute" | "share" =
@@ -174,10 +197,24 @@ export default async function MonthlyPage({
       typeof sp.nfoCountLens === "string" ? sp.nfoCountLens : undefined,
     nfoFundsLens:
       typeof sp.nfoFundsLens === "string" ? sp.nfoFundsLens : undefined,
-    // Only echo `flowsView` when the user has actively picked
-    // "trend" — bars is the default, so omitting it keeps the URL
-    // (and every other LensToggle's link) clean.
+    // Chart-type `<thing>View` toggles. Only the non-default
+    // ("trend") value is echoed — keeps the URL clean by default
+    // and stops other LensToggles on the page from re-attaching
+    // `<thing>View=bars` when clicked.
     ...(sp.flowsView === "trend" ? { flowsView: "trend" } : {}),
+    ...(sp.aaumView === "trend" ? { aaumView: "trend" } : {}),
+    ...(sp.sipContribView === "trend" ? { sipContribView: "trend" } : {}),
+    ...(sp.sipAumView === "trend" ? { sipAumView: "trend" } : {}),
+    ...(sp.sipAccountsView === "trend" ? { sipAccountsView: "trend" } : {}),
+    ...(sp.aeFlowView === "trend" ? { aeFlowView: "trend" } : {}),
+    ...(sp.aeBridgeView === "trend" ? { aeBridgeView: "trend" } : {}),
+    ...(sp.folioAddView === "trend" ? { folioAddView: "trend" } : {}),
+    ...(sp.nfoCountView === "trend" ? { nfoCountView: "trend" } : {}),
+    ...(sp.nfoFundsView === "trend" ? { nfoFundsView: "trend" } : {}),
+    ...(sp.aeAaumView === "trend" ? { aeAaumView: "trend" } : {}),
+    ...(sp.equityBreakdownView === "trend"
+      ? { equityBreakdownView: "trend" }
+      : {}),
   };
 
   // AMFI Monthly Snapshot — first live AMFI widget. Reads directly from
@@ -710,14 +747,23 @@ export default async function MonthlyPage({
     cyclePhaseByLabel: cyclePhaseByMonth,
     episodeAnchors: episodeAnchorsForInsights,
   });
-  // Series spec shared by the bars and trend views of the Monthly
-  // Net Flows card. `BarSpec` and `LineSpec` both have shape
+  // Series specs shared by the bars and trend views of multi-series
+  // chart cards. `BarSpec` and `LineSpec` both have shape
   // `{ key, name, color }` so the same array works as `bars=` on
   // GroupedBars and `lines=` on MultiLine.
   const monthlyFlowsSeries = [
     { key: "equity", name: "Equity", color: "hsl(var(--chart-1))" },
     { key: "debt", name: "Debt", color: "hsl(var(--chart-2))" },
     { key: "liquid", name: "Liquid", color: "hsl(var(--chart-4))" },
+  ];
+  const activeEquityBridgeSeries = [
+    { key: "netInflow", name: "Net inflow", color: "hsl(var(--chart-1))" },
+    { key: "marketResidual", name: "Market impact", color: "hsl(var(--chart-3))" },
+  ];
+  const equityBreakdownSeries = [
+    { key: "activeEquity", name: "Active Equity", color: "hsl(var(--chart-1))" },
+    { key: "etfIndex", name: "ETF & Index", color: "hsl(var(--chart-5))" },
+    { key: "arbitrage", name: "Arbitrage", color: "hsl(var(--chart-2))" },
   ];
 
   // Provenance: all three fields come from the AMFI Monthly Report.
@@ -1777,35 +1823,61 @@ export default async function MonthlyPage({
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
               action={
-                <LensToggle
-                  basePath="/monthly"
-                  paramName="aaumLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "vs 12M avg" },
-                  ]}
-                  active={aaumLens}
-                  preserveParams={preservedQueryParams}
-                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="aaumLens"
+                    defaultValue="absolute"
+                    lenses={[
+                      { value: "absolute", label: "₹ Cr" },
+                      { value: "share", label: "vs 12M avg" },
+                    ]}
+                    active={aaumLens}
+                    preserveParams={preservedQueryParams}
+                  />
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="aaumView"
+                    defaultValue="bars"
+                    lenses={[
+                      { value: "bars", label: "Bars" },
+                      { value: "trend", label: "Trend" },
+                    ]}
+                    active={aaumView}
+                    preserveParams={preservedQueryParams}
+                  />
+                </div>
               }
             >
               {aaumTrendHasData ? (
-                <BarSeries
-                  data={aaumDisplayData}
-                  name="AAUM"
-                  color="hsl(var(--chart-1))"
-                  valueFormat={aaumLens === "share" ? "pct" : "cr"}
-                  axisFormat={aaumLens === "share" ? "pct" : "cr"}
-                  trendline={
-                    aaumLens === "share"
-                      ? undefined
-                      : movingAverage(aaumTrendData, 12)
-                  }
-                  referenceValue={aaumLens === "share" ? 100 : undefined}
-                  referenceLabel={aaumLens === "share" ? "12M avg" : undefined}
-                  cyclePhaseBands={cyclePhaseBands}
-                />
+                aaumView === "trend" ? (
+                  <MultiLine
+                    data={aaumDisplayData}
+                    xKey="label"
+                    labelFormat="month"
+                    valueFormat={aaumLens === "share" ? "pct" : "cr"}
+                    axisFormat={aaumLens === "share" ? "pct" : "cr"}
+                    lines={[
+                      { key: "value", name: "AAUM", color: "hsl(var(--chart-1))" },
+                    ]}
+                  />
+                ) : (
+                  <BarSeries
+                    data={aaumDisplayData}
+                    name="AAUM"
+                    color="hsl(var(--chart-1))"
+                    valueFormat={aaumLens === "share" ? "pct" : "cr"}
+                    axisFormat={aaumLens === "share" ? "pct" : "cr"}
+                    trendline={
+                      aaumLens === "share"
+                        ? undefined
+                        : movingAverage(aaumTrendData, 12)
+                    }
+                    referenceValue={aaumLens === "share" ? 100 : undefined}
+                    referenceLabel={aaumLens === "share" ? "12M avg" : undefined}
+                    cyclePhaseBands={cyclePhaseBands}
+                  />
+                )
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                   AAUM unavailable · totalAaum not in uploaded AMFI PDFs
@@ -1833,7 +1905,7 @@ export default async function MonthlyPage({
             return v === null ? undefined : { label: "Equity YoY", pct: v };
           })()}
           action={
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <LensToggle
                 basePath="/monthly"
                 paramName="flowsLens"
@@ -1919,34 +1991,60 @@ export default async function MonthlyPage({
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
               action={
-                <LensToggle
-                  basePath="/monthly"
-                  paramName="sipContribLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "% of net inflow" },
-                  ]}
-                  active={sipContribLens}
-                  preserveParams={preservedQueryParams}
-                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="sipContribLens"
+                    defaultValue="absolute"
+                    lenses={[
+                      { value: "absolute", label: "₹ Cr" },
+                      { value: "share", label: "% of net inflow" },
+                    ]}
+                    active={sipContribLens}
+                    preserveParams={preservedQueryParams}
+                  />
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="sipContribView"
+                    defaultValue="bars"
+                    lenses={[
+                      { value: "bars", label: "Bars" },
+                      { value: "trend", label: "Trend" },
+                    ]}
+                    active={sipContribView}
+                    preserveParams={preservedQueryParams}
+                  />
+                </div>
               }
             >
               {sipContribTrend.length > 0 ? (
-                <BarSeries
-                  data={sipContribDisplay}
-                  name="SIP Contribution"
-                  color="hsl(var(--chart-1))"
-                  valueFormat={sipContribLens === "share" ? "pct" : "cr"}
-                  axisFormat={sipContribLens === "share" ? "pct" : "cr"}
-                  labelFormat="month"
-                  trendline={
-                    sipContribLens === "share"
-                      ? undefined
-                      : movingAverage(sipContribTrend, 12)
-                  }
-                  cyclePhaseBands={cyclePhaseBands}
-                />
+                sipContribView === "trend" ? (
+                  <MultiLine
+                    data={sipContribDisplay}
+                    xKey="label"
+                    labelFormat="month"
+                    valueFormat={sipContribLens === "share" ? "pct" : "cr"}
+                    axisFormat={sipContribLens === "share" ? "pct" : "cr"}
+                    lines={[
+                      { key: "value", name: "SIP Contribution", color: "hsl(var(--chart-1))" },
+                    ]}
+                  />
+                ) : (
+                  <BarSeries
+                    data={sipContribDisplay}
+                    name="SIP Contribution"
+                    color="hsl(var(--chart-1))"
+                    valueFormat={sipContribLens === "share" ? "pct" : "cr"}
+                    axisFormat={sipContribLens === "share" ? "pct" : "cr"}
+                    labelFormat="month"
+                    trendline={
+                      sipContribLens === "share"
+                        ? undefined
+                        : movingAverage(sipContribTrend, 12)
+                    }
+                    cyclePhaseBands={cyclePhaseBands}
+                  />
+                )
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                   SIP contribution not yet ingested — appears once the next AMFI Monthly Notes (press release) lands.
@@ -1972,34 +2070,60 @@ export default async function MonthlyPage({
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
               action={
-                <LensToggle
-                  basePath="/monthly"
-                  paramName="sipAumLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "% of total AUM" },
-                  ]}
-                  active={sipAumLens}
-                  preserveParams={preservedQueryParams}
-                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="sipAumLens"
+                    defaultValue="absolute"
+                    lenses={[
+                      { value: "absolute", label: "₹ Cr" },
+                      { value: "share", label: "% of total AUM" },
+                    ]}
+                    active={sipAumLens}
+                    preserveParams={preservedQueryParams}
+                  />
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="sipAumView"
+                    defaultValue="bars"
+                    lenses={[
+                      { value: "bars", label: "Bars" },
+                      { value: "trend", label: "Trend" },
+                    ]}
+                    active={sipAumView}
+                    preserveParams={preservedQueryParams}
+                  />
+                </div>
               }
             >
               {sipAumTrend.length > 0 ? (
-                <BarSeries
-                  data={sipAumDisplay}
-                  name="SIP AUM"
-                  color="hsl(var(--chart-2))"
-                  valueFormat={sipAumLens === "share" ? "pct" : "cr"}
-                  axisFormat={sipAumLens === "share" ? "pct" : "cr"}
-                  labelFormat="month"
-                  trendline={
-                    sipAumLens === "share"
-                      ? undefined
-                      : movingAverage(sipAumTrend, 12)
-                  }
-                  cyclePhaseBands={cyclePhaseBands}
-                />
+                sipAumView === "trend" ? (
+                  <MultiLine
+                    data={sipAumDisplay}
+                    xKey="label"
+                    labelFormat="month"
+                    valueFormat={sipAumLens === "share" ? "pct" : "cr"}
+                    axisFormat={sipAumLens === "share" ? "pct" : "cr"}
+                    lines={[
+                      { key: "value", name: "SIP AUM", color: "hsl(var(--chart-2))" },
+                    ]}
+                  />
+                ) : (
+                  <BarSeries
+                    data={sipAumDisplay}
+                    name="SIP AUM"
+                    color="hsl(var(--chart-2))"
+                    valueFormat={sipAumLens === "share" ? "pct" : "cr"}
+                    axisFormat={sipAumLens === "share" ? "pct" : "cr"}
+                    labelFormat="month"
+                    trendline={
+                      sipAumLens === "share"
+                        ? undefined
+                        : movingAverage(sipAumTrend, 12)
+                    }
+                    cyclePhaseBands={cyclePhaseBands}
+                  />
+                )
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                   SIP AUM not yet ingested — appears once the next AMFI Monthly Notes (press release) lands.
@@ -2025,34 +2149,60 @@ export default async function MonthlyPage({
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
               action={
-                <LensToggle
-                  basePath="/monthly"
-                  paramName="sipAccountsLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "Count" },
-                    { value: "share", label: "Per ₹ Cr AUM" },
-                  ]}
-                  active={sipAccountsLens}
-                  preserveParams={preservedQueryParams}
-                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="sipAccountsLens"
+                    defaultValue="absolute"
+                    lenses={[
+                      { value: "absolute", label: "Count" },
+                      { value: "share", label: "Per ₹ Cr AUM" },
+                    ]}
+                    active={sipAccountsLens}
+                    preserveParams={preservedQueryParams}
+                  />
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="sipAccountsView"
+                    defaultValue="bars"
+                    lenses={[
+                      { value: "bars", label: "Bars" },
+                      { value: "trend", label: "Trend" },
+                    ]}
+                    active={sipAccountsView}
+                    preserveParams={preservedQueryParams}
+                  />
+                </div>
               }
             >
               {sipAccountsTrend.length > 0 ? (
-                <BarSeries
-                  data={sipAccountsDisplay}
-                  name="SIP Accounts"
-                  color="hsl(var(--chart-3))"
-                  valueFormat={sipAccountsLens === "share" ? "count" : "crore-count"}
-                  axisFormat={sipAccountsLens === "share" ? "count" : "crore-count"}
-                  labelFormat="month"
-                  trendline={
-                    sipAccountsLens === "share"
-                      ? undefined
-                      : movingAverage(sipAccountsTrend, 12)
-                  }
-                  cyclePhaseBands={cyclePhaseBands}
-                />
+                sipAccountsView === "trend" ? (
+                  <MultiLine
+                    data={sipAccountsDisplay}
+                    xKey="label"
+                    labelFormat="month"
+                    valueFormat={sipAccountsLens === "share" ? "count" : "crore-count"}
+                    axisFormat={sipAccountsLens === "share" ? "count" : "crore-count"}
+                    lines={[
+                      { key: "value", name: "SIP Accounts", color: "hsl(var(--chart-3))" },
+                    ]}
+                  />
+                ) : (
+                  <BarSeries
+                    data={sipAccountsDisplay}
+                    name="SIP Accounts"
+                    color="hsl(var(--chart-3))"
+                    valueFormat={sipAccountsLens === "share" ? "count" : "crore-count"}
+                    axisFormat={sipAccountsLens === "share" ? "count" : "crore-count"}
+                    labelFormat="month"
+                    trendline={
+                      sipAccountsLens === "share"
+                        ? undefined
+                        : movingAverage(sipAccountsTrend, 12)
+                    }
+                    cyclePhaseBands={cyclePhaseBands}
+                  />
+                )
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                   SIP accounts not yet ingested — appears once the next AMFI Monthly Notes (press release) lands.
@@ -2097,34 +2247,60 @@ export default async function MonthlyPage({
                   return v === null ? undefined : { label: "YoY", pct: v };
                 })()}
                 action={
-                  <LensToggle
-                    basePath="/monthly"
-                    paramName="aeFlowLens"
-                    defaultValue="absolute"
-                    lenses={[
-                      { value: "absolute", label: "₹ Cr" },
-                      { value: "share", label: "% of net inflow" },
-                    ]}
-                    active={aeFlowLens}
-                    preserveParams={preservedQueryParams}
-                  />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <LensToggle
+                      basePath="/monthly"
+                      paramName="aeFlowLens"
+                      defaultValue="absolute"
+                      lenses={[
+                        { value: "absolute", label: "₹ Cr" },
+                        { value: "share", label: "% of net inflow" },
+                      ]}
+                      active={aeFlowLens}
+                      preserveParams={preservedQueryParams}
+                    />
+                    <LensToggle
+                      basePath="/monthly"
+                      paramName="aeFlowView"
+                      defaultValue="bars"
+                      lenses={[
+                        { value: "bars", label: "Bars" },
+                        { value: "trend", label: "Trend" },
+                      ]}
+                      active={aeFlowView}
+                      preserveParams={preservedQueryParams}
+                    />
+                  </div>
                 }
               >
-                <BarSeries
-                  data={activeEquityFlowDisplay}
-                  name="Active Equity Net Inflow"
-                  color="hsl(var(--chart-1))"
-                  valueFormat={aeFlowLens === "share" ? "pct" : "cr"}
-                  axisFormat={aeFlowLens === "share" ? "pct" : "cr"}
-                  labelFormat="month"
-                  trendline={
-                    aeFlowLens === "share"
-                      ? undefined
-                      : movingAverage(activeEquityFlowTrend, 12)
-                  }
-                  trendlineName="12M avg"
-                  cyclePhaseBands={cyclePhaseBands}
-                />
+                {aeFlowView === "trend" ? (
+                  <MultiLine
+                    data={activeEquityFlowDisplay}
+                    xKey="label"
+                    labelFormat="month"
+                    valueFormat={aeFlowLens === "share" ? "pct" : "cr"}
+                    axisFormat={aeFlowLens === "share" ? "pct" : "cr"}
+                    lines={[
+                      { key: "value", name: "Active Equity Net Inflow", color: "hsl(var(--chart-1))" },
+                    ]}
+                  />
+                ) : (
+                  <BarSeries
+                    data={activeEquityFlowDisplay}
+                    name="Active Equity Net Inflow"
+                    color="hsl(var(--chart-1))"
+                    valueFormat={aeFlowLens === "share" ? "pct" : "cr"}
+                    axisFormat={aeFlowLens === "share" ? "pct" : "cr"}
+                    labelFormat="month"
+                    trendline={
+                      aeFlowLens === "share"
+                        ? undefined
+                        : movingAverage(activeEquityFlowTrend, 12)
+                    }
+                    trendlineName="12M avg"
+                    cyclePhaseBands={cyclePhaseBands}
+                  />
+                )}
                 {aeFlowLens === "absolute" && (
                   <div className="mt-2">
                     <VolatilityRibbon series={activeEquityFlowTrend} />
@@ -2151,26 +2327,39 @@ export default async function MonthlyPage({
                   const v = latestYoyPct(activeEquityBridgeDeltaSeries, 12);
                   return v === null ? undefined : { label: "ΔAUM YoY", pct: v };
                 })()}
+                action={
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="aeBridgeView"
+                    defaultValue="bars"
+                    lenses={[
+                      { value: "bars", label: "Bars" },
+                      { value: "trend", label: "Trend" },
+                    ]}
+                    active={aeBridgeView}
+                    preserveParams={preservedQueryParams}
+                  />
+                }
               >
-                <GroupedBars
-                  data={activeEquityBridge}
-                  xKey="month"
-                  labelFormat="month"
-                  valueFormat="cr"
-                  axisFormat="cr"
-                  bars={[
-                    {
-                      key: "netInflow",
-                      name: "Net inflow",
-                      color: "hsl(var(--chart-1))",
-                    },
-                    {
-                      key: "marketResidual",
-                      name: "Market impact",
-                      color: "hsl(var(--chart-3))",
-                    },
-                  ]}
-                />
+                {aeBridgeView === "trend" ? (
+                  <MultiLine
+                    data={activeEquityBridge}
+                    xKey="month"
+                    labelFormat="month"
+                    valueFormat="cr"
+                    axisFormat="cr"
+                    lines={activeEquityBridgeSeries}
+                  />
+                ) : (
+                  <GroupedBars
+                    data={activeEquityBridge}
+                    xKey="month"
+                    labelFormat="month"
+                    valueFormat="cr"
+                    axisFormat="cr"
+                    bars={activeEquityBridgeSeries}
+                  />
+                )}
                 <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
                   Market impact = ΔAUM − net inflow for the month.
                   <InfoTooltip label="Captures mark-to-market and minor reclassification effects on the active-equity envelope. AUM uses month-end values." />
@@ -2298,32 +2487,58 @@ export default async function MonthlyPage({
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
               action={
-                <LensToggle
-                  basePath="/monthly"
-                  paramName="folioAddLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "Lakh" },
-                    { value: "share", label: "bps of base" },
-                  ]}
-                  active={folioAddLens}
-                  preserveParams={preservedQueryParams}
-                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="folioAddLens"
+                    defaultValue="absolute"
+                    lenses={[
+                      { value: "absolute", label: "Lakh" },
+                      { value: "share", label: "bps of base" },
+                    ]}
+                    active={folioAddLens}
+                    preserveParams={preservedQueryParams}
+                  />
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="folioAddView"
+                    defaultValue="bars"
+                    lenses={[
+                      { value: "bars", label: "Bars" },
+                      { value: "trend", label: "Trend" },
+                    ]}
+                    active={folioAddView}
+                    preserveParams={preservedQueryParams}
+                  />
+                </div>
               }
             >
-              <BarSeries
-                data={folioAdditionsDisplay}
-                name="Folio Additions"
-                color="hsl(var(--chart-4))"
-                valueFormat={folioAddLens === "share" ? "bps" : "lakh"}
-                axisFormat={folioAddLens === "share" ? "bps" : "lakh"}
-                labelFormat="month"
-                trendline={
-                  folioAddLens === "share"
-                    ? undefined
-                    : movingAverage(folioAdditionsTrend, 12)
-                }
-              />
+              {folioAddView === "trend" ? (
+                <MultiLine
+                  data={folioAdditionsDisplay}
+                  xKey="label"
+                  labelFormat="month"
+                  valueFormat={folioAddLens === "share" ? "bps" : "lakh"}
+                  axisFormat={folioAddLens === "share" ? "bps" : "lakh"}
+                  lines={[
+                    { key: "value", name: "Folio Additions", color: "hsl(var(--chart-4))" },
+                  ]}
+                />
+              ) : (
+                <BarSeries
+                  data={folioAdditionsDisplay}
+                  name="Folio Additions"
+                  color="hsl(var(--chart-4))"
+                  valueFormat={folioAddLens === "share" ? "bps" : "lakh"}
+                  axisFormat={folioAddLens === "share" ? "bps" : "lakh"}
+                  labelFormat="month"
+                  trendline={
+                    folioAddLens === "share"
+                      ? undefined
+                      : movingAverage(folioAdditionsTrend, 12)
+                  }
+                />
+              )}
             </ChartWithContext>
           )}
 
@@ -2360,34 +2575,60 @@ export default async function MonthlyPage({
                         return v === null ? undefined : { label: "YoY", pct: v };
                       })()}
                       action={
-                        <LensToggle
-                          basePath="/monthly"
-                          paramName="nfoCountLens"
-                          defaultValue="absolute"
-                          lenses={[
-                            { value: "absolute", label: "Count" },
-                            { value: "share", label: "% of 5Y avg" },
-                          ]}
-                          active={nfoCountLens}
-                          preserveParams={preservedQueryParams}
-                        />
+                        <div className="flex flex-wrap items-center gap-2">
+                          <LensToggle
+                            basePath="/monthly"
+                            paramName="nfoCountLens"
+                            defaultValue="absolute"
+                            lenses={[
+                              { value: "absolute", label: "Count" },
+                              { value: "share", label: "% of 5Y avg" },
+                            ]}
+                            active={nfoCountLens}
+                            preserveParams={preservedQueryParams}
+                          />
+                          <LensToggle
+                            basePath="/monthly"
+                            paramName="nfoCountView"
+                            defaultValue="bars"
+                            lenses={[
+                              { value: "bars", label: "Bars" },
+                              { value: "trend", label: "Trend" },
+                            ]}
+                            active={nfoCountView}
+                            preserveParams={preservedQueryParams}
+                          />
+                        </div>
                       }
                     >
-                      <BarSeries
-                        data={nfoCountDisplay}
-                        name="NFO Launches"
-                        color="hsl(var(--chart-5))"
-                        valueFormat={nfoCountLens === "share" ? "pct" : "count"}
-                        axisFormat={nfoCountLens === "share" ? "pct" : "count"}
-                        labelFormat="month"
-                        trendline={
-                          nfoCountLens === "share"
-                            ? undefined
-                            : movingAverage(nfoCountTrend, 12)
-                        }
-                        referenceValue={nfoCountLens === "share" ? 100 : undefined}
-                        referenceLabel={nfoCountLens === "share" ? "5Y avg" : undefined}
-                      />
+                      {nfoCountView === "trend" ? (
+                        <MultiLine
+                          data={nfoCountDisplay}
+                          xKey="label"
+                          labelFormat="month"
+                          valueFormat={nfoCountLens === "share" ? "pct" : "count"}
+                          axisFormat={nfoCountLens === "share" ? "pct" : "count"}
+                          lines={[
+                            { key: "value", name: "NFO Launches", color: "hsl(var(--chart-5))" },
+                          ]}
+                        />
+                      ) : (
+                        <BarSeries
+                          data={nfoCountDisplay}
+                          name="NFO Launches"
+                          color="hsl(var(--chart-5))"
+                          valueFormat={nfoCountLens === "share" ? "pct" : "count"}
+                          axisFormat={nfoCountLens === "share" ? "pct" : "count"}
+                          labelFormat="month"
+                          trendline={
+                            nfoCountLens === "share"
+                              ? undefined
+                              : movingAverage(nfoCountTrend, 12)
+                          }
+                          referenceValue={nfoCountLens === "share" ? 100 : undefined}
+                          referenceLabel={nfoCountLens === "share" ? "5Y avg" : undefined}
+                        />
+                      )}
                     </ChartWithContext>
                   )}
                   {nfoFundsTrend.length > 0 && (
@@ -2409,32 +2650,58 @@ export default async function MonthlyPage({
                         return v === null ? undefined : { label: "YoY", pct: v };
                       })()}
                       action={
-                        <LensToggle
-                          basePath="/monthly"
-                          paramName="nfoFundsLens"
-                          defaultValue="absolute"
-                          lenses={[
-                            { value: "absolute", label: "₹ Cr" },
-                            { value: "share", label: "% of net inflow" },
-                          ]}
-                          active={nfoFundsLens}
-                          preserveParams={preservedQueryParams}
-                        />
+                        <div className="flex flex-wrap items-center gap-2">
+                          <LensToggle
+                            basePath="/monthly"
+                            paramName="nfoFundsLens"
+                            defaultValue="absolute"
+                            lenses={[
+                              { value: "absolute", label: "₹ Cr" },
+                              { value: "share", label: "% of net inflow" },
+                            ]}
+                            active={nfoFundsLens}
+                            preserveParams={preservedQueryParams}
+                          />
+                          <LensToggle
+                            basePath="/monthly"
+                            paramName="nfoFundsView"
+                            defaultValue="bars"
+                            lenses={[
+                              { value: "bars", label: "Bars" },
+                              { value: "trend", label: "Trend" },
+                            ]}
+                            active={nfoFundsView}
+                            preserveParams={preservedQueryParams}
+                          />
+                        </div>
                       }
                     >
-                      <BarSeries
-                        data={nfoFundsDisplay}
-                        name="NFO Funds"
-                        color="hsl(var(--chart-2))"
-                        valueFormat={nfoFundsLens === "share" ? "pct" : "cr"}
-                        axisFormat={nfoFundsLens === "share" ? "pct" : "cr"}
-                        labelFormat="month"
-                        trendline={
-                          nfoFundsLens === "share"
-                            ? undefined
-                            : movingAverage(nfoFundsTrend, 12)
-                        }
-                      />
+                      {nfoFundsView === "trend" ? (
+                        <MultiLine
+                          data={nfoFundsDisplay}
+                          xKey="label"
+                          labelFormat="month"
+                          valueFormat={nfoFundsLens === "share" ? "pct" : "cr"}
+                          axisFormat={nfoFundsLens === "share" ? "pct" : "cr"}
+                          lines={[
+                            { key: "value", name: "NFO Funds", color: "hsl(var(--chart-2))" },
+                          ]}
+                        />
+                      ) : (
+                        <BarSeries
+                          data={nfoFundsDisplay}
+                          name="NFO Funds"
+                          color="hsl(var(--chart-2))"
+                          valueFormat={nfoFundsLens === "share" ? "pct" : "cr"}
+                          axisFormat={nfoFundsLens === "share" ? "pct" : "cr"}
+                          labelFormat="month"
+                          trendline={
+                            nfoFundsLens === "share"
+                              ? undefined
+                              : movingAverage(nfoFundsTrend, 12)
+                          }
+                        />
+                      )}
                     </ChartWithContext>
                   )}
                 </section>
@@ -2480,35 +2747,61 @@ export default async function MonthlyPage({
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
               action={
-                <LensToggle
-                  basePath="/monthly"
-                  paramName="aeAaumLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "% of total AAUM" },
-                  ]}
-                  active={aeAaumLens}
-                  preserveParams={preservedQueryParams}
-                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="aeAaumLens"
+                    defaultValue="absolute"
+                    lenses={[
+                      { value: "absolute", label: "₹ Cr" },
+                      { value: "share", label: "% of total AAUM" },
+                    ]}
+                    active={aeAaumLens}
+                    preserveParams={preservedQueryParams}
+                  />
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="aeAaumView"
+                    defaultValue="bars"
+                    lenses={[
+                      { value: "bars", label: "Bars" },
+                      { value: "trend", label: "Trend" },
+                    ]}
+                    active={aeAaumView}
+                    preserveParams={preservedQueryParams}
+                  />
+                </div>
               }
             >
               {activeEquityTrend.length > 0 ? (
-                <BarSeries
-                  data={activeEquityAaumDisplay}
-                  name="Active Equity AAUM"
-                  color="hsl(var(--chart-1))"
-                  valueFormat={aeAaumLens === "share" ? "pct" : "cr"}
-                  axisFormat={aeAaumLens === "share" ? "pct" : "cr"}
-                  labelFormat="month"
-                  cyclePhaseBands={cyclePhaseBands}
-                  trendline={
-                    aeAaumLens === "share"
-                      ? undefined
-                      : movingAverage(activeEquityTrend, 12)
-                  }
-                  trendlineName="12M avg"
-                />
+                aeAaumView === "trend" ? (
+                  <MultiLine
+                    data={activeEquityAaumDisplay}
+                    xKey="label"
+                    labelFormat="month"
+                    valueFormat={aeAaumLens === "share" ? "pct" : "cr"}
+                    axisFormat={aeAaumLens === "share" ? "pct" : "cr"}
+                    lines={[
+                      { key: "value", name: "Active Equity AAUM", color: "hsl(var(--chart-1))" },
+                    ]}
+                  />
+                ) : (
+                  <BarSeries
+                    data={activeEquityAaumDisplay}
+                    name="Active Equity AAUM"
+                    color="hsl(var(--chart-1))"
+                    valueFormat={aeAaumLens === "share" ? "pct" : "cr"}
+                    axisFormat={aeAaumLens === "share" ? "pct" : "cr"}
+                    labelFormat="month"
+                    cyclePhaseBands={cyclePhaseBands}
+                    trendline={
+                      aeAaumLens === "share"
+                        ? undefined
+                        : movingAverage(activeEquityTrend, 12)
+                    }
+                    trendlineName="12M avg"
+                  />
+                )
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                   Active-equity AAUM not yet ingested — appears once IIFL category fields land in the AMFI Monthly snapshot.
@@ -2535,32 +2828,52 @@ export default async function MonthlyPage({
                 : { label: "Active YoY", pct: v };
             })()}
             action={
-              <LensToggle
-                basePath="/monthly"
-                paramName="equityMixLens"
-                defaultValue="absolute"
-                lenses={[
-                  { value: "absolute", label: "₹ Cr" },
-                  { value: "share", label: "Share %" },
-                ]}
-                active={equityBreakdownLens}
-                preserveParams={preservedQueryParams}
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                <LensToggle
+                  basePath="/monthly"
+                  paramName="equityMixLens"
+                  defaultValue="absolute"
+                  lenses={[
+                    { value: "absolute", label: "₹ Cr" },
+                    { value: "share", label: "Share %" },
+                  ]}
+                  active={equityBreakdownLens}
+                  preserveParams={preservedQueryParams}
+                />
+                <LensToggle
+                  basePath="/monthly"
+                  paramName="equityBreakdownView"
+                  defaultValue="bars"
+                  lenses={[
+                    { value: "bars", label: "Bars" },
+                    { value: "trend", label: "Trend" },
+                  ]}
+                  active={equityBreakdownView}
+                  preserveParams={preservedQueryParams}
+                />
+              </div>
             }
           >
             {equityBreakdownHasData ? (
-              <GroupedBars
-                data={equityBreakdownDisplay}
-                xKey="month"
-                labelFormat="month"
-                valueFormat={equityBreakdownLens === "share" ? "pct" : "cr"}
-                axisFormat={equityBreakdownLens === "share" ? "pct" : "cr"}
-                bars={[
-                  { key: "activeEquity", name: "Active Equity", color: "hsl(var(--chart-1))" },
-                  { key: "etfIndex", name: "ETF & Index", color: "hsl(var(--chart-5))" },
-                  { key: "arbitrage", name: "Arbitrage", color: "hsl(var(--chart-2))" },
-                ]}
-              />
+              equityBreakdownView === "trend" ? (
+                <MultiLine
+                  data={equityBreakdownDisplay}
+                  xKey="month"
+                  labelFormat="month"
+                  valueFormat={equityBreakdownLens === "share" ? "pct" : "cr"}
+                  axisFormat={equityBreakdownLens === "share" ? "pct" : "cr"}
+                  lines={equityBreakdownSeries}
+                />
+              ) : (
+                <GroupedBars
+                  data={equityBreakdownDisplay}
+                  xKey="month"
+                  labelFormat="month"
+                  valueFormat={equityBreakdownLens === "share" ? "pct" : "cr"}
+                  axisFormat={equityBreakdownLens === "share" ? "pct" : "cr"}
+                  bars={equityBreakdownSeries}
+                />
+              )
             ) : (
               <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                 Equity breakdown (Active / ETF & Index / Arbitrage) not yet ingested for any month.
