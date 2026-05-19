@@ -1869,7 +1869,7 @@ export default async function MonthlyPage({
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  No SIP contribution months yet
+                  SIP contribution not yet ingested — appears once the next AMFI Monthly Notes (press release) lands.
                 </div>
               )}
             </ChartWithContext>
@@ -1921,7 +1921,7 @@ export default async function MonthlyPage({
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  No SIP AUM months yet
+                  SIP AUM not yet ingested — appears once the next AMFI Monthly Notes (press release) lands.
                 </div>
               )}
             </ChartWithContext>
@@ -1973,7 +1973,7 @@ export default async function MonthlyPage({
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  No SIP accounts months yet
+                  SIP accounts not yet ingested — appears once the next AMFI Monthly Notes (press release) lands.
                 </div>
               )}
             </ChartWithContext>
@@ -2427,7 +2427,7 @@ export default async function MonthlyPage({
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  Active Equity AAUM unavailable
+                  Active-equity AAUM not yet ingested — appears once IIFL category fields land in the AMFI Monthly snapshot.
                 </div>
               )}
             </ChartWithContext>
@@ -2479,7 +2479,7 @@ export default async function MonthlyPage({
               />
             ) : (
               <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                Equity breakdown unavailable
+                Equity breakdown (Active / ETF & Index / Arbitrage) not yet ingested for any month.
               </div>
             )}
             <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -2628,7 +2628,7 @@ export default async function MonthlyPage({
                   />
                 ) : (
                   <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                    Category data unavailable
+                    Category snapshot not yet ingested for this slug.
                   </div>
                 )}
               </Card>
@@ -2681,7 +2681,7 @@ export default async function MonthlyPage({
                         />
                       ) : (
                         <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                          Category data unavailable
+                          Category snapshot not yet ingested for this slug.
                         </div>
                       )}
                     </Card>
@@ -2772,7 +2772,7 @@ export default async function MonthlyPage({
           />
         ) : (
           <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-            AAUM disclosure unavailable
+            AMFI Fundwise AAUM disclosure not yet ingested for the selected quarter.
           </div>
         )}
         <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
