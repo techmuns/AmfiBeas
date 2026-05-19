@@ -858,7 +858,7 @@ export default async function QuarterlyPage({
                 <Donut data={mixSlices} />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  Mix unavailable for the selected quarter
+                  AUM mix not published for the selected quarter — pick a more recent quarter or upload the AMFI Quarterly PDF.
                 </div>
               )}
             </Card>
@@ -912,7 +912,7 @@ export default async function QuarterlyPage({
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  Last-month AAUM unavailable
+                  Last-month AAUM not yet published — appears after the next AMFI Quarterly Report is ingested.
                 </div>
               )}
             </ChartWithContext>
@@ -1059,7 +1059,7 @@ export default async function QuarterlyPage({
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  Active Equity Last-month AAUM unavailable
+                  Active-equity AAUM not yet published — appears after the next AMFI Quarterly Report is ingested.
                 </div>
               )}
             </ChartWithContext>
@@ -1123,7 +1123,7 @@ export default async function QuarterlyPage({
               />
             ) : (
               <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                Equity breakdown unavailable
+                Equity breakdown (Active / ETF & Index / Arbitrage) not yet published for this quarter.
               </div>
             )}
             <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -1249,7 +1249,7 @@ export default async function QuarterlyPage({
                   />
                 ) : (
                   <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                    Folios unavailable
+                    Folio count not yet ingested for any quarter.
                   </div>
                 )}
               </ChartWithContext>
@@ -1302,7 +1302,7 @@ export default async function QuarterlyPage({
                   />
                 ) : (
                   <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                    Need at least two consecutive quarters of folios
+                    Need at least two consecutive quarters of folio data to derive additions.
                   </div>
                 )}
                 <div
@@ -1363,7 +1363,7 @@ export default async function QuarterlyPage({
                   />
                 ) : (
                   <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                    Scheme count unavailable
+                    Open-ended scheme count not yet ingested.
                   </div>
                 )}
                 <div
@@ -1431,7 +1431,7 @@ export default async function QuarterlyPage({
                   />
                 ) : (
                   <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                    Category data unavailable
+                    Category snapshot not yet ingested for this slug.
                   </div>
                 )}
               </Card>
@@ -1483,7 +1483,7 @@ export default async function QuarterlyPage({
                         />
                       ) : (
                         <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                          Category data unavailable
+                          Category snapshot not yet ingested for this slug.
                         </div>
                       )}
                     </Card>
@@ -1595,7 +1595,7 @@ export default async function QuarterlyPage({
           />
         ) : (
           <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-            AAUM disclosure unavailable
+            AMFI Fundwise AAUM disclosure not yet ingested for the latest quarter.
           </div>
         )}
         <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
