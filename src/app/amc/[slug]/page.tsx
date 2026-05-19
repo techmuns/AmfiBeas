@@ -6,9 +6,12 @@ import { Card } from "@/components/ui/Card";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import { DistributionStrip } from "@/components/ui/DistributionStrip";
 import { KpiCard } from "@/components/ui/KpiCard";
+import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
+import { SectionDivider } from "@/components/ui/SectionDivider";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { RankTrendChart } from "@/components/charts/RankTrendChart";
 import { chartInsights, latestYoyPct } from "@/lib/chart-context";
+import { amcMarketWrap } from "@/data/market-wrap-amc";
 import {
   allAaumAmcs,
   amcAaumSeries,
@@ -44,6 +47,9 @@ export default async function AmcPage({
 
   const detail = amcDetail(slug);
   if (!detail) notFound();
+
+  // Three-sentence "today's read" surfaced at the top of the page.
+  const marketWrapData = amcMarketWrap(slug);
 
   const aaumSeries = amcAaumSeries(slug);
   const shareSeries = amcMarketShareSeries(slug);
@@ -283,6 +289,14 @@ export default async function AmcPage({
         }
       />
 
+      <MarketWrapCard wrap={marketWrapData} />
+
+      <SectionDivider
+        eyebrow="Section 1"
+        label="Snapshot"
+        context="Latest-quarter KPIs and where this AMC sits in the cohort."
+      />
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label="Latest MF AAUM"
@@ -418,6 +432,12 @@ export default async function AmcPage({
         </Card>
       )}
 
+      <SectionDivider
+        eyebrow="Section 2"
+        label="Trends"
+        context="AAUM, market share and rank trajectory vs the cohort."
+      />
+
       <section className="grid gap-4 lg:grid-cols-2">
         <ChartWithContext
           title="AAUM Trend"
@@ -505,6 +525,15 @@ export default async function AmcPage({
             <EmptyChart>No rank history</EmptyChart>
           )}
         </ChartWithContext>
+      </section>
+
+      <SectionDivider
+        eyebrow="Section 3"
+        label="Peer comparison"
+        context="Side-by-side with the Top 7 cohort and the full peer table."
+      />
+
+      <section className="grid gap-4 lg:grid-cols-2">
         <Card
           title="Peer Comparison"
           subtitle={
