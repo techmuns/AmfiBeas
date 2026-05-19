@@ -8,17 +8,22 @@ import {
   CalendarRange,
   FileBarChart,
   Building2,
-  Sparkles,
+  ArrowLeftRight,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
+// Main nav — five analytical pages a client actually scrolls through.
+// /premium is a "what licensed data could enable" pitch and not part
+// of the client narrative; we leave the page live but pull it out of
+// the main nav so the sidebar stays focused. /data-sources and
+// /other-schemes remain reachable via deep links and footer copy.
 const nav = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
   { href: "/monthly", label: "Monthly", icon: CalendarDays },
   { href: "/quarterly", label: "Quarterly", icon: CalendarRange },
   { href: "/amc", label: "AMCs", icon: Building2 },
+  { href: "/compare", label: "Compare", icon: ArrowLeftRight },
   { href: "/financials", label: "Financials", icon: FileBarChart },
-  { href: "/premium", label: "Premium", icon: Sparkles },
 ];
 
 function isActive(pathname: string, href: string) {
