@@ -143,6 +143,28 @@ export default async function MonthlyPage({
     sp.equityMixLens === "share" ? "share" : "absolute";
   const activePassiveLens: "absolute" | "share" =
     sp.activePassiveLens === "share" ? "share" : "absolute";
+  // Per-card lens toggles. Each one switches a trend chart between
+  // an absolute number (₹ Cr / count / etc) and a meaningful share
+  // / ratio specific to that card. Default is "absolute" — URL stays
+  // clean unless the user actively picked "share".
+  const aaumLens: "absolute" | "share" =
+    sp.aaumLens === "share" ? "share" : "absolute";
+  const sipContribLens: "absolute" | "share" =
+    sp.sipContribLens === "share" ? "share" : "absolute";
+  const sipAumLens: "absolute" | "share" =
+    sp.sipAumLens === "share" ? "share" : "absolute";
+  const sipAccountsLens: "absolute" | "share" =
+    sp.sipAccountsLens === "share" ? "share" : "absolute";
+  const aeFlowLens: "absolute" | "share" =
+    sp.aeFlowLens === "share" ? "share" : "absolute";
+  const aeAaumLens: "absolute" | "share" =
+    sp.aeAaumLens === "share" ? "share" : "absolute";
+  const folioAddLens: "absolute" | "share" =
+    sp.folioAddLens === "share" ? "share" : "absolute";
+  const nfoCountLens: "absolute" | "share" =
+    sp.nfoCountLens === "share" ? "share" : "absolute";
+  const nfoFundsLens: "absolute" | "share" =
+    sp.nfoFundsLens === "share" ? "share" : "absolute";
   // Pass-through params for every LensToggle so toggling A doesn't
   // lose B (or the selected month).
   const preservedQueryParams: Record<string, string | undefined> = {
@@ -155,6 +177,23 @@ export default async function MonthlyPage({
       typeof sp.activePassiveLens === "string"
         ? sp.activePassiveLens
         : undefined,
+    aaumLens: typeof sp.aaumLens === "string" ? sp.aaumLens : undefined,
+    sipContribLens:
+      typeof sp.sipContribLens === "string" ? sp.sipContribLens : undefined,
+    sipAumLens:
+      typeof sp.sipAumLens === "string" ? sp.sipAumLens : undefined,
+    sipAccountsLens:
+      typeof sp.sipAccountsLens === "string" ? sp.sipAccountsLens : undefined,
+    aeFlowLens:
+      typeof sp.aeFlowLens === "string" ? sp.aeFlowLens : undefined,
+    aeAaumLens:
+      typeof sp.aeAaumLens === "string" ? sp.aeAaumLens : undefined,
+    folioAddLens:
+      typeof sp.folioAddLens === "string" ? sp.folioAddLens : undefined,
+    nfoCountLens:
+      typeof sp.nfoCountLens === "string" ? sp.nfoCountLens : undefined,
+    nfoFundsLens:
+      typeof sp.nfoFundsLens === "string" ? sp.nfoFundsLens : undefined,
   };
 
   // AMFI Monthly Snapshot — first live AMFI widget. Reads directly from
@@ -440,6 +479,21 @@ export default async function MonthlyPage({
     const pct = (latest.value / avg) * 100;
     return `${pct.toFixed(1)}% of trailing 12M avg · latest ${latest.label}`;
   })();
+  // "Share" view for the AAUM card: each month indexed as a % of
+  // its own trailing-12M moving average. Months with fewer than 12
+  // prior data points are dropped (no trailing average available
+  // yet). The toggle swaps the absolute ₹ Cr series for this one
+  // when the user picks "vs 12M avg".
+  const aaumTrendDataShare = aaumTrendData
+    .map((p, i, arr) => {
+      if (i + 1 < 12) return null;
+      const slice = arr.slice(i + 1 - 12, i + 1);
+      const avg = slice.reduce((s, q) => s + q.value, 0) / 12;
+      if (avg <= 0) return null;
+      return { label: p.label, value: (p.value / avg) * 100 };
+    })
+    .filter((p): p is { label: string; value: number } => p !== null);
+  const aaumDisplayData = aaumLens === "share" ? aaumTrendDataShare : aaumTrendData;
   const totalAaumInsights = chartInsights(aaumTrendData, {
     metricName: "total AAUM",
     unitSuffix: "₹ Cr",
@@ -548,6 +602,57 @@ export default async function MonthlyPage({
     sipContribTrend.length > 0 ||
     sipAumTrend.length > 0 ||
     sipAccountsTrend.length > 0;
+
+  // ---- "Share" series for each SIP card -----------------------------
+  // Built once so the toggle below just picks between absolute and
+  // share. Each share series uses the SAME row's denominator so the
+  // ratio is computable without cross-row lookups; rows where the
+  // denominator is missing or zero are filtered out.
+  const sipContribShare = amfiMonthlyRows()
+    .filter(
+      (r) =>
+        typeof r.sipContribution === "number" &&
+        typeof r.netInflow === "number" &&
+        r.netInflow > 0
+    )
+    .map((r) => ({
+      label: r.month,
+      value: ((r.sipContribution as number) / (r.netInflow as number)) * 100,
+    }))
+    .slice(-24);
+  const sipContribDisplay =
+    sipContribLens === "share" ? sipContribShare : sipContribTrend;
+
+  const sipAumShare = amfiMonthlyRows()
+    .filter(
+      (r) =>
+        typeof r.sipAum === "number" &&
+        typeof r.totalAum === "number" &&
+        r.totalAum > 0
+    )
+    .map((r) => ({
+      label: r.month,
+      value: ((r.sipAum as number) / (r.totalAum as number)) * 100,
+    }))
+    .slice(-24);
+  const sipAumDisplay = sipAumLens === "share" ? sipAumShare : sipAumTrend;
+
+  // SIP accounts density: accounts per ₹ Cr AUM. Accounts come in raw
+  // count; totalAum is in ₹ Cr. The ratio is a pure scalar.
+  const sipAccountsShare = amfiMonthlyRows()
+    .filter(
+      (r) =>
+        typeof r.sipAccounts === "number" &&
+        typeof r.totalAum === "number" &&
+        r.totalAum > 0
+    )
+    .map((r) => ({
+      label: r.month,
+      value: (r.sipAccounts as number) / (r.totalAum as number),
+    }))
+    .slice(-24);
+  const sipAccountsDisplay =
+    sipAccountsLens === "share" ? sipAccountsShare : sipAccountsTrend;
 
   // ---- Monthly Flows (Figure 22-style) section -----------------------
   //
@@ -708,6 +813,22 @@ export default async function MonthlyPage({
     yoyLag: 12,
   });
 
+  // Active Equity AAUM share view: % of total industry AAUM.
+  const activeEquityAaumShare = amfiMonthlyRows()
+    .filter(
+      (r) =>
+        typeof r.activeEquityAaum === "number" &&
+        typeof r.totalAaum === "number" &&
+        r.totalAaum > 0
+    )
+    .map((r) => ({
+      label: r.month,
+      value: ((r.activeEquityAaum as number) / (r.totalAaum as number)) * 100,
+    }))
+    .slice(-24);
+  const activeEquityAaumDisplay =
+    aeAaumLens === "share" ? activeEquityAaumShare : activeEquityTrend;
+
   // Active Equity Share denominator: pp shift vs trailing 12M average
   // — the absolute share moves slowly, so the pp delta is the more
   // informative read.
@@ -854,6 +975,70 @@ export default async function MonthlyPage({
       data: industryNetInflowPeerSeries,
     },
   });
+
+  // ---- "Share" series for folio + NFO toggle ------------------------
+  const folioAdditionsShare = (() => {
+    // For each month with a folio-additions value, expressed in bps
+    // of the trailing folio base. Additions in lakh; base in crore;
+    // 1 Cr = 100 lakh.
+    const out: { label: string; value: number }[] = [];
+    const rows = amfiMonthlyRows();
+    const folioByMonth = new Map<string, number>();
+    for (const r of rows) {
+      if (typeof r.industryFolios === "number") {
+        folioByMonth.set(r.month, r.industryFolios);
+      }
+    }
+    for (const p of folioAdditionsTrend) {
+      const baseCr = folioByMonth.get(p.label);
+      if (typeof baseCr !== "number" || baseCr <= 0) continue;
+      const bps = (p.value / 100 / (baseCr / 1e7)) * 10000;
+      out.push({ label: p.label, value: bps });
+    }
+    return out;
+  })();
+  const folioAdditionsDisplay =
+    folioAddLens === "share" ? folioAdditionsShare : folioAdditionsTrend;
+
+  // NFO launches: % of trailing 5Y (60M) average. The plausibility
+  // cap from the denominator caption is reused via the shared
+  // constant declared above.
+  const nfoCountShare = (() => {
+    const allValid = amfiMonthlyRows()
+      .map((r) => r.industryNfoCount)
+      .filter(
+        (v): v is number =>
+          typeof v === "number" && v <= NFO_COUNT_PLAUSIBLE_CAP
+      );
+    if (allValid.length < 12) return [];
+    const trailing60 = allValid.slice(-60);
+    const avg = trailing60.reduce((s, v) => s + v, 0) / trailing60.length;
+    if (avg <= 0) return [];
+    return nfoCountTrend.map((p) => ({
+      label: p.label,
+      value: (p.value / avg) * 100,
+    }));
+  })();
+  const nfoCountDisplay =
+    nfoCountLens === "share" ? nfoCountShare : nfoCountTrend;
+
+  // NFO funds: % of industry net inflow that month.
+  const nfoFundsShare = amfiMonthlyRows()
+    .filter(
+      (r) =>
+        typeof r.industryNfoFundsMobilized === "number" &&
+        typeof r.netInflow === "number" &&
+        r.netInflow > 0
+    )
+    .map((r) => ({
+      label: r.month,
+      value:
+        ((r.industryNfoFundsMobilized as number) / (r.netInflow as number)) *
+        100,
+    }))
+    .slice(-24);
+  const nfoFundsDisplay =
+    nfoFundsLens === "share" ? nfoFundsShare : nfoFundsTrend;
 
   const foliosHover = formatKpiProvenanceTooltip(
     latestProvenanceFor("industryFolios")
@@ -1004,6 +1189,25 @@ export default async function MonthlyPage({
       data: industryNetInflowPeerSeries,
     },
   });
+
+  // Active Equity Flow share view: % of industry net inflow that
+  // month. Same pattern as SIP contribution share — clearer "who's
+  // pulling the flow" read than the absolute ₹ Cr.
+  const activeEquityFlowShare = amfiMonthlyRows()
+    .filter(
+      (r) =>
+        typeof r.activeEquityNetInflow === "number" &&
+        typeof r.netInflow === "number" &&
+        r.netInflow !== 0
+    )
+    .map((r) => ({
+      label: r.month,
+      value:
+        ((r.activeEquityNetInflow as number) / (r.netInflow as number)) * 100,
+    }))
+    .slice(-24);
+  const activeEquityFlowDisplay =
+    aeFlowLens === "share" ? activeEquityFlowShare : activeEquityFlowTrend;
 
   // Active Equity AUM Bridge — single-series chartInsights doesn't
   // map cleanly to a 2-series bridge. We surface the analytical
@@ -1762,22 +1966,49 @@ export default async function MonthlyPage({
             </Card>
             <ChartWithContext
               title="Total AAUM Trend"
-              subtitle={aaumTrendSubtitle}
+              subtitle={
+                aaumLens === "share"
+                  ? `${aaumTrendDataShare.length} month${aaumTrendDataShare.length === 1 ? "" : "s"} · indexed to trailing 12M avg`
+                  : aaumTrendSubtitle
+              }
               flowKind="stock"
-              denominatorCaption={totalAaumDenomCaption}
+              denominatorCaption={
+                aaumLens === "share" ? undefined : totalAaumDenomCaption
+              }
               denominatorTooltip="Each month's total AAUM expressed as a % of the trailing 12-month average AAUM. Helps separate cyclical mean-reversion from structural growth."
               insights={totalAaumInsights}
               yoyBadge={(() => {
                 const v = latestYoyPct(aaumTrendData, 12);
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
+              action={
+                <LensToggle
+                  basePath="/monthly"
+                  paramName="aaumLens"
+                  defaultValue="absolute"
+                  lenses={[
+                    { value: "absolute", label: "₹ Cr" },
+                    { value: "share", label: "vs 12M avg" },
+                  ]}
+                  active={aaumLens}
+                  preserveParams={preservedQueryParams}
+                />
+              }
             >
               {aaumTrendHasData ? (
                 <BarSeries
-                  data={aaumTrendData}
+                  data={aaumDisplayData}
                   name="AAUM"
                   color="hsl(var(--chart-1))"
-                  trendline={movingAverage(aaumTrendData, 12)}
+                  valueFormat={aaumLens === "share" ? "pct" : "cr"}
+                  axisFormat={aaumLens === "share" ? "pct" : "cr"}
+                  trendline={
+                    aaumLens === "share"
+                      ? undefined
+                      : movingAverage(aaumTrendData, 12)
+                  }
+                  referenceValue={aaumLens === "share" ? 100 : undefined}
+                  referenceLabel={aaumLens === "share" ? "12M avg" : undefined}
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
@@ -1856,25 +2087,48 @@ export default async function MonthlyPage({
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <ChartWithContext
               title="SIP Contribution Trend"
-              subtitle={`Monthly gross SIP inflow · ${sipContribTrend.length} month${sipContribTrend.length === 1 ? "" : "s"} · ₹ Cr · no SIP redemptions are netted`}
+              subtitle={
+                sipContribLens === "share"
+                  ? `${sipContribShare.length} month${sipContribShare.length === 1 ? "" : "s"} · % of industry net inflow`
+                  : `Monthly gross SIP inflow · ${sipContribTrend.length} month${sipContribTrend.length === 1 ? "" : "s"} · ₹ Cr · no SIP redemptions are netted`
+              }
               flowKind="gross"
-              denominatorCaption={sipContribLatestDenomCaption}
+              denominatorCaption={
+                sipContribLens === "share" ? undefined : sipContribLatestDenomCaption
+              }
               denominatorTooltip="SIP gross contribution as a share of the industry's net inflow that month. When the share trends up, retail systematic flow is doing more of the heavy lifting; when it falls, lump-sum / institutional money dominates."
               insights={sipContribInsights}
               yoyBadge={(() => {
                 const v = latestYoyPct(sipContribTrend, 12);
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
+              action={
+                <LensToggle
+                  basePath="/monthly"
+                  paramName="sipContribLens"
+                  defaultValue="absolute"
+                  lenses={[
+                    { value: "absolute", label: "₹ Cr" },
+                    { value: "share", label: "% of net inflow" },
+                  ]}
+                  active={sipContribLens}
+                  preserveParams={preservedQueryParams}
+                />
+              }
             >
               {sipContribTrend.length > 0 ? (
                 <BarSeries
-                  data={sipContribTrend}
+                  data={sipContribDisplay}
                   name="SIP Contribution"
                   color="hsl(var(--chart-1))"
-                  valueFormat="cr"
-                  axisFormat="cr"
+                  valueFormat={sipContribLens === "share" ? "pct" : "cr"}
+                  axisFormat={sipContribLens === "share" ? "pct" : "cr"}
                   labelFormat="month"
-                  trendline={movingAverage(sipContribTrend, 12)}
+                  trendline={
+                    sipContribLens === "share"
+                      ? undefined
+                      : movingAverage(sipContribTrend, 12)
+                  }
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
@@ -1885,25 +2139,48 @@ export default async function MonthlyPage({
 
             <ChartWithContext
               title="SIP AUM Trend"
-              subtitle={`Period-end SIP assets · ${sipAumTrend.length} month${sipAumTrend.length === 1 ? "" : "s"} · ₹ Cr`}
+              subtitle={
+                sipAumLens === "share"
+                  ? `${sipAumShare.length} month${sipAumShare.length === 1 ? "" : "s"} · % of total industry AUM`
+                  : `Period-end SIP assets · ${sipAumTrend.length} month${sipAumTrend.length === 1 ? "" : "s"} · ₹ Cr`
+              }
               flowKind="stock"
-              denominatorCaption={sipAumDenomCaption}
+              denominatorCaption={
+                sipAumLens === "share" ? undefined : sipAumDenomCaption
+              }
               denominatorTooltip="SIP AUM as a % of total industry AUM. Captures how much of the industry's asset base sits in committed, recurring flows — a structural-stability indicator."
               insights={sipAumInsights}
               yoyBadge={(() => {
                 const v = latestYoyPct(sipAumTrend, 12);
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
+              action={
+                <LensToggle
+                  basePath="/monthly"
+                  paramName="sipAumLens"
+                  defaultValue="absolute"
+                  lenses={[
+                    { value: "absolute", label: "₹ Cr" },
+                    { value: "share", label: "% of total AUM" },
+                  ]}
+                  active={sipAumLens}
+                  preserveParams={preservedQueryParams}
+                />
+              }
             >
               {sipAumTrend.length > 0 ? (
                 <BarSeries
-                  data={sipAumTrend}
+                  data={sipAumDisplay}
                   name="SIP AUM"
                   color="hsl(var(--chart-2))"
-                  valueFormat="cr"
-                  axisFormat="cr"
+                  valueFormat={sipAumLens === "share" ? "pct" : "cr"}
+                  axisFormat={sipAumLens === "share" ? "pct" : "cr"}
                   labelFormat="month"
-                  trendline={movingAverage(sipAumTrend, 12)}
+                  trendline={
+                    sipAumLens === "share"
+                      ? undefined
+                      : movingAverage(sipAumTrend, 12)
+                  }
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
@@ -1914,25 +2191,48 @@ export default async function MonthlyPage({
 
             <ChartWithContext
               title="SIP Contributing Accounts Trend"
-              subtitle={`Active SIP accounts · ${sipAccountsTrend.length} month${sipAccountsTrend.length === 1 ? "" : "s"}`}
+              subtitle={
+                sipAccountsLens === "share"
+                  ? `${sipAccountsShare.length} month${sipAccountsShare.length === 1 ? "" : "s"} · accounts per ₹ Cr AUM`
+                  : `Active SIP accounts · ${sipAccountsTrend.length} month${sipAccountsTrend.length === 1 ? "" : "s"}`
+              }
               flowKind="stock"
-              denominatorCaption={sipAccountsDenomCaption}
+              denominatorCaption={
+                sipAccountsLens === "share" ? undefined : sipAccountsDenomCaption
+              }
               denominatorTooltip="SIP accounts per ₹ Cr of industry AUM — a density measure of investor participation per unit of capital. Rising = more retail-density per Cr; falling = AUM growing faster than account base."
               insights={sipAccountsInsights}
               yoyBadge={(() => {
                 const v = latestYoyPct(sipAccountsTrend, 12);
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
+              action={
+                <LensToggle
+                  basePath="/monthly"
+                  paramName="sipAccountsLens"
+                  defaultValue="absolute"
+                  lenses={[
+                    { value: "absolute", label: "Count" },
+                    { value: "share", label: "Per ₹ Cr AUM" },
+                  ]}
+                  active={sipAccountsLens}
+                  preserveParams={preservedQueryParams}
+                />
+              }
             >
               {sipAccountsTrend.length > 0 ? (
                 <BarSeries
-                  data={sipAccountsTrend}
+                  data={sipAccountsDisplay}
                   name="SIP Accounts"
                   color="hsl(var(--chart-3))"
-                  valueFormat="crore-count"
-                  axisFormat="crore-count"
+                  valueFormat={sipAccountsLens === "share" ? "count" : "crore-count"}
+                  axisFormat={sipAccountsLens === "share" ? "count" : "crore-count"}
                   labelFormat="month"
-                  trendline={movingAverage(sipAccountsTrend, 12)}
+                  trendline={
+                    sipAccountsLens === "share"
+                      ? undefined
+                      : movingAverage(sipAccountsTrend, 12)
+                  }
                 />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
@@ -1958,36 +2258,62 @@ export default async function MonthlyPage({
             {activeEquityFlowTrend.length > 0 && (
               <ChartWithContext
                 title="Active Equity Net Inflows"
-                subtitle={`Monthly net inflow · ${activeEquityFlowTrend.length} month${activeEquityFlowTrend.length === 1 ? "" : "s"}${
-                  activeEquityFlowAvg !== null
-                    ? ` · trailing 12M avg ${formatCompactCrSafe(activeEquityFlowAvg)}`
-                    : ""
-                } · ₹ Cr`}
+                subtitle={
+                  aeFlowLens === "share"
+                    ? `${activeEquityFlowShare.length} month${activeEquityFlowShare.length === 1 ? "" : "s"} · % of industry net inflow`
+                    : `Monthly net inflow · ${activeEquityFlowTrend.length} month${activeEquityFlowTrend.length === 1 ? "" : "s"}${
+                        activeEquityFlowAvg !== null
+                          ? ` · trailing 12M avg ${formatCompactCrSafe(activeEquityFlowAvg)}`
+                          : ""
+                      } · ₹ Cr`
+                }
                 flowKind="net"
-                denominatorCaption={activeEquityFlowDenomCaption}
+                denominatorCaption={
+                  aeFlowLens === "share" ? undefined : activeEquityFlowDenomCaption
+                }
                 denominatorTooltip="Latest active-equity net inflow as a % of industry net inflow for the same month — captures how much of the month's flow ended up in the active-equity envelope."
                 insights={activeEquityFlowInsights}
                 yoyBadge={(() => {
                   const v = latestYoyPct(activeEquityFlowTrend, 12);
                   return v === null ? undefined : { label: "YoY", pct: v };
                 })()}
+                action={
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="aeFlowLens"
+                    defaultValue="absolute"
+                    lenses={[
+                      { value: "absolute", label: "₹ Cr" },
+                      { value: "share", label: "% of net inflow" },
+                    ]}
+                    active={aeFlowLens}
+                    preserveParams={preservedQueryParams}
+                  />
+                }
               >
                 <BarSeries
-                  data={activeEquityFlowTrend}
+                  data={activeEquityFlowDisplay}
                   name="Active Equity Net Inflow"
                   color="hsl(var(--chart-1))"
-                  valueFormat="cr"
-                  axisFormat="cr"
+                  valueFormat={aeFlowLens === "share" ? "pct" : "cr"}
+                  axisFormat={aeFlowLens === "share" ? "pct" : "cr"}
                   labelFormat="month"
-                  trendline={movingAverage(activeEquityFlowTrend, 12)}
+                  trendline={
+                    aeFlowLens === "share"
+                      ? undefined
+                      : movingAverage(activeEquityFlowTrend, 12)
+                  }
                   trendlineName="12M avg"
                 />
-                <div className="mt-2">
-                  <VolatilityRibbon series={activeEquityFlowTrend} />
-                </div>
+                {aeFlowLens === "absolute" && (
+                  <div className="mt-2">
+                    <VolatilityRibbon series={activeEquityFlowTrend} />
+                  </div>
+                )}
                 <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  Dashed line = trailing 12-month average of net inflow.
-                  Strip below = ≥ ±2σ MoM moves shaded green / red.
+                  {aeFlowLens === "absolute"
+                    ? "Dashed line = trailing 12-month average of net inflow. Strip below = ≥ ±2σ MoM moves shaded green / red."
+                    : "Share of industry net inflow captured by the active-equity envelope each month."}
                   <InfoTooltip label="Active-equity envelope = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
                 </p>
               </ChartWithContext>
@@ -2166,24 +2492,47 @@ export default async function MonthlyPage({
           {hasAnyFolioOrNfoTrend && folioAdditionsTrend.length > 0 && (
             <ChartWithContext
               title="Folio Additions Trend"
-              subtitle={`Net new folios per month · ${folioAdditionsTrend.length} month${folioAdditionsTrend.length === 1 ? "" : "s"} · lakh · ${foliosHover ?? ""}`}
+              subtitle={
+                folioAddLens === "share"
+                  ? `${folioAdditionsShare.length} month${folioAdditionsShare.length === 1 ? "" : "s"} · bps of existing folio base`
+                  : `Net new folios per month · ${folioAdditionsTrend.length} month${folioAdditionsTrend.length === 1 ? "" : "s"} · lakh · ${foliosHover ?? ""}`
+              }
               flowKind="net"
-              denominatorCaption={folioAdditionsDenomCaption}
+              denominatorCaption={
+                folioAddLens === "share" ? undefined : folioAdditionsDenomCaption
+              }
               denominatorTooltip="Monthly folio additions expressed as basis points of the existing folio base. The bps view normalises growth against the (large, growing) base so the trend is comparable across years."
               insights={folioAdditionsInsights}
               yoyBadge={(() => {
                 const v = latestYoyPct(folioAdditionsTrend, 12);
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
+              action={
+                <LensToggle
+                  basePath="/monthly"
+                  paramName="folioAddLens"
+                  defaultValue="absolute"
+                  lenses={[
+                    { value: "absolute", label: "Lakh" },
+                    { value: "share", label: "bps of base" },
+                  ]}
+                  active={folioAddLens}
+                  preserveParams={preservedQueryParams}
+                />
+              }
             >
               <BarSeries
-                data={folioAdditionsTrend}
+                data={folioAdditionsDisplay}
                 name="Folio Additions"
                 color="hsl(var(--chart-4))"
-                valueFormat="lakh"
-                axisFormat="lakh"
+                valueFormat={folioAddLens === "share" ? "bps" : "lakh"}
+                axisFormat={folioAddLens === "share" ? "bps" : "lakh"}
                 labelFormat="month"
-                trendline={movingAverage(folioAdditionsTrend, 12)}
+                trendline={
+                  folioAddLens === "share"
+                    ? undefined
+                    : movingAverage(folioAdditionsTrend, 12)
+                }
               />
             </ChartWithContext>
           )}
@@ -2205,48 +2554,96 @@ export default async function MonthlyPage({
                   {nfoCountTrend.length > 0 && (
                     <ChartWithContext
                       title="NFO Launches Trend"
-                      subtitle={`Open + close-ended schemes · ${nfoCountTrend.length} month${nfoCountTrend.length === 1 ? "" : "s"} · ${nfoCountSourceLine}`}
+                      subtitle={
+                        nfoCountLens === "share"
+                          ? `${nfoCountShare.length} month${nfoCountShare.length === 1 ? "" : "s"} · % of trailing 5Y monthly avg`
+                          : `Open + close-ended schemes · ${nfoCountTrend.length} month${nfoCountTrend.length === 1 ? "" : "s"} · ${nfoCountSourceLine}`
+                      }
                       flowKind="stock"
-                      denominatorCaption={nfoCountDenomCaption}
+                      denominatorCaption={
+                        nfoCountLens === "share" ? undefined : nfoCountDenomCaption
+                      }
                       denominatorTooltip="Monthly NFO launches as a % of the trailing 5-year monthly average. Values above 100% = launch activity hotter than the 5Y norm (often coincides with bullish market regimes)."
                       insights={nfoCountInsights}
                       yoyBadge={(() => {
                         const v = latestYoyPct(nfoCountTrend, 12);
                         return v === null ? undefined : { label: "YoY", pct: v };
                       })()}
+                      action={
+                        <LensToggle
+                          basePath="/monthly"
+                          paramName="nfoCountLens"
+                          defaultValue="absolute"
+                          lenses={[
+                            { value: "absolute", label: "Count" },
+                            { value: "share", label: "% of 5Y avg" },
+                          ]}
+                          active={nfoCountLens}
+                          preserveParams={preservedQueryParams}
+                        />
+                      }
                     >
                       <BarSeries
-                        data={nfoCountTrend}
+                        data={nfoCountDisplay}
                         name="NFO Launches"
                         color="hsl(var(--chart-5))"
-                        valueFormat="count"
-                        axisFormat="count"
+                        valueFormat={nfoCountLens === "share" ? "pct" : "count"}
+                        axisFormat={nfoCountLens === "share" ? "pct" : "count"}
                         labelFormat="month"
-                        trendline={movingAverage(nfoCountTrend, 12)}
+                        trendline={
+                          nfoCountLens === "share"
+                            ? undefined
+                            : movingAverage(nfoCountTrend, 12)
+                        }
+                        referenceValue={nfoCountLens === "share" ? 100 : undefined}
+                        referenceLabel={nfoCountLens === "share" ? "5Y avg" : undefined}
                       />
                     </ChartWithContext>
                   )}
                   {nfoFundsTrend.length > 0 && (
                     <ChartWithContext
                       title="NFO Funds Mobilised Trend"
-                      subtitle={`Gross funds raised during NFOs · ${nfoFundsTrend.length} month${nfoFundsTrend.length === 1 ? "" : "s"} · ₹ Cr · no redemptions netted · ${nfoFundsSourceLine}`}
+                      subtitle={
+                        nfoFundsLens === "share"
+                          ? `${nfoFundsShare.length} month${nfoFundsShare.length === 1 ? "" : "s"} · % of industry net inflow`
+                          : `Gross funds raised during NFOs · ${nfoFundsTrend.length} month${nfoFundsTrend.length === 1 ? "" : "s"} · ₹ Cr · no redemptions netted · ${nfoFundsSourceLine}`
+                      }
                       flowKind="gross"
-                      denominatorCaption={nfoFundsDenomCaption}
+                      denominatorCaption={
+                        nfoFundsLens === "share" ? undefined : nfoFundsDenomCaption
+                      }
                       denominatorTooltip="NFO gross funds mobilised as a % of industry net inflow that month — i.e., how much of the month's net flow was absorbed by new fund launches vs going to existing schemes."
                       insights={nfoFundsInsights}
                       yoyBadge={(() => {
                         const v = latestYoyPct(nfoFundsTrend, 12);
                         return v === null ? undefined : { label: "YoY", pct: v };
                       })()}
+                      action={
+                        <LensToggle
+                          basePath="/monthly"
+                          paramName="nfoFundsLens"
+                          defaultValue="absolute"
+                          lenses={[
+                            { value: "absolute", label: "₹ Cr" },
+                            { value: "share", label: "% of net inflow" },
+                          ]}
+                          active={nfoFundsLens}
+                          preserveParams={preservedQueryParams}
+                        />
+                      }
                     >
                       <BarSeries
-                        data={nfoFundsTrend}
+                        data={nfoFundsDisplay}
                         name="NFO Funds"
                         color="hsl(var(--chart-2))"
-                        valueFormat="cr"
-                        axisFormat="cr"
+                        valueFormat={nfoFundsLens === "share" ? "pct" : "cr"}
+                        axisFormat={nfoFundsLens === "share" ? "pct" : "cr"}
                         labelFormat="month"
-                        trendline={movingAverage(nfoFundsTrend, 12)}
+                        trendline={
+                          nfoFundsLens === "share"
+                            ? undefined
+                            : movingAverage(nfoFundsTrend, 12)
+                        }
                       />
                     </ChartWithContext>
                   )}
@@ -2277,25 +2674,48 @@ export default async function MonthlyPage({
           <section className="grid gap-4 lg:grid-cols-2">
             <ChartWithContext
               title="Active Equity AAUM Trend"
-              subtitle={`${activeEquityTrend.length} month${activeEquityTrend.length === 1 ? "" : "s"} · ₹ Cr · period-average`}
+              subtitle={
+                aeAaumLens === "share"
+                  ? `${activeEquityAaumShare.length} month${activeEquityAaumShare.length === 1 ? "" : "s"} · % of total industry AAUM`
+                  : `${activeEquityTrend.length} month${activeEquityTrend.length === 1 ? "" : "s"} · ₹ Cr · period-average`
+              }
               flowKind="stock"
-              denominatorCaption={activeEquityAaumDenomCaption}
+              denominatorCaption={
+                aeAaumLens === "share" ? undefined : activeEquityAaumDenomCaption
+              }
               denominatorTooltip="Latest active-equity AAUM as a % of total industry AAUM — separates absolute scale growth from share capture vs other segments."
               insights={activeEquityAaumInsights}
               yoyBadge={(() => {
                 const v = latestYoyPct(activeEquityTrend, 12);
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
+              action={
+                <LensToggle
+                  basePath="/monthly"
+                  paramName="aeAaumLens"
+                  defaultValue="absolute"
+                  lenses={[
+                    { value: "absolute", label: "₹ Cr" },
+                    { value: "share", label: "% of total AAUM" },
+                  ]}
+                  active={aeAaumLens}
+                  preserveParams={preservedQueryParams}
+                />
+              }
             >
               {activeEquityTrend.length > 0 ? (
                 <BarSeries
-                  data={activeEquityTrend}
+                  data={activeEquityAaumDisplay}
                   name="Active Equity AAUM"
                   color="hsl(var(--chart-1))"
-                  valueFormat="cr"
-                  axisFormat="cr"
+                  valueFormat={aeAaumLens === "share" ? "pct" : "cr"}
+                  axisFormat={aeAaumLens === "share" ? "pct" : "cr"}
                   labelFormat="month"
-                  trendline={movingAverage(activeEquityTrend, 12)}
+                  trendline={
+                    aeAaumLens === "share"
+                      ? undefined
+                      : movingAverage(activeEquityTrend, 12)
+                  }
                   trendlineName="12M avg"
                 />
               ) : (
