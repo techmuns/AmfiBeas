@@ -7,7 +7,6 @@ import { Card } from "@/components/ui/Card";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
-import { SectionDivider } from "@/components/ui/SectionDivider";
 import { quarterlyMarketWrap } from "@/data/market-wrap-quarterly";
 import { FiscalQuarterPicker } from "@/components/filters/FiscalQuarterPicker";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -63,6 +62,24 @@ import {
 } from "@/data/amc-peer-universe";
 import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
 import { cn } from "@/lib/cn";
+import {
+  DashboardTabs,
+  type DashboardTabDef,
+} from "@/components/layout/DashboardTabs";
+import { TabIntroCard } from "@/components/ui/TabIntroCard";
+import { resolveTab } from "@/lib/tabs";
+
+const QUARTERLY_TABS = [
+  { id: "snapshot", label: "Snapshot" },
+  { id: "aaum-flows", label: "AAUM & Flows" },
+  { id: "retail-schemes", label: "Retail & Schemes" },
+  { id: "active-passive", label: "Active vs Passive" },
+  { id: "concentration", label: "Concentration" },
+] as const satisfies readonly DashboardTabDef[];
+type QuarterlyTabId = (typeof QUARTERLY_TABS)[number]["id"];
+const QUARTERLY_TAB_IDS = QUARTERLY_TABS.map(
+  (t) => t.id,
+) as readonly QuarterlyTabId[];
 
 /** Sign-aware compact ₹ Cr formatter — mirrors the equivalent helper
  *  on /monthly so a negative net inflow KPI renders as "−₹32.4K Cr"
@@ -124,6 +141,12 @@ export default async function QuarterlyPage({
     // "trend" value is preserved so other toggles never re-attach
     // `q<thing>View=bars` to the URL.
   };
+
+  const activeTab = resolveTab<QuarterlyTabId>(
+    sp.tab,
+    QUARTERLY_TAB_IDS,
+    "snapshot",
+  );
 
   // Share-mode transform helper for grouped-bar series.
   const toShareRow = (
@@ -847,6 +870,23 @@ export default async function QuarterlyPage({
         }
       />
 
+      <MarketWrapCard wrap={marketWrapData} />
+
+      <DashboardTabs
+        tabs={QUARTERLY_TABS}
+        activeId={activeTab}
+        searchParams={sp}
+      />
+
+      {activeTab === "snapshot" && (
+        <TabIntroCard
+          headline="What's the state of the industry this quarter?"
+          summary="Five quarterly signals — AAUM trend, flow quality, active vs passive, retail health, and concentration — synthesised from the latest live quarter."
+          watchNext="Whether the signals reinforce each other (broad recovery / broad drawdown) or pull in opposite directions (rotation underway)."
+        />
+      )}
+
+      {activeTab === "snapshot" && (
       <section className="space-y-3">
         <div>
           <h2 className="text-sm font-medium tracking-tight">
@@ -859,7 +899,7 @@ export default async function QuarterlyPage({
         </div>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
           <QSignalTile
-            label="Quarterly AAUM Trajectory"
+            label="Quarterly AAUM trend"
             pill={
               aaumDeltaVs4Q === null
                 ? "—"
@@ -879,7 +919,7 @@ export default async function QuarterlyPage({
             }
             read={(() => {
               if (aaumDeltaVs4Q === null)
-                return "AAUM trajectory unavailable — need at least 4 quarters.";
+                return "AAUM trend unavailable — need at least 4 quarters.";
               if (aaumDeltaVs4Q >= 5)
                 return "Quarterly AAUM is running well ahead of its trailing-4Q average — sector earnings should be expanding. Watch whether the gap holds or fades next quarter.";
               if (aaumDeltaVs4Q >= 0)
@@ -1011,16 +1051,9 @@ export default async function QuarterlyPage({
           />
         </div>
       </section>
+      )}
 
-      <MarketWrapCard wrap={marketWrapData} />
-
-      <SectionDivider
-        eyebrow="Section 1"
-        label="Today's read"
-        context="The cycle phase the latest quarter sits inside, plus how flow ran vs trend."
-      />
-
-      {cyclePhasePoints.length > 0 && (
+      {activeTab === "snapshot" && cyclePhasePoints.length > 0 && (
         <Card
           title="Cycle Regime"
           subtitle={`Per-month cycle phase since ${cyclePhasePoints[0].month} · derived from active-equity flow z-score + Nifty 500 drawdown`}
@@ -1029,13 +1062,15 @@ export default async function QuarterlyPage({
         </Card>
       )}
 
-      <SectionDivider
-        eyebrow="Section 2"
-        label="Industry flow"
-        context="Quarterly headline KPIs, AUM mix, last-month AAUM trend, and net flows by category."
-      />
+      {activeTab === "aaum-flows" && (
+        <TabIntroCard
+          headline="Where did the industry's quarterly AAUM and flow go?"
+          summary="Headline AAUM, AUM mix donut, last-month AAUM trend, quarterly net flows by category, and category-level QAAUM/flow share. The full quarterly flow picture in one tab."
+          watchNext="Whether equity continues to dominate flow magnitude as AAUM expands."
+        />
+      )}
 
-      {/* AMFI Quarterly Snapshot — first live section, mirrors /monthly. */}
+      {activeTab === "aaum-flows" && (
       <Card
         title="AMFI Quarterly Snapshot"
         subtitle={
@@ -1087,10 +1122,9 @@ export default async function QuarterlyPage({
           </div>
         )}
       </Card>
+      )}
 
-      {/* AMFI Quarterly AUM Mix & Trend — Donut bound to the selected
-          quarter; bar trend shows the full 8-quarter history. */}
-      {selectedRow && (
+      {activeTab === "aaum-flows" && selectedRow && (
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
@@ -1170,9 +1204,7 @@ export default async function QuarterlyPage({
         </div>
       )}
 
-      {/* Quarterly Flows — full-width grouped bar chart mirroring
-          /monthly's Equity / Debt / Liquid Monthly Net Flows. */}
-      {flowsHasData && (
+      {activeTab === "aaum-flows" && flowsHasData && (
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
@@ -1232,14 +1264,15 @@ export default async function QuarterlyPage({
         </div>
       )}
 
-      <SectionDivider
-        eyebrow="Section 3"
-        label="Active vs Passive"
-        context="Where new equity money is going and how the passive share is moving."
-      />
+      {activeTab === "active-passive" && (
+        <TabIntroCard
+          headline="How fast is passive closing the gap?"
+          summary="Active-equity last-month AAUM and the equity AAUM breakdown show whether ETF & Index is gaining share against actively managed equity."
+          watchNext="Whether the ETF & Index share keeps climbing even as active-equity AAUM rises."
+        />
+      )}
 
-      {/* Active Equity & Equity Mix — 3 cards mirroring /monthly. */}
-      {hasAnyEquityMix && (
+      {activeTab === "active-passive" && hasAnyEquityMix && (
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
@@ -1363,17 +1396,15 @@ export default async function QuarterlyPage({
         </div>
       )}
 
-      <SectionDivider
-        eyebrow="Section 4"
-        label="Folios & shelf"
-        context="Retail participation depth: total folios, additions per quarter, and the open-ended scheme shelf."
-      />
+      {activeTab === "retail-schemes" && (
+        <TabIntroCard
+          headline="How broad is retail participation?"
+          summary="Total folios, quarterly folio additions, and open-ended scheme count. Together they show whether participation is widening and whether the AMC shelf is expanding to absorb it."
+          watchNext="Whether folio additions accelerate while the scheme count stabilises — a sign of consolidation in winning categories."
+        />
+      )}
 
-      {/* Quarterly Folios & Scheme Count — mirrors /monthly's Industry
-          Folios & NFO. NFO Launches / NFO Funds Mobilized are NOT
-          mirrored because the quarterly PDF page 2 doesn't carry the
-          industry-wide Grand Total NFO row. */}
-      {(hasAnyFolioKpi || hasAnyFolioTrend) && (
+      {activeTab === "retail-schemes" && (hasAnyFolioKpi || hasAnyFolioTrend) && (
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
@@ -1612,18 +1643,7 @@ export default async function QuarterlyPage({
         </div>
       )}
 
-      <SectionDivider
-        eyebrow="Section 5"
-        label="Category rotation"
-        context="QAAUM share vs net-inflow share across active-equity categories — where flow is moving."
-      />
-
-      {/* IIFL Active-Equity Category Trends — LIVE. Sourced from
-          AMFI Monthly Reports aggregated into fiscal quarters. The
-          one section on /quarterly that is allowed to source from
-          AMFI Monthly Reports (true QAAUM share requires monthly
-          period-average AAUM). */}
-      {hasAnyIiflTrend ? (
+      {activeTab === "aaum-flows" && hasAnyIiflTrend ? (
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
@@ -1673,22 +1693,7 @@ export default async function QuarterlyPage({
           </section>
 
           {hasExpandedIiflTrend && (
-            <details className="group rounded-md border border-dashed border-border bg-muted/20">
-              <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium tracking-tight marker:hidden">
-                <span className="inline-flex items-center gap-2">
-                  <span className="text-foreground">
-                    Show more active-equity categories
-                  </span>
-                  <span className="rounded-full border border-border bg-background px-1.5 py-0 text-[10px] uppercase tracking-wide text-muted-foreground">
-                    {iiflExpandedCards.length} more
-                  </span>
-                  <span className="text-muted-foreground transition-transform group-open:rotate-90">
-                    ›
-                  </span>
-                </span>
-              </summary>
-              <div className="border-t border-border/60 p-4">
-                <section className="grid gap-4 lg:grid-cols-2">
+            <section className="grid gap-4 lg:grid-cols-2">
                   {iiflExpandedCards.map((c) => (
                     <Card
                       key={c.slug}
@@ -1722,9 +1727,7 @@ export default async function QuarterlyPage({
                       )}
                     </Card>
                   ))}
-                </section>
-              </div>
-            </details>
+            </section>
           )}
 
           <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -1735,13 +1738,15 @@ export default async function QuarterlyPage({
         </div>
       ) : null}
 
-      <SectionDivider
-        eyebrow="Section 6"
-        label="Concentration & AMC landscape"
-        context="HHI of AMC + category concentration, and Top-7 AMC share of industry AUM."
-      />
+      {activeTab === "concentration" && (
+        <TabIntroCard
+          headline="How concentrated is the industry?"
+          summary="AMC and category Herfindahl–Hirschman Indexes, plus the Top-7 AMC share of industry AUM. Together they show whether incumbents are pulling away or whether challengers have a window."
+          watchNext="Whether the AMC HHI percentile holds in the top decile — the structural signal for incumbent moat strength."
+        />
+      )}
 
-      {hhiHasData && (
+      {activeTab === "concentration" && hhiHasData && (
         <Card
           title="Industry Concentration · HHI"
           subtitle={`Herfindahl–Hirschman Index · 0–10,000 · lower = more competitive · Source: AMFI Fundwise AAUM + AMFI Quarterly Report${
@@ -1799,6 +1804,7 @@ export default async function QuarterlyPage({
         </Card>
       )}
 
+      {activeTab === "concentration" && (
       <Card
         tone={aumMarketShare.isFullUniverse ? undefined : "pending"}
         title="AUM Market Share"
@@ -1838,6 +1844,7 @@ export default async function QuarterlyPage({
           <InfoTooltip label="Denominator is total AAUM of all AMCs in the snapshot." />
         </p>
       </Card>
+      )}
 
     </div>
   );
