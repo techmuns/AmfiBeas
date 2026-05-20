@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { TrendingUp } from "lucide-react";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
@@ -68,7 +67,6 @@ import { marketWrap } from "@/data/market-wrap";
 import { CoachPill } from "@/components/ui/CoachPill";
 import { EpisodeReplayStrip } from "@/components/ui/EpisodeReplayStrip";
 import { HeadlineCard } from "@/components/ui/HeadlineCard";
-import { SectionDivider } from "@/components/ui/SectionDivider";
 import { StickyContextFooter } from "@/components/ui/StickyContextFooter";
 import { LensToggle } from "@/components/ui/LensToggle";
 import { MoodGauge } from "@/components/ui/MoodGauge";
@@ -101,6 +99,24 @@ import {
   formatPercentile,
 } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import {
+  DashboardTabs,
+  type DashboardTabDef,
+} from "@/components/layout/DashboardTabs";
+import { TabIntroCard } from "@/components/ui/TabIntroCard";
+import { resolveTab } from "@/lib/tabs";
+
+const MONTHLY_TABS = [
+  { id: "snapshot", label: "Snapshot" },
+  { id: "flows", label: "Flows" },
+  { id: "sip-retail", label: "SIP & Retail" },
+  { id: "active-passive", label: "Active vs Passive" },
+  { id: "nfo-categories", label: "NFO & Categories" },
+  { id: "market-cycle", label: "Market Cycle" },
+] as const satisfies readonly DashboardTabDef[];
+type MonthlyTabId = (typeof MONTHLY_TABS)[number]["id"];
+const MONTHLY_TAB_IDS = MONTHLY_TABS.map((t) => t.id) as readonly MonthlyTabId[];
+
 export default async function MonthlyPage({
   searchParams,
 }: {
@@ -180,6 +196,14 @@ export default async function MonthlyPage({
     nfoFundsLens:
       typeof sp.nfoFundsLens === "string" ? sp.nfoFundsLens : undefined,
   };
+
+  // Resolve the active tab from the URL. Unknown / missing values
+  // silently fall back to "snapshot" so stale bookmarks don't break.
+  const activeTab = resolveTab<MonthlyTabId>(
+    sp.tab,
+    MONTHLY_TAB_IDS,
+    "snapshot",
+  );
 
   // AMFI Monthly Snapshot — first live AMFI widget. Reads directly from
   // the manually-uploaded-PDF snapshot. The selected row is whichever
@@ -1227,11 +1251,12 @@ export default async function MonthlyPage({
   );
 
   // Proportion diagnostics: category rotation, NFO drag, passive flow share.
+  // Each renders independently under its own tab now (rotation+nfoDrag in
+  // nfo-categories, passiveFlowShare in active-passive), so there's no
+  // longer a combined visibility gate.
   const rotation = categoryRotation(3, 5);
   const nfoDrag = nfoDragTrend(24);
   const passiveFlowShare = passiveFlowShareTrend(24);
-  const hasProportionDiagnostics =
-    rotation !== null || nfoDrag !== null || passiveFlowShare !== null;
 
   // The headline active-equity signal drives the HeadlineCard at the
   // top of the page; nfo/passive/sip/market-stress signals feed the
@@ -1566,13 +1591,21 @@ export default async function MonthlyPage({
 
       <MarketWrapCard wrap={marketWrapData} />
 
-      <SectionDivider
-        eyebrow="Section 1"
-        label="Today's read"
-        context="The single-glance regime call, headline signal and any newsworthy anomaly."
+      <DashboardTabs
+        tabs={MONTHLY_TABS}
+        activeId={activeTab}
+        searchParams={sp}
       />
 
-      {activeEquitySignal && (
+      {activeTab === "snapshot" && (
+        <TabIntroCard
+          headline="What changed this month?"
+          summary="The single-glance regime call, headline industry signal, and any callouts worth flagging before you drill into flows or categories."
+          watchNext="Whether the headline signal is consistent with the cycle phase and mood shown above."
+        />
+      )}
+
+      {activeTab === "snapshot" && activeEquitySignal && (
         <HeadlineCard
           eyebrow={`AMFI · ${activeEquitySignal.latestMonth}`}
           headline={(() => {
@@ -1624,9 +1657,11 @@ export default async function MonthlyPage({
         />
       )}
 
-      {coachMessage && <CoachPill message={coachMessage} />}
+      {activeTab === "snapshot" && coachMessage && (
+        <CoachPill message={coachMessage} />
+      )}
 
-      {topCallouts.length > 0 && (
+      {activeTab === "snapshot" && topCallouts.length > 0 && (
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {topCallouts.map((c) => (
             <CalloutCard
@@ -1640,60 +1675,36 @@ export default async function MonthlyPage({
         </section>
       )}
 
-      <SectionDivider
-        eyebrow="Section 2"
-        label="Industry flow"
-        icon={<TrendingUp className="h-3.5 w-3.5" />}
-        context="What's happening with industry-wide assets and the latest month's net flow."
-      />
-
-      {(flowHeatCells.length > 0 || sankeyData) && (
-        <details className="group">
-          <summary className="cursor-pointer list-none rounded-md border border-dashed border-border bg-muted/20 px-4 py-2.5 text-sm font-medium tracking-tight marker:hidden hover:bg-muted/30">
-            <span className="inline-flex items-center gap-2">
-              <span className="text-foreground">
-                Show detailed industry views (7-year calendar + Sankey)
-              </span>
-              <span className="text-muted-foreground transition-transform group-open:rotate-90">›</span>
-            </span>
-          </summary>
-          <div className="mt-3 space-y-4">
-            {flowHeatCells.length > 0 && (
-              <Card
-                title="Active Equity Flow · 7-year Calendar"
-                subtitle="Each cell = one month · colour = z-score vs full history"
-              >
-                <CalendarHeatGrid
-                  cells={flowHeatCells}
-                  saturationBound={2}
-                  caption="Active-equity net inflow z-score per month"
-                />
-              </Card>
-            )}
-            {sankeyData && (
-              <Card
-                title="Where the Money Went · Latest Month"
-                subtitle={`Industry net flow split by source × destination · ${sankeyData.month}`}
-              >
-                <SankeyFlow
-                  sources={sankeyData.sources}
-                  targets={sankeyData.targets}
-                  links={sankeyData.links}
-                  formatValue={(v) => formatCompactCrSafe(v)}
-                  height={320}
-                />
-                <p className="mt-3 text-[11px] text-muted-foreground">
-                  Source widths show SIP vs lump-sum split of net inflow.
-                  Destination widths show Equity / Debt / Liquid / Other shares.
-                  Source-to-destination ribbons are proportional approximations
-                  (the AMFI release does not split SIP destinations by category).
-                </p>
-              </Card>
-            )}
-          </div>
-        </details>
+      {activeTab === "flows" && (
+        <TabIntroCard
+          headline="Where is money going?"
+          summary="Equity, debt and liquid net flows show whether investors are moving into risk assets, defensive assets, or cash-like funds. The Sankey breaks the latest month's flow into SIP vs lump-sum sources."
+          watchNext="Whether active-equity net inflow stays above its trailing 12-month average."
+        />
       )}
 
+      {activeTab === "flows" && sankeyData && (
+        <Card
+          title="Where the Money Went · Latest Month"
+          subtitle={`Industry net flow split by source × destination · ${sankeyData.month}`}
+        >
+          <SankeyFlow
+            sources={sankeyData.sources}
+            targets={sankeyData.targets}
+            links={sankeyData.links}
+            formatValue={(v) => formatCompactCrSafe(v)}
+            height={320}
+          />
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            Source widths show SIP vs lump-sum split of net inflow.
+            Destination widths show Equity / Debt / Liquid / Other shares.
+            Source-to-destination ribbons are proportional approximations
+            (the AMFI release does not split SIP destinations by category).
+          </p>
+        </Card>
+      )}
+
+      {activeTab === "snapshot" && (
       <Card
         title="AMFI Monthly Snapshot"
         subtitle={
@@ -1745,8 +1756,9 @@ export default async function MonthlyPage({
           </div>
         )}
       </Card>
+      )}
 
-      {amfiSelected && (
+      {activeTab === "flows" && amfiSelected && (
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
@@ -1825,7 +1837,7 @@ export default async function MonthlyPage({
         </div>
       )}
 
-      {monthlyFlowsHasData && (
+      {activeTab === "flows" && monthlyFlowsHasData && (
         <ChartWithContext
           title="Equity / Debt / Liquid Monthly Net Flows"
           subtitle={
@@ -1872,13 +1884,15 @@ export default async function MonthlyPage({
         </ChartWithContext>
       )}
 
-      <SectionDivider
-        eyebrow="Section 3"
-        label="Retail / SIP pulse"
-        context="Are systematic flows holding up, slowing, or accelerating? Folio growth read."
-      />
+      {activeTab === "sip-retail" && (
+        <TabIntroCard
+          headline="Is systematic retail flow holding up?"
+          summary="SIP contribution, SIP AUM and folio additions show whether investor participation is broad, growing, and sticky — or starting to thin."
+          watchNext="Whether SIP contribution growth stays above the folio-base growth rate."
+        />
+      )}
 
-      {hasAnySipTrend && (
+      {activeTab === "sip-retail" && hasAnySipTrend && (
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">SIP Trends</h2>
@@ -2059,17 +2073,9 @@ export default async function MonthlyPage({
         </div>
       )}
 
-      {hasActiveEquityFlowDiagnostics && (
-        <details className="group">
-          <summary className="cursor-pointer list-none rounded-md border border-dashed border-border bg-muted/20 px-4 py-2.5 text-sm font-medium tracking-tight marker:hidden hover:bg-muted/30">
-            <span className="inline-flex items-center gap-2">
-              <span className="text-foreground">
-                Show active equity flow diagnostics
-              </span>
-              <span className="text-muted-foreground transition-transform group-open:rotate-90">›</span>
-            </span>
-          </summary>
-          <section className="mt-3 grid gap-4 lg:grid-cols-2">
+      {activeTab === "flows" && hasActiveEquityFlowDiagnostics && (
+        <>
+          <section className="grid gap-4 lg:grid-cols-2">
             {activeEquityFlowTrend.length > 0 && (
               <ChartWithContext
                 title="Active Equity Net Inflows"
@@ -2170,36 +2176,26 @@ export default async function MonthlyPage({
               </ChartWithContext>
             )}
           </section>
-        </details>
+        </>
       )}
 
-      {hasProportionDiagnostics && (
-        <details className="group">
-          <summary className="cursor-pointer list-none rounded-md border border-dashed border-border bg-muted/20 px-4 py-2.5 text-sm font-medium tracking-tight marker:hidden hover:bg-muted/30">
-            <span className="inline-flex items-center gap-2">
-              <span className="text-foreground">
-                Show rotation, NFO drag and passive flow share
-              </span>
-              <span className="text-muted-foreground transition-transform group-open:rotate-90">›</span>
-            </span>
-          </summary>
-          <div className="mt-3 space-y-3">
-            {rotation && <CategoryRotationCard rotation={rotation} />}
-            <section className="grid gap-4 lg:grid-cols-2">
-              {nfoDrag && <NfoDragCard trend={nfoDrag} />}
-              {passiveFlowShare && (
-                <PassiveFlowShareCard trend={passiveFlowShare} />
-              )}
-            </section>
-          </div>
-        </details>
+      {activeTab === "nfo-categories" && rotation && (
+        <CategoryRotationCard rotation={rotation} />
       )}
 
-      {hasAnyFolioOrNfo && (
+      {activeTab === "nfo-categories" && nfoDrag && (
+        <NfoDragCard trend={nfoDrag} />
+      )}
+
+      {activeTab === "active-passive" && passiveFlowShare && (
+        <PassiveFlowShareCard trend={passiveFlowShare} />
+      )}
+
+      {activeTab === "sip-retail" && hasAnyFolioOrNfo && (
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
-              Industry Folios &amp; NFO
+              Industry Folios
             </h2>
             <p className="text-xs text-muted-foreground">
               Source: AMFI Monthly Report
@@ -2207,7 +2203,7 @@ export default async function MonthlyPage({
             </p>
           </div>
 
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <section className="grid gap-4 md:grid-cols-2">
             <KpiCard
               label="Folios"
               value={formatCroreCountSafe(industryFoliosLatest)}
@@ -2233,41 +2229,6 @@ export default async function MonthlyPage({
               noteHover={foliosHover ?? undefined}
               sparkline={folioAdditionsTrend}
               sparklineColor="hsl(var(--chart-4))"
-            />
-            <KpiCard
-              label="NFO Launches"
-              value={formatIntSafe(industryNfoCountLatest)}
-              note=""
-              noteHover={nfoCountHover ?? undefined}
-              sparkline={nfoCountCtx.sparkline}
-              sparklineColor="hsl(var(--chart-5))"
-              yoyPct={nfoCountCtx.yoyPct}
-              percentile={nfoCountCtx.percentile}
-              ratio={
-                typeof industryNfoFundsLatest === "number" &&
-                typeof industryNfoCountLatest === "number" &&
-                industryNfoCountLatest > 0
-                  ? `${formatCompactCrSafe(industryNfoFundsLatest / industryNfoCountLatest)} per launch`
-                  : undefined
-              }
-            />
-            <KpiCard
-              label="NFO Funds Mobilized"
-              value={formatCompactCrSafe(industryNfoFundsLatest)}
-              note=""
-              noteHover={nfoFundsHover ?? undefined}
-              sparkline={nfoFundsCtx.sparkline}
-              sparklineColor="hsl(var(--chart-2))"
-              yoyPct={nfoFundsCtx.yoyPct}
-              percentile={nfoFundsCtx.percentile}
-              ratio={
-                folioLatestRow &&
-                typeof folioLatestRow.industryNfoFundsMobilized === "number" &&
-                typeof folioLatestRow.netInflow === "number" &&
-                folioLatestRow.netInflow > 0
-                  ? `${((folioLatestRow.industryNfoFundsMobilized / folioLatestRow.netInflow) * 100).toFixed(1)}% of net inflow`
-                  : undefined
-              }
             />
           </section>
 
@@ -2320,21 +2281,62 @@ export default async function MonthlyPage({
               />
             </ChartWithContext>
           )}
+        </div>
+      )}
+
+      {activeTab === "nfo-categories" && hasAnyFolioOrNfo && (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight">
+              NFO Activity
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Source: AMFI Monthly Report
+              {foliosNfoRead ? ` · ${foliosNfoRead}` : ""}
+            </p>
+          </div>
+
+          <section className="grid gap-4 md:grid-cols-2">
+            <KpiCard
+              label="NFO Launches"
+              value={formatIntSafe(industryNfoCountLatest)}
+              note=""
+              noteHover={nfoCountHover ?? undefined}
+              sparkline={nfoCountCtx.sparkline}
+              sparklineColor="hsl(var(--chart-5))"
+              yoyPct={nfoCountCtx.yoyPct}
+              percentile={nfoCountCtx.percentile}
+              ratio={
+                typeof industryNfoFundsLatest === "number" &&
+                typeof industryNfoCountLatest === "number" &&
+                industryNfoCountLatest > 0
+                  ? `${formatCompactCrSafe(industryNfoFundsLatest / industryNfoCountLatest)} per launch`
+                  : undefined
+              }
+            />
+            <KpiCard
+              label="NFO Funds Mobilized"
+              value={formatCompactCrSafe(industryNfoFundsLatest)}
+              note=""
+              noteHover={nfoFundsHover ?? undefined}
+              sparkline={nfoFundsCtx.sparkline}
+              sparklineColor="hsl(var(--chart-2))"
+              yoyPct={nfoFundsCtx.yoyPct}
+              percentile={nfoFundsCtx.percentile}
+              ratio={
+                folioLatestRow &&
+                typeof folioLatestRow.industryNfoFundsMobilized === "number" &&
+                typeof folioLatestRow.netInflow === "number" &&
+                folioLatestRow.netInflow > 0
+                  ? `${((folioLatestRow.industryNfoFundsMobilized / folioLatestRow.netInflow) * 100).toFixed(1)}% of net inflow`
+                  : undefined
+              }
+            />
+          </section>
 
           {hasAnyFolioOrNfoTrend &&
             (nfoCountTrend.length > 0 || nfoFundsTrend.length > 0) && (
-              <details className="group">
-                <summary className="cursor-pointer list-none rounded-md border border-dashed border-border bg-muted/20 px-4 py-2.5 text-sm font-medium tracking-tight marker:hidden hover:bg-muted/30">
-                  <span className="inline-flex items-center gap-2">
-                    <span className="text-foreground">
-                      Show NFO launch + funds-mobilised trends
-                    </span>
-                    <span className="text-muted-foreground transition-transform group-open:rotate-90">
-                      ›
-                    </span>
-                  </span>
-                </summary>
-                <section className="mt-3 grid gap-4 md:grid-cols-2">
+              <section className="grid gap-4 md:grid-cols-2">
                   {nfoCountTrend.length > 0 && (
                     <ChartWithContext
                       title="NFO Launches Trend"
@@ -2436,18 +2438,19 @@ export default async function MonthlyPage({
                     </ChartWithContext>
                   )}
                 </section>
-              </details>
             )}
         </div>
       )}
 
-      <SectionDivider
-        eyebrow="Section 4"
-        label="Active vs Passive"
-        context="Where new equity money is going and whether the passive shift is accelerating."
-      />
+      {activeTab === "active-passive" && (
+        <TabIntroCard
+          headline="Where is new equity money going?"
+          summary="Active-equity AAUM, ETF & Index share, and the equity breakdown show how fast passive is closing the gap on actively managed equity."
+          watchNext="Whether ETF & Index share keeps gaining ground in net inflows even when active equity AAUM is rising."
+        />
+      )}
 
-      {hasAnyEquityMix && (
+      {activeTab === "active-passive" && hasAnyEquityMix && (
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
@@ -2573,7 +2576,8 @@ export default async function MonthlyPage({
         </div>
       )}
 
-      {activePassiveTrend && activePassiveTrend.history.length > 0 && (
+      {activeTab === "active-passive" &&
+        activePassiveTrend && activePassiveTrend.history.length > 0 && (
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
@@ -2662,13 +2666,15 @@ export default async function MonthlyPage({
         </div>
       )}
 
-      <SectionDivider
-        eyebrow="Section 5"
-        label="Category rotation"
-        context="Which categories are winning flow share and which categories investors trust through drawdowns."
-      />
+      {activeTab === "nfo-categories" && (
+        <TabIntroCard
+          headline="Where is flow rotating?"
+          summary="NFO launches, category share trends, and the active-equity category heatmap show which categories are winning new money — and which ones investors trust through drawdowns."
+          watchNext="Whether NFO drag falls back below its 5-year norm as winning categories absorb most of the flow."
+        />
+      )}
 
-      {iiflTrendHasAny && (
+      {activeTab === "nfo-categories" && iiflTrendHasAny && (
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
@@ -2719,59 +2725,42 @@ export default async function MonthlyPage({
           </section>
 
           {iiflTrendHasExpanded && (
-            <details className="group rounded-md border border-dashed border-border bg-muted/20">
-              <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium tracking-tight marker:hidden">
-                <span className="inline-flex items-center gap-2">
-                  <span className="text-foreground">
-                    Show more active-equity categories
-                  </span>
-                  <span className="rounded-full border border-border bg-background px-1.5 py-0 text-[10px] uppercase tracking-wide text-muted-foreground">
-                    {expandedTrendCards.length} more
-                  </span>
-                  <span className="text-muted-foreground transition-transform group-open:rotate-90">
-                    ›
-                  </span>
-                </span>
-              </summary>
-              <div className="border-t border-border/60 p-4">
-                <section className="grid gap-4 lg:grid-cols-2">
-                  {expandedTrendCards.map((c) => (
-                    <Card
-                      key={c.slug}
-                      title={c.label}
-                      subtitle={`${c.series.length} month${c.series.length === 1 ? "" : "s"} · % of active-equity envelope`}
-                      action={<CategoryHeatPill z={c.latestZ} />}
-                    >
-                      {c.hasData ? (
-                        <MultiLine
-                          data={c.series}
-                          xKey="month"
-                          labelFormat="month"
-                          valueFormat="pct"
-                          axisFormat="pct"
-                          lines={[
-                            {
-                              key: "aumSharePct",
-                              name: "QAAUM share",
-                              color: "hsl(var(--chart-1))",
-                            },
-                            {
-                              key: "flowSharePct",
-                              name: "Net inflow share",
-                              color: "hsl(var(--chart-3))",
-                            },
-                          ]}
-                        />
-                      ) : (
-                        <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                          Category snapshot not yet ingested for this slug.
-                        </div>
-                      )}
-                    </Card>
-                  ))}
-                </section>
-              </div>
-            </details>
+            <section className="grid gap-4 lg:grid-cols-2">
+              {expandedTrendCards.map((c) => (
+                <Card
+                  key={c.slug}
+                  title={c.label}
+                  subtitle={`${c.series.length} month${c.series.length === 1 ? "" : "s"} · % of active-equity envelope`}
+                  action={<CategoryHeatPill z={c.latestZ} />}
+                >
+                  {c.hasData ? (
+                    <MultiLine
+                      data={c.series}
+                      xKey="month"
+                      labelFormat="month"
+                      valueFormat="pct"
+                      axisFormat="pct"
+                      lines={[
+                        {
+                          key: "aumSharePct",
+                          name: "QAAUM share",
+                          color: "hsl(var(--chart-1))",
+                        },
+                        {
+                          key: "flowSharePct",
+                          name: "Net inflow share",
+                          color: "hsl(var(--chart-3))",
+                        },
+                      ]}
+                    />
+                  ) : (
+                    <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                      Category snapshot not yet ingested for this slug.
+                    </div>
+                  )}
+                </Card>
+              ))}
+            </section>
           )}
 
           <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -2782,11 +2771,11 @@ export default async function MonthlyPage({
         </div>
       )}
 
-      {categoryResilienceRows.length > 0 && (
+      {activeTab === "nfo-categories" && categoryResilienceRows.length > 0 && (
         <CategoryResilienceCard rows={categoryResilienceRows} />
       )}
 
-      {iiflHeatmapHasData && (
+      {activeTab === "nfo-categories" && iiflHeatmapHasData && (
         <div className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
@@ -2825,6 +2814,28 @@ export default async function MonthlyPage({
         </div>
       )}
 
+      {activeTab === "market-cycle" && (
+        <TabIntroCard
+          headline="When did this happen before?"
+          summary="Cycle replay, the 7-year calendar of flow z-scores, episode recovery latencies, and AMC concentration place the current month in historical context."
+          watchNext="Whether flow z-scores stay positive when Nifty draws down — that's the buy-the-dip signal."
+        />
+      )}
+
+      {activeTab === "market-cycle" && flowHeatCells.length > 0 && (
+        <Card
+          title="Active Equity Flow · 7-year Calendar"
+          subtitle="Each cell = one month · colour = z-score vs full history"
+        >
+          <CalendarHeatGrid
+            cells={flowHeatCells}
+            saturationBound={2}
+            caption="Active-equity net inflow z-score per month"
+          />
+        </Card>
+      )}
+
+      {activeTab === "market-cycle" && (
       <Card
         tone={aumMarketShare.isFullUniverse ? undefined : "pending"}
         title="AUM Market Share"
@@ -2864,18 +2875,13 @@ export default async function MonthlyPage({
           <InfoTooltip label="Denominator is total AAUM of all AMCs in the snapshot." />
         </p>
       </Card>
+      )}
 
-      <SectionDivider
-        eyebrow="Section 6"
-        label="Historical context"
-        context="When did this happen before? Cycle replay, episode recovery latencies, and the regime narrative."
-      />
-
-      {episodeRecoveryData.length > 0 && (
+      {activeTab === "market-cycle" && episodeRecoveryData.length > 0 && (
         <EpisodeRecoveryCard rows={episodeRecoveryData} />
       )}
 
-      {episodes.length > 0 && (
+      {activeTab === "market-cycle" && episodes.length > 0 && (
         <Card
           title="Cycle Replay · How investors behaved in past drawdowns"
           subtitle="Each card is a distinct drawdown episode — colour pill captures the average flow z-score during the episode"
