@@ -28,6 +28,7 @@ import {
   snapshotSectionRead,
   latestIndustryFolioAdditions,
   latestProvenanceFor,
+  activeEquityAumBridgeSnapshot,
   monthlyActiveEquityAumBridge,
   monthlyActiveEquityNetInflowTrend,
   monthlyActiveEquityShareTrend,
@@ -89,6 +90,7 @@ import {
 import { topAumMarketShareSeries } from "@/data/amc-peer-universe";
 import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
 import { GroupedBars } from "@/components/charts/GroupedBars";
+import { BridgeStrip } from "@/components/charts/BridgeStrip";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { MonthPicker } from "@/components/filters/MonthPicker";
 import {
@@ -130,8 +132,6 @@ export default async function MonthlyPage({
     sp.sipAccountsView === "trend" ? "trend" : "bars";
   const aeFlowView: "bars" | "trend" =
     sp.aeFlowView === "trend" ? "trend" : "bars";
-  const aeBridgeView: "bars" | "trend" =
-    sp.aeBridgeView === "trend" ? "trend" : "bars";
   const folioAddView: "bars" | "trend" =
     sp.folioAddView === "trend" ? "trend" : "bars";
   const nfoCountView: "bars" | "trend" =
@@ -207,7 +207,6 @@ export default async function MonthlyPage({
     ...(sp.sipAumView === "trend" ? { sipAumView: "trend" } : {}),
     ...(sp.sipAccountsView === "trend" ? { sipAccountsView: "trend" } : {}),
     ...(sp.aeFlowView === "trend" ? { aeFlowView: "trend" } : {}),
-    ...(sp.aeBridgeView === "trend" ? { aeBridgeView: "trend" } : {}),
     ...(sp.folioAddView === "trend" ? { folioAddView: "trend" } : {}),
     ...(sp.nfoCountView === "trend" ? { nfoCountView: "trend" } : {}),
     ...(sp.nfoFundsView === "trend" ? { nfoFundsView: "trend" } : {}),
@@ -756,10 +755,6 @@ export default async function MonthlyPage({
     { key: "debt", name: "Debt", color: "hsl(var(--chart-2))" },
     { key: "liquid", name: "Liquid", color: "hsl(var(--chart-4))" },
   ];
-  const activeEquityBridgeSeries = [
-    { key: "netInflow", name: "Net inflow", color: "hsl(var(--chart-1))" },
-    { key: "marketResidual", name: "Market impact", color: "hsl(var(--chart-3))" },
-  ];
   const equityBreakdownSeries = [
     { key: "activeEquity", name: "Active Equity", color: "hsl(var(--chart-1))" },
     { key: "etfIndex", name: "ETF & Index", color: "hsl(var(--chart-5))" },
@@ -1174,6 +1169,7 @@ export default async function MonthlyPage({
   const activeEquityFlowTrend = monthlyActiveEquityNetInflowTrend(24);
   const activeEquityFlowAvg = trailingActiveEquityNetInflowAverage(12);
   const activeEquityBridge = monthlyActiveEquityAumBridge(24);
+  const activeEquityBridgeStrip = activeEquityAumBridgeSnapshot(12);
   const sipAumShareTrend = monthlySipAumShareTrend(24);
   const hasActiveEquityFlowDiagnostics =
     activeEquityFlowTrend.length > 0 ||
@@ -2315,53 +2311,34 @@ export default async function MonthlyPage({
               </ChartWithContext>
             )}
 
-            {activeEquityBridge.length > 0 && (
+            {activeEquityBridgeStrip && (
               <ChartWithContext
                 title="Active Equity AUM Bridge"
-                subtitle={`${activeEquityBridge.length} month${activeEquityBridge.length === 1 ? "" : "s"} · ₹ Cr · net inflow vs market impact`}
+                subtitle={`${activeEquityBridgeStrip.windowMonths}-month bridge · opening → flow → market → closing`}
                 flowKind="gross"
                 denominatorCaption={activeEquityBridgeDenomCaption}
-                denominatorTooltip="Latest month's market-impact share of |ΔAUM| — tells you whether MoM AUM change was driven by flow or mark-to-market."
+                denominatorTooltip="Net flow vs market / residual share of the trailing-window ΔAUM — tells you whether AAUM growth was driven by money in or by mark-to-market."
                 insights={activeEquityBridgeInsights}
                 yoyBadge={(() => {
                   const v = latestYoyPct(activeEquityBridgeDeltaSeries, 12);
                   return v === null ? undefined : { label: "ΔAUM YoY", pct: v };
                 })()}
-                action={
-                  <LensToggle
-                    basePath="/monthly"
-                    paramName="aeBridgeView"
-                    defaultValue="bars"
-                    lenses={[
-                      { value: "bars", label: "Bars" },
-                      { value: "trend", label: "Trend" },
-                    ]}
-                    active={aeBridgeView}
-                    preserveParams={preservedQueryParams}
-                  />
-                }
               >
-                {aeBridgeView === "trend" ? (
-                  <MultiLine
-                    data={activeEquityBridge}
-                    xKey="month"
-                    labelFormat="month"
-                    valueFormat="cr"
-                    axisFormat="cr"
-                    lines={activeEquityBridgeSeries}
-                  />
-                ) : (
-                  <GroupedBars
-                    data={activeEquityBridge}
-                    xKey="month"
-                    labelFormat="month"
-                    valueFormat="cr"
-                    axisFormat="cr"
-                    bars={activeEquityBridgeSeries}
-                  />
-                )}
+                <BridgeStrip
+                  data={{
+                    startLabel: activeEquityBridgeStrip.startMonth,
+                    endLabel: activeEquityBridgeStrip.endMonth,
+                    openingValue: activeEquityBridgeStrip.openingAum,
+                    netFlowContribution: activeEquityBridgeStrip.netInflowTotal,
+                    marketResidualContribution:
+                      activeEquityBridgeStrip.marketResidualTotal,
+                    closingValue: activeEquityBridgeStrip.closingAum,
+                    sparkline: activeEquityBridgeStrip.deltaSparkline,
+                    subject: "Active Equity AAUM",
+                  }}
+                />
                 <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  Market impact = ΔAUM − net inflow for the month.
+                  Market / residual = ΔAUM − net inflow, summed across the window.
                   <InfoTooltip label="Captures mark-to-market and minor reclassification effects on the active-equity envelope. AUM uses month-end values." />
                 </p>
               </ChartWithContext>

@@ -37,6 +37,10 @@ export interface CategoryResilienceRow {
    *  the reader a sense of how recent the evidence is. Empty when
    *  no Correction months exist for the category. */
   latestCorrectionMonth: string | null;
+  /** Per-month flow series across the Correction months for the
+   *  sparkline (oldest → newest). Same units as
+   *  `avgFlowDuringCorrection`. */
+  correctionFlowHistory: { label: string; value: number }[];
 }
 
 /**
@@ -64,11 +68,13 @@ export function categoryDrawdownResilience(
     let positiveMonths = 0;
     let flowSum = 0;
     let latestCorrectionMonth: string | null = null;
+    const correctionFlowHistory: { label: string; value: number }[] = [];
     for (const r of rows) {
       if (phaseByMonth.get(r.month) !== "Correction") continue;
       if (typeof r.categoryNetInflow !== "number") continue;
       correctionMonths += 1;
       flowSum += r.categoryNetInflow;
+      correctionFlowHistory.push({ label: r.month, value: r.categoryNetInflow });
       if (r.categoryNetInflow > 0) positiveMonths += 1;
       if (
         latestCorrectionMonth === null ||
@@ -78,6 +84,7 @@ export function categoryDrawdownResilience(
       }
     }
     if (correctionMonths < minCorrectionMonths) continue;
+    correctionFlowHistory.sort((a, b) => a.label.localeCompare(b.label));
     out.push({
       slug: c.slug,
       label: c.label,
@@ -85,6 +92,7 @@ export function categoryDrawdownResilience(
       positiveFlowRatePct: (positiveMonths / correctionMonths) * 100,
       avgFlowDuringCorrection: flowSum / correctionMonths,
       latestCorrectionMonth,
+      correctionFlowHistory,
     });
   }
   // Sort most-resilient first.

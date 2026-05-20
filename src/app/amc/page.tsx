@@ -7,7 +7,6 @@ import { AmcBattleCard } from "@/components/ui/AmcBattleCard";
 import { AmcQuadrantChart } from "@/components/charts/AmcQuadrantChart";
 import { CohortJourneyMap } from "@/components/charts/CohortJourneyMap";
 import { Heatmap } from "@/components/charts/Heatmap";
-import { SkyscraperCity } from "@/components/charts/SkyscraperCity";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
 import { amcAaumSeries, amcIndexRows } from "@/data/amc-detail";
 import {
@@ -51,19 +50,6 @@ export default async function AmcListPage({
   }));
   const anomalies = latestQoqAnomalies(2);
   const quadrant = amcTrajectoryQuadrant(30);
-  // Skyscraper City buildings — top 15 AMCs by latest market share
-  // (constrained so the row stays visually clean).
-  const skyscraperBuildings = quadrant
-    ? [...quadrant.points]
-        .sort((a, b) => b.marketSharePct - a.marketSharePct)
-        .slice(0, 15)
-        .map((p) => ({
-          slug: p.slug,
-          displayName: p.displayName,
-          marketSharePct: p.marketSharePct,
-          qoqGrowthPct: p.qoqGrowthPct,
-        }))
-    : [];
 
   // Cohort journey arrows (5Y / full-history span).
   const journeyPoints = cohortJourneyMap(20) ?? [];
@@ -190,29 +176,6 @@ export default async function AmcListPage({
           <p className="mt-3 text-[11px] text-muted-foreground">
             Green arrows = share gainers · red = share losers · grey = roughly flat.
             Hover an arrow for the precise pp move.
-          </p>
-        </Card>
-      )}
-
-      {skyscraperBuildings.length >= 4 && (
-        <Card
-          title="AMC Skyscraper City"
-          subtitle="Each building = one AMC · height = market share · colour tint = QoQ growth"
-        >
-          <SkyscraperCity buildings={skyscraperBuildings} />
-          <p className="mt-3 text-[11px] text-muted-foreground">
-            Tap a building to open the AMC&rsquo;s detail page.
-            <span className="ml-2 inline-flex items-center gap-3">
-              <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-sm bg-positive" /> Growing
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-sm bg-[hsl(var(--chart-1))]" /> Steady
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-sm bg-negative" /> Contracting
-              </span>
-            </span>
           </p>
         </Card>
       )}
