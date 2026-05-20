@@ -38,6 +38,7 @@ import {
   formatDelta,
   formatLakhSafe,
   formatPctSafe,
+  formatPercentile,
   formatQuarterLabelLong,
   ordinalSuffix,
 } from "@/lib/format";
@@ -192,7 +193,9 @@ export default function HomePage() {
             }
             valueLine={
               sipSig
-                ? `SIP stickiness ${sipSig.latestSharePct.toFixed(1)}% of total AUM · ${ordinalSuffix(Math.round(sipSig.percentileRank ?? 0))} pct`
+                ? formatPercentile(sipSig.percentileRank) === "—"
+                  ? `SIP stickiness ${sipSig.latestSharePct.toFixed(1)}% of total AUM`
+                  : `SIP stickiness ${sipSig.latestSharePct.toFixed(1)}% of total AUM · ${formatPercentile(sipSig.percentileRank)}`
                 : null
             }
             sparkline={aeSparkline}
@@ -214,8 +217,8 @@ export default function HomePage() {
                 : "neutral"
             }
             valueLine={
-              passiveSig
-                ? `${ordinalSuffix(Math.round(passiveSig.percentileRank ?? 0))} pct of history`
+              passiveSig && formatPercentile(passiveSig.percentileRank) !== "—"
+                ? `${formatPercentile(passiveSig.percentileRank)} of history`
                 : null
             }
             sparkline={passiveSpark}
@@ -487,9 +490,13 @@ function flowQualityRead(
   const aePart = ae
     ? `Active-equity net inflow is ${describeZ(ae.zScore)}.`
     : "Active-equity flow data unavailable.";
-  const sipPart = sip
-    ? ` SIP AUM at ${sip.latestSharePct.toFixed(1)}% of total AUM (${ordinalSuffix(Math.round(sip.percentileRank ?? 0))} percentile).`
-    : "";
+  const sipPart = (() => {
+    if (!sip) return "";
+    const base = ` SIP AUM at ${sip.latestSharePct.toFixed(1)}% of total AUM`;
+    if (formatPercentile(sip.percentileRank) === "—") return `${base}.`;
+    const rounded = Math.round(sip.percentileRank as number);
+    return `${base} (${rounded}${ordinalSuffix(rounded)} percentile).`;
+  })();
   const action =
     ae && (ae.zScore ?? 0) <= -1
       ? " Stressed flow — watch for redemption pressure on listed AMC earnings."
@@ -512,8 +519,12 @@ function passivePressureRead(
   p: ReturnType<typeof passiveShiftSignal>
 ): string {
   if (!p) return "Passive share data unavailable.";
-  const ord = ordinalSuffix(Math.round(p.percentileRank ?? 0));
-  const positionPart = `Passive share at ${p.latestSharePct.toFixed(1)}% of equity AUM (${ord} percentile of history).`;
+  const positionPart = (() => {
+    const base = `Passive share at ${p.latestSharePct.toFixed(1)}% of equity AUM`;
+    if (formatPercentile(p.percentileRank) === "—") return `${base}.`;
+    const rounded = Math.round(p.percentileRank as number);
+    return `${base} (${rounded}${ordinalSuffix(rounded)} percentile of history).`;
+  })();
   const action =
     (p.percentileRank ?? 50) >= 80
       ? " Passive accelerating — structural revenue-yield headwind for active-heavy AMCs."
