@@ -112,9 +112,10 @@ export default async function AmcListPage({
                       "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors hover:bg-accent",
                       a.direction === "up"
                         ? "border-positive/40 bg-positive/10 text-positive"
-                        : "border-negative/40 bg-negative/10 text-negative"
+                        : "border-negative/40 bg-negative/10 text-negative",
+                      a.isTinyBase && "opacity-80"
                     )}
-                    title={`QoQ ${a.qoqGrowthPct.toFixed(2)}% · ${a.zScore >= 0 ? "+" : ""}${a.zScore.toFixed(2)}σ from median ${anomalies.medianQoqPct.toFixed(2)}%`}
+                    title={`QoQ ${a.qoqGrowthPct.toFixed(2)}% · ${a.zScore >= 0 ? "+" : ""}${a.zScore.toFixed(2)}σ from median ${anomalies.medianQoqPct.toFixed(2)}% · Latest AAUM ${a.latestAumCr.toFixed(0)} Cr${a.isTinyBase ? " (tiny base — % growth amplified by small denominator)" : ""}`}
                   >
                     <Icon className="h-3 w-3" />
                     <span className="font-medium">{a.displayName}</span>
@@ -126,6 +127,11 @@ export default async function AmcListPage({
                       {a.zScore >= 0 ? "+" : ""}
                       {a.zScore.toFixed(1)}σ
                     </span>
+                    {a.isTinyBase && (
+                      <span className="rounded-full border border-foreground/20 bg-muted px-1.5 py-0 text-[9px] uppercase tracking-wide text-muted-foreground">
+                        Tiny-base
+                      </span>
+                    )}
                   </Link>
                 </li>
               );
@@ -134,8 +140,10 @@ export default async function AmcListPage({
           <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <AlertTriangle className="mr-1 inline h-3 w-3 align-[-2px]" />
             Cohort median QoQ growth: {anomalies.medianQoqPct.toFixed(2)}% ·
-            stdDev {anomalies.stdDevPct.toFixed(2)} pp.
-            <InfoTooltip label="Outliers are AMCs whose latest QoQ growth sits ≥2 standard deviations from the cohort median — investigate before drawing conclusions; could be a new AMC ramping up, a one-off reclassification, or a structural shift." />
+            stdDev {anomalies.stdDevPct.toFixed(2)} pp. Tiny-base names sit
+            below 0.25% of the cohort AUM — their % growth is amplified by
+            a small denominator, not by a franchise shift.
+            <InfoTooltip label="Outliers are AMCs whose latest QoQ growth sits ≥2 standard deviations from the cohort median — investigate before drawing conclusions; could be a new AMC ramping up, a one-off reclassification, or a structural shift. Ordering: non-tiny-base names first, ranked by absolute ₹ Cr ΔAUM." />
           </p>
         </Card>
       )}

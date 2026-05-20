@@ -50,6 +50,9 @@ export function Card({
         // even sees the source caption.
         isDemo &&
           "border-dashed border-muted-foreground/40 opacity-80 [&_.recharts-surface]:grayscale [&_.recharts-surface]:opacity-90",
+        // Print: keep the title and body together; never split a card
+        // mid-flow across pages.
+        "print:break-inside-avoid",
         className
       )}
       {...rest}

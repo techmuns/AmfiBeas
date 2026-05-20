@@ -121,6 +121,29 @@ export default async function ComparePage({
 
       <AmcCompareSelector amcs={universe} selectedA={slugA} selectedB={slugB} />
 
+      {/* Comparison Read panel — buy-side one-line read derived from the
+          latest quarter's AAUM, share, growth, and rank. Renders before
+          the detail columns so the scan order is "headline → evidence". */}
+      {detailA && detailB && (
+        <Card
+          title="Comparison Read"
+          subtitle="Buy-side one-line interpretation"
+        >
+          <ComparisonRead
+            a={{
+              displayName: detailA.displayName,
+              latest: detailA.latest ?? null,
+              growth: growthA ?? null,
+            }}
+            b={{
+              displayName: detailB.displayName,
+              latest: detailB.latest ?? null,
+              growth: growthB ?? null,
+            }}
+          />
+        </Card>
+      )}
+
       {/* Two side-by-side summary columns */}
       <section className="grid gap-4 lg:grid-cols-2">
         {[
@@ -488,6 +511,110 @@ export default async function ComparePage({
           </p>
         </Card>
       )}
+    </div>
+  );
+}
+
+interface ComparisonSide {
+  displayName: string;
+  latest:
+    | {
+        avgAum: number;
+        marketSharePct: number;
+        rank: number;
+      }
+    | null;
+  growth:
+    | {
+        qoqGrowthPct: number | null;
+        yoyGrowthPct: number | null;
+      }
+    | null;
+}
+
+function ComparisonRead({ a, b }: { a: ComparisonSide; b: ComparisonSide }) {
+  if (!a.latest || !b.latest) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Latest-quarter data unavailable for one or both AMCs.
+      </p>
+    );
+  }
+  const largerByAum = a.latest.avgAum >= b.latest.avgAum ? a : b;
+  const smallerByAum = largerByAum === a ? b : a;
+  const aumGapCr = Math.abs(a.latest.avgAum - b.latest.avgAum);
+  const shareGap = a.latest.marketSharePct - b.latest.marketSharePct;
+
+  const aQoQ = a.growth?.qoqGrowthPct ?? null;
+  const bQoQ = b.growth?.qoqGrowthPct ?? null;
+  const aYoY = a.growth?.yoyGrowthPct ?? null;
+  const bYoY = b.growth?.yoyGrowthPct ?? null;
+
+  const fasterQoQ =
+    aQoQ === null || bQoQ === null
+      ? null
+      : aQoQ > bQoQ
+      ? a
+      : aQoQ < bQoQ
+      ? b
+      : null;
+
+  const fasterYoY =
+    aYoY === null || bYoY === null
+      ? null
+      : aYoY > bYoY
+      ? a
+      : aYoY < bYoY
+      ? b
+      : null;
+
+  const sharePart =
+    shareGap === 0
+      ? `Share split is even at ${a.latest.marketSharePct.toFixed(2)}% each.`
+      : `${largerByAum.displayName} holds ${largerByAum.latest!.marketSharePct.toFixed(2)}% vs ${smallerByAum.displayName}'s ${smallerByAum.latest!.marketSharePct.toFixed(2)}% (${Math.abs(shareGap).toFixed(2)} pp gap).`;
+
+  const sizePart = `${largerByAum.displayName} is the larger franchise by ${formatCompactCrSafe(aumGapCr)} of AAUM.`;
+
+  const growthPart = (() => {
+    if (!fasterQoQ && !fasterYoY) return "QoQ and YoY growth data unavailable.";
+    if (fasterQoQ && fasterYoY && fasterQoQ === fasterYoY) {
+      return `${fasterQoQ.displayName} is the faster grower on both QoQ (${(fasterQoQ === a ? aQoQ! : bQoQ!).toFixed(2)}%) and YoY (${(fasterQoQ === a ? aYoY! : bYoY!).toFixed(2)}%).`;
+    }
+    if (fasterQoQ) {
+      return `${fasterQoQ.displayName} is growing faster QoQ (${(fasterQoQ === a ? aQoQ! : bQoQ!).toFixed(2)}% vs ${(fasterQoQ === a ? bQoQ! : aQoQ!).toFixed(2)}%).`;
+    }
+    return `${fasterYoY!.displayName} is growing faster YoY (${(fasterYoY === a ? aYoY! : bYoY!).toFixed(2)}% vs ${(fasterYoY === a ? bYoY! : aYoY!).toFixed(2)}%).`;
+  })();
+
+  const rankPart = (() => {
+    if (a.latest.rank === b.latest.rank)
+      return `Rank #${a.latest.rank} (tie).`;
+    if (a.latest.rank < b.latest.rank)
+      return `${a.displayName} ranks #${a.latest.rank} vs ${b.displayName} #${b.latest.rank}.`;
+    return `${b.displayName} ranks #${b.latest.rank} vs ${a.displayName} #${a.latest.rank}.`;
+  })();
+
+  // Headline interpretation — combines size + growth + share signal.
+  const headline = (() => {
+    if (fasterQoQ && fasterQoQ !== largerByAum) {
+      return `${largerByAum.displayName} is larger, but ${fasterQoQ.displayName} is growing faster and ${
+        (fasterQoQ === a ? (aQoQ ?? 0) : (bQoQ ?? 0)) > 0
+          ? "gaining share"
+          : "shrinking its gap"
+      }.`;
+    }
+    if (fasterQoQ && fasterQoQ === largerByAum) {
+      return `${largerByAum.displayName} is both larger and growing faster — extending its lead.`;
+    }
+    return `${largerByAum.displayName} is the larger franchise; growth pace is close to ${smallerByAum.displayName}.`;
+  })();
+
+  return (
+    <div className="space-y-1.5 text-[13px] leading-snug">
+      <p className="font-medium text-foreground">{headline}</p>
+      <p className="text-muted-foreground">
+        {sizePart} {sharePart} {growthPart} {rankPart}
+      </p>
     </div>
   );
 }

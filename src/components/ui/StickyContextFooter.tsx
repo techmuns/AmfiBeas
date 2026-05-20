@@ -43,8 +43,9 @@ export function StickyContextFooter({
 }: StickyContextFooterProps) {
   return (
     <div
+      data-print-hidden="true"
       className={cn(
-        "sticky bottom-0 z-30 mt-6 -mx-4 border-t bg-background/95 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/75 sm:-mx-0 sm:rounded-t-md sm:border sm:px-3",
+        "sticky bottom-0 z-30 mt-6 -mx-4 border-t bg-background/95 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/75 print:hidden sm:-mx-0 sm:rounded-t-md sm:border sm:px-3",
         className
       )}
     >
