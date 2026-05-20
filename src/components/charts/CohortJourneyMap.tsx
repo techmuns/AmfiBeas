@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { cn } from "@/lib/cn";
 
-interface JourneyPoint {
+interface DriftPoint {
   amcSlug: string;
   displayName: string;
   startMarketSharePct: number;
@@ -14,24 +14,23 @@ interface JourneyPoint {
   endQuarterLabel: string;
   latestAum: number;
   shareDeltaPp: number;
+  /** Optional rank change over the same window (positive = climbed). */
+  rankChange?: number | null;
+  /** Optional AAUM change over the same window (₹ Cr, signed). */
+  aumChange?: number | null;
 }
 
 interface CohortJourneyMapProps {
-  points: JourneyPoint[];
+  points: DriftPoint[];
   height?: number;
   className?: string;
 }
 
 /**
- * Cohort Journey Map. Each AMC drawn as an arrow on a 2D canvas:
- *   - x-axis: the journey through time (left → right)
- *   - y-axis: market share %
- *   - arrow tail: AMC's share at the EARLIEST quarter on record
- *   - arrow head: AMC's share at the LATEST quarter
- *   - colour: green for share gainers, red for share losers
- *
- * Visualises the structural shifts in the industry as a single
- * image of converging / diverging arrows.
+ * AMC Market-Share Drift. Each AMC is drawn as a line from its
+ * earliest-quarter market share to its latest, on a vertical
+ * percentage axis. Colour: green = share gain, red = share loss,
+ * grey = roughly flat (|Δ| ≤ 2 bps).
  */
 export function CohortJourneyMap({
   points,
@@ -40,7 +39,7 @@ export function CohortJourneyMap({
 }: CohortJourneyMapProps) {
   const layout = useMemo(() => {
     if (points.length === 0) return null;
-    const padding = { top: 24, bottom: 32, left: 60, right: 100 };
+    const padding = { top: 24, bottom: 32, left: 60, right: 140 };
     const vw = 880;
     const innerW = vw - padding.left - padding.right;
     const innerH = height - padding.top - padding.bottom;
@@ -71,15 +70,33 @@ export function CohortJourneyMap({
   if (!layout || points.length === 0) return null;
   const { vw, padding, innerH, yMax, yScale, startX, endX } = layout;
 
-  // Y-axis tick values
   const ticks: number[] = [];
   const tickStep = yMax > 5 ? Math.ceil(yMax / 5) : 1;
   for (let v = 0; v <= yMax; v += tickStep) ticks.push(v);
 
+  // Flat band: |Δ| ≤ 2 bps = 0.02 pp.
+  const FLAT_PP = 0.02;
+  const tone = (deltaPp: number) =>
+    deltaPp > FLAT_PP
+      ? "hsl(var(--positive))"
+      : deltaPp < -FLAT_PP
+        ? "hsl(var(--negative))"
+        : "hsl(var(--muted-foreground))";
+  const marker = (deltaPp: number) =>
+    deltaPp > FLAT_PP
+      ? "url(#drift-up)"
+      : deltaPp < -FLAT_PP
+        ? "url(#drift-down)"
+        : "url(#drift-flat)";
+
   return (
     <div className={cn("w-full overflow-x-auto", className)}>
-      <svg viewBox={`0 0 ${vw} ${height}`} className="block w-full" style={{ minWidth: 600 }}>
-        {/* Y-axis grid + ticks */}
+      <svg
+        viewBox={`0 0 ${vw} ${height}`}
+        className="block w-full"
+        style={{ minWidth: 600 }}
+        aria-label="AMC market-share drift between two quarters"
+      >
         {ticks.map((t) => (
           <g key={t}>
             <line
@@ -104,7 +121,6 @@ export function CohortJourneyMap({
             </text>
           </g>
         ))}
-        {/* X-axis labels */}
         <text
           x={startX}
           y={padding.top + innerH + 18}
@@ -126,10 +142,9 @@ export function CohortJourneyMap({
           {points[0].endQuarterLabel}
         </text>
 
-        {/* Arrow definitions for gainers / losers */}
         <defs>
           <marker
-            id="arrow-up"
+            id="drift-up"
             viewBox="0 0 10 10"
             refX="9"
             refY="5"
@@ -140,7 +155,7 @@ export function CohortJourneyMap({
             <path d="M 0 0 L 10 5 L 0 10 z" fill="hsl(var(--positive))" />
           </marker>
           <marker
-            id="arrow-down"
+            id="drift-down"
             viewBox="0 0 10 10"
             refX="9"
             refY="5"
@@ -151,7 +166,7 @@ export function CohortJourneyMap({
             <path d="M 0 0 L 10 5 L 0 10 z" fill="hsl(var(--negative))" />
           </marker>
           <marker
-            id="arrow-flat"
+            id="drift-flat"
             viewBox="0 0 10 10"
             refX="9"
             refY="5"
@@ -163,22 +178,26 @@ export function CohortJourneyMap({
           </marker>
         </defs>
 
-        {/* Per-AMC journey arrows */}
         {points.map((p) => {
           const sy = yScale(p.startMarketSharePct);
           const ey = yScale(p.endMarketSharePct);
-          const tone =
-            p.shareDeltaPp > 0.1
-              ? "hsl(var(--positive))"
-              : p.shareDeltaPp < -0.1
-                ? "hsl(var(--negative))"
-                : "hsl(var(--muted-foreground))";
-          const marker =
-            p.shareDeltaPp > 0.1
-              ? "url(#arrow-up)"
-              : p.shareDeltaPp < -0.1
-                ? "url(#arrow-down)"
-                : "url(#arrow-flat)";
+          const stroke = tone(p.shareDeltaPp);
+          const bpsDelta = p.shareDeltaPp * 100;
+          const tooltipParts = [
+            p.displayName,
+            `${p.startMarketSharePct.toFixed(2)}% → ${p.endMarketSharePct.toFixed(2)}%`,
+            `Δ ${bpsDelta >= 0 ? "+" : ""}${bpsDelta.toFixed(0)} bps`,
+          ];
+          if (typeof p.rankChange === "number" && p.rankChange !== 0) {
+            tooltipParts.push(
+              `Rank ${p.rankChange > 0 ? "▲" : "▼"}${Math.abs(p.rankChange)}`
+            );
+          }
+          if (typeof p.aumChange === "number" && Number.isFinite(p.aumChange)) {
+            tooltipParts.push(
+              `AAUM ${p.aumChange >= 0 ? "+" : "−"}₹${Math.abs(p.aumChange / 1000).toFixed(1)}K Cr`
+            );
+          }
           return (
             <g key={p.amcSlug}>
               <line
@@ -186,16 +205,13 @@ export function CohortJourneyMap({
                 y1={sy}
                 x2={endX}
                 y2={ey}
-                stroke={tone}
-                strokeOpacity={0.55}
-                strokeWidth={1.6}
-                markerEnd={marker}
+                stroke={stroke}
+                strokeOpacity={0.6}
+                strokeWidth={1.7}
+                markerEnd={marker(p.shareDeltaPp)}
               >
-                <title>
-                  {`${p.displayName}: ${p.startMarketSharePct.toFixed(2)}% → ${p.endMarketSharePct.toFixed(2)}% (${p.shareDeltaPp >= 0 ? "+" : ""}${p.shareDeltaPp.toFixed(2)}pp)`}
-                </title>
+                <title>{tooltipParts.join(" · ")}</title>
               </line>
-              {/* End-cap label for the larger AMCs only — top 7 by latest AUM */}
               {p.endMarketSharePct >= 2 && (
                 <text
                   x={endX + 4}

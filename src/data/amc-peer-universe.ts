@@ -694,7 +694,7 @@ export interface HhiPercentileRead {
 }
 
 /**
- * AMC Trajectory Quadrant.
+ * AMC Share vs Growth Quadrant.
  *
  * Plots AMCs in a 2×2 quadrant chart driven by:
  *   - X axis  : latest QoQ AAUM growth (%)

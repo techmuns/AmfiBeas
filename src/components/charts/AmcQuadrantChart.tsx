@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { formatCompactCr, isUnavailable } from "@/lib/format";
 
 interface QuadrantPoint {
   slug: string;
@@ -18,6 +19,8 @@ interface QuadrantPoint {
   qoqGrowthPct: number;
   avgAum: number;
   quadrant: "Leaders" | "Gainers" | "Defenders" | "Laggards";
+  /** Optional YoY AAUM growth %. Rendered in the tooltip when supplied. */
+  yoyGrowthPct?: number | null;
 }
 
 interface AmcQuadrantChartProps {
@@ -70,7 +73,7 @@ export function AmcQuadrantChart({
 }: AmcQuadrantChartProps) {
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <ScatterChart margin={{ top: 12, right: 12, left: 0, bottom: 4 }}>
+      <ScatterChart margin={{ top: 16, right: 24, left: 8, bottom: 8 }}>
         <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" />
         <XAxis
           type="number"
@@ -91,7 +94,7 @@ export function AmcQuadrantChart({
           fontSize={11}
           tickLine={false}
           axisLine={false}
-          width={48}
+          width={56}
         />
         <ReferenceLine
           x={medianGrowthPct}
@@ -101,7 +104,8 @@ export function AmcQuadrantChart({
             value: "median growth",
             fontSize: 10,
             fill: "hsl(var(--muted-foreground))",
-            position: "top",
+            position: "insideTopRight",
+            offset: 4,
           }}
         />
         <ReferenceLine
@@ -112,7 +116,8 @@ export function AmcQuadrantChart({
             value: "median share",
             fontSize: 10,
             fill: "hsl(var(--muted-foreground))",
-            position: "right",
+            position: "insideTopLeft",
+            offset: 4,
           }}
         />
         <Tooltip
@@ -127,9 +132,18 @@ export function AmcQuadrantChart({
                   Share {p.marketSharePct.toFixed(2)}%
                 </div>
                 <div className="tabular text-muted-foreground">
+                  AAUM {formatCompactCr(p.avgAum)}
+                </div>
+                <div className="tabular text-muted-foreground">
                   QoQ {p.qoqGrowthPct >= 0 ? "+" : ""}
                   {p.qoqGrowthPct.toFixed(2)}%
                 </div>
+                {!isUnavailable(p.yoyGrowthPct) && (
+                  <div className="tabular text-muted-foreground">
+                    YoY {(p.yoyGrowthPct as number) >= 0 ? "+" : ""}
+                    {(p.yoyGrowthPct as number).toFixed(2)}%
+                  </div>
+                )}
                 <div className="mt-1 text-[10px] uppercase tracking-wide">
                   {p.quadrant}
                 </div>

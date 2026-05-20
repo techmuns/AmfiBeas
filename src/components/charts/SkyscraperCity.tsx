@@ -1,148 +1,158 @@
 import Link from "next/link";
 import { cn } from "@/lib/cn";
+import { formatCompactCr, formatPctSafe, isUnavailable } from "@/lib/format";
 
-interface SkyscraperBuilding {
-  /** AMC slug — used to build the link href. */
+export interface SkyscraperBuilding {
   slug: string;
-  /** Display label shown beneath the building. */
   displayName: string;
-  /** Building height — typically market share %. */
   marketSharePct: number;
-  /** Drives the colour tint — typically QoQ growth %. Positive →
-   *  green, negative → red, near-zero → muted. */
   qoqGrowthPct: number | null;
+  /** Latest AAUM (₹ Cr). */
+  aum?: number | null;
+  /** Universe-rank by AAUM. */
+  rank?: number | null;
+  /** YoY AAUM growth %. */
+  yoyGrowthPct?: number | null;
+  /** Rank change since the earliest point on record (positive = climbed). */
+  rankChange?: number | null;
 }
 
 interface SkyscraperCityProps {
   buildings: SkyscraperBuilding[];
-  /** Base path for the per-AMC link (e.g. "/amc"). */
   basePath?: string;
-  height?: number;
   className?: string;
 }
 
-const MAX_BUILDING_WIDTH = 56;
-const MIN_BUILDING_WIDTH = 28;
+function formatBpsDelta(pct: number | null | undefined): string {
+  if (typeof pct !== "number" || !Number.isFinite(pct)) return "—";
+  const bps = pct * 100;
+  const sign = bps > 0 ? "+" : bps < 0 ? "−" : "";
+  return `${sign}${Math.abs(bps).toFixed(0)} bps`;
+}
 
-function tintFor(growth: number | null): {
-  fill: string;
-  windowFill: string;
-} {
-  if (growth === null) {
-    return { fill: "hsl(var(--muted-foreground))", windowFill: "hsl(var(--muted))" };
-  }
-  if (growth > 5) {
-    return { fill: "hsl(var(--positive))", windowFill: "hsl(var(--positive))" };
-  }
-  if (growth < -5) {
-    return { fill: "hsl(var(--negative))", windowFill: "hsl(var(--negative))" };
-  }
-  return { fill: "hsl(var(--chart-1))", windowFill: "hsl(var(--chart-1))" };
+function growthTone(pct: number | null | undefined): string {
+  if (typeof pct !== "number" || !Number.isFinite(pct)) return "text-muted-foreground";
+  if (pct > 1) return "text-positive";
+  if (pct < -1) return "text-negative";
+  return "text-muted-foreground";
 }
 
 /**
- * AMC market-share Skyscraper City — each AMC drawn as a building
- * whose **height** scales with its market share and **colour** tints
- * with QoQ growth (green = growing, red = contracting). Buildings
- * have stylised window patterns to read as buildings, not bars.
- *
- * Designed as a slide-deck-grade alternative to the standard "top-N
- * bar chart" view of AMC concentration. The visual metaphor (city
- * skyline) makes the concentration story memorable.
+ * AMC Ranked Market Share — top-N AMCs rendered as a horizontal
+ * ranked-bar list. Each row carries the AMC's market share, AAUM,
+ * QoQ-bps and YoY-bps inline. Sorted by share descending. Top-3 get
+ * a darker accent; everyone else uses a muted neutral fill. The
+ * bar width scales relative to the leader so the read is purely
+ * about relative size.
  */
 export function SkyscraperCity({
   buildings,
   basePath = "/amc",
-  height = 280,
   className,
 }: SkyscraperCityProps) {
   if (buildings.length === 0) return null;
   const sorted = [...buildings].sort(
     (a, b) => b.marketSharePct - a.marketSharePct
   );
-  const tallest = sorted[0]?.marketSharePct ?? 1;
-  // Building width tapers down for smaller AMCs (max → min).
-  const widthFor = (i: number) => {
-    if (sorted.length <= 1) return MAX_BUILDING_WIDTH;
-    const t = i / (sorted.length - 1);
-    return Math.round(MAX_BUILDING_WIDTH - t * (MAX_BUILDING_WIDTH - MIN_BUILDING_WIDTH));
-  };
-  const buildingHeight = (share: number) =>
-    Math.max(20, Math.round((share / tallest) * (height - 60)));
+  const top = sorted[0]?.marketSharePct ?? 1;
 
   return (
-    <div className={cn("w-full overflow-x-auto", className)}>
-      <div
-        className="relative flex items-end justify-center gap-2 border-b border-border/60 px-4 pt-6"
-        style={{ minHeight: height }}
-      >
+    <div className={cn("w-full", className)}>
+      <ul className="space-y-1.5">
         {sorted.map((b, i) => {
-          const w = widthFor(i);
-          const h = buildingHeight(b.marketSharePct);
-          const tint = tintFor(b.qoqGrowthPct);
-          // Render windows as a tiled pattern.
-          const windowsPerRow = w >= 50 ? 4 : w >= 36 ? 3 : 2;
-          const rows = Math.max(2, Math.floor(h / 14));
+          const rank = b.rank ?? i + 1;
+          const width = top > 0 ? Math.max(2, (b.marketSharePct / top) * 100) : 0;
+          const accent = i < 3;
+          const rankArrow =
+            typeof b.rankChange === "number" && b.rankChange !== 0
+              ? b.rankChange > 0
+                ? "▲"
+                : "▼"
+              : "";
+          const rankTone =
+            typeof b.rankChange === "number" && b.rankChange !== 0
+              ? b.rankChange > 0
+                ? "text-positive"
+                : "text-negative"
+              : "text-muted-foreground";
+          const title = [
+            b.displayName,
+            `Rank ${rank}`,
+            !isUnavailable(b.aum) ? formatCompactCr(b.aum as number) : null,
+            `Share ${b.marketSharePct.toFixed(2)}%`,
+            typeof b.qoqGrowthPct === "number"
+              ? `QoQ ${b.qoqGrowthPct >= 0 ? "+" : ""}${b.qoqGrowthPct.toFixed(1)}%`
+              : null,
+            typeof b.yoyGrowthPct === "number"
+              ? `YoY ${b.yoyGrowthPct >= 0 ? "+" : ""}${b.yoyGrowthPct.toFixed(1)}%`
+              : null,
+            rankArrow
+              ? `Rank ${rankArrow}${Math.abs(b.rankChange as number)}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(" · ");
           return (
-            <Link
-              key={b.slug}
-              href={`${basePath}/${b.slug}`}
-              className="group flex flex-col items-center"
-              title={`${b.displayName} · ${b.marketSharePct.toFixed(2)}% share${
-                b.qoqGrowthPct !== null
-                  ? ` · QoQ ${b.qoqGrowthPct >= 0 ? "+" : ""}${b.qoqGrowthPct.toFixed(1)}%`
-                  : ""
-              }`}
-            >
-              <div
-                className="relative overflow-hidden rounded-t-sm transition-opacity group-hover:opacity-90"
-                style={{
-                  width: w,
-                  height: h,
-                  backgroundColor: tint.fill,
-                  boxShadow: "inset -2px -8px 12px rgba(0,0,0,0.18)",
-                }}
+            <li key={b.slug}>
+              <Link
+                href={`${basePath}/${b.slug}`}
+                title={title}
+                className="group grid grid-cols-[28px_minmax(120px,1.4fr)_minmax(120px,2fr)_auto] items-center gap-3 rounded-md border border-transparent px-2 py-1.5 hover:border-border hover:bg-accent/40"
               >
-                {/* Window grid */}
-                <div
-                  className="grid h-full w-full p-1"
-                  style={{
-                    gridTemplateColumns: `repeat(${windowsPerRow}, 1fr)`,
-                    gridTemplateRows: `repeat(${rows}, 1fr)`,
-                    gap: 2,
-                  }}
-                >
-                  {Array.from({ length: windowsPerRow * rows }).map((_, idx) => (
-                    <div
-                      key={idx}
-                      className="rounded-[1px]"
-                      style={{
-                        backgroundColor:
-                          (idx % 3 === 0)
-                            ? "hsl(var(--background) / 0.45)"
-                            : "hsl(var(--background) / 0.25)",
-                      }}
-                    />
-                  ))}
-                </div>
-                {/* Roof "antenna" for the tallest few */}
-                {i < 3 && (
-                  <div
-                    className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-2 bg-foreground"
-                    style={{ width: 1.5, height: 10 }}
+                <span className="text-[11px] tabular text-muted-foreground">
+                  {rank}
+                </span>
+                <span className="truncate text-[12px] font-medium text-foreground">
+                  {b.displayName}
+                </span>
+                <span className="relative h-3 w-full overflow-hidden rounded-sm bg-muted/40">
+                  <span
+                    className={cn(
+                      "absolute inset-y-0 left-0 rounded-sm",
+                      accent ? "bg-foreground/70" : "bg-foreground/35"
+                    )}
+                    style={{ width: `${width}%` }}
                   />
-                )}
-              </div>
-              <div className="mt-1 max-w-[80px] truncate text-center text-[9px] tabular text-foreground/80 group-hover:text-foreground">
-                {b.displayName}
-              </div>
-              <div className="text-[9px] tabular text-muted-foreground">
-                {b.marketSharePct.toFixed(2)}%
-              </div>
-            </Link>
+                </span>
+                <span className="shrink-0 inline-flex items-center gap-2 text-[11px] tabular text-muted-foreground">
+                  <span className="font-semibold text-foreground">
+                    {b.marketSharePct.toFixed(2)}%
+                  </span>
+                  {!isUnavailable(b.aum) && (
+                    <span className="whitespace-nowrap">{formatCompactCr(b.aum as number)}</span>
+                  )}
+                  <span className={cn("whitespace-nowrap", growthTone(b.qoqGrowthPct))}>
+                    QoQ {formatBpsDelta(b.qoqGrowthPct)}
+                  </span>
+                  <span
+                    className={cn(
+                      "whitespace-nowrap",
+                      growthTone(b.yoyGrowthPct)
+                    )}
+                  >
+                    YoY{" "}
+                    {typeof b.yoyGrowthPct === "number"
+                      ? formatBpsDelta(b.yoyGrowthPct)
+                      : "—"}
+                  </span>
+                  {rankArrow && (
+                    <span className={cn("whitespace-nowrap", rankTone)}>
+                      {rankArrow}
+                      {Math.abs(b.rankChange as number)}
+                    </span>
+                  )}
+                </span>
+              </Link>
+            </li>
           );
         })}
-      </div>
+      </ul>
+      <p className="mt-3 text-[10px] text-muted-foreground">
+        Bar width scales relative to the top AMC&rsquo;s market share.
+        QoQ / YoY shown in basis points (bps). Click an AMC for full
+        detail. {formatPctSafe(sorted[0]?.marketSharePct, 2)} is the top
+        share.
+      </p>
     </div>
   );
 }

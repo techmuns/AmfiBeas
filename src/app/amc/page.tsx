@@ -20,7 +20,17 @@ import {
   type AmcQuadrantPoint,
 } from "@/data/amc-peer-universe";
 import { LensToggle } from "@/components/ui/LensToggle";
+import { isUnavailable } from "@/lib/format";
 import { cn } from "@/lib/cn";
+
+function median(values: number[]): number | null {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 1
+    ? sorted[mid]
+    : (sorted[mid - 1] + sorted[mid]) / 2;
+}
 
 export default async function AmcListPage({
   searchParams,
@@ -30,6 +40,8 @@ export default async function AmcListPage({
   const sp = await searchParams;
   const healthLens: "growth" | "zscore" =
     sp.healthLens === "zscore" ? "zscore" : "growth";
+  const driftLens: "topMovers" | "all" =
+    sp.drift === "all" ? "all" : "topMovers";
   const data = amcIndexRows();
 
   if (!data) {
@@ -51,31 +63,150 @@ export default async function AmcListPage({
   }));
   const anomalies = latestQoqAnomalies(2);
   const quadrant = amcTrajectoryQuadrant(30);
-  // Skyscraper City buildings — top 15 AMCs by latest market share
-  // (constrained so the row stays visually clean).
-  const skyscraperBuildings = quadrant
+
+  // Slug → AmcIndexRow lookup so YoY / rank can be joined into both
+  // the Skyline rows and the Quadrant tooltips without recomputing
+  // them from the snapshot.
+  const indexBySlug = new Map(data.rows.map((r) => [r.amcSlug, r]));
+
+  // Ranked market-share bars — top 15 AMCs by latest market share,
+  // enriched with AAUM, rank and YoY so the row strip below each bar
+  // carries the analytical context investors actually read.
+  const skylineBars = quadrant
     ? [...quadrant.points]
         .sort((a, b) => b.marketSharePct - a.marketSharePct)
         .slice(0, 15)
-        .map((p) => ({
-          slug: p.slug,
-          displayName: p.displayName,
-          marketSharePct: p.marketSharePct,
-          qoqGrowthPct: p.qoqGrowthPct,
-        }))
+        .map((p) => {
+          const ir = indexBySlug.get(p.slug);
+          return {
+            slug: p.slug,
+            displayName: p.displayName,
+            marketSharePct: p.marketSharePct,
+            qoqGrowthPct: p.qoqGrowthPct,
+            aum: p.avgAum,
+            rank: ir?.rank ?? null,
+            yoyGrowthPct: ir?.yoyGrowthPct ?? null,
+          };
+        })
     : [];
 
-  // Cohort journey arrows (5Y / full-history span).
-  const journeyPoints = cohortJourneyMap(20) ?? [];
+  // Cohort drift points (start-quarter to end-quarter market share
+  // change). The journey helper returns the top-N AMCs by latest
+  // AAUM; we apply our own gainers/losers slicing below.
+  const allDriftPoints = cohortJourneyMap(20) ?? [];
+  const gainers = [...allDriftPoints]
+    .filter((p) => p.shareDeltaPp > 0)
+    .sort((a, b) => b.shareDeltaPp - a.shareDeltaPp)
+    .slice(0, 5);
+  const losers = [...allDriftPoints]
+    .filter((p) => p.shareDeltaPp < 0)
+    .sort((a, b) => a.shareDeltaPp - b.shareDeltaPp)
+    .slice(0, 5);
+  const driftDisplayPoints =
+    driftLens === "all" ? allDriftPoints : [...gainers, ...losers];
 
-  // Battle-cards rolodex — top 12 AMCs by AAUM, with their AAUM
-  // sparkline pulled from amc-detail. The card grid replaces the
-  // tabular row scan with a visual scan.
+  // ---- AMC Signal Summary --------------------------------------------
+  // Three columns: top share gainers, top share losers, emerging
+  // challengers (sub-median-share AMCs with above-median growth, QoQ
+  // first then YoY-fallback).
+  const topGainers = [...allDriftPoints]
+    .sort((a, b) => b.shareDeltaPp - a.shareDeltaPp)
+    .slice(0, 3);
+  const topLosers = [...allDriftPoints]
+    .sort((a, b) => a.shareDeltaPp - b.shareDeltaPp)
+    .slice(0, 3);
+  const driftBySlug = new Map(allDriftPoints.map((p) => [p.amcSlug, p]));
+
+  // Cohort median for QoQ growth (from quadrant.medianGrowthPct) and
+  // for YoY (computed from indexRows, since AmcQuadrantPoint doesn't
+  // carry yoyGrowthPct). Both default to null when the cohort doesn't
+  // expose enough values to compute a median.
+  const yoyGrowthValues: number[] = quadrant
+    ? quadrant.points
+        .map((p) => indexBySlug.get(p.slug)?.yoyGrowthPct ?? null)
+        .filter((v): v is number => typeof v === "number" && Number.isFinite(v))
+    : [];
+  const medianYoyGrowthPct = median(yoyGrowthValues);
+  const medianQoqGrowthPct = quadrant?.medianGrowthPct ?? null;
+  const medianSharePct = quadrant?.medianSharePct ?? null;
+
+  type EmergingChallenger = {
+    slug: string;
+    displayName: string;
+    growthPct: number;
+    growthDenom: "QoQ" | "YoY";
+    shareGainBps: number | null;
+  };
+  const emergingChallengers: EmergingChallenger[] = (() => {
+    if (
+      !quadrant ||
+      medianSharePct === null ||
+      (medianQoqGrowthPct === null && medianYoyGrowthPct === null)
+    ) {
+      return [];
+    }
+    const out: EmergingChallenger[] = [];
+    for (const p of quadrant.points) {
+      if (p.marketSharePct >= medianSharePct) continue;
+      const yoy = indexBySlug.get(p.slug)?.yoyGrowthPct ?? null;
+      let growthPct: number | null = null;
+      let growthDenom: "QoQ" | "YoY" | null = null;
+      if (
+        !isUnavailable(p.qoqGrowthPct) &&
+        medianQoqGrowthPct !== null &&
+        p.qoqGrowthPct > medianQoqGrowthPct
+      ) {
+        growthPct = p.qoqGrowthPct;
+        growthDenom = "QoQ";
+      } else if (
+        isUnavailable(p.qoqGrowthPct) &&
+        !isUnavailable(yoy) &&
+        medianYoyGrowthPct !== null &&
+        (yoy as number) > medianYoyGrowthPct
+      ) {
+        growthPct = yoy as number;
+        growthDenom = "YoY";
+      }
+      if (growthPct === null || growthDenom === null) continue;
+      const drift = driftBySlug.get(p.slug);
+      const shareGainBps = drift ? drift.shareDeltaPp * 100 : null;
+      out.push({
+        slug: p.slug,
+        displayName: p.displayName,
+        growthPct,
+        growthDenom,
+        shareGainBps,
+      });
+    }
+    out.sort((a, b) => {
+      if (b.growthPct !== a.growthPct) return b.growthPct - a.growthPct;
+      const aSg = a.shareGainBps ?? -Infinity;
+      const bSg = b.shareGainBps ?? -Infinity;
+      return bSg - aSg;
+    });
+    return out.slice(0, 3);
+  })();
+  const emergingUnavailable =
+    quadrant &&
+    medianSharePct !== null &&
+    medianQoqGrowthPct === null &&
+    medianYoyGrowthPct === null;
+
+  // Quadrant points enriched with YoY so the chart tooltip carries it.
+  const quadrantPointsWithYoy: AmcQuadrantPoint[] = quadrant
+    ? quadrant.points.map((p) => ({
+        ...p,
+        yoyGrowthPct: indexBySlug.get(p.slug)?.yoyGrowthPct ?? null,
+      }))
+    : [];
+
+  // Battle-cards rolodex — top 12 AMCs by AAUM with their AAUM
+  // sparkline pulled from amc-detail.
   const battleCards = quadrant
     ? [...quadrant.points]
         .slice(0, 12)
         .map((p) => {
-          const indexRow = data.rows.find((r) => r.amcSlug === p.slug);
+          const indexRow = indexBySlug.get(p.slug);
           const series = amcAaumSeries(p.slug);
           return {
             slug: p.slug,
@@ -154,10 +285,89 @@ export default async function AmcListPage({
         </Card>
       )}
 
+      {(topGainers.length > 0 || topLosers.length > 0 || emergingChallengers.length > 0 || emergingUnavailable) && (
+        <Card
+          title="AMC Signal Summary"
+          subtitle="Top share gainers, losers and emerging challengers in one scan"
+        >
+          <AmcSignalSummary
+            gainers={topGainers}
+            losers={topLosers}
+            emerging={emergingChallengers}
+            emergingUnavailable={Boolean(emergingUnavailable)}
+          />
+          <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            Gainers and losers ranked by quarterly change in market-share
+            bps. Emerging challengers = sub-median-share AMCs growing
+            faster than the cohort median.
+            <InfoTooltip label="Top gainers and losers are ranked by quarter-over-quarter change in market-share basis points. Emerging challengers are AMCs with market share below the cohort median and QoQ AAUM growth above the cohort median; if QoQ growth is unavailable, the YoY fallback is used and the entry is tagged · YoY. Active/passive mix and listed-AMC revenue/yield will surface once those fields are ingested." />
+          </p>
+        </Card>
+      )}
+
+      {allDriftPoints.length >= 4 && (
+        <Card
+          title="AMC Market-Share Drift"
+          subtitle={`Start-quarter (${allDriftPoints[0].startQuarterLabel}) → latest (${allDriftPoints[0].endQuarterLabel}) movement in market share · ${driftLens === "all" ? `${allDriftPoints.length} AMCs` : `top ${gainers.length} gainers + top ${losers.length} losers`}`}
+          action={
+            <LensToggle
+              basePath="/amc"
+              paramName="drift"
+              defaultValue="topMovers"
+              lenses={[
+                { value: "topMovers", label: "Top movers" },
+                { value: "all", label: "Show all" },
+              ]}
+              active={driftLens}
+            />
+          }
+        >
+          <CohortJourneyMap points={driftDisplayPoints} />
+          <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            Green = share gain, red = share loss, grey = within ±2 bps
+            of flat. Hover an arrow for the precise bps move.
+            <InfoTooltip label="Drift = end-quarter market share − start-quarter market share, expressed in basis points. Flat band is |Δ| ≤ 2 bps. Top-movers view shows the largest five gainers and five losers; Show-all surfaces every AMC in the cohort." />
+          </p>
+        </Card>
+      )}
+
+      {skylineBars.length >= 4 && (
+        <Card
+          title="AMC Ranked Market Share"
+          subtitle={`Top ${skylineBars.length} AMCs · latest market share · ${quadrant?.latestQuarterLabel ?? ""}`}
+        >
+          <SkyscraperCity buildings={skylineBars} />
+        </Card>
+      )}
+
+      {quadrant && quadrantPointsWithYoy.length >= 4 && (
+        <Card
+          title="AMC Share vs Growth Quadrant"
+          subtitle={`Top ${quadrant.points.length} AMCs by AAUM · ${quadrant.latestQuarterLabel} · cohort medians shown as dashed lines`}
+        >
+          <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+            <AmcQuadrantChart
+              data={quadrantPointsWithYoy}
+              medianSharePct={quadrant.medianSharePct}
+              medianGrowthPct={quadrant.medianGrowthPct}
+            />
+            <QuadrantBucketsList buckets={quadrant.buckets} />
+          </div>
+          <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            Leaders: high share + above-median growth. Gainers: low share but
+            growing faster than peers. Defenders: high share but slowing.
+            Laggards: low share + below-median growth.
+            <InfoTooltip
+              label={`Y-axis: AMC's share of total cohort AAUM (top ${quadrant.points.length} AMCs). X-axis: QoQ AAUM growth (this quarter vs last). Both quadrant splits use the cohort median, not zero — so the buckets stay meaningful when the whole industry is growing or contracting. Dot size scales with market share.`}
+            />
+          </p>
+        </Card>
+      )}
+
       {battleCards.length > 0 && (
         <Card
-          title="AMC Roster · Battle Cards"
-          subtitle="Each card is one AMC · rank, tier, share, growth and trailing AAUM at a glance"
+          title="AMC Roster"
+          subtitle="Each card = one AMC · rank, tier, share, growth and trailing AAUM at a glance"
         >
           <div className="overflow-x-auto">
             <div className="flex gap-3" style={{ minWidth: "max-content" }}>
@@ -178,66 +388,6 @@ export default async function AmcListPage({
               ))}
             </div>
           </div>
-        </Card>
-      )}
-
-      {journeyPoints.length >= 4 && (
-        <Card
-          title="Cohort Journey Map"
-          subtitle={`Each arrow = one AMC's market-share journey from ${journeyPoints[0].startQuarterLabel} to ${journeyPoints[0].endQuarterLabel}`}
-        >
-          <CohortJourneyMap points={journeyPoints} />
-          <p className="mt-3 text-[11px] text-muted-foreground">
-            Green arrows = share gainers · red = share losers · grey = roughly flat.
-            Hover an arrow for the precise pp move.
-          </p>
-        </Card>
-      )}
-
-      {skyscraperBuildings.length >= 4 && (
-        <Card
-          title="AMC Skyscraper City"
-          subtitle="Each building = one AMC · height = market share · colour tint = QoQ growth"
-        >
-          <SkyscraperCity buildings={skyscraperBuildings} />
-          <p className="mt-3 text-[11px] text-muted-foreground">
-            Tap a building to open the AMC&rsquo;s detail page.
-            <span className="ml-2 inline-flex items-center gap-3">
-              <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-sm bg-positive" /> Growing
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-sm bg-[hsl(var(--chart-1))]" /> Steady
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-sm bg-negative" /> Contracting
-              </span>
-            </span>
-          </p>
-        </Card>
-      )}
-
-      {quadrant && quadrant.points.length >= 4 && (
-        <Card
-          title="AMC Trajectory Quadrant"
-          subtitle={`Top ${quadrant.points.length} AMCs by AAUM · ${quadrant.latestQuarterLabel} · cohort medians shown as dashed lines`}
-        >
-          <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-            <AmcQuadrantChart
-              data={quadrant.points}
-              medianSharePct={quadrant.medianSharePct}
-              medianGrowthPct={quadrant.medianGrowthPct}
-            />
-            <QuadrantBucketsList buckets={quadrant.buckets} />
-          </div>
-          <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            Leaders: high share + above-median growth. Gainers: low share but
-            growing faster than peers. Defenders: high share but slowing.
-            Laggards: low share + below-median growth.
-            <InfoTooltip
-              label={`Y-axis: AMC's share of total cohort AAUM (top ${quadrant.points.length} AMCs). X-axis: QoQ AAUM growth (this quarter vs last). Both quadrant splits use the cohort median, not zero — so the buckets stay meaningful when the whole industry is growing or contracting. Dot size scales with market share.`}
-            />
-          </p>
         </Card>
       )}
 
@@ -314,6 +464,124 @@ export default async function AmcListPage({
   );
 }
 
+/** Three-column signal panel: top share gainers, top share losers,
+ *  emerging challengers (sub-median-share AMCs with above-median
+ *  growth). Each entry is a link to the AMC's detail page styled like
+ *  the Outliers pills above. */
+function AmcSignalSummary({
+  gainers,
+  losers,
+  emerging,
+  emergingUnavailable,
+}: {
+  gainers: { amcSlug: string; displayName: string; shareDeltaPp: number }[];
+  losers: { amcSlug: string; displayName: string; shareDeltaPp: number }[];
+  emerging: {
+    slug: string;
+    displayName: string;
+    growthPct: number;
+    growthDenom: "QoQ" | "YoY";
+    shareGainBps: number | null;
+  }[];
+  emergingUnavailable: boolean;
+}) {
+  return (
+    <div className="grid gap-4 md:grid-cols-3">
+      <div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Top share gainers
+        </div>
+        {gainers.length === 0 ? (
+          <div className="mt-2 text-xs text-muted-foreground">—</div>
+        ) : (
+          <ul className="mt-2 space-y-1.5">
+            {gainers.map((g) => (
+              <li key={g.amcSlug}>
+                <Link
+                  href={`/amc/${g.amcSlug}`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-positive/40 bg-positive/10 px-2.5 py-1 text-xs text-positive transition-colors hover:bg-positive/20"
+                  title={`${g.displayName} · +${(g.shareDeltaPp * 100).toFixed(0)} bps share gain`}
+                >
+                  <TrendingUp className="h-3 w-3" />
+                  <span className="font-medium">{g.displayName}</span>
+                  <span className="tabular">
+                    +{(g.shareDeltaPp * 100).toFixed(0)} bps
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Top share losers
+        </div>
+        {losers.length === 0 ? (
+          <div className="mt-2 text-xs text-muted-foreground">—</div>
+        ) : (
+          <ul className="mt-2 space-y-1.5">
+            {losers.map((l) => (
+              <li key={l.amcSlug}>
+                <Link
+                  href={`/amc/${l.amcSlug}`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-negative/40 bg-negative/10 px-2.5 py-1 text-xs text-negative transition-colors hover:bg-negative/20"
+                  title={`${l.displayName} · ${(l.shareDeltaPp * 100).toFixed(0)} bps share loss`}
+                >
+                  <TrendingDown className="h-3 w-3" />
+                  <span className="font-medium">{l.displayName}</span>
+                  <span className="tabular">
+                    {(l.shareDeltaPp * 100).toFixed(0)} bps
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Emerging challengers
+        </div>
+        {emergingUnavailable ? (
+          <div className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span>—</span>
+            <InfoTooltip label="Emerging-challenger ranking unavailable: cohort growth data is missing for this period." />
+          </div>
+        ) : emerging.length === 0 ? (
+          <div className="mt-2 text-xs text-muted-foreground">
+            No sub-median-share AMCs above cohort growth median this period.
+          </div>
+        ) : (
+          <ul className="mt-2 space-y-1.5">
+            {emerging.map((e) => (
+              <li key={e.slug}>
+                <Link
+                  href={`/amc/${e.slug}`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[hsl(var(--chart-1))]/40 bg-[hsl(var(--chart-1))]/10 px-2.5 py-1 text-xs text-[hsl(var(--chart-1))] transition-colors hover:bg-[hsl(var(--chart-1))]/20"
+                  title={`${e.displayName} · ${e.growthDenom} ${e.growthPct >= 0 ? "+" : ""}${e.growthPct.toFixed(1)}% growth · ${e.shareGainBps !== null ? `${e.shareGainBps >= 0 ? "+" : ""}${e.shareGainBps.toFixed(0)} bps share` : "share change unavailable"}`}
+                >
+                  <TrendingUp className="h-3 w-3" />
+                  <span className="font-medium">{e.displayName}</span>
+                  <span className="tabular">
+                    {e.growthPct >= 0 ? "+" : ""}
+                    {e.growthPct.toFixed(1)}%
+                  </span>
+                  {e.growthDenom === "YoY" && (
+                    <span className="text-[10px] tabular opacity-75">· YoY</span>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /** Compact 2×2 list view next to the quadrant chart. Each bucket
  *  shows up to 5 AMCs ordered by market share so the read scans
  *  largest-first. */
@@ -329,6 +597,16 @@ function QuadrantBucketsList({
     Defenders: "border-[hsl(var(--chart-3))]/40 bg-[hsl(var(--chart-3))]/10 text-[hsl(var(--chart-3))]",
     Laggards: "border-negative/40 bg-negative/10 text-negative",
   };
+  const interpretation: Record<AmcQuadrant, string> = {
+    Leaders:
+      "Holding share while growing faster than the cohort — durable franchises.",
+    Gainers:
+      "Sub-scale today but capturing flow — watchlist for share migration.",
+    Defenders:
+      "Large but slowing — vulnerable to share erosion if growth doesn't recover.",
+    Laggards:
+      "Sub-scale and below-trend — likely structural or strategic drag.",
+  };
   return (
     <div className="grid grid-cols-2 gap-3">
       {order.map((q) => {
@@ -341,6 +619,9 @@ function QuadrantBucketsList({
             )}>
               {q} · {buckets[q].length}
             </div>
+            <p className="mt-1.5 text-[10px] leading-snug text-muted-foreground">
+              {interpretation[q]}
+            </p>
             {items.length === 0 ? (
               <div className="mt-2 text-xs text-muted-foreground">No AMCs in this bucket this quarter.</div>
             ) : (
