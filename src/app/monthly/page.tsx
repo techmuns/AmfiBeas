@@ -956,9 +956,10 @@ export default async function MonthlyPage({
 
   // ---- "Share" series for folio + NFO toggle ------------------------
   const folioAdditionsShare = (() => {
-    // For each month with a folio-additions value, expressed in bps
-    // of the trailing folio base. Additions in lakh; base in crore;
-    // 1 Cr = 100 lakh.
+    // For each month with a folio-additions value, expressed as % of
+    // the existing folio base. Both `value` (additions) and the folio
+    // base are stored as raw counts in the snapshot; the ratio is
+    // therefore additions ÷ base × 100.
     const out: { label: string; value: number }[] = [];
     const rows = amfiMonthlyRows();
     const folioByMonth = new Map<string, number>();
@@ -968,10 +969,10 @@ export default async function MonthlyPage({
       }
     }
     for (const p of folioAdditionsTrend) {
-      const baseCr = folioByMonth.get(p.label);
-      if (typeof baseCr !== "number" || baseCr <= 0) continue;
-      const bps = (p.value / 100 / (baseCr / 1e7)) * 10000;
-      out.push({ label: p.label, value: bps });
+      const base = folioByMonth.get(p.label);
+      if (typeof base !== "number" || base <= 0) continue;
+      const pct = (p.value / base) * 100;
+      out.push({ label: p.label, value: pct });
     }
     return out;
   })();
@@ -1393,7 +1394,7 @@ export default async function MonthlyPage({
     return series.map((p) => ({
       month: p.month,
       value: stdDev !== null ? (p.value - mean) / stdDev : null,
-      hoverDetail: `₹${formatCompactCrSafe(p.value)} · ${
+      hoverDetail: `${formatCompactCrSafe(p.value)} · ${
         stdDev !== null
           ? `${((p.value - mean) / stdDev).toFixed(2)}σ`
           : "—"
@@ -1442,7 +1443,7 @@ export default async function MonthlyPage({
         activeEquitySignal.percentileRank.toFixed(0) +
         ordinalSuffix(Math.round(activeEquitySignal.percentileRank)),
       statement: `Active-equity inflow in the top ${(100 - activeEquitySignal.percentileRank).toFixed(0)}% of months on record`,
-      context: `Latest ${activeEquitySignal.latestMonth} · ₹${formatCompactCrSafe(activeEquitySignal.latestValue)} vs historical mean ₹${formatCompactCrSafe(activeEquitySignal.mean)}`,
+      context: `Latest ${activeEquitySignal.latestMonth} · ${formatCompactCrSafe(activeEquitySignal.latestValue)} vs historical mean ${formatCompactCrSafe(activeEquitySignal.mean)}`,
     });
   } else if (
     activeEquitySignal &&
@@ -1454,7 +1455,7 @@ export default async function MonthlyPage({
       tone: "negative",
       accentNumber: activeEquitySignal.percentileRank.toFixed(0) + "th",
       statement: `Active-equity inflow in the bottom ${activeEquitySignal.percentileRank.toFixed(0)}% of months on record`,
-      context: `Latest ${activeEquitySignal.latestMonth} · ₹${formatCompactCrSafe(activeEquitySignal.latestValue)} vs historical mean ₹${formatCompactCrSafe(activeEquitySignal.mean)}`,
+      context: `Latest ${activeEquitySignal.latestMonth} · ${formatCompactCrSafe(activeEquitySignal.latestValue)} vs historical mean ${formatCompactCrSafe(activeEquitySignal.mean)}`,
     });
   }
   if (
@@ -1467,7 +1468,7 @@ export default async function MonthlyPage({
       tone: "neutral",
       accentNumber: `${nfoSignal.percentileRank.toFixed(0)}${ordinalSuffix(Math.round(nfoSignal.percentileRank))}`,
       statement: `NFO mobilisation at the low end of history — investors prefer existing schemes`,
-      context: `Latest ${nfoSignal.latestMonth} · ₹${formatCompactCrSafe(nfoSignal.latestValue)} vs ₹${formatCompactCrSafe(nfoSignal.mean)} historical mean`,
+      context: `Latest ${nfoSignal.latestMonth} · ${formatCompactCrSafe(nfoSignal.latestValue)} vs ${formatCompactCrSafe(nfoSignal.mean)} historical mean`,
     });
   } else if (
     nfoSignal &&
@@ -1479,7 +1480,7 @@ export default async function MonthlyPage({
       tone: "neutral",
       accentNumber: `${nfoSignal.percentileRank.toFixed(0)}${ordinalSuffix(Math.round(nfoSignal.percentileRank))}`,
       statement: "NFO mobilisation at the high end of history — bull-market cue",
-      context: `Latest ${nfoSignal.latestMonth} · ₹${formatCompactCrSafe(nfoSignal.latestValue)}`,
+      context: `Latest ${nfoSignal.latestMonth} · ${formatCompactCrSafe(nfoSignal.latestValue)}`,
     });
   }
   if (passiveSignal && passiveSignal.latestSharePct !== null) {
@@ -1677,7 +1678,7 @@ export default async function MonthlyPage({
                   sources={sankeyData.sources}
                   targets={sankeyData.targets}
                   links={sankeyData.links}
-                  formatValue={(v) => `₹${formatCompactCrSafe(v)}`}
+                  formatValue={(v) => formatCompactCrSafe(v)}
                   height={320}
                 />
                 <p className="mt-3 text-[11px] text-muted-foreground">
@@ -2274,14 +2275,14 @@ export default async function MonthlyPage({
               title="Folio Additions Trend"
               subtitle={
                 folioAddLens === "share"
-                  ? `${folioAdditionsShare.length} month${folioAdditionsShare.length === 1 ? "" : "s"} · bps of existing folio base`
+                  ? `${folioAdditionsShare.length} month${folioAdditionsShare.length === 1 ? "" : "s"} · % of folio base`
                   : `Net new folios per month · ${folioAdditionsTrend.length} month${folioAdditionsTrend.length === 1 ? "" : "s"} · lakh · ${foliosHover ?? ""}`
               }
               flowKind="net"
               denominatorCaption={
                 folioAddLens === "share" ? undefined : folioAdditionsDenomCaption
               }
-              denominatorTooltip="Monthly folio additions expressed as basis points of the existing folio base. The bps view normalises growth against the (large, growing) base so the trend is comparable across years."
+              denominatorTooltip="Monthly folio additions expressed as a percentage of the existing folio base. Normalises growth against the (large, growing) base so the trend is comparable across years."
               insights={folioAdditionsInsights}
               yoyBadge={(() => {
                 const v = latestYoyPct(folioAdditionsTrend, 12);
@@ -2295,7 +2296,7 @@ export default async function MonthlyPage({
                     defaultValue="absolute"
                     lenses={[
                       { value: "absolute", label: "Lakh" },
-                      { value: "share", label: "bps of base" },
+                      { value: "share", label: "% of base" },
                     ]}
                     active={folioAddLens}
                     preserveParams={preservedQueryParams}
@@ -2307,8 +2308,8 @@ export default async function MonthlyPage({
                 data={folioAdditionsDisplay}
                 name="Folio Additions"
                 color="hsl(var(--chart-4))"
-                valueFormat={folioAddLens === "share" ? "bps" : "lakh"}
-                axisFormat={folioAddLens === "share" ? "bps" : "lakh"}
+                valueFormat={folioAddLens === "share" ? "pct" : "lakh"}
+                axisFormat={folioAddLens === "share" ? "pct" : "lakh"}
                 labelFormat="month"
                 trendline={
                   folioAddLens === "share"
@@ -2880,7 +2881,7 @@ export default async function MonthlyPage({
         >
           <EpisodeReplayStrip
             episodes={episodes}
-            formatValue={(v) => `₹${formatCompactCrSafe(v)}`}
+            formatValue={(v) => formatCompactCrSafe(v)}
           />
         </Card>
       )}
