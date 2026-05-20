@@ -3,8 +3,7 @@ import { Card } from "@/components/ui/Card";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { AreaTrend } from "@/components/charts/AreaTrend";
 import { BarSeries } from "@/components/charts/BarSeries";
-import { MultiLine } from "@/components/charts/MultiLine";
-import { LensToggle } from "@/components/ui/LensToggle";
+import { movingAverage } from "@/lib/chart-context";
 import {
   dataMode,
   latestOtherSchemesCategoryBreakdown,
@@ -15,12 +14,7 @@ import { momChange, yoyChange } from "@/data/aggregate";
 import { liveOtherSchemesNote } from "@/lib/provenance";
 import { cn } from "@/lib/cn";
 
-export default async function OtherSchemesPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const sp = await searchParams;
+export default async function OtherSchemesPage() {
   const isLive = dataMode().otherSchemes === "live";
   const series = otherSchemesByMonth();
   const breakdown = latestOtherSchemesCategoryBreakdown();
@@ -42,19 +36,10 @@ export default async function OtherSchemesPage({
     );
   }
 
-  // Chart-type toggles. Each eligible card owns its own
-  // `<thing>View` URL param. Bars (default) is never echoed into
-  // the URL; only "trend" rides along so the default page stays
-  // URL-clean. Other LensToggles on the page would normally strip
-  // this from links, so we explicitly preserve it below.
-  const netFlowView: "bars" | "trend" =
-    sp.netFlowView === "trend" ? "trend" : "bars";
-  const mobilisedView: "bars" | "trend" =
-    sp.mobilisedView === "trend" ? "trend" : "bars";
-  const preservedQueryParams: Record<string, string | undefined> = {
-    ...(sp.netFlowView === "trend" ? { netFlowView: "trend" } : {}),
-    ...(sp.mobilisedView === "trend" ? { mobilisedView: "trend" } : {}),
-  };
+  // Chart-style toggles (Bars vs Trend) were removed across the
+  // dashboard — every chart now renders the trend visual directly.
+  // Stale `?netFlowView=bars|trend` and `?mobilisedView=...` URLs
+  // are ignored silently.
 
   const aumMom = momChange(series.map((s) => s.totalAum));
   const aumYoy = yoyChange(series.map((s) => s.totalAum));
@@ -127,72 +112,27 @@ export default async function OtherSchemesPage({
         </Card>
         <Card
           title="Net Flow"
-          subtitle="Inflow (+) / Outflow (−) per month"
-          action={
-            <LensToggle
-              basePath="/other-schemes"
-              paramName="netFlowView"
-              defaultValue="bars"
-              lenses={[
-                { value: "bars", label: "Bars" },
-                { value: "trend", label: "Trend" },
-              ]}
-              active={netFlowView}
-              preserveParams={preservedQueryParams}
-            />
-          }
+          subtitle="Inflow (+) / Outflow (−) per month · zero reference + signed area fill"
         >
-          {netFlowView === "trend" ? (
-            <MultiLine
-              data={flowSeries}
-              xKey="label"
-              labelFormat="month"
-              valueFormat="cr"
-              axisFormat="cr"
-              lines={[
-                { key: "value", name: "Net flow", color: "hsl(var(--chart-2))" },
-              ]}
-            />
-          ) : (
-            <BarSeries data={flowSeries} color="hsl(var(--chart-2))" name="Net flow" />
-          )}
+          <BarSeries
+            data={flowSeries}
+            color="hsl(var(--chart-2))"
+            name="Net flow"
+            zeroReference
+          />
         </Card>
         <Card
           title="Funds Mobilised"
-          subtitle="Gross monthly inflow before redemptions"
+          subtitle="Gross monthly inflow before redemptions · dashed line = 12M average"
           className="lg:col-span-2"
-          action={
-            <LensToggle
-              basePath="/other-schemes"
-              paramName="mobilisedView"
-              defaultValue="bars"
-              lenses={[
-                { value: "bars", label: "Bars" },
-                { value: "trend", label: "Trend" },
-              ]}
-              active={mobilisedView}
-              preserveParams={preservedQueryParams}
-            />
-          }
         >
-          {mobilisedView === "trend" ? (
-            <MultiLine
-              data={mobilizedSeries}
-              xKey="label"
-              labelFormat="month"
-              valueFormat="cr"
-              axisFormat="cr"
-              lines={[
-                { key: "value", name: "Mobilised", color: "hsl(var(--chart-1))" },
-              ]}
-            />
-          ) : (
-            <BarSeries
-              data={mobilizedSeries}
-              color="hsl(var(--chart-1))"
-              name="Mobilised"
-            />
-          )}
+          <BarSeries
+            data={mobilizedSeries}
+            color="hsl(var(--chart-1))"
+            name="Mobilised"
+            trendline={movingAverage(mobilizedSeries, 12)}
+            trendlineName="12M avg"
+          />
         </Card>
       </section>
 
