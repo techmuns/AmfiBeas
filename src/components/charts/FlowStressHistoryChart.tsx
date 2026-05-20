@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { formatPercentile } from "@/lib/format";
 
 interface FlowStressPoint {
   month: string;
@@ -114,9 +115,11 @@ export function FlowStressHistoryChart({
                 <div className="tabular text-muted-foreground">
                   Drawdown {p.drawdownPct.toFixed(2)}%
                 </div>
-                <div className="tabular text-muted-foreground">
-                  Flow percentile {p.flowPercentile.toFixed(0)}th
-                </div>
+                {formatPercentile(p.flowPercentile) !== "—" && (
+                  <div className="tabular text-muted-foreground">
+                    Flow {formatPercentile(p.flowPercentile)}
+                  </div>
+                )}
                 <div className="mt-1 text-[10px]">{p.label}</div>
               </div>
             );

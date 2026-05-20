@@ -28,6 +28,7 @@ import {
 } from "@/data/market-indices";
 import {
   formatCompactCrSafe,
+  formatPercentile,
 } from "@/lib/format";
 
 export const metadata = {
@@ -209,8 +210,8 @@ export default function InvestorSummaryPage() {
             badge={stress.label}
             badgeClass={stressLabelClass(stress.label)}
             footnote={
-              stress.flowPercentileRank !== null
-                ? `Flow pct ${stress.flowPercentileRank.toFixed(0)}th`
+              formatPercentile(stress.flowPercentileRank) !== "—"
+                ? `Flow ${formatPercentile(stress.flowPercentileRank)}`
                 : "—"
             }
           />
@@ -262,9 +263,11 @@ export default function InvestorSummaryPage() {
                 {passiveFlow.latestSharePct.toFixed(1)}%
               </div>
               <div className="text-[11px] tabular text-muted-foreground">
-                Latest {passiveFlow.latestMonth} ·{" "}
-                {passiveFlow.percentile?.toFixed(0) ?? "—"}th percentile · hist
-                avg {passiveFlow.mean.toFixed(1)}%
+                Latest {passiveFlow.latestMonth}
+                {formatPercentile(passiveFlow.percentile) !== "—"
+                  ? ` · ${formatPercentile(passiveFlow.percentile)}`
+                  : ""}{" "}
+                · hist avg {passiveFlow.mean.toFixed(1)}%
               </div>
             </div>
           </Card>
