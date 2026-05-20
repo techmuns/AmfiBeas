@@ -11,7 +11,7 @@ interface ChartWithContextProps {
   flowKind?: "net" | "gross" | "stock";
   /** Analytical denominator the chart is expressed against. Examples:
    *    "67% of industry net inflow · latest 2026-04"
-   *    "120 bps of total folio base"
+   *    "+0.93% of folio base · latest 2026-04"
    *    "98% of trailing 12M avg"
    *  Folded inline into the subtitle so the chart header stays a
    *  single, scannable line instead of an extra labelled pill. */

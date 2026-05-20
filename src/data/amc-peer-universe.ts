@@ -522,6 +522,14 @@ export interface AmcAnomaly {
   qoqGrowthPct: number;
   zScore: number;
   direction: "up" | "down";
+  /** Latest-quarter average AUM in ₹ Cr. Lets the UI sort by absolute
+   *  Cr delta and de-emphasise tiny-base names whose huge % growth is
+   *  the result of a small denominator. */
+  latestAumCr: number;
+  /** True when the AMC's latest AAUM is below 0.25% of the cohort
+   *  total — a heuristic for "outlier driven by tiny denominator,
+   *  not by a real franchise shift." */
+  isTinyBase: boolean;
 }
 
 export interface AmcAnomalyReport {
@@ -578,7 +586,12 @@ export function latestQoqAnomalies(threshold = 2): AmcAnomalyReport | null {
     }
   }
 
-  const cohort: { slug: string; displayName: string; growth: number }[] = [];
+  const cohort: {
+    slug: string;
+    displayName: string;
+    growth: number;
+    latestAum: number;
+  }[] = [];
   for (const [slug, latest] of latestBySlug) {
     const prior = priorBySlug.get(slug);
     if (prior === undefined || prior <= 0) continue;
@@ -586,6 +599,7 @@ export function latestQoqAnomalies(threshold = 2): AmcAnomalyReport | null {
       slug,
       displayName: latest.displayName,
       growth: ((latest.aum - prior) / prior) * 100,
+      latestAum: latest.aum,
     });
   }
   if (cohort.length < 10) return null;
@@ -601,6 +615,10 @@ export function latestQoqAnomalies(threshold = 2): AmcAnomalyReport | null {
     sorted.reduce((s, v) => s + (v - mean) ** 2, 0) / sorted.length;
   const stdDev = Math.sqrt(variance);
 
+  // Tiny-base threshold: latest AAUM < 0.25% of the cohort total.
+  const cohortTotalAum = cohort.reduce((s, c) => s + c.latestAum, 0);
+  const tinyBaseCutoff = cohortTotalAum * 0.0025;
+
   const outliers: AmcAnomaly[] = [];
   if (stdDev > 0) {
     for (const c of cohort) {
@@ -612,12 +630,21 @@ export function latestQoqAnomalies(threshold = 2): AmcAnomalyReport | null {
           qoqGrowthPct: Number(c.growth.toFixed(2)),
           zScore: Number(z.toFixed(2)),
           direction: z >= 0 ? "up" : "down",
+          latestAumCr: c.latestAum,
+          isTinyBase: c.latestAum < tinyBaseCutoff,
         });
       }
     }
   }
-  // Sort by absolute z descending — most striking first.
-  outliers.sort((a, b) => Math.abs(b.zScore) - Math.abs(a.zScore));
+  // Sort: non-tiny-base first (so the headline read isn't dominated
+  // by names whose huge % growth comes from a tiny denominator),
+  // then by absolute Cr delta within each group.
+  outliers.sort((a, b) => {
+    if (a.isTinyBase !== b.isTinyBase) return a.isTinyBase ? 1 : -1;
+    const aDelta = Math.abs(a.latestAumCr * (a.qoqGrowthPct / 100));
+    const bDelta = Math.abs(b.latestAumCr * (b.qoqGrowthPct / 100));
+    return bDelta - aDelta;
+  });
 
   return {
     quarter: latestQ,

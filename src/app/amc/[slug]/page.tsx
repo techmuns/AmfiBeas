@@ -585,7 +585,7 @@ export default async function AmcPage({
           }
         >
           {peerChart.length > 0 ? (
-            <FocusedBarChart rows={peerChart} />
+            <FocusedPeerList rows={peerChart} />
           ) : (
             <EmptyChart>No peer data</EmptyChart>
           )}
@@ -712,54 +712,64 @@ function EmptyChart({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Compact peer-comparison bar chart that highlights the focused AMC.
- *  We render this inline (rather than reuse BarSeries) so the focused
- *  AMC stands out without forking the shared chart components. */
-function FocusedBarChart({
+/** Ranked peer-comparison list — focused AMC highlighted, with
+ *  a dot-plot magnitude indicator (no proportional bar fills). The
+ *  detailed peer table sits directly below this card. */
+function FocusedPeerList({
   rows,
 }: {
   rows: { label: string; value: number; slug: string; isFocused: boolean }[];
 }) {
   const max = Math.max(...rows.map((r) => r.value), 1);
+  const sorted = [...rows].sort((a, b) => b.value - a.value);
   return (
-    <div className="space-y-2">
-      {rows.map((r) => {
-        const widthPct = (r.value / max) * 100;
+    <ol className="space-y-1.5">
+      {sorted.map((r, i) => {
+        const dotLeftPct = (r.value / max) * 100;
         return (
-          <div key={r.slug} className="flex items-center gap-3 text-xs">
-            <div
+          <li
+            key={r.slug}
+            className={cn(
+              "grid grid-cols-[24px_minmax(120px,_1.4fr)_2fr_minmax(80px,_auto)] items-center gap-3 rounded-md px-2 py-1.5 text-xs",
+              r.isFocused && "bg-accent/40 ring-1 ring-positive/30"
+            )}
+          >
+            <span className="tabular text-muted-foreground">
+              #{i + 1}
+            </span>
+            <span
               className={cn(
-                "w-40 truncate",
-                r.isFocused ? "font-semibold" : "text-muted-foreground"
+                "truncate",
+                r.isFocused ? "font-semibold text-foreground" : "text-foreground"
               )}
               title={r.label}
             >
               {r.label}
-            </div>
-            <div className="flex-1">
-              <div className="h-5 rounded bg-muted">
-                <div
-                  className={cn(
-                    "h-5 rounded",
-                    r.isFocused
-                      ? "bg-positive/70"
-                      : "bg-foreground/20"
-                  )}
-                  style={{ width: `${widthPct}%` }}
-                />
-              </div>
-            </div>
-            <div
+            </span>
+            <span className="relative block h-2">
+              <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-border" />
+              <span
+                className={cn(
+                  "absolute top-1/2 inline-block h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-card",
+                  r.isFocused
+                    ? "bg-positive"
+                    : "bg-foreground/35"
+                )}
+                style={{ left: `${dotLeftPct}%` }}
+                aria-hidden
+              />
+            </span>
+            <span
               className={cn(
-                "w-24 text-right tabular",
-                r.isFocused ? "font-semibold" : "text-muted-foreground"
+                "text-right tabular",
+                r.isFocused ? "font-semibold text-foreground" : "text-muted-foreground"
               )}
             >
               {formatCompactCrSafe(r.value)}
-            </div>
-          </div>
+            </span>
+          </li>
         );
       })}
-    </div>
+    </ol>
   );
 }

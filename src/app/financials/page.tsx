@@ -13,7 +13,6 @@ import type { AmcStatus } from "@/components/filters/FilterBar";
 import { QuarterPicker } from "@/components/filters/QuarterPicker";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
-import { LensToggle } from "@/components/ui/LensToggle";
 import { FinancialsPeerCsvButton } from "@/components/data/FinancialsPeerCsvButton";
 import { cyclePhaseHistory } from "@/data/market-indices";
 import { cn } from "@/lib/cn";
@@ -83,21 +82,9 @@ export default async function FinancialsPage({
     fullSeries.find((q) => q.quarter === selectedPeriod) ??
     fullSeries[fullSeries.length - 1];
 
-  // Chart-type toggle for the Operating Revenue / Operating Profit / PAT
-  // card. Bars (default) is never echoed into the URL; only "trend"
-  // rides along so the default page stays URL-clean.
-  const pnlView: "bars" | "trend" =
-    sp.pnlView === "trend" ? "trend" : "bars";
-
-  // Pass-through params for every LensToggle on this page. Keeps the
-  // selected AMC, date-range, and quarter intact when the user clicks
-  // Bars / Trend — otherwise the page would reset to the default AMC.
-  const preservedQueryParams: Record<string, string | undefined> = {
-    amcs: typeof sp.amcs === "string" ? sp.amcs : undefined,
-    range: typeof sp.range === "string" ? sp.range : undefined,
-    period: typeof sp.period === "string" ? sp.period : undefined,
-    ...(sp.pnlView === "trend" ? { pnlView: "trend" } : {}),
-  };
+  // Chart-style toggles (Bars vs Trend) were removed across the
+  // dashboard — the P&L card now renders the trend visual directly.
+  // Stale `?pnlView=bars|trend` URLs are ignored silently.
 
   // Series spec shared by the bars and trend views of the P&L card.
   // `BarSpec` and `LineSpec` are both `{ key, name, color }`, so the
@@ -694,6 +681,45 @@ export default async function FinancialsPage({
         />
       </section>
 
+      <FinancialSignalReadCard
+        amcName={profile?.name ?? slug.toUpperCase()}
+        latest={latest}
+        revenueYoy={latestYoyPct(revenueSeries, 4)}
+        patYoy={latestYoyPct(
+          pnlData.map((d) => ({ label: d.quarter, value: d.pat ?? 0 })),
+          4
+        )}
+        patMarginPct={latest.revenue > 0 ? (latest.pat / latest.revenue) * 100 : null}
+        opMarginPct={
+          latest.revenue > 0 ? (latest.operatingProfit / latest.revenue) * 100 : null
+        }
+        peerMedianPatMarginPct={peerMedianPatMargin}
+        revenueYieldBps={revenueYieldBps}
+        peerMedianRevenueYieldBps={peerMedianRevenueYield}
+      />
+
+      <Card
+        title="Revenue Yield Methodology"
+        subtitle="Important: how to read these numbers"
+      >
+        <p className="text-[12px] leading-snug text-muted-foreground">
+          Operating revenue yield is computed on{" "}
+          <span className="text-foreground">MF QAAUM</span> only —
+          (annualised Operating Revenue ÷ same-quarter MF QAAUM, ×10,000
+          for bps). The Operating Revenue field is the AMC&rsquo;s{" "}
+          <span className="text-foreground">total standalone P&amp;L
+          operating revenue</span>; it may include non-MF operating
+          revenue (AIF, PMS, advisory, international, etc.). A clean MF
+          management-fee split is{" "}
+          <span className="text-foreground">not</span> available in
+          public quarterly filings, so the revenue yield reads as a
+          slight ceiling on the true pure-MF management-fee yield.
+          Cross-AMC differences in the non-MF mix can therefore inflate
+          or deflate the comparison.
+          <InfoTooltip label="Placeholder fields exist in the data layer for mfManagementFees and otherOperatingRevenue. When AMC disclosure improves (e.g. segment-level filings consistently breaking out MF vs non-MF), these can be wired up without changing the chart shape." />
+        </p>
+      </Card>
+
       <SectionDivider
         eyebrow="Section 2"
         label="Trends"
@@ -712,35 +738,12 @@ export default async function FinancialsPage({
             const v = latestYoyPct(revenueSeries, 4);
             return v === null ? undefined : { label: "Revenue YoY", pct: v };
           })()}
-          action={
-            <LensToggle
-              basePath="/financials"
-              paramName="pnlView"
-              defaultValue="bars"
-              lenses={[
-                { value: "bars", label: "Bars" },
-                { value: "trend", label: "Trend" },
-              ]}
-              active={pnlView}
-              preserveParams={preservedQueryParams}
-            />
-          }
         >
-          {pnlView === "trend" ? (
-            <MultiLine
-              data={pnlData}
-              xKey="quarter"
-              valueFormat="cr"
-              axisFormat="cr"
-              lines={pnlSeries}
-            />
-          ) : (
-            <GroupedBars
-              data={pnlData}
-              xKey="quarter"
-              bars={pnlSeries}
-            />
-          )}
+          <GroupedBars
+            data={pnlData}
+            xKey="quarter"
+            bars={pnlSeries}
+          />
         </ChartWithContext>
         <ChartWithContext
           title="Margin Trend"
@@ -994,5 +997,104 @@ function PeerMetricCell({
         {delta.toFixed(digits)} {deltaSuffix}
       </span>
     </div>
+  );
+}
+
+/** Listed-AMC Financial Signal Read — concise buy-side interpretation
+ *  of the selected AMC's latest quarter: revenue / PAT / margins /
+ *  peer position. Pure template, no LLM. */
+function FinancialSignalReadCard({
+  amcName,
+  latest,
+  revenueYoy,
+  patYoy,
+  patMarginPct,
+  opMarginPct,
+  peerMedianPatMarginPct,
+  revenueYieldBps,
+  peerMedianRevenueYieldBps,
+}: {
+  amcName: string;
+  latest: { quarter: string; revenue: number; operatingProfit: number; pat: number };
+  revenueYoy: number | null;
+  patYoy: number | null;
+  patMarginPct: number | null;
+  opMarginPct: number | null;
+  peerMedianPatMarginPct: number | null;
+  revenueYieldBps: number;
+  peerMedianRevenueYieldBps: number | null;
+}) {
+  const periodLabel = formatQuarterLabelLong(latest.quarter);
+
+  const headline = (() => {
+    if (revenueYoy === null && patYoy === null) {
+      return `${amcName} · ${periodLabel}: earnings read pending — YoY comparison unavailable.`;
+    }
+    const rev = revenueYoy ?? 0;
+    const pat = patYoy ?? 0;
+    if (rev >= 10 && pat >= 15) {
+      return `${amcName} delivered a strong ${periodLabel}: revenue and earnings both expanding above the AAUM line.`;
+    }
+    if (rev >= 5 && pat >= 5 && pat >= rev) {
+      return `${amcName} showed operating leverage in ${periodLabel}: earnings grew faster than revenue.`;
+    }
+    if (rev > 0 && pat < 0) {
+      return `${amcName} grew revenue but earnings fell in ${periodLabel} — cost or yield headwinds are eating leverage.`;
+    }
+    if (rev < 0) {
+      return `${amcName} had a soft ${periodLabel}: revenue contracted YoY.`;
+    }
+    return `${amcName} posted a steady ${periodLabel} — no headline upside surprise.`;
+  })();
+
+  const marginVsPeer =
+    patMarginPct !== null && peerMedianPatMarginPct !== null
+      ? patMarginPct - peerMedianPatMarginPct
+      : null;
+  const yieldVsPeer =
+    peerMedianRevenueYieldBps !== null
+      ? revenueYieldBps - peerMedianRevenueYieldBps
+      : null;
+
+  const beats: string[] = [];
+  if (revenueYoy !== null)
+    beats.push(`Revenue ${revenueYoy >= 0 ? "+" : ""}${revenueYoy.toFixed(1)}% YoY`);
+  if (patYoy !== null)
+    beats.push(`PAT ${patYoy >= 0 ? "+" : ""}${patYoy.toFixed(1)}% YoY`);
+  if (patMarginPct !== null)
+    beats.push(
+      `PAT margin ${patMarginPct.toFixed(1)}%${
+        marginVsPeer !== null
+          ? ` (${marginVsPeer >= 0 ? "+" : ""}${marginVsPeer.toFixed(1)} pp vs peer median)`
+          : ""
+      }`
+    );
+  if (opMarginPct !== null)
+    beats.push(`Operating margin ${opMarginPct.toFixed(1)}%`);
+  if (yieldVsPeer !== null)
+    beats.push(
+      `Revenue yield ${revenueYieldBps.toFixed(1)} bps (${yieldVsPeer >= 0 ? "+" : ""}${yieldVsPeer.toFixed(1)} bps vs peer median)`
+    );
+
+  const watch =
+    marginVsPeer !== null && marginVsPeer < -2
+      ? "Watch PAT-margin gap vs peers — closing requires either yield expansion or cost discipline."
+      : marginVsPeer !== null && marginVsPeer > 2
+      ? "Margin premium vs peers is the durable edge — watch whether passive accelerating compresses it."
+      : "Watch quarterly margin trajectory + revenue yield drift — small drifts compound into multi-year re-rating.";
+
+  return (
+    <Card
+      title="Listed AMC Financial Signal Read"
+      subtitle={`${amcName} · ${periodLabel} · buy-side interpretation`}
+    >
+      <div className="space-y-2 text-[13px] leading-snug">
+        <p className="font-medium text-foreground">{headline}</p>
+        {beats.length > 0 && (
+          <p className="text-muted-foreground">{beats.join(" · ")}.</p>
+        )}
+        <p className="text-muted-foreground">{watch}</p>
+      </div>
+    </Card>
   );
 }

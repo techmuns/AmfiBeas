@@ -78,6 +78,18 @@ export default function InvestorSummaryPage() {
         @media print {
           @page { size: A4; margin: 12mm; }
           .print\\:hidden { display: none !important; }
+          /* Keep card title + body together; suppress mid-card page splits */
+          .print\\:break-inside-avoid {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+          /* Suppress trailing blank page after the last block */
+          .print\\:break-after-avoid:last-child {
+            break-after: avoid;
+            page-break-after: avoid;
+          }
+          /* Hide the sticky context footer reliably in print */
+          [data-print-hidden="true"] { display: none !important; }
         }
         `}
       </style>

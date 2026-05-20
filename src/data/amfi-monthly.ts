@@ -486,6 +486,69 @@ export function monthlyActiveEquityAumBridge(
   return out.slice(-lastN);
 }
 
+export interface ActiveEquityBridgeSnapshot {
+  startMonth: string;
+  endMonth: string;
+  windowMonths: number;
+  openingAum: number;
+  closingAum: number;
+  netInflowTotal: number;
+  marketResidualTotal: number;
+  /** Monthly ΔAUM series (closing − previous closing) across the
+   *  window — used for the temporal sparkline under the BridgeStrip. */
+  deltaSparkline: { label: string; value: number }[];
+}
+
+/**
+ * Aggregated Active-Equity AUM bridge over the most recent
+ * `windowMonths`. Returns the opening / closing AUM, the cumulative
+ * net flow and market residual across the window, and a monthly
+ * ΔAUM series for the BridgeStrip sparkline.
+ *
+ * Identity: closingAum − openingAum ≈ netInflowTotal + marketResidualTotal
+ * (drift only from reclassifications captured in the monthly residual).
+ */
+export function activeEquityAumBridgeSnapshot(
+  windowMonths = 12
+): ActiveEquityBridgeSnapshot | null {
+  const rows = amfiMonthlyRows().filter(
+    (r) => typeof r.activeEquityAum === "number"
+  );
+  if (rows.length < 2) return null;
+
+  // Take windowMonths + 1 rows so the bridge spans `windowMonths`
+  // month-end-to-month-end transitions.
+  const tail = rows.slice(-(windowMonths + 1));
+  if (tail.length < 2) return null;
+
+  const startRow = tail[0];
+  const endRow = tail[tail.length - 1];
+
+  let netInflowTotal = 0;
+  let marketResidualTotal = 0;
+  const deltaSparkline: { label: string; value: number }[] = [];
+  for (let i = 1; i < tail.length; i++) {
+    const cur = tail[i];
+    const prev = tail[i - 1];
+    if (typeof cur.activeEquityNetInflow !== "number") continue;
+    const delta = (cur.activeEquityAum as number) - (prev.activeEquityAum as number);
+    netInflowTotal += cur.activeEquityNetInflow;
+    marketResidualTotal += delta - cur.activeEquityNetInflow;
+    deltaSparkline.push({ label: cur.month, value: delta });
+  }
+
+  return {
+    startMonth: startRow.month,
+    endMonth: endRow.month,
+    windowMonths: tail.length - 1,
+    openingAum: startRow.activeEquityAum as number,
+    closingAum: endRow.activeEquityAum as number,
+    netInflowTotal,
+    marketResidualTotal,
+    deltaSparkline,
+  };
+}
+
 /**
  * SIP AUM as a % share of Total AUM for the latest `lastN` months.
  *
