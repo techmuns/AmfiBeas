@@ -97,24 +97,6 @@ export default async function QuarterlyPage({
     sp.qFolioAddLens === "share" ? "share" : "absolute";
   const qSchemesLens: "absolute" | "share" =
     sp.qSchemesLens === "share" ? "share" : "absolute";
-  // Chart-type toggles. Each eligible bar-style time-series card on
-  // the page owns its own `q<thing>View` URL param. Bars is the
-  // default and is never echoed into the URL — only the "trend"
-  // value rides along so the default page stays URL-clean.
-  const qAaumView: "bars" | "trend" =
-    sp.qAaumView === "trend" ? "trend" : "bars";
-  const qFlowsView: "bars" | "trend" =
-    sp.qFlowsView === "trend" ? "trend" : "bars";
-  const qAeAaumView: "bars" | "trend" =
-    sp.qAeAaumView === "trend" ? "trend" : "bars";
-  const qEquityMixView: "bars" | "trend" =
-    sp.qEquityMixView === "trend" ? "trend" : "bars";
-  const qFoliosView: "bars" | "trend" =
-    sp.qFoliosView === "trend" ? "trend" : "bars";
-  const qFolioAddView: "bars" | "trend" =
-    sp.qFolioAddView === "trend" ? "trend" : "bars";
-  const qSchemesView: "bars" | "trend" =
-    sp.qSchemesView === "trend" ? "trend" : "bars";
   // Pass-through params for every LensToggle on this page.
   const preservedQueryParams: Record<string, string | undefined> = {
     quarter: typeof sp.quarter === "string" ? sp.quarter : undefined,
@@ -131,16 +113,6 @@ export default async function QuarterlyPage({
       typeof sp.qFolioAddLens === "string" ? sp.qFolioAddLens : undefined,
     qSchemesLens:
       typeof sp.qSchemesLens === "string" ? sp.qSchemesLens : undefined,
-    // Chart-type `q<thing>View` toggles — only the non-default
-    // "trend" value is preserved so other toggles never re-attach
-    // `q<thing>View=bars` to the URL.
-    ...(sp.qAaumView === "trend" ? { qAaumView: "trend" } : {}),
-    ...(sp.qFlowsView === "trend" ? { qFlowsView: "trend" } : {}),
-    ...(sp.qAeAaumView === "trend" ? { qAeAaumView: "trend" } : {}),
-    ...(sp.qEquityMixView === "trend" ? { qEquityMixView: "trend" } : {}),
-    ...(sp.qFoliosView === "trend" ? { qFoliosView: "trend" } : {}),
-    ...(sp.qFolioAddView === "trend" ? { qFolioAddView: "trend" } : {}),
-    ...(sp.qSchemesView === "trend" ? { qSchemesView: "trend" } : {}),
   };
 
   // Share-mode transform helper for grouped-bar series.
@@ -922,62 +894,36 @@ export default async function QuarterlyPage({
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
               action={
-                <div className="flex flex-wrap items-center gap-2">
-                  <LensToggle
-                    basePath="/quarterly"
-                    paramName="qAaumLens"
-                    defaultValue="absolute"
-                    lenses={[
-                      { value: "absolute", label: "₹ Cr" },
-                      { value: "share", label: "vs 4Q avg" },
-                    ]}
-                    active={qAaumLens}
-                    preserveParams={preservedQueryParams}
-                  />
-                  <LensToggle
-                    basePath="/quarterly"
-                    paramName="qAaumView"
-                    defaultValue="bars"
-                    lenses={[
-                      { value: "bars", label: "Bars" },
-                      { value: "trend", label: "Trend" },
-                    ]}
-                    active={qAaumView}
-                    preserveParams={preservedQueryParams}
-                  />
-                </div>
+                <LensToggle
+                  basePath="/quarterly"
+                  paramName="qAaumLens"
+                  defaultValue="absolute"
+                  lenses={[
+                    { value: "absolute", label: "₹ Cr" },
+                    { value: "share", label: "vs 4Q avg" },
+                  ]}
+                  active={qAaumLens}
+                  preserveParams={preservedQueryParams}
+                />
               }
             >
               {aaumTrendHasData ? (
-                qAaumView === "trend" ? (
-                  <MultiLine
-                    data={aaumDisplayData}
-                    xKey="label"
-                    labelFormat="none"
-                    valueFormat={qAaumLens === "share" ? "pct" : "cr"}
-                    axisFormat={qAaumLens === "share" ? "pct" : "cr"}
-                    lines={[
-                      { key: "value", name: "Last-month AAUM", color: "hsl(var(--chart-1))" },
-                    ]}
-                  />
-                ) : (
-                  <BarSeries
-                    data={aaumDisplayData}
-                    name="Last-month AAUM"
-                    color="hsl(var(--chart-1))"
-                    valueFormat={qAaumLens === "share" ? "pct" : "cr"}
-                    axisFormat={qAaumLens === "share" ? "pct" : "cr"}
-                    labelFormat="none"
-                    trendline={
-                      qAaumLens === "share"
-                        ? undefined
-                        : movingAverage(aaumTrendData, 4)
-                    }
-                    trendlineName="4Q avg"
-                    referenceValue={qAaumLens === "share" ? 100 : undefined}
-                    referenceLabel={qAaumLens === "share" ? "4Q avg" : undefined}
-                  />
-                )
+                <BarSeries
+                  data={aaumDisplayData}
+                  name="Last-month AAUM"
+                  color="hsl(var(--chart-1))"
+                  valueFormat={qAaumLens === "share" ? "pct" : "cr"}
+                  axisFormat={qAaumLens === "share" ? "pct" : "cr"}
+                  labelFormat="none"
+                  trendline={
+                    qAaumLens === "share"
+                      ? undefined
+                      : movingAverage(aaumTrendData, 4)
+                  }
+                  trendlineName="4Q avg"
+                  referenceValue={qAaumLens === "share" ? 100 : undefined}
+                  referenceLabel={qAaumLens === "share" ? "4Q avg" : undefined}
+                />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                   Last-month AAUM not yet published — appears after the next AMFI Quarterly Report is ingested.
@@ -1026,44 +972,23 @@ export default async function QuarterlyPage({
                   defaultValue="absolute"
                   lenses={[
                     { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "Share %" },
+                    { value: "share", label: "% of flow magnitude" },
                   ]}
                   active={quarterlyFlowsLens}
-                  preserveParams={preservedQueryParams}
-                />
-                <LensToggle
-                  basePath="/quarterly"
-                  paramName="qFlowsView"
-                  defaultValue="bars"
-                  lenses={[
-                    { value: "bars", label: "Bars" },
-                    { value: "trend", label: "Trend" },
-                  ]}
-                  active={qFlowsView}
                   preserveParams={preservedQueryParams}
                 />
               </div>
             }
           >
-            {qFlowsView === "trend" ? (
-              <MultiLine
-                data={flowsDataDisplay}
-                xKey="quarterLabel"
-                labelFormat="none"
-                valueFormat={quarterlyFlowsLens === "share" ? "pct" : "cr"}
-                axisFormat={quarterlyFlowsLens === "share" ? "pct" : "cr"}
-                lines={qFlowsSeries}
-              />
-            ) : (
-              <GroupedBars
-                data={flowsDataDisplay}
-                xKey="quarterLabel"
-                labelFormat="none"
-                valueFormat={quarterlyFlowsLens === "share" ? "pct" : "cr"}
-                axisFormat={quarterlyFlowsLens === "share" ? "pct" : "cr"}
-                bars={qFlowsSeries}
-              />
-            )}
+            <GroupedBars
+              data={flowsDataDisplay}
+              xKey="quarterLabel"
+              labelFormat="none"
+              valueFormat={quarterlyFlowsLens === "share" ? "pct" : "cr"}
+              axisFormat={quarterlyFlowsLens === "share" ? "pct" : "cr"}
+              bars={qFlowsSeries}
+              zeroReference
+            />
             <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
               Liquid is shown separately for readability.
               <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes. Share view divides each value by the quarter's sum of absolute flow magnitudes so signs (inflow vs outflow) stay intact." />
@@ -1121,48 +1046,24 @@ export default async function QuarterlyPage({
                     active={qAeAaumLens}
                     preserveParams={preservedQueryParams}
                   />
-                  <LensToggle
-                    basePath="/quarterly"
-                    paramName="qAeAaumView"
-                    defaultValue="bars"
-                    lenses={[
-                      { value: "bars", label: "Bars" },
-                      { value: "trend", label: "Trend" },
-                    ]}
-                    active={qAeAaumView}
-                    preserveParams={preservedQueryParams}
-                  />
                 </div>
               }
             >
               {aeAaumTrend.length > 0 ? (
-                qAeAaumView === "trend" ? (
-                  <MultiLine
-                    data={aeAaumDisplay}
-                    xKey="label"
-                    labelFormat="none"
-                    valueFormat={qAeAaumLens === "share" ? "pct" : "cr"}
-                    axisFormat={qAeAaumLens === "share" ? "pct" : "cr"}
-                    lines={[
-                      { key: "value", name: "Active Equity Last-month AAUM", color: "hsl(var(--chart-1))" },
-                    ]}
-                  />
-                ) : (
-                  <BarSeries
-                    data={aeAaumDisplay}
-                    name="Active Equity Last-month AAUM"
-                    color="hsl(var(--chart-1))"
-                    valueFormat={qAeAaumLens === "share" ? "pct" : "cr"}
-                    axisFormat={qAeAaumLens === "share" ? "pct" : "cr"}
-                    labelFormat="none"
-                    trendline={
-                      qAeAaumLens === "share"
-                        ? undefined
-                        : movingAverage(aeAaumTrend, 4)
-                    }
-                    trendlineName="4Q avg"
-                  />
-                )
+                <BarSeries
+                  data={aeAaumDisplay}
+                  name="Active Equity Last-month AAUM"
+                  color="hsl(var(--chart-1))"
+                  valueFormat={qAeAaumLens === "share" ? "pct" : "cr"}
+                  axisFormat={qAeAaumLens === "share" ? "pct" : "cr"}
+                  labelFormat="none"
+                  trendline={
+                    qAeAaumLens === "share"
+                      ? undefined
+                      : movingAverage(aeAaumTrend, 4)
+                  }
+                  trendlineName="4Q avg"
+                />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                   Active-equity AAUM not yet published — appears after the next AMFI Quarterly Report is ingested.
@@ -1189,49 +1090,34 @@ export default async function QuarterlyPage({
                 : { label: "Active YoY", pct: v };
             })()}
             action={
-              <div className="flex flex-wrap items-center gap-2">
-                <LensToggle
-                  basePath="/quarterly"
-                  paramName="qEquityMixLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "Share %" },
-                  ]}
-                  active={equityMixLens}
-                  preserveParams={preservedQueryParams}
-                />
-                <LensToggle
-                  basePath="/quarterly"
-                  paramName="qEquityMixView"
-                  defaultValue="bars"
-                  lenses={[
-                    { value: "bars", label: "Bars" },
-                    { value: "trend", label: "Trend" },
-                  ]}
-                  active={qEquityMixView}
-                  preserveParams={preservedQueryParams}
-                />
-              </div>
+              <LensToggle
+                basePath="/quarterly"
+                paramName="qEquityMixLens"
+                defaultValue="absolute"
+                lenses={[
+                  { value: "absolute", label: "₹ Cr" },
+                  { value: "share", label: "% of equity AAUM" },
+                ]}
+                active={equityMixLens}
+                preserveParams={preservedQueryParams}
+              />
             }
           >
             {aeBreakdownHasData ? (
-              qEquityMixView === "trend" ? (
-                <MultiLine
-                  data={aeBreakdownDisplay}
+              equityMixLens === "share" ? (
+                <StackedArea
+                  data={aeBreakdownDisplay as Record<string, string | number>[]}
                   xKey="quarterLabel"
                   labelFormat="none"
-                  valueFormat={equityMixLens === "share" ? "pct" : "cr"}
-                  axisFormat={equityMixLens === "share" ? "pct" : "cr"}
-                  lines={qEquityMixSeries}
+                  series={qEquityMixSeries}
                 />
               ) : (
                 <GroupedBars
                   data={aeBreakdownDisplay}
                   xKey="quarterLabel"
                   labelFormat="none"
-                  valueFormat={equityMixLens === "share" ? "pct" : "cr"}
-                  axisFormat={equityMixLens === "share" ? "pct" : "cr"}
+                  valueFormat="cr"
+                  axisFormat="cr"
                   bars={qEquityMixSeries}
                 />
               )
@@ -1343,50 +1229,26 @@ export default async function QuarterlyPage({
                       active={qFoliosLens}
                       preserveParams={preservedQueryParams}
                     />
-                    <LensToggle
-                      basePath="/quarterly"
-                      paramName="qFoliosView"
-                      defaultValue="bars"
-                      lenses={[
-                        { value: "bars", label: "Bars" },
-                        { value: "trend", label: "Trend" },
-                      ]}
-                      active={qFoliosView}
-                      preserveParams={preservedQueryParams}
-                    />
                   </div>
                 }
               >
                 {foliosTrend.length > 0 ? (
-                  qFoliosView === "trend" ? (
-                    <MultiLine
-                      data={foliosDisplay}
-                      xKey="label"
-                      labelFormat="none"
-                      valueFormat={qFoliosLens === "share" ? "pct" : "crore-count"}
-                      axisFormat={qFoliosLens === "share" ? "pct" : "crore-count"}
-                      lines={[
-                        { key: "value", name: "Folios", color: "hsl(var(--chart-1))" },
-                      ]}
-                    />
-                  ) : (
-                    <BarSeries
-                      data={foliosDisplay}
-                      name="Folios"
-                      color="hsl(var(--chart-1))"
-                      valueFormat={qFoliosLens === "share" ? "pct" : "crore-count"}
-                      axisFormat={qFoliosLens === "share" ? "pct" : "crore-count"}
-                      labelFormat="none"
-                      trendline={
-                        qFoliosLens === "share"
-                          ? undefined
-                          : movingAverage(foliosTrend, 4)
-                      }
-                      trendlineName="4Q avg"
-                      referenceValue={qFoliosLens === "share" ? 100 : undefined}
-                      referenceLabel={qFoliosLens === "share" ? "4Q avg" : undefined}
-                    />
-                  )
+                  <BarSeries
+                    data={foliosDisplay}
+                    name="Folios"
+                    color="hsl(var(--chart-1))"
+                    valueFormat={qFoliosLens === "share" ? "pct" : "crore-count"}
+                    axisFormat={qFoliosLens === "share" ? "pct" : "crore-count"}
+                    labelFormat="none"
+                    trendline={
+                      qFoliosLens === "share"
+                        ? undefined
+                        : movingAverage(foliosTrend, 4)
+                    }
+                    trendlineName="4Q avg"
+                    referenceValue={qFoliosLens === "share" ? 100 : undefined}
+                    referenceLabel={qFoliosLens === "share" ? "4Q avg" : undefined}
+                  />
                 ) : (
                   <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                     Folio count not yet ingested for any quarter.
@@ -1424,48 +1286,24 @@ export default async function QuarterlyPage({
                       active={qFolioAddLens}
                       preserveParams={preservedQueryParams}
                     />
-                    <LensToggle
-                      basePath="/quarterly"
-                      paramName="qFolioAddView"
-                      defaultValue="bars"
-                      lenses={[
-                        { value: "bars", label: "Bars" },
-                        { value: "trend", label: "Trend" },
-                      ]}
-                      active={qFolioAddView}
-                      preserveParams={preservedQueryParams}
-                    />
                   </div>
                 }
               >
                 {folioAdditionsTrend.length > 0 ? (
-                  qFolioAddView === "trend" ? (
-                    <MultiLine
-                      data={folioAdditionsDisplay}
-                      xKey="label"
-                      labelFormat="none"
-                      valueFormat={qFolioAddLens === "share" ? "bps" : "lakh"}
-                      axisFormat={qFolioAddLens === "share" ? "bps" : "lakh"}
-                      lines={[
-                        { key: "value", name: "Folio Additions", color: "hsl(var(--chart-4))" },
-                      ]}
-                    />
-                  ) : (
-                    <BarSeries
-                      data={folioAdditionsDisplay}
-                      name="Folio Additions"
-                      color="hsl(var(--chart-4))"
-                      valueFormat={qFolioAddLens === "share" ? "bps" : "lakh"}
-                      axisFormat={qFolioAddLens === "share" ? "bps" : "lakh"}
-                      labelFormat="none"
-                      trendline={
-                        qFolioAddLens === "share"
-                          ? undefined
-                          : movingAverage(folioAdditionsTrend, 4)
-                      }
-                      trendlineName="4Q avg"
-                    />
-                  )
+                  <BarSeries
+                    data={folioAdditionsDisplay}
+                    name="Folio Additions"
+                    color="hsl(var(--chart-4))"
+                    valueFormat={qFolioAddLens === "share" ? "bps" : "lakh"}
+                    axisFormat={qFolioAddLens === "share" ? "bps" : "lakh"}
+                    labelFormat="none"
+                    trendline={
+                      qFolioAddLens === "share"
+                        ? undefined
+                        : movingAverage(folioAdditionsTrend, 4)
+                    }
+                    trendlineName="4Q avg"
+                  />
                 ) : (
                   <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                     Need at least two consecutive quarters of folio data to derive additions.
@@ -1509,50 +1347,26 @@ export default async function QuarterlyPage({
                       active={qSchemesLens}
                       preserveParams={preservedQueryParams}
                     />
-                    <LensToggle
-                      basePath="/quarterly"
-                      paramName="qSchemesView"
-                      defaultValue="bars"
-                      lenses={[
-                        { value: "bars", label: "Bars" },
-                        { value: "trend", label: "Trend" },
-                      ]}
-                      active={qSchemesView}
-                      preserveParams={preservedQueryParams}
-                    />
                   </div>
                 }
               >
                 {schemesTrend.length > 0 ? (
-                  qSchemesView === "trend" ? (
-                    <MultiLine
-                      data={schemesDisplay}
-                      xKey="label"
-                      labelFormat="none"
-                      valueFormat={qSchemesLens === "share" ? "pct" : "count"}
-                      axisFormat={qSchemesLens === "share" ? "pct" : "count"}
-                      lines={[
-                        { key: "value", name: "Open-Ended Schemes", color: "hsl(var(--chart-5))" },
-                      ]}
-                    />
-                  ) : (
-                    <BarSeries
-                      data={schemesDisplay}
-                      name="Open-Ended Schemes"
-                      color="hsl(var(--chart-5))"
-                      valueFormat={qSchemesLens === "share" ? "pct" : "count"}
-                      axisFormat={qSchemesLens === "share" ? "pct" : "count"}
-                      labelFormat="none"
-                      trendline={
-                        qSchemesLens === "share"
-                          ? undefined
-                          : movingAverage(schemesTrend, 4)
-                      }
-                      trendlineName="4Q avg"
-                      referenceValue={qSchemesLens === "share" ? 100 : undefined}
-                      referenceLabel={qSchemesLens === "share" ? "4Q avg" : undefined}
-                    />
-                  )
+                  <BarSeries
+                    data={schemesDisplay}
+                    name="Open-Ended Schemes"
+                    color="hsl(var(--chart-5))"
+                    valueFormat={qSchemesLens === "share" ? "pct" : "count"}
+                    axisFormat={qSchemesLens === "share" ? "pct" : "count"}
+                    labelFormat="none"
+                    trendline={
+                      qSchemesLens === "share"
+                        ? undefined
+                        : movingAverage(schemesTrend, 4)
+                    }
+                    trendlineName="4Q avg"
+                    referenceValue={qSchemesLens === "share" ? 100 : undefined}
+                    referenceLabel={qSchemesLens === "share" ? "4Q avg" : undefined}
+                  />
                 ) : (
                   <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                     Open-ended scheme count not yet ingested.

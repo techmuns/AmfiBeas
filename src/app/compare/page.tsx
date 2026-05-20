@@ -121,6 +121,13 @@ export default async function ComparePage({
 
       <AmcCompareSelector amcs={universe} selectedA={slugA} selectedB={slugB} />
 
+      {detailA && detailB && (
+        <ComparisonRead
+          a={{ name: detailA.displayName, latest: detailA.latest, growth: growthA }}
+          b={{ name: detailB.displayName, latest: detailB.latest, growth: growthB }}
+        />
+      )}
+
       {/* Two side-by-side summary columns */}
       <section className="grid gap-4 lg:grid-cols-2">
         {[
@@ -488,6 +495,129 @@ export default async function ComparePage({
           </p>
         </Card>
       )}
+    </div>
+  );
+}
+
+interface ComparisonSide {
+  name: string;
+  latest: {
+    avgAum: number;
+    marketSharePct: number;
+    rank: number;
+    outOf: number;
+    fiscalLabel: string;
+  } | null;
+  growth: {
+    qoqGrowthPct: number | null;
+    yoyGrowthPct: number | null;
+  } | null;
+}
+
+/** Top Comparison Read — three pill rows plus a one-line investor
+ *  interpretation. Lives above the side-by-side detail columns so the
+ *  reader gets the headline before the supporting tables. */
+function ComparisonRead({
+  a,
+  b,
+}: {
+  a: ComparisonSide;
+  b: ComparisonSide;
+}) {
+  if (!a.latest || !b.latest) return null;
+  const larger = a.latest.avgAum >= b.latest.avgAum ? a : b;
+  const smaller = larger === a ? b : a;
+  const qoqA = a.growth?.qoqGrowthPct ?? null;
+  const qoqB = b.growth?.qoqGrowthPct ?? null;
+  const fasterGrower =
+    qoqA === null && qoqB === null
+      ? null
+      : qoqA === null
+        ? b
+        : qoqB === null
+          ? a
+          : qoqA >= qoqB
+            ? a
+            : b;
+  const shareLeader = a.latest.marketSharePct >= b.latest.marketSharePct ? a : b;
+  const rankClimber =
+    a.latest.rank < b.latest.rank ? a : a.latest.rank > b.latest.rank ? b : null;
+
+  const sentenceParts: string[] = [];
+  sentenceParts.push(
+    `${larger.name} is the larger AMC (${formatCompactCrSafe(larger.latest!.avgAum)} vs ${formatCompactCrSafe(smaller.latest!.avgAum)})`
+  );
+  if (fasterGrower && fasterGrower !== larger) {
+    const gpct =
+      fasterGrower === a ? qoqA : qoqB;
+    if (typeof gpct === "number") {
+      sentenceParts.push(
+        `but ${fasterGrower.name} is growing faster (${gpct >= 0 ? "+" : ""}${gpct.toFixed(1)}% QoQ)`
+      );
+    }
+  }
+  if (rankClimber && rankClimber === fasterGrower && fasterGrower !== larger) {
+    sentenceParts.push(`and gaining ground in the rankings`);
+  }
+  const investorLine = sentenceParts.join(" ") + ".";
+
+  return (
+    <Card title="Top read" subtitle="Side-by-side investor interpretation">
+      <div className="grid gap-3 md:grid-cols-4">
+        <ComparePill
+          label="Larger AMC"
+          value={larger.name}
+          note={`${formatCompactCrSafe(larger.latest!.avgAum)} AAUM`}
+        />
+        <ComparePill
+          label="Faster grower"
+          value={fasterGrower ? fasterGrower.name : "—"}
+          note={
+            fasterGrower
+              ? `QoQ ${
+                  ((fasterGrower === a ? qoqA : qoqB) as number) >= 0 ? "+" : ""
+                }${((fasterGrower === a ? qoqA : qoqB) as number).toFixed(1)}%`
+              : "QoQ not available"
+          }
+        />
+        <ComparePill
+          label="Share leader"
+          value={shareLeader.name}
+          note={`${formatPctSafe(shareLeader.latest!.marketSharePct, 2)} market share`}
+        />
+        <ComparePill
+          label="Higher rank"
+          value={rankClimber ? rankClimber.name : "Tied"}
+          note={
+            rankClimber
+              ? `Rank #${rankClimber.latest!.rank} of ${rankClimber.latest!.outOf}`
+              : `Rank #${a.latest.rank}`
+          }
+        />
+      </div>
+      <p className="mt-3 text-[12px] italic text-foreground">{investorLine}</p>
+    </Card>
+  );
+}
+
+function ComparePill({
+  label,
+  value,
+  note,
+}: {
+  label: string;
+  value: string;
+  note: string;
+}) {
+  return (
+    <div className="rounded-md border bg-card p-3 shadow-sm">
+      <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </div>
+      <div className="mt-1 text-sm font-medium text-foreground truncate" title={value}>
+        {value}
+      </div>
+      <div className="text-[11px] tabular text-muted-foreground">{note}</div>
     </div>
   );
 }

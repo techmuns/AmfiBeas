@@ -712,54 +712,55 @@ function EmptyChart({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Compact peer-comparison bar chart that highlights the focused AMC.
- *  We render this inline (rather than reuse BarSeries) so the focused
- *  AMC stands out without forking the shared chart components. */
+/** Compact peer-comparison ranked table that highlights the focused
+ *  AMC. The focused row gets a subtle accent background; all rows
+ *  show rank, name and AAUM in a flat, scannable layout. No bar
+ *  fills — analytical clarity over visual decoration. */
 function FocusedBarChart({
   rows,
 }: {
   rows: { label: string; value: number; slug: string; isFocused: boolean }[];
 }) {
-  const max = Math.max(...rows.map((r) => r.value), 1);
+  const sorted = [...rows].sort((a, b) => b.value - a.value);
   return (
-    <div className="space-y-2">
-      {rows.map((r) => {
-        const widthPct = (r.value / max) * 100;
-        return (
-          <div key={r.slug} className="flex items-center gap-3 text-xs">
-            <div
+    <table className="w-full text-xs tabular">
+      <thead>
+        <tr className="text-left text-[10px] uppercase tracking-wide text-muted-foreground">
+          <th className="px-2 py-1.5 w-8">#</th>
+          <th className="px-2 py-1.5">AMC</th>
+          <th className="px-2 py-1.5 text-right">AAUM</th>
+        </tr>
+      </thead>
+      <tbody>
+        {sorted.map((r, i) => (
+          <tr
+            key={r.slug}
+            className={cn(
+              "border-t border-border/60",
+              r.isFocused && "bg-positive/10"
+            )}
+          >
+            <td className="px-2 py-2 text-muted-foreground">{i + 1}</td>
+            <td
               className={cn(
-                "w-40 truncate",
-                r.isFocused ? "font-semibold" : "text-muted-foreground"
+                "px-2 py-2 truncate",
+                r.isFocused ? "font-semibold text-positive" : "text-foreground"
               )}
               title={r.label}
             >
               {r.label}
-            </div>
-            <div className="flex-1">
-              <div className="h-5 rounded bg-muted">
-                <div
-                  className={cn(
-                    "h-5 rounded",
-                    r.isFocused
-                      ? "bg-positive/70"
-                      : "bg-foreground/20"
-                  )}
-                  style={{ width: `${widthPct}%` }}
-                />
-              </div>
-            </div>
-            <div
+            </td>
+            <td
               className={cn(
-                "w-24 text-right tabular",
-                r.isFocused ? "font-semibold" : "text-muted-foreground"
+                "px-2 py-2 text-right",
+                r.isFocused ? "font-semibold text-positive" : "text-muted-foreground"
               )}
             >
               {formatCompactCrSafe(r.value)}
-            </div>
-          </div>
-        );
-      })}
-    </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }

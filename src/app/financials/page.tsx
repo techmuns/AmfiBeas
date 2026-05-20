@@ -11,9 +11,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { FilterBar } from "@/components/filters/FilterBar";
 import type { AmcStatus } from "@/components/filters/FilterBar";
 import { QuarterPicker } from "@/components/filters/QuarterPicker";
-import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
-import { LensToggle } from "@/components/ui/LensToggle";
 import { FinancialsPeerCsvButton } from "@/components/data/FinancialsPeerCsvButton";
 import { cyclePhaseHistory } from "@/data/market-indices";
 import { cn } from "@/lib/cn";
@@ -83,25 +81,8 @@ export default async function FinancialsPage({
     fullSeries.find((q) => q.quarter === selectedPeriod) ??
     fullSeries[fullSeries.length - 1];
 
-  // Chart-type toggle for the Operating Revenue / Operating Profit / PAT
-  // card. Bars (default) is never echoed into the URL; only "trend"
-  // rides along so the default page stays URL-clean.
-  const pnlView: "bars" | "trend" =
-    sp.pnlView === "trend" ? "trend" : "bars";
-
-  // Pass-through params for every LensToggle on this page. Keeps the
-  // selected AMC, date-range, and quarter intact when the user clicks
-  // Bars / Trend — otherwise the page would reset to the default AMC.
-  const preservedQueryParams: Record<string, string | undefined> = {
-    amcs: typeof sp.amcs === "string" ? sp.amcs : undefined,
-    range: typeof sp.range === "string" ? sp.range : undefined,
-    period: typeof sp.period === "string" ? sp.period : undefined,
-    ...(sp.pnlView === "trend" ? { pnlView: "trend" } : {}),
-  };
-
-  // Series spec shared by the bars and trend views of the P&L card.
-  // `BarSpec` and `LineSpec` are both `{ key, name, color }`, so the
-  // same array works as `bars=` on GroupedBars and `lines=` on MultiLine.
+  // Series spec for the P&L MultiLine card. `LineSpec` shape is
+  // `{ key, name, color }` — matches what MultiLine expects.
   const pnlSeries = [
     { key: "revenue", name: "Operating Revenue", color: "hsl(var(--chart-1))" },
     { key: "op", name: "Operating Profit", color: "hsl(var(--chart-2))" },
@@ -703,7 +684,7 @@ export default async function FinancialsPage({
       <section className="grid gap-4 lg:grid-cols-2">
         <ChartWithContext
           title="Operating Revenue / Operating Profit / PAT"
-          subtitle="Quarterly · ₹ Cr · Operating Revenue from standalone P&L (all operating segments, excludes Other Income)"
+          subtitle="Quarterly · ₹ Cr · standalone P&L · Operating Revenue covers all operating segments (excludes Other Income); may include non-MF operating revenue where the AMC reports advisory / AIF / PMS in the same standalone line"
           flowKind="gross"
           denominatorCaption={pnlDenomCaption}
           denominatorTooltip="Latest quarter's PAT margin (PAT ÷ Operating Revenue) — the single headline operating-quality number for the AMC."
@@ -712,35 +693,15 @@ export default async function FinancialsPage({
             const v = latestYoyPct(revenueSeries, 4);
             return v === null ? undefined : { label: "Revenue YoY", pct: v };
           })()}
-          action={
-            <LensToggle
-              basePath="/financials"
-              paramName="pnlView"
-              defaultValue="bars"
-              lenses={[
-                { value: "bars", label: "Bars" },
-                { value: "trend", label: "Trend" },
-              ]}
-              active={pnlView}
-              preserveParams={preservedQueryParams}
-            />
-          }
         >
-          {pnlView === "trend" ? (
-            <MultiLine
-              data={pnlData}
-              xKey="quarter"
-              valueFormat="cr"
-              axisFormat="cr"
-              lines={pnlSeries}
-            />
-          ) : (
-            <GroupedBars
-              data={pnlData}
-              xKey="quarter"
-              bars={pnlSeries}
-            />
-          )}
+          <MultiLine
+            data={pnlData}
+            xKey="quarter"
+            valueFormat="cr"
+            axisFormat="cr"
+            lines={pnlSeries}
+            showDots
+          />
         </ChartWithContext>
         <ChartWithContext
           title="Margin Trend"

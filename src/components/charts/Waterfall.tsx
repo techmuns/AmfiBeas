@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @deprecated — internal only. This component still renders Recharts
+ * `<Bar>` / `<BarChart>` and must NOT be imported by any user-facing
+ * dashboard route under the no-bars policy. Kept in the tree so
+ * historical references compile; do not re-introduce it on a page.
+ */
 import {
   Bar,
   BarChart,

@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  Bar,
   CartesianGrid,
   ComposedChart,
   Legend,
   Line,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -39,8 +39,8 @@ export interface TrendlineSpec {
 }
 
 interface GroupedBarsProps {
-  /** Cell values may be null — Recharts skips null bars so chart x-axes
-   *  can render a fixed-window x-axis with gaps for missing data. */
+  /** Cell values may be null — Recharts skips null points so the
+   *  x-axis can render a fixed window with gaps for missing data. */
   data: Record<string, string | number | null>[];
   xKey: string;
   bars: BarSpec[];
@@ -49,11 +49,18 @@ interface GroupedBarsProps {
   axisFormat?: AxisFormat;
   labelFormat?: LabelFormat;
   showLegend?: boolean;
-  /** Optional dashed-line overlays. Backward-compatible: when undefined
-   *  the chart renders identically to before. */
+  /** Optional dotted-line overlays (e.g. trailing-N moving averages). */
   trendlines?: TrendlineSpec[];
+  /** When true, render a horizontal y=0 reference line so signed
+   *  series read inflow-vs-outflow without scanning the y-axis. */
+  zeroReference?: boolean;
 }
 
+/**
+ * Multi-series trend renderer. Draws one continuous line per `bars[]`
+ * entry plus optional dotted trendline overlays. Reads as a clean
+ * multi-line trend chart, not a grouped column chart — no bar fills.
+ */
 export function GroupedBars({
   data,
   xKey,
@@ -64,6 +71,7 @@ export function GroupedBars({
   labelFormat = "quarter",
   showLegend = true,
   trendlines,
+  zeroReference,
 }: GroupedBarsProps) {
   const fmtValue = valueFormatter(valueFormat);
   const fmtAxis = axisFormatter(axisFormat);
@@ -104,7 +112,7 @@ export function GroupedBars({
           width={48}
         />
         <Tooltip
-          cursor={{ fill: "hsl(var(--accent))", opacity: 0.4 }}
+          cursor={{ stroke: "hsl(var(--border))" }}
           content={
             <ChartTooltip formatValue={(n) => fmtValue(n)} labelFormatter={fmtLabel} />
           }
@@ -112,17 +120,30 @@ export function GroupedBars({
         {showLegend && (
           <Legend
             wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
-            iconType="square"
-            iconSize={8}
+            iconType="plainline"
+            iconSize={14}
+          />
+        )}
+        {zeroReference && (
+          <ReferenceLine
+            y={0}
+            stroke="hsl(var(--muted-foreground))"
+            strokeWidth={1}
+            strokeOpacity={0.5}
           />
         )}
         {bars.map((b) => (
-          <Bar
+          <Line
             key={b.key}
+            type="monotone"
             dataKey={b.key}
             name={b.name}
-            fill={b.color}
-            radius={[3, 3, 0, 0]}
+            stroke={b.color}
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 3 }}
+            isAnimationActive={false}
+            connectNulls={false}
           />
         ))}
         {trendlines?.map((tl) => (

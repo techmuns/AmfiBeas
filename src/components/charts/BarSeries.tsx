@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Bar,
+  Area,
   CartesianGrid,
   ComposedChart,
   Line,
@@ -33,29 +33,37 @@ interface BarSeriesProps {
   /**
    * Optional horizontal reference line. Set when callers want to
    * overlay a trailing-N-month average, target, or threshold on top
-   * of the bar series. `referenceLabel` renders inline on the line.
+   * of the series. `referenceLabel` renders inline on the line.
    * Omit `referenceValue` to disable.
    */
   referenceValue?: number | null;
   referenceLabel?: string;
   /** Optional trailing-window moving-average overlay (parallel to
    *  `data`, with `value` = average or null when not enough history).
-   *  Drawn as a smooth line on top of the bars so the eye separates
+   *  Drawn as a dotted line on top of the area so the eye separates
    *  noise from direction. */
   trendline?: { label: string; value: number | null }[];
   /** Optional name for the trendline shown in the tooltip. Defaults
    *  to "12M avg". */
   trendlineName?: string;
-  /** Gap between bar categories — % of the bar width. Default 28%
-   *  gives a touch more breathing room than Recharts' default. */
+  /** Kept for API compatibility with prior bar implementation. */
   barCategoryGap?: string | number;
   /** Optional cycle-phase bands rendered as subtle background
    *  ReferenceAreas — one band per contiguous "Correction" /
    *  "Peak" stretch. Labels are matched against `data[].label`
    *  exactly. Pass [] or omit to hide. */
   cyclePhaseBands?: { fromLabel: string; toLabel: string; phase: "Correction" | "Peak" }[];
+  /** When true, render a horizontal y=0 reference line. Useful for
+   *  signed flow series so the reader sees inflow vs outflow without
+   *  scanning the y-axis. */
+  zeroReference?: boolean;
 }
 
+/**
+ * Single-series trend renderer. Draws a smooth filled area + optional
+ * dotted moving-average line on top. Reads as a continuous trend, not
+ * a column chart — no per-point segmentation, no bar fills.
+ */
 export function BarSeries({
   data,
   height = 300,
@@ -68,8 +76,8 @@ export function BarSeries({
   referenceLabel,
   trendline,
   trendlineName = "12M avg",
-  barCategoryGap = "32%",
   cyclePhaseBands,
+  zeroReference,
 }: BarSeriesProps) {
   const fmtValue = valueFormatter(valueFormat);
   const fmtAxis = axisFormatter(axisFormat);
@@ -77,28 +85,31 @@ export function BarSeries({
   const hasRef =
     typeof referenceValue === "number" && Number.isFinite(referenceValue);
 
-  // Merge trendline values into the data so the ComposedChart can
-  // render a `Line` over the bars. Trendline points are aligned by
-  // array index — the caller must ensure parallel arrays.
   const merged = data.map((p, i) => ({
     label: p.label,
     value: p.value,
     trend: trendline?.[i]?.value ?? null,
   }));
 
+  // Stable gradient id keyed off the colour so multiple cards on the
+  // same page don't clash. Colour is already an `hsl(var(--…))` token
+  // so hashing it is unnecessary — we just slugify.
+  const gradientId = `area-${name.replace(/[^a-zA-Z0-9_-]/g, "")}-${color.replace(/[^a-zA-Z0-9_-]/g, "")}`;
+
   return (
     <ResponsiveContainer width="100%" height={height}>
       <ComposedChart
         data={merged}
         margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
-        barCategoryGap={barCategoryGap}
       >
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity={0.32} />
+            <stop offset="100%" stopColor={color} stopOpacity={0.04} />
+          </linearGradient>
+        </defs>
         <CartesianGrid stroke="hsl(var(--border))" vertical={false} strokeDasharray="3 3" />
         {cyclePhaseBands?.map((b, i) => {
-          // Only render bands whose anchors are inside the visible
-          // x-axis. ReferenceArea silently ignores out-of-range
-          // anchors but a missing one renders the band edge-to-edge,
-          // which looks worse than skipping it.
           const labels = new Set(data.map((p) => p.label));
           if (!labels.has(b.fromLabel) || !labels.has(b.toLabel)) return null;
           const fill =
@@ -136,12 +147,29 @@ export function BarSeries({
           width={48}
         />
         <Tooltip
-          cursor={{ fill: "hsl(var(--accent))", opacity: 0.4 }}
+          cursor={{ stroke: "hsl(var(--border))" }}
           content={
             <ChartTooltip formatValue={(n) => fmtValue(n)} labelFormatter={fmtLabel} />
           }
         />
-        <Bar dataKey="value" name={name} fill={color} radius={[3, 3, 0, 0]} />
+        {zeroReference && (
+          <ReferenceLine
+            y={0}
+            stroke="hsl(var(--muted-foreground))"
+            strokeWidth={1}
+            strokeOpacity={0.5}
+          />
+        )}
+        <Area
+          type="monotone"
+          dataKey="value"
+          name={name}
+          stroke={color}
+          strokeWidth={2}
+          fill={`url(#${gradientId})`}
+          isAnimationActive={false}
+          activeDot={{ r: 3 }}
+        />
         {trendline && trendline.length > 0 && (
           <Line
             type="monotone"

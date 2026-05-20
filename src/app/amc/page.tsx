@@ -53,10 +53,11 @@ export default async function AmcListPage({
   }
 
   const subtitle = `${data.rows.length} AMCs · ${data.fiscalLabel}`;
-  const health =
-    healthLens === "zscore"
-      ? amcHealthGrowthZScoreMatrix(8)
-      : amcHealthGrowthMatrix(8);
+  // We pull BOTH growth and z-score matrices so the summary cards above
+  // the heatmap can read from either without recomputing.
+  const healthGrowth = amcHealthGrowthMatrix(8);
+  const healthZScore = amcHealthGrowthZScoreMatrix(8);
+  const health = healthLens === "zscore" ? healthZScore : healthGrowth;
   const healthDisplayRows = health.rows.map((r) => ({
     label: r.displayName,
     values: r.values,
@@ -69,15 +70,31 @@ export default async function AmcListPage({
   // them from the snapshot.
   const indexBySlug = new Map(data.rows.map((r) => [r.amcSlug, r]));
 
-  // Ranked market-share bars — top 15 AMCs by latest market share,
-  // enriched with AAUM, rank and YoY so the row strip below each bar
-  // carries the analytical context investors actually read.
+  // Cohort 25th-percentile AAUM threshold for the tiny-base outlier
+  // chip — tiny names with massive % growth often sit below this.
+  const tinyBaseThreshold: number | null = (() => {
+    if (!quadrant || quadrant.points.length === 0) return null;
+    const aums = quadrant.points
+      .map((p) => p.avgAum)
+      .filter((v) => Number.isFinite(v))
+      .sort((a, b) => a - b);
+    if (aums.length === 0) return null;
+    const idx = Math.floor(aums.length * 0.25);
+    return aums[idx];
+  })();
+
+  // Ranked market-share table — top 15 AMCs by latest market share,
+  // enriched with AAUM, rank, YoY and an 8-quarter AAUM sparkline so
+  // each row carries the analytical context investors actually read.
   const skylineBars = quadrant
     ? [...quadrant.points]
         .sort((a, b) => b.marketSharePct - a.marketSharePct)
         .slice(0, 15)
         .map((p) => {
           const ir = indexBySlug.get(p.slug);
+          const sparkline = amcAaumSeries(p.slug)
+            .slice(-8)
+            .map((s) => ({ label: s.fiscalLabel, value: s.avgAum }));
           return {
             slug: p.slug,
             displayName: p.displayName,
@@ -86,6 +103,7 @@ export default async function AmcListPage({
             aum: p.avgAum,
             rank: ir?.rank ?? null,
             yoyGrowthPct: ir?.yoyGrowthPct ?? null,
+            sparkline,
           };
         })
     : [];
@@ -192,6 +210,78 @@ export default async function AmcListPage({
     medianQoqGrowthPct === null &&
     medianYoyGrowthPct === null;
 
+  // Health Heatmap summary cards — three institutional reads computed
+  // off the same 8-quarter matrices as the heatmap itself.
+  type HealthSummaryEntry = {
+    slug: string;
+    label: string;
+    value: number;
+    quarterLabel?: string;
+  };
+  const consistentGrowers: HealthSummaryEntry[] = (() => {
+    const out: { row: typeof healthGrowth.rows[number]; mean: number; std: number }[] = [];
+    for (const r of healthGrowth.rows) {
+      const vals = r.values.filter(
+        (v): v is number => typeof v === "number" && Number.isFinite(v)
+      );
+      if (vals.length < 4) continue;
+      const mean = vals.reduce((s, v) => s + v, 0) / vals.length;
+      if (mean <= 0) continue;
+      const variance =
+        vals.reduce((s, v) => s + (v - mean) ** 2, 0) / vals.length;
+      const std = Math.sqrt(variance);
+      out.push({ row: r, mean, std });
+    }
+    out.sort((a, b) => a.std / Math.max(a.mean, 0.001) - b.std / Math.max(b.mean, 0.001));
+    return out.slice(0, 3).map((e) => ({
+      slug: e.row.amcSlug,
+      label: e.row.displayName,
+      value: e.mean,
+    }));
+  })();
+  const sharpestContractions: HealthSummaryEntry[] = (() => {
+    const out: HealthSummaryEntry[] = [];
+    for (const r of healthGrowth.rows) {
+      let worst: number | null = null;
+      let worstIdx = -1;
+      r.values.forEach((v, i) => {
+        if (typeof v === "number" && Number.isFinite(v)) {
+          if (worst === null || v < worst) {
+            worst = v;
+            worstIdx = i;
+          }
+        }
+      });
+      if (worst !== null && worst < 0) {
+        out.push({
+          slug: r.amcSlug,
+          label: r.displayName,
+          value: worst,
+          quarterLabel: healthGrowth.quarterLabels[worstIdx],
+        });
+      }
+    }
+    out.sort((a, b) => a.value - b.value);
+    return out.slice(0, 3);
+  })();
+  const highestZScoreMovers: HealthSummaryEntry[] = (() => {
+    const out: HealthSummaryEntry[] = [];
+    const latestIdx = healthZScore.quarterLabels.length - 1;
+    if (latestIdx < 0) return out;
+    for (const r of healthZScore.rows) {
+      const v = r.values[latestIdx];
+      if (typeof v === "number" && Number.isFinite(v)) {
+        out.push({ slug: r.amcSlug, label: r.displayName, value: v });
+      }
+    }
+    out.sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
+    return out.slice(0, 3);
+  })();
+  const hasHealthSummary =
+    consistentGrowers.length > 0 ||
+    sharpestContractions.length > 0 ||
+    highestZScoreMovers.length > 0;
+
   // Quadrant points enriched with YoY so the chart tooltip carries it.
   const quadrantPointsWithYoy: AmcQuadrantPoint[] = quadrant
     ? quadrant.points.map((p) => ({
@@ -249,6 +339,11 @@ export default async function AmcListPage({
           <ul className="flex flex-wrap gap-2">
             {anomalies.outliers.map((a) => {
               const Icon = a.direction === "up" ? TrendingUp : TrendingDown;
+              const aum = indexBySlug.get(a.amcSlug)?.avgAum ?? null;
+              const isTinyBase =
+                tinyBaseThreshold !== null &&
+                typeof aum === "number" &&
+                aum < tinyBaseThreshold;
               return (
                 <li key={a.amcSlug}>
                   <Link
@@ -259,7 +354,7 @@ export default async function AmcListPage({
                         ? "border-positive/40 bg-positive/10 text-positive"
                         : "border-negative/40 bg-negative/10 text-negative"
                     )}
-                    title={`QoQ ${a.qoqGrowthPct.toFixed(2)}% · ${a.zScore >= 0 ? "+" : ""}${a.zScore.toFixed(2)}σ from median ${anomalies.medianQoqPct.toFixed(2)}%`}
+                    title={`QoQ ${a.qoqGrowthPct.toFixed(2)}% · ${a.zScore >= 0 ? "+" : ""}${a.zScore.toFixed(2)}σ from median ${anomalies.medianQoqPct.toFixed(2)}%${isTinyBase ? " · Tiny base — growth % inflated by a small denominator" : ""}`}
                   >
                     <Icon className="h-3 w-3" />
                     <span className="font-medium">{a.displayName}</span>
@@ -271,6 +366,11 @@ export default async function AmcListPage({
                       {a.zScore >= 0 ? "+" : ""}
                       {a.zScore.toFixed(1)}σ
                     </span>
+                    {isTinyBase && (
+                      <span className="ml-1 rounded border border-muted-foreground/30 bg-background/60 px-1 py-0.5 text-[9px] uppercase tracking-wide text-muted-foreground">
+                        Tiny base
+                      </span>
+                    )}
                   </Link>
                 </li>
               );
@@ -280,7 +380,7 @@ export default async function AmcListPage({
             <AlertTriangle className="mr-1 inline h-3 w-3 align-[-2px]" />
             Cohort median QoQ growth: {anomalies.medianQoqPct.toFixed(2)}% ·
             stdDev {anomalies.stdDevPct.toFixed(2)} pp.
-            <InfoTooltip label="Outliers are AMCs whose latest QoQ growth sits ≥2 standard deviations from the cohort median — investigate before drawing conclusions; could be a new AMC ramping up, a one-off reclassification, or a structural shift." />
+            <InfoTooltip label="Outliers are AMCs whose latest QoQ growth sits ≥2 standard deviations from the cohort median — investigate before drawing conclusions; could be a new AMC ramping up, a one-off reclassification, or a structural shift. AMCs flagged 'Tiny base' sit below the cohort 25th-percentile AAUM, so their % growth is inflated by a small denominator and should be treated as a watchlist signal rather than a headline." />
           </p>
         </Card>
       )}
@@ -388,6 +488,24 @@ export default async function AmcListPage({
               ))}
             </div>
           </div>
+        </Card>
+      )}
+
+      {hasHealthSummary && (
+        <Card
+          title="AMC Health Signal Summary"
+          subtitle="Most consistent growers, sharpest contractions and biggest z-score movers in one scan"
+        >
+          <HealthSummaryPanel
+            consistent={consistentGrowers}
+            contractions={sharpestContractions}
+            zMovers={highestZScoreMovers}
+          />
+          <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            All three reads use the 8-quarter Health Heatmap window
+            below.
+            <InfoTooltip label="Most consistent growers = AMCs with positive mean QoQ growth and lowest coefficient of variation across the 8Q window. Sharpest contractions = largest single-quarter negative QoQ growth in the window. Highest z-score movers = largest |latest-quarter z-score vs cohort|. Drill into the heatmap below for the full per-quarter detail." />
+          </p>
         </Card>
       )}
 
@@ -646,6 +764,94 @@ function QuadrantBucketsList({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+interface HealthSummaryRow {
+  slug: string;
+  label: string;
+  value: number;
+  quarterLabel?: string;
+}
+
+/** Three-column summary above the AMC Health Heatmap: most consistent
+ *  growers, sharpest contractions, biggest latest-quarter z-score
+ *  movers. Driven entirely off the heatmap matrices — no new data. */
+function HealthSummaryPanel({
+  consistent,
+  contractions,
+  zMovers,
+}: {
+  consistent: HealthSummaryRow[];
+  contractions: HealthSummaryRow[];
+  zMovers: HealthSummaryRow[];
+}) {
+  return (
+    <div className="grid gap-4 md:grid-cols-3">
+      <HealthSummaryColumn
+        title="Most consistent growers"
+        rows={consistent}
+        formatValue={(v) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}% mean`}
+        toneClass="text-positive"
+      />
+      <HealthSummaryColumn
+        title="Sharpest contractions"
+        rows={contractions}
+        formatValue={(v) => `${v.toFixed(1)}%`}
+        toneClass="text-negative"
+        suffixFromRow={(r) => (r.quarterLabel ? ` · ${r.quarterLabel}` : "")}
+      />
+      <HealthSummaryColumn
+        title="Highest z-score movers (latest qtr)"
+        rows={zMovers}
+        formatValue={(v) => `${v >= 0 ? "+" : ""}${v.toFixed(2)}σ`}
+        toneClass="text-foreground"
+      />
+    </div>
+  );
+}
+
+function HealthSummaryColumn({
+  title,
+  rows,
+  formatValue,
+  toneClass,
+  suffixFromRow,
+}: {
+  title: string;
+  rows: HealthSummaryRow[];
+  formatValue: (v: number) => string;
+  toneClass: string;
+  suffixFromRow?: (r: HealthSummaryRow) => string;
+}) {
+  return (
+    <div>
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}
+      </div>
+      {rows.length === 0 ? (
+        <div className="mt-2 text-xs text-muted-foreground">—</div>
+      ) : (
+        <ul className="mt-2 space-y-1.5">
+          {rows.map((r) => (
+            <li key={r.slug}>
+              <Link
+                href={`/amc/${r.slug}`}
+                className="flex items-center justify-between gap-2 rounded-md border border-transparent px-2 py-1 text-xs hover:border-border hover:bg-accent/40"
+              >
+                <span className="truncate text-foreground" title={r.label}>
+                  {r.label}
+                </span>
+                <span className={cn("shrink-0 tabular", toneClass)}>
+                  {formatValue(r.value)}
+                  {suffixFromRow ? suffixFromRow(r) : ""}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
