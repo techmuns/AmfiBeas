@@ -36,9 +36,17 @@ interface ChartWithContextProps {
   className?: string;
 }
 
+/** Static "Basis" chip styling for the Net/Gross flow-kind metadata.
+ *  Visually distinct from `LensToggle` segmented pills (which are
+ *  user-clickable controls) so beginners can tell at a glance that
+ *  the basis chip describes WHAT the data is, not HOW it's viewed. */
 const FLOW_PILL_CLASS: Record<"net" | "gross", string> = {
-  net: "border-foreground/30 bg-muted text-foreground",
-  gross: "border-foreground/30 bg-foreground/5 text-foreground",
+  net: "border-foreground/40 bg-foreground/10 text-foreground",
+  gross: "border-foreground/40 bg-foreground/5 text-foreground",
+};
+const FLOW_PILL_TITLE: Record<"net" | "gross", string> = {
+  net: "This card shows net flows (inflows minus outflows / redemptions).",
+  gross: "This card shows gross flows (inflows only, no redemptions netted).",
 };
 
 /**
@@ -74,7 +82,22 @@ export function ChartWithContext({
     yoyBadge && Number.isFinite(yoyBadge.pct) ? yoyBadge : null;
   const yoyPositive = yoyOk ? yoyOk.pct >= 0 : false;
   const headerAction = (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
+      {/* Basis chip first — metadata describing the data the card uses,
+          visually distinct from segmented control pills below. */}
+      {pillKind && (
+        <span
+          className={cn(
+            "shrink-0 rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+            FLOW_PILL_CLASS[pillKind]
+          )}
+          title={FLOW_PILL_TITLE[pillKind]}
+          aria-label={`Data basis: ${pillKind} flows`}
+        >
+          <span className="mr-1 font-normal opacity-60">Basis ·</span>
+          {pillKind === "net" ? "NET" : "GROSS"}
+        </span>
+      )}
       {yoyOk && (
         <span
           className={cn(
@@ -87,16 +110,6 @@ export function ChartWithContext({
         >
           {yoyOk.label ?? "YoY"} {yoyOk.pct >= 0 ? "+" : ""}
           {yoyOk.pct.toFixed(1)}%
-        </span>
-      )}
-      {pillKind && (
-        <span
-          className={cn(
-            "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-            FLOW_PILL_CLASS[pillKind]
-          )}
-        >
-          {pillKind === "net" ? "Net" : "Gross"}
         </span>
       )}
       {action}

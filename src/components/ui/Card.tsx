@@ -58,8 +58,12 @@ export function Card({
       {...rest}
     >
       {(title || action || toneBadge) && (
-        <div className="flex items-start justify-between gap-4 px-6 pt-5">
-          <div>
+        <div className="flex flex-col gap-3 px-6 pt-5 sm:flex-row sm:items-start sm:justify-between">
+          {/* min-w-0 + flex-1 is the critical pair: without min-w-0 a
+              flex item refuses to shrink below its content width, which
+              is what forces long titles like "SIP Contribution Trend"
+              into one-word-per-line wraps inside narrow columns. */}
+          <div className="min-w-0 flex-1 space-y-1">
             {title && (
               <h3 className="text-sm font-medium tracking-tight">{title}</h3>
             )}
@@ -69,14 +73,16 @@ export function Card({
               <p className="text-xs text-muted-foreground">{subtitle}</p>
             ) : null}
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {action}
-            {toneBadge && (
-              <span className="shrink-0 rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-                {toneBadge}
-              </span>
-            )}
-          </div>
+          {(action || toneBadge) && (
+            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+              {action}
+              {toneBadge && (
+                <span className="shrink-0 rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                  {toneBadge}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       )}
       <div className="px-6 pb-6 pt-4">{children}</div>

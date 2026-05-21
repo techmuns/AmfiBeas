@@ -574,22 +574,31 @@ export default async function FinancialsPage({
         title="Revenue Yield Methodology"
         subtitle="Important: how to read these numbers"
       >
-        <p className="text-[12px] leading-snug text-muted-foreground">
-          Operating revenue yield is computed on{" "}
-          <span className="text-foreground">MF QAAUM</span> only —
-          (annualised Operating Revenue ÷ same-quarter MF QAAUM, ×10,000
-          for bps). The Operating Revenue field is the AMC&rsquo;s{" "}
-          <span className="text-foreground">total standalone P&amp;L
-          operating revenue</span>; it may include non-MF operating
-          revenue (AIF, PMS, advisory, international, etc.). A clean MF
-          management-fee split is{" "}
-          <span className="text-foreground">not</span> available in
-          public quarterly filings, so the revenue yield reads as a
-          slight ceiling on the true pure-MF management-fee yield.
-          Cross-AMC differences in the non-MF mix can therefore inflate
-          or deflate the comparison.
-          <InfoTooltip label="Placeholder fields exist in the data layer for mfManagementFees and otherOperatingRevenue. When AMC disclosure improves (e.g. segment-level filings consistently breaking out MF vs non-MF), these can be wired up without changing the chart shape." />
-        </p>
+        <ul className="list-disc space-y-1.5 pl-5 text-[12px] leading-snug text-muted-foreground">
+          <li>
+            <span className="font-medium text-foreground">
+              Operating revenue may include non-MF revenue.
+            </span>{" "}
+            Public filings do not cleanly split mutual-fund management fees
+            from AIF / PMS / advisory / other operating revenue, so the
+            yield reads as a slight ceiling on the true pure-MF
+            management-fee yield. Cross-AMC differences in the non-MF mix
+            can inflate or deflate the comparison.
+          </li>
+          <li>
+            <span className="text-foreground">Formula:</span> revenue yield
+            (bps) = annualised Operating Revenue ÷ same-quarter MF QAAUM
+            × 10,000. Operating yield and profit yield use the same
+            denominator with Operating Profit and PAT numerators.
+          </li>
+          <li>
+            <span className="text-foreground">Peer comparison:</span> the
+            &ldquo;vs peer median&rdquo; deltas use the median across all
+            listed AMCs in the same quarter — a positive Δ means this AMC
+            monetises AAUM more aggressively than the listed cohort.
+            <InfoTooltip label="Placeholder fields exist in the data layer for mfManagementFees and otherOperatingRevenue. When AMC disclosure improves (e.g. segment-level filings consistently breaking out MF vs non-MF), these can be wired up without changing the chart shape." />
+          </li>
+        </ul>
       </Card>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

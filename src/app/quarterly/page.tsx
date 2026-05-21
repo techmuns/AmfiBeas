@@ -4,13 +4,21 @@ import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { StackedArea } from "@/components/charts/StackedArea";
 import { Card } from "@/components/ui/Card";
+import { HowToRead } from "@/components/ui/HowToRead";
+import { ChartTypeToggle } from "@/components/ui/ChartTypeToggle";
+import { BarsWithGrowth } from "@/components/charts/BarsWithGrowth";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
 import { quarterlyMarketWrap } from "@/data/market-wrap-quarterly";
 import { FiscalQuarterPicker } from "@/components/filters/FiscalQuarterPicker";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { chartInsights, latestYoyPct, movingAverage } from "@/lib/chart-context";
+import {
+  chartInsights,
+  latestYoyPct,
+  slicedMovingAverage,
+  yoyPctSeries,
+} from "@/lib/chart-context";
 import {
   IIFL_ACTIVE_EQUITY_CATEGORIES,
   IIFL_TREND_EXPANDED_SLUGS,
@@ -101,6 +109,10 @@ export default async function QuarterlyPage({
   // ---- Lens toggles (parsed up-front) ----
   const quarterlyFlowsLens: "absolute" | "share" =
     sp.qFlowsLens === "share" ? "share" : "absolute";
+  // Chart-type toggle for the one approved Bars + Growth callsite on
+  // /quarterly. Default is "trend" — only "bars" is echoed into the URL.
+  const quarterlyFlowsView: "trend" | "bars" =
+    sp.quarterlyFlowsView === "bars" ? "bars" : "trend";
   const equityMixLens: "absolute" | "share" =
     sp.qEquityMixLens === "share" ? "share" : "absolute";
   // Per-card lens toggles for /quarterly. Each one switches a trend
@@ -130,6 +142,10 @@ export default async function QuarterlyPage({
     quarter: typeof sp.quarter === "string" ? sp.quarter : undefined,
     qFlowsLens:
       typeof sp.qFlowsLens === "string" ? sp.qFlowsLens : undefined,
+    quarterlyFlowsView:
+      typeof sp.quarterlyFlowsView === "string"
+        ? sp.quarterlyFlowsView
+        : undefined,
     qEquityMixLens:
       typeof sp.qEquityMixLens === "string" ? sp.qEquityMixLens : undefined,
     qAaumLens: typeof sp.qAaumLens === "string" ? sp.qAaumLens : undefined,
@@ -398,6 +414,9 @@ export default async function QuarterlyPage({
 
   // Last-month AAUM trend across the full AMFI quarterly history.
   const aaumTrendData = quarterlyTrend("grandTotalLastMonthAaum", 16);
+  // Full quarterly history so the 4Q trailing average has real prior
+  // data to draw on for the leftmost visible quarters.
+  const aaumTrendFullHistory = quarterlyTrend("grandTotalLastMonthAaum", 10_000);
   const aaumTrendHasData = aaumTrendData.length > 0;
   const aaumTrendSubtitle = aaumTrendHasData
     ? `Last-month AAUM · ${aaumTrendData.length} quarter${aaumTrendData.length === 1 ? "" : "s"} · ₹ Cr`
@@ -519,6 +538,7 @@ export default async function QuarterlyPage({
   // cards use LAST-MONTH AAUM (not true QAAUM) — labelled explicitly
   // so the methodology is unambiguous.
   const aeAaumTrend = quarterlyActiveEquityLastMonthAaumTrend(16);
+  const aeAaumFullHistory = quarterlyActiveEquityLastMonthAaumTrend(10_000);
   const aeShareTrend = quarterlyActiveEquityLastMonthShareTrend(16);
   const aeBreakdown = quarterlyEquityLastMonthAaumBreakdown(16);
   const aeBreakdownDisplay =
@@ -579,6 +599,20 @@ export default async function QuarterlyPage({
   const equityFlowFromQuarterly = flowsData
     .filter((r) => typeof r.equity === "number")
     .map((r) => ({ label: r.quarterLabel, value: r.equity as number }));
+  // Full quarterly equity-flow history + YoY (lag=4) for the optional
+  // Bars + Growth view on this card.
+  const quarterlyFlowsFullHistory = quarterlyFlowsData(10_000);
+  const quarterlyEquityFullSeries = quarterlyFlowsFullHistory
+    .filter((r) => typeof r.equity === "number")
+    .map((r) => ({ label: r.quarterLabel, value: r.equity as number }));
+  const quarterlyEquityYoyByLabel = new Map(
+    yoyPctSeries(quarterlyEquityFullSeries, 4).map((p) => [p.label, p.value])
+  );
+  const quarterlyFlowsBarsData = equityFlowFromQuarterly.map((p) => ({
+    label: p.label,
+    value: p.value,
+    growthPct: quarterlyEquityYoyByLabel.get(p.label) ?? null,
+  }));
   const quarterlyFlowsInsights = chartInsights(equityFlowFromQuarterly, {
     metricName: "equity net inflow",
     unitSuffix: "₹ Cr",
@@ -655,8 +689,11 @@ export default async function QuarterlyPage({
   const foliosCtx = quarterlyKpiContext("grandTotalFolios", 16);
   const openEndedSchemes = latestOpenEndedSchemeCount();
   const foliosTrend = quarterlyTrend("grandTotalFolios", 16);
+  const foliosFullHistory = quarterlyTrend("grandTotalFolios", 10_000);
   const folioAdditionsTrend = quarterlyFolioAdditionsTrend(16);
+  const folioAdditionsFullHistory = quarterlyFolioAdditionsTrend(10_000);
   const schemesTrend = quarterlyOpenEndedSchemeCountTrend(16);
+  const schemesFullHistory = quarterlyOpenEndedSchemeCountTrend(10_000);
   const foliosHover = formatQuarterlyProvenanceTooltip(
     getQuarterlyKpiProvenance(selectedRow, "grandTotalFolios")
   );
@@ -1193,7 +1230,7 @@ export default async function QuarterlyPage({
                   trendline={
                     qAaumLens === "share"
                       ? undefined
-                      : movingAverage(aaumTrendData, 4)
+                      : slicedMovingAverage(aaumTrendFullHistory, 4, aaumTrendData.length)
                   }
                   trendlineName="4Q avg"
                   referenceValue={qAaumLens === "share" ? 100 : undefined}
@@ -1223,13 +1260,21 @@ export default async function QuarterlyPage({
           <ChartWithContext
             title="Equity / Debt / Liquid Quarterly Net Flows"
             subtitle={
-              quarterlyFlowsLens === "share"
-                ? `${flowsData.length} quarter${flowsData.length === 1 ? "" : "s"} · % of quarterly flow magnitude (signs preserved)`
-                : `${flowsData.length} quarter${flowsData.length === 1 ? "" : "s"} · ₹ Cr · positive = inflow, negative = outflow`
+              quarterlyFlowsView === "bars"
+                ? `${flowsData.length} quarter${flowsData.length === 1 ? "" : "s"} · Equity flow only · ₹ Cr · YoY growth overlaid`
+                : quarterlyFlowsLens === "share"
+                  ? `${flowsData.length} quarter${flowsData.length === 1 ? "" : "s"} · % of quarterly flow magnitude (signs preserved)`
+                  : `${flowsData.length} quarter${flowsData.length === 1 ? "" : "s"} · ₹ Cr · positive = inflow, negative = outflow`
             }
             flowKind="net"
-            denominatorCaption={quarterlyFlowsDenomCaption}
-            denominatorTooltip="Latest quarter's per-segment share of total flow magnitude — the headline read for 'where did the quarter's flow go?'."
+            denominatorCaption={
+              quarterlyFlowsView === "bars" ? undefined : quarterlyFlowsDenomCaption
+            }
+            denominatorTooltip={
+              quarterlyFlowsView === "bars"
+                ? undefined
+                : "Latest quarter's per-segment share of total flow magnitude — the headline read for 'where did the quarter's flow go?'."
+            }
             insights={quarterlyFlowsInsights}
             yoyBadge={(() => {
               const v = latestYoyPct(equityFlowFromQuarterly, 4);
@@ -1238,33 +1283,69 @@ export default async function QuarterlyPage({
                 : { label: "Equity YoY", pct: v };
             })()}
             action={
-              <div className="flex flex-wrap items-center gap-2">
-                <LensToggle
+              <>
+                {quarterlyFlowsView === "trend" && (
+                  <LensToggle
+                    basePath="/quarterly"
+                    paramName="qFlowsLens"
+                    defaultValue="absolute"
+                    lenses={[
+                      { value: "absolute", label: "₹ Cr" },
+                      { value: "share", label: "% of flow magnitude" },
+                    ]}
+                    active={quarterlyFlowsLens}
+                    preserveParams={preservedQueryParams}
+                  />
+                )}
+                <ChartTypeToggle
                   basePath="/quarterly"
-                  paramName="qFlowsLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "% of flow magnitude" },
-                  ]}
-                  active={quarterlyFlowsLens}
+                  paramName="quarterlyFlowsView"
+                  active={quarterlyFlowsView}
                   preserveParams={preservedQueryParams}
                 />
-              </div>
+              </>
             }
           >
-            <GroupedBars
-              data={flowsDataDisplay}
-              xKey="quarterLabel"
-              labelFormat="none"
-              valueFormat={quarterlyFlowsLens === "share" ? "pct" : "cr"}
-              axisFormat={quarterlyFlowsLens === "share" ? "pct" : "cr"}
-              bars={qFlowsSeries}
-            />
-            <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              Liquid is shown separately for readability.
-              <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes. Share view divides each value by the quarter's sum of absolute flow magnitudes so signs (inflow vs outflow) stay intact." />
-            </p>
+            {quarterlyFlowsView === "bars" ? (
+              <>
+                <BarsWithGrowth
+                  data={quarterlyFlowsBarsData}
+                  barColor="hsl(var(--chart-1))"
+                  growthColor="hsl(var(--foreground))"
+                  valueFormat="cr"
+                  axisFormat="cr"
+                  labelFormat="none"
+                  name="Equity quarterly net flow"
+                  growthLabel="Equity YoY %"
+                />
+                <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
+                  Bars show actual quarterly Equity flow. The line shows
+                  YoY growth. Debt and Liquid remain visible in Trend view.
+                </p>
+              </>
+            ) : (
+              <>
+                <GroupedBars
+                  data={flowsDataDisplay}
+                  xKey="quarterLabel"
+                  labelFormat="none"
+                  valueFormat={quarterlyFlowsLens === "share" ? "pct" : "cr"}
+                  axisFormat={quarterlyFlowsLens === "share" ? "pct" : "cr"}
+                  bars={qFlowsSeries}
+                />
+                <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  Liquid is shown separately for readability.
+                  <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes. Share view divides each value by the quarter's sum of absolute flow magnitudes so signs (inflow vs outflow) stay intact." />
+                </p>
+              </>
+            )}
+            <HowToRead>
+              <ul className="list-disc space-y-0.5 pl-4">
+                <li>Positive bars mean money entered the category; negative bars mean it left.</li>
+                <li>Rising equity usually signals risk-on; rising debt or liquid often signals defensive allocation.</li>
+                <li>Compare the latest quarter to the trailing-4-quarter average (the dotted line in Trend view) to spot unusually large moves.</li>
+              </ul>
+            </HowToRead>
           </ChartWithContext>
         </div>
       )}
@@ -1333,7 +1414,7 @@ export default async function QuarterlyPage({
                   trendline={
                     qAeAaumLens === "share"
                       ? undefined
-                      : movingAverage(aeAaumTrend, 4)
+                      : slicedMovingAverage(aeAaumFullHistory, 4, aeAaumTrend.length)
                   }
                   trendlineName="4Q avg"
                 />
@@ -1462,7 +1543,9 @@ export default async function QuarterlyPage({
           </section>
 
           {hasAnyFolioTrend && (
-            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            /* Downgraded to 2-up: chart cards with LensToggles squeezed
+               at xl:grid-cols-3 and wrapped titles awkwardly. */
+            <section className="grid gap-4 lg:grid-cols-2">
               <ChartWithContext
                 title="Folios Trend"
                 subtitle={
@@ -1507,7 +1590,7 @@ export default async function QuarterlyPage({
                     trendline={
                       qFoliosLens === "share"
                         ? undefined
-                        : movingAverage(foliosTrend, 4)
+                        : slicedMovingAverage(foliosFullHistory, 4, foliosTrend.length)
                     }
                     trendlineName="4Q avg"
                     referenceValue={qFoliosLens === "share" ? 100 : undefined}
@@ -1564,7 +1647,7 @@ export default async function QuarterlyPage({
                     trendline={
                       qFolioAddLens === "share"
                         ? undefined
-                        : movingAverage(folioAdditionsTrend, 4)
+                        : slicedMovingAverage(folioAdditionsFullHistory, 4, folioAdditionsTrend.length)
                     }
                     trendlineName="4Q avg"
                   />
@@ -1625,7 +1708,7 @@ export default async function QuarterlyPage({
                     trendline={
                       qSchemesLens === "share"
                         ? undefined
-                        : movingAverage(schemesTrend, 4)
+                        : slicedMovingAverage(schemesFullHistory, 4, schemesTrend.length)
                     }
                     trendlineName="4Q avg"
                     referenceValue={qSchemesLens === "share" ? 100 : undefined}

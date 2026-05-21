@@ -1,8 +1,17 @@
 import Link from "next/link";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
+import { HowToRead } from "@/components/ui/HowToRead";
+import { ChartTypeToggle } from "@/components/ui/ChartTypeToggle";
+import { BarsWithGrowth } from "@/components/charts/BarsWithGrowth";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
-import { chartInsights, latestYoyPct, movingAverage } from "@/lib/chart-context";
+import {
+  chartInsights,
+  latestYoyPct,
+  movingAverage,
+  slicedMovingAverage,
+  yoyPctSeries,
+} from "@/lib/chart-context";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BarSeries } from "@/components/charts/BarSeries";
 import { Donut, type DonutSlice } from "@/components/charts/Donut";
@@ -134,6 +143,13 @@ export default async function MonthlyPage({
       : "share";
   const monthlyFlowsLens: "absolute" | "share" =
     sp.flowsLens === "share" ? "share" : "absolute";
+  // Chart-type toggles for the two approved Bars + Growth callsites on
+  // /monthly. Default is "trend" — only "bars" is echoed back into the
+  // URL so canonical links stay clean.
+  const monthlyFlowsView: "trend" | "bars" =
+    sp.monthlyFlowsView === "bars" ? "bars" : "trend";
+  const aeFlowView: "trend" | "bars" =
+    sp.aeFlowView === "bars" ? "bars" : "trend";
   // Chart-type toggles. Each eligible bar-style time-series card on
   // the page owns its own `<thing>View` URL param. Bars is the
   // default and is never echoed into the URL — only the "trend"
@@ -174,6 +190,10 @@ export default async function MonthlyPage({
     month: typeof sp.month === "string" ? sp.month : undefined,
     heatmap: typeof sp.heatmap === "string" ? sp.heatmap : undefined,
     flowsLens: typeof sp.flowsLens === "string" ? sp.flowsLens : undefined,
+    monthlyFlowsView:
+      typeof sp.monthlyFlowsView === "string" ? sp.monthlyFlowsView : undefined,
+    aeFlowView:
+      typeof sp.aeFlowView === "string" ? sp.aeFlowView : undefined,
     equityMixLens:
       typeof sp.equityMixLens === "string" ? sp.equityMixLens : undefined,
     activePassiveLens:
@@ -528,6 +548,9 @@ export default async function MonthlyPage({
   // 2024-12 / 2025-01 because those Notes don't carry the row), but no
   // synthetic data is introduced.
   const sipContribTrend = monthlyTrend("sipContribution", 24);
+  // Full history (un-sliced) so the 12M trailing average has real
+  // prior data to draw on for the leftmost visible months.
+  const sipContribFullHistory = monthlyTrend("sipContribution", 10_000);
   // SIP-contribution-specific context for the ChartWithContext wrapper.
   // Denominator: industry net inflow that month — answers "what share
   // of the month's net flow came from systematic SIPs?".
@@ -559,7 +582,9 @@ export default async function MonthlyPage({
     },
   });
   const sipAumTrend = monthlyTrend("sipAum", 24);
+  const sipAumFullHistory = monthlyTrend("sipAum", 10_000);
   const sipAccountsTrend = monthlyTrend("sipAccounts", 24);
+  const sipAccountsFullHistory = monthlyTrend("sipAccounts", 10_000);
 
   // SIP AUM denominator caption: latest SIP AUM as % of total AUM.
   const sipAumDenomCaption = (() => {
@@ -730,6 +755,22 @@ export default async function MonthlyPage({
   const equityFlowFromRows = monthlyFlowsRows
     .filter((r) => typeof r.equity === "number")
     .map((r) => ({ label: r.month as string, value: r.equity as number }));
+  // Full equity-flow history + YoY (lag=12) for the optional Bars +
+  // Growth view on this card. YoY is computed over full history so
+  // the visible-window growth line has real values from the leftmost
+  // month onward (gaps only where prior history truly doesn't exist).
+  const monthlyFlowsFullHistory = monthlyFlowsData(10_000);
+  const monthlyEquityFullSeries = monthlyFlowsFullHistory
+    .filter((r) => typeof r.equity === "number")
+    .map((r) => ({ label: r.month, value: r.equity as number }));
+  const monthlyEquityYoyByLabel = new Map(
+    yoyPctSeries(monthlyEquityFullSeries, 12).map((p) => [p.label, p.value])
+  );
+  const monthlyFlowsBarsData = equityFlowFromRows.map((p) => ({
+    label: p.label,
+    value: p.value,
+    growthPct: monthlyEquityYoyByLabel.get(p.label) ?? null,
+  }));
   const monthlyFlowsInsights = chartInsights(equityFlowFromRows, {
     metricName: "equity net inflow",
     unitSuffix: "₹ Cr",
@@ -765,6 +806,7 @@ export default async function MonthlyPage({
   // are consistent with IIFL's Figure 19 / 21 framing. Missing months
   // are omitted from each per-field series — never zero-filled.
   const activeEquityTrend = monthlyTrend("activeEquityAaum", 24);
+  const activeEquityFullHistory = monthlyTrend("activeEquityAaum", 10_000);
   const activeEquityShareTrend = monthlyActiveEquityShareTrend(24);
   const equityBreakdown = monthlyEquityBreakdown(24);
   const equityBreakdownHasData = equityBreakdown.some(
@@ -902,8 +944,11 @@ export default async function MonthlyPage({
       : null;
 
   const folioAdditionsTrend = monthlyIndustryFolioAdditionsTrend(24);
+  const folioAdditionsFullHistory = monthlyIndustryFolioAdditionsTrend(10_000);
   const nfoCountTrend = monthlyTrend("industryNfoCount", 24);
+  const nfoCountFullHistory = monthlyTrend("industryNfoCount", 10_000);
   const nfoFundsTrend = monthlyTrend("industryNfoFundsMobilized", 24);
+  const nfoFundsFullHistory = monthlyTrend("industryNfoFundsMobilized", 10_000);
   const foliosCtx = kpiContext("industryFolios", 24);
   const nfoCountCtx = kpiContext("industryNfoCount", 24);
   const nfoFundsCtx = kpiContext("industryNfoFundsMobilized", 24);
@@ -1158,6 +1203,18 @@ export default async function MonthlyPage({
   // dropped: the monthly snapshot only carries net flow, gross
   // (Funds Mobilized) lives on the quarterly snapshot.
   const activeEquityFlowTrend = monthlyActiveEquityNetInflowTrend(24);
+  const activeEquityFlowFullHistory = monthlyActiveEquityNetInflowTrend(10_000);
+  // YoY (lag=12) for the Bars + Growth view on the Active Equity Net
+  // Inflow card. Same full-history computation pattern as the equity
+  // flow card above.
+  const aeFlowYoyByLabel = new Map(
+    yoyPctSeries(activeEquityFlowFullHistory, 12).map((p) => [p.label, p.value])
+  );
+  const aeFlowBarsData = activeEquityFlowTrend.map((p) => ({
+    label: p.label,
+    value: p.value,
+    growthPct: aeFlowYoyByLabel.get(p.label) ?? null,
+  }));
   const activeEquityFlowAvg = trailingActiveEquityNetInflowAverage(12);
   const activeEquityBridge = monthlyActiveEquityAumBridge(24);
   const activeEquityBridgeStrip = activeEquityAumBridgeSnapshot(12);
@@ -1844,46 +1901,90 @@ export default async function MonthlyPage({
         <ChartWithContext
           title="Equity / Debt / Liquid Monthly Net Flows"
           subtitle={
-            monthlyFlowsLens === "share"
-              ? `${monthlyFlowsRows.length} month${monthlyFlowsRows.length === 1 ? "" : "s"} · % of monthly flow magnitude (signs preserved)`
-              : `${monthlyFlowsRows.length} month${monthlyFlowsRows.length === 1 ? "" : "s"} · ₹ Cr · positive = inflow, negative = outflow`
+            monthlyFlowsView === "bars"
+              ? `${monthlyFlowsRows.length} month${monthlyFlowsRows.length === 1 ? "" : "s"} · Equity flow only · ₹ Cr · YoY growth overlaid`
+              : monthlyFlowsLens === "share"
+                ? `${monthlyFlowsRows.length} month${monthlyFlowsRows.length === 1 ? "" : "s"} · % of monthly flow magnitude (signs preserved)`
+                : `${monthlyFlowsRows.length} month${monthlyFlowsRows.length === 1 ? "" : "s"} · ₹ Cr · positive = inflow, negative = outflow`
           }
           flowKind="net"
-          denominatorCaption={monthlyFlowsDenomCaption}
-          denominatorTooltip="Latest month's per-segment share of total flow magnitude — the headline read for 'where did the month's flow go?'."
+          denominatorCaption={
+            monthlyFlowsView === "bars" ? undefined : monthlyFlowsDenomCaption
+          }
+          denominatorTooltip={
+            monthlyFlowsView === "bars"
+              ? undefined
+              : "Latest month's per-segment share of total flow magnitude — the headline read for 'where did the month's flow go?'."
+          }
           insights={monthlyFlowsInsights}
           yoyBadge={(() => {
             const v = latestYoyPct(equityFlowFromRows, 12);
             return v === null ? undefined : { label: "Equity YoY", pct: v };
           })()}
           action={
-            <div className="flex flex-wrap items-center gap-2">
-              <LensToggle
+            <>
+              {monthlyFlowsView === "trend" && (
+                <LensToggle
+                  basePath="/monthly"
+                  paramName="flowsLens"
+                  defaultValue="absolute"
+                  lenses={[
+                    { value: "absolute", label: "₹ Cr" },
+                    { value: "share", label: "% of flow magnitude" },
+                  ]}
+                  active={monthlyFlowsLens}
+                  preserveParams={preservedQueryParams}
+                />
+              )}
+              <ChartTypeToggle
                 basePath="/monthly"
-                paramName="flowsLens"
-                defaultValue="absolute"
-                lenses={[
-                  { value: "absolute", label: "₹ Cr" },
-                  { value: "share", label: "% of flow magnitude" },
-                ]}
-                active={monthlyFlowsLens}
+                paramName="monthlyFlowsView"
+                active={monthlyFlowsView}
                 preserveParams={preservedQueryParams}
               />
-            </div>
+            </>
           }
         >
-          <GroupedBars
-            data={monthlyFlowsDisplay}
-            xKey="month"
-            labelFormat="month"
-            valueFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
-            axisFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
-            bars={monthlyFlowsSeries}
-          />
-          <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            Liquid is shown separately for readability.
-            <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes. In share view, each value is divided by the sum of absolute flow magnitudes in that month, so signs (inflow vs outflow) stay intact." />
-          </p>
+          {monthlyFlowsView === "bars" ? (
+            <>
+              <BarsWithGrowth
+                data={monthlyFlowsBarsData}
+                barColor="hsl(var(--chart-1))"
+                growthColor="hsl(var(--foreground))"
+                valueFormat="cr"
+                axisFormat="cr"
+                labelFormat="month"
+                name="Equity net flow"
+                growthLabel="Equity YoY %"
+              />
+              <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
+                Bars show actual Equity net flow. The line shows YoY growth.
+                Debt and Liquid remain visible in Trend view.
+              </p>
+            </>
+          ) : (
+            <>
+              <GroupedBars
+                data={monthlyFlowsDisplay}
+                xKey="month"
+                labelFormat="month"
+                valueFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
+                axisFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
+                bars={monthlyFlowsSeries}
+              />
+              <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                Liquid is shown separately for readability.
+                <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes. In share view, each value is divided by the sum of absolute flow magnitudes in that month, so signs (inflow vs outflow) stay intact." />
+              </p>
+            </>
+          )}
+          <HowToRead>
+            <ul className="list-disc space-y-0.5 pl-4">
+              <li>Positive bars mean money entered the category; negative bars mean it left.</li>
+              <li>Rising equity usually signals risk-on appetite; rising debt or liquid often signals defensive allocation.</li>
+              <li>Compare the current month to the trailing-12 average (the dotted line in Trend view) to spot unusually large moves.</li>
+            </ul>
+          </HowToRead>
         </ChartWithContext>
       )}
 
@@ -1904,7 +2005,10 @@ export default async function MonthlyPage({
               {sipTrendsRead ? ` · ${sipTrendsRead}` : ""}
             </p>
           </div>
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {/* Downgraded to 2-up: 3 SIP chart cards with LensToggles
+              cramped at xl:grid-cols-3 and forced titles to wrap one
+              word per line. */}
+          <section className="grid gap-4 lg:grid-cols-2">
             <ChartWithContext
               title="SIP Contribution Trend"
               subtitle={
@@ -1949,7 +2053,7 @@ export default async function MonthlyPage({
                   trendline={
                     sipContribLens === "share"
                       ? undefined
-                      : movingAverage(sipContribTrend, 12)
+                      : slicedMovingAverage(sipContribFullHistory, 12, sipContribTrend.length)
                   }
                   cyclePhaseBands={cyclePhaseBands}
                   dynamicYDomain={sipContribLens === "share"}
@@ -2005,7 +2109,7 @@ export default async function MonthlyPage({
                   trendline={
                     sipAumLens === "share"
                       ? undefined
-                      : movingAverage(sipAumTrend, 12)
+                      : slicedMovingAverage(sipAumFullHistory, 12, sipAumTrend.length)
                   }
                   cyclePhaseBands={cyclePhaseBands}
                   dynamicYDomain={sipAumLens === "share"}
@@ -2061,7 +2165,7 @@ export default async function MonthlyPage({
                   trendline={
                     sipAccountsLens === "share"
                       ? undefined
-                      : movingAverage(sipAccountsTrend, 12)
+                      : slicedMovingAverage(sipAccountsFullHistory, 12, sipAccountsTrend.length)
                   }
                   cyclePhaseBands={cyclePhaseBands}
                   dynamicYDomain={sipAccountsLens === "share"}
@@ -2083,66 +2187,102 @@ export default async function MonthlyPage({
               <ChartWithContext
                 title="Active Equity Net Inflows"
                 subtitle={
-                  aeFlowLens === "share"
-                    ? `${activeEquityFlowShare.length} month${activeEquityFlowShare.length === 1 ? "" : "s"} · % of industry net inflow`
-                    : `Monthly net inflow · ${activeEquityFlowTrend.length} month${activeEquityFlowTrend.length === 1 ? "" : "s"}${
-                        activeEquityFlowAvg !== null
-                          ? ` · trailing 12M avg ${formatCompactCrSafe(activeEquityFlowAvg)}`
-                          : ""
-                      } · ₹ Cr`
+                  aeFlowView === "bars"
+                    ? `${activeEquityFlowTrend.length} month${activeEquityFlowTrend.length === 1 ? "" : "s"} · ₹ Cr · YoY growth overlaid`
+                    : aeFlowLens === "share"
+                      ? `${activeEquityFlowShare.length} month${activeEquityFlowShare.length === 1 ? "" : "s"} · % of industry net inflow`
+                      : `Monthly net inflow · ${activeEquityFlowTrend.length} month${activeEquityFlowTrend.length === 1 ? "" : "s"}${
+                          activeEquityFlowAvg !== null
+                            ? ` · trailing 12M avg ${formatCompactCrSafe(activeEquityFlowAvg)}`
+                            : ""
+                        } · ₹ Cr`
                 }
                 flowKind="net"
                 denominatorCaption={
-                  aeFlowLens === "share" ? undefined : activeEquityFlowDenomCaption
+                  aeFlowView === "bars" || aeFlowLens === "share"
+                    ? undefined
+                    : activeEquityFlowDenomCaption
                 }
-                denominatorTooltip="Latest active-equity net inflow as a % of industry net inflow for the same month — captures how much of the month's flow ended up in the active-equity envelope."
+                denominatorTooltip={
+                  aeFlowView === "bars"
+                    ? undefined
+                    : "Latest active-equity net inflow as a % of industry net inflow for the same month — captures how much of the month's flow ended up in the active-equity envelope."
+                }
                 insights={activeEquityFlowInsights}
                 yoyBadge={(() => {
                   const v = latestYoyPct(activeEquityFlowTrend, 12);
                   return v === null ? undefined : { label: "YoY", pct: v };
                 })()}
                 action={
-                  <div className="flex flex-wrap items-center gap-2">
-                    <LensToggle
+                  <>
+                    {aeFlowView === "trend" && (
+                      <LensToggle
+                        basePath="/monthly"
+                        paramName="aeFlowLens"
+                        defaultValue="absolute"
+                        lenses={[
+                          { value: "absolute", label: "₹ Cr" },
+                          { value: "share", label: "% of net inflow" },
+                        ]}
+                        active={aeFlowLens}
+                        preserveParams={preservedQueryParams}
+                      />
+                    )}
+                    <ChartTypeToggle
                       basePath="/monthly"
-                      paramName="aeFlowLens"
-                      defaultValue="absolute"
-                      lenses={[
-                        { value: "absolute", label: "₹ Cr" },
-                        { value: "share", label: "% of net inflow" },
-                      ]}
-                      active={aeFlowLens}
+                      paramName="aeFlowView"
+                      active={aeFlowView}
                       preserveParams={preservedQueryParams}
                     />
-                  </div>
+                  </>
                 }
               >
-                <BarSeries
-                  data={activeEquityFlowDisplay}
-                  name="Active Equity Net Inflow"
-                  color="hsl(var(--chart-1))"
-                  valueFormat={aeFlowLens === "share" ? "pct" : "cr"}
-                  axisFormat={aeFlowLens === "share" ? "pct" : "cr"}
-                  labelFormat="month"
-                  trendline={
-                    aeFlowLens === "share"
-                      ? undefined
-                      : movingAverage(activeEquityFlowTrend, 12)
-                  }
-                  trendlineName="12M avg"
-                  cyclePhaseBands={cyclePhaseBands}
-                />
-                {aeFlowLens === "absolute" && (
-                  <div className="mt-2">
-                    <VolatilityRibbon series={activeEquityFlowTrend} />
-                  </div>
+                {aeFlowView === "bars" ? (
+                  <>
+                    <BarsWithGrowth
+                      data={aeFlowBarsData}
+                      barColor="hsl(var(--chart-1))"
+                      growthColor="hsl(var(--foreground))"
+                      valueFormat="cr"
+                      axisFormat="cr"
+                      labelFormat="month"
+                      name="Active Equity net inflow"
+                      growthLabel="YoY %"
+                    />
+                    <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
+                      Bars show actual flow. The line shows YoY growth.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <BarSeries
+                      data={activeEquityFlowDisplay}
+                      name="Active Equity Net Inflow"
+                      color="hsl(var(--chart-1))"
+                      valueFormat={aeFlowLens === "share" ? "pct" : "cr"}
+                      axisFormat={aeFlowLens === "share" ? "pct" : "cr"}
+                      labelFormat="month"
+                      trendline={
+                        aeFlowLens === "share"
+                          ? undefined
+                          : slicedMovingAverage(activeEquityFlowFullHistory, 12, activeEquityFlowTrend.length)
+                      }
+                      trendlineName="12M avg"
+                      cyclePhaseBands={cyclePhaseBands}
+                    />
+                    {aeFlowLens === "absolute" && (
+                      <div className="mt-2">
+                        <VolatilityRibbon series={activeEquityFlowTrend} />
+                      </div>
+                    )}
+                    <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      {aeFlowLens === "absolute"
+                        ? "Dashed line = trailing 12-month average of net inflow. Strip below = ≥ ±2σ MoM moves shaded green / red."
+                        : "Share of industry net inflow captured by the active-equity envelope each month."}
+                      <InfoTooltip label="Active-equity envelope = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
+                    </p>
+                  </>
                 )}
-                <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  {aeFlowLens === "absolute"
-                    ? "Dashed line = trailing 12-month average of net inflow. Strip below = ≥ ±2σ MoM moves shaded green / red."
-                    : "Share of industry net inflow captured by the active-equity envelope each month."}
-                  <InfoTooltip label="Active-equity envelope = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
-                </p>
               </ChartWithContext>
             )}
 
@@ -2295,7 +2435,7 @@ export default async function MonthlyPage({
                 trendline={
                   folioAddLens === "share"
                     ? undefined
-                    : movingAverage(folioAdditionsTrend, 12)
+                    : slicedMovingAverage(folioAdditionsFullHistory, 12, folioAdditionsTrend.length)
                 }
               />
             </ChartWithContext>
@@ -2314,6 +2454,14 @@ export default async function MonthlyPage({
               {foliosNfoRead ? ` · ${foliosNfoRead}` : ""}
             </p>
           </div>
+
+          <HowToRead>
+            <ul className="list-disc space-y-0.5 pl-4">
+              <li><span className="text-foreground">NFOs</span> are new fund launches — schemes that don&rsquo;t yet have an existing AUM.</li>
+              <li>Very high NFO activity can signal product-launch euphoria; investors should check whether the new schemes are durable categories or one-offs.</li>
+              <li>Low NFO activity means money is mostly flowing into existing, established schemes.</li>
+            </ul>
+          </HowToRead>
 
           <section className="grid gap-4 md:grid-cols-2">
             <KpiCard
@@ -2400,7 +2548,7 @@ export default async function MonthlyPage({
                         trendline={
                           nfoCountLens === "share"
                             ? undefined
-                            : movingAverage(nfoCountTrend, 12)
+                            : slicedMovingAverage(nfoCountFullHistory, 12, nfoCountTrend.length)
                         }
                         referenceValue={nfoCountLens === "share" ? 100 : undefined}
                         referenceLabel={nfoCountLens === "share" ? "5Y avg" : undefined}
@@ -2451,7 +2599,7 @@ export default async function MonthlyPage({
                         trendline={
                           nfoFundsLens === "share"
                             ? undefined
-                            : movingAverage(nfoFundsTrend, 12)
+                            : slicedMovingAverage(nfoFundsFullHistory, 12, nfoFundsTrend.length)
                         }
                       />
                     </ChartWithContext>
@@ -2527,7 +2675,7 @@ export default async function MonthlyPage({
                   trendline={
                     aeAaumLens === "share"
                       ? undefined
-                      : movingAverage(activeEquityTrend, 12)
+                      : slicedMovingAverage(activeEquityFullHistory, 12, activeEquityTrend.length)
                   }
                   trendlineName="12M avg"
                   dynamicYDomain={aeAaumLens === "share"}
@@ -2610,6 +2758,14 @@ export default async function MonthlyPage({
               · Source: AMFI Monthly Report
             </p>
           </div>
+
+          <HowToRead>
+            <ul className="list-disc space-y-0.5 pl-4">
+              <li><span className="text-foreground">Active funds</span> are managed by a fund manager — they pick stocks and aim to beat an index.</li>
+              <li><span className="text-foreground">Passive funds</span> simply track an index (e.g. Nifty 50) at a lower fee.</li>
+              <li>A rising passive share pressures fee yields for active-heavy AMCs over time, even when active AUM is still growing in absolute terms.</li>
+            </ul>
+          </HowToRead>
 
           <section className="grid gap-4 lg:grid-cols-2">
             <ChartWithContext

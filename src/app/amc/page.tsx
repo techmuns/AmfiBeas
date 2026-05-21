@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeftRight, AlertTriangle, TrendingUp, TrendingDown } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
+import { HowToRead } from "@/components/ui/HowToRead";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { AmcBattleCard } from "@/components/ui/AmcBattleCard";
 import { AmcQuadrantChart } from "@/components/charts/AmcQuadrantChart";
@@ -246,6 +247,14 @@ export default async function AmcListPage({
               label={`Y-axis: AMC's share of total cohort AAUM (top ${quadrant.points.length} AMCs). X-axis: QoQ AAUM growth (this quarter vs last). Both quadrant splits use the cohort median, not zero — so the buckets stay meaningful when the whole industry is growing or contracting. Dot size scales with market share.`}
             />
           </p>
+          <HowToRead>
+            <ul className="list-disc space-y-0.5 pl-4">
+              <li><span className="text-foreground">Leader</span> = high share + high growth (compounding from a strong base).</li>
+              <li><span className="text-foreground">Challenger / Gainer</span> = low share + high growth (catching up).</li>
+              <li><span className="text-foreground">Defender</span> = high share + slowing growth (mature franchise, risk of share loss).</li>
+              <li><span className="text-foreground">Laggard</span> = low share + weak growth (no momentum signal yet).</li>
+            </ul>
+          </HowToRead>
         </Card>
       )}
 

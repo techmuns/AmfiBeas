@@ -25,6 +25,32 @@ export function movingAverage(
   });
 }
 
+/** Trailing N-period moving average computed over a FULL historical
+ *  series, then sliced to the visible tail. Use this instead of calling
+ *  `movingAverage()` on a pre-sliced series — that pattern makes the
+ *  trendline `null` for the first `window-1` visible points, which
+ *  visually reads as "the average line starts halfway through the
+ *  chart". By passing the full history here, the visible window
+ *  always shows real average values whenever prior data exists.
+ *
+ *  Gaps remain only where the underlying snapshot genuinely has fewer
+ *  than `window-1` months of prior data — never fake backfill.
+ *
+ *  Example:
+ *    const visible = monthlyTrend(field, 24);           // last 24 months
+ *    const history = monthlyTrend(field, 10_000);       // full history
+ *    <BarSeries data={visible} trendline={
+ *      slicedMovingAverage(history, 12, 24)             // 12M MA, last 24
+ *    } />
+ */
+export function slicedMovingAverage(
+  fullHistory: SeriesPoint[],
+  window: number,
+  visibleLength: number
+): { label: string; value: number | null }[] {
+  return movingAverage(fullHistory, window).slice(-visibleLength);
+}
+
 /** Latest-point YoY % change vs a lag-N prior point. Returns null
  *  when the series is too short, when either anchor value isn't a
  *  finite number, or when the prior value is zero (would divide
