@@ -9,6 +9,8 @@ import { AmcQuadrantChart } from "@/components/charts/AmcQuadrantChart";
 import { CohortJourneyMap } from "@/components/charts/CohortJourneyMap";
 import { Heatmap } from "@/components/charts/Heatmap";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
+import { StrategicMovesCohortLane } from "@/components/amc/StrategicMovesCohortLane";
+import { ForwardBetsRegister } from "@/components/amc/ForwardBetsRegister";
 import { amcAaumSeries, amcIndexRows } from "@/data/amc-detail";
 import {
   amcHealthGrowthMatrix,
@@ -187,6 +189,8 @@ export default async function AmcListPage({
         </Card>
       )}
 
+      {activeTab === "overview" && <StrategicMovesCohortLane />}
+
       {activeTab === "overview" && rosterCards.length > 0 && (
         <Card
           title="AMC Roster"
@@ -300,6 +304,8 @@ export default async function AmcListPage({
           </HowToRead>
         </Card>
       )}
+
+      {activeTab === "share-positioning" && <ForwardBetsRegister />}
 
       {activeTab === "overview" && health.rows.length > 0 && (
         <Card
