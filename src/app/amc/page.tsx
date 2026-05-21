@@ -10,8 +10,8 @@ import { CohortJourneyMap } from "@/components/charts/CohortJourneyMap";
 import { Heatmap } from "@/components/charts/Heatmap";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
 import { StrategicMovesCohortLane } from "@/components/amc/StrategicMovesCohortLane";
-import { ForwardBetsRegister } from "@/components/amc/ForwardBetsRegister";
 import { CohortUniqueInvestorShare } from "@/components/amc/CohortUniqueInvestorShare";
+import { IndustryConcentrationStack } from "@/components/amc/IndustryConcentrationStack";
 import { amcAaumSeries, amcIndexRows } from "@/data/amc-detail";
 import {
   amcHealthGrowthMatrix,
@@ -324,7 +324,7 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {activeTab === "share-positioning" && <ForwardBetsRegister />}
+      {activeTab === "share-positioning" && <IndustryConcentrationStack />}
 
       {activeTab === "overview" && health.rows.length > 0 && (
         <Card
