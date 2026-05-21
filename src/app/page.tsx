@@ -159,7 +159,7 @@ export default function HomePage() {
             read={amcWinnersLosersRead(topGainers, topLosers)}
             footer={
               <Link
-                href="/amc?tab=share-movers"
+                href="/amc?tab=share-positioning"
                 className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
               >
                 See share movers <ArrowUpRight className="h-3 w-3" />
@@ -188,7 +188,7 @@ export default function HomePage() {
             read={listedAmcRead(revQoYoY, patMarginQ, patYoy)}
             footer={
               <Link
-                href="/financials?tab=snapshot"
+                href="/financials"
                 className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
               >
                 See margins + yields <ArrowUpRight className="h-3 w-3" />
@@ -228,27 +228,27 @@ export default function HomePage() {
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           <ExploreTile
             title="Monthly Signals"
-            href="/monthly?tab=snapshot"
+            href="/monthly"
             summary="What changed this month — flows, SIP retail, active vs passive, NFOs, and the market-cycle backdrop."
           />
           <ExploreTile
             title="Quarterly KPIs"
-            href="/quarterly?tab=snapshot"
+            href="/quarterly"
             summary="Industry AAUM, flows, concentration, and the per-category mix at quarter-end."
           />
           <ExploreTile
             title="AMC Winners & Losers"
-            href="/amc?tab=share-movers"
+            href="/amc?tab=share-positioning"
             summary="Which AMCs gained share, which lost it — quarter by quarter, with a positioning quadrant."
           />
           <ExploreTile
             title="Listed AMC Earnings"
-            href="/financials?tab=snapshot"
+            href="/financials"
             summary="P&L, margins, yields, and the listed-peer cohort table for every disclosed AMC."
           />
           <ExploreTile
             title="Compare AMCs"
-            href="/compare?tab=read"
+            href="/compare"
             summary="Side-by-side AAUM, market share, rank, and growth for any two AMCs."
           />
         </div>

@@ -168,8 +168,9 @@ export default async function MonthlyPage({
   const nfoFundsLens: "absolute" | "share" =
     sp.nfoFundsLens === "share" ? "share" : "absolute";
   // Pass-through params for every LensToggle so toggling A doesn't
-  // lose B (or the selected month).
+  // lose B (or the selected month / active tab).
   const preservedQueryParams: Record<string, string | undefined> = {
+    tab: typeof sp.tab === "string" ? sp.tab : undefined,
     month: typeof sp.month === "string" ? sp.month : undefined,
     heatmap: typeof sp.heatmap === "string" ? sp.heatmap : undefined,
     flowsLens: typeof sp.flowsLens === "string" ? sp.flowsLens : undefined,
@@ -1593,6 +1594,7 @@ export default async function MonthlyPage({
       <MarketWrapCard wrap={marketWrapData} />
 
       <DashboardTabs
+        basePath="/monthly"
         tabs={MONTHLY_TABS}
         activeId={activeTab}
         searchParams={sp}
@@ -2797,7 +2799,10 @@ export default async function MonthlyPage({
                   : "Net inflow share of active equity categories · past 12 months · Source: AMFI Monthly Report"}
               </p>
             </div>
-            <HeatmapLensToggle lens={heatmapLens} />
+            <HeatmapLensToggle
+              lens={heatmapLens}
+              activeTab={typeof sp.tab === "string" ? sp.tab : undefined}
+            />
           </div>
 
           <IiflHeatmap
@@ -2915,27 +2920,38 @@ export default async function MonthlyPage({
 /** Sign-aware compact ₹ Cr — local helper so a negative active-equity
  *  net inflow renders as "−₹32.4K Cr" rather than the unsigned value. */
 /** Heatmap lens toggle — pure-server segmented control rendered as
- *  two <a> tags so server routing handles state. No client component
- *  overhead. Each link preserves the rest of the URL params we care
- *  about (currently just `?month=`, which the heatmap window doesn't
- *  use, so we keep it simple and reset to a single param). */
-function HeatmapLensToggle({ lens }: { lens: "share" | "zscore" }) {
+ *  two `<Link>`s so the App Router handles state. Each link preserves
+ *  the current `?tab=` so toggling the heatmap lens doesn't bounce the
+ *  reader back to the default tab. */
+function HeatmapLensToggle({
+  lens,
+  activeTab,
+}: {
+  lens: "share" | "zscore";
+  activeTab: string | undefined;
+}) {
   const baseClass =
     "rounded-md border px-2.5 py-1 text-[11px] font-medium tracking-tight transition-colors";
   const activeClass = "border-foreground/40 bg-foreground/5 text-foreground";
   const inactiveClass =
     "border-border text-muted-foreground hover:bg-accent hover:text-foreground";
+  const shareQuery: Record<string, string> = {};
+  const zscoreQuery: Record<string, string> = { heatmap: "zscore" };
+  if (activeTab) {
+    shareQuery.tab = activeTab;
+    zscoreQuery.tab = activeTab;
+  }
   return (
     <div className="inline-flex items-center gap-1 rounded-md border bg-card p-0.5 shadow-sm">
       <Link
-        href={{ pathname: "/monthly" }}
+        href={{ pathname: "/monthly", query: shareQuery }}
         scroll={false}
         className={cn(baseClass, lens === "share" ? activeClass : inactiveClass)}
       >
         Share
       </Link>
       <Link
-        href={{ pathname: "/monthly", query: { heatmap: "zscore" } }}
+        href={{ pathname: "/monthly", query: zscoreQuery }}
         scroll={false}
         className={cn(baseClass, lens === "zscore" ? activeClass : inactiveClass)}
       >

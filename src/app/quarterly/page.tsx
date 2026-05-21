@@ -122,8 +122,11 @@ export default async function QuarterlyPage({
   // Chart-style toggles (Bars vs Trend) were removed across the
   // dashboard — every chart now renders the trend visual directly.
   // Stale `?q...View=bars|trend` URLs are ignored silently.
-  // Pass-through params for every LensToggle on this page.
+  // Pass-through params for every LensToggle on this page. `tab` is
+  // included so toggling a lens doesn't bounce the reader back to the
+  // default tab.
   const preservedQueryParams: Record<string, string | undefined> = {
+    tab: typeof sp.tab === "string" ? sp.tab : undefined,
     quarter: typeof sp.quarter === "string" ? sp.quarter : undefined,
     qFlowsLens:
       typeof sp.qFlowsLens === "string" ? sp.qFlowsLens : undefined,
@@ -874,6 +877,7 @@ export default async function QuarterlyPage({
       <MarketWrapCard wrap={marketWrapData} />
 
       <DashboardTabs
+        basePath="/quarterly"
         tabs={QUARTERLY_TABS}
         activeId={activeTab}
         searchParams={sp}

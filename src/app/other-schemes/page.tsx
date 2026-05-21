@@ -99,6 +99,7 @@ export default async function OtherSchemesPage({
       />
 
       <DashboardTabs
+        basePath="/other-schemes"
         tabs={OTHER_SCHEMES_TABS}
         activeId={activeTab}
         searchParams={sp}

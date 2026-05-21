@@ -111,6 +111,7 @@ export default async function AmcListPage({
       />
 
       <DashboardTabs
+        basePath="/amc"
         tabs={AMC_TABS}
         activeId={activeTab}
         searchParams={sp}
@@ -266,6 +267,9 @@ export default async function AmcListPage({
                 { value: "zscore", label: "Z-score" },
               ]}
               active={healthLens}
+              preserveParams={{
+                tab: typeof sp.tab === "string" ? sp.tab : undefined,
+              }}
             />
           }
         >

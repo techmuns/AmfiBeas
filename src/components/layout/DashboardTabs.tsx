@@ -8,6 +8,10 @@ export interface DashboardTabDef {
 }
 
 interface DashboardTabsProps {
+  /** The page's own route, e.g. `"/monthly"` or `"/quarterly"`. Used
+   *  to build absolute internal hrefs so each tab Link navigates via
+   *  the client-side router. */
+  basePath: string;
   tabs: readonly DashboardTabDef[];
   activeId: string;
   /** The page's raw `searchParams` after `await searchParams`. Every
@@ -20,10 +24,12 @@ interface DashboardTabsProps {
 /**
  * Sticky horizontal tab strip rendered as plain `<Link>` elements — no
  * client component, no router hooks. Each tab rewrites the page URL
- * with `?tab=<id>` while preserving every other query param so the
- * URL is always shareable.
+ * with `<basePath>?tab=<id>` while preserving every other query param
+ * so the URL is always shareable AND every click stays inside the
+ * same browser tab via the client-side router.
  */
 export function DashboardTabs({
+  basePath,
   tabs,
   activeId,
   searchParams,
@@ -40,7 +46,7 @@ export function DashboardTabs({
       >
         {tabs.map((t) => {
           const active = t.id === activeId;
-          const href = buildTabHref(t.id, searchParams);
+          const href = buildTabHref(basePath, t.id, searchParams);
           return (
             <Link
               key={t.id}

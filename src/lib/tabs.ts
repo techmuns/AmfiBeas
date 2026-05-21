@@ -22,13 +22,19 @@ export function resolveTab<T extends string>(
 }
 
 /**
- * Build a `?…` query string for a tab link. The active tab is encoded
- * as `?tab=<id>` and every other key in `preserved` is appended if its
- * value is a non-empty string. Array-valued params are flattened in
- * insertion order. Empty / undefined values are dropped so the URL
- * stays clean.
+ * Build a fully-qualified tab href: `<basePath>?…` with every non-`tab`
+ * key in `preserved` carried over and `tab` set to `tabId`. Empty /
+ * undefined values are dropped so the URL stays clean.
+ *
+ * The `basePath` is required so callers always produce an absolute
+ * internal route (`/monthly?tab=flows`) rather than a path-less query
+ * string (`?tab=flows`). Path-less hrefs work in most React Router
+ * implementations but make in-app navigation fragile across the
+ * Next.js App Router — explicit paths always navigate via the
+ * client-side router.
  */
 export function buildTabHref(
+  basePath: string,
   tabId: string,
   preserved: Record<string, string | string[] | undefined>,
 ): string {
@@ -44,5 +50,5 @@ export function buildTabHref(
     }
   }
   params.set("tab", tabId);
-  return `?${params.toString()}`;
+  return `${basePath}?${params.toString()}`;
 }
