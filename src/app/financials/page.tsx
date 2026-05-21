@@ -10,6 +10,7 @@ import { QuarterPicker } from "@/components/filters/QuarterPicker";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { FinancialsPeerCsvButton } from "@/components/data/FinancialsPeerCsvButton";
+import { HowToRead } from "@/components/ui/HowToRead";
 import { cn } from "@/lib/cn";
 import {
   SOURCED_FINANCIALS_SLUGS,
@@ -705,9 +706,14 @@ export default async function FinancialsPage({
 
       <ChartWithContext
         title="Operating Revenue / Operating Profit / PAT"
-        subtitle="Quarterly · ₹ Cr · Operating Revenue from standalone P&L (all operating segments, excludes Other Income)"
+        subtitle="Quarterly P&L for this AMC. Tracks top line, operating profit, and bottom line together."
         flowKind="gross"
-        denominatorCaption={pnlDenomCaption}
+        denominatorCaption={(() => {
+          const base = "Quarterly · ₹ Cr · Operating Revenue from standalone P&L (all operating segments, excludes Other Income)";
+          return pnlDenomCaption
+            ? `${base} · ${pnlDenomCaption}`
+            : base;
+        })()}
         denominatorTooltip="Latest quarter's PAT margin (PAT ÷ Operating Revenue) — the single headline operating-quality number for the AMC."
         insights={pnlInsights}
         yoyBadge={(() => {
@@ -724,9 +730,14 @@ export default async function FinancialsPage({
 
       <ChartWithContext
         title="Margin Trend"
-        subtitle="PAT & Operating margin · % of Operating Revenue · peer-median overlay"
+        subtitle="PAT margin and Operating margin over time, against the listed-peer median."
         flowKind="stock"
-        denominatorCaption={marginDenomCaption}
+        denominatorCaption={(() => {
+          const base = "% of Operating Revenue · peer-median overlay";
+          return marginDenomCaption
+            ? `${base} · ${marginDenomCaption}`
+            : base;
+        })()}
         denominatorTooltip="Latest PAT margin minus the listed-peer median PAT margin for the same quarter, in percentage points. Positive = AMC running above the cohort."
         insights={marginInsights}
         yoyBadge={(() => {
@@ -760,9 +771,14 @@ export default async function FinancialsPage({
 
       <ChartWithContext
         title="Yields (bps of MF QAAUM)"
-        subtitle={`${yieldsSubtitle} · peer-median overlay`}
+        subtitle="How many basis points each rupee of AAUM earns — revenue, operating, and profit yields, against peer median."
         flowKind="stock"
-        denominatorCaption={yieldDenomCaption}
+        denominatorCaption={(() => {
+          const base = `${yieldsSubtitle} · peer-median overlay`;
+          return yieldDenomCaption
+            ? `${base} · ${yieldDenomCaption}`
+            : base;
+        })()}
         denominatorTooltip="Latest revenue yield minus the listed-peer median revenue yield for the same quarter, in basis points. Positive = AMC monetises AAUM harder than the cohort."
         insights={yieldInsights}
         yoyBadge={(() => {
@@ -802,7 +818,16 @@ export default async function FinancialsPage({
 
       <Card
         title="Listed-AMC Peer Comparison"
-        subtitle={`${peerRows.length} listed AMCs · ${formatQuarterLabelLong(selectedPeriod)}${peerRows.some((p) => p.derivedFrom) ? " · derived rows flagged inline" : ""} · Source: Company filings · AMFI Fundwise AAUM`}
+        subtitleNode={
+          <div className="space-y-0.5">
+            <p className="text-xs text-muted-foreground">
+              This AMC against every other listed AMC for the same quarter — quick spot-check of where it sits in the cohort.
+            </p>
+            <p className="text-[11px] text-muted-foreground/80">
+              {`${peerRows.length} listed AMCs · ${formatQuarterLabelLong(selectedPeriod)}${peerRows.some((p) => p.derivedFrom) ? " · derived rows flagged inline" : ""} · Source: Company filings · AMFI Fundwise AAUM`}
+            </p>
+          </div>
+        }
         action={
           <FinancialsPeerCsvButton
             rows={peerRows}
@@ -810,6 +835,13 @@ export default async function FinancialsPage({
           />
         }
       >
+        <HowToRead>
+          <ul className="list-disc space-y-0.5 pl-4">
+            <li>Each row is one listed AMC for the same quarter as the selected AMC above.</li>
+            <li>Yields (Rev / Op / Profit) are expressed in <span className="text-foreground">bps of MF QAAUM</span>. Higher = AMC monetises AAUM more aggressively than peers.</li>
+            <li>Empty cells mean the metric wasn&rsquo;t cleanly disclosed in that AMC&rsquo;s standalone filings for the quarter — not zero.</li>
+          </ul>
+        </HowToRead>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

@@ -51,6 +51,64 @@ export function slicedMovingAverage(
   return movingAverage(fullHistory, window).slice(-visibleLength);
 }
 
+/** Picks the right average overlay for a chart card based on actual
+ *  data depth. The single helper every trendline callsite on the
+ *  dashboard should use — it removes the "average line starts
+ *  halfway through the chart" problem entirely.
+ *
+ *  Resolution rule:
+ *   - When `fullHistory.length >= visibleSeries.length + window − 1`,
+ *     returns a **trailing-window MA** series aligned to the visible
+ *     window. Every visible point has a real average. Caller wires
+ *     it as `trendline={overlay.trendline} trendlineName={overlay.label}`
+ *     and uses no `referenceValue`.
+ *   - Otherwise, returns a **visible-period mean** — a single
+ *     horizontal value rendered as `referenceValue` with
+ *     `referenceLabel="Shown-period avg"`. Real values only, no fake
+ *     early-period numbers. Caller passes no `trendline`.
+ *   - When even the visible series is empty / single-point, returns
+ *     `{ kind: "none" }` so the caller can suppress both overlays.
+ *
+ *  Window-to-label map: 12 → "12-month avg", 4 → "4-quarter avg",
+ *  anything else → "${window}-period avg". Visible-mean label is
+ *  always "Shown-period avg".
+ */
+export function adaptiveAverageOverlay(
+  fullHistory: SeriesPoint[],
+  visibleSeries: SeriesPoint[],
+  window: number
+):
+  | { kind: "trailing"; trendline: { label: string; value: number | null }[]; label: string }
+  | { kind: "visible-mean"; referenceValue: number; label: string }
+  | { kind: "none" } {
+  if (!visibleSeries || visibleSeries.length < 2) {
+    return { kind: "none" };
+  }
+  const trailingLabel =
+    window === 12
+      ? "12-month avg"
+      : window === 4
+        ? "4-quarter avg"
+        : `${window}-period avg`;
+  if (fullHistory.length >= visibleSeries.length + window - 1) {
+    return {
+      kind: "trailing",
+      trendline: slicedMovingAverage(fullHistory, window, visibleSeries.length),
+      label: trailingLabel,
+    };
+  }
+  const finite = visibleSeries.filter(
+    (p) => typeof p.value === "number" && Number.isFinite(p.value)
+  );
+  if (finite.length < 2) return { kind: "none" };
+  const mean = finite.reduce((s, p) => s + p.value, 0) / finite.length;
+  return {
+    kind: "visible-mean",
+    referenceValue: mean,
+    label: "Shown-period avg",
+  };
+}
+
 /** Latest-point YoY % change vs a lag-N prior point. Returns null
  *  when the series is too short, when either anchor value isn't a
  *  finite number, or when the prior value is zero (would divide

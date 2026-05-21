@@ -264,7 +264,16 @@ export default async function ComparePage({
 
       <Card
         title="AAUM Overlay"
-        subtitle="MF AAUM · ₹ Cr · both AMCs on one axis · Source: AMFI Fundwise AAUM"
+        subtitleNode={
+          <div className="space-y-0.5">
+            <p className="text-xs text-muted-foreground">
+              Both AMCs&rsquo; MF AAUM plotted on the same axis. The further apart the lines, the wider the scale gap.
+            </p>
+            <p className="text-[11px] text-muted-foreground/80">
+              ₹ Cr · Source: AMFI Fundwise AAUM
+            </p>
+          </div>
+        }
       >
         {overlayData.length > 0 ? (
           <MultiLine
@@ -295,7 +304,16 @@ export default async function ComparePage({
 
       <Card
         title="QoQ Growth Overlay"
-        subtitle="% change vs prior quarter · Source: AMFI Fundwise AAUM"
+        subtitleNode={
+          <div className="space-y-0.5">
+            <p className="text-xs text-muted-foreground">
+              Both AMCs&rsquo; quarter-on-quarter growth on one chart. Strips out scale differences — focuses on momentum.
+            </p>
+            <p className="text-[11px] text-muted-foreground/80">
+              % change vs prior quarter · Source: AMFI Fundwise AAUM
+            </p>
+          </div>
+        }
       >
         {(() => {
           const qoqA: { label: string; value: number }[] = [];
@@ -369,7 +387,16 @@ export default async function ComparePage({
       <section className="grid gap-4 lg:grid-cols-2">
         <Card
           title="Market Share Overlay"
-          subtitle="% of industry MF AAUM · Source: AMFI Fundwise AAUM"
+          subtitleNode={
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">
+                Both AMCs&rsquo; share of industry MF AAUM. Shows who has been gaining or losing ground.
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">
+                % of industry MF AAUM · Source: AMFI Fundwise AAUM
+              </p>
+            </div>
+          }
         >
           {shareOverlay.length > 0 ? (
             <MultiLine
@@ -400,7 +427,16 @@ export default async function ComparePage({
 
         <Card
           title="Rank Overlay"
-          subtitle="Position by AAUM (lower = larger AMC) · Source: AMFI Fundwise AAUM"
+          subtitleNode={
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">
+                Both AMCs&rsquo; rank in the industry by AAUM each quarter. Lower number = larger AMC.
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">
+                Source: AMFI Fundwise AAUM
+              </p>
+            </div>
+          }
         >
           {rankOverlay.length > 0 ? (
             <MultiLine
@@ -433,7 +469,16 @@ export default async function ComparePage({
       {detailA && detailB && (
         <Card
           title="Latest Quarter — Side-by-Side"
-          subtitle={`${detailA.latest?.fiscalLabel ?? "—"} · Source: AMFI Fundwise AAUM`}
+          subtitleNode={
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">
+                Headline metrics for the two AMCs in the most recent reported quarter.
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">
+                {`${detailA.latest?.fiscalLabel ?? "—"} · Source: AMFI Fundwise AAUM`}
+              </p>
+            </div>
+          }
         >
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

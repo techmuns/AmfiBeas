@@ -115,21 +115,29 @@ export function ChartWithContext({
       {action}
     </div>
   );
-  // Subtitle absorbs the denominator caption. Both pieces are read
-  // as one line so the eye doesn't bounce between header → pill →
-  // chart.
+  // Two-line subtitle: the plain-English description on the first
+  // line, dense metadata (denominator caption + optional info-tooltip)
+  // on its own smaller secondary line below. Decoupling these stops
+  // the readable subtitle from being crushed when the metadata is
+  // long, and prevents either line from wrapping into vertical
+  // one-word-per-line text inside narrow grid columns.
   const subtitleNode =
     subtitle || denominatorCaption || denominatorTooltip ? (
-      <>
-        {subtitle}
-        {subtitle && denominatorCaption ? " · " : ""}
-        {denominatorCaption}
-        {denominatorTooltip ? (
-          <span className="ml-1 align-middle">
-            <InfoTooltip label={denominatorTooltip} />
-          </span>
-        ) : null}
-      </>
+      <div className="space-y-0.5">
+        {subtitle && (
+          <p className="text-xs text-muted-foreground">{subtitle}</p>
+        )}
+        {(denominatorCaption || denominatorTooltip) && (
+          <p className="flex flex-wrap items-center gap-x-1 text-[11px] text-muted-foreground/80">
+            {denominatorCaption}
+            {denominatorTooltip ? (
+              <span className="align-middle">
+                <InfoTooltip label={denominatorTooltip} />
+              </span>
+            ) : null}
+          </p>
+        )}
+      </div>
     ) : undefined;
   // Single headline line — the engine's highest-priority insight.
   const headline = insights && insights.length > 0 ? insights[0] : null;
@@ -139,6 +147,7 @@ export function ChartWithContext({
       subtitleNode={subtitleNode}
       action={pillKind || yoyOk || action ? headerAction : undefined}
       className={className}
+      stackHeader
     >
       {headline && (
         <p className="mb-3 border-l-2 border-foreground/40 pl-3 text-[13px] italic leading-snug text-foreground/85">

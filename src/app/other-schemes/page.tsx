@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/Card";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { AreaTrend } from "@/components/charts/AreaTrend";
 import { BarSeries } from "@/components/charts/BarSeries";
-import { movingAverage } from "@/lib/chart-context";
+import { adaptiveAverageOverlay } from "@/lib/chart-context";
 import {
   dataMode,
   latestOtherSchemesCategoryBreakdown,
@@ -145,7 +145,10 @@ export default async function OtherSchemesPage({
       )}
 
       {activeTab === "snapshot" && (
-        <Card title="AUM Trend" subtitle={`Group V total · ${series.length} months`}>
+        <Card
+          title="AUM Trend"
+          subtitle="Group V total AUM by month. Tracks how the passive + other-schemes pool has grown."
+        >
           <AreaTrend data={aumSeries} name="AUM" />
         </Card>
       )}
@@ -162,7 +165,7 @@ export default async function OtherSchemesPage({
         <section className="grid gap-4 lg:grid-cols-2">
           <Card
             title="Net Flow"
-            subtitle="Inflow (+) / Outflow (−) per month · zero reference + signed area fill"
+            subtitle="Monthly net flow into the passive pool. Positive = money entered; negative = money left."
           >
             <BarSeries
               data={flowSeries}
@@ -173,15 +176,22 @@ export default async function OtherSchemesPage({
           </Card>
           <Card
             title="Funds Mobilised"
-            subtitle="Gross monthly inflow before redemptions · dashed line = 12M average"
+            subtitle="Gross monthly inflow before redemptions. The trailing average smooths out month-to-month noise."
           >
-            <BarSeries
-              data={mobilizedSeries}
-              color="hsl(var(--chart-1))"
-              name="Mobilised"
-              trendline={movingAverage(mobilizedSeries, 12)}
-              trendlineName="12M avg"
-            />
+            {(() => {
+              const ov = adaptiveAverageOverlay(mobilizedSeries, mobilizedSeries, 12);
+              return (
+                <BarSeries
+                  data={mobilizedSeries}
+                  color="hsl(var(--chart-1))"
+                  name="Mobilised"
+                  trendline={ov.kind === "trailing" ? ov.trendline : undefined}
+                  trendlineName={ov.kind === "trailing" ? ov.label : undefined}
+                  referenceValue={ov.kind === "visible-mean" ? ov.referenceValue : undefined}
+                  referenceLabel={ov.kind === "visible-mean" ? ov.label : undefined}
+                />
+              );
+            })()}
           </Card>
         </section>
       )}
