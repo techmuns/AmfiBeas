@@ -109,35 +109,114 @@ export function adaptiveAverageOverlay(
   };
 }
 
+/** Compute the calendar year-ago label for a given series label, or
+ *  null when the label isn't a recognized date format.
+ *
+ *  Recognized formats:
+ *    "YYYY-MM"    monthly        (subtract 1 from the year)
+ *    "FYxx-Qn"    quarterly      (subtract 1 from the FY year token)
+ *    "FYxxxx-Qn"  quarterly      (4-digit FY token)
+ *    "YYYY-Qn"    quarterly      (calendar-quarter labels)
+ *  Only honored when `lag` matches the unit (12 for month, 4 for
+ *  quarter). Otherwise returns null so callers fall back to positional
+ *  lookback.
+ *
+ *  Purpose: stop YoY helpers from producing nonsense numbers when the
+ *  underlying series has a gap. Positional `series[i - lag]` happily
+ *  jumps over missing months and returns a 3-year-old value as the
+ *  "year ago" anchor; this helper makes the year-ago row be the
+ *  literal calendar year-ago label, and the caller returns `null` when
+ *  that row isn't present.
+ */
+function expectedPriorLabel(label: string, lag: number): string | null {
+  const monthly = /^(\d{4})-(\d{2})$/.exec(label);
+  if (monthly && lag === 12) {
+    return `${Number(monthly[1]) - 1}-${monthly[2]}`;
+  }
+  if (lag === 4) {
+    const fyShort = /^FY(\d{2})-Q([1-4])$/.exec(label);
+    if (fyShort) {
+      const yrNum = Number(fyShort[1]) - 1;
+      return `FY${String(yrNum).padStart(2, "0")}-Q${fyShort[2]}`;
+    }
+    const fyLong = /^FY(\d{4})-Q([1-4])$/.exec(label);
+    if (fyLong) {
+      const yrNum = Number(fyLong[1]) - 1;
+      return `FY${String(yrNum).padStart(4, "0")}-Q${fyLong[2]}`;
+    }
+    const calQ = /^(\d{4})-Q([1-4])$/.exec(label);
+    if (calQ) {
+      return `${Number(calQ[1]) - 1}-Q${calQ[2]}`;
+    }
+  }
+  return null;
+}
+
 /** Latest-point YoY % change vs a lag-N prior point. Returns null
  *  when the series is too short, when either anchor value isn't a
  *  finite number, or when the prior value is zero (would divide
  *  by zero). Mirrors the math the chartInsights() YoY rule uses so
- *  the header badge and the insight line stay in lockstep. */
+ *  the header badge and the insight line stay in lockstep.
+ *
+ *  Prefers calendar-label lookup (e.g. for "2024-09" with lag=12, it
+ *  finds "2023-09" by literal match), falling back to positional
+ *  `series[len-1-lag]` only when the label format isn't recognized.
+ *  This protects against ingest gaps that would otherwise produce
+ *  spurious "year-ago" anchors many years back.
+ */
 export function latestYoyPct(
   series: SeriesPoint[],
   lag: number
 ): number | null {
-  if (series.length <= lag) return null;
+  if (series.length === 0) return null;
   const latest = series[series.length - 1];
-  const prior = series[series.length - 1 - lag];
-  if (!Number.isFinite(latest.value) || !Number.isFinite(prior.value)) {
+  if (!Number.isFinite(latest.value)) return null;
+  const expected = expectedPriorLabel(latest.label, lag);
+  let prior: SeriesPoint | undefined;
+  if (expected !== null) {
+    prior = series.find((p) => p.label === expected);
+  } else if (series.length > lag) {
+    prior = series[series.length - 1 - lag];
+  }
+  if (!prior || !Number.isFinite(prior.value) || prior.value === 0) {
     return null;
   }
-  if (prior.value === 0) return null;
   return ((latest.value - prior.value) / Math.abs(prior.value)) * 100;
 }
 
 /** Year-over-year % change for each point in a monthly series, where
- *  the lookback is 12 entries. Quarterly callers pass `lag = 4`. */
+ *  the lookback is 12 entries. Quarterly callers pass `lag = 4`.
+ *
+ *  Prefers calendar-label lookup (so a 2024-09 row YoY pairs with
+ *  the 2023-09 row by literal label match). Falls back to positional
+ *  `series[i - lag]` only when the labels aren't a recognized date
+ *  format. Returns `null` for points whose calendar year-ago row is
+ *  missing — preferable to silently jumping over a gap and reporting
+ *  a 3-year-old value as the "year ago" anchor (which produced an
+ *  observed +560% artefact when the snapshot had a 23-month gap).
+ */
 export function yoyPctSeries(
   series: SeriesPoint[],
   lag = 12
 ): { label: string; value: number | null }[] {
+  const byLabel = new Map(series.map((p) => [p.label, p.value]));
   return series.map((p, i) => {
+    const expected = expectedPriorLabel(p.label, lag);
+    if (expected !== null) {
+      const prev = byLabel.get(expected);
+      if (prev === undefined || prev === 0 || !Number.isFinite(prev)) {
+        return { label: p.label, value: null };
+      }
+      return {
+        label: p.label,
+        value: ((p.value - prev) / Math.abs(prev)) * 100,
+      };
+    }
     if (i < lag) return { label: p.label, value: null };
     const prior = series[i - lag].value;
-    if (prior === 0) return { label: p.label, value: null };
+    if (prior === 0 || !Number.isFinite(prior)) {
+      return { label: p.label, value: null };
+    }
     return {
       label: p.label,
       value: ((p.value - prior) / Math.abs(prior)) * 100,
