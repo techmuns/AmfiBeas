@@ -7,7 +7,6 @@ import { AreaTrend } from "@/components/charts/AreaTrend";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { AmcCompareSelector } from "@/components/compare/AmcCompareSelector";
 import { PostureRadarCompare } from "@/components/amc/PostureRadar";
-import { StrategicMovesCompare } from "@/components/amc/StrategicMovesTimeline";
 import {
   allAaumAmcs,
   amcAaumSeries,
@@ -388,15 +387,6 @@ export default async function ComparePage({
 
       {detailA && detailB && (
         <PostureRadarCompare
-          slugA={slugA}
-          slugB={slugB}
-          nameA={detailA.displayName}
-          nameB={detailB.displayName}
-        />
-      )}
-
-      {detailA && detailB && (
-        <StrategicMovesCompare
           slugA={slugA}
           slugB={slugB}
           nameA={detailA.displayName}

@@ -11,6 +11,7 @@ import { Heatmap } from "@/components/charts/Heatmap";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
 import { StrategicMovesCohortLane } from "@/components/amc/StrategicMovesCohortLane";
 import { ForwardBetsRegister } from "@/components/amc/ForwardBetsRegister";
+import { CohortUniqueInvestorShare } from "@/components/amc/CohortUniqueInvestorShare";
 import { amcAaumSeries, amcIndexRows } from "@/data/amc-detail";
 import {
   amcHealthGrowthMatrix,
@@ -32,6 +33,7 @@ import { resolveTab } from "@/lib/tabs";
 
 const AMC_TABS = [
   { id: "overview", label: "AMC Overview" },
+  { id: "insights", label: "Insights" },
   { id: "share-positioning", label: "Share & Positioning" },
 ] as const satisfies readonly DashboardTabDef[];
 type AmcTabId = (typeof AMC_TABS)[number]["id"];
@@ -189,7 +191,17 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {activeTab === "overview" && <StrategicMovesCohortLane />}
+      {activeTab === "insights" && (
+        <TabIntroCard
+          headline="What is the cohort signalling — share gains and strategic moves?"
+          summary="Two cohort-wide views distilled from listed-AMC earnings concalls — share of unique investors at the latest disclosed period, and every disclosed strategic move grouped by fiscal quarter."
+          watchNext="Whose Unique Investor Share is climbing fastest while peers stay flat, and which themes are emerging across multiple concalls at the same time."
+        />
+      )}
+
+      {activeTab === "insights" && <CohortUniqueInvestorShare />}
+
+      {activeTab === "insights" && <StrategicMovesCohortLane />}
 
       {activeTab === "overview" && rosterCards.length > 0 && (
         <Card
