@@ -363,7 +363,10 @@ export default async function MonthlyPage({
     const value = getKpiValue(amfiSelected, spec.field);
     if (value === null) return [];
     const provenance = getKpiProvenance(amfiSelected, spec.field);
-    const ctx = kpiContext(spec.field, 24);
+    // Anchor YoY / percentile / sparkline window to the user-selected
+    // month, not the latest available. Otherwise the picker changes the
+    // headline value but the pills stay stuck on the latest snapshot.
+    const ctx = kpiContext(spec.field, 24, amfiSelected?.month);
     return [
       {
         ...spec,

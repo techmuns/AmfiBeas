@@ -262,7 +262,10 @@ export default async function QuarterlyPage({
     const value = getQuarterlyKpiValue(selectedRow, field);
     if (value === null) return;
     const provenance = getQuarterlyKpiProvenance(selectedRow, field);
-    const ctx = quarterlyKpiContext(field, 16);
+    // Anchor YoY / percentile / sparkline to the user-selected quarter,
+    // not the latest. Without this the picker only changes the headline
+    // value while the pills stay pinned to the most recent quarter.
+    const ctx = quarterlyKpiContext(field, 16, selectedRow?.quarter);
     SNAPSHOT_KPI_CARDS.push({
       key: field,
       label,

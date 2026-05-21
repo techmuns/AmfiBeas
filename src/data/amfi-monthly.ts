@@ -212,7 +212,8 @@ export interface KpiContext {
 
 export function kpiContext(
   field: AmfiMonthlyKpiField,
-  lastN = 24
+  lastN = 24,
+  asOfMonth?: string
 ): KpiContext {
   const rows = amfiMonthlyRows();
   const series = rows
@@ -228,25 +229,34 @@ export function kpiContext(
       zScore: null,
     };
   }
-  const latest = series[series.length - 1];
-  const sparkline = series.slice(-lastN).map((p) => ({
+  // Anchor = caller-selected month when present, else the most recent row.
+  // YoY / percentile / z-score / sparkline window all key off the anchor so
+  // the snapshot card stays in sync when the user picks a non-latest month.
+  // If the requested month isn't in the series for this field, fall back to
+  // latest so cards never go blank.
+  const anchorIdx = asOfMonth
+    ? series.findIndex((p) => p.month === asOfMonth)
+    : -1;
+  const anchorPos = anchorIdx >= 0 ? anchorIdx : series.length - 1;
+  const anchor = series[anchorPos];
+  const sparkline = series.slice(Math.max(0, anchorPos - lastN + 1), anchorPos + 1).map((p) => ({
     label: p.month,
     value: p.value,
   }));
   const yearAgoMonth = (() => {
-    const [y, m] = latest.month.split("-").map(Number);
+    const [y, m] = anchor.month.split("-").map(Number);
     return `${y - 1}-${String(m).padStart(2, "0")}`;
   })();
   const yearAgoRow = series.find((p) => p.month === yearAgoMonth);
   const yoyPct =
     yearAgoRow && yearAgoRow.value !== 0
-      ? ((latest.value - yearAgoRow.value) / Math.abs(yearAgoRow.value)) * 100
+      ? ((anchor.value - yearAgoRow.value) / Math.abs(yearAgoRow.value)) * 100
       : null;
   const values = series.map((p) => p.value);
-  const stats = historicalSignalStats(values, latest.value);
+  const stats = historicalSignalStats(values, anchor.value);
   return {
-    latest: latest.value,
-    latestMonth: latest.month,
+    latest: anchor.value,
+    latestMonth: anchor.month,
     sparkline,
     yoyPct,
     percentile: stats.percentileRank,
