@@ -28,11 +28,8 @@ import { TabIntroCard } from "@/components/ui/TabIntroCard";
 import { resolveTab } from "@/lib/tabs";
 
 const AMC_TABS = [
-  { id: "snapshot", label: "Snapshot" },
-  { id: "share-movers", label: "Share Movers" },
-  { id: "positioning", label: "Positioning" },
-  { id: "roster", label: "Roster" },
-  { id: "health", label: "Health" },
+  { id: "overview", label: "AMC Overview" },
+  { id: "share-positioning", label: "Share & Positioning" },
 ] as const satisfies readonly DashboardTabDef[];
 type AmcTabId = (typeof AMC_TABS)[number]["id"];
 const AMC_TAB_IDS = AMC_TABS.map((t) => t.id) as readonly AmcTabId[];
@@ -45,7 +42,7 @@ export default async function AmcListPage({
   const sp = await searchParams;
   const healthLens: "growth" | "zscore" =
     sp.healthLens === "zscore" ? "zscore" : "growth";
-  const activeTab = resolveTab<AmcTabId>(sp.tab, AMC_TAB_IDS, "snapshot");
+  const activeTab = resolveTab<AmcTabId>(sp.tab, AMC_TAB_IDS, "overview");
   const data = amcIndexRows();
 
   if (!data) {
@@ -68,13 +65,13 @@ export default async function AmcListPage({
   const anomalies = latestQoqAnomalies(2);
   const quadrant = amcTrajectoryQuadrant(30);
 
-  // Cohort journey arrows (5Y / full-history span).
+  // Market-share movement arrows over the full available window.
   const journeyPoints = cohortJourneyMap(20) ?? [];
 
-  // Battle-cards rolodex — top 12 AMCs by AAUM, with their AAUM
+  // AMC Roster cards — top 12 AMCs by AAUM, with their AAUM
   // sparkline pulled from amc-detail. The card grid replaces the
   // tabular row scan with a visual scan.
-  const battleCards = quadrant
+  const rosterCards = quadrant
     ? [...quadrant.points]
         .slice(0, 12)
         .map((p) => {
@@ -119,15 +116,15 @@ export default async function AmcListPage({
         searchParams={sp}
       />
 
-      {activeTab === "snapshot" && (
+      {activeTab === "overview" && (
         <TabIntroCard
-          headline="Which AMCs moved the most this quarter?"
-          summary="Outliers vs the cohort median — names that grew or shrank ≥ 2σ from the median QoQ AAUM growth. Tiny-base names are flagged so a fast-grower from a small denominator doesn't get mistaken for a franchise shift."
-          watchNext="Whether the same names show up in the Share Movers and Positioning tabs."
+          headline="Who are the AMCs, what changed this quarter, and which names need attention?"
+          summary="Outliers vs the cohort median, the full AMC roster with rank and trailing AAUM, the quarterly health heatmap, and a searchable table — the primary cohort drilldown."
+          watchNext="Whether outlier names also show up as rank-7 to rank-15 quiet compounders in the roster — challengers worth tracking."
         />
       )}
 
-      {activeTab === "snapshot" && anomalies && anomalies.outliers.length > 0 && (
+      {activeTab === "overview" && anomalies && anomalies.outliers.length > 0 && (
         <Card
           title="Outliers this quarter"
           subtitle={`${anomalies.outliers.length} AMC${anomalies.outliers.length === 1 ? "" : "s"} with QoQ AAUM growth ≥2σ from the cohort median in ${anomalies.quarterLabel} · ${anomalies.participantCount} AMCs measured · Source: AMFI Fundwise AAUM`}
@@ -179,22 +176,14 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {activeTab === "roster" && (
-        <TabIntroCard
-          headline="Who are the top AMCs at a glance?"
-          summary="One card per AMC in the top cohort. Rank, share-tier, market share, QoQ and YoY growth, and the trailing AAUM line — everything you need for a fast cross-name scan."
-          watchNext="Whether any rank-7 to rank-15 names are quietly compounding faster than the Top-7."
-        />
-      )}
-
-      {activeTab === "roster" && battleCards.length > 0 && (
+      {activeTab === "overview" && rosterCards.length > 0 && (
         <Card
           title="AMC Roster"
           subtitle="Each card is one AMC · rank, tier, share, growth and trailing AAUM at a glance"
         >
           <div className="overflow-x-auto">
             <div className="flex gap-3" style={{ minWidth: "max-content" }}>
-              {battleCards.map((c) => (
+              {rosterCards.map((c) => (
                 <div key={c.slug} className="w-[200px] shrink-0">
                   <AmcBattleCard
                     slug={c.slug}
@@ -214,15 +203,15 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {activeTab === "share-movers" && (
+      {activeTab === "share-positioning" && (
         <TabIntroCard
-          headline="Which AMCs are gaining or losing market share?"
-          summary="Each arrow tracks one AMC's market-share move over the full available window. Green arrows are share gainers, red are losers, grey are roughly flat."
-          watchNext="A deeper share-drift breakdown — momentum vs incumbent moat — is tracked in issue #177."
+          headline="Who is gaining or losing share, and how are AMCs positioned?"
+          summary="Market-share movement arrows over the full available window, paired with the share-vs-growth quadrant and Leaders / Gainers / Defenders / Laggards bucket lists. Read for cohort-relative positioning, not absolute scale."
+          watchNext="Whether names that show up as share gainers also sit in the Leaders or Gainers buckets — that's the durable franchise signal."
         />
       )}
 
-      {activeTab === "share-movers" && journeyPoints.length >= 4 && (
+      {activeTab === "share-positioning" && journeyPoints.length >= 4 && (
         <Card
           title="Market-share movement"
           subtitle={`Each arrow = one AMC's market-share move from ${journeyPoints[0].startQuarterLabel} to ${journeyPoints[0].endQuarterLabel}`}
@@ -235,15 +224,7 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {activeTab === "positioning" && (
-        <TabIntroCard
-          headline="Who are the leaders, gainers, defenders and laggards?"
-          summary="Top AMCs plotted against their share of cohort AAUM and their QoQ growth rate. Cohort-median splits separate the four buckets so the quadrants stay meaningful even when the whole industry is growing or contracting."
-          watchNext="Whether names migrate between buckets quarter-over-quarter — challengers crossing into 'Leaders' is the structural signal."
-        />
-      )}
-
-      {activeTab === "positioning" && quadrant && quadrant.points.length >= 4 && (
+      {activeTab === "share-positioning" && quadrant && quadrant.points.length >= 4 && (
         <Card
           title="AMC Share vs Growth Quadrant"
           subtitle={`Top ${quadrant.points.length} AMCs by AAUM · ${quadrant.latestQuarterLabel} · cohort medians shown as dashed lines`}
@@ -267,15 +248,7 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {activeTab === "health" && (
-        <TabIntroCard
-          headline="Which AMCs have been consistently healthy or fragile?"
-          summary="QoQ AAUM growth rates (or z-scores vs the cohort) across the trailing 8 quarters. Stripes of green pick out steady compounders; stripes of red pick out structural laggards."
-          watchNext="Whether the z-score view shows any AMC consistently > +1σ — that's a cohort-relative compounding signal."
-        />
-      )}
-
-      {activeTab === "health" && health.rows.length > 0 && (
+      {activeTab === "overview" && health.rows.length > 0 && (
         <Card
           title="AMC Health Heatmap"
           subtitle={
@@ -324,7 +297,7 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {activeTab === "health" && <AmcSearchTable rows={data.rows} />}
+      {activeTab === "overview" && <AmcSearchTable rows={data.rows} />}
 
       <Card>
         <div className="space-y-1 text-xs text-muted-foreground">

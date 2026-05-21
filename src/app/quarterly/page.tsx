@@ -72,6 +72,7 @@ import { resolveTab } from "@/lib/tabs";
 const QUARTERLY_TABS = [
   { id: "snapshot", label: "Snapshot" },
   { id: "aaum-flows", label: "AAUM & Flows" },
+  { id: "categories", label: "Categories" },
   { id: "retail-schemes", label: "Retail & Schemes" },
   { id: "active-passive", label: "Active vs Passive" },
   { id: "concentration", label: "Concentration" },
@@ -1643,7 +1644,15 @@ export default async function QuarterlyPage({
         </div>
       )}
 
-      {activeTab === "aaum-flows" && hasAnyIiflTrend ? (
+      {activeTab === "categories" && (
+        <TabIntroCard
+          headline="Where is flow rotating across categories?"
+          summary="Quarterly QAAUM share and net-inflow share for each active-equity category. Read for which categories are absorbing money and which are quietly losing share through the cycle."
+          watchNext="Which categories show a sustained rise in net-inflow share before AUM share follows — the leading multi-quarter rotation signal."
+        />
+      )}
+
+      {activeTab === "categories" && hasAnyIiflTrend ? (
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">

@@ -1,11 +1,8 @@
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
-import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
-import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
 import { chartInsights, latestYoyPct } from "@/lib/chart-context";
-import { financialsMarketWrap } from "@/data/market-wrap-financials";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FilterBar } from "@/components/filters/FilterBar";
 import type { AmcStatus } from "@/components/filters/FilterBar";
@@ -13,7 +10,6 @@ import { QuarterPicker } from "@/components/filters/QuarterPicker";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { FinancialsPeerCsvButton } from "@/components/data/FinancialsPeerCsvButton";
-import { cyclePhaseHistory } from "@/data/market-indices";
 import { cn } from "@/lib/cn";
 import {
   SOURCED_FINANCIALS_SLUGS,
@@ -25,24 +21,6 @@ import {
 } from "@/data/aggregate";
 import { aaumProvenance } from "@/data/source";
 import { AMCS, getAMC } from "@/data/amcs";
-import {
-  DashboardTabs,
-  type DashboardTabDef,
-} from "@/components/layout/DashboardTabs";
-import { TabIntroCard } from "@/components/ui/TabIntroCard";
-import { resolveTab } from "@/lib/tabs";
-
-const FINANCIALS_TABS = [
-  { id: "snapshot", label: "Earnings Snapshot" },
-  { id: "pnl", label: "P&L" },
-  { id: "margins", label: "Margins" },
-  { id: "yields", label: "Yields" },
-  { id: "peers", label: "Peer Compare" },
-] as const satisfies readonly DashboardTabDef[];
-type FinancialsTabId = (typeof FINANCIALS_TABS)[number]["id"];
-const FINANCIALS_TAB_IDS = FINANCIALS_TABS.map(
-  (t) => t.id,
-) as readonly FinancialsTabId[];
 
 // /financials renders only AMCs flagged listed=true in the AMC registry.
 // Unlisted AMCs (SBI, Kotak, Axis, DSP, Mirae, …) don't publish standalone
@@ -75,11 +53,6 @@ export default async function FinancialsPage({
   const sp = await searchParams;
   const filters = parseFilters(sp);
   const status = buildAmcStatus();
-  const activeTab = resolveTab<FinancialsTabId>(
-    sp.tab,
-    FINANCIALS_TAB_IDS,
-    "snapshot",
-  );
 
   // Single-select: pick the first sourced AMC from the URL, else fall back to
   // hdfc. Unlisted / pending slugs in the URL are ignored.
@@ -116,9 +89,6 @@ export default async function FinancialsPage({
     { key: "op", name: "Operating Profit", color: "hsl(var(--chart-2))" },
     { key: "pat", name: "PAT", color: "hsl(var(--chart-3))" },
   ];
-
-  // Three-sentence "today's read" surfaced above the KPI grid.
-  const marketWrapData = financialsMarketWrap(slug, selectedPeriod);
 
   // Fixed-window chart axis. All three chart groups (Revenue/Op/PAT bars,
   // Margin Trend, Yields) share the same x-axis: the latest 8 calendar
@@ -515,7 +485,6 @@ export default async function FinancialsPage({
   const yieldNote = derivedHeadline
     ? `Derived · ${derivedHeadline} · ${yieldSource}`
     : yieldSource;
-  const cyclePhasePoints = cyclePhaseHistory();
 
   // ---- KPI-card sparklines + peer-median deltas ----
   // 8Q sparkline values for the focused AMC. Each strips nulls so the
@@ -579,37 +548,50 @@ export default async function FinancialsPage({
         amcs={LISTED_AMC_SLUGS}
       />
 
-      <MarketWrapCard wrap={marketWrapData} />
-
       <QuarterPicker
         availableQuarters={availableQuarters}
         selectedQuarter={selectedPeriod}
       />
 
-      <DashboardTabs
-        tabs={FINANCIALS_TABS}
-        activeId={activeTab}
-        searchParams={sp}
+      <FinancialSignalReadCard
+        amcName={profile?.name ?? slug.toUpperCase()}
+        latest={latest}
+        revenueYoy={latestYoyPct(revenueSeries, 4)}
+        patYoy={latestYoyPct(
+          pnlData.map((d) => ({ label: d.quarter, value: d.pat ?? 0 })),
+          4
+        )}
+        patMarginPct={latest.revenue > 0 ? (latest.pat / latest.revenue) * 100 : null}
+        opMarginPct={
+          latest.revenue > 0 ? (latest.operatingProfit / latest.revenue) * 100 : null
+        }
+        peerMedianPatMarginPct={peerMedianPatMargin}
+        revenueYieldBps={revenueYieldBps}
+        peerMedianRevenueYieldBps={peerMedianRevenueYield}
       />
 
-      {activeTab === "snapshot" && (
-        <TabIntroCard
-          headline={`How is ${profile?.name ?? slug.toUpperCase()} earning this quarter?`}
-          summary="Operating revenue, operating profit, PAT, margins and yields for the selected quarter — plus the cycle backdrop. The headline financial read in one panel."
-          watchNext="Whether PAT margin holds vs the listed-peer median as flow mix shifts."
-        />
-      )}
+      <Card
+        title="Revenue Yield Methodology"
+        subtitle="Important: how to read these numbers"
+      >
+        <p className="text-[12px] leading-snug text-muted-foreground">
+          Operating revenue yield is computed on{" "}
+          <span className="text-foreground">MF QAAUM</span> only —
+          (annualised Operating Revenue ÷ same-quarter MF QAAUM, ×10,000
+          for bps). The Operating Revenue field is the AMC&rsquo;s{" "}
+          <span className="text-foreground">total standalone P&amp;L
+          operating revenue</span>; it may include non-MF operating
+          revenue (AIF, PMS, advisory, international, etc.). A clean MF
+          management-fee split is{" "}
+          <span className="text-foreground">not</span> available in
+          public quarterly filings, so the revenue yield reads as a
+          slight ceiling on the true pure-MF management-fee yield.
+          Cross-AMC differences in the non-MF mix can therefore inflate
+          or deflate the comparison.
+          <InfoTooltip label="Placeholder fields exist in the data layer for mfManagementFees and otherOperatingRevenue. When AMC disclosure improves (e.g. segment-level filings consistently breaking out MF vs non-MF), these can be wired up without changing the chart shape." />
+        </p>
+      </Card>
 
-      {activeTab === "snapshot" && cyclePhasePoints.length > 0 && (
-        <Card
-          title="Cycle Regime"
-          subtitle="Per-month cycle phase · helps contextualise the quarters below"
-        >
-          <CycleRibbon points={cyclePhasePoints} lastN={84} />
-        </Card>
-      )}
-
-      {activeTab === "snapshot" && (
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label="Operating Revenue"
@@ -656,9 +638,7 @@ export default async function FinancialsPage({
           }
         />
       </section>
-      )}
 
-      {(activeTab === "snapshot" || activeTab === "margins" || activeTab === "yields") && (
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label="Operating Margin (% of revenue)"
@@ -713,190 +693,104 @@ export default async function FinancialsPage({
           }
         />
       </section>
-      )}
 
-      {activeTab === "snapshot" && (
-      <FinancialSignalReadCard
-        amcName={profile?.name ?? slug.toUpperCase()}
-        latest={latest}
-        revenueYoy={latestYoyPct(revenueSeries, 4)}
-        patYoy={latestYoyPct(
-          pnlData.map((d) => ({ label: d.quarter, value: d.pat ?? 0 })),
-          4
-        )}
-        patMarginPct={latest.revenue > 0 ? (latest.pat / latest.revenue) * 100 : null}
-        opMarginPct={
-          latest.revenue > 0 ? (latest.operatingProfit / latest.revenue) * 100 : null
-        }
-        peerMedianPatMarginPct={peerMedianPatMargin}
-        revenueYieldBps={revenueYieldBps}
-        peerMedianRevenueYieldBps={peerMedianRevenueYield}
-      />
-      )}
-
-      {(activeTab === "snapshot" || activeTab === "yields") && (
-      <Card
-        title="Revenue Yield Methodology"
-        subtitle="Important: how to read these numbers"
+      <ChartWithContext
+        title="Operating Revenue / Operating Profit / PAT"
+        subtitle="Quarterly · ₹ Cr · Operating Revenue from standalone P&L (all operating segments, excludes Other Income)"
+        flowKind="gross"
+        denominatorCaption={pnlDenomCaption}
+        denominatorTooltip="Latest quarter's PAT margin (PAT ÷ Operating Revenue) — the single headline operating-quality number for the AMC."
+        insights={pnlInsights}
+        yoyBadge={(() => {
+          const v = latestYoyPct(revenueSeries, 4);
+          return v === null ? undefined : { label: "Revenue YoY", pct: v };
+        })()}
       >
-        <p className="text-[12px] leading-snug text-muted-foreground">
-          Operating revenue yield is computed on{" "}
-          <span className="text-foreground">MF QAAUM</span> only —
-          (annualised Operating Revenue ÷ same-quarter MF QAAUM, ×10,000
-          for bps). The Operating Revenue field is the AMC&rsquo;s{" "}
-          <span className="text-foreground">total standalone P&amp;L
-          operating revenue</span>; it may include non-MF operating
-          revenue (AIF, PMS, advisory, international, etc.). A clean MF
-          management-fee split is{" "}
-          <span className="text-foreground">not</span> available in
-          public quarterly filings, so the revenue yield reads as a
-          slight ceiling on the true pure-MF management-fee yield.
-          Cross-AMC differences in the non-MF mix can therefore inflate
-          or deflate the comparison.
-          <InfoTooltip label="Placeholder fields exist in the data layer for mfManagementFees and otherOperatingRevenue. When AMC disclosure improves (e.g. segment-level filings consistently breaking out MF vs non-MF), these can be wired up without changing the chart shape." />
-        </p>
-      </Card>
-      )}
-
-      {activeTab === "pnl" && (
-        <TabIntroCard
-          headline="How is the P&L compounding?"
-          summary="Operating revenue, operating profit, and PAT across the available quarterly history. The right chart for spotting a margin or revenue inflection."
-          watchNext="Whether revenue YoY growth is decelerating faster than PAT YoY — usually a margin tailwind from cost discipline."
+        <GroupedBars
+          data={pnlData}
+          xKey="quarter"
+          bars={pnlSeries}
         />
-      )}
+      </ChartWithContext>
 
-      {activeTab === "margins" && (
-        <TabIntroCard
-          headline="Where do margins sit vs peers?"
-          summary="PAT and operating margins with the listed-peer median overlay. The cohort context separates franchise quality from sector tailwinds."
-          watchNext="Whether the PAT-margin gap to the peer median widens or narrows over the next 2-3 quarters."
+      <ChartWithContext
+        title="Margin Trend"
+        subtitle="PAT & Operating margin · % of Operating Revenue · peer-median overlay"
+        flowKind="stock"
+        denominatorCaption={marginDenomCaption}
+        denominatorTooltip="Latest PAT margin minus the listed-peer median PAT margin for the same quarter, in percentage points. Positive = AMC running above the cohort."
+        insights={marginInsights}
+        yoyBadge={(() => {
+          const v = latestYoyPct(patMarginSeries, 4);
+          return v === null ? undefined : { label: "PAT margin YoY", pct: v };
+        })()}
+      >
+        <MultiLine
+          data={marginDataWithPeer}
+          xKey="quarter"
+          valueFormat="pct"
+          axisFormat="pct"
+          showDots
+          dynamicYDomain
+          lines={[
+            { key: "patMargin", name: "PAT margin", color: "hsl(var(--chart-3))" },
+            { key: "opMargin", name: "Operating margin", color: "hsl(var(--chart-2))" },
+            {
+              key: "patMedian",
+              name: "Peer median PAT",
+              color: "hsl(var(--muted-foreground))",
+            },
+            {
+              key: "opMedian",
+              name: "Peer median Op",
+              color: "hsl(var(--muted-foreground))",
+            },
+          ]}
         />
-      )}
+      </ChartWithContext>
 
-      {activeTab === "yields" && (
-        <TabIntroCard
-          headline="How hard does this AMC monetise its AAUM?"
-          summary="Revenue, operating, and profit yields in bps of MF QAAUM, with peer-median overlays. Watch the gap to peers — small drifts here compound into material multi-year re-ratings."
-          watchNext="Whether the revenue yield stays inside its trailing 4-quarter range even as the equity / passive mix evolves."
+      <ChartWithContext
+        title="Yields (bps of MF QAAUM)"
+        subtitle={`${yieldsSubtitle} · peer-median overlay`}
+        flowKind="stock"
+        denominatorCaption={yieldDenomCaption}
+        denominatorTooltip="Latest revenue yield minus the listed-peer median revenue yield for the same quarter, in basis points. Positive = AMC monetises AAUM harder than the cohort."
+        insights={yieldInsights}
+        yoyBadge={(() => {
+          const v = latestYoyPct(revenueYieldSeries, 4);
+          return v === null ? undefined : { label: "Rev yield YoY", pct: v };
+        })()}
+      >
+        <MultiLine
+          data={yieldDataWithPeer}
+          xKey="quarter"
+          valueFormat="bps"
+          axisFormat="bps"
+          showDots
+          dynamicYDomain
+          lines={[
+            { key: "revenue", name: "Revenue yield", color: "hsl(var(--chart-1))" },
+            { key: "op", name: "Operating yield", color: "hsl(var(--chart-2))" },
+            { key: "profit", name: "Profit yield", color: "hsl(var(--chart-3))" },
+            {
+              key: "revenueMedian",
+              name: "Peer median revenue",
+              color: "hsl(var(--muted-foreground))",
+            },
+            {
+              key: "opMedian",
+              name: "Peer median op",
+              color: "hsl(var(--muted-foreground))",
+            },
+            {
+              key: "profitMedian",
+              name: "Peer median profit",
+              color: "hsl(var(--muted-foreground))",
+            },
+          ]}
         />
-      )}
+      </ChartWithContext>
 
-      {(activeTab === "pnl" || activeTab === "margins" || activeTab === "yields") && (
-      <section className="grid gap-4 lg:grid-cols-2">
-        {activeTab === "pnl" && (
-        <ChartWithContext
-          title="Operating Revenue / Operating Profit / PAT"
-          subtitle="Quarterly · ₹ Cr · Operating Revenue from standalone P&L (all operating segments, excludes Other Income)"
-          flowKind="gross"
-          denominatorCaption={pnlDenomCaption}
-          denominatorTooltip="Latest quarter's PAT margin (PAT ÷ Operating Revenue) — the single headline operating-quality number for the AMC."
-          insights={pnlInsights}
-          yoyBadge={(() => {
-            const v = latestYoyPct(revenueSeries, 4);
-            return v === null ? undefined : { label: "Revenue YoY", pct: v };
-          })()}
-        >
-          <GroupedBars
-            data={pnlData}
-            xKey="quarter"
-            bars={pnlSeries}
-          />
-        </ChartWithContext>
-        )}
-        {activeTab === "margins" && (
-        <ChartWithContext
-          title="Margin Trend"
-          subtitle="PAT & Operating margin · % of Operating Revenue · peer-median overlay"
-          flowKind="stock"
-          denominatorCaption={marginDenomCaption}
-          denominatorTooltip="Latest PAT margin minus the listed-peer median PAT margin for the same quarter, in percentage points. Positive = AMC running above the cohort."
-          insights={marginInsights}
-          yoyBadge={(() => {
-            const v = latestYoyPct(patMarginSeries, 4);
-            return v === null ? undefined : { label: "PAT margin YoY", pct: v };
-          })()}
-        >
-          <MultiLine
-            data={marginDataWithPeer}
-            xKey="quarter"
-            valueFormat="pct"
-            axisFormat="pct"
-            showDots
-            dynamicYDomain
-            lines={[
-              { key: "patMargin", name: "PAT margin", color: "hsl(var(--chart-3))" },
-              { key: "opMargin", name: "Operating margin", color: "hsl(var(--chart-2))" },
-              {
-                key: "patMedian",
-                name: "Peer median PAT",
-                color: "hsl(var(--muted-foreground))",
-              },
-              {
-                key: "opMedian",
-                name: "Peer median Op",
-                color: "hsl(var(--muted-foreground))",
-              },
-            ]}
-          />
-        </ChartWithContext>
-        )}
-        {activeTab === "yields" && (
-        <ChartWithContext
-          title="Yields (bps of MF QAAUM)"
-          subtitle={`${yieldsSubtitle} · peer-median overlay`}
-          flowKind="stock"
-          denominatorCaption={yieldDenomCaption}
-          denominatorTooltip="Latest revenue yield minus the listed-peer median revenue yield for the same quarter, in basis points. Positive = AMC monetises AAUM harder than the cohort."
-          insights={yieldInsights}
-          yoyBadge={(() => {
-            const v = latestYoyPct(revenueYieldSeries, 4);
-            return v === null ? undefined : { label: "Rev yield YoY", pct: v };
-          })()}
-          className="lg:col-span-2"
-        >
-          <MultiLine
-            data={yieldDataWithPeer}
-            xKey="quarter"
-            valueFormat="bps"
-            axisFormat="bps"
-            showDots
-            dynamicYDomain
-            lines={[
-              { key: "revenue", name: "Revenue yield", color: "hsl(var(--chart-1))" },
-              { key: "op", name: "Operating yield", color: "hsl(var(--chart-2))" },
-              { key: "profit", name: "Profit yield", color: "hsl(var(--chart-3))" },
-              {
-                key: "revenueMedian",
-                name: "Peer median revenue",
-                color: "hsl(var(--muted-foreground))",
-              },
-              {
-                key: "opMedian",
-                name: "Peer median op",
-                color: "hsl(var(--muted-foreground))",
-              },
-              {
-                key: "profitMedian",
-                name: "Peer median profit",
-                color: "hsl(var(--muted-foreground))",
-              },
-            ]}
-          />
-        </ChartWithContext>
-        )}
-      </section>
-      )}
-
-      {activeTab === "peers" && (
-        <TabIntroCard
-          headline="How does this AMC stack up against listed peers?"
-          summary="Side-by-side table of AAUM, P&L, margins and yields for every listed peer in the selected quarter. The cohort lens for franchise quality."
-          watchNext="Whether the rank ordering on PAT margin and revenue yield diverges — that's the early signal for differentiated business models."
-        />
-      )}
-
-      {activeTab === "peers" && (
       <Card
         title="Listed-AMC Peer Comparison"
         subtitle={`${peerRows.length} listed AMCs · ${formatQuarterLabelLong(selectedPeriod)}${peerRows.some((p) => p.derivedFrom) ? " · derived rows flagged inline" : ""} · Source: Company filings · AMFI Fundwise AAUM`}
@@ -1024,7 +918,6 @@ export default async function FinancialsPage({
           <InfoTooltip label="Yields = annualised P&L (quarterly × 4) ÷ same-quarter MF AAUM, expressed in bps (× 10,000). AAUM column in ₹ Cr; &quot;—&quot; marks quarters with missing AAUM or P&L data." />
         </p>
       </Card>
-      )}
     </div>
   );
 }

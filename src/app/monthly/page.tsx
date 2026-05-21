@@ -111,7 +111,8 @@ const MONTHLY_TABS = [
   { id: "flows", label: "Flows" },
   { id: "sip-retail", label: "SIP & Retail" },
   { id: "active-passive", label: "Active vs Passive" },
-  { id: "nfo-categories", label: "NFO & Categories" },
+  { id: "nfo", label: "NFO" },
+  { id: "categories", label: "Categories" },
   { id: "market-cycle", label: "Market Cycle" },
 ] as const satisfies readonly DashboardTabDef[];
 type MonthlyTabId = (typeof MONTHLY_TABS)[number]["id"];
@@ -1251,8 +1252,8 @@ export default async function MonthlyPage({
   );
 
   // Proportion diagnostics: category rotation, NFO drag, passive flow share.
-  // Each renders independently under its own tab now (rotation+nfoDrag in
-  // nfo-categories, passiveFlowShare in active-passive), so there's no
+  // Each renders independently under its own tab now (rotation in categories,
+  // nfoDrag in nfo, passiveFlowShare in active-passive), so there's no
   // longer a combined visibility gate.
   const rotation = categoryRotation(3, 5);
   const nfoDrag = nfoDragTrend(24);
@@ -2179,11 +2180,27 @@ export default async function MonthlyPage({
         </>
       )}
 
-      {activeTab === "nfo-categories" && rotation && (
+      {activeTab === "nfo" && (
+        <TabIntroCard
+          headline="How active is the NFO pipeline?"
+          summary="NFO launches and gross funds mobilised — new money raised by new schemes vs absorbed by existing ones. The leading indicator of fund-launch sentiment and AMC product appetite."
+          watchNext="Whether NFO drag falls back below its 5-year norm as winning categories absorb most of the flow."
+        />
+      )}
+
+      {activeTab === "categories" && (
+        <TabIntroCard
+          headline="Where is flow rotating across categories?"
+          summary="Category-level QAAUM share and net-inflow share inside the active-equity envelope, plus the rotation magnitude and category heatmap. Read for which categories are winning new money — and which ones investors trust through drawdowns."
+          watchNext="Which categories show a sustained rise in net-inflow share before AUM share follows."
+        />
+      )}
+
+      {activeTab === "categories" && rotation && (
         <CategoryRotationCard rotation={rotation} />
       )}
 
-      {activeTab === "nfo-categories" && nfoDrag && (
+      {activeTab === "nfo" && nfoDrag && (
         <NfoDragCard trend={nfoDrag} />
       )}
 
@@ -2284,7 +2301,7 @@ export default async function MonthlyPage({
         </div>
       )}
 
-      {activeTab === "nfo-categories" && hasAnyFolioOrNfo && (
+      {activeTab === "nfo" && hasAnyFolioOrNfo && (
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
@@ -2666,15 +2683,7 @@ export default async function MonthlyPage({
         </div>
       )}
 
-      {activeTab === "nfo-categories" && (
-        <TabIntroCard
-          headline="Where is flow rotating?"
-          summary="NFO launches, category share trends, and the active-equity category heatmap show which categories are winning new money — and which ones investors trust through drawdowns."
-          watchNext="Whether NFO drag falls back below its 5-year norm as winning categories absorb most of the flow."
-        />
-      )}
-
-      {activeTab === "nfo-categories" && iiflTrendHasAny && (
+      {activeTab === "categories" && iiflTrendHasAny && (
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
@@ -2771,11 +2780,11 @@ export default async function MonthlyPage({
         </div>
       )}
 
-      {activeTab === "nfo-categories" && categoryResilienceRows.length > 0 && (
+      {activeTab === "categories" && categoryResilienceRows.length > 0 && (
         <CategoryResilienceCard rows={categoryResilienceRows} />
       )}
 
-      {activeTab === "nfo-categories" && iiflHeatmapHasData && (
+      {activeTab === "categories" && iiflHeatmapHasData && (
         <div className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>

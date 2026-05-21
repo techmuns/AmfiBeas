@@ -21,24 +21,23 @@ import {
   formatPctSafe,
 } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import {
-  DashboardTabs,
-  type DashboardTabDef,
-} from "@/components/layout/DashboardTabs";
-import { TabIntroCard } from "@/components/ui/TabIntroCard";
-import { resolveTab } from "@/lib/tabs";
 
 const DEFAULT_A = "hdfc";
 const DEFAULT_B = "nippon";
 
-const COMPARE_TABS = [
-  { id: "read", label: "Read" },
-  { id: "size", label: "Size" },
-  { id: "share", label: "Share & Rank" },
-  { id: "growth", label: "Growth" },
-] as const satisfies readonly DashboardTabDef[];
-type CompareTabId = (typeof COMPARE_TABS)[number]["id"];
-const COMPARE_TAB_IDS = COMPARE_TABS.map((t) => t.id) as readonly CompareTabId[];
+/** Sort fiscal-quarter labels chronologically. Labels look like
+ *  `1QFY25`, `4QFY26`. Indian fiscal year FY25 spans Apr 2024 -
+ *  Mar 2025, so 1QFY25 < 2QFY25 < … < 4QFY25 < 1QFY26 chronologically.
+ *  A plain `.sort()` would order them lexicographically and place
+ *  `1QFY26` before `2QFY25` — visibly wrong on overlay x-axes. */
+function fiscalLabelSortKey(label: string): number {
+  const m = label.match(/^(\d+)QFY(\d+)$/);
+  if (!m) return 0;
+  return parseInt(m[2], 10) * 4 + parseInt(m[1], 10);
+}
+function sortFiscalLabelsChronologically(labels: string[]): string[] {
+  return [...labels].sort((a, b) => fiscalLabelSortKey(a) - fiscalLabelSortKey(b));
+}
 
 function resolveWithFallback(
   raw: string | string[] | undefined,
@@ -54,7 +53,6 @@ export default async function ComparePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const activeTab = resolveTab<CompareTabId>(sp.tab, COMPARE_TAB_IDS, "read");
   const universe = allAaumAmcs();
   const slugA = resolveWithFallback(sp.a, DEFAULT_A);
   const rawB = resolveWithFallback(sp.b, DEFAULT_B);
@@ -83,11 +81,16 @@ export default async function ComparePage({
           ? ("down" as const)
           : ("flat" as const);
 
-  // Overlay chart — align both series on a shared chronological set
-  // of fiscal-quarter labels. AMC series carry fiscalLabel already.
-  const overlayLabels = Array.from(
-    new Set([...aaumA.map((p) => p.fiscalLabel), ...aaumB.map((p) => p.fiscalLabel)])
-  ).sort();
+  // Overlay charts — align both AMC series on a shared chronological
+  // set of fiscal-quarter labels. AMC series carry fiscalLabel already.
+  const overlayLabels = sortFiscalLabelsChronologically(
+    Array.from(
+      new Set([
+        ...aaumA.map((p) => p.fiscalLabel),
+        ...aaumB.map((p) => p.fiscalLabel),
+      ])
+    )
+  );
   const aaumByLabelA = new Map(aaumA.map((p) => [p.fiscalLabel, p.avgAum]));
   const aaumByLabelB = new Map(aaumB.map((p) => [p.fiscalLabel, p.avgAum]));
   const overlayData = overlayLabels.map((label) => ({
@@ -98,9 +101,14 @@ export default async function ComparePage({
 
   const shareByLabelA = new Map(shareA.map((p) => [p.fiscalLabel, p.marketSharePct]));
   const shareByLabelB = new Map(shareB.map((p) => [p.fiscalLabel, p.marketSharePct]));
-  const shareOverlayLabels = Array.from(
-    new Set([...shareA.map((p) => p.fiscalLabel), ...shareB.map((p) => p.fiscalLabel)])
-  ).sort();
+  const shareOverlayLabels = sortFiscalLabelsChronologically(
+    Array.from(
+      new Set([
+        ...shareA.map((p) => p.fiscalLabel),
+        ...shareB.map((p) => p.fiscalLabel),
+      ])
+    )
+  );
   const shareOverlay = shareOverlayLabels.map((label) => ({
     label,
     [slugA]: shareByLabelA.get(label) ?? null,
@@ -109,9 +117,14 @@ export default async function ComparePage({
 
   const rankByLabelA = new Map(rankA.map((p) => [p.fiscalLabel, p.rank]));
   const rankByLabelB = new Map(rankB.map((p) => [p.fiscalLabel, p.rank]));
-  const rankOverlayLabels = Array.from(
-    new Set([...rankA.map((p) => p.fiscalLabel), ...rankB.map((p) => p.fiscalLabel)])
-  ).sort();
+  const rankOverlayLabels = sortFiscalLabelsChronologically(
+    Array.from(
+      new Set([
+        ...rankA.map((p) => p.fiscalLabel),
+        ...rankB.map((p) => p.fiscalLabel),
+      ])
+    )
+  );
   const rankOverlay = rankOverlayLabels.map((label) => ({
     label,
     [slugA]: rankByLabelA.get(label) ?? null,
@@ -137,23 +150,7 @@ export default async function ComparePage({
 
       <AmcCompareSelector amcs={universe} selectedA={slugA} selectedB={slugB} />
 
-      <DashboardTabs
-        tabs={COMPARE_TABS}
-        activeId={activeTab}
-        searchParams={sp}
-      />
-
-      {activeTab === "read" && (
-        <TabIntroCard
-          headline={`Which franchise has the upper hand — ${
-            detailA?.displayName ?? slugA.toUpperCase()
-          } or ${detailB?.displayName ?? slugB.toUpperCase()}?`}
-          summary="A one-paragraph buy-side read on size, share, growth pace, and rank, paired with the latest quarter's headline metrics side-by-side."
-          watchNext="Whether the faster grower is also the one gaining share — that's the durable franchise signal."
-        />
-      )}
-
-      {activeTab === "read" && detailA && detailB && (
+      {detailA && detailB && (
         <Card
           title="Comparison Read"
           subtitle="Buy-side one-line interpretation"
@@ -173,7 +170,267 @@ export default async function ComparePage({
         </Card>
       )}
 
-      {activeTab === "read" && detailA && detailB && (
+      <section className="grid gap-4 lg:grid-cols-2">
+          {[
+            { detail: detailA, growth: growthA, color: "hsl(var(--chart-1))" },
+            { detail: detailB, growth: growthB, color: "hsl(var(--chart-3))" },
+          ].map((side, idx) => {
+            if (!side.detail) {
+              return (
+                <Card key={idx} title="AMC unavailable" subtitle="No AAUM data for this slug.">
+                  <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
+                    —
+                  </div>
+                </Card>
+              );
+            }
+            const latest = side.detail.latest;
+            return (
+              <Card
+                key={side.detail.amcSlug}
+                title={side.detail.displayName}
+                subtitle={
+                  latest
+                    ? `${latest.fiscalLabel} · rank #${latest.rank} of ${latest.outOf}`
+                    : "No latest quarter"
+                }
+                action={
+                  <Link
+                    href={`/amc/${side.detail.amcSlug}`}
+                    className="inline-flex items-center text-[11px] text-muted-foreground hover:text-foreground"
+                  >
+                    Full page →
+                  </Link>
+                }
+              >
+                <div className="grid grid-cols-2 gap-3">
+                  <KpiCard
+                    label="MF Average AUM"
+                    value={formatCompactCrSafe(latest?.avgAum ?? null)}
+                    note={latest ? latest.fiscalLabel : ""}
+                  />
+                  <KpiCard
+                    label="Market Share"
+                    value={formatPctSafe(latest?.marketSharePct ?? null, 2)}
+                    note={latest ? `Within ${latest.outOf} AMCs` : ""}
+                  />
+                  <KpiCard
+                    label="QoQ AAUM"
+                    value={
+                      side.growth?.qoqGrowthPct === null ||
+                      side.growth?.qoqGrowthPct === undefined
+                        ? "—"
+                        : formatDelta(side.growth.qoqGrowthPct)
+                    }
+                    trend={trend(side.growth?.qoqGrowthPct)}
+                    note={side.growth?.prevQuarter ? "vs prior quarter" : "—"}
+                  />
+                  <KpiCard
+                    label="YoY AAUM"
+                    value={
+                      side.growth?.yoyGrowthPct === null ||
+                      side.growth?.yoyGrowthPct === undefined
+                        ? "—"
+                        : formatDelta(side.growth.yoyGrowthPct)
+                    }
+                    trend={trend(side.growth?.yoyGrowthPct)}
+                    note={
+                      side.growth?.yoyQuarter
+                        ? "Same quarter last year"
+                        : "Insufficient history"
+                    }
+                  />
+                </div>
+
+                <div className="mt-4">
+                  {(side.detail.amcSlug === slugA ? aaumA : aaumB).length > 0 ? (
+                    <AreaTrend
+                      data={(side.detail.amcSlug === slugA ? aaumA : aaumB).map((p) => ({
+                        month: p.fiscalLabel,
+                        value: p.avgAum,
+                      }))}
+                      name="AAUM"
+                    />
+                  ) : (
+                    <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+                      No AAUM history
+                    </div>
+                  )}
+                </div>
+              </Card>
+            );
+          })}
+        </section>
+
+      <Card
+        title="AAUM Overlay"
+        subtitle="MF AAUM · ₹ Cr · both AMCs on one axis · Source: AMFI Fundwise AAUM"
+      >
+        {overlayData.length > 0 ? (
+          <MultiLine
+            data={overlayData}
+            xKey="label"
+            valueFormat="cr"
+            axisFormat="cr"
+            labelFormat="none"
+            lines={[
+              {
+                key: slugA,
+                name: detailA?.displayName ?? slugA,
+                color: "hsl(var(--chart-1))",
+              },
+              {
+                key: slugB,
+                name: detailB?.displayName ?? slugB,
+                color: "hsl(var(--chart-3))",
+              },
+            ]}
+          />
+        ) : (
+          <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+            No overlapping AAUM data
+          </div>
+        )}
+      </Card>
+
+      <Card
+        title="QoQ Growth Overlay"
+        subtitle="% change vs prior quarter · Source: AMFI Fundwise AAUM"
+      >
+        {(() => {
+          const qoqA: { label: string; value: number }[] = [];
+          for (let i = 1; i < aaumA.length; i++) {
+            const cur = aaumA[i].avgAum;
+            const prev = aaumA[i - 1].avgAum;
+            if (prev > 0) {
+              qoqA.push({
+                label: aaumA[i].fiscalLabel,
+                value: ((cur - prev) / prev) * 100,
+              });
+            }
+          }
+          const qoqB: { label: string; value: number }[] = [];
+          for (let i = 1; i < aaumB.length; i++) {
+            const cur = aaumB[i].avgAum;
+            const prev = aaumB[i - 1].avgAum;
+            if (prev > 0) {
+              qoqB.push({
+                label: aaumB[i].fiscalLabel,
+                value: ((cur - prev) / prev) * 100,
+              });
+            }
+          }
+          const labels = sortFiscalLabelsChronologically(
+            Array.from(
+              new Set([
+                ...qoqA.map((q) => q.label),
+                ...qoqB.map((q) => q.label),
+              ])
+            )
+          );
+          const aMap = new Map(qoqA.map((q) => [q.label, q.value]));
+          const bMap = new Map(qoqB.map((q) => [q.label, q.value]));
+          const data = labels.map((label) => ({
+            label,
+            [slugA]: aMap.get(label) ?? null,
+            [slugB]: bMap.get(label) ?? null,
+          }));
+          if (data.length === 0) {
+            return (
+              <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                Insufficient history
+              </div>
+            );
+          }
+          return (
+            <MultiLine
+              data={data}
+              xKey="label"
+              valueFormat="pct"
+              axisFormat="pct"
+              labelFormat="none"
+              lines={[
+                {
+                  key: slugA,
+                  name: detailA?.displayName ?? slugA,
+                  color: "hsl(var(--chart-1))",
+                },
+                {
+                  key: slugB,
+                  name: detailB?.displayName ?? slugB,
+                  color: "hsl(var(--chart-3))",
+                },
+              ]}
+            />
+          );
+        })()}
+      </Card>
+
+      <section className="grid gap-4 lg:grid-cols-2">
+        <Card
+          title="Market Share Overlay"
+          subtitle="% of industry MF AAUM · Source: AMFI Fundwise AAUM"
+        >
+          {shareOverlay.length > 0 ? (
+            <MultiLine
+              data={shareOverlay}
+              xKey="label"
+              valueFormat="pct"
+              axisFormat="pct"
+              labelFormat="none"
+              lines={[
+                {
+                  key: slugA,
+                  name: detailA?.displayName ?? slugA,
+                  color: "hsl(var(--chart-1))",
+                },
+                {
+                  key: slugB,
+                  name: detailB?.displayName ?? slugB,
+                  color: "hsl(var(--chart-3))",
+                },
+              ]}
+            />
+          ) : (
+            <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+              No share history
+            </div>
+          )}
+        </Card>
+
+        <Card
+          title="Rank Overlay"
+          subtitle="Position by AAUM (lower = larger AMC) · Source: AMFI Fundwise AAUM"
+        >
+          {rankOverlay.length > 0 ? (
+            <MultiLine
+              data={rankOverlay}
+              xKey="label"
+              valueFormat="count"
+              axisFormat="count"
+              labelFormat="none"
+              lines={[
+                {
+                  key: slugA,
+                  name: detailA?.displayName ?? slugA,
+                  color: "hsl(var(--chart-1))",
+                },
+                {
+                  key: slugB,
+                  name: detailB?.displayName ?? slugB,
+                  color: "hsl(var(--chart-3))",
+                },
+              ]}
+            />
+          ) : (
+            <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+              No rank history
+            </div>
+          )}
+        </Card>
+      </section>
+
+      {detailA && detailB && (
         <Card
           title="Latest Quarter — Side-by-Side"
           subtitle={`${detailA.latest?.fiscalLabel ?? "—"} · Source: AMFI Fundwise AAUM`}
@@ -280,293 +537,6 @@ export default async function ComparePage({
             Δ = {detailA.displayName} − {detailB.displayName}. For Rank,
             a negative Δ means {detailA.displayName} is the larger AMC.
           </p>
-        </Card>
-      )}
-
-      {activeTab === "size" && (
-        <TabIntroCard
-          headline="How big are these AMCs and how have they grown?"
-          summary="Side-by-side KPI cards (AAUM, market share, rank, QoQ, YoY) and each AMC's full AAUM history, then an overlay so the two trajectories sit on one axis. Read for divergence — the bigger franchise isn't always the faster one."
-          watchNext="Whether the AAUM lines are widening or narrowing — that's the multi-year share story in one chart."
-        />
-      )}
-
-      {activeTab === "size" && (
-        <section className="grid gap-4 lg:grid-cols-2">
-          {[
-            { detail: detailA, growth: growthA, color: "hsl(var(--chart-1))" },
-            { detail: detailB, growth: growthB, color: "hsl(var(--chart-3))" },
-          ].map((side, idx) => {
-            if (!side.detail) {
-              return (
-                <Card key={idx} title="AMC unavailable" subtitle="No AAUM data for this slug.">
-                  <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
-                    —
-                  </div>
-                </Card>
-              );
-            }
-            const latest = side.detail.latest;
-            return (
-              <Card
-                key={side.detail.amcSlug}
-                title={side.detail.displayName}
-                subtitle={
-                  latest
-                    ? `${latest.fiscalLabel} · rank #${latest.rank} of ${latest.outOf}`
-                    : "No latest quarter"
-                }
-                action={
-                  <Link
-                    href={`/amc/${side.detail.amcSlug}`}
-                    className="inline-flex items-center text-[11px] text-muted-foreground hover:text-foreground"
-                  >
-                    Full page →
-                  </Link>
-                }
-              >
-                <div className="grid grid-cols-2 gap-3">
-                  <KpiCard
-                    label="MF Average AUM"
-                    value={formatCompactCrSafe(latest?.avgAum ?? null)}
-                    note={latest ? latest.fiscalLabel : ""}
-                  />
-                  <KpiCard
-                    label="Market Share"
-                    value={formatPctSafe(latest?.marketSharePct ?? null, 2)}
-                    note={latest ? `Within ${latest.outOf} AMCs` : ""}
-                  />
-                  <KpiCard
-                    label="QoQ AAUM"
-                    value={
-                      side.growth?.qoqGrowthPct === null ||
-                      side.growth?.qoqGrowthPct === undefined
-                        ? "—"
-                        : formatDelta(side.growth.qoqGrowthPct)
-                    }
-                    trend={trend(side.growth?.qoqGrowthPct)}
-                    note={side.growth?.prevQuarter ? "vs prior quarter" : "—"}
-                  />
-                  <KpiCard
-                    label="YoY AAUM"
-                    value={
-                      side.growth?.yoyGrowthPct === null ||
-                      side.growth?.yoyGrowthPct === undefined
-                        ? "—"
-                        : formatDelta(side.growth.yoyGrowthPct)
-                    }
-                    trend={trend(side.growth?.yoyGrowthPct)}
-                    note={
-                      side.growth?.yoyQuarter
-                        ? "Same quarter last year"
-                        : "Insufficient history"
-                    }
-                  />
-                </div>
-
-                <div className="mt-4">
-                  {(side.detail.amcSlug === slugA ? aaumA : aaumB).length > 0 ? (
-                    <AreaTrend
-                      data={(side.detail.amcSlug === slugA ? aaumA : aaumB).map((p) => ({
-                        month: p.fiscalLabel,
-                        value: p.avgAum,
-                      }))}
-                      name="AAUM"
-                    />
-                  ) : (
-                    <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
-                      No AAUM history
-                    </div>
-                  )}
-                </div>
-              </Card>
-            );
-          })}
-        </section>
-      )}
-
-      {activeTab === "size" && (
-        <Card
-          title="AAUM Overlay"
-          subtitle="MF AAUM · ₹ Cr · both AMCs on one axis · Source: AMFI Fundwise AAUM"
-        >
-          {overlayData.length > 0 ? (
-            <MultiLine
-              data={overlayData}
-              xKey="label"
-              valueFormat="cr"
-              axisFormat="cr"
-              labelFormat="none"
-              lines={[
-                {
-                  key: slugA,
-                  name: detailA?.displayName ?? slugA,
-                  color: "hsl(var(--chart-1))",
-                },
-                {
-                  key: slugB,
-                  name: detailB?.displayName ?? slugB,
-                  color: "hsl(var(--chart-3))",
-                },
-              ]}
-            />
-          ) : (
-            <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-              No overlapping AAUM data
-            </div>
-          )}
-        </Card>
-      )}
-
-      {activeTab === "share" && (
-        <TabIntroCard
-          headline="Who's gaining share and who's climbing the rank table?"
-          summary="Market share (% of industry AAUM) and rank-by-AAUM, overlaid for both AMCs across the available history. Share movement is the slow signal; rank movement is the visible one."
-          watchNext="A sustained rank crossover usually precedes a share crossover — watch for the lag."
-        />
-      )}
-
-      {activeTab === "share" && (
-        <section className="grid gap-4 lg:grid-cols-2">
-          <Card
-            title="Market Share Overlay"
-            subtitle="% of industry MF AAUM · Source: AMFI Fundwise AAUM"
-          >
-            {shareOverlay.length > 0 ? (
-              <MultiLine
-                data={shareOverlay}
-                xKey="label"
-                valueFormat="pct"
-                axisFormat="pct"
-                labelFormat="none"
-                lines={[
-                  {
-                    key: slugA,
-                    name: detailA?.displayName ?? slugA,
-                    color: "hsl(var(--chart-1))",
-                  },
-                  {
-                    key: slugB,
-                    name: detailB?.displayName ?? slugB,
-                    color: "hsl(var(--chart-3))",
-                  },
-                ]}
-              />
-            ) : (
-              <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                No share history
-              </div>
-            )}
-          </Card>
-
-          <Card
-            title="Rank Overlay"
-            subtitle="Position by AAUM (lower = larger AMC) · Source: AMFI Fundwise AAUM"
-          >
-            {rankOverlay.length > 0 ? (
-              <MultiLine
-                data={rankOverlay}
-                xKey="label"
-                valueFormat="count"
-                axisFormat="count"
-                labelFormat="none"
-                lines={[
-                  {
-                    key: slugA,
-                    name: detailA?.displayName ?? slugA,
-                    color: "hsl(var(--chart-1))",
-                  },
-                  {
-                    key: slugB,
-                    name: detailB?.displayName ?? slugB,
-                    color: "hsl(var(--chart-3))",
-                  },
-                ]}
-              />
-            ) : (
-              <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                No rank history
-              </div>
-            )}
-          </Card>
-        </section>
-      )}
-
-      {activeTab === "growth" && (
-        <TabIntroCard
-          headline="Who's running faster — and is the lead opening or closing?"
-          summary="Quarter-on-quarter AAUM growth for both AMCs across the available history. The cleanest view of momentum, untouched by base-size."
-          watchNext="Whether the leader's QoQ lead is widening or narrowing — three quarters of one-sided wins is usually a regime change."
-        />
-      )}
-
-      {activeTab === "growth" && (
-        <Card
-          title="QoQ Growth Overlay"
-          subtitle="% change vs prior quarter · Source: AMFI Fundwise AAUM"
-        >
-          {(() => {
-            const qoqA: { label: string; value: number }[] = [];
-            for (let i = 1; i < aaumA.length; i++) {
-              const cur = aaumA[i].avgAum;
-              const prev = aaumA[i - 1].avgAum;
-              if (prev > 0) {
-                qoqA.push({
-                  label: aaumA[i].fiscalLabel,
-                  value: ((cur - prev) / prev) * 100,
-                });
-              }
-            }
-            const qoqB: { label: string; value: number }[] = [];
-            for (let i = 1; i < aaumB.length; i++) {
-              const cur = aaumB[i].avgAum;
-              const prev = aaumB[i - 1].avgAum;
-              if (prev > 0) {
-                qoqB.push({
-                  label: aaumB[i].fiscalLabel,
-                  value: ((cur - prev) / prev) * 100,
-                });
-              }
-            }
-            const labels = Array.from(
-              new Set([...qoqA.map((q) => q.label), ...qoqB.map((q) => q.label)])
-            ).sort();
-            const aMap = new Map(qoqA.map((q) => [q.label, q.value]));
-            const bMap = new Map(qoqB.map((q) => [q.label, q.value]));
-            const data = labels.map((label) => ({
-              label,
-              [slugA]: aMap.get(label) ?? null,
-              [slugB]: bMap.get(label) ?? null,
-            }));
-            if (data.length === 0) {
-              return (
-                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  Insufficient history
-                </div>
-              );
-            }
-            return (
-              <MultiLine
-                data={data}
-                xKey="label"
-                valueFormat="pct"
-                axisFormat="pct"
-                labelFormat="none"
-                lines={[
-                  {
-                    key: slugA,
-                    name: detailA?.displayName ?? slugA,
-                    color: "hsl(var(--chart-1))",
-                  },
-                  {
-                    key: slugB,
-                    name: detailB?.displayName ?? slugB,
-                    color: "hsl(var(--chart-3))",
-                  },
-                ]}
-              />
-            );
-          })()}
         </Card>
       )}
     </div>
