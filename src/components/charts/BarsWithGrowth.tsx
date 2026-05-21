@@ -126,8 +126,12 @@ export function BarsWithGrowth({
           cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.4 }}
           content={
             <ChartTooltip
-              formatValue={(n, key) => {
-                if (key === "growthPct") {
+              // ChartTooltip passes the series display name (e.g.
+              // "Equity YoY %"), not the dataKey. Match on the
+              // growth-line name we declared on the <Line> below so
+              // the percent row renders as a percent, not currency.
+              formatValue={(n, seriesName) => {
+                if (seriesName === growthLabel) {
                   if (n === null || n === undefined || !Number.isFinite(n)) {
                     return "—";
                   }
