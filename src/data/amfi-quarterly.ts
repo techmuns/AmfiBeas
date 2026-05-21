@@ -441,7 +441,8 @@ export interface QuarterlyKpiContext {
 
 export function quarterlyKpiContext(
   field: AmfiQuarterlyKpiField,
-  lastN = 16
+  lastN = 16,
+  asOfQuarter?: string
 ): QuarterlyKpiContext {
   const rows = amfiQuarterlyIndustryRows();
   const series = rows.flatMap((r) => {
@@ -459,16 +460,26 @@ export function quarterlyKpiContext(
       zScore: null,
     };
   }
-  const latest = series[series.length - 1];
+  // Anchor = caller-selected quarter when present, else the most recent
+  // row. YoY (vs row 4 quarters back from anchor), percentile / z-score,
+  // and the sparkline window all key off the anchor so the snapshot card
+  // stays in sync when the user picks a non-latest quarter. Fallback to
+  // latest if the requested quarter isn't in the field's series.
+  const anchorIdx = asOfQuarter
+    ? series.findIndex((p) => p.quarter === asOfQuarter)
+    : -1;
+  const anchorPos = anchorIdx >= 0 ? anchorIdx : series.length - 1;
+  const anchor = series[anchorPos];
   const sparkline = series
-    .slice(-lastN)
+    .slice(Math.max(0, anchorPos - lastN + 1), anchorPos + 1)
     .map((p) => ({ label: p.label, value: p.value }));
-  // YoY = vs the row 4 quarters back (same fiscal quarter, prior year).
-  const yearAgoIdx = series.length - 1 - 4;
+  // YoY = vs the row 4 quarters back from anchor (same fiscal quarter,
+  // prior year).
+  const yearAgoIdx = anchorPos - 4;
   const yearAgo = yearAgoIdx >= 0 ? series[yearAgoIdx] : null;
   const yoyPct =
     yearAgo && yearAgo.value !== 0
-      ? ((latest.value - yearAgo.value) / Math.abs(yearAgo.value)) * 100
+      ? ((anchor.value - yearAgo.value) / Math.abs(yearAgo.value)) * 100
       : null;
   const values = series.map((p) => p.value);
   const n = values.length;
@@ -476,12 +487,12 @@ export function quarterlyKpiContext(
   const variance = values.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
   const stdDev = n >= 2 && variance > 0 ? Math.sqrt(variance) : null;
   const zScore =
-    stdDev !== null && stdDev > 0 ? (latest.value - mean) / stdDev : null;
-  const lessOrEqual = values.filter((v) => v <= latest.value).length;
+    stdDev !== null && stdDev > 0 ? (anchor.value - mean) / stdDev : null;
+  const lessOrEqual = values.filter((v) => v <= anchor.value).length;
   const percentile = (lessOrEqual / n) * 100;
   return {
-    latest: latest.value,
-    latestQuarter: latest.quarter,
+    latest: anchor.value,
+    latestQuarter: anchor.quarter,
     sparkline,
     yoyPct,
     percentile,

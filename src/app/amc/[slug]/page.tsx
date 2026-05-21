@@ -445,19 +445,22 @@ export default async function AmcPage({
       <SectionDivider
         eyebrow="Section 2"
         label="Trends"
-        context="AAUM, market share and rank trajectory vs the cohort."
+        context="AAUM, market share and rank movement vs the cohort."
       />
 
       <section className="grid gap-4 lg:grid-cols-2">
         <ChartWithContext
           title="AAUM Trend"
-          subtitle={
-            aaumLens === "share"
-              ? `${aaumSeries.length} quarter${aaumSeries.length === 1 ? "" : "s"} · MF AAUM · ₹ Cr · Source: AMFI Fundwise AAUM`
-              : `Rebased to 100 at start · ${aaumSeries.length} quarter${aaumSeries.length === 1 ? "" : "s"} · this AMC vs industry total · Source: AMFI Fundwise AAUM`
-          }
+          subtitle="This AMC&rsquo;s AAUM by quarter. Tracks how the asset base has grown."
           flowKind="stock"
-          denominatorCaption={aaumDenomCaption}
+          denominatorCaption={(() => {
+            const base = aaumLens === "share"
+              ? `${aaumSeries.length} quarter${aaumSeries.length === 1 ? "" : "s"} · MF AAUM · ₹ Cr · Source: AMFI Fundwise AAUM`
+              : `Rebased to 100 at start · ${aaumSeries.length} quarter${aaumSeries.length === 1 ? "" : "s"} · this AMC vs industry total · Source: AMFI Fundwise AAUM`;
+            return aaumDenomCaption
+              ? `${base} · ${aaumDenomCaption}`
+              : base;
+          })()}
           denominatorTooltip="Latest AMC AAUM as a percentage of industry total — the cleanest peer benchmark for 'is this AMC pulling ahead of the industry?'."
           insights={aaumInsights}
           yoyBadge={(() => {
@@ -517,9 +520,14 @@ export default async function AmcPage({
         </ChartWithContext>
         <ChartWithContext
           title="Market Share Trend"
-          subtitle="% of industry MF AAUM · cohort median overlay · Source: AMFI Fundwise AAUM"
+          subtitle="This AMC&rsquo;s share of industry MF AAUM, against the cohort median."
           flowKind="stock"
-          denominatorCaption={shareDenomCaption}
+          denominatorCaption={(() => {
+            const base = "% of industry MF AAUM · cohort median overlay · Source: AMFI Fundwise AAUM";
+            return shareDenomCaption
+              ? `${base} · ${shareDenomCaption}`
+              : base;
+          })()}
           denominatorTooltip="Latest market share minus the share four quarters back, in percentage points — share moves slowly, so the YoY pp delta is the more informative read."
           insights={shareInsights}
           yoyBadge={(() => {
@@ -554,9 +562,14 @@ export default async function AmcPage({
         </ChartWithContext>
         <ChartWithContext
           title="Rank Trend"
-          subtitle="Position by AAUM (lower number = larger AMC) · tier bands shown · Source: AMFI Fundwise AAUM"
+          subtitle="This AMC&rsquo;s rank in the industry by AAUM. Lower number = larger AMC."
           flowKind="stock"
-          denominatorCaption={rankDenomCaption}
+          denominatorCaption={(() => {
+            const base = "Position by AAUM (lower number = larger AMC) · tier bands shown · Source: AMFI Fundwise AAUM";
+            return rankDenomCaption
+              ? `${base} · ${rankDenomCaption}`
+              : base;
+          })()}
           denominatorTooltip="Change in league-table position vs four quarters ago — a single up-or-down read on whether this AMC is climbing or slipping."
         >
           {rankChart.length > 0 ? (

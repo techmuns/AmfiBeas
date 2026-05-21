@@ -21,6 +21,20 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
    * from the older generated/demo widgets.
    */
   tone?: "live" | "demo" | "pending";
+  /**
+   * When true, header stacks title / subtitle / action area vertically
+   * at every viewport width — no responsive switch to a horizontal
+   * row layout. Use for chart cards whose action area packs multiple
+   * control groups (Basis chip + YoY pill + lens toggle + chart-type
+   * toggle); the responsive `sm:flex-row` layout would otherwise
+   * compete with the title for horizontal space and crush long titles
+   * into one-word-per-line wraps inside narrow grid columns.
+   *
+   * `ChartWithContext` passes this unconditionally so the rule
+   * applies to every chart card on the dashboard. Plain Card callers
+   * (KpiCard, methodology cards) keep the default responsive layout.
+   */
+  stackHeader?: boolean;
 }
 
 export function Card({
@@ -31,6 +45,7 @@ export function Card({
   className,
   children,
   tone,
+  stackHeader,
   ...rest
 }: CardProps) {
   const isDemo = tone === "demo" || tone === "pending";
@@ -58,26 +73,59 @@ export function Card({
       {...rest}
     >
       {(title || action || toneBadge) && (
-        <div className="flex items-start justify-between gap-4 px-6 pt-5">
-          <div>
-            {title && (
-              <h3 className="text-sm font-medium tracking-tight">{title}</h3>
+        stackHeader ? (
+          // Vertical-at-every-width layout: title → subtitle → action
+          // row. Used by ChartWithContext for every chart card so the
+          // header never crushes the title to share space with a
+          // crowded action area.
+          <div className="flex flex-col gap-3 px-6 pt-5">
+            <div className="min-w-0 space-y-1">
+              {title && (
+                <h3 className="text-sm font-medium tracking-tight">{title}</h3>
+              )}
+              {subtitleNode ? (
+                <div className="text-xs text-muted-foreground">{subtitleNode}</div>
+              ) : subtitle ? (
+                <p className="text-xs text-muted-foreground">{subtitle}</p>
+              ) : null}
+            </div>
+            {(action || toneBadge) && (
+              <div className="flex flex-wrap items-center gap-2">
+                {action}
+                {toneBadge && (
+                  <span className="shrink-0 rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {toneBadge}
+                  </span>
+                )}
+              </div>
             )}
-            {subtitleNode ? (
-              <p className="text-xs text-muted-foreground">{subtitleNode}</p>
-            ) : subtitle ? (
-              <p className="text-xs text-muted-foreground">{subtitle}</p>
-            ) : null}
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {action}
-            {toneBadge && (
-              <span className="shrink-0 rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-                {toneBadge}
-              </span>
+        ) : (
+          <div className="flex flex-col gap-3 px-6 pt-5 sm:flex-row sm:items-start sm:justify-between">
+            {/* min-w-0 + flex-1 is the critical pair: without min-w-0 a
+                flex item refuses to shrink below its content width. */}
+            <div className="min-w-0 flex-1 space-y-1">
+              {title && (
+                <h3 className="text-sm font-medium tracking-tight">{title}</h3>
+              )}
+              {subtitleNode ? (
+                <div className="text-xs text-muted-foreground">{subtitleNode}</div>
+              ) : subtitle ? (
+                <p className="text-xs text-muted-foreground">{subtitle}</p>
+              ) : null}
+            </div>
+            {(action || toneBadge) && (
+              <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                {action}
+                {toneBadge && (
+                  <span className="shrink-0 rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {toneBadge}
+                  </span>
+                )}
+              </div>
             )}
           </div>
-        </div>
+        )
       )}
       <div className="px-6 pb-6 pt-4">{children}</div>
     </div>

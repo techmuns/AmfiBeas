@@ -36,9 +36,17 @@ interface ChartWithContextProps {
   className?: string;
 }
 
+/** Static "Basis" chip styling for the Net/Gross flow-kind metadata.
+ *  Visually distinct from `LensToggle` segmented pills (which are
+ *  user-clickable controls) so beginners can tell at a glance that
+ *  the basis chip describes WHAT the data is, not HOW it's viewed. */
 const FLOW_PILL_CLASS: Record<"net" | "gross", string> = {
-  net: "border-foreground/30 bg-muted text-foreground",
-  gross: "border-foreground/30 bg-foreground/5 text-foreground",
+  net: "border-foreground/40 bg-foreground/10 text-foreground",
+  gross: "border-foreground/40 bg-foreground/5 text-foreground",
+};
+const FLOW_PILL_TITLE: Record<"net" | "gross", string> = {
+  net: "This card shows net flows (inflows minus outflows / redemptions).",
+  gross: "This card shows gross flows (inflows only, no redemptions netted).",
 };
 
 /**
@@ -74,7 +82,22 @@ export function ChartWithContext({
     yoyBadge && Number.isFinite(yoyBadge.pct) ? yoyBadge : null;
   const yoyPositive = yoyOk ? yoyOk.pct >= 0 : false;
   const headerAction = (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
+      {/* Basis chip first — metadata describing the data the card uses,
+          visually distinct from segmented control pills below. */}
+      {pillKind && (
+        <span
+          className={cn(
+            "shrink-0 rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+            FLOW_PILL_CLASS[pillKind]
+          )}
+          title={FLOW_PILL_TITLE[pillKind]}
+          aria-label={`Data basis: ${pillKind} flows`}
+        >
+          <span className="mr-1 font-normal opacity-60">Basis ·</span>
+          {pillKind === "net" ? "NET" : "GROSS"}
+        </span>
+      )}
       {yoyOk && (
         <span
           className={cn(
@@ -89,34 +112,32 @@ export function ChartWithContext({
           {yoyOk.pct.toFixed(1)}%
         </span>
       )}
-      {pillKind && (
-        <span
-          className={cn(
-            "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-            FLOW_PILL_CLASS[pillKind]
-          )}
-        >
-          {pillKind === "net" ? "Net" : "Gross"}
-        </span>
-      )}
       {action}
     </div>
   );
-  // Subtitle absorbs the denominator caption. Both pieces are read
-  // as one line so the eye doesn't bounce between header → pill →
-  // chart.
+  // Two-line subtitle: the plain-English description on the first
+  // line, dense metadata (denominator caption + optional info-tooltip)
+  // on its own smaller secondary line below. Decoupling these stops
+  // the readable subtitle from being crushed when the metadata is
+  // long, and prevents either line from wrapping into vertical
+  // one-word-per-line text inside narrow grid columns.
   const subtitleNode =
     subtitle || denominatorCaption || denominatorTooltip ? (
-      <>
-        {subtitle}
-        {subtitle && denominatorCaption ? " · " : ""}
-        {denominatorCaption}
-        {denominatorTooltip ? (
-          <span className="ml-1 align-middle">
-            <InfoTooltip label={denominatorTooltip} />
-          </span>
-        ) : null}
-      </>
+      <div className="space-y-0.5">
+        {subtitle && (
+          <p className="text-xs text-muted-foreground">{subtitle}</p>
+        )}
+        {(denominatorCaption || denominatorTooltip) && (
+          <p className="flex flex-wrap items-center gap-x-1 text-[11px] text-muted-foreground/80">
+            {denominatorCaption}
+            {denominatorTooltip ? (
+              <span className="align-middle">
+                <InfoTooltip label={denominatorTooltip} />
+              </span>
+            ) : null}
+          </p>
+        )}
+      </div>
     ) : undefined;
   // Single headline line — the engine's highest-priority insight.
   const headline = insights && insights.length > 0 ? insights[0] : null;
@@ -126,6 +147,7 @@ export function ChartWithContext({
       subtitleNode={subtitleNode}
       action={pillKind || yoyOk || action ? headerAction : undefined}
       className={className}
+      stackHeader
     >
       {headline && (
         <p className="mb-3 border-l-2 border-foreground/40 pl-3 text-[13px] italic leading-snug text-foreground/85">

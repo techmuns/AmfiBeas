@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeftRight, AlertTriangle, TrendingUp, TrendingDown } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
+import { HowToRead } from "@/components/ui/HowToRead";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { AmcBattleCard } from "@/components/ui/AmcBattleCard";
 import { AmcQuadrantChart } from "@/components/charts/AmcQuadrantChart";
@@ -20,6 +21,19 @@ import {
 } from "@/data/amc-peer-universe";
 import { LensToggle } from "@/components/ui/LensToggle";
 import { cn } from "@/lib/cn";
+import {
+  DashboardTabs,
+  type DashboardTabDef,
+} from "@/components/layout/DashboardTabs";
+import { TabIntroCard } from "@/components/ui/TabIntroCard";
+import { resolveTab } from "@/lib/tabs";
+
+const AMC_TABS = [
+  { id: "overview", label: "AMC Overview" },
+  { id: "share-positioning", label: "Share & Positioning" },
+] as const satisfies readonly DashboardTabDef[];
+type AmcTabId = (typeof AMC_TABS)[number]["id"];
+const AMC_TAB_IDS = AMC_TABS.map((t) => t.id) as readonly AmcTabId[];
 
 export default async function AmcListPage({
   searchParams,
@@ -29,6 +43,7 @@ export default async function AmcListPage({
   const sp = await searchParams;
   const healthLens: "growth" | "zscore" =
     sp.healthLens === "zscore" ? "zscore" : "growth";
+  const activeTab = resolveTab<AmcTabId>(sp.tab, AMC_TAB_IDS, "overview");
   const data = amcIndexRows();
 
   if (!data) {
@@ -51,13 +66,13 @@ export default async function AmcListPage({
   const anomalies = latestQoqAnomalies(2);
   const quadrant = amcTrajectoryQuadrant(30);
 
-  // Cohort journey arrows (5Y / full-history span).
+  // Market-share movement arrows over the full available window.
   const journeyPoints = cohortJourneyMap(20) ?? [];
 
-  // Battle-cards rolodex — top 12 AMCs by AAUM, with their AAUM
+  // AMC Roster cards — top 12 AMCs by AAUM, with their AAUM
   // sparkline pulled from amc-detail. The card grid replaces the
   // tabular row scan with a visual scan.
-  const battleCards = quadrant
+  const rosterCards = quadrant
     ? [...quadrant.points]
         .slice(0, 12)
         .map((p) => {
@@ -96,10 +111,34 @@ export default async function AmcListPage({
         }
       />
 
-      {anomalies && anomalies.outliers.length > 0 && (
+      <DashboardTabs
+        basePath="/amc"
+        tabs={AMC_TABS}
+        activeId={activeTab}
+        searchParams={sp}
+      />
+
+      {activeTab === "overview" && (
+        <TabIntroCard
+          headline="Who are the AMCs, what changed this quarter, and which names need attention?"
+          summary="Outliers vs the cohort median, the full AMC roster with rank and trailing AAUM, the quarterly health heatmap, and a searchable table — the primary cohort drilldown."
+          watchNext="Whether outlier names also show up as rank-7 to rank-15 quiet compounders in the roster — challengers worth tracking."
+        />
+      )}
+
+      {activeTab === "overview" && anomalies && anomalies.outliers.length > 0 && (
         <Card
           title="Outliers this quarter"
-          subtitle={`${anomalies.outliers.length} AMC${anomalies.outliers.length === 1 ? "" : "s"} with QoQ AAUM growth ≥2σ from the cohort median in ${anomalies.quarterLabel} · ${anomalies.participantCount} AMCs measured · Source: AMFI Fundwise AAUM`}
+          subtitleNode={
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">
+                AMCs whose QoQ AAUM growth is far above or below the cohort median this quarter.
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">
+                {`${anomalies.outliers.length} AMC${anomalies.outliers.length === 1 ? "" : "s"} ≥2σ from cohort median in ${anomalies.quarterLabel} · ${anomalies.participantCount} AMCs measured · Source: AMFI Fundwise AAUM`}
+              </p>
+            </div>
+          }
         >
           <ul className="flex flex-wrap gap-2">
             {anomalies.outliers.map((a) => {
@@ -148,14 +187,30 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {battleCards.length > 0 && (
+      {activeTab === "overview" && rosterCards.length > 0 && (
         <Card
-          title="AMC Roster · Battle Cards"
-          subtitle="Each card is one AMC · rank, tier, share, growth and trailing AAUM at a glance"
+          title="AMC Roster"
+          subtitleNode={
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">
+                Every AMC at a glance, sorted by rank. Each card shows market share, growth, and the trailing AAUM sparkline.
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">
+                Scroll horizontally to see all AMCs.
+              </p>
+            </div>
+          }
         >
+          <HowToRead>
+            <ul className="list-disc space-y-0.5 pl-4">
+              <li><span className="text-foreground">Rank</span> is by AAUM (lower number = larger AMC).</li>
+              <li><span className="text-foreground">Top 7</span> AMCs typically hold ~70% of total industry AUM — the rest is a long tail.</li>
+              <li>Sparkline shows the trailing AAUM path; the QoQ / YoY growth numbers next to it tell you the recent direction.</li>
+            </ul>
+          </HowToRead>
           <div className="overflow-x-auto">
             <div className="flex gap-3" style={{ minWidth: "max-content" }}>
-              {battleCards.map((c) => (
+              {rosterCards.map((c) => (
                 <div key={c.slug} className="w-[200px] shrink-0">
                   <AmcBattleCard
                     slug={c.slug}
@@ -175,10 +230,27 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {journeyPoints.length >= 4 && (
+      {activeTab === "share-positioning" && (
+        <TabIntroCard
+          headline="Who is gaining or losing share, and how are AMCs positioned?"
+          summary="Market-share movement arrows over the full available window, paired with the share-vs-growth quadrant and Leaders / Gainers / Defenders / Laggards bucket lists. Read for cohort-relative positioning, not absolute scale."
+          watchNext="Whether names that show up as share gainers also sit in the Leaders or Gainers buckets — that's the durable franchise signal."
+        />
+      )}
+
+      {activeTab === "share-positioning" && journeyPoints.length >= 4 && (
         <Card
-          title="Cohort Journey Map"
-          subtitle={`Each arrow = one AMC's market-share journey from ${journeyPoints[0].startQuarterLabel} to ${journeyPoints[0].endQuarterLabel}`}
+          title="Market-share movement"
+          subtitleNode={
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">
+                Who gained or lost market share over the full available window.
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">
+                {`Each arrow = one AMC · ${journeyPoints[0].startQuarterLabel} → ${journeyPoints[0].endQuarterLabel}`}
+              </p>
+            </div>
+          }
         >
           <CohortJourneyMap points={journeyPoints} />
           <p className="mt-3 text-[11px] text-muted-foreground">
@@ -188,10 +260,19 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {quadrant && quadrant.points.length >= 4 && (
+      {activeTab === "share-positioning" && quadrant && quadrant.points.length >= 4 && (
         <Card
-          title="AMC Trajectory Quadrant"
-          subtitle={`Top ${quadrant.points.length} AMCs by AAUM · ${quadrant.latestQuarterLabel} · cohort medians shown as dashed lines`}
+          title="AMC Share vs Growth Quadrant"
+          subtitleNode={
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">
+                Each AMC plotted by market share (Y-axis) and QoQ growth (X-axis). The two dashed lines split the cohort at its medians, not at zero.
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">
+                {`Top ${quadrant.points.length} AMCs by AAUM · ${quadrant.latestQuarterLabel} · cohort medians shown as dashed lines`}
+              </p>
+            </div>
+          }
         >
           <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
             <AmcQuadrantChart
@@ -209,16 +290,29 @@ export default async function AmcListPage({
               label={`Y-axis: AMC's share of total cohort AAUM (top ${quadrant.points.length} AMCs). X-axis: QoQ AAUM growth (this quarter vs last). Both quadrant splits use the cohort median, not zero — so the buckets stay meaningful when the whole industry is growing or contracting. Dot size scales with market share.`}
             />
           </p>
+          <HowToRead>
+            <ul className="list-disc space-y-0.5 pl-4">
+              <li><span className="text-foreground">Leader</span> = high share + high growth (compounding from a strong base).</li>
+              <li><span className="text-foreground">Challenger / Gainer</span> = low share + high growth (catching up).</li>
+              <li><span className="text-foreground">Defender</span> = high share + slowing growth (mature franchise, risk of share loss).</li>
+              <li><span className="text-foreground">Laggard</span> = low share + weak growth (no momentum signal yet).</li>
+            </ul>
+          </HowToRead>
         </Card>
       )}
 
-      {health.rows.length > 0 && (
+      {activeTab === "overview" && health.rows.length > 0 && (
         <Card
           title="AMC Health Heatmap"
-          subtitle={
-            healthLens === "zscore"
-              ? `QoQ growth z-score vs cohort each quarter · ${health.quarterLabels[0]} → ${health.quarterLabels[health.quarterLabels.length - 1]} · Source: AMFI Fundwise AAUM`
-              : `QoQ AAUM growth · ${health.quarterLabels[0]} → ${health.quarterLabels[health.quarterLabels.length - 1]} · Source: AMFI Fundwise AAUM`
+          subtitleNode={
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">
+                Each row is one AMC. Each cell colours the quarter green or red depending on whether that AMC outperformed or underperformed the cohort.
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">
+                {`${healthLens === "zscore" ? "QoQ growth z-score vs cohort" : "QoQ AAUM growth"} · ${health.quarterLabels[0]} → ${health.quarterLabels[health.quarterLabels.length - 1]} · Source: AMFI Fundwise AAUM`}
+              </p>
+            </div>
           }
           action={
             <LensToggle
@@ -230,6 +324,9 @@ export default async function AmcListPage({
                 { value: "zscore", label: "Z-score" },
               ]}
               active={healthLens}
+              preserveParams={{
+                tab: typeof sp.tab === "string" ? sp.tab : undefined,
+              }}
             />
           }
         >
@@ -261,7 +358,7 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      <AmcSearchTable rows={data.rows} />
+      {activeTab === "overview" && <AmcSearchTable rows={data.rows} />}
 
       <Card>
         <div className="space-y-1 text-xs text-muted-foreground">
