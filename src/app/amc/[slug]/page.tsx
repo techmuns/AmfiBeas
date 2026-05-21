@@ -27,6 +27,10 @@ import {
   resolveAmcSlug,
 } from "@/data/amc-detail";
 import { latestQoqAnomalies } from "@/data/amc-peer-universe";
+import { amcNarrativeLatest, amcMetricTrend } from "@/data/amc-narratives";
+import { ConcallDigest } from "@/components/amc/ConcallDigest";
+import { StrategicMovesTimeline } from "@/components/amc/StrategicMovesTimeline";
+import { PostureRadar } from "@/components/amc/PostureRadar";
 import {
   formatCompactCrSafe,
   formatDelta,
@@ -580,8 +584,55 @@ export default async function AmcPage({
         </ChartWithContext>
       </section>
 
+      {(() => {
+        const narrative = amcNarrativeLatest(slug);
+        const uniqueInvShare = amcMetricTrend(slug, "uniqueInvestorShare");
+        const hasNarrative =
+          narrative !== null || uniqueInvShare.length > 0;
+        if (!hasNarrative) return null;
+        return (
+          <>
+            <SectionDivider
+              eyebrow="Section 3"
+              label="What management is saying"
+              context="Themes, strategic moves, posture and disclosed cohort metrics from the latest concalls."
+            />
+
+            <ConcallDigest row={narrative} amcDisplayName={detail.displayName} />
+
+            <StrategicMovesTimeline
+              slug={slug}
+              amcDisplayName={detail.displayName}
+            />
+
+            <section className="grid gap-4 lg:grid-cols-2">
+              <PostureRadar slug={slug} amcDisplayName={detail.displayName} />
+              {uniqueInvShare.length > 0 && (
+                <ChartWithContext
+                  title="Unique Investor Share"
+                  subtitle="Share of industry's unique investors. Captures retail breadth this AMC commands."
+                  flowKind="stock"
+                  denominatorCaption={`${uniqueInvShare.length} quarter${uniqueInvShare.length === 1 ? "" : "s"} · % of industry · Source: company concall disclosures`}
+                  denominatorTooltip="Each AMC reports its share of the industry's distinct investor base. Rising share = the AMC is acquiring retail investors faster than the industry's underlying growth rate."
+                  insights={[]}
+                >
+                  <BarSeries
+                    data={uniqueInvShare}
+                    name="Unique investor share"
+                    color="hsl(var(--chart-2))"
+                    valueFormat="pct"
+                    axisFormat="pct"
+                    labelFormat="none"
+                  />
+                </ChartWithContext>
+              )}
+            </section>
+          </>
+        );
+      })()}
+
       <SectionDivider
-        eyebrow="Section 3"
+        eyebrow="Section 4"
         label="Peer comparison"
         context="Side-by-side with the Top 7 cohort and the full peer table."
       />

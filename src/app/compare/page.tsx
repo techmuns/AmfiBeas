@@ -6,6 +6,8 @@ import { KpiCard } from "@/components/ui/KpiCard";
 import { AreaTrend } from "@/components/charts/AreaTrend";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { AmcCompareSelector } from "@/components/compare/AmcCompareSelector";
+import { PostureRadarCompare } from "@/components/amc/PostureRadar";
+import { StrategicMovesCompare } from "@/components/amc/StrategicMovesTimeline";
 import {
   allAaumAmcs,
   amcAaumSeries,
@@ -383,6 +385,24 @@ export default async function ComparePage({
           );
         })()}
       </Card>
+
+      {detailA && detailB && (
+        <PostureRadarCompare
+          slugA={slugA}
+          slugB={slugB}
+          nameA={detailA.displayName}
+          nameB={detailB.displayName}
+        />
+      )}
+
+      {detailA && detailB && (
+        <StrategicMovesCompare
+          slugA={slugA}
+          slugB={slugB}
+          nameA={detailA.displayName}
+          nameB={detailB.displayName}
+        />
+      )}
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Card

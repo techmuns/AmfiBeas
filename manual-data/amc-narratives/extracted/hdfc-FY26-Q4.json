@@ -1,0 +1,89 @@
+{
+  "amcSlug": "hdfc",
+  "fiscalPeriod": "FY26-Q4",
+  "callDate": "2026-04-16",
+  "sourcePdf": "hdfc-FY26-Q4.pdf",
+  "themes": [
+    {
+      "category": "growth",
+      "headline": "QAAUM ₹9.3 trillion, up 20% YoY; equity-oriented AUM at ₹6 trillion",
+      "detail": "Industry as a whole saw ₹7.4 trillion of net inflows in FY26, the 14th consecutive year of positive net inflows.",
+      "metricRef": "totalQaaum"
+    },
+    {
+      "category": "growth",
+      "headline": "Unique investor share moved from 17.6% to 27% over three years",
+      "detail": "Added ~10 million unique investors over three years; total accounts now exceed 30 million; HDFC alone added 3.5 of the industry's 7.2 million net-new investors in FY26.",
+      "metricRef": "uniqueInvestorShare"
+    },
+    {
+      "category": "strategy",
+      "headline": "Digital transactions hit 97% — up from 81% three years back",
+      "detail": "Management framed the firm as a 'digital AI value creator', not a traditional asset manager.",
+      "metricRef": "digitalTransactionPct"
+    },
+    {
+      "category": "regulatory",
+      "headline": "TER → BER framework live April 1 2026; gross 3-4 bps P&L hit",
+      "detail": "5 bps incentive in lieu of exit loads removed. Plan is to offset through commission optimisation and tighter direct/indirect cost control.",
+      "metricRef": "berImpactBps"
+    },
+    {
+      "category": "strategy",
+      "headline": "Alternatives: first close of private credit fund with IFC anchor",
+      "detail": "GiftCity has 5 live funds. PMS won EPFO + Siemens PF mandates this year. SIF approach explicitly framed as 'deliberate, not a race'."
+    },
+    {
+      "category": "cost",
+      "headline": "Employee costs +12.5% YoY ex-ESOPs; 5Y CAGR at 13%",
+      "detail": "Headcount grew from 1,250 to 1,700 over 5 years. Cost / AAUM has trended down despite continued tech, talent and new-vertical investment.",
+      "metricRef": "headcount"
+    },
+    {
+      "category": "growth",
+      "headline": "98% of India zip-codes contribute inflows; P30 towns are the growth engine",
+      "detail": "Open architecture across HDFC Bank, MFDs, national distributors, and fintech. Fintech flow share now exceeds its book share."
+    }
+  ],
+  "metrics": [
+    { "field": "uniqueInvestorShare", "value": 27, "unit": "pct" },
+    { "field": "digitalTransactionPct", "value": 97, "unit": "pct" },
+    { "field": "p30InflowShare", "value": null, "unit": "pct" },
+    { "field": "headcount", "value": 1700, "unit": "count" },
+    { "field": "dividendPerShare", "value": 54, "unit": "inr" },
+    { "field": "payoutRatio", "value": 81, "unit": "pct" },
+    { "field": "berImpactBps", "value": 3.5, "unit": "bps" }
+  ],
+  "channelMix": {
+    "directPct": 31,
+    "bankPct": null,
+    "nationalDistPct": null,
+    "mfdPct": null,
+    "fintechPct": null,
+    "note": "Direct plans ~31% of equity AUM; open architecture; fintech flow share exceeds book share"
+  },
+  "events": [
+    { "type": "mandate_win", "label": "EPFO fixed-income mandate" },
+    { "type": "mandate_win", "label": "Siemens Provident Fund Organisation mandate" },
+    { "type": "fund_launch", "label": "Private credit AIF — first close with IFC as anchor investor" },
+    { "type": "international", "label": "Two new inbound funds in GiftCity; total now at 5" },
+    { "type": "fund_launch", "label": "Seven new mutual fund schemes launched during the year" },
+    { "type": "board_change", "label": "Rajan Anandan (Peak XV) joins technology committee as invitee" },
+    { "type": "regulatory", "label": "TER → BER framework effective April 1 2026", "impactBps": 3.5 }
+  ],
+  "quotes": [
+    {
+      "text": "We are transitioning from a traditional asset manager to a digital AI value creator.",
+      "speaker": "Navneet Munot, MD & CEO"
+    }
+  ],
+  "initiatives": [
+    "private credit AIF",
+    "GiftCity inbound",
+    "GiftCity outbound",
+    "PMS fixed-income mandates",
+    "SIF",
+    "AI & digital transformation",
+    "fintech distribution"
+  ]
+}

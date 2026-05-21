@@ -15,7 +15,8 @@
     "ingest": "tsx scripts/ingest/index.ts",
     "ingest:amfi-pdf": "tsx scripts/ingest/amfi-monthly-pdf.ts",
     "ingest:amfi-quarterly-pdf": "tsx scripts/ingest/amfi-quarterly-pdf.ts",
-    "ingest:market-indices": "tsx scripts/ingest/market-indices.ts"
+    "ingest:market-indices": "tsx scripts/ingest/market-indices.ts",
+    "ingest:amc-narratives": "tsx scripts/ingest/amc-narratives.ts"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.19.6",

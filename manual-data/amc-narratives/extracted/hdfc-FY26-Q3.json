@@ -1,0 +1,52 @@
+{
+  "amcSlug": "hdfc",
+  "fiscalPeriod": "FY26-Q3",
+  "callDate": "2026-01-14",
+  "sourcePdf": "hdfc-FY26-Q3.pdf",
+  "themes": [
+    {
+      "category": "growth",
+      "headline": "QAAUM crossed ₹9 trillion; equity-oriented AUM > ₹6 trillion (65.5% mix)",
+      "detail": "Industry AUM at ₹80.2T. Over the last 2 calendar years, net new flows have exceeded ₹10 trillion (~$115B).",
+      "metricRef": "totalQaaum"
+    },
+    {
+      "category": "growth",
+      "headline": "Unique investor penetration now at 26%; added 2.8M of industry's 6.4M",
+      "detail": "Total unique investors crossed 15.4 million.",
+      "metricRef": "uniqueInvestorShare"
+    },
+    {
+      "category": "growth",
+      "headline": "Systematic transactions reached ₹47.3 bn in Dec '25 — 24% YoY growth",
+      "detail": "SIP asset base now ₹16.6T, > 20% of industry AUM."
+    },
+    {
+      "category": "strategy",
+      "headline": "PMS AUM crossed ₹50 bn; secured a couple of large mandates",
+      "detail": "Alternatives: completed first close of private credit fund."
+    },
+    {
+      "category": "growth",
+      "headline": "Gold & silver ETFs are now 18% of industry ETF AUM",
+      "detail": "₹327 bn of net new flows into gold/silver ETFs in the quarter alone."
+    }
+  ],
+  "metrics": [
+    { "field": "uniqueInvestorShare", "value": 26, "unit": "pct" },
+    { "field": "digitalTransactionPct", "value": null, "unit": "pct" }
+  ],
+  "channelMix": {
+    "directPct": null, "bankPct": null, "nationalDistPct": null,
+    "mfdPct": null, "fintechPct": null,
+    "note": "Open architecture; broad-based distribution"
+  },
+  "events": [
+    { "type": "mandate_win", "label": "Two large PMS mandates secured during the quarter" },
+    { "type": "fund_launch", "label": "Private credit AIF — first close completed" }
+  ],
+  "quotes": [
+    { "text": "Net new flows over the past 2 calendar years have exceeded ₹10 trillion or approximately USD 115 billion.", "speaker": "Simal Kanuga, CIRO" }
+  ],
+  "initiatives": ["private credit AIF", "PMS scale-up", "gold and silver ETFs"]
+}
