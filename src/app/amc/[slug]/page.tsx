@@ -11,7 +11,6 @@ import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 import { BarSeries } from "@/components/charts/BarSeries";
 import { MultiLine } from "@/components/charts/MultiLine";
-import { RankTrendChart } from "@/components/charts/RankTrendChart";
 import { chartInsights, latestYoyPct } from "@/lib/chart-context";
 import { amcMarketWrap } from "@/data/market-wrap-amc";
 import {
@@ -29,7 +28,6 @@ import {
 import { latestQoqAnomalies } from "@/data/amc-peer-universe";
 import { amcNarrativeLatest } from "@/data/amc-narratives";
 import { ConcallDigest } from "@/components/amc/ConcallDigest";
-import { PostureRadar } from "@/components/amc/PostureRadar";
 import {
   formatCompactCrSafe,
   formatDelta,
@@ -77,10 +75,6 @@ export default async function AmcPage({
   const shareChart = shareSeries.map((p) => ({
     label: p.fiscalLabel,
     value: p.marketSharePct,
-  }));
-  const rankChart = rankSeries.map((p) => ({
-    quarter: p.fiscalLabel,
-    rank: p.rank,
   }));
 
   // ---- Peer-context overlays for the AMC detail charts ----
@@ -168,20 +162,6 @@ export default async function AmcPage({
     const prior = shareSeries[shareSeries.length - 5];
     const pp = latest.marketSharePct - prior.marketSharePct;
     return `${pp >= 0 ? "+" : "−"}${Math.abs(pp).toFixed(2)} pp YoY · latest ${latest.fiscalLabel}`;
-  })();
-
-  // Rank Trend denominator: rank change vs 4Q back — a single
-  // up-or-down read on whether this AMC is climbing the league
-  // table. Lower rank = larger AMC, so a NEGATIVE delta is an
-  // improvement; we phrase it that way.
-  const rankDenomCaption = (() => {
-    if (rankSeries.length < 5) return undefined;
-    const latest = rankSeries[rankSeries.length - 1];
-    const prior = rankSeries[rankSeries.length - 5];
-    const delta = latest.rank - prior.rank;
-    if (delta === 0)
-      return `Unchanged vs 4Q ago · latest rank ${latest.rank} · ${latest.fiscalLabel}`;
-    return `${delta < 0 ? "↑" : "↓"} ${Math.abs(delta)} rank${Math.abs(delta) === 1 ? "" : "s"} vs 4Q ago · latest ${latest.rank} · ${latest.fiscalLabel}`;
   })();
 
   // KPI-card contexts: percentile-vs-own-history readings + 4Q / 5Y deltas.
@@ -563,24 +543,6 @@ export default async function AmcPage({
             <EmptyChart>No market-share history</EmptyChart>
           )}
         </ChartWithContext>
-        <ChartWithContext
-          title="Rank Trend"
-          subtitle="This AMC&rsquo;s rank in the industry by AAUM. Lower number = larger AMC."
-          flowKind="stock"
-          denominatorCaption={(() => {
-            const base = "Position by AAUM (lower number = larger AMC) · tier bands shown · Source: AMFI Fundwise AAUM";
-            return rankDenomCaption
-              ? `${base} · ${rankDenomCaption}`
-              : base;
-          })()}
-          denominatorTooltip="Change in league-table position vs four quarters ago — a single up-or-down read on whether this AMC is climbing or slipping."
-        >
-          {rankChart.length > 0 ? (
-            <RankTrendChart data={rankChart} />
-          ) : (
-            <EmptyChart>No rank history</EmptyChart>
-          )}
-        </ChartWithContext>
       </section>
 
       {(() => {
@@ -599,8 +561,6 @@ export default async function AmcPage({
               slug={slug}
               amcDisplayName={detail.displayName}
             />
-
-            <PostureRadar slug={slug} amcDisplayName={detail.displayName} />
           </>
         );
       })()}

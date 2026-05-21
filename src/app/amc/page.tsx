@@ -201,7 +201,14 @@ export default async function AmcListPage({
 
       {activeTab === "insights" && <CohortUniqueInvestorShare />}
 
-      {activeTab === "insights" && <StrategicMovesCohortLane />}
+      {activeTab === "insights" && (
+        <StrategicMovesCohortLane
+          selectedAmc={typeof sp.moveAmc === "string" ? sp.moveAmc : undefined}
+          selectedPeriod={
+            typeof sp.movePeriod === "string" ? sp.movePeriod : undefined
+          }
+        />
+      )}
 
       {activeTab === "overview" && rosterCards.length > 0 && (
         <Card

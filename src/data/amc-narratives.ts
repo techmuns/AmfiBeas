@@ -213,67 +213,6 @@ export function cohortInitiativesUnion(slugs: string[]): string[] {
   return Array.from(seen.values()).sort();
 }
 
-/** Score the AMC on the 5 posture-radar axes, 0–100, using the latest
- *  available narrative row. Returns `null` for axes the AMC doesn't
- *  disclose (the radar renders these as dashed grid lines).
- *
- *  Scoring rules:
- *   - digitalMaturity   : digitalTransactionPct          (0-100 → 0-100)
- *   - geographicDepth   : p30InflowShare                 (0-100 → 0-100)
- *   - channelDiversity  : 1 - HHI(channelMix shares)     (0-1 → 0-100)
- *   - pipelineBreadth   : initiatives.length             (curve: 1→20, 3→60, 5+→100)
- *   - cohortBreadth     : uniqueInvestorShare            (0-35% → 0-100)
- */
-export interface PostureScores {
-  digitalMaturity: number | null;
-  geographicDepth: number | null;
-  channelDiversity: number | null;
-  pipelineBreadth: number | null;
-  cohortBreadth: number | null;
-  asOf: string;       // fiscalPeriod that fed the scores
-}
-
-export function amcPostureScores(slug: string): PostureScores | null {
-  const latest = amcNarrativeLatest(slug);
-  if (!latest) return null;
-  const metricVal = (field: string): number | null => {
-    const m = latest.metrics.find((x) => x.field === field);
-    const v = m?.value;
-    return typeof v === "number" && Number.isFinite(v) ? v : null;
-  };
-  const digital = metricVal("digitalTransactionPct");
-  const p30 = metricVal("p30InflowShare");
-  const cohort = metricVal("uniqueInvestorShare");
-  const cm = latest.channelMix;
-  const channelShares = cm
-    ? [cm.directPct, cm.bankPct, cm.nationalDistPct, cm.mfdPct, cm.fintechPct]
-    : [];
-  const channelDiv = (() => {
-    if (channelShares.some((v) => v === null || v === undefined)) return null;
-    const total = channelShares.reduce<number>((s, v) => s + (v ?? 0), 0);
-    if (total <= 0) return null;
-    // Herfindahl on shares (normalised), inverted: higher diversity = higher score.
-    const shares = channelShares.map((v) => (v ?? 0) / total);
-    const hhi = shares.reduce((s, x) => s + x * x, 0);
-    return Math.max(0, Math.min(100, (1 - hhi) * 100));
-  })();
-  const pipeline = (() => {
-    const n = latest.initiatives.length;
-    if (n === 0) return null;
-    if (n >= 5) return 100;
-    return Math.round((n / 5) * 100);
-  })();
-  return {
-    digitalMaturity: digital,
-    geographicDepth: p30,
-    channelDiversity: channelDiv,
-    pipelineBreadth: pipeline,
-    cohortBreadth:
-      cohort !== null ? Math.max(0, Math.min(100, (cohort / 35) * 100)) : null,
-    asOf: latest.fiscalPeriod,
-  };
-}
-
 /** Category-styling map used by the Concall Digest pills. */
 export const THEME_CATEGORY_PILL: Record<
   ThemeCategory,
@@ -305,18 +244,7 @@ export const THEME_CATEGORY_PILL: Record<
   },
 };
 
-/** Posture-radar axis labels in the order the radar renders them. */
-export const POSTURE_AXES = [
-  { key: "digitalMaturity", label: "Digital maturity" },
-  { key: "geographicDepth", label: "Geographic depth" },
-  { key: "channelDiversity", label: "Channel diversity" },
-  { key: "pipelineBreadth", label: "Pipeline breadth" },
-  { key: "cohortBreadth", label: "Cohort breadth" },
-] as const;
-
-export type PostureAxisKey = (typeof POSTURE_AXES)[number]["key"];
-
-/** Event-type styling map used by the Strategic Moves Timeline. */
+/** Event-type styling map used by the Strategic Moves Cohort feed. */
 export const EVENT_TYPE_BADGE: Record<
   StrategicEventType,
   { label: string; cls: string }
