@@ -1,28 +1,20 @@
 import Link from "next/link";
 import { ArrowUpRight, Sparkles } from "lucide-react";
-import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
 import { marketWrap } from "@/data/market-wrap";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { AreaTrend } from "@/components/charts/AreaTrend";
-import { BarSeries } from "@/components/charts/BarSeries";
 import { Sparkline } from "@/components/charts/Sparkline";
 import { IndustryNarrative } from "@/components/data/IndustryNarrative";
 import {
   industryQuarterly,
   latestMonth,
   latestQuarter,
-  momChange,
-  yoyChange,
   yoyChangeQuarterly,
 } from "@/data/aggregate";
 import {
   activeEquityNetInflowSignal,
   activeEquityNetInflowSparkline,
-  amfiMonthlyRows,
-  latestIndustryFolioAdditions,
-  monthlyIndustryFolioAdditionsTrend,
   passiveShareSparkline,
   passiveShiftSignal,
   sipStickinessSignal,
@@ -34,86 +26,16 @@ import {
 import { amcTrajectoryQuadrant } from "@/data/amc-peer-universe";
 import { industryNarrative } from "@/data/narrative";
 import {
-  formatCompactCrSafe,
-  formatDelta,
-  formatLakhSafe,
-  formatPctSafe,
   formatPercentile,
   formatQuarterLabelLong,
   ordinalSuffix,
 } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
-const AMFI_MONTHLY_SOURCE = "Source: AMFI Monthly Report";
-const SCREENER_SOURCE = "Source: Company filings";
-
 export default function HomePage() {
-  // Live industry monthly snapshot (amfi-monthly-pdf.json) is now the
-  // source of truth for every industry-level KPI on the Overview. The
-  // synthetic `industryByMonth()` helper is no longer called here —
-  // each KPI builds its own per-field series and drops months where the
-  // field is absent in the snapshot. Demo April-2026 ticks gone.
-  const amfiRows = amfiMonthlyRows();
-  const totalAumSeries = amfiRows
-    .filter((r): r is typeof r & { totalAum: number } => typeof r.totalAum === "number")
-    .map((r) => r.totalAum);
-  const activeEquityAumSeries = amfiRows
-    .filter(
-      (r): r is typeof r & { activeEquityAum: number } =>
-        typeof r.activeEquityAum === "number"
-    )
-    .map((r) => r.activeEquityAum);
-  const sipContribSeries = amfiRows
-    .filter(
-      (r): r is typeof r & { sipContribution: number } =>
-        typeof r.sipContribution === "number"
-    )
-    .map((r) => r.sipContribution);
-
-  const aumLatest =
-    totalAumSeries.length > 0 ? totalAumSeries[totalAumSeries.length - 1] : null;
-  const activeEquityLatest =
-    activeEquityAumSeries.length > 0
-      ? activeEquityAumSeries[activeEquityAumSeries.length - 1]
-      : null;
-  const sipLatest =
-    sipContribSeries.length > 0
-      ? sipContribSeries[sipContribSeries.length - 1]
-      : null;
-
-  const aumYoy = yoyChange(totalAumSeries);
-  const activeEquityMom = momChange(activeEquityAumSeries);
-  const sipMom = momChange(sipContribSeries);
-
-  // Folio Additions replaces the previously-synthetic "Investor Additions"
-  // tile. Value = latest month's industryFolios − previous month's
-  // industryFolios (lakh scale). MoM delta compares that to the prior
-  // month's additions so the tile reads as "how much did this month's
-  // pace change vs last month's pace."
-  const folioAdditionsTrend = monthlyIndustryFolioAdditionsTrend(24);
-  const folioAdditionsLatest = latestIndustryFolioAdditions();
-  const folioAdditionsMom =
-    folioAdditionsTrend.length >= 2
-      ? momChange(folioAdditionsTrend.map((r) => r.value))
-      : 0;
-
   const quarterly = industryQuarterly();
   const latestQ = quarterly[quarterly.length - 1];
   const patYoy = yoyChangeQuarterly(quarterly.map((q) => q.pat));
-
-  const aumSeries = amfiRows.flatMap((r) =>
-    typeof r.totalAum === "number"
-      ? [{ month: r.month, value: r.totalAum }]
-      : []
-  );
-  const sipSeries = amfiRows.flatMap((r) =>
-    typeof r.sipContribution === "number"
-      ? [{ label: r.month, value: r.sipContribution }]
-      : []
-  );
-
-  const trend = (n: number) =>
-    n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
 
   const patMargin =
     latestQ.revenue > 0 ? (latestQ.pat / latestQ.revenue) * 100 : null;
@@ -237,10 +159,10 @@ export default function HomePage() {
             read={amcWinnersLosersRead(topGainers, topLosers)}
             footer={
               <Link
-                href="/amc"
+                href="/amc?tab=share-movers"
                 className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
               >
-                See drift / quadrant <ArrowUpRight className="h-3 w-3" />
+                See share movers <ArrowUpRight className="h-3 w-3" />
               </Link>
             }
           />
@@ -266,10 +188,10 @@ export default function HomePage() {
             read={listedAmcRead(revQoYoY, patMarginQ, patYoy)}
             footer={
               <Link
-                href="/financials"
+                href="/financials?tab=snapshot"
                 className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
               >
-                See margin + indexed lines <ArrowUpRight className="h-3 w-3" />
+                See margins + yields <ArrowUpRight className="h-3 w-3" />
               </Link>
             }
           />
@@ -293,75 +215,43 @@ export default function HomePage() {
         </section>
       )}
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          label="Industry AUM"
-          value={formatCompactCrSafe(aumLatest)}
-          delta={`${formatDelta(aumYoy)} YoY`}
-          trend={trend(aumYoy)}
-          note={AMFI_MONTHLY_SOURCE}
-        />
-        <KpiCard
-          label="Active Equity AUM"
-          value={formatCompactCrSafe(activeEquityLatest)}
-          delta={`${formatDelta(activeEquityMom)} MoM`}
-          trend={trend(activeEquityMom)}
-          note={AMFI_MONTHLY_SOURCE}
-        />
-        <KpiCard
-          label="Monthly SIP"
-          value={formatCompactCrSafe(sipLatest)}
-          delta={`${formatDelta(sipMom)} MoM`}
-          trend={trend(sipMom)}
-          note={AMFI_MONTHLY_SOURCE}
-        />
-        <KpiCard
-          label="Industry Folio Additions"
-          value={formatLakhSafe(folioAdditionsLatest)}
-          delta={`${formatDelta(folioAdditionsMom)} MoM`}
-          trend={trend(folioAdditionsMom)}
-          note={AMFI_MONTHLY_SOURCE}
-        />
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          label="Listed AMC Revenue"
-          value={formatCompactCrSafe(latestQ.revenue)}
-          note={SCREENER_SOURCE}
-        />
-        <KpiCard
-          label="Listed AMC Op Profit"
-          value={formatCompactCrSafe(latestQ.operatingProfit)}
-          note={SCREENER_SOURCE}
-        />
-        <KpiCard
-          label="Listed AMC PAT"
-          value={formatCompactCrSafe(latestQ.pat)}
-          delta={`${formatDelta(patYoy)} YoY`}
-          trend={trend(patYoy)}
-          note={SCREENER_SOURCE}
-        />
-        <KpiCard
-          label="Listed AMC PAT Margin"
-          value={formatPctSafe(patMargin)}
-          note={SCREENER_SOURCE}
-        />
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-2">
-        <Card
-          title="AUM Trend"
-          subtitle={`Industry total · ${aumSeries.length} month${aumSeries.length === 1 ? "" : "s"} · ${AMFI_MONTHLY_SOURCE}`}
-        >
-          <AreaTrend data={aumSeries} name="AUM" />
-        </Card>
-        <Card
-          title="SIP Flows"
-          subtitle={`Monthly inflows · industry · ${sipSeries.length} month${sipSeries.length === 1 ? "" : "s"} · ${AMFI_MONTHLY_SOURCE}`}
-        >
-          <BarSeries data={sipSeries} name="SIP" />
-        </Card>
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-sm font-medium tracking-tight">
+            Explore the dashboard
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Deep dives on each metric and AMC — the Sector Read tiles
+            above are the headline; these routes are the evidence.
+          </p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <ExploreTile
+            title="Monthly Signals"
+            href="/monthly?tab=snapshot"
+            summary="What changed this month — flows, SIP retail, active vs passive, NFOs, and the market-cycle backdrop."
+          />
+          <ExploreTile
+            title="Quarterly KPIs"
+            href="/quarterly?tab=snapshot"
+            summary="Industry AAUM, flows, concentration, and the per-category mix at quarter-end."
+          />
+          <ExploreTile
+            title="AMC Winners & Losers"
+            href="/amc?tab=share-movers"
+            summary="Which AMCs gained share, which lost it — quarter by quarter, with a positioning quadrant."
+          />
+          <ExploreTile
+            title="Listed AMC Earnings"
+            href="/financials?tab=snapshot"
+            summary="P&L, margins, yields, and the listed-peer cohort table for every disclosed AMC."
+          />
+          <ExploreTile
+            title="Compare AMCs"
+            href="/compare?tab=read"
+            summary="Side-by-side AAUM, market share, rank, and growth for any two AMCs."
+          />
+        </div>
       </section>
 
       <Card
@@ -450,6 +340,34 @@ function SignalTile({
       <p className="text-[12px] leading-snug text-muted-foreground">{read}</p>
       {footer && <div className="mt-auto pt-1">{footer}</div>}
     </div>
+  );
+}
+
+/** Gateway tile linking to a deep-dive route. The Overview itself is
+ *  intentionally short; these tiles point the reader at where to look
+ *  next without duplicating the headline KPIs. */
+function ExploreTile({
+  title,
+  href,
+  summary,
+}: {
+  title: string;
+  href: string;
+  summary: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group flex flex-col gap-1.5 rounded-lg border bg-card px-4 py-3 shadow-sm transition-colors hover:border-foreground/20 hover:bg-accent/40"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-medium tracking-tight">{title}</span>
+        <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground transition-colors group-hover:text-foreground" />
+      </div>
+      <p className="text-[12px] leading-snug text-muted-foreground">
+        {summary}
+      </p>
+    </Link>
   );
 }
 
@@ -575,7 +493,6 @@ function listedAmcRead(
       ? " Strong earnings cycle — operating leverage working."
       : patYoY !== null && patYoY < 0
       ? " Earnings cycle softening — watch revenue yield + cost ratio."
-      : " Watch the gap between revenue yield trajectory and equity-AAUM growth.";
+      : " Watch the gap between revenue yield trend and equity-AAUM growth.";
   return `${revPart}${patPart}${marginPart}${action}`;
 }
-

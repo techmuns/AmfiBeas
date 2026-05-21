@@ -954,7 +954,7 @@ export default async function QuarterlyPage({
               if (flowQualityPct >= 50)
                 return "Equity dominates the quarter's flow magnitude — risk-on mix supports AMC revenue yield. Watch for SIP vs lumpsum split persistence.";
               if (flowQualityPct >= 0)
-                return "Mixed flow quality — equity contributes but debt/liquid still meaningful. Watch the equity share trajectory across the next 2-3 quarters.";
+                return "Mixed flow quality — equity contributes but debt/liquid still meaningful. Watch the equity share trend across the next 2-3 quarters.";
               return "Equity flow is net-negative this quarter — defensive rotation underway. Watch whether redemptions are concentrated in a few categories or industry-wide.";
             })()}
           />
