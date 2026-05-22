@@ -1918,11 +1918,11 @@ export default async function MonthlyPage({
             }
             return (
               <span>
-                <span className="text-3xl font-medium text-foreground/80 sm:text-4xl">
+                <span className="text-lg font-medium text-foreground/80 sm:text-xl">
                   {activeEquitySignal.latestValue < 0 ? "−₹" : "₹"}
                 </span>
                 <AnimatedNumber value={scaled} decimals={decimals} />
-                <span className="ml-1 text-3xl font-medium text-foreground/80 sm:text-4xl">
+                <span className="ml-1 text-lg font-medium text-foreground/80 sm:text-xl">
                   {suffix}
                 </span>
               </span>

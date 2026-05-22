@@ -43,7 +43,7 @@ export function HeadlineCard({
         <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           {eyebrow}
         </div>
-        <div className="text-4xl font-semibold tabular tracking-tight sm:text-5xl lg:text-6xl">
+        <div className="text-2xl font-semibold tabular tracking-tight sm:text-3xl lg:text-4xl">
           {headline}
         </div>
         <div className="text-sm text-foreground/85">{context}</div>
