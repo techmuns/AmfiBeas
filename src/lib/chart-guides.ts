@@ -71,6 +71,10 @@ export const CHART_GUIDES = {
     title: "Market share overlay",
     body: "Each AMC's share of total industry MF AAUM each quarter (navy = AMC A, orange = AMC B). Use this view when absolute AUM growth is rising for both AMCs and you want to see which one is gaining or ceding cohort share. Source: AMFI Fundwise AAUM disclosure.",
   },
+  "os-flow-combo": {
+    title: "Funds mobilised and net flow",
+    body: "Navy bars: gross funds mobilised each month for SEBI Group V (Index Funds, ETFs, FoF, Gold ETFs) — the inflow side of the equation, always positive. Orange line on the right axis: net flow on the same ₹ Cr scale (mobilised minus redemption). The line dips below zero in months where redemption exceeds gross mobilised, meaning Group V was a net outflow that month. Tooltip carries the precise number for each month — labels are intentionally omitted to keep the line readable across the full window.",
+  },
 } as const satisfies Record<string, ChartGuide>;
 
 export type ChartGuideId = keyof typeof CHART_GUIDES;

@@ -1,9 +1,9 @@
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
+import { DesignLanguageCard } from "@/components/ui/DesignLanguageCard";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { AreaTrend } from "@/components/charts/AreaTrend";
-import { BarSeries } from "@/components/charts/BarSeries";
-import { movingAverage } from "@/lib/chart-context";
+import { StackedBarCombo } from "@/components/charts/StackedBarCombo";
 import {
   dataMode,
   latestOtherSchemesCategoryBreakdown,
@@ -49,13 +49,14 @@ export default async function OtherSchemesPage() {
     month: s.month,
     value: s.totalAum,
   }));
-  const flowSeries = series.map((s) => ({
-    label: s.month,
-    value: s.netFlow,
-  }));
-  const mobilizedSeries = series.map((s) => ({
-    label: s.month,
-    value: s.fundsMobilized,
+  // Bars = monthly funds mobilised (gross inflow). Line = net flow on
+  // the same ₹ Cr scale, free to swing negative when redemptions
+  // exceed mobilised that month. Both come from the same SEBI Group V
+  // monthly row, so the two series are always co-temporal.
+  const flowCombo = series.map((s) => ({
+    label: formatMonthLabel(s.month),
+    bottom: s.fundsMobilized,
+    line: s.netFlow,
   }));
 
   const trend = (n: number) =>
@@ -106,35 +107,32 @@ export default async function OtherSchemesPage() {
         />
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        <Card title="AUM Trend" subtitle="Group V total · 11 months">
-          <AreaTrend data={aumSeries} name="AUM" />
-        </Card>
-        <Card
-          title="Net Flow"
-          subtitle="Inflow (+) / Outflow (−) per month · zero reference + signed area fill"
+      <Card
+        title="AUM trend"
+        subtitle={`Group V total · ${series.length} month${series.length === 1 ? "" : "s"} · Source: AMFI monthly category breakdown`}
+      >
+        <AreaTrend data={aumSeries} name="AUM" />
+      </Card>
+
+      {flowCombo.length >= 2 && (
+        <DesignLanguageCard
+          title="Funds mobilised and net flow"
+          chartId="os-flow-combo"
+          source={`Source: AMFI monthly category breakdown · ${flowCombo.length} month${flowCombo.length === 1 ? "" : "s"} · Both series on the same ₹ Cr scale; net flow swings below zero in months where redemption exceeds mobilised`}
         >
-          <BarSeries
-            data={flowSeries}
-            color="hsl(var(--chart-2))"
-            name="Net flow"
-            zeroReference
+          <StackedBarCombo
+            variant="C"
+            data={flowCombo}
+            barName="Funds mobilised"
+            lineName="Net flow"
+            leftMode="raw"
+            leftUnitLabel="₹ Cr"
+            rightUnitLabel="₹ Cr"
+            showBarLabels={false}
+            showLineLabels={false}
           />
-        </Card>
-        <Card
-          title="Funds Mobilised"
-          subtitle="Gross monthly inflow before redemptions · dashed line = 12M average"
-          className="lg:col-span-2"
-        >
-          <BarSeries
-            data={mobilizedSeries}
-            color="hsl(var(--chart-1))"
-            name="Mobilised"
-            trendline={movingAverage(mobilizedSeries, 12)}
-            trendlineName="12M avg"
-          />
-        </Card>
-      </section>
+        </DesignLanguageCard>
+      )}
 
       <Card
         title={`Category Breakdown · ${formatMonthLabel(breakdown.month)}`}
