@@ -77,10 +77,6 @@ export default function HomePage() {
           <h2 className="text-sm font-medium tracking-tight">
             Sector Read · Buy-side AMC view
           </h2>
-          <p className="text-xs text-muted-foreground">
-            What changed · why it matters · what to watch — derived from
-            the latest live snapshot.
-          </p>
         </div>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
           <SignalTile
