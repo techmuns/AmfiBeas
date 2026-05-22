@@ -1887,7 +1887,17 @@ export default async function MonthlyPage({
 
       {activeTab === "snapshot" && activeEquitySignal && (
         <HeadlineCard
-          eyebrow={`AMFI · ${activeEquitySignal.latestMonth}`}
+          eyebrow={(() => {
+            const FULL_MONTHS = [
+              "January", "February", "March", "April", "May", "June",
+              "July", "August", "September", "October", "November", "December",
+            ];
+            const [y, m] = activeEquitySignal.latestMonth.split("-");
+            const idx = Number(m) - 1;
+            return Number.isFinite(idx) && idx >= 0 && idx < 12
+              ? `${FULL_MONTHS[idx]} ${y}`
+              : activeEquitySignal.latestMonth;
+          })()}
           headline={(() => {
             const v = Math.abs(activeEquitySignal.latestValue);
             // Pick a compact scale + suffix on the server so we can

@@ -23,8 +23,9 @@ export function MoodGauge({
   className,
 }: MoodGaugeProps) {
   const padding = 12;
+  const labelGap = 18;
   const width = size;
-  const height = size / 2 + padding * 2;
+  const height = size / 2 + padding * 2 + labelGap;
   const cx = width / 2;
   const cy = size / 2 + padding;
   const radius = (size / 2) - padding;
@@ -107,21 +108,21 @@ export function MoodGauge({
         {/* Endpoint labels */}
         <text
           x={cx - radius + 2}
-          y={cy + 14}
+          y={cy + 16}
           textAnchor="start"
-          fontSize="9"
-          fill="hsl(var(--muted-foreground))"
-          className="tabular"
+          fontSize="12"
+          fill="hsl(var(--foreground))"
+          className="tabular font-medium"
         >
           Fear
         </text>
         <text
           x={cx + radius - 2}
-          y={cy + 14}
+          y={cy + 16}
           textAnchor="end"
-          fontSize="9"
-          fill="hsl(var(--muted-foreground))"
-          className="tabular"
+          fontSize="12"
+          fill="hsl(var(--foreground))"
+          className="tabular font-medium"
         >
           Greed
         </text>
