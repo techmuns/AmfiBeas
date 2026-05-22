@@ -1607,79 +1607,75 @@ export default async function MonthlyPage({
   const foliosNfoRead = foliosNfoSectionRead();
 
   // ---- Snapshot tab "What changed this month?" intro ----------------
-  // Replaces the static summary / watch-next pair on the Snapshot
-  // TabIntroCard with a live read composed off the same signals the
-  // hero zone uses. The summary names the headline change and current
-  // cycle phase; the watch-next pivots on the most extreme secondary
-  // signal so the line carries actual content next month.
+  // Composes a live summary using INDUSTRY-WIDE signals that the
+  // HeadlineCard below does not already surface (HeadlineCard owns
+  // active-equity flow, cycle phase, mood, drawdown, passive share
+  // and SIP stickiness). This card stays distinct by focusing on the
+  // total-industry AAUM trend, folio momentum, and NFO drag.
   const snapshotIntro = (() => {
     const summaryParts: string[] = [];
+    const latestRow = folioLatestRow;
 
-    if (activeEquitySignal && activeEquitySignal.percentileRank !== null) {
-      const pct = activeEquitySignal.percentileRank;
-      const sign = activeEquitySignal.latestValue < 0 ? "−" : "";
-      const valStr = formatCompactCrSafe(Math.abs(activeEquitySignal.latestValue));
-      const meanStr = formatCompactCrSafe(Math.abs(activeEquitySignal.mean));
-      let descriptor: string;
-      if (pct >= 90) descriptor = `top ${(100 - pct).toFixed(0)}% of months on record`;
-      else if (pct <= 10) descriptor = `bottom ${pct.toFixed(0)}% of months on record`;
-      else descriptor = `${formatPercentile(pct)} of months on record`;
-      summaryParts.push(
-        `Active-equity inflow at ${sign}${valStr} in ${activeEquitySignal.latestMonth} — ${descriptor} (historical mean ${meanStr}).`
-      );
+    const aaumSeries = amfiMonthlyRows()
+      .filter((r) => typeof r.totalAaum === "number")
+      .map((r) => ({ month: r.month, value: r.totalAaum as number }));
+    if (aaumSeries.length >= 2) {
+      const latest = aaumSeries[aaumSeries.length - 1];
+      const prev = aaumSeries[aaumSeries.length - 2];
+      if (prev.value > 0) {
+        const momPct = ((latest.value - prev.value) / prev.value) * 100;
+        const valStr = formatCompactCrSafe(latest.value);
+        summaryParts.push(
+          `Industry AAUM at ${valStr} (${momPct >= 0 ? "+" : ""}${momPct.toFixed(1)}% MoM) in ${latest.month}.`
+        );
+      }
     }
 
-    const cyclePhaseLatest = (() => {
-      const last = cyclePhasePoints[cyclePhasePoints.length - 1];
-      return last?.phase ?? null;
-    })();
-    if (cyclePhaseLatest) {
-      const moodSuffix = mood?.label
-        ? ` · investor mood ${mood.label.toLowerCase()}`
-        : "";
-      summaryParts.push(`Cycle phase: ${cyclePhaseLatest}${moodSuffix}.`);
+    if (
+      industryFolioAdditionsLatest !== null &&
+      industryFolioAdditionsLatest > 0
+    ) {
+      summaryParts.push(
+        `${formatLakhSafe(industryFolioAdditionsLatest)} new folios added this month.`
+      );
+    } else if (latestRow && typeof latestRow.netInflow === "number") {
+      const netInflowSeries = amfiMonthlyRows()
+        .filter((r) => typeof r.netInflow === "number")
+        .map((r) => ({ month: r.month, value: r.netInflow as number }));
+      if (netInflowSeries.length >= 2) {
+        const latest = netInflowSeries[netInflowSeries.length - 1];
+        const prev = netInflowSeries[netInflowSeries.length - 2];
+        const fmtSigned = (v: number) =>
+          (v < 0 ? "−" : "") + formatCompactCrSafe(Math.abs(v));
+        summaryParts.push(
+          `Industry net inflow ${fmtSigned(latest.value)} (vs ${fmtSigned(prev.value)} last month).`
+        );
+      }
     }
 
     let watchNext: string | undefined;
     if (
-      nfoSignal &&
-      nfoSignal.percentileRank !== null &&
-      nfoSignal.percentileRank <= 15
+      latestRow &&
+      typeof latestRow.industryNfoFundsMobilized === "number" &&
+      typeof latestRow.netInflow === "number" &&
+      latestRow.netInflow > 0
     ) {
-      watchNext = `NFO mobilisation in the ${nfoSignal.percentileRank.toFixed(0)}${ordinalSuffix(
-        Math.round(nfoSignal.percentileRank)
-      )} percentile — see if investors keep preferring existing schemes.`;
-    } else if (
-      nfoSignal &&
-      nfoSignal.percentileRank !== null &&
-      nfoSignal.percentileRank >= 80
-    ) {
-      watchNext = `NFO mobilisation in the ${nfoSignal.percentileRank.toFixed(0)}${ordinalSuffix(
-        Math.round(nfoSignal.percentileRank)
-      )} percentile — track whether launch activity tips into froth.`;
-    } else if (
-      passiveSignal &&
-      passiveSignal.percentileRank !== null &&
-      passiveSignal.percentileRank >= 75
-    ) {
-      watchNext = `Passive AUM share at ${passiveSignal.latestSharePct.toFixed(1)}% — track whether the active→passive shift keeps accelerating.`;
-    } else if (
-      latestNifty &&
-      latestNifty.drawdownPct !== null &&
-      latestNifty.drawdownPct <= -10
-    ) {
-      watchNext = `Nifty 500 ${Math.abs(latestNifty.drawdownPct).toFixed(1)}% off its all-time peak — watch SIP stickiness while the market stays compressed.`;
-    } else if (
-      sipStickiness &&
-      sipStickiness.latestSharePct !== null
-    ) {
-      watchNext = `SIP base at ${sipStickiness.latestSharePct.toFixed(1)}% of total AUM — see if recurring flows keep absorbing redemptions next month.`;
+      const nfoSharePct =
+        (latestRow.industryNfoFundsMobilized / latestRow.netInflow) * 100;
+      const countSuffix =
+        typeof latestRow.industryNfoCount === "number"
+          ? ` across ${latestRow.industryNfoCount} launches`
+          : "";
+      watchNext = `NFOs absorbed ${nfoSharePct.toFixed(1)}% of industry net inflow${countSuffix} — a low share signals investors sticking with existing schemes, a high share is historically a froth cue.`;
+    } else if (nfoSignal && nfoSignal.percentileRank !== null) {
+      const pct = nfoSignal.percentileRank;
+      watchNext = `NFO mobilisation in the ${pct.toFixed(0)}${ordinalSuffix(Math.round(pct))} percentile of history — see whether launch activity stays here or pivots.`;
     }
 
     const summary =
       summaryParts.length > 0
         ? summaryParts.join(" ")
-        : "Headline industry signal and any callouts worth flagging before you drill into flows or categories.";
+        : "Industry-wide context to read alongside the headline signal below.";
 
     return { summary, watchNext };
   })();
