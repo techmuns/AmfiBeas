@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { HowToRead } from "@/components/ui/HowToRead";
@@ -127,6 +128,25 @@ const MONTHLY_TABS = [
 ] as const satisfies readonly DashboardTabDef[];
 type MonthlyTabId = (typeof MONTHLY_TABS)[number]["id"];
 const MONTHLY_TAB_IDS = MONTHLY_TABS.map((t) => t.id) as readonly MonthlyTabId[];
+
+/** Highlight span used by the Snapshot intro card. Coloured via the
+ *  `text-positive` / `text-negative` design tokens; pass `null` for
+ *  neutral / no highlight. Declared at module scope so React's
+ *  static-components lint rule stays happy. */
+type IntroTone = "positive" | "negative" | null;
+function Hi({ tone, children }: { tone: IntroTone; children: ReactNode }) {
+  return (
+    <span
+      className={cn(
+        "font-semibold",
+        tone === "positive" && "text-positive",
+        tone === "negative" && "text-negative"
+      )}
+    >
+      {children}
+    </span>
+  );
+}
 
 export default async function MonthlyPage({
   searchParams,
@@ -1667,15 +1687,15 @@ export default async function MonthlyPage({
   // Composes a live summary using INDUSTRY-WIDE signals that the
   // HeadlineCard below does not already surface (HeadlineCard owns
   // active-equity flow, cycle phase, mood, drawdown, passive share
-  // and SIP stickiness). This card stays distinct by focusing on the
-  // total-industry AAUM trend, folio momentum, and NFO drag.
+  // and SIP stickiness). The summary stays % only — absolute ₹ Cr /
+  // lakh figures are dropped; the good / bad readings on each %
+  // are coloured via the design-token positive / negative classes
+  // through the module-level `Hi` highlight helper below.
   const snapshotIntro = (() => {
-    const summaryParts: string[] = [];
+    const summaryParts: ReactNode[] = [];
     const latestRow = folioLatestRow;
 
-    // Industry AAUM main line — current MoM growth + trailing-12M
-    // average MoM pace so the reader can tell whether this month was
-    // hotter or cooler than the typical compounding rate.
+    // Industry AAUM MoM% vs trailing-12M MoM% pace.
     const aaumSeries = amfiMonthlyRows()
       .filter((r) => typeof r.totalAaum === "number")
       .map((r) => ({ month: r.month, value: r.totalAaum as number }));
@@ -1684,11 +1704,7 @@ export default async function MonthlyPage({
       const prev = aaumSeries[aaumSeries.length - 2];
       if (prev.value > 0) {
         const momPct = ((latest.value - prev.value) / prev.value) * 100;
-        const valStr = formatCompactCrSafe(latest.value);
 
-        // Trailing-12M average MoM (uses the 13 most-recent points to
-        // produce 12 MoM changes). Skips months where the prior value
-        // is non-positive.
         const window = aaumSeries.slice(-13);
         const momChanges: number[] = [];
         for (let i = 1; i < window.length; i++) {
@@ -1701,28 +1717,35 @@ export default async function MonthlyPage({
             ? momChanges.reduce((s, v) => s + v, 0) / momChanges.length
             : null;
 
-        const momStr = `${momPct >= 0 ? "+" : ""}${momPct.toFixed(1)}% MoM`;
-        const head = `Industry AAUM at ${valStr} in ${latest.month}, ${momStr}`;
+        const momStr = `${momPct >= 0 ? "+" : ""}${momPct.toFixed(1)}%`;
+        const momTone: IntroTone = momPct > 0 ? "positive" : momPct < 0 ? "negative" : null;
 
         if (avgMom !== null && momChanges.length >= 6) {
           const diff = momPct - avgMom;
-          const tone =
-            diff > 0.4
-              ? "running hotter than"
-              : diff < -0.4
-                ? "running cooler than"
-                : "in line with";
-          const avgStr = `${avgMom >= 0 ? "+" : ""}${avgMom.toFixed(1)}%/mo`;
-          summaryParts.push(`${head} — ${tone} the trailing-12M pace of ${avgStr}.`);
+          const ppMag = Math.abs(diff);
+          const direction = diff >= 0 ? "above" : "below";
+          const deltaStr = `${ppMag.toFixed(1)}pp ${direction}`;
+          const deltaTone: IntroTone = diff > 0.4 ? "positive" : diff < -0.4 ? "negative" : null;
+          const avgStr = `${avgMom >= 0 ? "+" : ""}${avgMom.toFixed(1)}%`;
+          summaryParts.push(
+            <>
+              Industry AAUM grew <Hi tone={momTone}>{momStr}</Hi> MoM —{" "}
+              <Hi tone={deltaTone}>{deltaStr}</Hi> the trailing-12M pace
+              of {avgStr}/mo.
+            </>
+          );
         } else {
-          summaryParts.push(`${head}.`);
+          summaryParts.push(
+            <>
+              Industry AAUM grew <Hi tone={momTone}>{momStr}</Hi> MoM.
+            </>
+          );
         }
       }
     }
 
-    // Folio additions follow-up — current count + trailing-12M monthly
-    // average so a 13.8 L print reads as "ahead of typical" rather than
-    // a number floating with no scale.
+    // Folio additions: % vs trailing-12M monthly average. Absolute
+    // count dropped — only the relative comparison is shown.
     if (
       industryFolioAdditionsLatest !== null &&
       industryFolioAdditionsLatest > 0
@@ -1732,20 +1755,24 @@ export default async function MonthlyPage({
         folioWindow.length > 0
           ? folioWindow.reduce((s, p) => s + p.value, 0) / folioWindow.length
           : null;
-      if (folioMean !== null && folioWindow.length >= 6) {
+      if (folioMean !== null && folioWindow.length >= 6 && folioMean > 0) {
         const diff = industryFolioAdditionsLatest - folioMean;
-        const magnitude = folioMean > 0 ? Math.abs(diff / folioMean) * 100 : null;
-        const comparator =
-          magnitude !== null && magnitude >= 10
-            ? `${magnitude.toFixed(0)}% ${diff > 0 ? "above" : "below"}`
-            : "broadly in line with";
-        summaryParts.push(
-          `Folio base widened by ${formatLakhSafe(industryFolioAdditionsLatest)} — ${comparator} the trailing-12M monthly average of ${formatLakhSafe(folioMean)}.`
-        );
-      } else {
-        summaryParts.push(
-          `Folio base widened by ${formatLakhSafe(industryFolioAdditionsLatest)} this month.`
-        );
+        const magnitude = Math.abs(diff / folioMean) * 100;
+        if (magnitude >= 10) {
+          const above = diff > 0;
+          const pctStr = `${magnitude.toFixed(0)}% ${above ? "above" : "below"}`;
+          const tone: IntroTone = above ? "positive" : "negative";
+          summaryParts.push(
+            <>
+              Folio additions <Hi tone={tone}>{pctStr}</Hi> the
+              trailing-12M monthly average.
+            </>
+          );
+        } else {
+          summaryParts.push(
+            <>Folio additions broadly in line with the trailing-12M monthly average.</>
+          );
+        }
       }
     } else if (latestRow && typeof latestRow.netInflow === "number") {
       const netInflowSeries = amfiMonthlyRows()
@@ -1754,15 +1781,20 @@ export default async function MonthlyPage({
       if (netInflowSeries.length >= 2) {
         const latest = netInflowSeries[netInflowSeries.length - 1];
         const prev = netInflowSeries[netInflowSeries.length - 2];
-        const fmtSigned = (v: number) =>
-          (v < 0 ? "−" : "") + formatCompactCrSafe(Math.abs(v));
-        summaryParts.push(
-          `Industry net inflow ${fmtSigned(latest.value)} (vs ${fmtSigned(prev.value)} last month).`
-        );
+        if (prev.value !== 0) {
+          const changePct = ((latest.value - prev.value) / Math.abs(prev.value)) * 100;
+          const pctStr = `${changePct >= 0 ? "+" : ""}${changePct.toFixed(0)}%`;
+          const tone: IntroTone = changePct > 0 ? "positive" : changePct < 0 ? "negative" : null;
+          summaryParts.push(
+            <>
+              Industry net inflow <Hi tone={tone}>{pctStr}</Hi> MoM.
+            </>
+          );
+        }
       }
     }
 
-    let watchNext: string | undefined;
+    let watchNext: ReactNode | undefined;
     if (
       latestRow &&
       typeof latestRow.industryNfoFundsMobilized === "number" &&
@@ -1771,20 +1803,41 @@ export default async function MonthlyPage({
     ) {
       const nfoSharePct =
         (latestRow.industryNfoFundsMobilized / latestRow.netInflow) * 100;
-      const countSuffix =
-        typeof latestRow.industryNfoCount === "number"
-          ? ` across ${latestRow.industryNfoCount} launches`
-          : "";
-      watchNext = `NFOs absorbed ${nfoSharePct.toFixed(1)}% of industry net inflow${countSuffix} — a low share signals investors sticking with existing schemes, a high share is historically a froth cue.`;
+      const tone: IntroTone =
+        nfoSharePct <= 2 ? "positive" : nfoSharePct >= 5 ? "negative" : null;
+      const nfoStr = `${nfoSharePct.toFixed(1)}%`;
+      watchNext = (
+        <>
+          NFOs absorbed <Hi tone={tone}>{nfoStr}</Hi> of industry net inflow
+          — low share = investors sticking with existing schemes (healthy),
+          high share = historically a froth cue.
+        </>
+      );
     } else if (nfoSignal && nfoSignal.percentileRank !== null) {
       const pct = nfoSignal.percentileRank;
-      watchNext = `NFO mobilisation in the ${pct.toFixed(0)}${ordinalSuffix(Math.round(pct))} percentile of history — see whether launch activity stays here or pivots.`;
+      const tone: IntroTone = pct <= 25 ? "positive" : pct >= 75 ? "negative" : null;
+      const pctStr = `${pct.toFixed(0)}${ordinalSuffix(Math.round(pct))} percentile`;
+      watchNext = (
+        <>
+          NFO mobilisation in the <Hi tone={tone}>{pctStr}</Hi> of history —
+          see whether launch activity stays here or pivots.
+        </>
+      );
     }
 
-    const summary =
-      summaryParts.length > 0
-        ? summaryParts.join(" ")
-        : "Industry-wide context to read alongside the headline signal below.";
+    const summary: ReactNode =
+      summaryParts.length > 0 ? (
+        <>
+          {summaryParts.map((part, i) => (
+            <span key={i}>
+              {i > 0 ? " " : ""}
+              {part}
+            </span>
+          ))}
+        </>
+      ) : (
+        "Industry-wide context to read alongside the headline signal below."
+      );
 
     return { summary, watchNext };
   })();

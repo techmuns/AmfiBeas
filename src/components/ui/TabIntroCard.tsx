@@ -3,11 +3,13 @@ import { Card } from "@/components/ui/Card";
 
 interface TabIntroCardProps {
   headline: string;
-  summary: string;
+  /** Plain string or rich node (e.g. with `<span>`s coloured via the
+   *  `text-positive` / `text-negative` design tokens). */
+  summary: ReactNode;
   /** Optional "what to watch next" hint, rendered as a single line
    *  below the summary. Use one short sentence — anything longer
    *  belongs in a chart caption, not the intro. */
-  watchNext?: string;
+  watchNext?: ReactNode;
   /** Optional signal chip (e.g. a coloured badge for the current
    *  market regime). Renders to the right of the headline. */
   signalChip?: ReactNode;
@@ -33,7 +35,7 @@ export function TabIntroCard({
         </div>
         <p className="text-sm text-muted-foreground">{summary}</p>
         {watchNext ? (
-          <p className="text-[12px] text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             <span className="font-medium text-foreground">Watch next:</span>{" "}
             {watchNext}
           </p>
