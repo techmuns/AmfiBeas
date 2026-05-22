@@ -1,4 +1,7 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useState, type ReactNode } from "react";
+import { Sparkles, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 interface HowToReadProps {
@@ -10,24 +13,38 @@ interface HowToReadProps {
 }
 
 /**
- * Compact "How to read this" note for complex chart / dashboard cards.
- * Designed for the beginner-investor audience: 1-3 short sentences or
- * bullets, plain English. Sits directly inside the card body (under
- * the chart or under the subtitle). Never used to hide content —
- * always visible.
+ * "Explain with AI" toggle for complex chart / dashboard cards.
+ * Sits at the bottom of the card body as a compact button; clicking
+ * it expands the beginner-orientation note (1-3 short sentences or
+ * bullets) inline beneath the trigger.
  */
 export function HowToRead({ children, className }: HowToReadProps) {
+  const [open, setOpen] = useState(false);
   return (
-    <div
-      className={cn(
-        "mt-3 rounded-md border border-foreground/10 bg-muted/30 px-3 py-2 text-[12px] leading-snug text-muted-foreground",
-        className
+    <div className={cn("mt-3", className)}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className={cn(
+          "inline-flex items-center gap-1.5 rounded-md border border-foreground/10 bg-muted/30 px-2.5 py-1.5 text-[11px] font-medium uppercase tracking-wide text-foreground/80 transition-colors hover:bg-muted/60 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        )}
+      >
+        <Sparkles className="h-3 w-3" aria-hidden />
+        Explain with AI
+        <ChevronDown
+          className={cn(
+            "h-3 w-3 transition-transform",
+            open && "rotate-180"
+          )}
+          aria-hidden
+        />
+      </button>
+      {open && (
+        <div className="mt-2 rounded-md border border-foreground/10 bg-muted/30 px-3 py-2 text-[12px] leading-snug text-muted-foreground">
+          <div className="space-y-1">{children}</div>
+        </div>
       )}
-    >
-      <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-foreground/80">
-        How to read this
-      </p>
-      <div className="space-y-1">{children}</div>
     </div>
   );
 }
