@@ -59,6 +59,10 @@ export const CHART_GUIDES = {
     title: "Revenue yield and operating yield (bps)",
     body: "Navy bars: revenue yield in bps of MF QAAUM (annualised Operating Revenue ÷ same-quarter MF QAAUM × 10,000). Orange line: operating yield (annualised Operating Profit ÷ same MF QAAUM). Caveat: Operating Revenue may include non-MF operating revenue (AIF, PMS, advisory, international); the resulting yield reads as a slight ceiling on the true pure-MF management-fee yield. Cross-AMC differences in the non-MF mix can therefore inflate or deflate the comparison.",
   },
+  "home-industry-aum": {
+    title: "Industry AUM and annual growth",
+    body: "Navy bars: industry total AUM as of each fiscal year-end (₹ Cr; rebased to ₹ Lakh Cr on the axis once values cross the 1,00,000 Cr threshold). Orange line: YoY growth % vs the prior fiscal year-end. The diagonal arrow carries the period-end CAGR. Fiscal years where the prior March's AUM is missing in the snapshot are skipped — the source caption names the covered window.",
+  },
 } as const satisfies Record<string, ChartGuide>;
 
 export type ChartGuideId = keyof typeof CHART_GUIDES;

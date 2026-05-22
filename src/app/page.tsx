@@ -5,9 +5,9 @@ import { Card } from "@/components/ui/Card";
 import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
 import { marketWrap } from "@/data/market-wrap";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { AreaTrend } from "@/components/charts/AreaTrend";
-import { BarSeries } from "@/components/charts/BarSeries";
 import { Sparkline } from "@/components/charts/Sparkline";
+import { StackedBarCombo } from "@/components/charts/StackedBarCombo";
+import { DesignLanguageCard } from "@/components/ui/DesignLanguageCard";
 import { IndustryNarrative } from "@/components/data/IndustryNarrative";
 import {
   industryQuarterly,
@@ -33,6 +33,8 @@ import {
 } from "@/data/market-indices";
 import { amcTrajectoryQuadrant } from "@/data/amc-peer-universe";
 import { industryNarrative } from "@/data/narrative";
+import { fyLabel, monthToFy } from "@/lib/fiscal";
+import { cagrPct } from "@/lib/cagr";
 import {
   formatCompactCrSafe,
   formatDelta,
@@ -101,16 +103,46 @@ export default function HomePage() {
   const latestQ = quarterly[quarterly.length - 1];
   const patYoy = yoyChangeQuarterly(quarterly.map((q) => q.pat));
 
-  const aumSeries = amfiRows.flatMap((r) =>
-    typeof r.totalAum === "number"
-      ? [{ month: r.month, value: r.totalAum }]
-      : []
-  );
-  const sipSeries = amfiRows.flatMap((r) =>
-    typeof r.sipContribution === "number"
-      ? [{ label: r.month, value: r.sipContribution }]
-      : []
-  );
+  // Industry AUM trajectory — FY-end snapshots of total industry AUM
+  // with the YoY growth % overlaid as the right-axis line. Missing
+  // FYs are skipped (never zero-filled); the source caption names
+  // the covered window.
+  const industryAumFyEnd = (() => {
+    const byFy = new Map<number, { month: string; value: number }>();
+    for (const r of amfiRows) {
+      if (typeof r.totalAum !== "number" || !r.month.endsWith("-03")) continue;
+      const fy = monthToFy(r.month);
+      if (!Number.isFinite(fy)) continue;
+      const existing = byFy.get(fy);
+      if (!existing || r.month > existing.month) {
+        byFy.set(fy, { month: r.month, value: r.totalAum });
+      }
+    }
+    const sorted = Array.from(byFy.entries()).sort((a, b) => a[0] - b[0]);
+    return sorted.map(([fy, { value }], idx) => {
+      const prior = idx > 0 ? sorted[idx - 1] : null;
+      const priorFy = prior?.[0] ?? null;
+      const priorValue = prior?.[1].value ?? null;
+      const yoyOk =
+        typeof priorValue === "number" &&
+        priorFy !== null &&
+        fy - priorFy === 1 &&
+        priorValue > 0;
+      return {
+        label: fyLabel(fy),
+        fy,
+        bottom: value,
+        line: yoyOk
+          ? Number((((value - (priorValue as number)) / (priorValue as number)) * 100).toFixed(1))
+          : Number.NaN,
+      };
+    });
+  })();
+  // Keep every FY-end bar that has a totalAum value; the YoY LINE
+  // value stays NaN at the leading FY and at any FY where the prior
+  // year is missing (gap years). Recharts treats NaN as a gap, so
+  // the orange line bridges only adjacent years.
+  const industryAumExhibit = industryAumFyEnd.filter((p) => p.bottom > 0);
 
   const trend = (n: number) =>
     n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
@@ -349,20 +381,41 @@ export default function HomePage() {
         />
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        <Card
-          title="AUM Trend"
-          subtitle={`Industry total · ${aumSeries.length} month${aumSeries.length === 1 ? "" : "s"} · ${AMFI_MONTHLY_SOURCE}`}
-        >
-          <AreaTrend data={aumSeries} name="AUM" />
-        </Card>
-        <Card
-          title="SIP Flows"
-          subtitle={`Monthly inflows · industry · ${sipSeries.length} month${sipSeries.length === 1 ? "" : "s"} · ${AMFI_MONTHLY_SOURCE}`}
-        >
-          <BarSeries data={sipSeries} name="SIP" />
-        </Card>
-      </section>
+      {industryAumExhibit.length >= 2 &&
+        (() => {
+          const first = industryAumExhibit[0];
+          const last = industryAumExhibit[industryAumExhibit.length - 1];
+          const years = last.fy - first.fy;
+          const yoyCount = industryAumExhibit.filter((p) =>
+            Number.isFinite(p.line)
+          ).length;
+          return (
+            <DesignLanguageCard
+              title="Industry AUM and annual growth"
+              chartId="home-industry-aum"
+              source={`Source: ${AMFI_MONTHLY_SOURCE} · ${industryAumExhibit.length} FY-end snapshot${industryAumExhibit.length === 1 ? "" : "s"}, ${yoyCount} with an adjacent prior year for the YoY line (gap years are skipped, never interpolated)`}
+            >
+              <StackedBarCombo
+                variant="C"
+                data={industryAumExhibit}
+                barName="Total industry AUM"
+                lineName="YoY"
+                rightUnitLabel="%"
+                cagr={
+                  years >= 1
+                    ? {
+                        startLabel: first.label,
+                        endLabel: last.label,
+                        cagrPct: cagrPct(first.bottom, last.bottom, years),
+                        startValue: first.bottom,
+                        endValue: last.bottom,
+                      }
+                    : undefined
+                }
+              />
+            </DesignLanguageCard>
+          );
+        })()}
 
       <Card
         title="Premium Data"
@@ -575,7 +628,7 @@ function listedAmcRead(
       ? " Strong earnings cycle — operating leverage working."
       : patYoY !== null && patYoY < 0
       ? " Earnings cycle softening — watch revenue yield + cost ratio."
-      : " Watch the gap between revenue yield trajectory and equity-AAUM growth.";
+      : " Watch the gap between revenue yield drift and equity-AAUM growth.";
   return `${revPart}${patPart}${marginPart}${action}`;
 }
 

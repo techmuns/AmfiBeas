@@ -276,7 +276,7 @@ function ArchetypeB({
     total: d.bottom + (d.top ?? 0),
     line: d.line,
   }));
-  const lineLabelKeep = selectLineLabelIndices(lineValues);
+  const lineLabelKeep = selectLineLabelIndices(merged);
 
   return (
     <div className="w-full">
@@ -425,7 +425,7 @@ function ArchetypeC({
     bar: d.bottom,
     line: d.line,
   }));
-  const lineLabelKeep = selectLineLabelIndices(lineValues);
+  const lineLabelKeep = selectLineLabelIndices(merged);
 
   return (
     <div className="w-full">
@@ -777,24 +777,34 @@ function padDomain(values: number[], pad: number): [number, number] {
 /**
  * For Archetype B/C line labels: when the series has many points,
  * showing every value floods the chart. Per the plan: label only
- * first / last / peak / trough. For ≤ 4 points, label all of them.
+ * first / last / peak / trough. For ≤ 4 valid points, label all
+ * of them.
+ *
+ * `data` is the full row set including any gap rows whose `line`
+ * value is NaN. The returned set holds ORIGINAL data indices (not
+ * indices into the filtered series), so the renderer can match
+ * against the index Recharts passes for each rendered label point.
  */
-function selectLineLabelIndices(values: number[]): Set<number> {
+function selectLineLabelIndices(data: Array<{ line: number }>): Set<number> {
+  const validPoints: Array<{ idx: number; value: number }> = [];
+  data.forEach((d, idx) => {
+    if (Number.isFinite(d.line)) validPoints.push({ idx, value: d.line });
+  });
   const keep = new Set<number>();
-  if (values.length === 0) return keep;
-  if (values.length <= 4) {
-    values.forEach((_, i) => keep.add(i));
+  if (validPoints.length === 0) return keep;
+  if (validPoints.length <= 4) {
+    validPoints.forEach((p) => keep.add(p.idx));
     return keep;
   }
-  keep.add(0);
-  keep.add(values.length - 1);
-  let maxIdx = 0;
-  let minIdx = 0;
-  values.forEach((v, i) => {
-    if (v > values[maxIdx]) maxIdx = i;
-    if (v < values[minIdx]) minIdx = i;
+  keep.add(validPoints[0].idx);
+  keep.add(validPoints[validPoints.length - 1].idx);
+  let maxI = 0;
+  let minI = 0;
+  validPoints.forEach((p, i) => {
+    if (p.value > validPoints[maxI].value) maxI = i;
+    if (p.value < validPoints[minI].value) minI = i;
   });
-  keep.add(maxIdx);
-  keep.add(minIdx);
+  keep.add(validPoints[maxI].idx);
+  keep.add(validPoints[minI].idx);
   return keep;
 }
