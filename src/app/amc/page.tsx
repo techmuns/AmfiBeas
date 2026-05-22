@@ -8,6 +8,10 @@ import { AmcQuadrantChart } from "@/components/charts/AmcQuadrantChart";
 import { CohortJourneyMap } from "@/components/charts/CohortJourneyMap";
 import { Heatmap } from "@/components/charts/Heatmap";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
+import { DesignLanguageCard } from "@/components/ui/DesignLanguageCard";
+import { StackedBarCombo } from "@/components/charts/StackedBarCombo";
+import { topNAmcConcentrationExhibit } from "@/data/hero-exhibits";
+import { cagrPct } from "@/lib/cagr";
 import { amcAaumSeries, amcIndexRows } from "@/data/amc-detail";
 import {
   amcHealthGrowthMatrix,
@@ -21,12 +25,33 @@ import {
 import { LensToggle } from "@/components/ui/LensToggle";
 import { cn } from "@/lib/cn";
 
+type AmcTab = "overview" | "share-positioning";
+
+const TABS: Array<{ key: AmcTab; label: string; description: string }> = [
+  {
+    key: "overview",
+    label: "Overview",
+    description: "Cohort outliers, AMC roster, industry concentration.",
+  },
+  {
+    key: "share-positioning",
+    label: "Share & Positioning",
+    description: "Market-share movement, Share vs Growth, AMC Health Heatmap.",
+  },
+];
+
+function parseTab(value: string | string[] | undefined): AmcTab {
+  if (typeof value !== "string") return "overview";
+  return value === "share-positioning" ? "share-positioning" : "overview";
+}
+
 export default async function AmcListPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
+  const tab = parseTab(sp.tab);
   const healthLens: "growth" | "zscore" =
     sp.healthLens === "zscore" ? "zscore" : "growth";
   const data = amcIndexRows();
@@ -51,13 +76,12 @@ export default async function AmcListPage({
   const anomalies = latestQoqAnomalies(2);
   const quadrant = amcTrajectoryQuadrant(30);
 
-  // Cohort journey arrows (5Y / full-history span).
+  // Cohort share-movement arrows (5Y / full-history span).
   const journeyPoints = cohortJourneyMap(20) ?? [];
 
-  // Battle-cards rolodex — top 12 AMCs by AAUM, with their AAUM
-  // sparkline pulled from amc-detail. The card grid replaces the
-  // tabular row scan with a visual scan.
-  const battleCards = quadrant
+  // AMC Roster rolodex — top 12 AMCs by AAUM, with each AMC's
+  // trailing AAUM sparkline pulled from amc-detail.
+  const rosterCards = quadrant
     ? [...quadrant.points]
         .slice(0, 12)
         .map((p) => {
@@ -80,6 +104,8 @@ export default async function AmcListPage({
         })
     : [];
 
+  const heroTopAmc = topNAmcConcentrationExhibit();
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -96,6 +122,83 @@ export default async function AmcListPage({
         }
       />
 
+      <nav
+        aria-label="AMC views"
+        className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-2"
+      >
+        <ul className="flex flex-wrap items-center gap-1">
+          {TABS.map((t) => {
+            const active = t.key === tab;
+            const href =
+              t.key === "overview" ? "/amc" : `/amc?tab=${t.key}`;
+            return (
+              <li key={t.key}>
+                <Link
+                  href={href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium tracking-tight transition-colors",
+                    active
+                      ? "bg-brand-navy/10 text-brand-navy"
+                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                  )}
+                >
+                  {t.label}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+        <p className="text-[11px] italic text-muted-foreground">
+          {TABS.find((t) => t.key === tab)?.description}
+        </p>
+      </nav>
+
+      {tab === "overview" && (
+        <OverviewTab
+          anomalies={anomalies}
+          rosterCards={rosterCards}
+          heroTopAmc={heroTopAmc}
+          data={data}
+        />
+      )}
+
+      {tab === "share-positioning" && (
+        <SharePositioningTab
+          journeyPoints={journeyPoints}
+          quadrant={quadrant}
+          health={health}
+          healthLens={healthLens}
+          healthDisplayRows={healthDisplayRows}
+        />
+      )}
+    </div>
+  );
+}
+
+function OverviewTab({
+  anomalies,
+  rosterCards,
+  heroTopAmc,
+  data,
+}: {
+  anomalies: ReturnType<typeof latestQoqAnomalies>;
+  rosterCards: Array<{
+    slug: string;
+    displayName: string;
+    rank: number;
+    outOf: number;
+    marketSharePct: number;
+    qoqGrowthPct: number;
+    yoyGrowthPct: number | null;
+    isTop7: boolean;
+    sparkline: Array<{ label: string; value: number }>;
+  }>;
+  heroTopAmc: ReturnType<typeof topNAmcConcentrationExhibit>;
+  data: NonNullable<ReturnType<typeof amcIndexRows>>;
+}) {
+  return (
+    <div className="space-y-6">
       {anomalies && anomalies.outliers.length > 0 && (
         <Card
           title="Outliers this quarter"
@@ -148,14 +251,14 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {battleCards.length > 0 && (
+      {rosterCards.length > 0 && (
         <Card
-          title="AMC Roster · Battle Cards"
+          title="AMC Roster"
           subtitle="Each card is one AMC · rank, tier, share, growth and trailing AAUM at a glance"
         >
           <div className="overflow-x-auto">
             <div className="flex gap-3" style={{ minWidth: "max-content" }}>
-              {battleCards.map((c) => (
+              {rosterCards.map((c) => (
                 <div key={c.slug} className="w-[200px] shrink-0">
                   <AmcBattleCard
                     slug={c.slug}
@@ -175,10 +278,93 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {journeyPoints.length >= 4 && (
+      {heroTopAmc.availability.hasData &&
+        (() => {
+          const title =
+            heroTopAmc.n === 10
+              ? "Top 10 AMC concentration basis QAAUM"
+              : `Top ${heroTopAmc.n} AMC concentration basis QAAUM`;
+          const first = heroTopAmc.data[0];
+          const last = heroTopAmc.data[heroTopAmc.data.length - 1];
+          const years = (heroTopAmc.data.length - 1) / 4;
+          const firstTotal = first.bottom + first.top;
+          const lastTotal = last.bottom + last.top;
+          return (
+            <DesignLanguageCard
+              title={title}
+              chartId="hero-topn-amc-concentration"
+              source={`Source: AMFI Fundwise AAUM disclosure (MF-only) · ${heroTopAmc.availability.note}`}
+            >
+              <StackedBarCombo
+                variant="A"
+                data={heroTopAmc.data}
+                bottomName="Top 5"
+                topName={
+                  heroTopAmc.n === 10 ? "Ranks 6–10" : `Ranks 6–${heroTopAmc.n}`
+                }
+                showSegmentLabels={true}
+                showTotalLabel={true}
+                leftUnitLabel="%"
+                percentMode={true}
+                cagr={
+                  heroTopAmc.data.length >= 3 && years > 0
+                    ? {
+                        startLabel: first.label,
+                        endLabel: last.label,
+                        cagrPct: cagrPct(firstTotal, lastTotal, years),
+                        startValue: firstTotal,
+                        endValue: lastTotal,
+                      }
+                    : undefined
+                }
+              />
+            </DesignLanguageCard>
+          );
+        })()}
+
+      <AmcSearchTable rows={data.rows} />
+
+      <Card>
+        <div className="space-y-1 text-xs text-muted-foreground">
+          <div>
+            <strong className="text-foreground">Source:</strong> AMFI
+            Fundwise AAUM.
+          </div>
+          <div>
+            <strong className="text-foreground">Universe:</strong> all AMCs
+            with at least one quarter of <code>status=&quot;ok&quot;</code> AAUM
+            data in the snapshot. PMS / AIF / offshore / advisory / alternates
+            are not included.
+          </div>
+          <div>
+            <strong className="text-foreground">Snapshot quarter:</strong>{" "}
+            {data.fiscalLabel} ({data.quarter}).
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function SharePositioningTab({
+  journeyPoints,
+  quadrant,
+  health,
+  healthLens,
+  healthDisplayRows,
+}: {
+  journeyPoints: ReturnType<typeof cohortJourneyMap>;
+  quadrant: ReturnType<typeof amcTrajectoryQuadrant>;
+  health: ReturnType<typeof amcHealthGrowthMatrix>;
+  healthLens: "growth" | "zscore";
+  healthDisplayRows: Array<{ label: string; values: Array<number | null> }>;
+}) {
+  return (
+    <div className="space-y-6">
+      {journeyPoints && journeyPoints.length >= 4 && (
         <Card
-          title="Cohort Journey Map"
-          subtitle={`Each arrow = one AMC's market-share journey from ${journeyPoints[0].startQuarterLabel} to ${journeyPoints[0].endQuarterLabel}`}
+          title="Market-share movement"
+          subtitle={`Each arrow = one AMC's market-share movement from ${journeyPoints[0].startQuarterLabel} to ${journeyPoints[0].endQuarterLabel}`}
         >
           <CohortJourneyMap points={journeyPoints} />
           <p className="mt-3 text-[11px] text-muted-foreground">
@@ -190,7 +376,7 @@ export default async function AmcListPage({
 
       {quadrant && quadrant.points.length >= 4 && (
         <Card
-          title="AMC Trajectory Quadrant"
+          title="Share vs Growth"
           subtitle={`Top ${quadrant.points.length} AMCs by AAUM · ${quadrant.latestQuarterLabel} · cohort medians shown as dashed lines`}
         >
           <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
@@ -202,7 +388,7 @@ export default async function AmcListPage({
             <QuadrantBucketsList buckets={quadrant.buckets} />
           </div>
           <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            Leaders: high share + above-median growth. Gainers: low share but
+            Leaders: high share + above-median growth. Challengers: low share but
             growing faster than peers. Defenders: high share but slowing.
             Laggards: low share + below-median growth.
             <InfoTooltip
@@ -230,6 +416,7 @@ export default async function AmcListPage({
                 { value: "zscore", label: "Z-score" },
               ]}
               active={healthLens}
+              preserveParams={{ tab: "share-positioning" }}
             />
           }
         >
@@ -260,40 +447,27 @@ export default async function AmcListPage({
           </p>
         </Card>
       )}
-
-      <AmcSearchTable rows={data.rows} />
-
-      <Card>
-        <div className="space-y-1 text-xs text-muted-foreground">
-          <div>
-            <strong className="text-foreground">Source:</strong> AMFI
-            Fundwise AAUM.
-          </div>
-          <div>
-            <strong className="text-foreground">Universe:</strong> all AMCs
-            with at least one quarter of <code>status=&quot;ok&quot;</code> AAUM
-            data in the snapshot. PMS / AIF / offshore / advisory / alternates
-            are not included.
-          </div>
-          <div>
-            <strong className="text-foreground">Snapshot quarter:</strong>{" "}
-            {data.fiscalLabel} ({data.quarter}).
-          </div>
-        </div>
-      </Card>
     </div>
   );
 }
 
-/** Compact 2×2 list view next to the quadrant chart. Each bucket
- *  shows up to 5 AMCs ordered by market share so the read scans
- *  largest-first. */
+/** Compact 2×2 list view next to the Share vs Growth chart. Each
+ *  bucket shows up to 5 AMCs ordered by market share so the read
+ *  scans largest-first. */
 function QuadrantBucketsList({
   buckets,
 }: {
   buckets: Record<AmcQuadrant, AmcQuadrantPoint[]>;
 }) {
   const order: AmcQuadrant[] = ["Leaders", "Gainers", "Defenders", "Laggards"];
+  // User-facing relabel: "Gainers" reads as "Challengers" per the
+  // institutional copy guardrail. Internal enum stays as "Gainers".
+  const displayLabel: Record<AmcQuadrant, string> = {
+    Leaders: "Leaders",
+    Gainers: "Challengers",
+    Defenders: "Defenders",
+    Laggards: "Laggards",
+  };
   const accent: Record<AmcQuadrant, string> = {
     Leaders: "border-positive/40 bg-positive/10 text-positive",
     Gainers: "border-[hsl(var(--chart-1))]/40 bg-[hsl(var(--chart-1))]/10 text-[hsl(var(--chart-1))]",
@@ -310,7 +484,7 @@ function QuadrantBucketsList({
               "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
               accent[q]
             )}>
-              {q} · {buckets[q].length}
+              {displayLabel[q]} · {buckets[q].length}
             </div>
             {items.length === 0 ? (
               <div className="mt-2 text-xs text-muted-foreground">No AMCs in this bucket this quarter.</div>

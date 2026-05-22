@@ -808,7 +808,7 @@ export default async function QuarterlyPage({
         </div>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
           <QSignalTile
-            label="Quarterly AAUM Trajectory"
+            label="Quarterly AAUM movement"
             pill={
               aaumDeltaVs4Q === null
                 ? "—"
@@ -828,7 +828,7 @@ export default async function QuarterlyPage({
             }
             read={(() => {
               if (aaumDeltaVs4Q === null)
-                return "AAUM trajectory unavailable — need at least 4 quarters.";
+                return "AAUM movement unavailable — need at least 4 quarters.";
               if (aaumDeltaVs4Q >= 5)
                 return "Quarterly AAUM is running well ahead of its trailing-4Q average — sector earnings should be expanding. Watch whether the gap holds or fades next quarter.";
               if (aaumDeltaVs4Q >= 0)
@@ -863,7 +863,7 @@ export default async function QuarterlyPage({
               if (flowQualityPct >= 50)
                 return "Equity dominates the quarter's flow magnitude — risk-on mix supports AMC revenue yield. Watch for SIP vs lumpsum split persistence.";
               if (flowQualityPct >= 0)
-                return "Mixed flow quality — equity contributes but debt/liquid still meaningful. Watch the equity share trajectory across the next 2-3 quarters.";
+                return "Mixed flow quality — equity contributes but debt/liquid still meaningful. Watch the equity share movement across the next 2-3 quarters.";
               return "Equity flow is net-negative this quarter — defensive rotation underway. Watch whether redemptions are concentrated in a few categories or industry-wide.";
             })()}
           />

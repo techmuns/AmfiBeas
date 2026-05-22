@@ -445,7 +445,7 @@ export default async function AmcPage({
       <SectionDivider
         eyebrow="Section 2"
         label="Trends"
-        context="AAUM, market share and rank trajectory vs the cohort."
+        context="AAUM, market share and rank movement vs the cohort."
       />
 
       <section className="grid gap-4 lg:grid-cols-2">
