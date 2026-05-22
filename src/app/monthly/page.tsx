@@ -2632,27 +2632,12 @@ export default async function MonthlyPage({
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
               action={
-                <>
-                  {aeFlowView === "trend" && (
-                    <LensToggle
-                      basePath="/monthly"
-                      paramName="aeFlowLens"
-                      defaultValue="absolute"
-                      lenses={[
-                        { value: "absolute", label: "₹ Cr" },
-                        { value: "share", label: "% of net inflow" },
-                      ]}
-                      active={aeFlowLens}
-                      preserveParams={preservedQueryParams}
-                    />
-                  )}
-                  <ChartTypeToggle
-                    basePath="/monthly"
-                    paramName="aeFlowView"
-                    active={aeFlowView}
-                    preserveParams={preservedQueryParams}
-                  />
-                </>
+                <ChartTypeToggle
+                  basePath="/monthly"
+                  paramName="aeFlowView"
+                  active={aeFlowView}
+                  preserveParams={preservedQueryParams}
+                />
               }
             >
               {aeFlowView === "bars" ? (
