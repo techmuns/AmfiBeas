@@ -1865,17 +1865,17 @@ export default async function MonthlyPage({
       <PageHeader
         title="Monthly Operating KPIs"
         subtitle={subtitle}
-        action={<WeatherBadge headline={weather.headline} tone={weather.tone} />}
       />
-
-      <MarketWrapCard wrap={marketWrapData} />
 
       <DashboardTabs
         basePath="/monthly"
         tabs={MONTHLY_TABS}
         activeId={activeTab}
         searchParams={sp}
+        action={<WeatherBadge headline={weather.headline} tone={weather.tone} />}
       />
+
+      <MarketWrapCard wrap={marketWrapData} />
 
       {activeTab === "snapshot" && (
         <TabIntroCard

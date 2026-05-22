@@ -923,14 +923,14 @@ export default async function QuarterlyPage({
         }
       />
 
-      <MarketWrapCard wrap={marketWrapData} />
-
       <DashboardTabs
         basePath="/quarterly"
         tabs={QUARTERLY_TABS}
         activeId={activeTab}
         searchParams={sp}
       />
+
+      <MarketWrapCard wrap={marketWrapData} />
 
       {activeTab === "snapshot" && (
         <TabIntroCard
