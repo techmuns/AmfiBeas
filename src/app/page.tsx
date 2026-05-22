@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Sparkles } from "lucide-react";
-import { Card } from "@/components/ui/Card";
+import { ArrowUpRight } from "lucide-react";
 import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
 import { SignalTile } from "@/components/ui/SignalTile";
 import { marketWrap } from "@/data/market-wrap";
@@ -218,104 +217,7 @@ export default function HomePage() {
           <IndustryNarrative facts={narrative} />
         </section>
       )}
-
-      <section className="space-y-3">
-        <div>
-          <h2 className="text-sm font-medium tracking-tight">
-            Explore the dashboard
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            Deep dives on each metric and AMC — the Sector Read tiles
-            above are the headline; these routes are the evidence.
-          </p>
-        </div>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          <ExploreTile
-            title="Monthly Signals"
-            href="/monthly"
-            summary="What changed this month — flows, SIP retail, active vs passive, NFOs, and the market-cycle backdrop."
-          />
-          <ExploreTile
-            title="Quarterly KPIs"
-            href="/quarterly"
-            summary="Industry AAUM, flows, concentration, and the per-category mix at quarter-end."
-          />
-          <ExploreTile
-            title="AMC Winners & Losers"
-            href="/amc?tab=share-positioning"
-            summary="Which AMCs gained share, which lost it — quarter by quarter, with a positioning quadrant."
-          />
-          <ExploreTile
-            title="Listed AMC Earnings"
-            href="/financials"
-            summary="P&L, margins, yields, and the listed-peer cohort table for every disclosed AMC."
-          />
-          <ExploreTile
-            title="Compare AMCs"
-            href="/compare"
-            summary="Side-by-side AAUM, market share, rank, and growth for any two AMCs."
-          />
-        </div>
-      </section>
-
-      <Card
-        title="Premium Data"
-        subtitle="Licensed Morningstar datasets that unlock scheme-level KPIs"
-        action={
-          <Link
-            href="/premium"
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-          >
-            View licensed data options
-            <ArrowUpRight className="h-3 w-3" />
-          </Link>
-        }
-      >
-        <div className="flex items-start gap-3 text-sm">
-          <Sparkles className="mt-0.5 h-4 w-4 text-muted-foreground" />
-          <div className="text-muted-foreground">
-            Scheme ratings, fund factsheets, holdings, risk metrics, and peer
-            quartiles become available with a Morningstar license. The
-            dashboard does not synthesise these values when no license is
-            connected.{" "}
-            <Link
-              href="/premium"
-              className="text-foreground underline-offset-2 hover:underline"
-            >
-              See the full list →
-            </Link>
-          </div>
-        </div>
-      </Card>
     </div>
-  );
-}
-
-/** Gateway tile linking to a deep-dive route. The Overview itself is
- *  intentionally short; these tiles point the reader at where to look
- *  next without duplicating the headline KPIs. */
-function ExploreTile({
-  title,
-  href,
-  summary,
-}: {
-  title: string;
-  href: string;
-  summary: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group flex flex-col gap-1.5 rounded-lg border bg-card px-4 py-3 shadow-sm transition-colors hover:border-foreground/20 hover:bg-accent/40"
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium tracking-tight">{title}</span>
-        <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground transition-colors group-hover:text-foreground" />
-      </div>
-      <p className="text-[12px] leading-snug text-muted-foreground">
-        {summary}
-      </p>
-    </Link>
   );
 }
 
