@@ -380,6 +380,65 @@ export interface ActiveEquityFlowExhibit {
   windowEnd: string | null;
 }
 
+/**
+ * Industry total net inflow vs NIFTY 500. Mirrors the SIP-flows
+ * and active-equity-flow adapters, but uses the unfiltered
+ * `netInflow` field — i.e. the Grand Total row of the AMFI
+ * Monthly Report, signed (can swing strongly negative during
+ * drawdowns). Used on /summary to surface the flow-stress story
+ * against the index in the same Archetype D pattern.
+ */
+export function flowStressVsNiftyExhibit(): ActiveEquityFlowExhibit {
+  const amfi = amfiMonthlyRows();
+  const nifty = marketIndexRows(NIFTY_500);
+  const niftyByMonth = new Map(nifty.map((r) => [r.month, r.level]));
+  const continuousMonths = pickContinuousTail(
+    amfi
+      .filter(
+        (r) => typeof r.netInflow === "number" && niftyByMonth.has(r.month)
+      )
+      .map((r) => r.month)
+  );
+  const monthSet = new Set(continuousMonths);
+  const rowsInWindow = amfi
+    .filter((r) => monthSet.has(r.month))
+    .sort((a, b) => a.month.localeCompare(b.month));
+  if (rowsInWindow.length === 0) {
+    return {
+      data: [],
+      availability: {
+        hasData: false,
+        note: "Industry net-inflow series not yet ingested for the post-gap window.",
+      },
+      windowStart: null,
+      windowEnd: null,
+    };
+  }
+  const baseLevel = niftyByMonth.get(rowsInWindow[0].month);
+  if (typeof baseLevel !== "number") {
+    return {
+      data: [],
+      availability: { hasData: false, note: "Unable to rebase NIFTY 500." },
+      windowStart: rowsInWindow[0].month,
+      windowEnd: rowsInWindow[rowsInWindow.length - 1].month,
+    };
+  }
+  const points: ActiveEquityFlowPoint[] = rowsInWindow.map((r) => ({
+    label: formatMonthLabel(r.month),
+    bar: r.netInflow as number,
+    index: ((niftyByMonth.get(r.month) as number) / baseLevel) * 100,
+  }));
+  return {
+    data: points,
+    availability: {
+      hasData: points.length >= 6,
+      note: windowNote(rowsInWindow[0].month, rowsInWindow[rowsInWindow.length - 1].month),
+    },
+    windowStart: rowsInWindow[0].month,
+    windowEnd: rowsInWindow[rowsInWindow.length - 1].month,
+  };
+}
+
 export function activeEquityFlowVsNiftyExhibit(): ActiveEquityFlowExhibit {
   const amfi = amfiMonthlyRows();
   const nifty = marketIndexRows(NIFTY_500);

@@ -75,6 +75,10 @@ export const CHART_GUIDES = {
     title: "Funds mobilised and net flow",
     body: "Navy bars: gross funds mobilised each month for SEBI Group V (Index Funds, ETFs, FoF, Gold ETFs) — the inflow side of the equation, always positive. Orange line on the right axis: net flow on the same ₹ Cr scale (mobilised minus redemption). The line dips below zero in months where redemption exceeds gross mobilised, meaning Group V was a net outflow that month. Tooltip carries the precise number for each month — labels are intentionally omitted to keep the line readable across the full window.",
   },
+  "summary-flow-stress": {
+    title: "Flow stress vs NIFTY 500",
+    body: "Burgundy bars: industry-wide total monthly net inflow (Grand Total row of the AMFI Monthly Report, signed). Negative bars indicate net redemption months. Dark line on the right axis: NIFTY 500 month-end close, rebased to 100 at the start of the visible window. Use this view to read flow stress against the index — outflow bars during a drawdown signal capitulation; persistent inflow bars during a drawdown signal buy-the-dip behavior. Window is the most recent continuous slice; gap months upstream are excluded rather than bridged.",
+  },
 } as const satisfies Record<string, ChartGuide>;
 
 export type ChartGuideId = keyof typeof CHART_GUIDES;

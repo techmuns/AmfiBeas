@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { ArrowLeft, Printer } from "lucide-react";
 import { Card } from "@/components/ui/Card";
+import { DesignLanguageCard } from "@/components/ui/DesignLanguageCard";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { Sparkline } from "@/components/charts/Sparkline";
-import { FlowStressHistoryChart } from "@/components/charts/FlowStressHistoryChart";
+import { StackedBarCombo } from "@/components/charts/StackedBarCombo";
+import { flowStressVsNiftyExhibit } from "@/data/hero-exhibits";
 import { cn } from "@/lib/cn";
 import {
   activeEquityNetInflowSignal,
@@ -22,7 +24,6 @@ import {
   passiveFlowShareTrend,
 } from "@/data/amfi-monthly-category";
 import {
-  flowStressHistory,
   latestNifty500Row,
   marketStressFlowSignal,
 } from "@/data/market-indices";
@@ -50,7 +51,7 @@ export default function InvestorSummaryPage() {
   const nfoDrag = nfoDragTrend(24);
   const passiveFlow = passiveFlowShareTrend(24);
   const rotation = categoryRotation(3, 3);
-  const flowStress = flowStressHistory();
+  const heroFlowStress = flowStressVsNiftyExhibit();
   const read = investorRead({
     activeEquityZ: ae?.zScore ?? null,
     activeEquityPercentile: ae?.percentileRank ?? null,
@@ -274,23 +275,21 @@ export default function InvestorSummaryPage() {
         )}
       </section>
 
-      {flowStress.length > 0 && (
-        <Card
-          title="Flow Stress History"
-          subtitle="Nifty 500 drawdown with Buy-the-dip / Flow stress events overlaid"
+      {heroFlowStress.availability.hasData && (
+        <DesignLanguageCard
+          title="Flow stress vs NIFTY 500"
+          chartId="summary-flow-stress"
+          source={`Source: AMFI Monthly Report (Grand Total net inflow) · NSE NIFTY 500 month-end · ${heroFlowStress.availability.note}`}
         >
-          <FlowStressHistoryChart data={flowStress} height={180} />
-          <div className="mt-2 flex items-center justify-end gap-3 text-[10px] tabular text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-positive" />
-              Buy-the-dip
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-negative" />
-              Flow stress
-            </span>
-          </div>
-        </Card>
+          <StackedBarCombo
+            variant="D"
+            data={heroFlowStress.data}
+            barName="Industry net flow"
+            lineName="NIFTY 500 (indexed)"
+            rightUnitLabel="Index (base 100)"
+            height={220}
+          />
+        </DesignLanguageCard>
       )}
 
       <footer className="text-[10px] text-muted-foreground">
