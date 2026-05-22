@@ -14,15 +14,15 @@ export function fyLabel(fy: number): string {
   return `FY${String(fy).slice(2)}`;
 }
 
-export function monthsToFyAverage<T extends Record<string, unknown>>(
+export function monthsToFyAverage<T extends object>(
   rows: T[],
   monthField: keyof T,
   valueField: keyof T
 ): Array<{ fy: number; value: number; months: number }> {
   const buckets = new Map<number, { sum: number; n: number }>();
   for (const row of rows) {
-    const month = row[monthField];
-    const value = row[valueField];
+    const month = (row as Record<string, unknown>)[monthField as string];
+    const value = (row as Record<string, unknown>)[valueField as string];
     if (typeof month !== "string") continue;
     if (typeof value !== "number" || !Number.isFinite(value)) continue;
     const fy = monthToFy(month);
@@ -37,15 +37,15 @@ export function monthsToFyAverage<T extends Record<string, unknown>>(
     .map(([fy, { sum, n }]) => ({ fy, value: sum / n, months: n }));
 }
 
-export function monthsToFyEndOfPeriod<T extends Record<string, unknown>>(
+export function monthsToFyEndOfPeriod<T extends object>(
   rows: T[],
   monthField: keyof T,
   valueField: keyof T
 ): Array<{ fy: number; value: number }> {
   const byFy = new Map<number, { month: string; value: number }>();
   for (const row of rows) {
-    const month = row[monthField];
-    const value = row[valueField];
+    const month = (row as Record<string, unknown>)[monthField as string];
+    const value = (row as Record<string, unknown>)[valueField as string];
     if (typeof month !== "string") continue;
     if (typeof value !== "number" || !Number.isFinite(value)) continue;
     const fy = monthToFy(month);
@@ -58,4 +58,27 @@ export function monthsToFyEndOfPeriod<T extends Record<string, unknown>>(
   return Array.from(byFy.entries())
     .sort((a, b) => a[0] - b[0])
     .map(([fy, { value }]) => ({ fy, value }));
+}
+
+export function monthsToFySum<T extends object>(
+  rows: T[],
+  monthField: keyof T,
+  valueField: keyof T
+): Array<{ fy: number; value: number; months: number }> {
+  const byFy = new Map<number, { sum: number; n: number }>();
+  for (const row of rows) {
+    const month = (row as Record<string, unknown>)[monthField as string];
+    const value = (row as Record<string, unknown>)[valueField as string];
+    if (typeof month !== "string") continue;
+    if (typeof value !== "number" || !Number.isFinite(value)) continue;
+    const fy = monthToFy(month);
+    if (!Number.isFinite(fy)) continue;
+    const entry = byFy.get(fy) ?? { sum: 0, n: 0 };
+    entry.sum += value;
+    entry.n += 1;
+    byFy.set(fy, entry);
+  }
+  return Array.from(byFy.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([fy, { sum, n }]) => ({ fy, value: sum, months: n }));
 }

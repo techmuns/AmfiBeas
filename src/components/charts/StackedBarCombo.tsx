@@ -61,6 +61,13 @@ interface VariantAProps {
   height?: number;
   showSegmentLabels?: boolean;
   showTotalLabel?: boolean;
+  /** Override the auto-detected left axis unit ("₹ Cr" / "₹ Lakh Cr").
+   *  Pass "%" for share-of-something exhibits (e.g. Top-N concentration). */
+  leftUnitLabel?: string;
+  /** Switches tooltip / segment / total labels into percentage mode
+   *  (e.g. "57.2%" instead of "₹ 57 Cr"). Use together with
+   *  `leftUnitLabel="%"` for share-of-something exhibits. */
+  percentMode?: boolean;
   cagr?: CagrSpec;
 }
 
@@ -122,13 +129,20 @@ function ArchetypeA({
   height = 320,
   showTotalLabel = true,
   showSegmentLabels = true,
+  leftUnitLabel,
+  percentMode = false,
   cagr,
 }: VariantAProps) {
   const totals = data.map((d) => d.bottom + d.top);
   const domainMax = totals.length > 0 ? Math.max(...totals) : 0;
   const axisMax = niceCeiling(domainMax * 1.12);
-  const fmtAxis = axisFormatterCr(axisMax);
-  const unitLabel = axisUnitLabel(axisMax);
+  const fmtAxis = percentMode
+    ? (n: number) => `${Math.round(n)}`
+    : axisFormatterCr(axisMax);
+  const unitLabel = leftUnitLabel ?? axisUnitLabel(axisMax);
+  const tooltipFormatter = percentMode
+    ? (v: number) => `${v.toFixed(1)}%`
+    : formatCrTooltip;
 
   const merged = data.map((d) => ({
     label: d.label,
@@ -176,10 +190,10 @@ function ArchetypeA({
               return (
                 <div className="rounded-md border border-border bg-card px-3 py-2 text-[12px] shadow-sm">
                   <p className="pb-1 font-semibold tracking-tight">{label}</p>
-                  <SwatchRow color={BRAND.navy} name={bottomName} value={formatCrTooltip(row.bottom)} />
-                  <SwatchRow color={BRAND.orange} name={topName} value={formatCrTooltip(row.top)} />
+                  <SwatchRow color={BRAND.navy} name={bottomName} value={tooltipFormatter(row.bottom)} />
+                  <SwatchRow color={BRAND.orange} name={topName} value={tooltipFormatter(row.top)} />
                   <p className="border-t border-border pt-1 font-semibold">
-                    Total: {formatCrTooltip(row.total)}
+                    Total: {tooltipFormatter(row.total)}
                   </p>
                 </div>
               );
@@ -191,7 +205,9 @@ function ArchetypeA({
               <LabelList
                 dataKey="bottom"
                 position="center"
-                content={(p) => renderSegmentLabel(p as RechartsLabelProps, axisMax)}
+                content={(p) =>
+                  renderSegmentLabel(p as RechartsLabelProps, axisMax, percentMode)
+                }
               />
             )}
           </Bar>
@@ -200,14 +216,18 @@ function ArchetypeA({
               <LabelList
                 dataKey="top"
                 position="center"
-                content={(p) => renderSegmentLabel(p as RechartsLabelProps, axisMax)}
+                content={(p) =>
+                  renderSegmentLabel(p as RechartsLabelProps, axisMax, percentMode)
+                }
               />
             )}
             {showTotalLabel && (
               <LabelList
                 dataKey="total"
                 position="top"
-                content={(p) => renderTotalLabel(p as RechartsLabelProps, axisMax)}
+                content={(p) =>
+                  renderTotalLabel(p as RechartsLabelProps, axisMax, percentMode)
+                }
               />
             )}
           </Bar>
@@ -602,7 +622,8 @@ function UnitHeader({ leftUnit, rightUnit }: { leftUnit: string; rightUnit: stri
 
 function renderSegmentLabel(
   props: RechartsLabelProps,
-  axisMax: number
+  axisMax: number,
+  percentMode = false
 ): React.ReactElement | null {
   const { x = 0, y = 0, width = 0, height = 0, value } = props;
   if (typeof value !== "number" || !Number.isFinite(value) || value <= 0)
@@ -619,14 +640,15 @@ function renderSegmentLabel(
       fontWeight={600}
       fill={BRAND.labelOnFill}
     >
-      {formatSegmentLabel(value, axisMax)}
+      {formatSegmentLabel(value, axisMax, percentMode)}
     </text>
   );
 }
 
 function renderTotalLabel(
   props: RechartsLabelProps,
-  axisMax: number
+  axisMax: number,
+  percentMode = false
 ): React.ReactElement | null {
   const { x = 0, y = 0, width = 0, value } = props;
   if (typeof value !== "number" || !Number.isFinite(value)) return null;
@@ -639,7 +661,7 @@ function renderTotalLabel(
       fontWeight={600}
       fill={BRAND.axis}
     >
-      {formatSegmentLabel(value, axisMax)}
+      {formatSegmentLabel(value, axisMax, percentMode)}
     </text>
   );
 }
@@ -680,7 +702,12 @@ function renderLineLabel(
   );
 }
 
-function formatSegmentLabel(value: number, axisMax: number): string {
+function formatSegmentLabel(
+  value: number,
+  axisMax: number,
+  percentMode = false
+): string {
+  if (percentMode) return Math.round(value).toString();
   const useLakhCr = axisMax >= 1e5;
   if (useLakhCr) return (value / 1e5).toFixed(1);
   return Math.round(value).toLocaleString("en-IN");
