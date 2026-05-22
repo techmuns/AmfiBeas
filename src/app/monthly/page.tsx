@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/Card";
 import { HowToRead } from "@/components/ui/HowToRead";
 import { ChartTypeToggle } from "@/components/ui/ChartTypeToggle";
 import { BarsWithGrowth } from "@/components/charts/BarsWithGrowth";
+import { StackedBarsWithGrowth } from "@/components/charts/StackedBarsWithGrowth";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import {
   adaptiveAverageOverlay,
@@ -752,22 +753,64 @@ export default async function MonthlyPage({
   const equityFlowFromRows = monthlyFlowsRows
     .filter((r) => typeof r.equity === "number")
     .map((r) => ({ label: r.month as string, value: r.equity as number }));
-  // Full equity-flow history + YoY (lag=12) for the optional Bars +
-  // Growth view on this card. YoY is computed over full history so
-  // the visible-window growth line has real values from the leftmost
-  // month onward (gaps only where prior history truly doesn't exist).
+  // Stacked-magnitude data for the Bars + Growth view: each segment's
+  // absolute net-flow magnitude, plus per-segment YoY (computed on the
+  // magnitude series so the tooltip stays consistent with the bar
+  // heights) and a single industry-total YoY for the growth line.
+  // Full history is loaded so YoY has real values from the leftmost
+  // visible month onward.
   const monthlyFlowsFullHistory = monthlyFlowsData(10_000);
-  const monthlyEquityFullSeries = monthlyFlowsFullHistory
+  const monthlyDebtFullSeriesMag = monthlyFlowsFullHistory
+    .filter((r) => typeof r.debt === "number")
+    .map((r) => ({ label: r.month, value: Math.abs(r.debt as number) }));
+  const monthlyLiquidFullSeriesMag = monthlyFlowsFullHistory
+    .filter((r) => typeof r.liquid === "number")
+    .map((r) => ({ label: r.month, value: Math.abs(r.liquid as number) }));
+  const monthlyEquityFullSeriesMag = monthlyFlowsFullHistory
     .filter((r) => typeof r.equity === "number")
-    .map((r) => ({ label: r.month, value: r.equity as number }));
-  const monthlyEquityYoyByLabel = new Map(
-    yoyPctSeries(monthlyEquityFullSeries, 12).map((p) => [p.label, p.value])
+    .map((r) => ({ label: r.month, value: Math.abs(r.equity as number) }));
+  const monthlyEquityMagYoyByLabel = new Map(
+    yoyPctSeries(monthlyEquityFullSeriesMag, 12).map((p) => [p.label, p.value])
   );
-  const monthlyFlowsBarsData = equityFlowFromRows.map((p) => ({
-    label: p.label,
-    value: p.value,
-    growthPct: monthlyEquityYoyByLabel.get(p.label) ?? null,
-  }));
+  const monthlyDebtMagYoyByLabel = new Map(
+    yoyPctSeries(monthlyDebtFullSeriesMag, 12).map((p) => [p.label, p.value])
+  );
+  const monthlyLiquidMagYoyByLabel = new Map(
+    yoyPctSeries(monthlyLiquidFullSeriesMag, 12).map((p) => [p.label, p.value])
+  );
+  const monthlyTotalMagnitudeFullSeries = monthlyFlowsFullHistory
+    .map((r) => {
+      const e = typeof r.equity === "number" ? Math.abs(r.equity) : null;
+      const d = typeof r.debt === "number" ? Math.abs(r.debt) : null;
+      const l = typeof r.liquid === "number" ? Math.abs(r.liquid) : null;
+      if (e === null && d === null && l === null) return null;
+      return {
+        label: r.month,
+        value: (e ?? 0) + (d ?? 0) + (l ?? 0),
+      };
+    })
+    .filter((p): p is { label: string; value: number } => p !== null);
+  const monthlyTotalMagYoyByLabel = new Map(
+    yoyPctSeries(monthlyTotalMagnitudeFullSeries, 12).map((p) => [
+      p.label,
+      p.value,
+    ])
+  );
+  const monthlyFlowsMagnitudeStack = monthlyFlowsRows.map((r) => {
+    const eq = typeof r.equity === "number" ? r.equity : null;
+    const db = typeof r.debt === "number" ? r.debt : null;
+    const lq = typeof r.liquid === "number" ? r.liquid : null;
+    return {
+      label: r.month as string,
+      equityMag: eq === null ? null : Math.abs(eq),
+      debtMag: db === null ? null : Math.abs(db),
+      liquidMag: lq === null ? null : Math.abs(lq),
+      equityYoy: monthlyEquityMagYoyByLabel.get(r.month as string) ?? null,
+      debtYoy: monthlyDebtMagYoyByLabel.get(r.month as string) ?? null,
+      liquidYoy: monthlyLiquidMagYoyByLabel.get(r.month as string) ?? null,
+      totalMagYoy: monthlyTotalMagYoyByLabel.get(r.month as string) ?? null,
+    };
+  });
   const monthlyFlowsInsights = chartInsights(equityFlowFromRows, {
     metricName: "equity net inflow",
     unitSuffix: "₹ Cr",
@@ -2002,7 +2045,7 @@ export default async function MonthlyPage({
           denominatorCaption={(() => {
             const span = `${monthlyFlowsRows.length} month${monthlyFlowsRows.length === 1 ? "" : "s"}`;
             if (monthlyFlowsView === "bars") {
-              return `${span} · Equity flow only · ₹ Cr · YoY growth overlaid`;
+              return `${span} · Gross flow magnitude by segment · YoY % overlaid`;
             }
             if (monthlyFlowsLens === "share") {
               return `${span} · % of monthly flow magnitude (signs preserved)`;
@@ -2047,19 +2090,39 @@ export default async function MonthlyPage({
         >
           {monthlyFlowsView === "bars" ? (
             <>
-              <BarsWithGrowth
-                data={monthlyFlowsBarsData}
-                barColor="hsl(var(--chart-1))"
-                growthColor="hsl(var(--foreground))"
+              <StackedBarsWithGrowth
+                data={monthlyFlowsMagnitudeStack}
+                segments={[
+                  {
+                    key: "equityMag",
+                    name: "Equity",
+                    color: "hsl(var(--chart-1))",
+                    yoyKey: "equityYoy",
+                  },
+                  {
+                    key: "debtMag",
+                    name: "Debt",
+                    color: "hsl(var(--chart-2))",
+                    yoyKey: "debtYoy",
+                  },
+                  {
+                    key: "liquidMag",
+                    name: "Liquid",
+                    color: "hsl(var(--chart-4))",
+                    yoyKey: "liquidYoy",
+                  },
+                ]}
+                growthKey="totalMagYoy"
+                growthLabel="Total YoY %"
                 valueFormat="cr"
                 axisFormat="cr"
                 labelFormat="month"
-                name="Equity net flow"
-                growthLabel="Equity YoY %"
               />
               <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
-                Bars show actual Equity net flow. The line shows YoY growth.
-                Debt and Liquid remain visible in Trend view.
+                Bars stack each segment&apos;s gross flow magnitude (|inflow| + |outflow|),
+                so the column height shows how much money moved through the industry that
+                month. Dashed line is the YoY % change in total magnitude; hover a column
+                for per-segment YoY. Direction (inflow vs outflow) stays in the Trend view.
               </p>
             </>
           ) : (
