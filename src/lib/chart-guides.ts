@@ -63,6 +63,14 @@ export const CHART_GUIDES = {
     title: "Industry AUM and annual growth",
     body: "Navy bars: industry total AUM as of each fiscal year-end (₹ Cr; rebased to ₹ Lakh Cr on the axis once values cross the 1,00,000 Cr threshold). Orange line: YoY growth % vs the prior fiscal year-end. The diagonal arrow carries the period-end CAGR. Fiscal years where the prior March's AUM is missing in the snapshot are skipped — the source caption names the covered window.",
   },
+  "cmp-aaum-overlay": {
+    title: "AAUM overlay",
+    body: "Two AMCs' MF AAUM plotted on a shared ₹ Cr axis (navy = AMC A, orange = AMC B). Both AMCs are MF-only by construction — the AMFI Fundwise AAUM disclosure does not publish PMS / AIF / offshore / advisory / alternates. A widening gap implies AMC A is pulling away; a converging gap implies AMC B is catching up.",
+  },
+  "cmp-share-overlay": {
+    title: "Market share overlay",
+    body: "Each AMC's share of total industry MF AAUM each quarter (navy = AMC A, orange = AMC B). Use this view when absolute AUM growth is rising for both AMCs and you want to see which one is gaining or ceding cohort share. Source: AMFI Fundwise AAUM disclosure.",
+  },
 } as const satisfies Record<string, ChartGuide>;
 
 export type ChartGuideId = keyof typeof CHART_GUIDES;

@@ -2,10 +2,12 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
+import { DesignLanguageCard } from "@/components/ui/DesignLanguageCard";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { AreaTrend } from "@/components/charts/AreaTrend";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { AmcCompareSelector } from "@/components/compare/AmcCompareSelector";
+import { BRAND } from "@/lib/brand-palette";
 import {
   allAaumAmcs,
   amcAaumSeries,
@@ -147,8 +149,8 @@ export default async function ComparePage({
       {/* Two side-by-side summary columns */}
       <section className="grid gap-4 lg:grid-cols-2">
         {[
-          { detail: detailA, growth: growthA, color: "hsl(var(--chart-1))" },
-          { detail: detailB, growth: growthB, color: "hsl(var(--chart-3))" },
+          { detail: detailA, growth: growthA, color: BRAND.navy },
+          { detail: detailB, growth: growthB, color: BRAND.orange },
         ].map((side, idx) => {
           if (!side.detail) {
             return (
@@ -239,70 +241,78 @@ export default async function ComparePage({
 
       {/* Overlay charts */}
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card
-          title="AAUM Overlay"
-          subtitle="MF AAUM · ₹ Cr · both AMCs on one axis · Source: AMFI Fundwise AAUM"
-        >
-          {overlayData.length > 0 ? (
+        {overlayData.length > 0 ? (
+          <DesignLanguageCard
+            title="AAUM overlay"
+            chartId="cmp-aaum-overlay"
+            source="Source: AMFI Fundwise AAUM · both AMCs on one ₹ Cr axis"
+          >
             <MultiLine
               data={overlayData}
               xKey="label"
               valueFormat="cr"
               axisFormat="cr"
               labelFormat="none"
+              showDots
               lines={[
                 {
                   key: slugA,
                   name: detailA?.displayName ?? slugA,
-                  color: "hsl(var(--chart-1))",
+                  color: BRAND.navy,
                 },
                 {
                   key: slugB,
                   name: detailB?.displayName ?? slugB,
-                  color: "hsl(var(--chart-3))",
+                  color: BRAND.orange,
                 },
               ]}
             />
-          ) : (
+          </DesignLanguageCard>
+        ) : (
+          <Card title="AAUM overlay">
             <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
               No overlapping AAUM data
             </div>
-          )}
-        </Card>
+          </Card>
+        )}
 
-        <Card
-          title="Market Share Overlay"
-          subtitle="% of industry MF AAUM · Source: AMFI Fundwise AAUM"
-        >
-          {shareOverlay.length > 0 ? (
+        {shareOverlay.length > 0 ? (
+          <DesignLanguageCard
+            title="Market share overlay"
+            chartId="cmp-share-overlay"
+            source="Source: AMFI Fundwise AAUM · share of total industry MF AAUM each quarter"
+          >
             <MultiLine
               data={shareOverlay}
               xKey="label"
               valueFormat="pct"
               axisFormat="pct"
               labelFormat="none"
+              showDots
               lines={[
                 {
                   key: slugA,
                   name: detailA?.displayName ?? slugA,
-                  color: "hsl(var(--chart-1))",
+                  color: BRAND.navy,
                 },
                 {
                   key: slugB,
                   name: detailB?.displayName ?? slugB,
-                  color: "hsl(var(--chart-3))",
+                  color: BRAND.orange,
                 },
               ]}
             />
-          ) : (
+          </DesignLanguageCard>
+        ) : (
+          <Card title="Market share overlay">
             <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
               No share history
             </div>
-          )}
-        </Card>
+          </Card>
+        )}
 
         <Card
-          title="Rank Overlay"
+          title="Rank overlay"
           subtitle="Position by AAUM (lower = larger AMC) · Source: AMFI Fundwise AAUM"
         >
           {rankOverlay.length > 0 ? (
@@ -316,12 +326,12 @@ export default async function ComparePage({
                 {
                   key: slugA,
                   name: detailA?.displayName ?? slugA,
-                  color: "hsl(var(--chart-1))",
+                  color: BRAND.navy,
                 },
                 {
                   key: slugB,
                   name: detailB?.displayName ?? slugB,
-                  color: "hsl(var(--chart-3))",
+                  color: BRAND.orange,
                 },
               ]}
             />
@@ -387,12 +397,12 @@ export default async function ComparePage({
                   {
                     key: slugA,
                     name: detailA?.displayName ?? slugA,
-                    color: "hsl(var(--chart-1))",
+                    color: BRAND.navy,
                   },
                   {
                     key: slugB,
                     name: detailB?.displayName ?? slugB,
-                    color: "hsl(var(--chart-3))",
+                    color: BRAND.orange,
                   },
                 ]}
               />
