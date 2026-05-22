@@ -2,12 +2,13 @@ import { cn } from "@/lib/cn";
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string;
+  /** Accepted for backwards compatibility but no longer rendered.
+   *  The dashboard-wide rule is title-only headers; methodology /
+   *  source captions that used to live here now route through the
+   *  `action` slot (info-tooltip) or the in-body source footer. */
   subtitle?: string;
-  /** Optional rich subtitle node — takes precedence over `subtitle`.
-   *  Use when the subtitle needs inline children (e.g. an info
-   *  tooltip or a `<strong>` accent) that a plain string can't
-   *  express. ChartWithContext uses this to fold its denominator
-   *  caption + info-tooltip into the subtitle line. */
+  /** Accepted for backwards compatibility but no longer rendered.
+   *  See `subtitle`. */
   subtitleNode?: React.ReactNode;
   action?: React.ReactNode;
   /**
@@ -22,8 +23,8 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
    */
   tone?: "live" | "demo" | "pending";
   /**
-   * When true, header stacks title / subtitle / action area vertically
-   * at every viewport width — no responsive switch to a horizontal
+   * When true, header stacks title and action area vertically at
+   * every viewport width — no responsive switch to a horizontal
    * row layout. Use for chart cards whose action area packs multiple
    * control groups (Basis chip + YoY pill + lens toggle + chart-type
    * toggle); the responsive `sm:flex-row` layout would otherwise
@@ -39,8 +40,10 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function Card({
   title,
-  subtitle,
-  subtitleNode,
+  // `subtitle` and `subtitleNode` are accepted but intentionally
+  // not destructured into render output — the rule is title-only.
+  subtitle: _subtitle,
+  subtitleNode: _subtitleNode,
   action,
   className,
   children,
@@ -48,6 +51,8 @@ export function Card({
   stackHeader,
   ...rest
 }: CardProps) {
+  void _subtitle;
+  void _subtitleNode;
   const isDemo = tone === "demo" || tone === "pending";
   const toneBadge =
     tone === "demo"
@@ -74,20 +79,15 @@ export function Card({
     >
       {(title || action || toneBadge) && (
         stackHeader ? (
-          // Vertical-at-every-width layout: title → subtitle → action
-          // row. Used by ChartWithContext for every chart card so the
-          // header never crushes the title to share space with a
-          // crowded action area.
+          // Vertical-at-every-width layout: title → action row. Used
+          // by ChartWithContext for every chart card so the header
+          // never crushes the title to share space with a crowded
+          // action area.
           <div className="flex flex-col gap-3 px-6 pt-5">
-            <div className="min-w-0 space-y-1">
+            <div className="min-w-0">
               {title && (
                 <h3 className="text-sm font-medium tracking-tight">{title}</h3>
               )}
-              {subtitleNode ? (
-                <div className="text-xs text-muted-foreground">{subtitleNode}</div>
-              ) : subtitle ? (
-                <p className="text-xs text-muted-foreground">{subtitle}</p>
-              ) : null}
             </div>
             {(action || toneBadge) && (
               <div className="flex flex-wrap items-center gap-2">
@@ -104,15 +104,10 @@ export function Card({
           <div className="flex flex-col gap-3 px-6 pt-5 sm:flex-row sm:items-start sm:justify-between">
             {/* min-w-0 + flex-1 is the critical pair: without min-w-0 a
                 flex item refuses to shrink below its content width. */}
-            <div className="min-w-0 flex-1 space-y-1">
+            <div className="min-w-0 flex-1">
               {title && (
                 <h3 className="text-sm font-medium tracking-tight">{title}</h3>
               )}
-              {subtitleNode ? (
-                <div className="text-xs text-muted-foreground">{subtitleNode}</div>
-              ) : subtitle ? (
-                <p className="text-xs text-muted-foreground">{subtitle}</p>
-              ) : null}
             </div>
             {(action || toneBadge) && (
               <div className="flex flex-wrap items-center gap-2 sm:justify-end">

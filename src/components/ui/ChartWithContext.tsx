@@ -4,21 +4,20 @@ import { cn } from "@/lib/cn";
 
 interface ChartWithContextProps {
   title: string;
+  /** Accepted for backwards compatibility but no longer rendered.
+   *  See Card.tsx — the rule is title-only headers. */
   subtitle?: string;
   /** Net / Gross / Stock pill rendered in the header beside the title.
    *  "stock" means an AUM / level / count — no flow direction
    *  applies (no pill rendered in that case). */
   flowKind?: "net" | "gross" | "stock";
-  /** Analytical denominator the chart is expressed against. Examples:
-   *    "67% of industry net inflow · latest 2026-04"
-   *    "+0.93% of folio base · latest 2026-04"
-   *    "98% of trailing 12M avg"
-   *  Folded inline into the subtitle so the chart header stays a
-   *  single, scannable line instead of an extra labelled pill. */
+  /** Accepted for backwards compatibility but no longer rendered.
+   *  The metadata text that used to ride here is now considered
+   *  redundant alongside the chart itself. */
   denominatorCaption?: string;
   /** Optional info-button tooltip explaining the denominator more
-   *  fully (formula + source). Renders an (i) icon next to the
-   *  subtitle when provided. */
+   *  fully (formula + source). Renders an (i) icon in the header
+   *  action area so the methodology stays one click away. */
   denominatorTooltip?: string;
   /** Insight lines from `chartInsights(...)`. ONLY the first line is
    *  rendered — as a single italic headline above the chart — so the
@@ -50,14 +49,17 @@ const FLOW_PILL_TITLE: Record<"net" | "gross", string> = {
 };
 
 /**
- * Re-designed (Phase 0 of the cleanup): the wrapper now reads as
- * one quick scan — title, one-sentence headline insight, then the
- * chart. Denominator text rides inside the subtitle line; there's
- * no extra "In proportion to …" pill or three-bullet strip.
+ * Title-only chart card. The pre-existing `subtitle` and
+ * `denominatorCaption` props are still accepted at the call site
+ * for backwards compatibility but are not rendered — the
+ * dashboard-wide rule is "no short explanation text under the
+ * heading". Methodology copy that lived in the subtitle's info
+ * icon (`denominatorTooltip`) now rides in the header action slot
+ * as a standalone info-button so it stays one click away.
  *
  * Render order:
- *   1. Card header: title + subtitle (subtitle absorbs the
- *      denominator caption + optional info-tooltip).
+ *   1. Card header: title + action row (info-tooltip, Basis chip,
+ *      optional YoY badge, caller-passed action).
  *   2. Headline: a single italic prose line above the chart — the
  *      highest-priority insight from `chartInsights()`. Drops the
  *      previous three-bullet block.
@@ -67,9 +69,9 @@ const FLOW_PILL_TITLE: Record<"net" | "gross", string> = {
  */
 export function ChartWithContext({
   title,
-  subtitle,
+  subtitle: _subtitle,
   flowKind,
-  denominatorCaption,
+  denominatorCaption: _denominatorCaption,
   denominatorTooltip,
   insights,
   yoyBadge,
@@ -77,13 +79,25 @@ export function ChartWithContext({
   children,
   className,
 }: ChartWithContextProps) {
+  void _subtitle;
+  void _denominatorCaption;
   const pillKind = flowKind && flowKind !== "stock" ? flowKind : null;
   const yoyOk =
     yoyBadge && Number.isFinite(yoyBadge.pct) ? yoyBadge : null;
   const yoyPositive = yoyOk ? yoyOk.pct >= 0 : false;
-  const headerAction = (
+  const hasAnyAction =
+    !!denominatorTooltip || !!pillKind || !!yoyOk || !!action;
+  const headerAction = hasAnyAction ? (
     <div className="flex flex-wrap items-center gap-2">
-      {/* Basis chip first — metadata describing the data the card uses,
+      {/* Info-button first — the methodology copy migrated here from
+          the retired subtitle line. Keeps the deeper explanation one
+          click away on every chart card that used to carry it. */}
+      {denominatorTooltip && (
+        <span className="inline-flex shrink-0">
+          <InfoTooltip label={denominatorTooltip} size="sm" />
+        </span>
+      )}
+      {/* Basis chip — metadata describing the data the card uses,
           visually distinct from segmented control pills below. */}
       {pillKind && (
         <span
@@ -114,38 +128,13 @@ export function ChartWithContext({
       )}
       {action}
     </div>
-  );
-  // Two-line subtitle: the plain-English description on the first
-  // line, dense metadata (denominator caption + optional info-tooltip)
-  // on its own smaller secondary line below. Decoupling these stops
-  // the readable subtitle from being crushed when the metadata is
-  // long, and prevents either line from wrapping into vertical
-  // one-word-per-line text inside narrow grid columns.
-  const subtitleNode =
-    subtitle || denominatorCaption || denominatorTooltip ? (
-      <div className="space-y-0.5">
-        {subtitle && (
-          <p className="text-xs text-muted-foreground">{subtitle}</p>
-        )}
-        {(denominatorCaption || denominatorTooltip) && (
-          <p className="flex flex-wrap items-center gap-x-1 text-[11px] text-muted-foreground/80">
-            {denominatorCaption}
-            {denominatorTooltip ? (
-              <span className="align-middle">
-                <InfoTooltip label={denominatorTooltip} />
-              </span>
-            ) : null}
-          </p>
-        )}
-      </div>
-    ) : undefined;
+  ) : undefined;
   // Single headline line — the engine's highest-priority insight.
   const headline = insights && insights.length > 0 ? insights[0] : null;
   return (
     <Card
       title={title}
-      subtitleNode={subtitleNode}
-      action={pillKind || yoyOk || action ? headerAction : undefined}
+      action={headerAction}
       className={className}
       stackHeader
     >
