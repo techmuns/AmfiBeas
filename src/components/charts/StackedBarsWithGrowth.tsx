@@ -27,7 +27,8 @@ import {
 } from "./format";
 
 export interface StackedSegmentSpec {
-  /** Bar dataKey (each row's value here must be ≥ 0 or null). */
+  /** Bar dataKey. Values may be signed; Recharts stacks positives above
+   *  and negatives below the zero baseline when bars share a stackId. */
   key: string;
   /** Display name in the legend and tooltip. */
   name: string;
@@ -58,7 +59,8 @@ interface StackedBarsWithGrowthProps {
  * rides the secondary (right) y-axis. Per-segment YoY values can be
  * carried on each row via `yoyKey` and surface in the tooltip.
  *
- * Assumes bar values are non-negative (e.g. absolute flow magnitudes).
+ * Handles signed values: positive segments stack above the zero
+ * baseline, negative segments stack below (diverging stack).
  */
 export function StackedBarsWithGrowth({
   data,
@@ -246,7 +248,7 @@ function StackedTooltip({
         })}
         {growthEntry && (
           <div className="mt-1 flex items-center justify-between gap-3 border-t border-border/60 pt-1 tabular">
-            <span className="text-muted-foreground">Total {growthLabel}</span>
+            <span className="text-muted-foreground">{growthLabel}</span>
             <span className="font-medium">{fmtPct(growthVal)}</span>
           </div>
         )}

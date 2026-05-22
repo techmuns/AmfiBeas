@@ -789,62 +789,28 @@ export default async function MonthlyPage({
   const equityFlowFromRows = monthlyFlowsRows
     .filter((r) => typeof r.equity === "number")
     .map((r) => ({ label: r.month as string, value: r.equity as number }));
-  // Stacked-magnitude data for the Bars + Growth view: each segment's
-  // absolute net-flow magnitude, plus per-segment YoY (computed on the
-  // magnitude series so the tooltip stays consistent with the bar
-  // heights) and a single industry-total YoY for the growth line.
-  // Full history is loaded so YoY has real values from the leftmost
-  // visible month onward.
+  // Stacked-net-flow data for the Bars + Growth view: each segment's
+  // signed net-flow value (positive segments stack above zero, negative
+  // below), plus an equity YoY series for the growth line so it matches
+  // the "Equity YoY" pill in the card header. Full history is loaded
+  // so YoY has real values from the leftmost visible month onward.
   const monthlyFlowsFullHistory = monthlyFlowsData(10_000);
-  const monthlyDebtFullSeriesMag = monthlyFlowsFullHistory
-    .filter((r) => typeof r.debt === "number")
-    .map((r) => ({ label: r.month, value: Math.abs(r.debt as number) }));
-  const monthlyLiquidFullSeriesMag = monthlyFlowsFullHistory
-    .filter((r) => typeof r.liquid === "number")
-    .map((r) => ({ label: r.month, value: Math.abs(r.liquid as number) }));
-  const monthlyEquityFullSeriesMag = monthlyFlowsFullHistory
+  const monthlyEquityFullSeriesSigned = monthlyFlowsFullHistory
     .filter((r) => typeof r.equity === "number")
-    .map((r) => ({ label: r.month, value: Math.abs(r.equity as number) }));
-  const monthlyEquityMagYoyByLabel = new Map(
-    yoyPctSeries(monthlyEquityFullSeriesMag, 12).map((p) => [p.label, p.value])
+    .map((r) => ({ label: r.month, value: r.equity as number }));
+  const monthlyEquityYoyByLabel = new Map(
+    yoyPctSeries(monthlyEquityFullSeriesSigned, 12).map((p) => [p.label, p.value])
   );
-  const monthlyDebtMagYoyByLabel = new Map(
-    yoyPctSeries(monthlyDebtFullSeriesMag, 12).map((p) => [p.label, p.value])
-  );
-  const monthlyLiquidMagYoyByLabel = new Map(
-    yoyPctSeries(monthlyLiquidFullSeriesMag, 12).map((p) => [p.label, p.value])
-  );
-  const monthlyTotalMagnitudeFullSeries = monthlyFlowsFullHistory
-    .map((r) => {
-      const e = typeof r.equity === "number" ? Math.abs(r.equity) : null;
-      const d = typeof r.debt === "number" ? Math.abs(r.debt) : null;
-      const l = typeof r.liquid === "number" ? Math.abs(r.liquid) : null;
-      if (e === null && d === null && l === null) return null;
-      return {
-        label: r.month,
-        value: (e ?? 0) + (d ?? 0) + (l ?? 0),
-      };
-    })
-    .filter((p): p is { label: string; value: number } => p !== null);
-  const monthlyTotalMagYoyByLabel = new Map(
-    yoyPctSeries(monthlyTotalMagnitudeFullSeries, 12).map((p) => [
-      p.label,
-      p.value,
-    ])
-  );
-  const monthlyFlowsMagnitudeStack = monthlyFlowsRows.map((r) => {
+  const monthlyFlowsStack = monthlyFlowsRows.map((r) => {
     const eq = typeof r.equity === "number" ? r.equity : null;
     const db = typeof r.debt === "number" ? r.debt : null;
     const lq = typeof r.liquid === "number" ? r.liquid : null;
     return {
       label: r.month as string,
-      equityMag: eq === null ? null : Math.abs(eq),
-      debtMag: db === null ? null : Math.abs(db),
-      liquidMag: lq === null ? null : Math.abs(lq),
-      equityYoy: monthlyEquityMagYoyByLabel.get(r.month as string) ?? null,
-      debtYoy: monthlyDebtMagYoyByLabel.get(r.month as string) ?? null,
-      liquidYoy: monthlyLiquidMagYoyByLabel.get(r.month as string) ?? null,
-      totalMagYoy: monthlyTotalMagYoyByLabel.get(r.month as string) ?? null,
+      equity: eq,
+      debt: db,
+      liquid: lq,
+      equityYoy: monthlyEquityYoyByLabel.get(r.month as string) ?? null,
     };
   });
   const monthlyFlowsInsights = chartInsights(equityFlowFromRows, {
@@ -2337,29 +2303,27 @@ export default async function MonthlyPage({
         >
           {monthlyFlowsView === "bars" ? (
             <StackedBarsWithGrowth
-              data={monthlyFlowsMagnitudeStack}
+              data={monthlyFlowsStack}
               segments={[
                 {
-                  key: "equityMag",
+                  key: "equity",
                   name: "Equity",
                   color: "hsl(var(--chart-1))",
                   yoyKey: "equityYoy",
                 },
                 {
-                  key: "debtMag",
+                  key: "debt",
                   name: "Debt",
                   color: "hsl(var(--chart-2))",
-                  yoyKey: "debtYoy",
                 },
                 {
-                  key: "liquidMag",
+                  key: "liquid",
                   name: "Liquid",
                   color: "hsl(var(--chart-4))",
-                  yoyKey: "liquidYoy",
                 },
               ]}
-              growthKey="totalMagYoy"
-              growthLabel="Total YoY %"
+              growthKey="equityYoy"
+              growthLabel="Equity YoY %"
               valueFormat="cr"
               axisFormat="cr"
               labelFormat="month"
@@ -2377,10 +2341,12 @@ export default async function MonthlyPage({
           <HowToRead>
             {monthlyFlowsView === "bars" ? (
               <p>
-                Bars stack each segment&apos;s gross flow magnitude (|inflow| + |outflow|),
-                so the column height shows how much money moved through the industry that
-                month. Dashed line is the YoY % change in total magnitude; hover a column
-                for per-segment YoY. Direction (inflow vs outflow) stays in the Trend view.
+                Bars stack each segment&apos;s signed net flow — positive segments
+                stack above zero, negative below. Equity (SIP-driven retail money)
+                typically stays positive, while Debt and Liquid swing sharply with
+                institutional moves around quarter and fiscal-year ends. Dashed line
+                is YoY % change in Equity net inflow, matching the &ldquo;Equity YoY&rdquo;
+                pill above.
               </p>
             ) : (
               <p className="inline-flex items-center gap-1.5">
