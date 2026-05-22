@@ -2,9 +2,9 @@ import Link from "next/link";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
+import { SignalTile } from "@/components/ui/SignalTile";
 import { marketWrap } from "@/data/market-wrap";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Sparkline } from "@/components/charts/Sparkline";
 import { IndustryNarrative } from "@/components/data/IndustryNarrative";
 import {
   industryQuarterly,
@@ -30,7 +30,6 @@ import {
   formatQuarterLabelLong,
   ordinalSuffix,
 } from "@/lib/format";
-import { cn } from "@/lib/cn";
 
 export default function HomePage() {
   const quarterly = industryQuarterly();
@@ -92,6 +91,7 @@ export default function HomePage() {
             label="Industry Regime"
             pill={latestCycle?.phase ?? "—"}
             pillTone={cyclePhaseTone(latestCycle?.phase)}
+            headline={regimeHeadline(latestCycle?.phase)}
             valueLine={
               latestNifty && typeof latestNifty.drawdownPct === "number"
                 ? `Nifty 500 drawdown ${latestNifty.drawdownPct >= 0 ? "+" : ""}${latestNifty.drawdownPct.toFixed(1)}%`
@@ -113,6 +113,7 @@ export default function HomePage() {
                 ? "positive"
                 : "negative"
             }
+            headline={flowQualityHeadline(aeSignal?.zScore ?? null)}
             valueLine={
               sipSig
                 ? formatPercentile(sipSig.percentileRank) === "—"
@@ -138,6 +139,7 @@ export default function HomePage() {
                 ? "negative"
                 : "neutral"
             }
+            headline={passiveHeadline(passiveSig?.percentileRank ?? null)}
             valueLine={
               passiveSig && formatPercentile(passiveSig.percentileRank) !== "—"
                 ? `${formatPercentile(passiveSig.percentileRank)} of history`
@@ -151,6 +153,7 @@ export default function HomePage() {
             label="AMC Winners / Losers"
             pill={`${topGainers.length}↑ / ${topLosers.length}↓`}
             pillTone="neutral"
+            headline={winnersLosersHeadline(topGainers, topLosers)}
             valueLine={
               quadrant
                 ? `${quadrant.latestQuarterLabel} · QoQ AAUM growth`
@@ -180,6 +183,7 @@ export default function HomePage() {
                 ? "positive"
                 : "neutral"
             }
+            headline={listedAmcHeadline(patYoy)}
             valueLine={
               revQoYoY !== null
                 ? `Revenue ${revQoYoY >= 0 ? "+" : ""}${revQoYoY.toFixed(1)}% YoY · ${formatQuarterLabelLong(latestQuarter())}`
@@ -287,62 +291,6 @@ export default function HomePage() {
   );
 }
 
-/** Sector Read tile — title chip, value line, sparkline, 3-beat read.
- *  Buy-side analyst note style: each tile answers "what changed, why
- *  it matters, what to watch" inside the `read` paragraph. */
-function SignalTile({
-  label,
-  pill,
-  pillTone,
-  valueLine,
-  sparkline,
-  sparkColor,
-  read,
-  footer,
-}: {
-  label: string;
-  pill: string;
-  pillTone: "positive" | "negative" | "neutral";
-  valueLine: string | null;
-  sparkline?: { label: string; value: number }[];
-  sparkColor?: string;
-  read: string;
-  footer?: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-2 rounded-lg border bg-card px-4 py-3 shadow-sm">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs uppercase tracking-wide text-muted-foreground">
-          {label}
-        </span>
-        <span
-          className={cn(
-            "inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-medium tabular tracking-tight",
-            pillTone === "positive" &&
-              "border-positive/40 bg-positive/10 text-positive",
-            pillTone === "negative" &&
-              "border-negative/40 bg-negative/10 text-negative",
-            pillTone === "neutral" &&
-              "border-border bg-muted text-muted-foreground"
-          )}
-        >
-          {pill}
-        </span>
-      </div>
-      {valueLine && (
-        <div className="text-[11px] tabular text-foreground/80">{valueLine}</div>
-      )}
-      {sparkline && sparkline.length > 1 && (
-        <div className="-mx-1">
-          <Sparkline data={sparkline} color={sparkColor} height={24} />
-        </div>
-      )}
-      <p className="text-[12px] leading-snug text-muted-foreground">{read}</p>
-      {footer && <div className="mt-auto pt-1">{footer}</div>}
-    </div>
-  );
-}
-
 /** Gateway tile linking to a deep-dive route. The Overview itself is
  *  intentionally short; these tiles point the reader at where to look
  *  next without duplicating the headline KPIs. */
@@ -378,6 +326,55 @@ function cyclePhaseTone(
   if (phase === "Recovery" || phase === "Expansion") return "positive";
   if (phase === "Correction") return "negative";
   return "neutral";
+}
+
+// ---- Sector Read tile headlines ----
+// Short 2-4 word phrases shown on the FRONT face of each flippable
+// SignalTile. Each mirrors the lead phrase the long-form `*Read`
+// function below would produce, so the front and back tell the
+// same story at different zoom levels.
+
+function regimeHeadline(phase: string | undefined): string {
+  if (!phase) return "Cycle unknown";
+  if (phase === "Recovery") return "Off the lows";
+  if (phase === "Expansion") return "Risk-on intact";
+  if (phase === "Correction") return "Under stress";
+  if (phase === "Peak") return "Late cycle";
+  return phase;
+}
+
+function flowQualityHeadline(z: number | null): string {
+  if (z === null || !Number.isFinite(z)) return "Flow unknown";
+  if (z >= 2) return "Flow extremely strong";
+  if (z >= 1) return "Strong flow";
+  if (z <= -2) return "Flow extremely weak";
+  if (z <= -1) return "Flow stressed";
+  return "Flow near norm";
+}
+
+function passiveHeadline(percentile: number | null): string {
+  if (percentile === null || !Number.isFinite(percentile))
+    return "Passive share unknown";
+  if (percentile >= 80) return "Passive accelerating";
+  if (percentile <= 20) return "Active-heavy era";
+  return "Steady transition";
+}
+
+function winnersLosersHeadline(
+  gainers: { displayName: string; qoqGrowthPct: number }[],
+  losers: { displayName: string; qoqGrowthPct: number }[]
+): string {
+  if (gainers.length === 0 && losers.length === 0) return "No comparison";
+  if (gainers[0]) return `${gainers[0].displayName} leads`;
+  if (losers[0]) return `${losers[0].displayName} drags`;
+  return "Mixed quarter";
+}
+
+function listedAmcHeadline(patYoY: number | null): string {
+  if (patYoY === null || !Number.isFinite(patYoY)) return "Earnings unknown";
+  if (patYoY > 15) return "Operating leverage on";
+  if (patYoY < 0) return "Cycle softening";
+  return "Earnings steady";
 }
 
 function industryRegimeRead(
