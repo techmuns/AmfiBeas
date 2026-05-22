@@ -2,13 +2,19 @@ import { BarSeries } from "@/components/charts/BarSeries";
 import { Donut, type DonutSlice } from "@/components/charts/Donut";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
-import { StackedArea } from "@/components/charts/StackedArea";
+import { StackedBarCombo } from "@/components/charts/StackedBarCombo";
 import { Card } from "@/components/ui/Card";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
+import { DesignLanguageCard } from "@/components/ui/DesignLanguageCard";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 import { quarterlyMarketWrap } from "@/data/market-wrap-quarterly";
+import {
+  passiveShareExhibit,
+  topNAmcConcentrationExhibit,
+} from "@/data/hero-exhibits";
+import { cagrPct } from "@/lib/cagr";
 import { FiscalQuarterPicker } from "@/components/filters/FiscalQuarterPicker";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { chartInsights, latestYoyPct, movingAverage } from "@/lib/chart-context";
@@ -59,9 +65,7 @@ import {
 import {
   amcLevelHhiPercentileRead,
   amcLevelHhiSeries,
-  topAumMarketShareSeries,
 } from "@/data/amc-peer-universe";
-import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
 import { cn } from "@/lib/cn";
 
 /** Sign-aware compact ₹ Cr formatter — mirrors the equivalent helper
@@ -83,8 +87,6 @@ export default async function QuarterlyPage({
   // ---- Lens toggles (parsed up-front) ----
   const quarterlyFlowsLens: "absolute" | "share" =
     sp.qFlowsLens === "share" ? "share" : "absolute";
-  const equityMixLens: "absolute" | "share" =
-    sp.qEquityMixLens === "share" ? "share" : "absolute";
   // Per-card lens toggles for /quarterly. Each one switches a trend
   // chart between absolute and a card-specific share/ratio view.
   const qAaumLens: "absolute" | "share" =
@@ -124,6 +126,14 @@ export default async function QuarterlyPage({
     // "trend" value is preserved so other toggles never re-attach
     // `q<thing>View=bars` to the URL.
   };
+
+  // Design-language hero exhibits — quarterly-scope picks. The
+  // monthly-grain heroes (SIP flows / Active equity flow vs NIFTY)
+  // live on /monthly only; here we surface the two views that
+  // belong on a quarterly page: the passive-share FY trajectory and
+  // the Top-N AMC concentration basis QAAUM.
+  const heroPassive = passiveShareExhibit();
+  const heroTopAmc = topNAmcConcentrationExhibit();
 
   // Share-mode transform helper for grouped-bar series.
   const toShareRow = (
@@ -494,16 +504,6 @@ export default async function QuarterlyPage({
   const aeAaumTrend = quarterlyActiveEquityLastMonthAaumTrend(16);
   const aeShareTrend = quarterlyActiveEquityLastMonthShareTrend(16);
   const aeBreakdown = quarterlyEquityLastMonthAaumBreakdown(16);
-  const aeBreakdownDisplay =
-    equityMixLens === "share"
-      ? aeBreakdown.map((r) =>
-          toShareRow(r as Record<string, number | null | string>, [
-            "activeEquity",
-            "etfIndex",
-            "arbitrage",
-          ])
-        )
-      : aeBreakdown;
   const aeBreakdownHasData = aeBreakdown.some(
     (r) =>
       r.activeEquity !== null || r.etfIndex !== null || r.arbitrage !== null
@@ -512,31 +512,6 @@ export default async function QuarterlyPage({
     aeAaumTrend.length > 0 ||
     aeShareTrend.length > 0 ||
     aeBreakdownHasData;
-  // Latest active/etf/arbitrage mix — proportion-first read for the
-  // breakdown subtitle.
-  const latestQuarterlyEquityMix = (() => {
-    for (let i = aeBreakdown.length - 1; i >= 0; i--) {
-      const r = aeBreakdown[i];
-      const a = r.activeEquity;
-      const e = r.etfIndex;
-      const x = r.arbitrage;
-      if (typeof a === "number" && typeof e === "number" && typeof x === "number") {
-        const total = a + e + x;
-        if (total > 0) {
-          return {
-            activePct: (a / total) * 100,
-            etfPct: (e / total) * 100,
-            arbPct: (x / total) * 100,
-          };
-        }
-      }
-    }
-    return null;
-  })();
-  const aeBreakdownSubtitle = latestQuarterlyEquityMix
-    ? `${aeBreakdown.length} quarter${aeBreakdown.length === 1 ? "" : "s"} · ₹ Cr · latest mix ${latestQuarterlyEquityMix.activePct.toFixed(1)}% Active / ${latestQuarterlyEquityMix.etfPct.toFixed(1)}% ETF & Index / ${latestQuarterlyEquityMix.arbPct.toFixed(1)}% Arbitrage`
-    : `${aeBreakdown.length} quarter${aeBreakdown.length === 1 ? "" : "s"} · ₹ Cr · grouped bars · last-month AAUM`;
-
   // Quarterly Flows denominator: latest quarter's per-segment share
   // of total flow magnitude — mirrors /monthly's headline read.
   const quarterlyFlowsDenomCaption = (() => {
@@ -568,11 +543,6 @@ export default async function QuarterlyPage({
     { key: "debt", name: "Debt", color: "hsl(var(--chart-2))" },
     { key: "liquid", name: "Liquid", color: "hsl(var(--chart-4))" },
   ];
-  const qEquityMixSeries = [
-    { key: "activeEquity", name: "Active Equity", color: "hsl(var(--chart-1))" },
-    { key: "etfIndex", name: "ETF & Index", color: "hsl(var(--chart-5))" },
-    { key: "arbitrage", name: "Arbitrage", color: "hsl(var(--chart-2))" },
-  ];
 
   // Active Equity Last-month AAUM denominator: latest as % of total
   // industry last-month AAUM — same framing as /monthly but on the
@@ -602,25 +572,6 @@ export default async function QuarterlyPage({
     })
     .filter((p): p is { label: string; value: number } => p !== null);
   const aeAaumDisplay = qAeAaumLens === "share" ? aeAaumShare : aeAaumTrend;
-
-  // Equity Breakdown denominator: ETF & Index share = passive
-  // penetration — same framing as /monthly so the quarterly read
-  // is comparable.
-  const aeBreakdownDenomCaption = latestQuarterlyEquityMix
-    ? `ETF & Index = ${latestQuarterlyEquityMix.etfPct.toFixed(1)}% of equity AUM · latest available quarter`
-    : undefined;
-  const activeEquityFromQBreakdown = aeBreakdown
-    .filter((r) => typeof r.activeEquity === "number")
-    .map((r) => ({
-      label: r.quarterLabel,
-      value: r.activeEquity as number,
-    }));
-  const aeBreakdownInsights = chartInsights(activeEquityFromQBreakdown, {
-    metricName: "active-equity AAUM",
-    unitSuffix: "₹ Cr",
-    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
-    yoyLag: 4,
-  });
 
   // ---- Folios & Scheme Count ----------------------------------------
   const totalFolios = selectedRow?.grandTotalFolios ?? null;
@@ -743,8 +694,6 @@ export default async function QuarterlyPage({
 
   // AUM Market Share — live Top 7 + Others from AMFI Fundwise AAUM.
   // Same helper as /monthly so the two pages render an identical view.
-  const aumMarketShare = topAumMarketShareSeries(7, 8);
-  const aumMarketShareCoverage = aumMarketShare.coverage;
 
   // Cycle regime + section reads.
   const cyclePhasePoints = cyclePhaseHistory();
@@ -1307,59 +1256,41 @@ export default async function QuarterlyPage({
             </ChartWithContext>
           </section>
 
-          <ChartWithContext
-            title="Equity Last-month AAUM Breakdown"
-            subtitle={
-              equityMixLens === "share"
-                ? `${aeBreakdown.length} quarter${aeBreakdown.length === 1 ? "" : "s"} · stacked share of equity AAUM (last-month basis)`
-                : aeBreakdownSubtitle
-            }
-            flowKind="stock"
-            denominatorCaption={aeBreakdownDenomCaption}
-            denominatorTooltip="ETF & Index share of equity AUM — the headline passive-penetration number, computed on the last-month-AAUM basis from the quarterly disclosure."
-            insights={aeBreakdownInsights}
-            yoyBadge={(() => {
-              const v = latestYoyPct(activeEquityFromQBreakdown, 4);
-              return v === null
-                ? undefined
-                : { label: "Active YoY", pct: v };
+          {heroPassive.availability.hasData &&
+            (() => {
+              const first = heroPassive.data[0];
+              const last = heroPassive.data[heroPassive.data.length - 1];
+              const years = last.fy - first.fy;
+              const totalsFirst = first.bottom + first.top;
+              const totalsLast = last.bottom + last.top;
+              return (
+                <DesignLanguageCard
+                  title="Share of passive funds in equity envelope"
+                  chartId="hero-passive-share"
+                  source={`Source: AMFI monthly AAUM (IIFL Figure 19 methodology) · ${heroPassive.availability.note}`}
+                >
+                  <StackedBarCombo
+                    variant="B"
+                    data={heroPassive.data}
+                    bottomName="Active equity AAUM"
+                    topName="Passive (Index + ETF) AAUM"
+                    lineName="Passive share %"
+                    rightUnitLabel="%"
+                    cagr={
+                      years >= 1
+                        ? {
+                            startLabel: first.label,
+                            endLabel: last.label,
+                            cagrPct: cagrPct(totalsFirst, totalsLast, years),
+                            startValue: totalsFirst,
+                            endValue: totalsLast,
+                          }
+                        : undefined
+                    }
+                  />
+                </DesignLanguageCard>
+              );
             })()}
-            action={
-              <div className="flex flex-wrap items-center gap-2">
-                <LensToggle
-                  basePath="/quarterly"
-                  paramName="qEquityMixLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "% of equity AAUM" },
-                  ]}
-                  active={equityMixLens}
-                  preserveParams={preservedQueryParams}
-                />
-              </div>
-            }
-          >
-            {aeBreakdownHasData ? (
-              <GroupedBars
-                data={aeBreakdownDisplay}
-                xKey="quarterLabel"
-                labelFormat="none"
-                valueFormat={equityMixLens === "share" ? "pct" : "cr"}
-                axisFormat={equityMixLens === "share" ? "pct" : "cr"}
-                bars={qEquityMixSeries}
-              />
-            ) : (
-              <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                Equity breakdown (Active / ETF & Index / Arbitrage) not yet published for this quarter.
-              </div>
-            )}
-            <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              Active Equity, ETF &amp; Index, and Arbitrage shown separately.
-              All values use last-month AAUM, not a true 3-month average.
-              <InfoTooltip label="Active Equity = Growth/Equity schemes + Hybrid ex-Arbitrage + Solution-oriented schemes. ETF & Index = Index Funds + Other ETFs. Source: AMFI Quarterly Report's last-month AAUM column. Share view divides each by the quarter's sum of all three segments." />
-            </p>
-          </ChartWithContext>
         </div>
       )}
 
@@ -1738,7 +1669,7 @@ export default async function QuarterlyPage({
       <SectionDivider
         eyebrow="Section 6"
         label="Concentration & AMC landscape"
-        context="HHI of AMC + category concentration, and Top-7 AMC share of industry AUM."
+        context={`HHI of AMC + category concentration, and Top ${heroTopAmc.n} AMC share of industry QAAUM.`}
       />
 
       {hhiHasData && (
@@ -1799,45 +1730,49 @@ export default async function QuarterlyPage({
         </Card>
       )}
 
-      <Card
-        tone={aumMarketShare.isFullUniverse ? undefined : "pending"}
-        title="AUM Market Share"
-        subtitle={
-          aumMarketShareCoverage
-            ? `Top ${aumMarketShare.topAmcs.length} AMCs + Others · ${aumMarketShareCoverage.quarterLabel} · Source: AMFI Fundwise AAUM`
-            : `Top ${aumMarketShare.topAmcs.length} AMCs + Others · Source: AMFI Fundwise AAUM`
-        }
-      >
-        {aumMarketShare.rows.length > 0 ? (
-          <StackedArea
-            data={aumMarketShare.rows}
-            xKey="quarterLabel"
-            labelFormat="none"
-            reverseTooltipOrder
-            series={[
-              ...aumMarketShare.topAmcs.map((a) => ({
-                key: a.slug,
-                name: amcLabel(a.slug),
-                color: AMC_COLORS[a.slug] ?? "hsl(var(--muted-foreground))",
-              })),
-              {
-                key: "others",
-                name: "Others",
-                color: "hsl(var(--muted-foreground))",
-              },
-            ]}
-          />
-        ) : (
-          <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-            AMFI Fundwise AAUM disclosure not yet ingested for the latest quarter.
-          </div>
-        )}
-        <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          Top {aumMarketShare.topAmcs.length} AMCs by latest AAUM;
-          Others includes all remaining AMCs.
-          <InfoTooltip label="Denominator is total AAUM of all AMCs in the snapshot." />
-        </p>
-      </Card>
+      {heroTopAmc.availability.hasData &&
+        (() => {
+          const title =
+            heroTopAmc.n === 10
+              ? "Top 10 AMC concentration basis QAAUM"
+              : `Top ${heroTopAmc.n} AMC concentration basis QAAUM`;
+          const first = heroTopAmc.data[0];
+          const last = heroTopAmc.data[heroTopAmc.data.length - 1];
+          const years = (heroTopAmc.data.length - 1) / 4;
+          const firstTotal = first.bottom + first.top;
+          const lastTotal = last.bottom + last.top;
+          return (
+            <DesignLanguageCard
+              title={title}
+              chartId="hero-topn-amc-concentration"
+              source={`Source: AMFI Fundwise AAUM disclosure (MF-only) · ${heroTopAmc.availability.note}`}
+            >
+              <StackedBarCombo
+                variant="A"
+                data={heroTopAmc.data}
+                bottomName="Top 5"
+                topName={
+                  heroTopAmc.n === 10 ? "Ranks 6–10" : `Ranks 6–${heroTopAmc.n}`
+                }
+                showSegmentLabels={true}
+                showTotalLabel={true}
+                leftUnitLabel="%"
+                percentMode={true}
+                cagr={
+                  heroTopAmc.data.length >= 3 && years > 0
+                    ? {
+                        startLabel: first.label,
+                        endLabel: last.label,
+                        cagrPct: cagrPct(firstTotal, lastTotal, years),
+                        startValue: firstTotal,
+                        endValue: lastTotal,
+                      }
+                    : undefined
+                }
+              />
+            </DesignLanguageCard>
+          );
+        })()}
 
     </div>
   );
