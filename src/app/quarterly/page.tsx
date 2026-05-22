@@ -19,6 +19,7 @@ import {
   latestYoyPct,
   yoyPctSeries,
 } from "@/lib/chart-context";
+import { indexSeriesToBase } from "@/lib/index-series";
 import {
   IIFL_ACTIVE_EQUITY_CATEGORIES,
   IIFL_TREND_EXPANDED_SLUGS,
@@ -157,10 +158,18 @@ export default async function QuarterlyPage({
       typeof sp.qFolioAddLens === "string" ? sp.qFolioAddLens : undefined,
     qSchemesLens:
       typeof sp.qSchemesLens === "string" ? sp.qSchemesLens : undefined,
+    qCategoryTrendsScale:
+      typeof sp.qCategoryTrendsScale === "string"
+        ? sp.qCategoryTrendsScale
+        : undefined,
     // Chart-type `q<thing>View` toggles — only the non-default
     // "trend" value is preserved so other toggles never re-attach
     // `q<thing>View=bars` to the URL.
   };
+  // Scale toggle for the Active-Equity Category Trends section. Mirrors
+  // /monthly's categoryTrendsScale — see that file for rationale.
+  const qCategoryTrendsScale: "levels" | "indexed" =
+    sp.qCategoryTrendsScale === "indexed" ? "indexed" : "levels";
 
   const activeTab = resolveTab<QuarterlyTabId>(
     sp.tab,
@@ -1799,14 +1808,28 @@ export default async function QuarterlyPage({
 
       {activeTab === "categories" && hasAnyIiflTrend ? (
         <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-medium tracking-tight">
-              Active-Equity Category Trends
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              QAAUM share vs net inflow share · Source: AMFI Monthly
-              Reports, aggregated quarterly
-            </p>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-medium tracking-tight">
+                Active-Equity Category Trends
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {qCategoryTrendsScale === "indexed"
+                  ? "QAAUM share vs net inflow share · each series rebased to 100 at the first visible quarter · Source: AMFI Monthly Reports, aggregated quarterly"
+                  : "QAAUM share vs net inflow share · Source: AMFI Monthly Reports, aggregated quarterly"}
+              </p>
+            </div>
+            <LensToggle
+              basePath="/quarterly"
+              paramName="qCategoryTrendsScale"
+              defaultValue="levels"
+              lenses={[
+                { value: "levels", label: "Levels" },
+                { value: "indexed", label: "Indexed (100)" },
+              ]}
+              active={qCategoryTrendsScale}
+              preserveParams={preservedQueryParams}
+            />
           </div>
 
           <section className="grid gap-4 lg:grid-cols-2">
@@ -1818,11 +1841,22 @@ export default async function QuarterlyPage({
               >
                 {c.hasData ? (
                   <MultiLine
-                    data={c.series}
+                    data={
+                      qCategoryTrendsScale === "indexed"
+                        ? indexSeriesToBase(c.series, [
+                            "aumSharePct",
+                            "flowSharePct",
+                          ])
+                        : c.series
+                    }
                     xKey="label"
                     labelFormat="none"
-                    valueFormat="pct"
-                    axisFormat="pct"
+                    valueFormat={
+                      qCategoryTrendsScale === "indexed" ? "count" : "pct"
+                    }
+                    axisFormat={
+                      qCategoryTrendsScale === "indexed" ? "count" : "pct"
+                    }
                     dynamicYDomain
                     lines={[
                       {
@@ -1856,11 +1890,23 @@ export default async function QuarterlyPage({
                     >
                       {c.hasData ? (
                         <MultiLine
-                          data={c.series}
+                          data={
+                            qCategoryTrendsScale === "indexed"
+                              ? indexSeriesToBase(c.series, [
+                                  "aumSharePct",
+                                  "flowSharePct",
+                                ])
+                              : c.series
+                          }
                           xKey="label"
                           labelFormat="none"
-                          valueFormat="pct"
-                          axisFormat="pct"
+                          valueFormat={
+                            qCategoryTrendsScale === "indexed" ? "count" : "pct"
+                          }
+                          axisFormat={
+                            qCategoryTrendsScale === "indexed" ? "count" : "pct"
+                          }
+                          dynamicYDomain
                           lines={[
                             {
                               key: "aumSharePct",
@@ -1885,9 +1931,16 @@ export default async function QuarterlyPage({
           )}
 
           <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            QAAUM share and net inflow share, aggregated monthly into
-            fiscal quarters.
-            <InfoTooltip label="QAAUM share = avg(category AAUM) ÷ avg(active-equity AAUM) over the months in each fiscal quarter. Net inflow share = sum(category net inflow) ÷ sum(active-equity net inflow) over the same months. Active equity = Growth/Equity schemes + Hybrid ex-Arbitrage + Solution-Oriented schemes." />
+            {qCategoryTrendsScale === "indexed"
+              ? "Each line shows growth relative to its own first visible quarter (=100). Use Levels to read absolute % shares."
+              : "QAAUM share and net inflow share, aggregated monthly into fiscal quarters."}
+            <InfoTooltip
+              label={
+                qCategoryTrendsScale === "indexed"
+                  ? "Each series is rebased independently to 100 at the first visible quarter. A value of 130 means the share is 30% higher than the start of the visible window."
+                  : "QAAUM share = avg(category AAUM) ÷ avg(active-equity AAUM) over the months in each fiscal quarter. Net inflow share = sum(category net inflow) ÷ sum(active-equity net inflow) over the same months. Active equity = Growth/Equity schemes + Hybrid ex-Arbitrage + Solution-Oriented schemes."
+              }
+            />
           </p>
         </div>
       ) : null}

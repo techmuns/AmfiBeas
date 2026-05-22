@@ -18,6 +18,7 @@ import { Donut, type DonutSlice } from "@/components/charts/Donut";
 import { IiflHeatmap } from "@/components/charts/IiflHeatmap";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { StackedArea } from "@/components/charts/StackedArea";
+import { indexSeriesToBase } from "@/lib/index-series";
 import { latestMonth } from "@/data/aggregate";
 import {
   activeEquityNetInflowSignal,
@@ -215,7 +216,20 @@ export default async function MonthlyPage({
       typeof sp.nfoCountLens === "string" ? sp.nfoCountLens : undefined,
     nfoFundsLens:
       typeof sp.nfoFundsLens === "string" ? sp.nfoFundsLens : undefined,
+    categoryTrendsScale:
+      typeof sp.categoryTrendsScale === "string"
+        ? sp.categoryTrendsScale
+        : undefined,
   };
+  // Scale toggle for the Active-Equity Category Trends section. The two
+  // series on each card (QAAUM share, Net inflow share) live on the
+  // same y-axis but their typical ranges differ ~5× — QAAUM share drifts
+  // a few pp; Net inflow share swings 10–30pp — so on a shared scale
+  // QAAUM share's real volatility reads as a flat line. "indexed"
+  // rebases each series independently to 100 at its first visible
+  // point, so both lines move on the same comparable scale.
+  const categoryTrendsScale: "levels" | "indexed" =
+    sp.categoryTrendsScale === "indexed" ? "indexed" : "levels";
 
   // Resolve the active tab from the URL. Unknown / missing values
   // silently fall back to "snapshot" so stale bookmarks don't break.
@@ -3050,14 +3064,28 @@ export default async function MonthlyPage({
 
       {activeTab === "categories" && iiflTrendHasAny && (
         <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-medium tracking-tight">
-              Active-Equity Category Trends
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              QAAUM share vs net inflow share · active-equity envelope ·
-              Source: AMFI Monthly Report
-            </p>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-medium tracking-tight">
+                Active-Equity Category Trends
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {categoryTrendsScale === "indexed"
+                  ? "QAAUM share vs net inflow share · each series rebased to 100 at the first visible month · Source: AMFI Monthly Report"
+                  : "QAAUM share vs net inflow share · active-equity envelope · Source: AMFI Monthly Report"}
+              </p>
+            </div>
+            <LensToggle
+              basePath="/monthly"
+              paramName="categoryTrendsScale"
+              defaultValue="levels"
+              lenses={[
+                { value: "levels", label: "Levels" },
+                { value: "indexed", label: "Indexed (100)" },
+              ]}
+              active={categoryTrendsScale}
+              preserveParams={preservedQueryParams}
+            />
           </div>
 
           <section className="grid gap-4 lg:grid-cols-2">
@@ -3070,11 +3098,22 @@ export default async function MonthlyPage({
               >
                 {c.hasData ? (
                   <MultiLine
-                    data={c.series}
+                    data={
+                      categoryTrendsScale === "indexed"
+                        ? indexSeriesToBase(c.series, [
+                            "aumSharePct",
+                            "flowSharePct",
+                          ])
+                        : c.series
+                    }
                     xKey="month"
                     labelFormat="month"
-                    valueFormat="pct"
-                    axisFormat="pct"
+                    valueFormat={
+                      categoryTrendsScale === "indexed" ? "count" : "pct"
+                    }
+                    axisFormat={
+                      categoryTrendsScale === "indexed" ? "count" : "pct"
+                    }
                     dynamicYDomain
                     lines={[
                       {
@@ -3109,11 +3148,23 @@ export default async function MonthlyPage({
                 >
                   {c.hasData ? (
                     <MultiLine
-                      data={c.series}
+                      data={
+                        categoryTrendsScale === "indexed"
+                          ? indexSeriesToBase(c.series, [
+                              "aumSharePct",
+                              "flowSharePct",
+                            ])
+                          : c.series
+                      }
                       xKey="month"
                       labelFormat="month"
-                      valueFormat="pct"
-                      axisFormat="pct"
+                      valueFormat={
+                        categoryTrendsScale === "indexed" ? "count" : "pct"
+                      }
+                      axisFormat={
+                        categoryTrendsScale === "indexed" ? "count" : "pct"
+                      }
+                      dynamicYDomain
                       lines={[
                         {
                           key: "aumSharePct",
@@ -3138,9 +3189,16 @@ export default async function MonthlyPage({
           )}
 
           <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            QAAUM share and net inflow share, both within the
-            active-equity envelope.
-            <InfoTooltip label="Active equity = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
+            {categoryTrendsScale === "indexed"
+              ? "Each line shows growth relative to its own first visible month (=100). Use Levels to read absolute % shares."
+              : "QAAUM share and net inflow share, both within the active-equity envelope."}
+            <InfoTooltip
+              label={
+                categoryTrendsScale === "indexed"
+                  ? "Each series is rebased independently to 100 at the first visible month, so both lines move on the same comparable scale. A value of 130 means the share is 30% higher than the start of the visible window."
+                  : "Active equity = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes."
+              }
+            />
           </p>
         </div>
       )}

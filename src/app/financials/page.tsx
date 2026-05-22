@@ -3,6 +3,8 @@ import { Card } from "@/components/ui/Card";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { chartInsights, latestYoyPct } from "@/lib/chart-context";
+import { indexSeriesToBase } from "@/lib/index-series";
+import { LensToggle } from "@/components/ui/LensToggle";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FilterBar } from "@/components/filters/FilterBar";
 import type { AmcStatus } from "@/components/filters/FilterBar";
@@ -81,6 +83,14 @@ export default async function FinancialsPage({
   // Chart-style toggles (Bars vs Trend) were removed across the
   // dashboard — the P&L card now renders the trend visual directly.
   // Stale `?pnlView=bars|trend` URLs are ignored silently.
+
+  // Scale toggle for the P&L trend card. Revenue ≫ Operating Profit ≫
+  // PAT in absolute ₹ Cr, so on a shared y-axis the PAT line gets
+  // squashed and its growth volatility is hard to read. "indexed"
+  // rebases each series to 100 at the first visible quarter so all
+  // three move on a comparable growth scale.
+  const pnlScale: "levels" | "indexed" =
+    sp.pnlScale === "indexed" ? "indexed" : "levels";
 
   // Series spec shared by the bars and trend views of the P&L card.
   // `BarSpec` and `LineSpec` are both `{ key, name, color }`, so the
@@ -709,21 +719,50 @@ export default async function FinancialsPage({
         subtitle="Quarterly P&L for this AMC. Tracks top line, operating profit, and bottom line together."
         flowKind="gross"
         denominatorCaption={(() => {
-          const base = "Quarterly · ₹ Cr · Operating Revenue from standalone P&L (all operating segments, excludes Other Income)";
+          const base =
+            pnlScale === "indexed"
+              ? "Quarterly · each series rebased to 100 at the first visible quarter · Source: standalone P&L (all operating segments, excludes Other Income)"
+              : "Quarterly · ₹ Cr · Operating Revenue from standalone P&L (all operating segments, excludes Other Income)";
           return pnlDenomCaption
             ? `${base} · ${pnlDenomCaption}`
             : base;
         })()}
-        denominatorTooltip="Latest quarter's PAT margin (PAT ÷ Operating Revenue) — the single headline operating-quality number for the AMC."
+        denominatorTooltip={
+          pnlScale === "indexed"
+            ? "Each series is rebased independently to 100 at the first visible quarter, so all three lines move on a comparable growth scale. A value of 140 means that line is 40% above the start of the visible window. Use Levels to read absolute ₹ Cr."
+            : "Latest quarter's PAT margin (PAT ÷ Operating Revenue) — the single headline operating-quality number for the AMC."
+        }
         insights={pnlInsights}
         yoyBadge={(() => {
           const v = latestYoyPct(revenueSeries, 4);
           return v === null ? undefined : { label: "Revenue YoY", pct: v };
         })()}
+        action={
+          <LensToggle
+            basePath="/financials"
+            paramName="pnlScale"
+            defaultValue="levels"
+            lenses={[
+              { value: "levels", label: "₹ Cr" },
+              { value: "indexed", label: "Indexed (100)" },
+            ]}
+            active={pnlScale}
+            preserveParams={{
+              amcs: typeof sp.amcs === "string" ? sp.amcs : undefined,
+              period: typeof sp.period === "string" ? sp.period : undefined,
+            }}
+          />
+        }
       >
         <GroupedBars
-          data={pnlData}
+          data={
+            pnlScale === "indexed"
+              ? indexSeriesToBase(pnlData, ["revenue", "op", "pat"])
+              : pnlData
+          }
           xKey="quarter"
+          valueFormat={pnlScale === "indexed" ? "count" : "cr"}
+          axisFormat={pnlScale === "indexed" ? "count" : "cr"}
           bars={pnlSeries}
         />
       </ChartWithContext>
