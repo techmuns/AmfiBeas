@@ -35,7 +35,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-60 shrink-0 border-r bg-card lg:block">
+    <aside className="hidden w-60 shrink-0 border-r bg-card lg:sticky lg:top-0 lg:block lg:h-screen lg:self-start lg:overflow-y-auto">
       <div className="flex h-14 items-center px-5 text-base font-semibold tracking-tight">
         AmfiBeas
       </div>
