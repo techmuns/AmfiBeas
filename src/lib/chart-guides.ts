@@ -39,6 +39,26 @@ export const CHART_GUIDES = {
     title: "Active equity net flow vs NIFTY 500",
     body: "Burgundy bars: monthly active-equity-envelope net flow (Sub-II + active Sub-III ex-Arbitrage + Sub-IV). Negative bars indicate net outflow months. Dark line on the right axis: NIFTY 500 indexed to 100 at the start of the visible window. Window is the most recent continuous slice — gap months are excluded.",
   },
+  "fin-revenue-yoy": {
+    title: "Operating revenue and YoY",
+    body: "Navy bars: quarterly Operating Revenue (₹ Cr) from the AMC's standalone P&L. Orange line on the right axis: YoY growth % (this quarter vs the same quarter last year). Operating Revenue is the AMC's total operating segment revenue — it may include non-MF lines (AIF, PMS, advisory, international); a clean MF-only split is not disclosed.",
+  },
+  "fin-opprofit-yoy": {
+    title: "Operating profit and YoY",
+    body: "Navy bars: quarterly Operating Profit (₹ Cr). Orange line on the right axis: YoY growth % (this quarter vs the same quarter last year). Operating Profit excludes Other Income / treasury contribution.",
+  },
+  "fin-pat-yoy": {
+    title: "PAT and YoY",
+    body: "Navy bars: quarterly Profit After Tax (₹ Cr). Orange line on the right axis: YoY growth % (this quarter vs the same quarter last year).",
+  },
+  "fin-pat-margin": {
+    title: "PAT and PAT margin",
+    body: "Navy bars: quarterly Profit After Tax in ₹ Cr. Green line on the right axis: PAT margin % (PAT ÷ Operating Revenue). The peer-median comparison that used to overlay this chart now lives only in the Listed-AMC Peer Comparison table below.",
+  },
+  "fin-yields": {
+    title: "Revenue yield and operating yield (bps)",
+    body: "Navy bars: revenue yield in bps of MF QAAUM (annualised Operating Revenue ÷ same-quarter MF QAAUM × 10,000). Orange line: operating yield (annualised Operating Profit ÷ same MF QAAUM). Caveat: Operating Revenue may include non-MF operating revenue (AIF, PMS, advisory, international); the resulting yield reads as a slight ceiling on the true pure-MF management-fee yield. Cross-AMC differences in the non-MF mix can therefore inflate or deflate the comparison.",
+  },
 } as const satisfies Record<string, ChartGuide>;
 
 export type ChartGuideId = keyof typeof CHART_GUIDES;

@@ -94,6 +94,15 @@ interface VariantCProps {
   showBarLabels?: boolean;
   showLineLabels?: boolean;
   rightUnitLabel?: string;
+  /** Left-axis treatment.
+   *   - "currency" (default): Lakh-Cr-aware ₹ formatting.
+   *   - "raw": bare numbers (good for bps, count, or ratio bars).
+   *  The header unit text uses `leftUnitLabel` in raw mode. */
+  leftMode?: "currency" | "raw";
+  leftUnitLabel?: string;
+  /** Optional override for the line label unit suffix. Defaults to
+   *  `rightUnitLabel` when omitted. */
+  lineLabelUnit?: string;
   cagr?: CagrSpec;
 }
 
@@ -382,13 +391,29 @@ function ArchetypeC({
   showBarLabels = true,
   showLineLabels = true,
   rightUnitLabel = "%",
+  leftMode = "currency",
+  leftUnitLabel,
+  lineLabelUnit,
   cagr,
 }: VariantCProps) {
   const bars = data.map((d) => d.bottom);
   const domainMax = bars.length > 0 ? Math.max(...bars) : 0;
   const axisMax = niceCeiling(domainMax * 1.12);
-  const fmtAxis = axisFormatterCr(axisMax);
-  const unitLabel = axisUnitLabel(axisMax);
+  const fmtAxis =
+    leftMode === "currency"
+      ? axisFormatterCr(axisMax)
+      : (n: number) => (Number.isFinite(n) ? n.toFixed(0) : "—");
+  const unitLabel =
+    leftMode === "currency" ? axisUnitLabel(axisMax) : leftUnitLabel ?? "";
+  const barLabelFormatter =
+    leftMode === "currency"
+      ? (v: number) => formatSegmentLabel(v, axisMax, false)
+      : (v: number) => v.toFixed(1);
+  const barTooltipFormatter =
+    leftMode === "currency"
+      ? (v: number) => formatCrTooltip(v)
+      : (v: number) => `${v.toFixed(1)}${leftUnitLabel ? " " + leftUnitLabel : ""}`;
+  const lineUnit = lineLabelUnit ?? rightUnitLabel;
 
   const lineValues = data
     .map((d) => d.line)
@@ -451,8 +476,8 @@ function ArchetypeC({
               return (
                 <div className="rounded-md border border-border bg-card px-3 py-2 text-[12px] shadow-sm">
                   <p className="pb-1 font-semibold tracking-tight">{label}</p>
-                  <SwatchRow color={BRAND.navy} name={barName} value={formatCrTooltip(row.bar)} />
-                  <SwatchRow color={BRAND.orange} name={lineName} value={`${row.line.toFixed(1)}${rightUnitLabel}`} />
+                  <SwatchRow color={BRAND.navy} name={barName} value={barTooltipFormatter(row.bar)} />
+                  <SwatchRow color={BRAND.orange} name={lineName} value={`${row.line.toFixed(1)}${lineUnit}`} />
                 </div>
               );
             }}
@@ -463,7 +488,14 @@ function ArchetypeC({
               <LabelList
                 dataKey="bar"
                 position="top"
-                content={(p) => renderTotalLabel(p as RechartsLabelProps, axisMax)}
+                content={(p) =>
+                  renderTotalLabel(
+                    p as RechartsLabelProps,
+                    axisMax,
+                    false,
+                    leftMode === "raw" ? barLabelFormatter : undefined
+                  )
+                }
               />
             )}
           </Bar>
@@ -482,7 +514,7 @@ function ArchetypeC({
               <LabelList
                 dataKey="line"
                 content={(p) =>
-                  renderLineLabel(p as RechartsLabelProps, rightUnitLabel, lineLabelKeep)
+                  renderLineLabel(p as RechartsLabelProps, lineUnit, lineLabelKeep)
                 }
               />
             )}
@@ -648,10 +680,14 @@ function renderSegmentLabel(
 function renderTotalLabel(
   props: RechartsLabelProps,
   axisMax: number,
-  percentMode = false
+  percentMode = false,
+  formatter?: (v: number) => string
 ): React.ReactElement | null {
   const { x = 0, y = 0, width = 0, value } = props;
   if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  const text = formatter
+    ? formatter(value)
+    : formatSegmentLabel(value, axisMax, percentMode);
   return (
     <text
       x={x + width / 2}
@@ -661,7 +697,7 @@ function renderTotalLabel(
       fontWeight={600}
       fill={BRAND.axis}
     >
-      {formatSegmentLabel(value, axisMax, percentMode)}
+      {text}
     </text>
   );
 }
