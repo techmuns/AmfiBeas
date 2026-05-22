@@ -10,6 +10,15 @@ import { Donut, type DonutSlice } from "@/components/charts/Donut";
 import { IiflHeatmap } from "@/components/charts/IiflHeatmap";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { StackedArea } from "@/components/charts/StackedArea";
+import { StackedBarCombo } from "@/components/charts/StackedBarCombo";
+import { DesignLanguageCard } from "@/components/ui/DesignLanguageCard";
+import {
+  passiveShareExhibit,
+  sipFlowsVsNiftyExhibit,
+  activeEquityFlowVsNiftyExhibit,
+  nfoMobilisationExhibit,
+} from "@/data/hero-exhibits";
+import { cagrPct } from "@/lib/cagr";
 import { latestMonth } from "@/data/aggregate";
 import {
   activeEquityNetInflowSignal,
@@ -30,20 +39,16 @@ import {
   latestProvenanceFor,
   activeEquityAumBridgeSnapshot,
   monthlyActiveEquityAumBridge,
-  monthlyActiveEquityNetInflowTrend,
   monthlyActiveEquityShareTrend,
-  monthlyActivePassiveTrend,
   monthlyEquityBreakdown,
   monthlyFlowsData,
   monthlyIndustryFolioAdditionsTrend,
-  monthlySipAumShareTrend,
   monthlyTrend,
   nfoDragTrend,
   nfoHeatSignal,
   passiveShiftSignal,
   resolveSelectedRow,
   sipStickinessSignal,
-  trailingActiveEquityNetInflowAverage,
   type AmfiMonthlyKpiField,
 } from "@/data/amfi-monthly";
 import {
@@ -72,7 +77,6 @@ import { SectionDivider } from "@/components/ui/SectionDivider";
 import { StickyContextFooter } from "@/components/ui/StickyContextFooter";
 import { LensToggle } from "@/components/ui/LensToggle";
 import { MoodGauge } from "@/components/ui/MoodGauge";
-import { VolatilityRibbon } from "@/components/ui/VolatilityRibbon";
 import { WeatherBadge } from "@/components/ui/WeatherBadge";
 import { ordinalSuffix } from "@/lib/format";
 import {
@@ -126,22 +130,16 @@ export default async function MonthlyPage({
   // Stale `?...View=bars|trend` URLs are ignored silently.
   const equityBreakdownLens: "absolute" | "share" =
     sp.equityMixLens === "share" ? "share" : "absolute";
-  const activePassiveLens: "absolute" | "share" =
-    sp.activePassiveLens === "share" ? "share" : "absolute";
   // Per-card lens toggles. Each one switches a trend chart between
   // an absolute number (₹ Cr / count / etc) and a meaningful share
   // / ratio specific to that card. Default is "absolute" — URL stays
   // clean unless the user actively picked "share".
   const aaumLens: "absolute" | "share" =
     sp.aaumLens === "share" ? "share" : "absolute";
-  const sipContribLens: "absolute" | "share" =
-    sp.sipContribLens === "share" ? "share" : "absolute";
   const sipAumLens: "absolute" | "share" =
     sp.sipAumLens === "share" ? "share" : "absolute";
   const sipAccountsLens: "absolute" | "share" =
     sp.sipAccountsLens === "share" ? "share" : "absolute";
-  const aeFlowLens: "absolute" | "share" =
-    sp.aeFlowLens === "share" ? "share" : "absolute";
   const aeAaumLens: "absolute" | "share" =
     sp.aeAaumLens === "share" ? "share" : "absolute";
   const folioAddLens: "absolute" | "share" =
@@ -180,6 +178,15 @@ export default async function MonthlyPage({
     nfoFundsLens:
       typeof sp.nfoFundsLens === "string" ? sp.nfoFundsLens : undefined,
   };
+
+  // Design-language hero exhibits — wired to live snapshot accessors
+  // via src/data/hero-exhibits.ts. Each adapter returns an
+  // availability flag so a card with insufficient coverage renders
+  // an Unavailable state instead of an empty chart.
+  const heroPassive = passiveShareExhibit();
+  const heroSipFlows = sipFlowsVsNiftyExhibit();
+  const heroActiveFlow = activeEquityFlowVsNiftyExhibit();
+  const heroNfo = nfoMobilisationExhibit();
 
   // AMFI Monthly Snapshot — first live AMFI widget. Reads directly from
   // the manually-uploaded-PDF snapshot. The selected row is whichever
@@ -505,33 +512,6 @@ export default async function MonthlyPage({
   // SIP-contribution-specific context for the ChartWithContext wrapper.
   // Denominator: industry net inflow that month — answers "what share
   // of the month's net flow came from systematic SIPs?".
-  const sipContribLatestDenomCaption = (() => {
-    const rows = amfiMonthlyRows();
-    for (let i = rows.length - 1; i >= 0; i--) {
-      const r = rows[i];
-      if (
-        typeof r.sipContribution === "number" &&
-        typeof r.netInflow === "number" &&
-        r.netInflow > 0
-      ) {
-        const pct = (r.sipContribution / r.netInflow) * 100;
-        return `${pct.toFixed(0)}% of industry net inflow · latest ${r.month}`;
-      }
-    }
-    return undefined;
-  })();
-  const sipContribInsights = chartInsights(sipContribTrend, {
-    metricName: "SIP contribution",
-    unitSuffix: "₹ Cr",
-    drawdownByLabel: ddByMonthForInsights,
-    cyclePhaseByLabel: cyclePhaseByMonth,
-    episodeAnchors: episodeAnchorsForInsights,
-    yoyLag: 12,
-    peer: {
-      name: "industry net inflow",
-      data: industryNetInflowPeerSeries,
-    },
-  });
   const sipAumTrend = monthlyTrend("sipAum", 24);
   const sipAccountsTrend = monthlyTrend("sipAccounts", 24);
 
@@ -593,21 +573,6 @@ export default async function MonthlyPage({
   // share. Each share series uses the SAME row's denominator so the
   // ratio is computable without cross-row lookups; rows where the
   // denominator is missing or zero are filtered out.
-  const sipContribShare = amfiMonthlyRows()
-    .filter(
-      (r) =>
-        typeof r.sipContribution === "number" &&
-        typeof r.netInflow === "number" &&
-        r.netInflow > 0
-    )
-    .map((r) => ({
-      label: r.month,
-      value: ((r.sipContribution as number) / (r.netInflow as number)) * 100,
-    }))
-    .slice(-24);
-  const sipContribDisplay =
-    sipContribLens === "share" ? sipContribShare : sipContribTrend;
-
   const sipAumShare = amfiMonthlyRows()
     .filter(
       (r) =>
@@ -1131,64 +1096,8 @@ export default async function MonthlyPage({
   // AUM as a % of Total AUM. Gross-inflow share is intentionally
   // dropped: the monthly snapshot only carries net flow, gross
   // (Funds Mobilized) lives on the quarterly snapshot.
-  const activeEquityFlowTrend = monthlyActiveEquityNetInflowTrend(24);
-  const activeEquityFlowAvg = trailingActiveEquityNetInflowAverage(12);
   const activeEquityBridge = monthlyActiveEquityAumBridge(24);
   const activeEquityBridgeStrip = activeEquityAumBridgeSnapshot(12);
-  const sipAumShareTrend = monthlySipAumShareTrend(24);
-  const hasActiveEquityFlowDiagnostics =
-    activeEquityFlowTrend.length > 0 ||
-    activeEquityBridge.length > 0 ||
-    sipAumShareTrend.length > 0;
-
-  // Active Equity Net Inflow denominator: latest month's active-equity
-  // net inflow as a % of industry net inflow that month — answers
-  // "what share of the month's total flow ended up in active equity?".
-  const activeEquityFlowDenomCaption = (() => {
-    if (activeEquityFlowTrend.length === 0) return undefined;
-    const latest = activeEquityFlowTrend[activeEquityFlowTrend.length - 1];
-    const rows = amfiMonthlyRows();
-    const peerRow = rows.find((r) => r.month === latest.label);
-    if (
-      !peerRow ||
-      typeof peerRow.netInflow !== "number" ||
-      peerRow.netInflow === 0
-    )
-      return undefined;
-    const pct = (latest.value / peerRow.netInflow) * 100;
-    return `${pct >= 0 ? "+" : ""}${pct.toFixed(0)}% of industry net inflow · latest ${latest.label}`;
-  })();
-  const activeEquityFlowInsights = chartInsights(activeEquityFlowTrend, {
-    metricName: "active-equity net inflow",
-    unitSuffix: "₹ Cr",
-    drawdownByLabel: ddByMonthForInsights,
-    cyclePhaseByLabel: cyclePhaseByMonth,
-    episodeAnchors: episodeAnchorsForInsights,
-    yoyLag: 12,
-    peer: {
-      name: "industry net inflow",
-      data: industryNetInflowPeerSeries,
-    },
-  });
-
-  // Active Equity Flow share view: % of industry net inflow that
-  // month. Same pattern as SIP contribution share — clearer "who's
-  // pulling the flow" read than the absolute ₹ Cr.
-  const activeEquityFlowShare = amfiMonthlyRows()
-    .filter(
-      (r) =>
-        typeof r.activeEquityNetInflow === "number" &&
-        typeof r.netInflow === "number" &&
-        r.netInflow !== 0
-    )
-    .map((r) => ({
-      label: r.month,
-      value:
-        ((r.activeEquityNetInflow as number) / (r.netInflow as number)) * 100,
-    }))
-    .slice(-24);
-  const activeEquityFlowDisplay =
-    aeFlowLens === "share" ? activeEquityFlowShare : activeEquityFlowTrend;
 
   // Active Equity AUM Bridge — single-series chartInsights doesn't
   // map cleanly to a 2-series bridge. We surface the analytical
@@ -1528,34 +1437,6 @@ export default async function MonthlyPage({
     marketMonth: latestNifty?.month ?? null,
   });
 
-  // ---- Active vs Passive series ------------------------------------
-  const activePassiveTrend = monthlyActivePassiveTrend(24);
-
-  // Active vs ETF AUM denominator: latest passive AUM ÷ active AUM
-  // ratio — captures how far passive has closed the gap, more
-  // discriminating than the share % which compresses both sides.
-  const activeVsEtfDenomCaption = (() => {
-    if (!activePassiveTrend) return undefined;
-    const hist = activePassiveTrend.history;
-    if (hist.length === 0) return undefined;
-    const latest = hist[hist.length - 1];
-    if (latest.activeEquityAum <= 0) return undefined;
-    const ratio = latest.etfIndexAum / latest.activeEquityAum;
-    return `Passive = ${(ratio * 100).toFixed(1)}% of active-equity AUM · ${latest.month}`;
-  })();
-  const activeVsEtfPassiveSeries = activePassiveTrend
-    ? activePassiveTrend.history.map((p) => ({
-        label: p.month,
-        value: p.etfIndexAum,
-      }))
-    : [];
-  const activeVsEtfInsights = chartInsights(activeVsEtfPassiveSeries, {
-    metricName: "ETF & Index AUM",
-    unitSuffix: "₹ Cr",
-    cyclePhaseByLabel: cyclePhaseByMonth,
-    yoyLag: 12,
-  });
-
   return (
     <div className="space-y-8">
       <PageHeader
@@ -1888,61 +1769,27 @@ export default async function MonthlyPage({
             </p>
           </div>
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <ChartWithContext
-              title="SIP Contribution Trend"
-              subtitle={
-                sipContribLens === "share"
-                  ? `${sipContribShare.length} month${sipContribShare.length === 1 ? "" : "s"} · % of industry net inflow`
-                  : `Monthly gross SIP inflow · ${sipContribTrend.length} month${sipContribTrend.length === 1 ? "" : "s"} · ₹ Cr · no SIP redemptions are netted`
-              }
-              flowKind="gross"
-              denominatorCaption={
-                sipContribLens === "share" ? undefined : sipContribLatestDenomCaption
-              }
-              denominatorTooltip="SIP gross contribution as a share of the industry's net inflow that month. When the share trends up, retail systematic flow is doing more of the heavy lifting; when it falls, lump-sum / institutional money dominates."
-              insights={sipContribInsights}
-              yoyBadge={(() => {
-                const v = latestYoyPct(sipContribTrend, 12);
-                return v === null ? undefined : { label: "YoY", pct: v };
-              })()}
-              action={
-                <div className="flex flex-wrap items-center gap-2">
-                  <LensToggle
-                    basePath="/monthly"
-                    paramName="sipContribLens"
-                    defaultValue="absolute"
-                    lenses={[
-                      { value: "absolute", label: "₹ Cr" },
-                      { value: "share", label: "% of net inflow" },
-                    ]}
-                    active={sipContribLens}
-                    preserveParams={preservedQueryParams}
-                  />
-                </div>
-              }
-            >
-              {sipContribTrend.length > 0 ? (
-                <BarSeries
-                  data={sipContribDisplay}
-                  name="SIP Contribution"
-                  color="hsl(var(--chart-1))"
-                  valueFormat={sipContribLens === "share" ? "pct" : "cr"}
-                  axisFormat={sipContribLens === "share" ? "pct" : "cr"}
-                  labelFormat="month"
-                  trendline={
-                    sipContribLens === "share"
-                      ? undefined
-                      : movingAverage(sipContribTrend, 12)
-                  }
-                  cyclePhaseBands={cyclePhaseBands}
-                  dynamicYDomain={sipContribLens === "share"}
+            {heroSipFlows.availability.hasData ? (
+              <DesignLanguageCard
+                title="SIP flows vs NIFTY 500"
+                chartId="hero-sip-flows-vs-nifty"
+                source={`Source: AMFI press release · NSE NIFTY 500 month-end · ${heroSipFlows.availability.note}`}
+              >
+                <StackedBarCombo
+                  variant="D"
+                  data={heroSipFlows.data}
+                  barName="SIP contribution"
+                  lineName="NIFTY 500 (indexed)"
+                  rightUnitLabel="Index (base 100)"
                 />
-              ) : (
-                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  SIP contribution not yet ingested — appears once the next AMFI Monthly Notes (press release) lands.
-                </div>
-              )}
-            </ChartWithContext>
+              </DesignLanguageCard>
+            ) : (
+              <Card title="SIP flows vs NIFTY 500">
+                <p className="py-8 text-center text-sm text-muted-foreground">
+                  {heroSipFlows.availability.note}
+                </p>
+              </Card>
+            )}
 
             <ChartWithContext
               title="SIP AUM Trend"
@@ -2059,84 +1906,35 @@ export default async function MonthlyPage({
         </div>
       )}
 
-      {hasActiveEquityFlowDiagnostics && (
+      {heroActiveFlow.availability.hasData && (
+        <section className="grid gap-4">
+          <DesignLanguageCard
+            title="Active equity net flow vs NIFTY 500"
+            chartId="hero-active-equity-flow-vs-nifty"
+            source={`Source: AMFI Monthly Report (active-equity envelope) · NSE NIFTY 500 · ${heroActiveFlow.availability.note}`}
+          >
+            <StackedBarCombo
+              variant="D"
+              data={heroActiveFlow.data}
+              barName="Active equity net flow"
+              lineName="NIFTY 500 (indexed)"
+              rightUnitLabel="Index (base 100)"
+            />
+          </DesignLanguageCard>
+        </section>
+      )}
+
+      {activeEquityBridgeStrip && (
         <details className="group">
           <summary className="cursor-pointer list-none rounded-md border border-dashed border-border bg-muted/20 px-4 py-2.5 text-sm font-medium tracking-tight marker:hidden hover:bg-muted/30">
             <span className="inline-flex items-center gap-2">
               <span className="text-foreground">
-                Show active equity flow diagnostics
+                Show active equity AUM bridge
               </span>
               <span className="text-muted-foreground transition-transform group-open:rotate-90">›</span>
             </span>
           </summary>
           <section className="mt-3 grid gap-4 lg:grid-cols-2">
-            {activeEquityFlowTrend.length > 0 && (
-              <ChartWithContext
-                title="Active Equity Net Inflows"
-                subtitle={
-                  aeFlowLens === "share"
-                    ? `${activeEquityFlowShare.length} month${activeEquityFlowShare.length === 1 ? "" : "s"} · % of industry net inflow`
-                    : `Monthly net inflow · ${activeEquityFlowTrend.length} month${activeEquityFlowTrend.length === 1 ? "" : "s"}${
-                        activeEquityFlowAvg !== null
-                          ? ` · trailing 12M avg ${formatCompactCrSafe(activeEquityFlowAvg)}`
-                          : ""
-                      } · ₹ Cr`
-                }
-                flowKind="net"
-                denominatorCaption={
-                  aeFlowLens === "share" ? undefined : activeEquityFlowDenomCaption
-                }
-                denominatorTooltip="Latest active-equity net inflow as a % of industry net inflow for the same month — captures how much of the month's flow ended up in the active-equity envelope."
-                insights={activeEquityFlowInsights}
-                yoyBadge={(() => {
-                  const v = latestYoyPct(activeEquityFlowTrend, 12);
-                  return v === null ? undefined : { label: "YoY", pct: v };
-                })()}
-                action={
-                  <div className="flex flex-wrap items-center gap-2">
-                    <LensToggle
-                      basePath="/monthly"
-                      paramName="aeFlowLens"
-                      defaultValue="absolute"
-                      lenses={[
-                        { value: "absolute", label: "₹ Cr" },
-                        { value: "share", label: "% of net inflow" },
-                      ]}
-                      active={aeFlowLens}
-                      preserveParams={preservedQueryParams}
-                    />
-                  </div>
-                }
-              >
-                <BarSeries
-                  data={activeEquityFlowDisplay}
-                  name="Active Equity Net Inflow"
-                  color="hsl(var(--chart-1))"
-                  valueFormat={aeFlowLens === "share" ? "pct" : "cr"}
-                  axisFormat={aeFlowLens === "share" ? "pct" : "cr"}
-                  labelFormat="month"
-                  trendline={
-                    aeFlowLens === "share"
-                      ? undefined
-                      : movingAverage(activeEquityFlowTrend, 12)
-                  }
-                  trendlineName="12M avg"
-                  cyclePhaseBands={cyclePhaseBands}
-                />
-                {aeFlowLens === "absolute" && (
-                  <div className="mt-2">
-                    <VolatilityRibbon series={activeEquityFlowTrend} />
-                  </div>
-                )}
-                <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  {aeFlowLens === "absolute"
-                    ? "Dashed line = trailing 12-month average of net inflow. Strip below = ≥ ±2σ MoM moves shaded green / red."
-                    : "Share of industry net inflow captured by the active-equity envelope each month."}
-                  <InfoTooltip label="Active-equity envelope = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
-                </p>
-              </ChartWithContext>
-            )}
-
             {activeEquityBridgeStrip && (
               <ChartWithContext
                 title="Active Equity AUM Bridge"
@@ -2441,11 +2239,86 @@ export default async function MonthlyPage({
         </div>
       )}
 
+      {heroNfo.availability.hasData && (
+        <section className="grid gap-4">
+          {(() => {
+            const first = heroNfo.data[0];
+            const last = heroNfo.data[heroNfo.data.length - 1];
+            const years = last.fy - first.fy;
+            return (
+              <DesignLanguageCard
+                title="NFO mobilisation vs industry net flows"
+                chartId="hero-nfo-mobilisation"
+                source={`Source: AMFI Monthly Report (New Schemes page) · ${heroNfo.availability.note}`}
+              >
+                <StackedBarCombo
+                  variant="C"
+                  data={heroNfo.data}
+                  barName="NFO funds mobilised"
+                  lineName="NFO share of net inflow"
+                  rightUnitLabel="%"
+                  cagr={
+                    years >= 1
+                      ? {
+                          startLabel: first.label,
+                          endLabel: last.label,
+                          cagrPct: cagrPct(first.bottom, last.bottom, years),
+                          startValue: first.bottom,
+                          endValue: last.bottom,
+                        }
+                      : undefined
+                  }
+                />
+              </DesignLanguageCard>
+            );
+          })()}
+        </section>
+      )}
+
       <SectionDivider
         eyebrow="Section 4"
         label="Active vs Passive"
         context="Where new equity money is going and whether the passive shift is accelerating."
       />
+
+      {heroPassive.availability.hasData && (
+        <section className="grid gap-4">
+          {(() => {
+            const first = heroPassive.data[0];
+            const last = heroPassive.data[heroPassive.data.length - 1];
+            const years = last.fy - first.fy;
+            const totalsFirst = first.bottom + first.top;
+            const totalsLast = last.bottom + last.top;
+            return (
+              <DesignLanguageCard
+                title="Share of passive funds in equity envelope"
+                chartId="hero-passive-share"
+                source={`Source: AMFI monthly disclosures (AAUM, IIFL Figure 19 methodology) · ${heroPassive.availability.note}`}
+              >
+                <StackedBarCombo
+                  variant="B"
+                  data={heroPassive.data}
+                  bottomName="Active equity AAUM"
+                  topName="Passive (Index + ETF) AAUM"
+                  lineName="Passive share %"
+                  rightUnitLabel="%"
+                  cagr={
+                    years >= 1
+                      ? {
+                          startLabel: first.label,
+                          endLabel: last.label,
+                          cagrPct: cagrPct(totalsFirst, totalsLast, years),
+                          startValue: totalsFirst,
+                          endValue: totalsLast,
+                        }
+                      : undefined
+                  }
+                />
+              </DesignLanguageCard>
+            );
+          })()}
+        </section>
+      )}
 
       {hasAnyEquityMix && (
         <div className="space-y-3">
@@ -2570,95 +2443,6 @@ export default async function MonthlyPage({
               <InfoTooltip label="Active Equity = Growth/Equity schemes + Hybrid ex-Arbitrage + Solution-oriented schemes. ETF & Index = Index Funds + Other ETFs. Share view divides each segment by the sum of all three for that month." />
             </p>
           </ChartWithContext>
-        </div>
-      )}
-
-      {activePassiveTrend && activePassiveTrend.history.length > 0 && (
-        <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-medium tracking-tight">
-              Active vs Passive
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Active equity AUM vs ETF &amp; Index AUM · passive share trend
-              {activePassiveTrend.forecastMonths > 0
-                ? " + simple trend projection"
-                : ""}{" "}
-              · Source: AMFI Monthly Report
-            </p>
-          </div>
-
-          <section className="grid gap-4 lg:grid-cols-2">
-            <ChartWithContext
-              title="Active Equity vs ETF &amp; Index AUM"
-              subtitle={
-                activePassiveLens === "share"
-                  ? `${activePassiveTrend.history.length} month${activePassiveTrend.history.length === 1 ? "" : "s"} · share of total equity AUM`
-                  : `${activePassiveTrend.history.length} month${activePassiveTrend.history.length === 1 ? "" : "s"} · month-end AUM · ₹ Cr`
-              }
-              flowKind="stock"
-              denominatorCaption={activeVsEtfDenomCaption}
-              denominatorTooltip="Latest ETF & Index AUM expressed as a percentage of active-equity AUM — captures how far passive has closed the gap. More discriminating than the symmetric share % which compresses both sides."
-              insights={activeVsEtfInsights}
-              yoyBadge={(() => {
-                const v = latestYoyPct(activeVsEtfPassiveSeries, 12);
-                return v === null
-                  ? undefined
-                  : { label: "ETF AUM YoY", pct: v };
-              })()}
-              action={
-                <LensToggle
-                  basePath="/monthly"
-                  paramName="activePassiveLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "% of total equity AUM" },
-                  ]}
-                  active={activePassiveLens}
-                  preserveParams={preservedQueryParams}
-                />
-              }
-            >
-              <MultiLine
-                data={activePassiveTrend.history.map((p) => {
-                  const denom = p.activeEquityAum + p.etfIndexAum;
-                  if (activePassiveLens === "share") {
-                    return {
-                      month: p.month,
-                      active: denom > 0 ? (p.activeEquityAum / denom) * 100 : null,
-                      passive: denom > 0 ? (p.etfIndexAum / denom) * 100 : null,
-                    };
-                  }
-                  return {
-                    month: p.month,
-                    active: p.activeEquityAum,
-                    passive: p.etfIndexAum,
-                  };
-                })}
-                xKey="month"
-                labelFormat="month"
-                valueFormat={activePassiveLens === "share" ? "pct" : "cr"}
-                axisFormat={activePassiveLens === "share" ? "pct" : "cr"}
-                lines={[
-                  {
-                    key: "active",
-                    name: "Active equity",
-                    color: "hsl(var(--chart-1))",
-                  },
-                  {
-                    key: "passive",
-                    name: "ETF & Index",
-                    color: "hsl(var(--chart-5))",
-                  },
-                ]}
-              />
-              <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                Active equity vs ETF &amp; Index AUM.
-                <InfoTooltip label="Active equity = equity-oriented + hybrid (ex-arbitrage) + solution-oriented. ETF & Index = Index Funds + Other ETFs (excludes Gold ETFs). Share view divides each by their sum so the two lines always add to 100%." />
-              </p>
-            </ChartWithContext>
-          </section>
         </div>
       )}
 
