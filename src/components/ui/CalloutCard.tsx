@@ -8,6 +8,12 @@ interface CalloutCardProps {
   tone?: "positive" | "negative" | "neutral";
   /** Optional accent number rendered alongside, larger style. */
   accentNumber?: string;
+  /** Optional short caption that sits next to the accent number to
+   *  clarify what it represents (e.g. "percentile", "share of equity
+   *  AUM"). Without this, a bare "97th" or "9th" reads as a meaningless
+   *  ordinal — readers shouldn't have to scan the statement to learn
+   *  what the big number is. */
+  accentLabel?: string;
   className?: string;
 }
 
@@ -29,6 +35,7 @@ export function CalloutCard({
   context,
   tone = "neutral",
   accentNumber,
+  accentLabel,
   className,
 }: CalloutCardProps) {
   return (
@@ -40,8 +47,15 @@ export function CalloutCard({
       )}
     >
       {accentNumber && (
-        <div className="mb-2 text-3xl font-semibold tabular tracking-tight text-foreground">
-          {accentNumber}
+        <div className="mb-2 flex items-baseline gap-2">
+          <span className="text-3xl font-semibold tabular tracking-tight text-foreground">
+            {accentNumber}
+          </span>
+          {accentLabel && (
+            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {accentLabel}
+            </span>
+          )}
         </div>
       )}
       <div className="text-base font-medium leading-snug tracking-tight text-foreground">

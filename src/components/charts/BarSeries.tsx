@@ -5,6 +5,7 @@ import {
   Area,
   CartesianGrid,
   ComposedChart,
+  Legend,
   Line,
   ReferenceArea,
   ReferenceLine,
@@ -131,6 +132,48 @@ export function BarSeries({
 
   const hasRef =
     typeof referenceValue === "number" && Number.isFinite(referenceValue);
+  const hasTrend = !!trendline && trendline.length > 0;
+
+  // Legend payload — explicitly constructed so the dashed-line series
+  // (trendline + reference line) get a visible name. Without this the
+  // dotted overlays read as nameless chart furniture even though they
+  // have meaningful identities ("12M avg" etc.).
+  type LegendItem = {
+    id: string;
+    value: string;
+    type: "line";
+    color: string;
+    payload: { strokeDasharray: string };
+  };
+  const legendPayload: LegendItem[] = [];
+  if (name) {
+    legendPayload.push({
+      id: "value",
+      value: name,
+      type: "line",
+      color,
+      payload: { strokeDasharray: "0" },
+    });
+  }
+  if (hasTrend) {
+    legendPayload.push({
+      id: "trend",
+      value: trendlineName,
+      type: "line",
+      color: "hsl(var(--foreground))",
+      payload: { strokeDasharray: "4 3" },
+    });
+  }
+  if (hasRef && referenceLabel) {
+    legendPayload.push({
+      id: "ref",
+      value: referenceLabel,
+      type: "line",
+      color: "hsl(var(--muted-foreground))",
+      payload: { strokeDasharray: "4 4" },
+    });
+  }
+  const showLegend = legendPayload.length > 1;
 
   const gradientId = `bar-series-fill-${reactId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const positiveGradient = `${gradientId}-pos`;
@@ -140,7 +183,7 @@ export function BarSeries({
     <ResponsiveContainer width="100%" height={height}>
       <ComposedChart
         data={merged}
-        margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+        margin={{ top: 8, right: 36, left: 0, bottom: 0 }}
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -315,6 +358,20 @@ export function BarSeries({
             isAnimationActive={false}
             connectNulls={false}
             legendType="none"
+          />
+        )}
+        {showLegend && (
+          <Legend
+            verticalAlign="bottom"
+            align="left"
+            iconSize={14}
+            iconType="line"
+            wrapperStyle={{
+              fontSize: 11,
+              paddingTop: 8,
+              color: "hsl(var(--muted-foreground))",
+            }}
+            payload={legendPayload}
           />
         )}
       </ComposedChart>

@@ -1504,12 +1504,15 @@ export default async function MonthlyPage({
   // ---- Headline-style "callout" cards just below the hero ----
   // Editorial statements (not KPI tiles). Each card presents one
   // notable finding from the existing helpers in plain English.
+  // `accentLabel` clarifies what the big number means — without it
+  // "97th" / "9th" read as bare ordinals.
   type Callout = {
     id: string;
     statement: string;
     context?: string;
     tone: "positive" | "negative" | "neutral";
     accentNumber?: string;
+    accentLabel?: string;
   };
   const topCallouts: Callout[] = [];
   if (
@@ -1523,6 +1526,7 @@ export default async function MonthlyPage({
       accentNumber:
         activeEquitySignal.percentileRank.toFixed(0) +
         ordinalSuffix(Math.round(activeEquitySignal.percentileRank)),
+      accentLabel: "percentile · active-equity flow",
       statement: `Active-equity inflow in the top ${(100 - activeEquitySignal.percentileRank).toFixed(0)}% of months on record`,
       context: `Latest ${activeEquitySignal.latestMonth} · ${formatCompactCrSafe(activeEquitySignal.latestValue)} vs historical mean ${formatCompactCrSafe(activeEquitySignal.mean)}`,
     });
@@ -1535,6 +1539,7 @@ export default async function MonthlyPage({
       id: "ae-flow-cold",
       tone: "negative",
       accentNumber: activeEquitySignal.percentileRank.toFixed(0) + "th",
+      accentLabel: "percentile · active-equity flow",
       statement: `Active-equity inflow in the bottom ${activeEquitySignal.percentileRank.toFixed(0)}% of months on record`,
       context: `Latest ${activeEquitySignal.latestMonth} · ${formatCompactCrSafe(activeEquitySignal.latestValue)} vs historical mean ${formatCompactCrSafe(activeEquitySignal.mean)}`,
     });
@@ -1548,6 +1553,7 @@ export default async function MonthlyPage({
       id: "nfo-cold",
       tone: "neutral",
       accentNumber: `${nfoSignal.percentileRank.toFixed(0)}${ordinalSuffix(Math.round(nfoSignal.percentileRank))}`,
+      accentLabel: "percentile · NFO mobilisation",
       statement: `NFO mobilisation at the low end of history — investors prefer existing schemes`,
       context: `Latest ${nfoSignal.latestMonth} · ${formatCompactCrSafe(nfoSignal.latestValue)} vs ${formatCompactCrSafe(nfoSignal.mean)} historical mean`,
     });
@@ -1560,6 +1566,7 @@ export default async function MonthlyPage({
       id: "nfo-hot",
       tone: "neutral",
       accentNumber: `${nfoSignal.percentileRank.toFixed(0)}${ordinalSuffix(Math.round(nfoSignal.percentileRank))}`,
+      accentLabel: "percentile · NFO mobilisation",
       statement: "NFO mobilisation at the high end of history — bull-market cue",
       context: `Latest ${nfoSignal.latestMonth} · ${formatCompactCrSafe(nfoSignal.latestValue)}`,
     });
@@ -1569,6 +1576,7 @@ export default async function MonthlyPage({
       id: "passive-share",
       tone: "neutral",
       accentNumber: `${passiveSignal.latestSharePct.toFixed(1)}%`,
+      accentLabel: "share of equity AUM",
       statement: `Passive funds command ${passiveSignal.latestSharePct.toFixed(1)}% of equity AUM — ${
         passiveSignal.percentileRank !== null && passiveSignal.percentileRank >= 80
           ? "near recent highs"
@@ -1584,6 +1592,7 @@ export default async function MonthlyPage({
       id: "drawdown",
       tone: latestNifty.drawdownPct <= -10 ? "negative" : "neutral",
       accentNumber: `${latestNifty.drawdownPct.toFixed(1)}%`,
+      accentLabel: "Nifty 500 drawdown",
       statement: `Nifty 500 ${Math.abs(latestNifty.drawdownPct).toFixed(1)}% off its all-time peak`,
       context: `As of ${latestNifty.month} · level ${latestNifty.level.toLocaleString("en-IN")}`,
     });
@@ -1596,6 +1605,84 @@ export default async function MonthlyPage({
   const sipTrendsRead = sipTrendsSectionRead();
   const activeEquityMixRead = activeEquityMixSectionRead();
   const foliosNfoRead = foliosNfoSectionRead();
+
+  // ---- Snapshot tab "What changed this month?" intro ----------------
+  // Replaces the static summary / watch-next pair on the Snapshot
+  // TabIntroCard with a live read composed off the same signals the
+  // hero zone uses. The summary names the headline change and current
+  // cycle phase; the watch-next pivots on the most extreme secondary
+  // signal so the line carries actual content next month.
+  const snapshotIntro = (() => {
+    const summaryParts: string[] = [];
+
+    if (activeEquitySignal && activeEquitySignal.percentileRank !== null) {
+      const pct = activeEquitySignal.percentileRank;
+      const sign = activeEquitySignal.latestValue < 0 ? "−" : "";
+      const valStr = formatCompactCrSafe(Math.abs(activeEquitySignal.latestValue));
+      const meanStr = formatCompactCrSafe(Math.abs(activeEquitySignal.mean));
+      let descriptor: string;
+      if (pct >= 90) descriptor = `top ${(100 - pct).toFixed(0)}% of months on record`;
+      else if (pct <= 10) descriptor = `bottom ${pct.toFixed(0)}% of months on record`;
+      else descriptor = `${formatPercentile(pct)} of months on record`;
+      summaryParts.push(
+        `Active-equity inflow at ${sign}${valStr} in ${activeEquitySignal.latestMonth} — ${descriptor} (historical mean ${meanStr}).`
+      );
+    }
+
+    const cyclePhaseLatest = (() => {
+      const last = cyclePhasePoints[cyclePhasePoints.length - 1];
+      return last?.phase ?? null;
+    })();
+    if (cyclePhaseLatest) {
+      const moodSuffix = mood?.label
+        ? ` · investor mood ${mood.label.toLowerCase()}`
+        : "";
+      summaryParts.push(`Cycle phase: ${cyclePhaseLatest}${moodSuffix}.`);
+    }
+
+    let watchNext: string | undefined;
+    if (
+      nfoSignal &&
+      nfoSignal.percentileRank !== null &&
+      nfoSignal.percentileRank <= 15
+    ) {
+      watchNext = `NFO mobilisation in the ${nfoSignal.percentileRank.toFixed(0)}${ordinalSuffix(
+        Math.round(nfoSignal.percentileRank)
+      )} percentile — see if investors keep preferring existing schemes.`;
+    } else if (
+      nfoSignal &&
+      nfoSignal.percentileRank !== null &&
+      nfoSignal.percentileRank >= 80
+    ) {
+      watchNext = `NFO mobilisation in the ${nfoSignal.percentileRank.toFixed(0)}${ordinalSuffix(
+        Math.round(nfoSignal.percentileRank)
+      )} percentile — track whether launch activity tips into froth.`;
+    } else if (
+      passiveSignal &&
+      passiveSignal.percentileRank !== null &&
+      passiveSignal.percentileRank >= 75
+    ) {
+      watchNext = `Passive AUM share at ${passiveSignal.latestSharePct.toFixed(1)}% — track whether the active→passive shift keeps accelerating.`;
+    } else if (
+      latestNifty &&
+      latestNifty.drawdownPct !== null &&
+      latestNifty.drawdownPct <= -10
+    ) {
+      watchNext = `Nifty 500 ${Math.abs(latestNifty.drawdownPct).toFixed(1)}% off its all-time peak — watch SIP stickiness while the market stays compressed.`;
+    } else if (
+      sipStickiness &&
+      sipStickiness.latestSharePct !== null
+    ) {
+      watchNext = `SIP base at ${sipStickiness.latestSharePct.toFixed(1)}% of total AUM — see if recurring flows keep absorbing redemptions next month.`;
+    }
+
+    const summary =
+      summaryParts.length > 0
+        ? summaryParts.join(" ")
+        : "Headline industry signal and any callouts worth flagging before you drill into flows or categories.";
+
+    return { summary, watchNext };
+  })();
   // Build the Investor Read composite from the five signals + Nifty 500.
   const read = investorRead({
     activeEquityZ: activeEquitySignal?.zScore ?? null,
@@ -1635,8 +1722,8 @@ export default async function MonthlyPage({
       {activeTab === "snapshot" && (
         <TabIntroCard
           headline="What changed this month?"
-          summary="The single-glance regime call, headline industry signal, and any callouts worth flagging before you drill into flows or categories."
-          watchNext="Whether the headline signal is consistent with the cycle phase and mood shown above."
+          summary={snapshotIntro.summary}
+          watchNext={snapshotIntro.watchNext}
         />
       )}
 
@@ -1705,6 +1792,7 @@ export default async function MonthlyPage({
               context={c.context}
               tone={c.tone}
               accentNumber={c.accentNumber}
+              accentLabel={c.accentLabel}
             />
           ))}
         </section>
@@ -1718,35 +1806,45 @@ export default async function MonthlyPage({
         />
       )}
 
-      {activeTab === "flows" && sankeyData && (
-        <Card
-          title="Where the Money Went · Latest Month"
-          subtitleNode={
-            <div className="space-y-0.5">
-              <p className="text-xs text-muted-foreground">
-                Industry net flow split by where the money came from and where it ended up.
-              </p>
-              <p className="text-[11px] text-muted-foreground/80">
-                Latest month: {sankeyData.month}
-              </p>
-            </div>
-          }
-        >
-          <SankeyFlow
-            sources={sankeyData.sources}
-            targets={sankeyData.targets}
-            links={sankeyData.links}
-            formatValue={(v) => formatCompactCrSafe(v)}
-            height={320}
-          />
-          <p className="mt-3 text-[11px] text-muted-foreground">
-            Source widths show SIP vs lump-sum split of net inflow.
-            Destination widths show Equity / Debt / Liquid / Other shares.
-            Source-to-destination ribbons are proportional approximations
-            (the AMFI release does not split SIP destinations by category).
-          </p>
-        </Card>
-      )}
+      {activeTab === "flows" && sankeyData && (() => {
+        const sankeyGrandTotal = sankeyData.links.reduce(
+          (s, l) => s + Math.abs(l.value),
+          0
+        );
+        const formatSankeyPct = (v: number) =>
+          sankeyGrandTotal > 0
+            ? `${((v / sankeyGrandTotal) * 100).toFixed(1)}%`
+            : "";
+        return (
+          <Card
+            title="Where the Money Went · Latest Month"
+            subtitleNode={
+              <div className="space-y-0.5">
+                <p className="text-xs text-muted-foreground">
+                  Industry net flow split by where the money came from and where it ended up.
+                </p>
+                <p className="text-[11px] text-muted-foreground/80">
+                  Latest month: {sankeyData.month}
+                </p>
+              </div>
+            }
+          >
+            <SankeyFlow
+              sources={sankeyData.sources}
+              targets={sankeyData.targets}
+              links={sankeyData.links}
+              formatValue={formatSankeyPct}
+              height={320}
+            />
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              Source widths show SIP vs lump-sum split of net inflow.
+              Destination widths show Equity / Debt / Liquid / Other shares.
+              Source-to-destination ribbons are proportional approximations
+              (the AMFI release does not split SIP destinations by category).
+            </p>
+          </Card>
+        );
+      })()}
 
       {activeTab === "snapshot" && (
       <Card
