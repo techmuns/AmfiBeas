@@ -1,7 +1,7 @@
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { Sparkline } from "@/components/charts/Sparkline";
 import { cn } from "@/lib/cn";
-import { ordinalSuffix } from "@/lib/format";
+import { formatPercentilePill } from "@/lib/format";
 
 interface KpiCardProps {
   label: string;
@@ -35,7 +35,8 @@ interface KpiCardProps {
    *  rendered AFTER the delta line so cards can show both deltas. */
   yoyPct?: number | null;
   /** Optional 0-100 percentile rank of the latest value vs the
-   *  historical series. Renders as a compact pill ("87th pct"). */
+   *  historical series. Renders as a compact plain-language pill
+   *  ("Top 4%", "Bottom 9%", "Median", "Highest", "Lowest"). */
   percentile?: number | null;
   /** Optional ratio / context line ("20.6% of total AUM"). Rendered
    *  with subtle styling between the headline and the sparkline. */
@@ -140,8 +141,7 @@ export function KpiCard({
           )}
           {typeof percentile === "number" && (
             <span className="inline-flex items-center rounded-full border border-border bg-muted px-1.5 py-0 text-[10px] tabular font-medium text-muted-foreground">
-              {Math.round(percentile)}
-              {ordinalSuffix(Math.round(percentile))} pct
+              {formatPercentilePill(percentile)}
             </span>
           )}
         </div>

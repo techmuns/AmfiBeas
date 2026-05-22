@@ -200,9 +200,51 @@ export function ordinalSuffix(n: number): string {
   }
 }
 
-/** Format a 0-100 percentile as "Xst/Xnd/Xrd/Xth pct". */
+/**
+ * Format a 0–100 percentile rank as plain-English ranking copy. The
+ * raw "Nth pct" notation reads as analyst jargon to most users; this
+ * rewrites it as "Top X%", "Bottom X%", or the obvious endpoints.
+ *
+ * Mapping:
+ *   100         → "Highest on record"
+ *   95–99       → "Top N%" (N = 100 − pct, min 1)
+ *   56–94       → "Top N%"
+ *   45–55       → "Around median"
+ *   6–44        → "Bottom N%"
+ *   1–5         → "Bottom N% on record"
+ *   0           → "Lowest on record"
+ */
 export function formatPercentile(pct: number | null | undefined): string {
   if (typeof pct !== "number" || !Number.isFinite(pct)) return "—";
   const rounded = Math.round(pct);
-  return `${rounded}${ordinalSuffix(rounded)} pct`;
+  if (rounded >= 100) return "Highest on record";
+  if (rounded <= 0) return "Lowest on record";
+  if (rounded >= 45 && rounded <= 55) return "Around median";
+  if (rounded > 55) {
+    const top = Math.max(1, 100 - rounded);
+    return rounded >= 95 ? `Top ${top}% on record` : `Top ${top}%`;
+  }
+  return rounded <= 5
+    ? `Bottom ${rounded}% on record`
+    : `Bottom ${rounded}%`;
+}
+
+/**
+ * Compact pill version of {@link formatPercentile} for tight spaces
+ * (KPI-card pills, small chart annotations). Drops the trailing "on
+ * record" qualifier and shortens the endpoints.
+ */
+export function formatPercentilePill(
+  pct: number | null | undefined
+): string {
+  if (typeof pct !== "number" || !Number.isFinite(pct)) return "—";
+  const rounded = Math.round(pct);
+  if (rounded >= 100) return "Highest";
+  if (rounded <= 0) return "Lowest";
+  if (rounded >= 45 && rounded <= 55) return "Median";
+  if (rounded > 55) {
+    const top = Math.max(1, 100 - rounded);
+    return `Top ${top}%`;
+  }
+  return `Bottom ${rounded}%`;
 }

@@ -83,7 +83,6 @@ import { LensToggle } from "@/components/ui/LensToggle";
 import { MoodGauge } from "@/components/ui/MoodGauge";
 import { VolatilityRibbon } from "@/components/ui/VolatilityRibbon";
 import { WeatherBadge } from "@/components/ui/WeatherBadge";
-import { ordinalSuffix } from "@/lib/format";
 import {
   IIFL_ACTIVE_EQUITY_CATEGORIES,
   IIFL_TREND_EXPANDED_SLUGS,
@@ -1445,7 +1444,7 @@ export default async function MonthlyPage({
   const coachMessage = (() => {
     const stress = marketStressFlowSignal();
     if (stress?.label === "Buy-the-dip flow") {
-      return `Nifty 500 is in a ${Math.abs(stress.drawdownPct).toFixed(1)}% drawdown but active-equity flow sits in the ${formatPercentile(stress.flowPercentileRank)} — investors are buying the dip.`;
+      return `Nifty 500 is in a ${Math.abs(stress.drawdownPct).toFixed(1)}% drawdown but active-equity flow is in the ${formatPercentile(stress.flowPercentileRank).toLowerCase()} — investors are buying the dip.`;
     }
     if (stress?.label === "Flow stress") {
       return `Nifty 500 is in drawdown AND flow is at the bottom decile — historically a stress signal.`;
@@ -1455,7 +1454,7 @@ export default async function MonthlyPage({
       activeEquitySignal.percentileRank !== null &&
       activeEquitySignal.percentileRank >= 95
     ) {
-      return `Active-equity flow is in the ${activeEquitySignal.percentileRank.toFixed(0)}th percentile — a top-decile inflow month.`;
+      return `Active-equity flow is in the ${formatPercentile(activeEquitySignal.percentileRank).toLowerCase()} — a top-decile inflow month.`;
     }
     return null;
   })();
@@ -1597,14 +1596,13 @@ export default async function MonthlyPage({
     activeEquitySignal.percentileRank !== null &&
     activeEquitySignal.percentileRank >= 90
   ) {
+    const top = Math.max(1, Math.round(100 - activeEquitySignal.percentileRank));
     topCallouts.push({
       id: "ae-flow-hot",
       tone: "positive",
-      accentNumber:
-        activeEquitySignal.percentileRank.toFixed(0) +
-        ordinalSuffix(Math.round(activeEquitySignal.percentileRank)),
-      accentLabel: "percentile · active-equity flow",
-      statement: `Active-equity inflow in the top ${(100 - activeEquitySignal.percentileRank).toFixed(0)}% of months on record`,
+      accentNumber: `Top ${top}%`,
+      accentLabel: "active-equity flow · months on record",
+      statement: `Active-equity inflow in the top ${top}% of months on record`,
       context: `Latest ${activeEquitySignal.latestMonth} · ${formatCompactCrSafe(activeEquitySignal.latestValue)} vs historical mean ${formatCompactCrSafe(activeEquitySignal.mean)}`,
     });
   } else if (
@@ -1612,12 +1610,13 @@ export default async function MonthlyPage({
     activeEquitySignal.percentileRank !== null &&
     activeEquitySignal.percentileRank <= 10
   ) {
+    const bottom = Math.max(1, Math.round(activeEquitySignal.percentileRank));
     topCallouts.push({
       id: "ae-flow-cold",
       tone: "negative",
-      accentNumber: activeEquitySignal.percentileRank.toFixed(0) + "th",
-      accentLabel: "percentile · active-equity flow",
-      statement: `Active-equity inflow in the bottom ${activeEquitySignal.percentileRank.toFixed(0)}% of months on record`,
+      accentNumber: `Bottom ${bottom}%`,
+      accentLabel: "active-equity flow · months on record",
+      statement: `Active-equity inflow in the bottom ${bottom}% of months on record`,
       context: `Latest ${activeEquitySignal.latestMonth} · ${formatCompactCrSafe(activeEquitySignal.latestValue)} vs historical mean ${formatCompactCrSafe(activeEquitySignal.mean)}`,
     });
   }
@@ -1626,11 +1625,12 @@ export default async function MonthlyPage({
     nfoSignal.percentileRank !== null &&
     nfoSignal.percentileRank <= 15
   ) {
+    const bottom = Math.max(1, Math.round(nfoSignal.percentileRank));
     topCallouts.push({
       id: "nfo-cold",
       tone: "neutral",
-      accentNumber: `${nfoSignal.percentileRank.toFixed(0)}${ordinalSuffix(Math.round(nfoSignal.percentileRank))}`,
-      accentLabel: "percentile · NFO mobilisation",
+      accentNumber: `Bottom ${bottom}%`,
+      accentLabel: "NFO mobilisation · months on record",
       statement: `NFO mobilisation at the low end of history — investors prefer existing schemes`,
       context: `Latest ${nfoSignal.latestMonth} · ${formatCompactCrSafe(nfoSignal.latestValue)} vs ${formatCompactCrSafe(nfoSignal.mean)} historical mean`,
     });
@@ -1639,11 +1639,12 @@ export default async function MonthlyPage({
     nfoSignal.percentileRank !== null &&
     nfoSignal.percentileRank >= 80
   ) {
+    const top = Math.max(1, Math.round(100 - nfoSignal.percentileRank));
     topCallouts.push({
       id: "nfo-hot",
       tone: "neutral",
-      accentNumber: `${nfoSignal.percentileRank.toFixed(0)}${ordinalSuffix(Math.round(nfoSignal.percentileRank))}`,
-      accentLabel: "percentile · NFO mobilisation",
+      accentNumber: `Top ${top}%`,
+      accentLabel: "NFO mobilisation · months on record",
       statement: "NFO mobilisation at the high end of history — bull-market cue",
       context: `Latest ${nfoSignal.latestMonth} · ${formatCompactCrSafe(nfoSignal.latestValue)}`,
     });
@@ -1816,7 +1817,7 @@ export default async function MonthlyPage({
     } else if (nfoSignal && nfoSignal.percentileRank !== null) {
       const pct = nfoSignal.percentileRank;
       const tone: IntroTone = pct <= 25 ? "positive" : pct >= 75 ? "negative" : null;
-      const pctStr = `${pct.toFixed(0)}${ordinalSuffix(Math.round(pct))} percentile`;
+      const pctStr = formatPercentile(pct).toLowerCase();
       watchNext = (
         <>
           NFO mobilisation in the <Hi tone={tone}>{pctStr}</Hi> of history —
@@ -3672,7 +3673,7 @@ function NfoDragCard({
       <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
         Latest {trend.latestRatioPct.toFixed(1)}%
         {formatPercentile(trend.percentile) !== "—"
-          ? ` · ${formatPercentile(trend.percentile)} of available history`
+          ? ` · ${formatPercentile(trend.percentile)}`
           : ""}
         . Mean {trend.mean.toFixed(1)}%.
         <InfoTooltip label="Ratio = industryNfoFundsMobilized ÷ netInflow × 100. Months with non-positive total industry net inflow are skipped (the ratio is undefined). High ratios = NFOs absorbing more of the month's industry net inflow than usual — historically a froth cue, not a buy/sell call." />
@@ -3741,7 +3742,7 @@ function PassiveFlowShareCard({
       <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
         Latest {trend.latestSharePct.toFixed(1)}%
         {formatPercentile(trend.percentile) !== "—"
-          ? ` · ${formatPercentile(trend.percentile)} of available history`
+          ? ` · ${formatPercentile(trend.percentile)}`
           : ""}
         . Mean {trend.mean.toFixed(1)}%.
         <InfoTooltip label="Passive flow share = (Index Funds + Other ETFs net inflow) ÷ (Index Funds + Other ETFs + active-equity net inflow) × 100. Leading indicator of where the active-vs-passive AUM mix is heading — passive share of NEW money tends to move months before passive share of AUM. Gold ETFs are excluded. Months with non-positive denominator are skipped." />

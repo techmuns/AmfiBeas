@@ -29,6 +29,7 @@ import {
 import {
   formatCompactCrSafe,
   formatPercentile,
+  formatPercentilePill,
 } from "@/lib/format";
 
 export const metadata = {
@@ -147,7 +148,7 @@ export default function InvestorSummaryPage() {
             badgeClass={positiveLabelClass(ae.label)}
             footnote={
               ae.zScore !== null && ae.percentileRank !== null
-                ? `Z ${ae.zScore.toFixed(2)}σ · ${ae.percentileRank.toFixed(0)}th pct`
+                ? `Z ${ae.zScore.toFixed(2)}σ · ${formatPercentilePill(ae.percentileRank)}`
                 : "—"
             }
             sparkline={activeEquityNetInflowSparkline(24)}
@@ -163,7 +164,7 @@ export default function InvestorSummaryPage() {
             badgeClass="border-foreground/30 bg-muted text-foreground"
             footnote={
               nfo.zScore !== null && nfo.percentileRank !== null
-                ? `Z ${nfo.zScore.toFixed(2)}σ · ${nfo.percentileRank.toFixed(0)}th pct`
+                ? `Z ${nfo.zScore.toFixed(2)}σ · ${formatPercentilePill(nfo.percentileRank)}`
                 : "—"
             }
             sparkline={nfoMobilisationSparkline(24)}
@@ -179,7 +180,7 @@ export default function InvestorSummaryPage() {
             badgeClass="border-foreground/30 bg-muted text-foreground"
             footnote={
               passive.percentileRank !== null
-                ? `Hist avg ${passive.mean.toFixed(1)}% · ${passive.percentileRank.toFixed(0)}th pct`
+                ? `Hist avg ${passive.mean.toFixed(1)}% · ${formatPercentilePill(passive.percentileRank)}`
                 : "—"
             }
             sparkline={passiveShareSparkline(24)}
@@ -195,7 +196,7 @@ export default function InvestorSummaryPage() {
             badgeClass={positiveLabelClass(sip.label)}
             footnote={
               sip.percentileRank !== null
-                ? `Hist avg ${sip.mean.toFixed(1)}% · ${sip.percentileRank.toFixed(0)}th pct`
+                ? `Hist avg ${sip.mean.toFixed(1)}% · ${formatPercentilePill(sip.percentileRank)}`
                 : "—"
             }
             sparkline={sipStickinessSparkline(24)}
@@ -229,7 +230,7 @@ export default function InvestorSummaryPage() {
             }
             footnote={
               nfoDrag.percentile !== null
-                ? `Hist avg ${nfoDrag.mean.toFixed(1)}% · ${nfoDrag.percentile.toFixed(0)}th pct`
+                ? `Hist avg ${nfoDrag.mean.toFixed(1)}% · ${formatPercentilePill(nfoDrag.percentile)}`
                 : "—"
             }
           />

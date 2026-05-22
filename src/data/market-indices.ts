@@ -20,6 +20,7 @@ import {
   historicalSignalStats,
   type CyclePhase,
 } from "./amfi-monthly";
+import { formatPercentile } from "@/lib/format";
 
 const snapshot = marketIndicesRaw as MarketIndexMonthlySnapshot;
 
@@ -612,7 +613,7 @@ export function narrativeComposer(input: {
     open.push(
       `In ${input.latestMonth}, active-equity inflows ${flowStrength}` +
         (ae.percentile !== null
-          ? ` — ${ae.percentile.toFixed(0)}th percentile of months on record.`
+          ? ` — ${formatPercentile(ae.percentile).toLowerCase()} of months on record.`
           : ".")
     );
   }
@@ -668,7 +669,7 @@ export function narrativeComposer(input: {
   }
   if (sip && sip.percentile !== null && sip.percentile >= 70) {
     mid.push(
-      `SIP-anchored AUM share continues to grind higher (${sip.percentile.toFixed(0)}th percentile of available history) — the structural base keeps strengthening.`
+      `SIP-anchored AUM share continues to grind higher (${formatPercentile(sip.percentile).toLowerCase()} of available history) — the structural base keeps strengthening.`
     );
   }
   if (mid.length === 0) {

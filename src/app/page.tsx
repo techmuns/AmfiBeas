@@ -25,7 +25,6 @@ import { industryNarrative } from "@/data/narrative";
 import {
   formatPercentile,
   formatQuarterLabelLong,
-  ordinalSuffix,
 } from "@/lib/format";
 
 export default function HomePage() {
@@ -298,8 +297,7 @@ function flowQualityRead(
     if (!sip) return "";
     const base = ` SIP AUM at ${sip.latestSharePct.toFixed(1)}% of total AUM`;
     if (formatPercentile(sip.percentileRank) === "—") return `${base}.`;
-    const rounded = Math.round(sip.percentileRank as number);
-    return `${base} (${rounded}${ordinalSuffix(rounded)} percentile).`;
+    return `${base} (${formatPercentile(sip.percentileRank).toLowerCase()}).`;
   })();
   const action =
     ae && (ae.zScore ?? 0) <= -1
@@ -326,8 +324,7 @@ function passivePressureRead(
   const positionPart = (() => {
     const base = `Passive share at ${p.latestSharePct.toFixed(1)}% of equity AUM`;
     if (formatPercentile(p.percentileRank) === "—") return `${base}.`;
-    const rounded = Math.round(p.percentileRank as number);
-    return `${base} (${rounded}${ordinalSuffix(rounded)} percentile of history).`;
+    return `${base} (${formatPercentile(p.percentileRank).toLowerCase()}).`;
   })();
   const action =
     (p.percentileRank ?? 50) >= 80

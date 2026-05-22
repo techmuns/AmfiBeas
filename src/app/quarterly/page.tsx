@@ -63,6 +63,7 @@ import {
   formatCroreCountSafe,
   formatIntSafe,
   formatLakhSafe,
+  formatPercentilePill,
 } from "@/lib/format";
 import {
   amcLevelHhiPercentileRead,
@@ -1076,7 +1077,7 @@ export default async function QuarterlyPage({
             label="Concentration · HHI"
             pill={
               amcHhiPercentile
-                ? `${amcHhiPercentile.percentile.toFixed(0)}th pct`
+                ? formatPercentilePill(amcHhiPercentile.percentile)
                 : "—"
             }
             pillTone={
@@ -2101,7 +2102,7 @@ function HhiPercentileBlock({
       <div className="mt-1 text-lg font-semibold tabular tracking-tight">
         HHI {Math.round(read.latestHhi)}
         <span className="ml-2 text-[11px] font-medium text-muted-foreground">
-          {pct.toFixed(0)}th percentile · {interpret}
+          {formatPercentilePill(pct)} · {interpret}
         </span>
       </div>
       {change !== null && read.anchorQuarterLabel && (

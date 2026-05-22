@@ -25,6 +25,7 @@ import type {
   AmfiMonthlyPdfRow,
   AmfiMonthlyPdfSnapshot,
 } from "./snapshots/types";
+import { formatPercentile } from "@/lib/format";
 
 export const amfiMonthlyPdfSnapshot =
   amfiMonthlyPdfRaw as AmfiMonthlyPdfSnapshot;
@@ -1251,9 +1252,9 @@ export function classifyPhase(input: InvestorReadInput): CyclePhase {
 
 function describeFlowLevel(z: number | null, pct: number | null): string {
   if (z === null || pct === null) return "with limited flow history";
-  if (z >= 2) return `with active-equity inflows running unusually high (${pct.toFixed(0)}th percentile)`;
+  if (z >= 2) return `with active-equity inflows running unusually high (${formatPercentile(pct).toLowerCase()})`;
   if (z >= 1) return `with active-equity inflows in the top ${(100 - pct).toFixed(0)}% of months`;
-  if (z <= -2) return `with active-equity inflows running unusually low (${pct.toFixed(0)}th percentile)`;
+  if (z <= -2) return `with active-equity inflows running unusually low (${formatPercentile(pct).toLowerCase()})`;
   if (z <= -1) return `with active-equity inflows in the bottom ${pct.toFixed(0)}% of months`;
   return `with active-equity inflows close to the long-run average`;
 }
