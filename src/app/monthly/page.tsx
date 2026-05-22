@@ -2093,9 +2093,20 @@ export default async function MonthlyPage({
           sankeyGrandTotal > 0
             ? `${((v / sankeyGrandTotal) * 100).toFixed(1)}%`
             : "";
+        const sankeyMonthLabel = (() => {
+          const FULL_MONTHS = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December",
+          ];
+          const [y, m] = sankeyData.month.split("-");
+          const idx = Number(m) - 1;
+          return Number.isFinite(idx) && idx >= 0 && idx < 12
+            ? `${FULL_MONTHS[idx]} ${y}`
+            : sankeyData.month;
+        })();
         return (
           <Card
-            title="Where the Money Went · Latest Month"
+            title={`Where the Money Went · ${sankeyMonthLabel}`}
             subtitleNode={
               <div className="space-y-0.5">
                 <p className="text-xs text-muted-foreground">
