@@ -1325,39 +1325,38 @@ export default async function QuarterlyPage({
             }
           >
             {quarterlyFlowsView === "bars" ? (
-              <>
-                <BarsWithGrowth
-                  data={quarterlyFlowsBarsData}
-                  barColor="hsl(var(--chart-1))"
-                  growthColor="hsl(var(--foreground))"
-                  valueFormat="cr"
-                  axisFormat="cr"
-                  labelFormat="none"
-                  name="Equity quarterly net flow"
-                  growthLabel="Equity YoY %"
-                />
-                <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
+              <BarsWithGrowth
+                data={quarterlyFlowsBarsData}
+                barColor="hsl(var(--chart-1))"
+                growthColor="hsl(var(--foreground))"
+                valueFormat="cr"
+                axisFormat="cr"
+                labelFormat="none"
+                name="Equity quarterly net flow"
+                growthLabel="Equity YoY %"
+              />
+            ) : (
+              <GroupedBars
+                data={flowsDataDisplay}
+                xKey="quarterLabel"
+                labelFormat="none"
+                valueFormat={quarterlyFlowsLens === "share" ? "pct" : "cr"}
+                axisFormat={quarterlyFlowsLens === "share" ? "pct" : "cr"}
+                bars={qFlowsSeries}
+              />
+            )}
+            <HowToRead>
+              {quarterlyFlowsView === "bars" ? (
+                <p>
                   Bars show actual quarterly Equity flow. The line shows
                   YoY growth. Debt and Liquid remain visible in Trend view.
                 </p>
-              </>
-            ) : (
-              <>
-                <GroupedBars
-                  data={flowsDataDisplay}
-                  xKey="quarterLabel"
-                  labelFormat="none"
-                  valueFormat={quarterlyFlowsLens === "share" ? "pct" : "cr"}
-                  axisFormat={quarterlyFlowsLens === "share" ? "pct" : "cr"}
-                  bars={qFlowsSeries}
-                />
-                <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              ) : (
+                <p className="inline-flex items-center gap-1.5">
                   Liquid is shown separately for readability.
                   <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes. Share view divides each value by the quarter's sum of absolute flow magnitudes so signs (inflow vs outflow) stay intact." />
                 </p>
-              </>
-            )}
-            <HowToRead>
+              )}
               <ul className="list-disc space-y-0.5 pl-4">
                 <li>Positive bars mean money entered the category; negative bars mean it left.</li>
                 <li>Rising equity usually signals risk-on; rising debt or liquid often signals defensive allocation.</li>

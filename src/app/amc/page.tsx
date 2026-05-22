@@ -305,15 +305,15 @@ export default async function AmcListPage({
             />
             <QuadrantBucketsList buckets={quadrant.buckets} />
           </div>
-          <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            Leaders: high share + above-median growth. Gainers: low share but
-            growing faster than peers. Defenders: high share but slowing.
-            Laggards: low share + below-median growth.
-            <InfoTooltip
-              label={`Y-axis: AMC's share of total cohort AAUM (top ${quadrant.points.length} AMCs). X-axis: QoQ AAUM growth (this quarter vs last). Both quadrant splits use the cohort median, not zero — so the buckets stay meaningful when the whole industry is growing or contracting. Dot size scales with market share.`}
-            />
-          </p>
           <HowToRead>
+            <p className="inline-flex items-center gap-1.5">
+              Leaders: high share + above-median growth. Gainers: low share but
+              growing faster than peers. Defenders: high share but slowing.
+              Laggards: low share + below-median growth.
+              <InfoTooltip
+                label={`Y-axis: AMC's share of total cohort AAUM (top ${quadrant.points.length} AMCs). X-axis: QoQ AAUM growth (this quarter vs last). Both quadrant splits use the cohort median, not zero — so the buckets stay meaningful when the whole industry is growing or contracting. Dot size scales with market share.`}
+              />
+            </p>
             <ul className="list-disc space-y-0.5 pl-4">
               <li><span className="text-foreground">Leader</span> = high share + high growth (compounding from a strong base).</li>
               <li><span className="text-foreground">Challenger / Gainer</span> = low share + high growth (catching up).</li>

@@ -85,32 +85,32 @@ export function IndustryConcentrationStack() {
           Other AMCs excluding top 10
         </span>
       </div>
-      {(top10Cagr !== null || restCagr !== null) && (
-        <p className="mt-3 text-[12px] italic text-muted-foreground">
-          {first.label} → {last.label} CAGR ·{" "}
-          {top10Cagr !== null && (
-            <>
-              <span className="text-foreground">Top 10</span>{" "}
-              {top10Cagr >= 0 ? "+" : ""}
-              {top10Cagr.toFixed(1)}%
-            </>
-          )}
-          {top10Cagr !== null && restCagr !== null && " · "}
-          {restCagr !== null && (
-            <>
-              <span className="text-foreground">Long tail</span>{" "}
-              {restCagr >= 0 ? "+" : ""}
-              {restCagr.toFixed(1)}%
-            </>
-          )}
-          .{" "}
-          {restCagr !== null &&
-            top10Cagr !== null &&
-            restCagr > top10Cagr &&
-            "The long tail is growing faster than the leaders — the industry is fragmenting at the share-of-industry level."}
-        </p>
-      )}
       <HowToRead>
+        {(top10Cagr !== null || restCagr !== null) && (
+          <p className="italic">
+            {first.label} → {last.label} CAGR ·{" "}
+            {top10Cagr !== null && (
+              <>
+                <span className="text-foreground">Top 10</span>{" "}
+                {top10Cagr >= 0 ? "+" : ""}
+                {top10Cagr.toFixed(1)}%
+              </>
+            )}
+            {top10Cagr !== null && restCagr !== null && " · "}
+            {restCagr !== null && (
+              <>
+                <span className="text-foreground">Long tail</span>{" "}
+                {restCagr >= 0 ? "+" : ""}
+                {restCagr.toFixed(1)}%
+              </>
+            )}
+            .{" "}
+            {restCagr !== null &&
+              top10Cagr !== null &&
+              restCagr > top10Cagr &&
+              "The long tail is growing faster than the leaders — the industry is fragmenting at the share-of-industry level."}
+          </p>
+        )}
         <ul className="list-disc space-y-0.5 pl-4">
           <li>
             Each bar splits industry QAAUM at a year-end into{" "}

@@ -2141,59 +2141,58 @@ export default async function MonthlyPage({
           }
         >
           {monthlyFlowsView === "bars" ? (
-            <>
-              <StackedBarsWithGrowth
-                data={monthlyFlowsMagnitudeStack}
-                segments={[
-                  {
-                    key: "equityMag",
-                    name: "Equity",
-                    color: "hsl(var(--chart-1))",
-                    yoyKey: "equityYoy",
-                  },
-                  {
-                    key: "debtMag",
-                    name: "Debt",
-                    color: "hsl(var(--chart-2))",
-                    yoyKey: "debtYoy",
-                  },
-                  {
-                    key: "liquidMag",
-                    name: "Liquid",
-                    color: "hsl(var(--chart-4))",
-                    yoyKey: "liquidYoy",
-                  },
-                ]}
-                growthKey="totalMagYoy"
-                growthLabel="Total YoY %"
-                valueFormat="cr"
-                axisFormat="cr"
-                labelFormat="month"
-              />
-              <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
+            <StackedBarsWithGrowth
+              data={monthlyFlowsMagnitudeStack}
+              segments={[
+                {
+                  key: "equityMag",
+                  name: "Equity",
+                  color: "hsl(var(--chart-1))",
+                  yoyKey: "equityYoy",
+                },
+                {
+                  key: "debtMag",
+                  name: "Debt",
+                  color: "hsl(var(--chart-2))",
+                  yoyKey: "debtYoy",
+                },
+                {
+                  key: "liquidMag",
+                  name: "Liquid",
+                  color: "hsl(var(--chart-4))",
+                  yoyKey: "liquidYoy",
+                },
+              ]}
+              growthKey="totalMagYoy"
+              growthLabel="Total YoY %"
+              valueFormat="cr"
+              axisFormat="cr"
+              labelFormat="month"
+            />
+          ) : (
+            <GroupedBars
+              data={monthlyFlowsDisplay}
+              xKey="month"
+              labelFormat="month"
+              valueFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
+              axisFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
+              bars={monthlyFlowsSeries}
+            />
+          )}
+          <HowToRead>
+            {monthlyFlowsView === "bars" ? (
+              <p>
                 Bars stack each segment&apos;s gross flow magnitude (|inflow| + |outflow|),
                 so the column height shows how much money moved through the industry that
                 month. Dashed line is the YoY % change in total magnitude; hover a column
                 for per-segment YoY. Direction (inflow vs outflow) stays in the Trend view.
               </p>
-            </>
-          ) : (
-            <>
-              <GroupedBars
-                data={monthlyFlowsDisplay}
-                xKey="month"
-                labelFormat="month"
-                valueFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
-                axisFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
-                bars={monthlyFlowsSeries}
-              />
-              <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            ) : (
+              <p className="inline-flex items-center gap-1.5">
                 Liquid is shown separately for readability.
                 <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes. In share view, each value is divided by the sum of absolute flow magnitudes in that month, so signs (inflow vs outflow) stay intact." />
               </p>
-            </>
-          )}
-          <HowToRead>
+            )}
             <ul className="list-disc space-y-0.5 pl-4">
               <li>Positive bars mean money entered the category; negative bars mean it left.</li>
               <li>Rising equity usually signals risk-on appetite; rising debt or liquid often signals defensive allocation.</li>
@@ -2462,31 +2461,19 @@ export default async function MonthlyPage({
               }
             >
               {aeFlowView === "bars" ? (
-                <>
-                  <BarsWithGrowth
-                    data={aeFlowBarsData}
-                    barColor="hsl(var(--chart-1))"
-                    growthColor="hsl(var(--foreground))"
-                    valueFormat="cr"
-                    axisFormat="cr"
-                    labelFormat="month"
-                    name="Active Equity net inflow"
-                    growthLabel="YoY %"
-                  />
-                  <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
-                    Bars show actual flow. The line shows YoY growth.
-                  </p>
-                </>
+                <BarsWithGrowth
+                  data={aeFlowBarsData}
+                  barColor="hsl(var(--chart-1))"
+                  growthColor="hsl(var(--foreground))"
+                  valueFormat="cr"
+                  axisFormat="cr"
+                  labelFormat="month"
+                  name="Active Equity net inflow"
+                  growthLabel="YoY %"
+                />
               ) : (() => {
                 const ov = adaptiveAverageOverlay(activeEquityFlowFullHistory, activeEquityFlowDisplay, 12);
                 const useOverlay = aeFlowLens !== "share";
-                const overlayCopy = useOverlay
-                  ? ov.kind === "trailing"
-                    ? "Dashed line = trailing 12-month average of net inflow."
-                    : ov.kind === "visible-mean"
-                      ? "Dashed line = average over the shown period."
-                      : ""
-                  : "Share of industry net inflow captured by the active-equity envelope each month.";
                 return (
                   <>
                     <BarSeries
@@ -2507,15 +2494,30 @@ export default async function MonthlyPage({
                         <VolatilityRibbon series={activeEquityFlowTrend} />
                       </div>
                     )}
-                    <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                      {overlayCopy}
-                      {aeFlowLens === "absolute" && overlayCopy ? " Strip below = ≥ ±2σ MoM moves shaded green / red." : ""}
-                      <InfoTooltip label="Active-equity envelope = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
-                    </p>
                   </>
                 );
               })()}
               <HowToRead>
+                {aeFlowView === "bars" ? (
+                  <p>Bars show actual flow. The line shows YoY growth.</p>
+                ) : (() => {
+                  const ov = adaptiveAverageOverlay(activeEquityFlowFullHistory, activeEquityFlowDisplay, 12);
+                  const useOverlay = aeFlowLens !== "share";
+                  const overlayCopy = useOverlay
+                    ? ov.kind === "trailing"
+                      ? "Dashed line = trailing 12-month average of net inflow."
+                      : ov.kind === "visible-mean"
+                        ? "Dashed line = average over the shown period."
+                        : ""
+                    : "Share of industry net inflow captured by the active-equity envelope each month.";
+                  return (
+                    <p className="inline-flex items-center gap-1.5">
+                      {overlayCopy}
+                      {aeFlowLens === "absolute" && overlayCopy ? " Strip below = ≥ ±2σ MoM moves shaded green / red." : ""}
+                      <InfoTooltip label="Active-equity envelope = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
+                    </p>
+                  );
+                })()}
                 <ul className="list-disc space-y-0.5 pl-4">
                   <li>Positive values mean money entered active-equity funds; negative values mean money left.</li>
                   <li>Compare each month to the dashed reference line to spot unusually large moves.</li>
