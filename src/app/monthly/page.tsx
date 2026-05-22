@@ -15,7 +15,10 @@ import {
 } from "@/lib/chart-context";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BarSeries } from "@/components/charts/BarSeries";
-import { Donut, type DonutSlice } from "@/components/charts/Donut";
+import {
+  StackedShareBar,
+  type StackedShareBarSegment,
+} from "@/components/charts/StackedShareBar";
 import { IiflHeatmap } from "@/components/charts/IiflHeatmap";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { StackedArea } from "@/components/charts/StackedArea";
@@ -442,7 +445,7 @@ export default async function MonthlyPage({
   const mixDebt = getKpiValue(amfiSelected, "debtAum");
   const mixLiquid = getKpiValue(amfiSelected, "liquidAum");
 
-  const mixSlices: DonutSlice[] = [];
+  const mixSlices: StackedShareBarSegment[] = [];
   if (typeof mixEquity === "number") {
     mixSlices.push({
       key: "equity",
@@ -2182,7 +2185,10 @@ export default async function MonthlyPage({
           <section className="grid gap-4 lg:grid-cols-2">
             <Card title="Month-end AUM Mix" subtitle={mixSubtitle}>
               {mixHasData ? (
-                <Donut data={mixSlices} />
+                <StackedShareBar
+                  data={mixSlices}
+                  formatValue={(v) => formatCompactCrSafe(v)}
+                />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                   Mix unavailable · sub-category AUM not in uploaded AMFI PDFs
