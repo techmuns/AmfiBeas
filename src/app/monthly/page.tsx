@@ -1659,6 +1659,9 @@ export default async function MonthlyPage({
     const summaryParts: string[] = [];
     const latestRow = folioLatestRow;
 
+    // Industry AAUM main line — current MoM growth + trailing-12M
+    // average MoM pace so the reader can tell whether this month was
+    // hotter or cooler than the typical compounding rate.
     const aaumSeries = amfiMonthlyRows()
       .filter((r) => typeof r.totalAaum === "number")
       .map((r) => ({ month: r.month, value: r.totalAaum as number }));
@@ -1668,19 +1671,68 @@ export default async function MonthlyPage({
       if (prev.value > 0) {
         const momPct = ((latest.value - prev.value) / prev.value) * 100;
         const valStr = formatCompactCrSafe(latest.value);
-        summaryParts.push(
-          `Industry AAUM at ${valStr} (${momPct >= 0 ? "+" : ""}${momPct.toFixed(1)}% MoM) in ${latest.month}.`
-        );
+
+        // Trailing-12M average MoM (uses the 13 most-recent points to
+        // produce 12 MoM changes). Skips months where the prior value
+        // is non-positive.
+        const window = aaumSeries.slice(-13);
+        const momChanges: number[] = [];
+        for (let i = 1; i < window.length; i++) {
+          const m = window[i];
+          const p = window[i - 1];
+          if (p.value > 0) momChanges.push(((m.value - p.value) / p.value) * 100);
+        }
+        const avgMom =
+          momChanges.length > 0
+            ? momChanges.reduce((s, v) => s + v, 0) / momChanges.length
+            : null;
+
+        const momStr = `${momPct >= 0 ? "+" : ""}${momPct.toFixed(1)}% MoM`;
+        const head = `Industry AAUM at ${valStr} in ${latest.month}, ${momStr}`;
+
+        if (avgMom !== null && momChanges.length >= 6) {
+          const diff = momPct - avgMom;
+          const tone =
+            diff > 0.4
+              ? "running hotter than"
+              : diff < -0.4
+                ? "running cooler than"
+                : "in line with";
+          const avgStr = `${avgMom >= 0 ? "+" : ""}${avgMom.toFixed(1)}%/mo`;
+          summaryParts.push(`${head} — ${tone} the trailing-12M pace of ${avgStr}.`);
+        } else {
+          summaryParts.push(`${head}.`);
+        }
       }
     }
 
+    // Folio additions follow-up — current count + trailing-12M monthly
+    // average so a 13.8 L print reads as "ahead of typical" rather than
+    // a number floating with no scale.
     if (
       industryFolioAdditionsLatest !== null &&
       industryFolioAdditionsLatest > 0
     ) {
-      summaryParts.push(
-        `${formatLakhSafe(industryFolioAdditionsLatest)} new folios added this month.`
-      );
+      const folioWindow = folioAdditionsTrend.slice(-12);
+      const folioMean =
+        folioWindow.length > 0
+          ? folioWindow.reduce((s, p) => s + p.value, 0) / folioWindow.length
+          : null;
+      if (folioMean !== null && folioWindow.length >= 6) {
+        const diff = industryFolioAdditionsLatest - folioMean;
+        const magnitude = folioMean > 0 ? Math.abs(diff / folioMean) * 100 : null;
+        const comparator =
+          magnitude !== null && magnitude >= 10
+            ? `${magnitude.toFixed(0)}% ${diff > 0 ? "above" : "below"}`
+            : "broadly in line with";
+        summaryParts.push(
+          `Folio base widened by ${formatLakhSafe(industryFolioAdditionsLatest)} — ${comparator} the trailing-12M monthly average of ${formatLakhSafe(folioMean)}.`
+        );
+      } else {
+        summaryParts.push(
+          `Folio base widened by ${formatLakhSafe(industryFolioAdditionsLatest)} this month.`
+        );
+      }
     } else if (latestRow && typeof latestRow.netInflow === "number") {
       const netInflowSeries = amfiMonthlyRows()
         .filter((r) => typeof r.netInflow === "number")
