@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
 import { SignalTile } from "@/components/ui/SignalTile";
-import { marketWrap } from "@/data/market-wrap";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { IndustryNarrative } from "@/components/data/IndustryNarrative";
 import {
@@ -39,7 +37,6 @@ export default function HomePage() {
     latestQ.revenue > 0 ? (latestQ.pat / latestQ.revenue) * 100 : null;
 
   const narrative = industryNarrative(6);
-  const marketWrapData = marketWrap();
 
   // Buy-side Sector Read — five signal tiles synthesized from the
   // existing signal infrastructure. Each tile answers: what changed,
@@ -200,8 +197,6 @@ export default function HomePage() {
           />
         </div>
       </section>
-
-      <MarketWrapCard wrap={marketWrapData} />
 
       {narrative.length > 0 && (
         <section className="space-y-3">
