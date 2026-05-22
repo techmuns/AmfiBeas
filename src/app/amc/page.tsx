@@ -23,6 +23,7 @@ import {
   type AmcQuadrantPoint,
 } from "@/data/amc-peer-universe";
 import { LensToggle } from "@/components/ui/LensToggle";
+import { TabNav } from "@/components/ui/TabNav";
 import { cn } from "@/lib/cn";
 
 type AmcTab = "overview" | "share-positioning";
@@ -122,37 +123,12 @@ export default async function AmcListPage({
         }
       />
 
-      <nav
-        aria-label="AMC views"
-        className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-2"
-      >
-        <ul className="flex flex-wrap items-center gap-1">
-          {TABS.map((t) => {
-            const active = t.key === tab;
-            const href =
-              t.key === "overview" ? "/amc" : `/amc?tab=${t.key}`;
-            return (
-              <li key={t.key}>
-                <Link
-                  href={href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium tracking-tight transition-colors",
-                    active
-                      ? "bg-brand-navy/10 text-brand-navy"
-                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                  )}
-                >
-                  {t.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-        <p className="text-[11px] italic text-muted-foreground">
-          {TABS.find((t) => t.key === tab)?.description}
-        </p>
-      </nav>
+      <TabNav<AmcTab>
+        basePath="/amc"
+        tabs={TABS}
+        active={tab}
+        ariaLabel="AMC views"
+      />
 
       {tab === "overview" && (
         <OverviewTab

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { TrendingUp } from "lucide-react";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
@@ -73,9 +72,9 @@ import { marketWrap } from "@/data/market-wrap";
 import { CoachPill } from "@/components/ui/CoachPill";
 import { EpisodeReplayStrip } from "@/components/ui/EpisodeReplayStrip";
 import { HeadlineCard } from "@/components/ui/HeadlineCard";
-import { SectionDivider } from "@/components/ui/SectionDivider";
 import { StickyContextFooter } from "@/components/ui/StickyContextFooter";
 import { LensToggle } from "@/components/ui/LensToggle";
+import { TabNav } from "@/components/ui/TabNav";
 import { MoodGauge } from "@/components/ui/MoodGauge";
 import { WeatherBadge } from "@/components/ui/WeatherBadge";
 import { ordinalSuffix } from "@/lib/format";
@@ -105,12 +104,46 @@ import {
   formatPercentile,
 } from "@/lib/format";
 import { cn } from "@/lib/cn";
+type MTab =
+  | "snapshot"
+  | "flows"
+  | "sip-retail"
+  | "active-passive"
+  | "nfo"
+  | "categories"
+  | "market-cycle";
+
+const M_TABS: Array<{ key: MTab; label: string; description: string }> = [
+  { key: "snapshot", label: "Snapshot", description: "Headline signal, market wrap and the AMFI monthly KPI grid." },
+  { key: "flows", label: "Flows", description: "Equity/Debt/Liquid net flows and the active-equity envelope vs NIFTY 500." },
+  { key: "sip-retail", label: "SIP & retail", description: "SIP contribution against NIFTY 500, SIP AUM, SIP accounts." },
+  { key: "active-passive", label: "Active vs Passive", description: "FY passive-share exhibit and the monthly active / passive AAUM breakdown." },
+  { key: "nfo", label: "NFO & folios", description: "NFO mobilisation vs industry flows, NFO launches, folio additions." },
+  { key: "categories", label: "Categories", description: "Active-equity category trends, rotation, heatmap, Top-7 AUM market share." },
+  { key: "market-cycle", label: "Market cycle", description: "Episode recovery latencies and the cycle replay strip." },
+];
+
+function parseMTab(value: string | string[] | undefined): MTab {
+  if (typeof value !== "string") return "snapshot";
+  if (
+    value === "flows" ||
+    value === "sip-retail" ||
+    value === "active-passive" ||
+    value === "nfo" ||
+    value === "categories" ||
+    value === "market-cycle"
+  )
+    return value;
+  return "snapshot";
+}
+
 export default async function MonthlyPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
+  const tab = parseMTab(sp.tab);
   const subtitle = `Industry-wide · ${latestMonth()}`;
 
   // ---- Lens toggles (parsed up-front so any chart below can read them).
@@ -151,6 +184,7 @@ export default async function MonthlyPage({
   // Pass-through params for every LensToggle so toggling A doesn't
   // lose B (or the selected month).
   const preservedQueryParams: Record<string, string | undefined> = {
+    tab: typeof sp.tab === "string" ? sp.tab : undefined,
     month: typeof sp.month === "string" ? sp.month : undefined,
     heatmap: typeof sp.heatmap === "string" ? sp.heatmap : undefined,
     flowsLens: typeof sp.flowsLens === "string" ? sp.flowsLens : undefined,
@@ -1445,13 +1479,16 @@ export default async function MonthlyPage({
         action={<WeatherBadge headline={weather.headline} tone={weather.tone} />}
       />
 
-      <MarketWrapCard wrap={marketWrapData} />
-
-      <SectionDivider
-        eyebrow="Section 1"
-        label="Today's read"
-        context="The single-glance regime call, headline signal and any newsworthy anomaly."
+      <TabNav<MTab>
+        basePath="/monthly"
+        tabs={M_TABS}
+        active={tab}
+        ariaLabel="Monthly views"
       />
+
+      {tab === "snapshot" && (
+        <>
+      <MarketWrapCard wrap={marketWrapData} />
 
       {activeEquitySignal && (
         <HeadlineCard
@@ -1520,13 +1557,6 @@ export default async function MonthlyPage({
           ))}
         </section>
       )}
-
-      <SectionDivider
-        eyebrow="Section 2"
-        label="Industry flow"
-        icon={<TrendingUp className="h-3.5 w-3.5" />}
-        context="What's happening with industry-wide assets and the latest month's net flow."
-      />
 
       {(flowHeatCells.length > 0 || sankeyData) && (
         <details className="group">
@@ -1705,7 +1735,11 @@ export default async function MonthlyPage({
           </section>
         </div>
       )}
+        </>
+      )}
 
+      {tab === "flows" && (
+        <>
       {monthlyFlowsHasData && (
         <ChartWithContext
           title="Equity / Debt / Liquid Monthly Net Flows"
@@ -1753,12 +1787,11 @@ export default async function MonthlyPage({
         </ChartWithContext>
       )}
 
-      <SectionDivider
-        eyebrow="Section 3"
-        label="Retail / SIP pulse"
-        context="Are systematic flows holding up, slowing, or accelerating? Folio growth read."
-      />
+        </>
+      )}
 
+      {tab === "sip-retail" && (
+        <>
       {hasAnySipTrend && (
         <div className="space-y-3">
           <div>
@@ -1905,7 +1938,11 @@ export default async function MonthlyPage({
           </section>
         </div>
       )}
+        </>
+      )}
 
+      {tab === "flows" && (
+        <>
       {heroActiveFlow.availability.hasData && (
         <section className="grid gap-4">
           <DesignLanguageCard
@@ -1970,7 +2007,11 @@ export default async function MonthlyPage({
           </section>
         </details>
       )}
+        </>
+      )}
 
+      {tab === "categories" && (
+        <>
       {hasProportionDiagnostics && (
         <details className="group">
           <summary className="cursor-pointer list-none rounded-md border border-dashed border-border bg-muted/20 px-4 py-2.5 text-sm font-medium tracking-tight marker:hidden hover:bg-muted/30">
@@ -1992,7 +2033,11 @@ export default async function MonthlyPage({
           </div>
         </details>
       )}
+        </>
+      )}
 
+      {tab === "nfo" && (
+        <>
       {hasAnyFolioOrNfo && (
         <div className="space-y-3">
           <div>
@@ -2275,12 +2320,11 @@ export default async function MonthlyPage({
         </section>
       )}
 
-      <SectionDivider
-        eyebrow="Section 4"
-        label="Active vs Passive"
-        context="Where new equity money is going and whether the passive shift is accelerating."
-      />
+        </>
+      )}
 
+      {tab === "active-passive" && (
+        <>
       {heroPassive.availability.hasData && (
         <section className="grid gap-4">
           {(() => {
@@ -2446,11 +2490,11 @@ export default async function MonthlyPage({
         </div>
       )}
 
-      <SectionDivider
-        eyebrow="Section 5"
-        label="Category rotation"
-        context="Which categories are winning flow share and which categories investors trust through drawdowns."
-      />
+        </>
+      )}
+
+      {tab === "categories" && (
+        <>
 
       {iiflTrendHasAny && (
         <div className="space-y-3">
@@ -2649,11 +2693,11 @@ export default async function MonthlyPage({
         </p>
       </Card>
 
-      <SectionDivider
-        eyebrow="Section 6"
-        label="Historical context"
-        context="When did this happen before? Cycle replay, episode recovery latencies, and the regime narrative."
-      />
+        </>
+      )}
+
+      {tab === "market-cycle" && (
+        <>
 
       {episodeRecoveryData.length > 0 && (
         <EpisodeRecoveryCard rows={episodeRecoveryData} />
@@ -2669,6 +2713,9 @@ export default async function MonthlyPage({
             formatValue={(v) => formatCompactCrSafe(v)}
           />
         </Card>
+      )}
+
+        </>
       )}
 
       <StickyContextFooter

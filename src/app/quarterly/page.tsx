@@ -8,7 +8,6 @@ import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import { DesignLanguageCard } from "@/components/ui/DesignLanguageCard";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
-import { SectionDivider } from "@/components/ui/SectionDivider";
 import { quarterlyMarketWrap } from "@/data/market-wrap-quarterly";
 import {
   passiveShareExhibit,
@@ -30,6 +29,7 @@ import { cyclePhaseHistory, historicalEpisodes } from "@/data/market-indices";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { LensToggle } from "@/components/ui/LensToggle";
+import { TabNav } from "@/components/ui/TabNav";
 import {
   availableQuartersDesc,
   formatQuarterlyProvenanceLine,
@@ -77,12 +77,43 @@ function formatSignedCompactCrSafe(v: number | null): string {
   return "−" + formatCompactCrSafe(-v);
 }
 
+type QTab =
+  | "snapshot"
+  | "aaum-flows"
+  | "categories"
+  | "retail-schemes"
+  | "active-passive"
+  | "concentration";
+
+const Q_TABS: Array<{ key: QTab; label: string; description: string }> = [
+  { key: "snapshot", label: "Snapshot", description: "Quarterly signal overview and market wrap." },
+  { key: "aaum-flows", label: "AAUM & flows", description: "Industry QAAUM snapshot, mix, last-month AAUM trend, and Equity/Debt/Liquid net flows." },
+  { key: "active-passive", label: "Active vs Passive", description: "Active-equity AAUM trajectory and the FY passive-share exhibit." },
+  { key: "retail-schemes", label: "Folios & schemes", description: "Folio depth, additions per quarter, and the open-ended scheme shelf." },
+  { key: "categories", label: "Categories", description: "Per-category QAAUM share and net-inflow share movement." },
+  { key: "concentration", label: "Concentration", description: "HHI of AMC + category concentration and the Top-N AMC share basis QAAUM." },
+];
+
+function parseQTab(value: string | string[] | undefined): QTab {
+  if (typeof value !== "string") return "snapshot";
+  if (
+    value === "aaum-flows" ||
+    value === "categories" ||
+    value === "retail-schemes" ||
+    value === "active-passive" ||
+    value === "concentration"
+  )
+    return value;
+  return "snapshot";
+}
+
 export default async function QuarterlyPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
+  const tab = parseQTab(sp.tab);
 
   // ---- Lens toggles (parsed up-front) ----
   const quarterlyFlowsLens: "absolute" | "share" =
@@ -108,6 +139,7 @@ export default async function QuarterlyPage({
   // Stale `?q...View=bars|trend` URLs are ignored silently.
   // Pass-through params for every LensToggle on this page.
   const preservedQueryParams: Record<string, string | undefined> = {
+    tab: typeof sp.tab === "string" ? sp.tab : undefined,
     quarter: typeof sp.quarter === "string" ? sp.quarter : undefined,
     qFlowsLens:
       typeof sp.qFlowsLens === "string" ? sp.qFlowsLens : undefined,
@@ -796,6 +828,15 @@ export default async function QuarterlyPage({
         }
       />
 
+      <TabNav<QTab>
+        basePath="/quarterly"
+        tabs={Q_TABS}
+        active={tab}
+        ariaLabel="Quarterly views"
+      />
+
+      {tab === "snapshot" && (
+        <>
       <section className="space-y-3">
         <div>
           <h2 className="text-sm font-medium tracking-tight">
@@ -963,12 +1004,6 @@ export default async function QuarterlyPage({
 
       <MarketWrapCard wrap={marketWrapData} />
 
-      <SectionDivider
-        eyebrow="Section 1"
-        label="Today's read"
-        context="The cycle phase the latest quarter sits inside, plus how flow ran vs trend."
-      />
-
       {cyclePhasePoints.length > 0 && (
         <Card
           title="Cycle Regime"
@@ -977,12 +1012,11 @@ export default async function QuarterlyPage({
           <CycleRibbon points={cyclePhasePoints} lastN={84} />
         </Card>
       )}
+        </>
+      )}
 
-      <SectionDivider
-        eyebrow="Section 2"
-        label="Industry flow"
-        context="Quarterly headline KPIs, AUM mix, last-month AAUM trend, and net flows by category."
-      />
+      {tab === "aaum-flows" && (
+        <>
 
       {/* AMFI Quarterly Snapshot — first live section, mirrors /monthly. */}
       <Card
@@ -1181,12 +1215,11 @@ export default async function QuarterlyPage({
         </div>
       )}
 
-      <SectionDivider
-        eyebrow="Section 3"
-        label="Active vs Passive"
-        context="Where new equity money is going and how the passive share is moving."
-      />
+        </>
+      )}
 
+      {tab === "active-passive" && (
+        <>
       {/* Active Equity & Equity Mix — 3 cards mirroring /monthly. */}
       {hasAnyEquityMix && (
         <div className="space-y-3">
@@ -1294,12 +1327,11 @@ export default async function QuarterlyPage({
         </div>
       )}
 
-      <SectionDivider
-        eyebrow="Section 4"
-        label="Folios & shelf"
-        context="Retail participation depth: total folios, additions per quarter, and the open-ended scheme shelf."
-      />
+        </>
+      )}
 
+      {tab === "retail-schemes" && (
+        <>
       {/* Quarterly Folios & Scheme Count — mirrors /monthly's Industry
           Folios & NFO. NFO Launches / NFO Funds Mobilized are NOT
           mirrored because the quarterly PDF page 2 doesn't carry the
@@ -1543,12 +1575,11 @@ export default async function QuarterlyPage({
         </div>
       )}
 
-      <SectionDivider
-        eyebrow="Section 5"
-        label="Category rotation"
-        context="QAAUM share vs net-inflow share across active-equity categories — where flow is moving."
-      />
+        </>
+      )}
 
+      {tab === "categories" && (
+        <>
       {/* IIFL Active-Equity Category Trends — LIVE. Sourced from
           AMFI Monthly Reports aggregated into fiscal quarters. The
           one section on /quarterly that is allowed to source from
@@ -1666,12 +1697,11 @@ export default async function QuarterlyPage({
         </div>
       ) : null}
 
-      <SectionDivider
-        eyebrow="Section 6"
-        label="Concentration & AMC landscape"
-        context={`HHI of AMC + category concentration, and Top ${heroTopAmc.n} AMC share of industry QAAUM.`}
-      />
+        </>
+      )}
 
+      {tab === "concentration" && (
+        <>
       {hhiHasData && (
         <Card
           title="Industry Concentration · HHI"
@@ -1773,6 +1803,8 @@ export default async function QuarterlyPage({
             </DesignLanguageCard>
           );
         })()}
+        </>
+      )}
 
     </div>
   );
