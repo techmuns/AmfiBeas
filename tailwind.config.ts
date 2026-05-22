@@ -39,6 +39,15 @@ const config: Config = {
           5: "hsl(var(--chart-5))",
           6: "hsl(var(--chart-6))",
         },
+        brand: {
+          navy: "var(--brand-navy)",
+          orange: "var(--brand-orange)",
+          green: "var(--brand-green)",
+          burgundy: "var(--brand-burgundy)",
+          grid: "var(--brand-grid)",
+          axis: "var(--brand-axis)",
+          source: "var(--brand-source)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

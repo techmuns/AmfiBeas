@@ -126,6 +126,62 @@ export function formatAxisCr(value: number) {
   return value.toFixed(0);
 }
 
+/**
+ * Exhibit-grade compact ₹ formatter used by the benchmark-style
+ * archetype components. Promotes to "Lakh Cr" at ≥ 1,00,000 Cr; below
+ * that, returns a plain Indian-comma-grouped value with the "Cr"
+ * suffix. Never uses "K Cr" — the brief says exhibits should read in
+ * ₹ Cr / ₹ Lakh Cr only.
+ *
+ *   12,500          → "₹ 12,500 Cr"
+ *   95,400          → "₹ 95,400 Cr"
+ *   1,07,000        → "₹ 1.1 Lakh Cr"
+ *   67,40,000       → "₹ 67.4 Lakh Cr"
+ */
+export function formatCrExhibit(value: number): string {
+  if (!Number.isFinite(value)) return "—";
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "−" : "";
+  if (abs >= 1e5) return `${sign}₹ ${(abs / 1e5).toFixed(1)} Lakh Cr`;
+  return `${sign}₹ ${Math.round(abs).toLocaleString("en-IN")} Cr`;
+}
+
+/**
+ * Tooltip-precision ₹ formatter — always shows the full Cr amount
+ * with Indian comma grouping, no Lakh-Cr promotion. Used in chart
+ * tooltips so the reader can see the precise number when hovering.
+ */
+export function formatCrTooltip(value: number): string {
+  if (!Number.isFinite(value)) return "—";
+  const sign = value < 0 ? "−" : "";
+  return `${sign}₹ ${Math.round(Math.abs(value)).toLocaleString("en-IN")} Cr`;
+}
+
+/**
+ * Axis-tick formatter that decides on a single unit for the whole
+ * axis from the supplied domain max, then renders every tick in that
+ * unit. Prevents the "some ticks Cr, some ticks Lakh Cr" jitter the
+ * brief calls out as a risk.
+ *
+ *   axisFormatterCr(8e4)(12345)   → "12,345"   (Cr unit, no suffix on
+ *                                                ticks — header carries it)
+ *   axisFormatterCr(7e6)(2.4e6)   → "24.0"     (Lakh Cr unit — header
+ *                                                still carries "Lakh Cr")
+ */
+export function axisFormatterCr(domainMax: number): (n: number) => string {
+  const useLakhCr = Math.abs(domainMax) >= 1e5;
+  if (useLakhCr) {
+    return (n: number) =>
+      Number.isFinite(n) ? (n / 1e5).toFixed(1) : "—";
+  }
+  return (n: number) =>
+    Number.isFinite(n) ? Math.round(n).toLocaleString("en-IN") : "—";
+}
+
+export function axisUnitLabel(domainMax: number): string {
+  return Math.abs(domainMax) >= 1e5 ? "₹ Lakh Cr" : "₹ Cr";
+}
+
 /** Display string for an unavailable metric. Used everywhere we'd otherwise
  *  show a fake number (NaN, undefined, null, or zero-from-missing-source). */
 export const UNAVAILABLE = "—";
