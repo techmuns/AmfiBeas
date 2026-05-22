@@ -62,6 +62,7 @@ import {
   weatherBadge,
 } from "@/data/market-indices";
 import { SankeyFlow } from "@/components/charts/SankeyFlow";
+import { PassiveShareInEquity } from "@/components/amc/PassiveShareInEquity";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CalendarHeatGrid } from "@/components/ui/CalendarHeatGrid";
 import { CalloutCard } from "@/components/ui/CalloutCard";
@@ -157,8 +158,6 @@ export default async function MonthlyPage({
   // Stale `?...View=bars|trend` URLs are ignored silently.
   const equityBreakdownLens: "absolute" | "share" =
     sp.equityMixLens === "share" ? "share" : "absolute";
-  const activePassiveLens: "absolute" | "share" =
-    sp.activePassiveLens === "share" ? "share" : "absolute";
   // Per-card lens toggles. Each one switches a trend chart between
   // an absolute number (₹ Cr / count / etc) and a meaningful share
   // / ratio specific to that card. Default is "absolute" — URL stays
@@ -1610,32 +1609,11 @@ export default async function MonthlyPage({
   });
 
   // ---- Active vs Passive series ------------------------------------
-  const activePassiveTrend = monthlyActivePassiveTrend(24);
-
-  // Active vs ETF AUM denominator: latest passive AUM ÷ active AUM
-  // ratio — captures how far passive has closed the gap, more
-  // discriminating than the share % which compresses both sides.
-  const activeVsEtfDenomCaption = (() => {
-    if (!activePassiveTrend) return undefined;
-    const hist = activePassiveTrend.history;
-    if (hist.length === 0) return undefined;
-    const latest = hist[hist.length - 1];
-    if (latest.activeEquityAum <= 0) return undefined;
-    const ratio = latest.etfIndexAum / latest.activeEquityAum;
-    return `Passive = ${(ratio * 100).toFixed(1)}% of active-equity AUM · ${latest.month}`;
-  })();
-  const activeVsEtfPassiveSeries = activePassiveTrend
-    ? activePassiveTrend.history.map((p) => ({
-        label: p.month,
-        value: p.etfIndexAum,
-      }))
-    : [];
-  const activeVsEtfInsights = chartInsights(activeVsEtfPassiveSeries, {
-    metricName: "ETF & Index AUM",
-    unitSuffix: "₹ Cr",
-    cyclePhaseByLabel: cyclePhaseByMonth,
-    yoyLag: 12,
-  });
+  // 96-month window so the Share-of-Passive card can pick every
+  // available March year-end + the most-recent Sep marker. The chart
+  // self-filters; other consumers of this trend only look at the tail
+  // so the wider window costs nothing.
+  const activePassiveTrend = monthlyActivePassiveTrend(96);
 
   return (
     <div className="space-y-8">
@@ -2853,80 +2831,8 @@ export default async function MonthlyPage({
             </ul>
           </HowToRead>
 
-          <section className="grid gap-4 lg:grid-cols-2">
-            <ChartWithContext
-              title="Active Equity vs ETF &amp; Index AUM"
-              subtitle="Active equity AUM next to passive (ETF + Index) AUM. Shows the active-vs-passive gap."
-              flowKind="stock"
-              denominatorCaption={(() => {
-                const span = `${activePassiveTrend.history.length} month${activePassiveTrend.history.length === 1 ? "" : "s"}`;
-                const base = activePassiveLens === "share"
-                  ? `${span} · share of total equity AUM`
-                  : `${span} · month-end AUM · ₹ Cr`;
-                return activeVsEtfDenomCaption
-                  ? `${base} · ${activeVsEtfDenomCaption}`
-                  : base;
-              })()}
-              denominatorTooltip="Latest ETF & Index AUM expressed as a percentage of active-equity AUM — captures how far passive has closed the gap. More discriminating than the symmetric share % which compresses both sides."
-              insights={activeVsEtfInsights}
-              yoyBadge={(() => {
-                const v = latestYoyPct(activeVsEtfPassiveSeries, 12);
-                return v === null
-                  ? undefined
-                  : { label: "ETF AUM YoY", pct: v };
-              })()}
-              action={
-                <LensToggle
-                  basePath="/monthly"
-                  paramName="activePassiveLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "% of total equity AUM" },
-                  ]}
-                  active={activePassiveLens}
-                  preserveParams={preservedQueryParams}
-                />
-              }
-            >
-              <MultiLine
-                data={activePassiveTrend.history.map((p) => {
-                  const denom = p.activeEquityAum + p.etfIndexAum;
-                  if (activePassiveLens === "share") {
-                    return {
-                      month: p.month,
-                      active: denom > 0 ? (p.activeEquityAum / denom) * 100 : null,
-                      passive: denom > 0 ? (p.etfIndexAum / denom) * 100 : null,
-                    };
-                  }
-                  return {
-                    month: p.month,
-                    active: p.activeEquityAum,
-                    passive: p.etfIndexAum,
-                  };
-                })}
-                xKey="month"
-                labelFormat="month"
-                valueFormat={activePassiveLens === "share" ? "pct" : "cr"}
-                axisFormat={activePassiveLens === "share" ? "pct" : "cr"}
-                lines={[
-                  {
-                    key: "active",
-                    name: "Active equity",
-                    color: "hsl(var(--chart-1))",
-                  },
-                  {
-                    key: "passive",
-                    name: "ETF & Index",
-                    color: "hsl(var(--chart-5))",
-                  },
-                ]}
-              />
-              <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                Active equity vs ETF &amp; Index AUM.
-                <InfoTooltip label="Active equity = equity-oriented + hybrid (ex-arbitrage) + solution-oriented. ETF & Index = Index Funds + Other ETFs (excludes Gold ETFs). Share view divides each by their sum so the two lines always add to 100%." />
-              </p>
-            </ChartWithContext>
+          <section className="grid gap-4 lg:grid-cols-1">
+            <PassiveShareInEquity trend={activePassiveTrend} />
           </section>
         </div>
       )}
