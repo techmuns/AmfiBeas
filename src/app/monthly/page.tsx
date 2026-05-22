@@ -1841,6 +1841,112 @@ export default async function MonthlyPage({
 
     return { summary, watchNext };
   })();
+
+  // ---- Flows tab "Where is money going?" intro ----------------------
+  // Summarises the cards that live under the Flows tab: the latest-
+  // month destination mix (Equity / Debt / Liquid from the Sankey),
+  // the SIP vs lump-sum source split, and active-equity flow vs its
+  // trailing-12M average. Each % is coloured via the `Hi` helper so
+  // a risk-on / defensive / lump-sum-dominant tilt reads at a glance.
+  const flowsIntro = (() => {
+    const summaryParts: ReactNode[] = [];
+
+    if (sankeyData) {
+      const sourceTotals = new Map<string, number>();
+      const targetTotals = new Map<string, number>();
+      for (const link of sankeyData.links) {
+        sourceTotals.set(link.source, (sourceTotals.get(link.source) ?? 0) + Math.abs(link.value));
+        targetTotals.set(link.target, (targetTotals.get(link.target) ?? 0) + Math.abs(link.value));
+      }
+      const targetTotal = Array.from(targetTotals.values()).reduce((s, v) => s + v, 0);
+      const sourceTotal = Array.from(sourceTotals.values()).reduce((s, v) => s + v, 0);
+
+      // Destination mix — Equity (risk) vs Debt vs Liquid (parked cash).
+      if (targetTotal > 0) {
+        const equityPct = ((targetTotals.get("equity") ?? 0) / targetTotal) * 100;
+        const debtPct = ((targetTotals.get("debt") ?? 0) / targetTotal) * 100;
+        const liquidPct = ((targetTotals.get("liquid") ?? 0) / targetTotal) * 100;
+        const equityTone: IntroTone =
+          equityPct >= 30 ? "positive" : equityPct <= 10 ? "negative" : null;
+        const liquidTone: IntroTone =
+          liquidPct >= 50 ? "negative" : liquidPct <= 20 ? "positive" : null;
+        const tilt =
+          equityPct >= 30
+            ? "risk-on tilt"
+            : liquidPct >= 50
+              ? "defensive tilt — money parked in cash-like funds"
+              : "balanced mix across risk and defensive assets";
+        summaryParts.push(
+          <>
+            Equity captured <Hi tone={equityTone}>{equityPct.toFixed(1)}%</Hi> of latest-month
+            net flow vs {debtPct.toFixed(1)}% to Debt and <Hi tone={liquidTone}>{liquidPct.toFixed(1)}%</Hi> parked
+            in Liquid — {tilt}.
+          </>
+        );
+      }
+
+      // Source mix — SIP (systematic) vs lump-sum (opportunistic).
+      if (sourceTotal > 0) {
+        const sipPct = ((sourceTotals.get("sip") ?? 0) / sourceTotal) * 100;
+        const sipTone: IntroTone =
+          sipPct >= 30 ? "positive" : sipPct <= 15 ? "negative" : null;
+        const sipNarrative =
+          sipPct >= 30
+            ? "systematic retail flow carrying the month"
+            : sipPct <= 15
+              ? "lump-sum dominated, lower flow stability"
+              : "balanced source mix";
+        summaryParts.push(
+          <>
+            SIP contributed <Hi tone={sipTone}>{sipPct.toFixed(1)}%</Hi> of total inflow
+            — {sipNarrative}.
+          </>
+        );
+      }
+    }
+
+    // Watch next — active-equity net inflow vs trailing-12M average.
+    let watchNext: ReactNode | undefined;
+    if (activeEquityFlowTrend.length >= 2) {
+      const trailing = activeEquityFlowTrend.slice(-12);
+      const trailingAvg =
+        trailing.length > 0
+          ? trailing.reduce((s, p) => s + p.value, 0) / trailing.length
+          : null;
+      const latest = activeEquityFlowTrend[activeEquityFlowTrend.length - 1];
+      if (trailingAvg !== null && trailingAvg !== 0) {
+        const vsAvgPct = ((latest.value - trailingAvg) / Math.abs(trailingAvg)) * 100;
+        const tone: IntroTone =
+          vsAvgPct > 10 ? "positive" : vsAvgPct < -10 ? "negative" : null;
+        const direction = vsAvgPct >= 0 ? "above" : "below";
+        const magnitude = `${Math.abs(vsAvgPct).toFixed(0)}% ${direction}`;
+        watchNext = (
+          <>
+            Active-equity net inflow <Hi tone={tone}>{magnitude}</Hi> the trailing-12M
+            average — see whether the {vsAvgPct >= 0 ? "strength" : "weakness"} persists
+            into next month.
+          </>
+        );
+      }
+    }
+
+    const summary: ReactNode =
+      summaryParts.length > 0 ? (
+        <>
+          {summaryParts.map((part, i) => (
+            <span key={i}>
+              {i > 0 ? " " : ""}
+              {part}
+            </span>
+          ))}
+        </>
+      ) : (
+        "Flows breakdown across categories and source types for the latest month."
+      );
+
+    return { summary, watchNext };
+  })();
+
   // Build the Investor Read composite from the five signals + Nifty 500.
   const read = investorRead({
     activeEquityZ: activeEquitySignal?.zScore ?? null,
@@ -1969,8 +2075,8 @@ export default async function MonthlyPage({
       {activeTab === "flows" && (
         <TabIntroCard
           headline="Where is money going?"
-          summary="Equity, debt and liquid net flows show whether investors are moving into risk assets, defensive assets, or cash-like funds. The Sankey breaks the latest month's flow into SIP vs lump-sum sources."
-          watchNext="Whether active-equity net inflow stays above its trailing 12-month average."
+          summary={flowsIntro.summary}
+          watchNext={flowsIntro.watchNext}
         />
       )}
 
