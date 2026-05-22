@@ -204,10 +204,6 @@ export default function HomePage() {
             <h2 className="text-sm font-medium tracking-tight">
               What changed this month
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Rule-based facts derived from the latest snapshot · sorted by
-              significance · top {narrative.length}
-            </p>
           </div>
           <IndustryNarrative facts={narrative} />
         </section>

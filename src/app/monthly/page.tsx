@@ -1941,12 +1941,6 @@ export default async function MonthlyPage({
               formatValue={formatSankeyPct}
               height={320}
             />
-            <p className="mt-3 text-[11px] text-muted-foreground">
-              Source widths show SIP vs lump-sum split of net inflow.
-              Destination widths show Equity / Debt / Liquid / Other shares.
-              Source-to-destination ribbons are proportional approximations
-              (the AMFI release does not split SIP destinations by category).
-            </p>
           </Card>
         );
       })()}
