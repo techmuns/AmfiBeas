@@ -12,6 +12,7 @@ import {
   chartInsights,
   exponentialMovingAverage,
   latestYoyPct,
+  slicedMovingAverage,
   yoyPctSeries,
 } from "@/lib/chart-context";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -210,6 +211,26 @@ export default async function MonthlyPage({
     sp.monthlyFlowsView === "bars" ? "bars" : "trend";
   const aeFlowView: "trend" | "bars" =
     sp.aeFlowView === "bars" ? "bars" : "trend";
+  // Visible-window range for the Active Equity Net Inflows card. The
+  // full stored history runs back to 2019-04 (78 months); this toggle
+  // lets the reader pick how much of it to show. Default 3Y. "all" maps
+  // to a value larger than the stored history so the cap is a no-op.
+  const aeFlowRange: "1y" | "3y" | "5y" | "all" =
+    sp.aeFlowRange === "1y"
+      ? "1y"
+      : sp.aeFlowRange === "5y"
+        ? "5y"
+        : sp.aeFlowRange === "all"
+          ? "all"
+          : "3y";
+  const aeFlowMonths =
+    aeFlowRange === "1y"
+      ? 12
+      : aeFlowRange === "5y"
+        ? 60
+        : aeFlowRange === "all"
+          ? 10_000
+          : 36;
   // Chart-type toggles. Each eligible bar-style time-series card on
   // the page owns its own `<thing>View` URL param. Bars is the
   // default and is never echoed into the URL — only the "trend"
@@ -252,6 +273,8 @@ export default async function MonthlyPage({
       typeof sp.monthlyFlowsView === "string" ? sp.monthlyFlowsView : undefined,
     aeFlowView:
       typeof sp.aeFlowView === "string" ? sp.aeFlowView : undefined,
+    aeFlowRange:
+      typeof sp.aeFlowRange === "string" ? sp.aeFlowRange : undefined,
     equityMixLens:
       typeof sp.equityMixLens === "string" ? sp.equityMixLens : undefined,
     activePassiveLens:
@@ -1303,7 +1326,7 @@ export default async function MonthlyPage({
   // AUM as a % of Total AUM. Gross-inflow share is intentionally
   // dropped: the monthly snapshot only carries net flow, gross
   // (Funds Mobilized) lives on the quarterly snapshot.
-  const activeEquityFlowTrend = monthlyActiveEquityNetInflowTrend(24);
+  const activeEquityFlowTrend = monthlyActiveEquityNetInflowTrend(aeFlowMonths);
   const activeEquityFlowFullHistory = monthlyActiveEquityNetInflowTrend(10_000);
   // YoY (lag=12) for the Bars + Growth view on the Active Equity Net
   // Inflow card. Same full-history computation pattern as the equity
@@ -2741,12 +2764,27 @@ export default async function MonthlyPage({
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
               action={
-                <ChartTypeToggle
-                  basePath="/monthly"
-                  paramName="aeFlowView"
-                  active={aeFlowView}
-                  preserveParams={preservedQueryParams}
-                />
+                <>
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="aeFlowRange"
+                    defaultValue="3y"
+                    lenses={[
+                      { value: "1y", label: "1Y" },
+                      { value: "3y", label: "3Y" },
+                      { value: "5y", label: "5Y" },
+                      { value: "all", label: "All" },
+                    ]}
+                    active={aeFlowRange}
+                    preserveParams={preservedQueryParams}
+                  />
+                  <ChartTypeToggle
+                    basePath="/monthly"
+                    paramName="aeFlowView"
+                    active={aeFlowView}
+                    preserveParams={preservedQueryParams}
+                  />
+                </>
               }
             >
               {aeFlowView === "bars" ? (
@@ -2761,8 +2799,12 @@ export default async function MonthlyPage({
                   growthLabel="YoY %"
                 />
               ) : (() => {
-                const ov = adaptiveAverageOverlay(activeEquityFlowFullHistory, activeEquityFlowDisplay, 12);
                 const useOverlay = aeFlowLens !== "share";
+                const trailingAvg = slicedMovingAverage(
+                  activeEquityFlowFullHistory,
+                  12,
+                  activeEquityFlowDisplay.length
+                );
                 return (
                   <>
                     <BarSeries
@@ -2772,10 +2814,9 @@ export default async function MonthlyPage({
                       valueFormat={aeFlowLens === "share" ? "pct" : "cr"}
                       axisFormat={aeFlowLens === "share" ? "pct" : "cr"}
                       labelFormat="month"
-                      trendline={useOverlay && ov.kind === "trailing" ? ov.trendline : undefined}
-                      trendlineName={useOverlay && ov.kind === "trailing" ? ov.label : undefined}
-                      referenceValue={useOverlay && ov.kind === "visible-mean" ? ov.referenceValue : undefined}
-                      referenceLabel={useOverlay && ov.kind === "visible-mean" ? ov.label : undefined}
+                      signedFill="single"
+                      trendline={useOverlay ? trailingAvg : undefined}
+                      trendlineName={useOverlay ? "Trailing 12-month avg" : undefined}
                       cyclePhaseBands={cyclePhaseBands}
                     />
                     {aeFlowLens === "absolute" && (
@@ -2788,28 +2829,59 @@ export default async function MonthlyPage({
               })()}
               <HowToRead>
                 {aeFlowView === "bars" ? (
-                  <p>Bars show actual flow. The line shows YoY growth.</p>
-                ) : (() => {
-                  const ov = adaptiveAverageOverlay(activeEquityFlowFullHistory, activeEquityFlowDisplay, 12);
-                  const useOverlay = aeFlowLens !== "share";
-                  const overlayCopy = useOverlay
-                    ? ov.kind === "trailing"
-                      ? "Dashed line = trailing 12-month average of net inflow."
-                      : ov.kind === "visible-mean"
-                        ? "Dashed line = average over the shown period."
-                        : ""
-                    : "Share of industry net inflow captured by the active-equity envelope each month.";
-                  return (
-                    <p className="inline-flex items-center gap-1.5">
-                      {overlayCopy}
-                      {aeFlowLens === "absolute" && overlayCopy ? " Strip below = ≥ ±2σ MoM moves shaded green / red." : ""}
-                      <InfoTooltip label="Active-equity envelope = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
-                    </p>
-                  );
-                })()}
-                <ul className="list-disc space-y-0.5 pl-4">
-                  <li>Positive values mean money entered active-equity funds; negative values mean money left.</li>
-                  <li>Compare each month to the dashed reference line to spot unusually large moves.</li>
+                  <p>
+                    Bars are the monthly net inflow in ₹ Cr; the dashed line
+                    (right axis) is its YoY % change, which strips seasonality so
+                    you can see whether a month beat the same month a year ago.
+                    Treat the big early-window YoY spikes with caution — they are
+                    base effects off a small year-ago denominator, so the recent,
+                    flatter YoY readings are the more reliable signal.
+                  </p>
+                ) : (
+                  <p className="inline-flex items-start gap-1.5">
+                    <span>
+                      The solid line is monthly active-equity net inflow — fresh
+                      money minus redemptions across equity, hybrid (ex-arbitrage)
+                      and solution-oriented schemes. The dashed line is its
+                      trailing 12-month average. The thin strip beneath shades any
+                      month whose move was ≥ ±2σ versus the series&apos; own
+                      history — sharp jumps green, sharp drops red.
+                    </span>
+                    <InfoTooltip label="Active-equity envelope = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
+                  </p>
+                )}
+                <ul className="list-disc space-y-1 pl-4">
+                  <li>
+                    <span className="font-medium text-foreground/80">
+                      Why it rarely turns negative:
+                    </span>{" "}
+                    active-equity flow is anchored by automated monthly SIPs,
+                    which keep buying through corrections. A dip usually means
+                    lump-sum or HNI profit-booking after a rally — not retail
+                    stopping — so an actual negative print is a genuine demand
+                    event worth flagging.
+                  </li>
+                  <li>
+                    <span className="font-medium text-foreground/80">
+                      Why it&apos;s the number to watch for AMCs:
+                    </span>{" "}
+                    active equity is the industry&apos;s highest-margin book (top
+                    expense-ratio yield), so a sustained rise lifts high-margin
+                    AUM and tends to show up in listed-AMC revenue and profit a
+                    quarter or two later — this line leads earnings.
+                  </li>
+                  {aeFlowView !== "bars" && (
+                    <li>
+                      <span className="font-medium text-foreground/80">
+                        The trailing-average gap is the signal:
+                      </span>{" "}
+                      when the line runs above its 12-month average, demand is
+                      hotter than its own recent norm (risk-on, often late-cycle);
+                      sustained months below have historically front-run AUM-growth
+                      slowdowns, and a clean break back above flags re-acceleration.
+                      The crossing matters more than the absolute ₹ figure.
+                    </li>
+                  )}
                 </ul>
               </HowToRead>
             </ChartWithContext>
