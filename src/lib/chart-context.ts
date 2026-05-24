@@ -51,6 +51,32 @@ export function slicedMovingAverage(
   return movingAverage(fullHistory, window).slice(-visibleLength);
 }
 
+/** Exponential moving average over the full series. Smoothing factor
+ *  `k = 2 / (window + 1)`, seeded with the first data point so every
+ *  point carries a value — no leading `null` gap like the trailing SMA.
+ *  Weights recent observations more heavily than an equal-weighted MA
+ *  of the same window, so it tracks turns a little faster while still
+ *  smoothing month-to-month noise.
+ *
+ *  Slice the result to the visible tail when overlaying on a windowed
+ *  chart; pass the full history here so the EMA is seeded from the
+ *  earliest real data rather than restarting at the visible edge. */
+export function exponentialMovingAverage(
+  series: SeriesPoint[],
+  window = 12
+): { label: string; value: number | null }[] {
+  if (series.length === 0) return [];
+  const k = 2 / (window + 1);
+  const out: { label: string; value: number | null }[] = [];
+  let ema = series[0].value;
+  for (let i = 0; i < series.length; i++) {
+    const v = series[i].value;
+    ema = i === 0 ? v : v * k + ema * (1 - k);
+    out.push({ label: series[i].label, value: ema });
+  }
+  return out;
+}
+
 /** Picks the right average overlay for a chart card based on actual
  *  data depth. The single helper every trendline callsite on the
  *  dashboard should use — it removes the "average line starts

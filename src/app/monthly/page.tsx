@@ -10,6 +10,7 @@ import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import {
   adaptiveAverageOverlay,
   chartInsights,
+  exponentialMovingAverage,
   latestYoyPct,
   yoyPctSeries,
 } from "@/lib/chart-context";
@@ -2262,41 +2263,62 @@ export default async function MonthlyPage({
               }
             >
               {aaumTrendHasData ? (() => {
-                const aaumOverlay = adaptiveAverageOverlay(aaumTrendData, aaumDisplayData, 12);
                 const showShareRef = aaumLens === "share";
+                // Absolute (₹ Cr) view overlays a 12-month EMA dotted line
+                // seeded over the full AAUM history. Share view keeps its
+                // indexed-to-100 reference line instead.
+                const aaumEma = showShareRef
+                  ? undefined
+                  : exponentialMovingAverage(aaumTrendData, 12);
+                // Only the cycle bands whose endpoints fall inside the
+                // rendered window actually paint (BarSeries filters the
+                // same way), so the legend below lists exactly those.
+                const aaumLabels = new Set(aaumDisplayData.map((p) => p.label));
+                const visibleBands = cyclePhaseBands.filter(
+                  (b) => aaumLabels.has(b.fromLabel) && aaumLabels.has(b.toLabel)
+                );
+                const hasCorrection = visibleBands.some((b) => b.phase === "Correction");
+                const hasPeak = visibleBands.some((b) => b.phase === "Peak");
                 return (
-                  <BarSeries
-                    data={aaumDisplayData}
-                    name="AAUM"
-                    color="hsl(var(--chart-1))"
-                    valueFormat={aaumLens === "share" ? "pct" : "cr"}
-                    axisFormat={aaumLens === "share" ? "pct" : "cr"}
-                    trendline={
-                      aaumLens !== "share" && aaumOverlay.kind === "trailing"
-                        ? aaumOverlay.trendline
-                        : undefined
-                    }
-                    trendlineName={
-                      aaumLens !== "share" && aaumOverlay.kind === "trailing"
-                        ? aaumOverlay.label
-                        : undefined
-                    }
-                    referenceValue={
-                      showShareRef
-                        ? 100
-                        : aaumOverlay.kind === "visible-mean"
-                          ? aaumOverlay.referenceValue
-                          : undefined
-                    }
-                    referenceLabel={
-                      showShareRef
-                        ? "12-month avg"
-                        : aaumOverlay.kind === "visible-mean"
-                          ? aaumOverlay.label
-                          : undefined
-                    }
-                    cyclePhaseBands={cyclePhaseBands}
-                  />
+                  <>
+                    <BarSeries
+                      data={aaumDisplayData}
+                      name="AAUM"
+                      color="hsl(var(--chart-1))"
+                      valueFormat={aaumLens === "share" ? "pct" : "cr"}
+                      axisFormat={aaumLens === "share" ? "pct" : "cr"}
+                      trendline={aaumEma}
+                      trendlineName={aaumEma ? "12-month EMA" : undefined}
+                      referenceValue={showShareRef ? 100 : undefined}
+                      referenceLabel={showShareRef ? "12-month avg" : undefined}
+                      cyclePhaseBands={cyclePhaseBands}
+                    />
+                    {(hasCorrection || hasPeak) && (
+                      <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+                        <span>Shaded bands mark market cycle phases (Nifty 500):</span>
+                        {hasCorrection && (
+                          <span className="inline-flex items-center gap-1.5">
+                            <span
+                              aria-hidden
+                              className="inline-block h-2.5 w-2.5 rounded-sm"
+                              style={{ backgroundColor: "hsl(var(--negative) / 0.4)" }}
+                            />
+                            Correction — index in drawdown
+                          </span>
+                        )}
+                        {hasPeak && (
+                          <span className="inline-flex items-center gap-1.5">
+                            <span
+                              aria-hidden
+                              className="inline-block h-2.5 w-2.5 rounded-sm"
+                              style={{ backgroundColor: "hsl(var(--chart-3) / 0.4)" }}
+                            />
+                            Peak — stretched / euphoric inflows
+                          </span>
+                        )}
+                      </p>
+                    )}
+                  </>
                 );
               })() : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
