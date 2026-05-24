@@ -324,6 +324,25 @@ export default async function MonthlyPage({
     sp.aeFlowLens === "share" ? "share" : "absolute";
   const aeAaumLens: "absolute" | "share" =
     sp.aeAaumLens === "share" ? "share" : "absolute";
+  // Visible-window range for the Active Equity AAUM Trend card. Mirrors
+  // the Active Equity Net Inflows card: full stored history runs back to
+  // 2019-04 (78 months); this toggle picks how much to show. Default 3Y.
+  const aeAaumRange: "1y" | "3y" | "5y" | "all" =
+    sp.aeAaumRange === "1y"
+      ? "1y"
+      : sp.aeAaumRange === "5y"
+        ? "5y"
+        : sp.aeAaumRange === "all"
+          ? "all"
+          : "3y";
+  const aeAaumMonths =
+    aeAaumRange === "1y"
+      ? 12
+      : aeAaumRange === "5y"
+        ? 60
+        : aeAaumRange === "all"
+          ? 10_000
+          : 36;
   const folioAddLens: "absolute" | "share" =
     sp.folioAddLens === "share" ? "share" : "absolute";
   const nfoCountLens: "absolute" | "share" =
@@ -360,6 +379,8 @@ export default async function MonthlyPage({
       typeof sp.aeFlowLens === "string" ? sp.aeFlowLens : undefined,
     aeAaumLens:
       typeof sp.aeAaumLens === "string" ? sp.aeAaumLens : undefined,
+    aeAaumRange:
+      typeof sp.aeAaumRange === "string" ? sp.aeAaumRange : undefined,
     folioAddLens:
       typeof sp.folioAddLens === "string" ? sp.folioAddLens : undefined,
     nfoCountLens:
@@ -997,7 +1018,7 @@ export default async function MonthlyPage({
   // (period-average) basis so the trend line and share denominator
   // are consistent with IIFL's Figure 19 / 21 framing. Missing months
   // are omitted from each per-field series — never zero-filled.
-  const activeEquityTrend = monthlyTrend("activeEquityAaum", 24);
+  const activeEquityTrend = monthlyTrend("activeEquityAaum", aeAaumMonths);
   const activeEquityFullHistory = monthlyTrend("activeEquityAaum", 10_000);
   const activeEquityShareTrend = monthlyActiveEquityShareTrend(24);
   const equityBreakdown = monthlyEquityBreakdown(24);
@@ -1084,7 +1105,7 @@ export default async function MonthlyPage({
       label: r.month,
       value: ((r.activeEquityAaum as number) / (r.totalAaum as number)) * 100,
     }))
-    .slice(-24);
+    .slice(-aeAaumMonths);
   const activeEquityAaumDisplay =
     aeAaumLens === "share" ? activeEquityAaumShare : activeEquityTrend;
 
@@ -3315,7 +3336,7 @@ export default async function MonthlyPage({
             </p>
           </div>
 
-          <section className="grid gap-4 lg:grid-cols-2">
+          <section>
             <ChartWithContext
               title="Active Equity AAUM Trend"
               subtitle="Period-average AUM in active equity funds. Shows the actively-managed equity asset base."
@@ -3336,22 +3357,41 @@ export default async function MonthlyPage({
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
               action={
-                <LensToggle
-                  basePath="/monthly"
-                  paramName="aeAaumLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "% of total AAUM" },
-                  ]}
-                  active={aeAaumLens}
-                  preserveParams={preservedQueryParams}
-                />
+                <>
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="aeAaumLens"
+                    defaultValue="absolute"
+                    lenses={[
+                      { value: "absolute", label: "₹ Cr" },
+                      { value: "share", label: "% of total AAUM" },
+                    ]}
+                    active={aeAaumLens}
+                    preserveParams={preservedQueryParams}
+                  />
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="aeAaumRange"
+                    defaultValue="3y"
+                    lenses={[
+                      { value: "1y", label: "1Y" },
+                      { value: "3y", label: "3Y" },
+                      { value: "5y", label: "5Y" },
+                      { value: "all", label: "All" },
+                    ]}
+                    active={aeAaumRange}
+                    preserveParams={preservedQueryParams}
+                  />
+                </>
               }
             >
               {activeEquityTrend.length > 0 ? (() => {
-                const ov = adaptiveAverageOverlay(activeEquityFullHistory, activeEquityAaumDisplay, 12);
                 const useOverlay = aeAaumLens !== "share";
+                const trailingAvg = slicedMovingAverage(
+                  activeEquityFullHistory,
+                  12,
+                  activeEquityAaumDisplay.length
+                );
                 return (
                   <BarSeries
                     data={activeEquityAaumDisplay}
@@ -3361,10 +3401,9 @@ export default async function MonthlyPage({
                     axisFormat={aeAaumLens === "share" ? "pct" : "cr"}
                     labelFormat="month"
                     cyclePhaseBands={cyclePhaseBands}
-                    trendline={useOverlay && ov.kind === "trailing" ? ov.trendline : undefined}
-                    trendlineName={useOverlay && ov.kind === "trailing" ? ov.label : undefined}
-                    referenceValue={useOverlay && ov.kind === "visible-mean" ? ov.referenceValue : undefined}
-                    referenceLabel={useOverlay && ov.kind === "visible-mean" ? ov.label : undefined}
+                    signedFill="single"
+                    trendline={useOverlay ? trailingAvg : undefined}
+                    trendlineName={useOverlay ? "Trailing 12-month avg" : undefined}
                     dynamicYDomain={aeAaumLens === "share"}
                   />
                 );
@@ -3373,6 +3412,58 @@ export default async function MonthlyPage({
                   Active-equity AAUM not yet ingested — appears once IIFL category fields land in the AMFI Monthly snapshot.
                 </div>
               )}
+              <HowToRead>
+                {aeAaumLens === "share" ? (
+                  <p className="inline-flex items-start gap-1.5">
+                    <span>
+                      This is active-equity AAUM as a share of the whole
+                      industry&apos;s assets. It strips out market-driven scale so
+                      you can see the structural question this tab is about: is
+                      actively-managed equity gaining or ceding ground to passive
+                      (ETF &amp; Index) and debt? A flat share while the ₹ line
+                      climbs means active equity is only riding the market up, not
+                      winning share.
+                    </span>
+                    <InfoTooltip label="Active-equity envelope = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
+                  </p>
+                ) : (
+                  <p className="inline-flex items-start gap-1.5">
+                    <span>
+                      The solid line is active-equity AAUM — the period-average
+                      asset base in actively-managed equity funds. Unlike a flow,
+                      this is a stock that grows two ways at once: fresh net
+                      inflows, and market gains marking up money already invested.
+                      So a rising line in a weak-flow month means the market did the
+                      lifting; a flat line despite strong inflows means prices fell.
+                      The dashed line is its trailing 12-month average — on a
+                      steadily-rising asset base the YoY badge above is usually the
+                      sharper read.
+                    </span>
+                    <InfoTooltip label="Active-equity envelope = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
+                  </p>
+                )}
+                <ul className="list-disc space-y-1 pl-4">
+                  <li>
+                    <span className="font-medium text-foreground/80">
+                      Why it&apos;s the AMC revenue base:
+                    </span>{" "}
+                    management fees scale off AUM, not flows, and active equity
+                    carries the highest expense-ratio yield of any category — so
+                    this asset base is the single biggest driver of an
+                    AMC&apos;s topline. The YoY growth rate, not the absolute
+                    level, is what flows through to earnings.
+                  </li>
+                  <li>
+                    <span className="font-medium text-foreground/80">
+                      Read it next to flows:
+                    </span>{" "}
+                    cross-check against Active Equity Net Inflows on the Flows
+                    tab. AAUM rising while flows are soft is a market-driven rally
+                    (fragile if prices reverse); AAUM rising on strong flows is
+                    durable, investor-funded growth.
+                  </li>
+                </ul>
+              </HowToRead>
             </ChartWithContext>
           </section>
 
