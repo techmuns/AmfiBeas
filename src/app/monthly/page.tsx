@@ -58,6 +58,7 @@ import {
   sipStickinessSignal,
   type AmfiMonthlyKpiField,
 } from "@/data/amfi-monthly";
+import type { AmfiMonthlyPdfRow } from "@/data/snapshots/types";
 import {
   cyclePhaseHistory,
   historicalEpisodes,
@@ -148,6 +149,41 @@ function Hi({ tone, children }: { tone: IntroTone; children: ReactNode }) {
       {children}
     </span>
   );
+}
+
+/** Month-end AUM mix shares (% of the month's own breakdown total) for a
+ *  single row, keyed by category. Mirrors the Month-end AUM Mix card's
+ *  segment logic exactly — including the residual "Other" bucket — so a
+ *  month-over-month delta computed from two of these maps lines up with
+ *  the shares the card renders. Returns an empty map when the row lacks
+ *  a usable breakdown. */
+function monthEndMixShares(
+  row: AmfiMonthlyPdfRow | null
+): Map<string, number> {
+  const shares = new Map<string, number>();
+  if (!row) return shares;
+  const eq = getKpiValue(row, "equityAum");
+  const db = getKpiValue(row, "debtAum");
+  const lq = getKpiValue(row, "liquidAum");
+  const total = getKpiValue(row, "totalAum");
+  const segs: { key: string; value: number }[] = [];
+  if (typeof eq === "number") segs.push({ key: "equity", value: eq });
+  if (typeof db === "number") segs.push({ key: "debt", value: db });
+  if (typeof lq === "number") segs.push({ key: "liquid", value: lq });
+  if (
+    typeof total === "number" &&
+    typeof eq === "number" &&
+    typeof db === "number" &&
+    typeof lq === "number"
+  ) {
+    const residual = total - (eq + db + lq);
+    if (residual > 0) segs.push({ key: "other", value: residual });
+  }
+  const sum = segs.reduce((s, x) => s + x.value, 0);
+  if (sum > 0) {
+    for (const s of segs) shares.set(s.key, (s.value / sum) * 100);
+  }
+  return shares;
 }
 
 export default async function MonthlyPage({
@@ -490,6 +526,28 @@ export default async function MonthlyPage({
     }
   }
   const mixHasData = mixSlices.length > 0;
+
+  // Month-over-month change in each category's SHARE of the month-end
+  // breakdown, in percentage points — surfaces where investor allocation
+  // is shifting relative to last month. Compared against the immediately
+  // preceding available month, using the same residual-"Other" basis as
+  // the slices above so the delta lines up with the rendered shares.
+  // Left null per-segment when there's no prior month or no comparable
+  // share to subtract.
+  const mixSelectedShares = monthEndMixShares(amfiSelected);
+  const mixPrevRow: AmfiMonthlyPdfRow | null = (() => {
+    if (!amfiSelected) return null;
+    const rows = amfiMonthlyRows(); // ascending by month
+    const idx = rows.findIndex((r) => r.month === amfiSelected.month);
+    return idx > 0 ? rows[idx - 1] : null;
+  })();
+  const mixPrevShares = monthEndMixShares(mixPrevRow);
+  for (const seg of mixSlices) {
+    const now = mixSelectedShares.get(seg.key);
+    const prev = mixPrevShares.get(seg.key);
+    seg.deltaPp =
+      typeof now === "number" && typeof prev === "number" ? now - prev : null;
+  }
 
   // Subtitle clarifies the basis. When `Other` is included it's by
   // residual against totalAum; when it's dropped (e.g. if totalAum was

@@ -1,3 +1,4 @@
+import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export interface StackedShareBarSegment {
@@ -7,6 +8,11 @@ export interface StackedShareBarSegment {
   value: number;
   /** Fill colour (any valid CSS colour, including `hsl(var(--...))`). */
   color: string;
+  /** Optional month-over-month change in this segment's SHARE, in
+   *  percentage points. When present, a small "+X.Xpp MoM" indicator
+   *  renders beside the share — green when share rose, red when it
+   *  fell. `null` / `undefined` hides it (no prior month to compare). */
+  deltaPp?: number | null;
 }
 
 interface StackedShareBarProps {
@@ -54,6 +60,19 @@ export function StackedShareBar({
     >
       {sorted.map((d) => {
         const pct = (d.value / total) * 100;
+        const delta =
+          typeof d.deltaPp === "number" && Number.isFinite(d.deltaPp)
+            ? d.deltaPp
+            : null;
+        // < 0.05pp rounds to "0.0pp" — treat as flat (no direction colour).
+        const deltaDir =
+          delta === null ? null : delta >= 0.05 ? "up" : delta <= -0.05 ? "down" : "flat";
+        const DeltaIcon =
+          deltaDir === "up"
+            ? ArrowUpRight
+            : deltaDir === "down"
+              ? ArrowDownRight
+              : null;
         return (
           <div key={d.key} className="space-y-2">
             <div className="flex items-baseline justify-between gap-3 text-sm">
@@ -65,8 +84,25 @@ export function StackedShareBar({
                 />
                 {d.label}
               </span>
-              <span className="tabular text-base font-semibold text-foreground">
-                {pct.toFixed(1)}%
+              <span className="inline-flex items-baseline gap-2">
+                {deltaDir !== null && (
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-0.5 text-[11px] tabular font-medium",
+                      deltaDir === "up" && "text-positive",
+                      deltaDir === "down" && "text-negative",
+                      deltaDir === "flat" && "text-muted-foreground"
+                    )}
+                    title={`Share ${deltaDir === "up" ? "rose" : deltaDir === "down" ? "fell" : "was flat"} vs previous month`}
+                  >
+                    {DeltaIcon && <DeltaIcon className="h-3 w-3" aria-hidden />}
+                    {(delta as number) >= 0 ? "+" : ""}
+                    {(delta as number).toFixed(1)}pp MoM
+                  </span>
+                )}
+                <span className="tabular text-base font-semibold text-foreground">
+                  {pct.toFixed(1)}%
+                </span>
               </span>
             </div>
             <div
