@@ -188,6 +188,74 @@ function monthEndMixShares(
   return shares;
 }
 
+type RenderedCycleBand = {
+  fromLabel: string;
+  toLabel: string;
+  phase: "Correction" | "Peak";
+  color?: string;
+};
+
+/** Prepare cycle-phase bands for a chart whose x-axis is `labels`:
+ *  keep only bands fully inside the window, give single-month runs
+ *  visible width (pad one label each side, clamped to the window) so a
+ *  point-in-time phase reads as a band, and recolour Peak green. Shared
+ *  by the Total AAUM Trend and the SIP cards so they render identically. */
+function renderedCycleBands(
+  bands: { fromLabel: string; toLabel: string; phase: "Correction" | "Peak" }[],
+  labels: string[]
+): RenderedCycleBand[] {
+  const idx = new Map(labels.map((l, i) => [l, i]));
+  return bands
+    .filter((b) => idx.has(b.fromLabel) && idx.has(b.toLabel))
+    .map((b) => {
+      const fromIdx = idx.get(b.fromLabel) as number;
+      const toIdx = idx.get(b.toLabel) as number;
+      const single = fromIdx === toIdx;
+      const lo = single ? Math.max(0, fromIdx - 1) : fromIdx;
+      const hi = single ? Math.min(labels.length - 1, toIdx + 1) : toIdx;
+      return {
+        fromLabel: labels[lo],
+        toLabel: labels[hi],
+        phase: b.phase,
+        color: b.phase === "Peak" ? "hsl(var(--positive))" : undefined,
+      };
+    });
+}
+
+/** Legend for the shaded cycle-phase bands. Lists only the phases that
+ *  actually appear in `bands`, so a window with no correction (e.g. the
+ *  SIP cards) shows just the Peak row. */
+function CyclePhaseLegend({ bands }: { bands: RenderedCycleBand[] }) {
+  const hasCorrection = bands.some((b) => b.phase === "Correction");
+  const hasPeak = bands.some((b) => b.phase === "Peak");
+  if (!hasCorrection && !hasPeak) return null;
+  return (
+    <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+      <span>Shaded bands mark market cycle phases (Nifty 500):</span>
+      {hasCorrection && (
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            aria-hidden
+            className="inline-block h-2.5 w-2.5 rounded-sm"
+            style={{ backgroundColor: "hsl(var(--negative) / 0.4)" }}
+          />
+          Correction — index in drawdown
+        </span>
+      )}
+      {hasPeak && (
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            aria-hidden
+            className="inline-block h-2.5 w-2.5 rounded-sm"
+            style={{ backgroundColor: "hsl(var(--positive) / 0.4)" }}
+          />
+          Peak — stretched / euphoric inflows
+        </span>
+      )}
+    </p>
+  );
+}
+
 export default async function MonthlyPage({
   searchParams,
 }: {
@@ -2296,38 +2364,10 @@ export default async function MonthlyPage({
                 const aaumEma = showShareRef
                   ? undefined
                   : exponentialMovingAverage(aaumTrendData, 12);
-                // Cycle bands for this card: recolour Peak green and give
-                // single-month runs (e.g. the 2024 Peak months) visible
-                // width by padding one month each side, so a point-in-time
-                // phase reads as a band like a multi-month run. Scoped to
-                // this card — the shared `cyclePhaseBands` is untouched.
-                const aaumLabels = aaumDisplayData.map((p) => p.label);
-                const aaumLabelIdx = new Map(aaumLabels.map((l, i) => [l, i]));
-                const aaumCycleBands = cyclePhaseBands
-                  .filter(
-                    (b) =>
-                      aaumLabelIdx.has(b.fromLabel) && aaumLabelIdx.has(b.toLabel)
-                  )
-                  .map((b) => {
-                    const fromIdx = aaumLabelIdx.get(b.fromLabel) as number;
-                    const toIdx = aaumLabelIdx.get(b.toLabel) as number;
-                    const lo = fromIdx === toIdx ? Math.max(0, fromIdx - 1) : fromIdx;
-                    const hi =
-                      fromIdx === toIdx
-                        ? Math.min(aaumLabels.length - 1, toIdx + 1)
-                        : toIdx;
-                    return {
-                      fromLabel: aaumLabels[lo],
-                      toLabel: aaumLabels[hi],
-                      phase: b.phase,
-                      color:
-                        b.phase === "Peak"
-                          ? "hsl(var(--positive))"
-                          : undefined,
-                    };
-                  });
-                const hasCorrection = aaumCycleBands.some((b) => b.phase === "Correction");
-                const hasPeak = aaumCycleBands.some((b) => b.phase === "Peak");
+                const aaumCycleBands = renderedCycleBands(
+                  cyclePhaseBands,
+                  aaumDisplayData.map((p) => p.label)
+                );
                 return (
                   <>
                     <BarSeries
@@ -2342,31 +2382,7 @@ export default async function MonthlyPage({
                       referenceLabel={showShareRef ? "12-month avg" : undefined}
                       cyclePhaseBands={aaumCycleBands}
                     />
-                    {(hasCorrection || hasPeak) && (
-                      <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
-                        <span>Shaded bands mark market cycle phases (Nifty 500):</span>
-                        {hasCorrection && (
-                          <span className="inline-flex items-center gap-1.5">
-                            <span
-                              aria-hidden
-                              className="inline-block h-2.5 w-2.5 rounded-sm"
-                              style={{ backgroundColor: "hsl(var(--negative) / 0.4)" }}
-                            />
-                            Correction — index in drawdown
-                          </span>
-                        )}
-                        {hasPeak && (
-                          <span className="inline-flex items-center gap-1.5">
-                            <span
-                              aria-hidden
-                              className="inline-block h-2.5 w-2.5 rounded-sm"
-                              style={{ backgroundColor: "hsl(var(--positive) / 0.4)" }}
-                            />
-                            Peak — stretched / euphoric inflows
-                          </span>
-                        )}
-                      </p>
-                    )}
+                    <CyclePhaseLegend bands={aaumCycleBands} />
                   </>
                 );
               })() : (
@@ -2587,23 +2603,35 @@ export default async function MonthlyPage({
               }
             >
               {sipContribTrend.length > 0 ? (() => {
-                const ov = adaptiveAverageOverlay(sipContribFullHistory, sipContribDisplay, 12);
+                // Absolute (₹ Cr) view overlays a 12-month EMA dotted line
+                // seeded over the full SIP history, then sliced to the
+                // visible window. Share view shows no overlay.
                 const useOverlay = sipContribLens !== "share";
+                const ema = useOverlay
+                  ? exponentialMovingAverage(sipContribFullHistory, 12).slice(
+                      -sipContribDisplay.length
+                    )
+                  : undefined;
+                const bands = renderedCycleBands(
+                  cyclePhaseBands,
+                  sipContribDisplay.map((p) => p.label)
+                );
                 return (
-                  <BarSeries
-                    data={sipContribDisplay}
-                    name="SIP Contribution"
-                    color="hsl(var(--chart-1))"
-                    valueFormat={sipContribLens === "share" ? "pct" : "cr"}
-                    axisFormat={sipContribLens === "share" ? "pct" : "cr"}
-                    labelFormat="month"
-                    trendline={useOverlay && ov.kind === "trailing" ? ov.trendline : undefined}
-                    trendlineName={useOverlay && ov.kind === "trailing" ? ov.label : undefined}
-                    referenceValue={useOverlay && ov.kind === "visible-mean" ? ov.referenceValue : undefined}
-                    referenceLabel={useOverlay && ov.kind === "visible-mean" ? ov.label : undefined}
-                    cyclePhaseBands={cyclePhaseBands}
-                    dynamicYDomain={sipContribLens === "share"}
-                  />
+                  <>
+                    <BarSeries
+                      data={sipContribDisplay}
+                      name="SIP Contribution"
+                      color="hsl(var(--chart-1))"
+                      valueFormat={sipContribLens === "share" ? "pct" : "cr"}
+                      axisFormat={sipContribLens === "share" ? "pct" : "cr"}
+                      labelFormat="month"
+                      trendline={ema}
+                      trendlineName={ema ? "12-month EMA" : undefined}
+                      cyclePhaseBands={bands}
+                      dynamicYDomain={sipContribLens === "share"}
+                    />
+                    <CyclePhaseLegend bands={bands} />
+                  </>
                 );
               })() : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
@@ -2646,23 +2674,35 @@ export default async function MonthlyPage({
               }
             >
               {sipAumTrend.length > 0 ? (() => {
-                const ov = adaptiveAverageOverlay(sipAumFullHistory, sipAumDisplay, 12);
+                // Absolute (₹ Cr) view overlays a 12-month EMA dotted line
+                // seeded over the full SIP history, then sliced to the
+                // visible window. Share view shows no overlay.
                 const useOverlay = sipAumLens !== "share";
+                const ema = useOverlay
+                  ? exponentialMovingAverage(sipAumFullHistory, 12).slice(
+                      -sipAumDisplay.length
+                    )
+                  : undefined;
+                const bands = renderedCycleBands(
+                  cyclePhaseBands,
+                  sipAumDisplay.map((p) => p.label)
+                );
                 return (
-                  <BarSeries
-                    data={sipAumDisplay}
-                    name="SIP AUM"
-                    color="hsl(var(--chart-2))"
-                    valueFormat={sipAumLens === "share" ? "pct" : "cr"}
-                    axisFormat={sipAumLens === "share" ? "pct" : "cr"}
-                    labelFormat="month"
-                    trendline={useOverlay && ov.kind === "trailing" ? ov.trendline : undefined}
-                    trendlineName={useOverlay && ov.kind === "trailing" ? ov.label : undefined}
-                    referenceValue={useOverlay && ov.kind === "visible-mean" ? ov.referenceValue : undefined}
-                    referenceLabel={useOverlay && ov.kind === "visible-mean" ? ov.label : undefined}
-                    cyclePhaseBands={cyclePhaseBands}
-                    dynamicYDomain={sipAumLens === "share"}
-                  />
+                  <>
+                    <BarSeries
+                      data={sipAumDisplay}
+                      name="SIP AUM"
+                      color="hsl(var(--chart-2))"
+                      valueFormat={sipAumLens === "share" ? "pct" : "cr"}
+                      axisFormat={sipAumLens === "share" ? "pct" : "cr"}
+                      labelFormat="month"
+                      trendline={ema}
+                      trendlineName={ema ? "12-month EMA" : undefined}
+                      cyclePhaseBands={bands}
+                      dynamicYDomain={sipAumLens === "share"}
+                    />
+                    <CyclePhaseLegend bands={bands} />
+                  </>
                 );
               })() : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
@@ -2705,23 +2745,35 @@ export default async function MonthlyPage({
               }
             >
               {sipAccountsTrend.length > 0 ? (() => {
-                const ov = adaptiveAverageOverlay(sipAccountsFullHistory, sipAccountsDisplay, 12);
+                // Absolute (count) view overlays a 12-month EMA dotted line
+                // seeded over the full SIP history, then sliced to the
+                // visible window. Share view shows no overlay.
                 const useOverlay = sipAccountsLens !== "share";
+                const ema = useOverlay
+                  ? exponentialMovingAverage(sipAccountsFullHistory, 12).slice(
+                      -sipAccountsDisplay.length
+                    )
+                  : undefined;
+                const bands = renderedCycleBands(
+                  cyclePhaseBands,
+                  sipAccountsDisplay.map((p) => p.label)
+                );
                 return (
-                  <BarSeries
-                    data={sipAccountsDisplay}
-                    name="SIP Accounts"
-                    color="hsl(var(--chart-3))"
-                    valueFormat={sipAccountsLens === "share" ? "count" : "crore-count"}
-                    axisFormat={sipAccountsLens === "share" ? "count" : "crore-count"}
-                    labelFormat="month"
-                    trendline={useOverlay && ov.kind === "trailing" ? ov.trendline : undefined}
-                    trendlineName={useOverlay && ov.kind === "trailing" ? ov.label : undefined}
-                    referenceValue={useOverlay && ov.kind === "visible-mean" ? ov.referenceValue : undefined}
-                    referenceLabel={useOverlay && ov.kind === "visible-mean" ? ov.label : undefined}
-                    cyclePhaseBands={cyclePhaseBands}
-                    dynamicYDomain={sipAccountsLens === "share"}
-                  />
+                  <>
+                    <BarSeries
+                      data={sipAccountsDisplay}
+                      name="SIP Accounts"
+                      color="hsl(var(--chart-3))"
+                      valueFormat={sipAccountsLens === "share" ? "count" : "crore-count"}
+                      axisFormat={sipAccountsLens === "share" ? "count" : "crore-count"}
+                      labelFormat="month"
+                      trendline={ema}
+                      trendlineName={ema ? "12-month EMA" : undefined}
+                      cyclePhaseBands={bands}
+                      dynamicYDomain={sipAccountsLens === "share"}
+                    />
+                    <CyclePhaseLegend bands={bands} />
+                  </>
                 );
               })() : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
