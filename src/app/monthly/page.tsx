@@ -1021,7 +1021,12 @@ export default async function MonthlyPage({
   const activeEquityTrend = monthlyTrend("activeEquityAaum", aeAaumMonths);
   const activeEquityFullHistory = monthlyTrend("activeEquityAaum", 10_000);
   const activeEquityShareTrend = monthlyActiveEquityShareTrend(24);
-  const equityBreakdown = monthlyEquityBreakdown(24);
+  // Equity AAUM breakdown over the full window where all three series
+  // are available: 2019-05 → latest. The only earlier row (2019-04)
+  // lacks the ETF & Index field, so it's filtered out.
+  const equityBreakdown = monthlyEquityBreakdown(10_000).filter(
+    (r) => r.month >= "2019-05"
+  );
   const equityBreakdownHasData = equityBreakdown.some(
     (r) => r.activeEquity !== null || r.etfIndex !== null || r.arbitrage !== null
   );
