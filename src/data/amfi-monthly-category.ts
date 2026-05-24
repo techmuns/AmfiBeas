@@ -893,8 +893,10 @@ export interface PassiveFlowShareTrend {
 }
 
 export function passiveFlowShareTrend(
-  months = 24
+  months = 24,
+  opts: { sanitize?: boolean } = {}
 ): PassiveFlowShareTrend | null {
+  const { sanitize = false } = opts;
   const activeFlowByMonth = new Map<string, number>();
   for (const r of amfiMonthlyRows()) {
     if (typeof r.activeEquityNetInflow === "number") {
@@ -937,9 +939,26 @@ export function passiveFlowShareTrend(
     });
   }
   if (history.length === 0) return null;
-  const trimmed = history.slice(-months);
-  const latest = history[history.length - 1];
-  const values = history.map((p) => p.passiveSharePct);
+
+  // When `sanitize` is set, drop months whose share falls outside a
+  // sane 0-100% band. Those occur when active-equity net flow is an
+  // OUTFLOW that month, which makes "share of NEW equity money"
+  // ill-defined and throws extreme readings (>100% / <0%) that distort
+  // the mean / percentile and blow out the chart's y-axis. Legacy
+  // callers (sanitize=false) keep the raw full series.
+  const usable = sanitize
+    ? history.filter(
+        (p) => p.passiveSharePct >= 0 && p.passiveSharePct <= 100
+      )
+    : history;
+  if (usable.length === 0) return null;
+
+  const trimmed = usable.slice(-months);
+  const latest = usable[usable.length - 1];
+  // Stats describe exactly what's plotted when sanitizing (same
+  // window as `trimmed`); legacy callers keep the full-history basis.
+  const statsBase = sanitize ? trimmed : usable;
+  const values = statsBase.map((p) => p.passiveSharePct);
   const mean = values.reduce((s, v) => s + v, 0) / values.length;
   const lessOrEqual = values.filter((v) => v <= latest.passiveSharePct).length;
   return {

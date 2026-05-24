@@ -1438,7 +1438,10 @@ export default async function MonthlyPage({
   // longer a combined visibility gate.
   const rotation = categoryRotation(3, 5);
   const nfoDrag = nfoDragTrend(24);
-  const passiveFlowShare = passiveFlowShareTrend(24);
+  // Wide window + sanitize so the card shows the full clean history
+  // (outflow-distorted months dropped) and the footer mean / percentile
+  // describe the same set of months that are actually plotted.
+  const passiveFlowShare = passiveFlowShareTrend(120, { sanitize: true });
 
   // The headline active-equity signal drives the HeadlineCard at the
   // top of the page; nfo/passive/sip/market-stress signals feed the
@@ -3930,6 +3933,32 @@ function PassiveFlowShareCard({
         . Mean {trend.mean.toFixed(1)}%.
         <InfoTooltip label="Passive flow share = (Index Funds + Other ETFs net inflow) ÷ (Index Funds + Other ETFs + active-equity net inflow) × 100. Leading indicator of where the active-vs-passive AUM mix is heading — passive share of NEW money tends to move months before passive share of AUM. Gold ETFs are excluded. Months with non-positive denominator are skipped." />
       </p>
+      <HowToRead>
+        <p>
+          Of every ₹100 of <strong>new</strong> equity money each month, this is
+          the share that chose index funds and ETFs over active funds —
+          (Index&nbsp;+&nbsp;ETF net inflow) ÷ (Index&nbsp;+&nbsp;ETF&nbsp;+&nbsp;active-equity net inflow).
+          It&rsquo;s a leading indicator: passive&rsquo;s share of <em>new</em> flow
+          tends to move months before passive&rsquo;s share of total AUM does.
+        </p>
+        <ul className="list-disc space-y-0.5 pl-4">
+          <li>
+            A rising line means investors are increasingly picking passive for
+            fresh money — a structural revenue-yield headwind for active-heavy AMCs.
+          </li>
+          <li>
+            The footer reads the <strong>latest</strong> month against this
+            history: &ldquo;Bottom 44%&rdquo; means 44% of months on record had a
+            passive share at or below today&rsquo;s — i.e. the current month ranks
+            in the lower-middle. It is <em>not</em> the chart&rsquo;s minimum.
+          </li>
+          <li>
+            Months where active equity saw a net <em>outflow</em> are excluded —
+            the &ldquo;share of new money&rdquo; ratio is undefined when there&rsquo;s no
+            net new active money to share. Gold ETFs are excluded throughout.
+          </li>
+        </ul>
+      </HowToRead>
     </Card>
   );
 }
