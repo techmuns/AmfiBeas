@@ -299,6 +299,26 @@ export default async function MonthlyPage({
         : aeFlowRange === "all"
           ? 10_000
           : 36;
+  // SIP Contribution period toggle. History now runs to ~10 years, so
+  // the card offers 1Y / 3Y / 5Y / All — where "All" is capped at 84
+  // months (the range that aligns with the cycle-phase / market-data
+  // window and shows both correction phases). Defaults to All.
+  const sipContribRange: "1y" | "3y" | "5y" | "all" =
+    sp.sipContribPeriod === "1y"
+      ? "1y"
+      : sp.sipContribPeriod === "3y"
+        ? "3y"
+        : sp.sipContribPeriod === "5y"
+          ? "5y"
+          : "all";
+  const sipContribMonths =
+    sipContribRange === "1y"
+      ? 12
+      : sipContribRange === "3y"
+        ? 36
+        : sipContribRange === "5y"
+          ? 60
+          : 84;
   // Chart-type toggles. Each eligible bar-style time-series card on
   // the page owns its own `<thing>View` URL param. Bars is the
   // default and is never echoed into the URL — only the "trend"
@@ -371,6 +391,8 @@ export default async function MonthlyPage({
     aaumLens: typeof sp.aaumLens === "string" ? sp.aaumLens : undefined,
     sipContribLens:
       typeof sp.sipContribLens === "string" ? sp.sipContribLens : undefined,
+    sipContribPeriod:
+      typeof sp.sipContribPeriod === "string" ? sp.sipContribPeriod : undefined,
     sipAumLens:
       typeof sp.sipAumLens === "string" ? sp.sipAumLens : undefined,
     sipAccountsLens:
@@ -752,9 +774,9 @@ export default async function MonthlyPage({
   // x-axis can therefore be non-uniform (e.g. sipAccounts is missing on
   // 2024-12 / 2025-01 because those Notes don't carry the row), but no
   // synthetic data is introduced.
-  const sipContribTrend = monthlyTrend("sipContribution", 24);
-  // Full history (un-sliced) so the 12M trailing average has real
-  // prior data to draw on for the leftmost visible months.
+  const sipContribTrend = monthlyTrend("sipContribution", sipContribMonths);
+  // Full history (un-sliced) so the 12M EMA has real prior data to draw
+  // on for the leftmost visible months.
   const sipContribFullHistory = monthlyTrend("sipContribution", 10_000);
   // SIP-contribution-specific context for the ChartWithContext wrapper.
   // Denominator: industry net inflow that month — answers "what share
@@ -860,7 +882,7 @@ export default async function MonthlyPage({
       label: r.month,
       value: ((r.sipContribution as number) / (r.netInflow as number)) * 100,
     }))
-    .slice(-24);
+    .slice(-sipContribMonths);
   const sipContribDisplay =
     sipContribLens === "share" ? sipContribShare : sipContribTrend;
 
@@ -2591,10 +2613,10 @@ export default async function MonthlyPage({
               {sipTrendsRead ? ` · ${sipTrendsRead}` : ""}
             </p>
           </div>
-          {/* Downgraded to 2-up: 3 SIP chart cards with LensToggles
-              cramped at xl:grid-cols-3 and forced titles to wrap one
-              word per line. */}
-          <section className="grid gap-4 lg:grid-cols-2">
+          {/* SIP Contribution leads full-width — it carries the deepest
+              history (period toggle, cycle bands). SIP AUM + SIP
+              Contributing Accounts sit 2-up below it. */}
+          <section className="space-y-4">
             <ChartWithContext
               title="SIP Contribution Trend"
               subtitle="Gross monthly SIP inflows. Shows how much retail money entered through SIPs."
@@ -2615,17 +2637,32 @@ export default async function MonthlyPage({
                 return v === null ? undefined : { label: "YoY", pct: v };
               })()}
               action={
-                <LensToggle
-                  basePath="/monthly"
-                  paramName="sipContribLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "% of net inflow" },
-                  ]}
-                  active={sipContribLens}
-                  preserveParams={preservedQueryParams}
-                />
+                <>
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="sipContribPeriod"
+                    defaultValue="all"
+                    lenses={[
+                      { value: "1y", label: "1Y" },
+                      { value: "3y", label: "3Y" },
+                      { value: "5y", label: "5Y" },
+                      { value: "all", label: "All" },
+                    ]}
+                    active={sipContribRange}
+                    preserveParams={preservedQueryParams}
+                  />
+                  <LensToggle
+                    basePath="/monthly"
+                    paramName="sipContribLens"
+                    defaultValue="absolute"
+                    lenses={[
+                      { value: "absolute", label: "₹ Cr" },
+                      { value: "share", label: "% of net inflow" },
+                    ]}
+                    active={sipContribLens}
+                    preserveParams={preservedQueryParams}
+                  />
+                </>
               }
             >
               {sipContribTrend.length > 0 ? (() => {
@@ -2666,6 +2703,7 @@ export default async function MonthlyPage({
               )}
             </ChartWithContext>
 
+            <div className="grid gap-4 lg:grid-cols-2">
             <ChartWithContext
               title="SIP AUM Trend"
               subtitle="Period-end SIP assets. Higher share means stickier retail AUM."
@@ -2807,6 +2845,7 @@ export default async function MonthlyPage({
                 </div>
               )}
             </ChartWithContext>
+            </div>
           </section>
         </div>
       )}

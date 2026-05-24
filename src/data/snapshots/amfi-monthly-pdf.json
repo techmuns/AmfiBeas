@@ -1,10 +1,622 @@
 {
   "meta": {
-    "generatedAt": "2026-05-21T11:36:53.720Z",
+    "generatedAt": "2026-05-24T18:59:21.915Z",
     "source": "manual-data/amfi-monthly/pdfs/",
-    "notes": "Industry-level monthly KPIs extracted from manually-uploaded AMFI PDFs. Auto-detects Monthly Report vs press release per file. Optional fields are OMITTED when not detected — never zeroed. Rows merged by month; prior values preserved when the latest PDF doesn't carry them. processedPdfs=108 / 108, totalRows=85."
+    "notes": "Industry-level monthly KPIs from manually-uploaded AMFI PDFs, plus historical SIP contribution backfilled from the AMFI month-wise SIP table (Apr-2016 onward). Optional fields OMITTED when not detected — never zeroed. Rows merged by month."
   },
   "rows": [
+    {
+      "month": "2016-04",
+      "sipContribution": 3122,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2016-05",
+      "sipContribution": 3189,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2016-06",
+      "sipContribution": 3310,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2016-07",
+      "sipContribution": 3334,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2016-08",
+      "sipContribution": 3497,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2016-09",
+      "sipContribution": 3698,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2016-10",
+      "sipContribution": 3434,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2016-11",
+      "sipContribution": 3884,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2016-12",
+      "sipContribution": 3973,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2017-01",
+      "sipContribution": 4095,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2017-02",
+      "sipContribution": 4050,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2017-03",
+      "sipContribution": 4335,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2017-04",
+      "sipContribution": 4269,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2017-05",
+      "sipContribution": 4584,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2017-06",
+      "sipContribution": 4744,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2017-07",
+      "sipContribution": 4947,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2017-08",
+      "sipContribution": 5206,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2017-09",
+      "sipContribution": 5516,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2017-10",
+      "sipContribution": 5621,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2017-11",
+      "sipContribution": 5893,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2017-12",
+      "sipContribution": 6222,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2018-01",
+      "sipContribution": 6644,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2018-02",
+      "sipContribution": 6425,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2018-03",
+      "sipContribution": 7119,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2018-04",
+      "sipContribution": 6690,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2018-05",
+      "sipContribution": 7304,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2018-06",
+      "sipContribution": 7554,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2018-07",
+      "sipContribution": 7554,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2018-08",
+      "sipContribution": 7658,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2018-09",
+      "sipContribution": 7727,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2018-10",
+      "sipContribution": 7985,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2018-11",
+      "sipContribution": 7985,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2018-12",
+      "sipContribution": 8022,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2019-01",
+      "sipContribution": 8064,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2019-02",
+      "sipContribution": 8095,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
+    {
+      "month": "2019-03",
+      "sipContribution": 8055,
+      "fieldSources": {
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
+        }
+      },
+      "sourceFormat": "press-release",
+      "sourcePdf": "AMFI website — month-wise SIP contribution table",
+      "sourcePages": [],
+      "extractedAt": "2026-05-24T18:59:21.906Z"
+    },
     {
       "month": "2019-04",
       "sourceFormat": "monthly-report",
@@ -238,6 +850,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:47.178Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 89778.43,
@@ -264,7 +883,8 @@
       "activeEquityAaum": 1010593.9099999999,
       "activeEquityNetInflow": -647.1400000000003,
       "industryNfoCount": 1967,
-      "industryNfoFundsMobilized": 82736339
+      "industryNfoFundsMobilized": 82736339,
+      "sipContribution": 8238
     },
     {
       "month": "2019-05",
@@ -517,6 +1137,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:51.751Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 68582.91,
@@ -545,7 +1172,8 @@
       "activeEquityAaum": 998092.8500000001,
       "activeEquityNetInflow": 3643.0699999999997,
       "industryNfoCount": 1954,
-      "industryNfoFundsMobilized": 83242056
+      "industryNfoFundsMobilized": 83242056,
+      "sipContribution": 8183
     },
     {
       "month": "2019-06",
@@ -780,6 +1408,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:50.844Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "debtAum": 1000721.87,
@@ -806,7 +1441,8 @@
       "activeEquityAaum": 1022656.54,
       "activeEquityNetInflow": 5562.630000000001,
       "industryNfoCount": 1940,
-      "industryNfoFundsMobilized": 83771689
+      "industryNfoFundsMobilized": 83771689,
+      "sipContribution": 8122
     },
     {
       "month": "2019-07",
@@ -1059,6 +1695,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:50.310Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 45441.23,
@@ -1087,7 +1730,8 @@
       "activeEquityAaum": 1003277.98,
       "activeEquityNetInflow": 12040.8,
       "industryNfoCount": 1929,
-      "industryNfoFundsMobilized": 84800409
+      "industryNfoFundsMobilized": 84800409,
+      "sipContribution": 8324
     },
     {
       "month": "2019-08",
@@ -1322,6 +1966,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:47.831Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 79428.2,
@@ -1348,7 +1999,8 @@
       "activeEquityAaum": 966544.58,
       "activeEquityNetInflow": 10205.429999999998,
       "industryNfoCount": 1918,
-      "industryNfoFundsMobilized": 85281222
+      "industryNfoFundsMobilized": 85281222,
+      "sipContribution": 8231
     },
     {
       "month": "2019-09",
@@ -1583,6 +2235,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:53.163Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "debtAum": 1015648.09,
@@ -1609,7 +2268,8 @@
       "activeEquityAaum": 990734.24,
       "activeEquityNetInflow": 4951.24,
       "industryNfoCount": 1903,
-      "industryNfoFundsMobilized": 85626244
+      "industryNfoFundsMobilized": 85626244,
+      "sipContribution": 8263
     },
     {
       "month": "2019-10",
@@ -1862,6 +2522,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:52.673Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 93202.96,
@@ -1890,7 +2557,8 @@
       "activeEquityAaum": 1016440.6799999999,
       "activeEquityNetInflow": 2855.3700000000003,
       "industryNfoCount": 1904,
-      "industryNfoFundsMobilized": 86256880
+      "industryNfoFundsMobilized": 86256880,
+      "sipContribution": 8246
     },
     {
       "month": "2019-11",
@@ -2143,6 +2811,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:52.193Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 6938.14,
@@ -2171,7 +2846,8 @@
       "activeEquityAaum": 1049203,
       "activeEquityNetInflow": -3066.05,
       "industryNfoCount": 1901,
-      "industryNfoFundsMobilized": 86518585
+      "industryNfoFundsMobilized": 86518585,
+      "sipContribution": 8273
     },
     {
       "month": "2019-12",
@@ -2406,6 +3082,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:48.423Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "debtAum": 1128201.22,
@@ -2432,7 +3115,8 @@
       "activeEquityAaum": 1055186.65,
       "activeEquityNetInflow": -1122.92,
       "industryNfoCount": 1911,
-      "industryNfoFundsMobilized": 87126725
+      "industryNfoFundsMobilized": 87126725,
+      "sipContribution": 8518
     },
     {
       "month": "2020-01",
@@ -2685,6 +3369,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:49.707Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 59682.29,
@@ -2713,7 +3404,8 @@
       "activeEquityAaum": 1083323.02,
       "activeEquityNetInflow": 5114.899999999999,
       "industryNfoCount": 1912,
-      "industryNfoFundsMobilized": 88533153
+      "industryNfoFundsMobilized": 88533153,
+      "sipContribution": 8532
     },
     {
       "month": "2020-02",
@@ -2903,6 +3595,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:49.009Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "debtAum": 1222324.42,
@@ -2924,7 +3623,8 @@
       "etfIndexAum": 16854.99,
       "etfIndexAaum": 188637.76,
       "industryNfoCount": 1917,
-      "industryNfoFundsMobilized": 88836161
+      "industryNfoFundsMobilized": 88836161,
+      "sipContribution": 8513
     },
     {
       "month": "2020-03",
@@ -3115,6 +3815,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:51.341Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "debtAum": 1029141.7,
@@ -3136,7 +3843,8 @@
       "etfIndexAum": 6911.370000000001,
       "etfIndexAaum": 154551.69,
       "industryNfoCount": 11,
-      "industryNfoFundsMobilized": 2027
+      "industryNfoFundsMobilized": 2027,
+      "sipContribution": 8641
     },
     {
       "month": "2020-04",
@@ -3390,6 +4098,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:47.324Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 68848.01,
@@ -3418,7 +4133,8 @@
       "activeEquityAaum": 842383.26,
       "activeEquityNetInflow": 6354.47,
       "industryNfoCount": 5,
-      "industryNfoFundsMobilized": 214
+      "industryNfoFundsMobilized": 214,
+      "sipContribution": 8376
     },
     {
       "month": "2020-05",
@@ -3653,6 +4369,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:51.810Z",
           "sourceLabel": "Sub II net inflow + Sub III ex-Arbitrage net inflow + Sub IV net inflow · (IIFL Figure 19-style active-equity envelope flow)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 61870.87,
@@ -3679,7 +4402,8 @@
       "arbitrageAaum": 69310.68,
       "etfIndexAaum": 170609.82,
       "activeEquityAaum": 862570.5399999999,
-      "activeEquityNetInflow": 11548.620000000003
+      "activeEquityNetInflow": 11548.620000000003,
+      "sipContribution": 8123
     },
     {
       "month": "2020-06",
@@ -3933,6 +4657,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:50.950Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 426408.46,
@@ -3961,7 +4692,8 @@
       "activeEquityAaum": 938476.5700000001,
       "activeEquityNetInflow": -3936.7499999999995,
       "industryNfoCount": 3,
-      "industryNfoFundsMobilized": 195
+      "industryNfoFundsMobilized": 195,
+      "sipContribution": 7917
     },
     {
       "month": "2020-07",
@@ -4152,6 +4884,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:50.371Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 14055.29,
@@ -4173,7 +4912,8 @@
       "netInflow": 89812.78,
       "industryFolios": 92105737,
       "industryNfoCount": 4,
-      "industryNfoFundsMobilized": 11737
+      "industryNfoFundsMobilized": 11737,
+      "sipContribution": 7831
     },
     {
       "month": "2020-08",
@@ -4364,6 +5104,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:47.893Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "debtAum": 1260997.27,
@@ -4385,7 +5132,8 @@
       "etfIndexAum": 1957.41,
       "etfIndexAaum": 219002.11000000002,
       "industryNfoCount": 6,
-      "industryNfoFundsMobilized": 1087
+      "industryNfoFundsMobilized": 1087,
+      "sipContribution": 7792
     },
     {
       "month": "2020-09",
@@ -4576,6 +5324,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:53.219Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "debtAum": 1213950.83,
@@ -4597,7 +5352,8 @@
       "etfIndexAum": 3912.89,
       "etfIndexAaum": 217816.34000000003,
       "industryNfoCount": 7,
-      "industryNfoFundsMobilized": 3474
+      "industryNfoFundsMobilized": 3474,
+      "sipContribution": 7788
     },
     {
       "month": "2020-10",
@@ -4833,6 +5589,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:52.729Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 19582.7,
@@ -4859,7 +5622,8 @@
       "activeEquityAaum": 1041135.4,
       "activeEquityNetInflow": -7461.99,
       "industryNfoCount": 11,
-      "industryNfoFundsMobilized": 3192
+      "industryNfoFundsMobilized": 3192,
+      "sipContribution": 7800
     },
     {
       "month": "2020-11",
@@ -5032,6 +5796,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:52.255Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "debtAum": 1387128.99,
@@ -5051,7 +5822,8 @@
       "netInflow": 27194.15,
       "industryFolios": 93679333,
       "industryNfoCount": 4,
-      "industryNfoFundsMobilized": 1254
+      "industryNfoFundsMobilized": 1254,
+      "sipContribution": 7302
     },
     {
       "month": "2020-12",
@@ -5242,6 +6014,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:48.496Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 5102.22,
@@ -5263,7 +6042,8 @@
       "netInflow": 2967.86,
       "industryFolios": 94335478,
       "industryNfoCount": 14,
-      "industryNfoFundsMobilized": 9039
+      "industryNfoFundsMobilized": 9039,
+      "sipContribution": 8418
     },
     {
       "month": "2021-01",
@@ -5498,6 +6278,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:49.776Z",
           "sourceLabel": "Sub II net inflow + Sub III ex-Arbitrage net inflow + Sub IV net inflow · (IIFL Figure 19-style active-equity envelope flow)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 337311.47,
@@ -5524,7 +6311,8 @@
       "arbitrageAaum": 70927.03,
       "etfIndexAaum": 279829.44999999995,
       "activeEquityAaum": 1210435.45,
-      "activeEquityNetInflow": -12342.479999999998
+      "activeEquityNetInflow": -12342.479999999998,
+      "sipContribution": 8023
     },
     {
       "month": "2021-02",
@@ -5778,6 +6566,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:49.090Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 355554.1,
@@ -5806,7 +6601,8 @@
       "activeEquityAaum": 1264815.33,
       "activeEquityNetInflow": -3861.08,
       "industryNfoCount": 12,
-      "industryNfoFundsMobilized": 3102
+      "industryNfoFundsMobilized": 3102,
+      "sipContribution": 7528
     },
     {
       "month": "2021-03",
@@ -6060,6 +6856,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:51.410Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 336598.22,
@@ -6088,7 +6891,8 @@
       "activeEquityAaum": 1278719.06,
       "activeEquityNetInflow": 12331.140000000001,
       "industryNfoCount": 16,
-      "industryNfoFundsMobilized": 4539
+      "industryNfoFundsMobilized": 4539,
+      "sipContribution": 9182
     },
     {
       "month": "2021-04",
@@ -6342,6 +7146,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:47.410Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 379465.5,
@@ -6370,7 +7181,8 @@
       "activeEquityAaum": 1276885.81,
       "activeEquityNetInflow": 4891.6,
       "industryNfoCount": 6,
-      "industryNfoFundsMobilized": 540
+      "industryNfoFundsMobilized": 540,
+      "sipContribution": 8596
     },
     {
       "month": "2021-05",
@@ -6624,6 +7436,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:51.880Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 334986.94,
@@ -6652,7 +7471,8 @@
       "activeEquityAaum": 1332678.9500000002,
       "activeEquityNetInflow": 11846.99,
       "industryNfoCount": 12,
-      "industryNfoFundsMobilized": 5910
+      "industryNfoFundsMobilized": 5910,
+      "sipContribution": 8819
     },
     {
       "month": "2021-06",
@@ -6906,6 +7726,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:51.033Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 338007.1,
@@ -6934,7 +7761,8 @@
       "activeEquityAaum": 1415411.1800000002,
       "activeEquityNetInflow": 9386.26,
       "industryNfoCount": 7,
-      "industryNfoFundsMobilized": 1090
+      "industryNfoFundsMobilized": 1090,
+      "sipContribution": 9156
     },
     {
       "month": "2021-07",
@@ -7188,6 +8016,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:50.449Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 370811.93,
@@ -7216,7 +8051,8 @@
       "activeEquityAaum": 1472801.68,
       "activeEquityNetInflow": 27218.42,
       "industryNfoCount": 15,
-      "industryNfoFundsMobilized": 17332
+      "industryNfoFundsMobilized": 17332,
+      "sipContribution": 9609
     },
     {
       "month": "2021-08",
@@ -7470,6 +8306,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:47.970Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 371245.71,
@@ -7498,7 +8341,8 @@
       "activeEquityAaum": 1531417.08,
       "activeEquityNetInflow": 25609.05,
       "industryNfoCount": 15,
-      "industryNfoFundsMobilized": 23668
+      "industryNfoFundsMobilized": 23668,
+      "sipContribution": 9923
     },
     {
       "month": "2021-09",
@@ -7752,6 +8596,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:53.289Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 323838.05,
@@ -7780,7 +8631,8 @@
       "activeEquityAaum": 1635875.61,
       "activeEquityNetInflow": 15355.240000000002,
       "industryNfoCount": 13,
-      "industryNfoFundsMobilized": 8283
+      "industryNfoFundsMobilized": 8283,
+      "sipContribution": 10351
     },
     {
       "month": "2021-10",
@@ -8034,6 +8886,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:52.800Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 314547.86,
@@ -8062,7 +8921,8 @@
       "activeEquityAaum": 1699459.01,
       "activeEquityNetInflow": 18094.559999999998,
       "industryNfoCount": 11,
-      "industryNfoFundsMobilized": 7734
+      "industryNfoFundsMobilized": 7734,
+      "sipContribution": 10519
     },
     {
       "month": "2021-11",
@@ -8316,6 +9176,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:52.330Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 369014.99,
@@ -8344,7 +9211,8 @@
       "activeEquityAaum": 1719806.03,
       "activeEquityNetInflow": 20132.120000000003,
       "industryNfoCount": 11,
-      "industryNfoFundsMobilized": 2705
+      "industryNfoFundsMobilized": 2705,
+      "sipContribution": 11005
     },
     {
       "month": "2021-12",
@@ -8598,6 +9466,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:48.580Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 361368.52,
@@ -8626,7 +9501,8 @@
       "activeEquityAaum": 1704490.03,
       "activeEquityNetInflow": 30098.65,
       "industryNfoCount": 21,
-      "industryNfoFundsMobilized": 20616
+      "industryNfoFundsMobilized": 20616,
+      "sipContribution": 11305
     },
     {
       "month": "2022-01",
@@ -8880,6 +9756,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:49.847Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 347955.35,
@@ -8908,7 +9791,8 @@
       "activeEquityAaum": 1766233.01,
       "activeEquityNetInflow": 20320.510000000002,
       "industryNfoCount": 15,
-      "industryNfoFundsMobilized": 3230
+      "industryNfoFundsMobilized": 3230,
+      "sipContribution": 11517
     },
     {
       "month": "2022-02",
@@ -9162,6 +10046,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:49.168Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 389305.48,
@@ -9190,7 +10081,8 @@
       "activeEquityAaum": 1734908.8200000003,
       "activeEquityNetInflow": 23383.08,
       "industryNfoCount": 19,
-      "industryNfoFundsMobilized": 3513
+      "industryNfoFundsMobilized": 3513,
+      "sipContribution": 11438
     },
     {
       "month": "2022-03",
@@ -9444,6 +10336,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:51.484Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 345903.47,
@@ -9472,7 +10371,8 @@
       "activeEquityAaum": 1724158.73,
       "activeEquityNetInflow": 31797.08,
       "industryNfoCount": 31,
-      "industryNfoFundsMobilized": 13275
+      "industryNfoFundsMobilized": 13275,
+      "sipContribution": 12328
     },
     {
       "month": "2022-04",
@@ -9726,6 +10626,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:47.487Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 375793.29,
@@ -9754,7 +10661,8 @@
       "activeEquityAaum": 1806964.61,
       "activeEquityNetInflow": 19149.709999999995,
       "industryNfoCount": 3,
-      "industryNfoFundsMobilized": 3240
+      "industryNfoFundsMobilized": 3240,
+      "sipContribution": 11863
     },
     {
       "month": "2022-05",
@@ -9989,6 +10897,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:51.940Z",
           "sourceLabel": "Sub II net inflow + Sub III ex-Arbitrage net inflow + Sub IV net inflow · (IIFL Figure 19-style active-equity envelope flow)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 378743.93,
@@ -10015,7 +10930,8 @@
       "arbitrageAaum": 114269.85,
       "etfIndexAaum": 475144.82999999996,
       "activeEquityAaum": 1711337.85,
-      "activeEquityNetInflow": 22805.15
+      "activeEquityNetInflow": 22805.15,
+      "sipContribution": 12286
     },
     {
       "month": "2022-06",
@@ -10250,6 +11166,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:51.092Z",
           "sourceLabel": "Sub II net inflow + Sub III ex-Arbitrage net inflow + Sub IV net inflow · (IIFL Figure 19-style active-equity envelope flow)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 364492.65,
@@ -10276,7 +11199,8 @@
       "arbitrageAaum": 112120.53,
       "etfIndexAaum": 478073.44000000006,
       "activeEquityAaum": 1694713.1,
-      "activeEquityNetInflow": 18949.02
+      "activeEquityNetInflow": 18949.02,
+      "sipContribution": 12276
     },
     {
       "month": "2022-07",
@@ -10530,6 +11454,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:50.513Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 358401.53,
@@ -10558,7 +11489,8 @@
       "activeEquityAaum": 1770536.2500000002,
       "activeEquityNetInflow": 10270.390000000001,
       "industryNfoCount": 9,
-      "industryNfoFundsMobilized": 1446
+      "industryNfoFundsMobilized": 1446,
+      "sipContribution": 12140
     },
     {
       "month": "2022-08",
@@ -10812,6 +11744,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:48.049Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 411291.99,
@@ -10840,7 +11779,8 @@
       "activeEquityAaum": 1895550.59,
       "activeEquityNetInflow": 8158.65,
       "industryNfoCount": 37,
-      "industryNfoFundsMobilized": 7985
+      "industryNfoFundsMobilized": 7985,
+      "sipContribution": 12693
     },
     {
       "month": "2022-09",
@@ -11094,6 +12034,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:53.366Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 352213.14,
@@ -11122,7 +12069,8 @@
       "activeEquityAaum": 1930799.52,
       "activeEquityNetInflow": 15647.900000000001,
       "industryNfoCount": 21,
-      "industryNfoFundsMobilized": 8374
+      "industryNfoFundsMobilized": 8374,
+      "sipContribution": 12976
     },
     {
       "month": "2022-10",
@@ -11376,6 +12324,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:52.873Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 373212.25,
@@ -11404,7 +12359,8 @@
       "activeEquityAaum": 1929188.22,
       "activeEquityNetInflow": 9213.17,
       "industryNfoCount": 31,
-      "industryNfoFundsMobilized": 5439
+      "industryNfoFundsMobilized": 5439,
+      "sipContribution": 13041
     },
     {
       "month": "2022-11",
@@ -11658,6 +12614,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:52.407Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 409715,
@@ -11686,7 +12649,8 @@
       "activeEquityAaum": 1983381.39,
       "activeEquityNetInflow": -51.50000000000014,
       "industryNfoCount": 26,
-      "industryNfoFundsMobilized": 7199
+      "industryNfoFundsMobilized": 7199,
+      "sipContribution": 13306
     },
     {
       "month": "2022-12",
@@ -11940,6 +12904,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:48.671Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 398344.68,
@@ -11968,7 +12939,8 @@
       "activeEquityAaum": 1995173.72,
       "activeEquityNetInflow": 8837.69,
       "industryNfoCount": 36,
-      "industryNfoFundsMobilized": 8486
+      "industryNfoFundsMobilized": 8486,
+      "sipContribution": 13573
     },
     {
       "month": "2023-01",
@@ -12222,6 +13194,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:49.925Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 395699.87,
@@ -12250,7 +13229,8 @@
       "activeEquityAaum": 1968878.1799999997,
       "activeEquityNetInflow": 15173.3,
       "industryNfoCount": 18,
-      "industryNfoFundsMobilized": 4422
+      "industryNfoFundsMobilized": 4422,
+      "sipContribution": 13856
     },
     {
       "month": "2023-02",
@@ -12504,6 +13484,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:49.253Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 386489.73,
@@ -12532,7 +13519,8 @@
       "activeEquityAaum": 1971804.5999999999,
       "activeEquityNetInflow": 16250.68,
       "industryNfoCount": 27,
-      "industryNfoFundsMobilized": 7187
+      "industryNfoFundsMobilized": 7187,
+      "sipContribution": 13686
     },
     {
       "month": "2023-03",
@@ -12786,6 +13774,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:51.556Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 332498.15,
@@ -12814,7 +13809,8 @@
       "activeEquityAaum": 1952033.1400000001,
       "activeEquityNetInflow": 20543.699999999997,
       "industryNfoCount": 45,
-      "industryNfoFundsMobilized": 8564
+      "industryNfoFundsMobilized": 8564,
+      "sipContribution": 14276
     },
     {
       "month": "2023-04",
@@ -13068,6 +14064,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:47.565Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 397785.67,
@@ -13096,7 +14099,8 @@
       "activeEquityAaum": 2003725.8900000001,
       "activeEquityNetInflow": 6274.619999999999,
       "industryNfoCount": 9,
-      "industryNfoFundsMobilized": 1828
+      "industryNfoFundsMobilized": 1828,
+      "sipContribution": 13728
     },
     {
       "month": "2023-05",
@@ -13350,6 +14354,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:52.003Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 442875.1,
@@ -13378,7 +14389,8 @@
       "activeEquityAaum": 2085729.15,
       "activeEquityNetInflow": 2793.3,
       "industryNfoCount": 5,
-      "industryNfoFundsMobilized": 483
+      "industryNfoFundsMobilized": 483,
+      "sipContribution": 14749
     },
     {
       "month": "2023-06",
@@ -13632,6 +14644,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:51.158Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 419555.58,
@@ -13660,7 +14679,8 @@
       "activeEquityAaum": 2176345.45,
       "activeEquityNetInflow": 10008.6,
       "industryNfoCount": 11,
-      "industryNfoFundsMobilized": 3228
+      "industryNfoFundsMobilized": 3228,
+      "sipContribution": 14734
     },
     {
       "month": "2023-07",
@@ -13914,6 +14934,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:50.594Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 474197.6,
@@ -13942,7 +14969,8 @@
       "activeEquityAaum": 2273196.7899999996,
       "activeEquityNetInflow": 10092.449999999999,
       "industryNfoCount": 17,
-      "industryNfoFundsMobilized": 6723
+      "industryNfoFundsMobilized": 6723,
+      "sipContribution": 15245
     },
     {
       "month": "2023-08",
@@ -14196,6 +15224,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:48.135Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 450016.9,
@@ -14224,7 +15259,8 @@
       "activeEquityAaum": 2323915.0999999996,
       "activeEquityNetInflow": 28035.190000000002,
       "industryNfoCount": 15,
-      "industryNfoFundsMobilized": 7531
+      "industryNfoFundsMobilized": 7531,
+      "sipContribution": 15814
     },
     {
       "month": "2023-09",
@@ -14478,6 +15514,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:53.433Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 378356.39,
@@ -14506,7 +15549,8 @@
       "activeEquityAaum": 2423378.14,
       "activeEquityNetInflow": 22733.970000000005,
       "industryNfoCount": 16,
-      "industryNfoFundsMobilized": 7795
+      "industryNfoFundsMobilized": 7795,
+      "sipContribution": 16042
     },
     {
       "month": "2023-10",
@@ -14760,6 +15804,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:52.937Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 413784.73,
@@ -14788,7 +15839,8 @@
       "activeEquityAaum": 2424972.35,
       "activeEquityNetInflow": 24683.53,
       "industryNfoCount": 14,
-      "industryNfoFundsMobilized": 3638
+      "industryNfoFundsMobilized": 3638,
+      "sipContribution": 16928
     },
     {
       "month": "2023-11",
@@ -15042,6 +16094,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:52.477Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 415620.26,
@@ -15070,7 +16129,8 @@
       "activeEquityAaum": 2493545.15,
       "activeEquityNetInflow": 19855.589999999997,
       "industryNfoCount": 14,
-      "industryNfoFundsMobilized": 2583
+      "industryNfoFundsMobilized": 2583,
+      "sipContribution": 17073
     },
     {
       "month": "2023-12",
@@ -15324,6 +16384,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:48.764Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 378569.77,
@@ -15352,7 +16419,8 @@
       "activeEquityAaum": 2683023.0900000003,
       "activeEquityNetInflow": 21581.21,
       "industryNfoCount": 21,
-      "industryNfoFundsMobilized": 9872
+      "industryNfoFundsMobilized": 9872,
+      "sipContribution": 17610
     },
     {
       "month": "2024-01",
@@ -15606,6 +16674,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:50.007Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 430866.24,
@@ -15634,7 +16709,8 @@
       "activeEquityAaum": 2790022.3400000003,
       "activeEquityNetInflow": 32056.910000000003,
       "industryNfoCount": 20,
-      "industryNfoFundsMobilized": 6817
+      "industryNfoFundsMobilized": 6817,
+      "sipContribution": 18838
     },
     {
       "month": "2024-02",
@@ -15888,6 +16964,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:49.402Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 517403.72,
@@ -15916,7 +16999,8 @@
       "activeEquityAaum": 2894763.04,
       "activeEquityNetInflow": 33645.83,
       "industryNfoCount": 22,
-      "industryNfoFundsMobilized": 11720
+      "industryNfoFundsMobilized": 11720,
+      "sipContribution": 19187
     },
     {
       "month": "2024-03",
@@ -16170,6 +17254,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:51.622Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 363509.69,
@@ -16198,7 +17289,8 @@
       "activeEquityAaum": 2935104.24,
       "activeEquityNetInflow": 28721.56,
       "industryNfoCount": 21,
-      "industryNfoFundsMobilized": 4146
+      "industryNfoFundsMobilized": 4146,
+      "sipContribution": 19271
     },
     {
       "month": "2024-04",
@@ -16452,6 +17544,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:47.638Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 469040.53,
@@ -16480,7 +17579,8 @@
       "activeEquityAaum": 3054570.4000000004,
       "activeEquityNetInflow": 25125.579999999998,
       "industryNfoCount": 9,
-      "industryNfoFundsMobilized": 1532
+      "industryNfoFundsMobilized": 1532,
+      "sipContribution": 20371
     },
     {
       "month": "2024-05",
@@ -16734,6 +17834,13 @@
           ],
           "extractedAt": "2026-05-21T11:36:52.066Z",
           "sourceLabel": "New Schemes Report · Grand Total row · Funds mobilized (open + close-ended)"
+        },
+        "sipContribution": {
+          "sourcePdf": "AMFI website — month-wise SIP contribution table",
+          "sourceFormat": "press-release",
+          "sourcePages": [],
+          "extractedAt": "2026-05-24T18:59:21.906Z",
+          "sourceLabel": "AMFI cumulative SIP contribution table (manual transcription)"
         }
       },
       "liquidAum": 497847.25,
@@ -16762,7 +17869,8 @@
       "activeEquityAaum": 3155309.3,
       "activeEquityNetInflow": 40394.939999999995,
       "industryNfoCount": 9,
-      "industryNfoFundsMobilized": 10140
+      "industryNfoFundsMobilized": 10140,
+      "sipContribution": 20904
     },
     {
       "month": "2024-06",

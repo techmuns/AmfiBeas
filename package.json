@@ -17,7 +17,8 @@
     "ingest:amfi-quarterly-pdf": "tsx scripts/ingest/amfi-quarterly-pdf.ts",
     "ingest:market-indices": "tsx scripts/ingest/market-indices.ts",
     "ingest:amc-narratives": "tsx scripts/ingest/amc-narratives.ts",
-    "ingest:amfi-aaum-pdf-backfill": "tsx scripts/ingest/amfi-aaum-pdf-backfill.ts"
+    "ingest:amfi-aaum-pdf-backfill": "tsx scripts/ingest/amfi-aaum-pdf-backfill.ts",
+    "ingest:amfi-sip-backfill": "tsx scripts/ingest/amfi-sip-contribution-backfill.ts"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.19.6",
