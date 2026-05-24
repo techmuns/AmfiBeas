@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { ChartTooltip } from "./Tooltip";
+import { formatAxisCr, formatCompactCr } from "@/lib/format";
 
 /**
  * Stacked bars + secondary-axis line overlay. Same visual language as
@@ -40,8 +41,6 @@ interface Props {
   bottomColor?: string;
   topColor?: string;
   lineColor?: string;
-  /** Suffix on bar-axis ticks + bar value labels (e.g. " T"). */
-  barUnitSuffix?: string;
   /** Y-axis range for the line — defaults to [0, 100]. */
   lineDomain?: [number, number];
   height?: number;
@@ -55,11 +54,14 @@ export function StackedBarsWithLine({
   bottomColor = "hsl(220, 60%, 35%)",
   topColor = "hsl(28, 85%, 55%)",
   lineColor = "hsl(140, 55%, 35%)",
-  barUnitSuffix = "",
   lineDomain = [0, 100],
   height = 340,
 }: Props) {
-  const fmtBar = (n: number) => n.toFixed(1);
+  // Bar values are ₹ Cr (the dashboard's canonical unit). Compact form
+  // ("₹X.XL Cr") for the total label + tooltip; axis form ("X.XL") for
+  // the in-bar segment labels and the left axis so they stay readable.
+  const fmtBarFull = (n: number) => formatCompactCr(n);
+  const fmtBarAxis = (n: number) => formatAxisCr(n);
   const fmtPct = (n: number) => `${n.toFixed(1)}%`;
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -85,7 +87,7 @@ export function StackedBarsWithLine({
           fontSize={11}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(n: number) => `${n}${barUnitSuffix}`}
+          tickFormatter={(n: number) => fmtBarAxis(n)}
           width={48}
         />
         <YAxis
@@ -108,7 +110,7 @@ export function StackedBarsWithLine({
                   return "—";
                 }
                 if (name === lineName) return fmtPct(n);
-                return `${fmtBar(n)}${barUnitSuffix}`;
+                return fmtBarFull(n);
               }}
             />
           }
@@ -128,7 +130,7 @@ export function StackedBarsWithLine({
             position="center"
             formatter={(v: unknown) =>
               typeof v === "number" && Number.isFinite(v) && v > 0
-                ? fmtBar(v)
+                ? fmtBarAxis(v)
                 : ""
             }
             style={{ fill: "white", fontSize: 11, fontWeight: 600 }}
@@ -149,7 +151,7 @@ export function StackedBarsWithLine({
             position="center"
             formatter={(v: unknown) =>
               typeof v === "number" && Number.isFinite(v) && v > 0
-                ? fmtBar(v)
+                ? fmtBarAxis(v)
                 : ""
             }
             style={{ fill: "white", fontSize: 11, fontWeight: 600 }}
@@ -159,7 +161,7 @@ export function StackedBarsWithLine({
             position="top"
             formatter={(v: unknown) =>
               typeof v === "number" && Number.isFinite(v)
-                ? `${fmtBar(v)}${barUnitSuffix}`
+                ? fmtBarFull(v)
                 : ""
             }
             style={{

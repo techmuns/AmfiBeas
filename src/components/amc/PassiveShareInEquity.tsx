@@ -42,9 +42,9 @@ export function PassiveShareInEquity({ trend }: Props) {
   }
   const chartData = points.map((p) => ({
     label: p.label,
-    bottom: p.activeBn, // active funds (orange in source chart, blue here)
-    top: p.passiveBn, // passive funds
-    total: p.totalBn,
+    bottom: p.activeCr, // active funds (orange in source chart, blue here)
+    top: p.passiveCr, // passive funds
+    total: p.totalCr,
     share: p.sharePct,
   }));
   const first = points[0];
@@ -61,7 +61,7 @@ export function PassiveShareInEquity({ trend }: Props) {
             AAUM at each year-end.
           </p>
           <p className="text-[11px] text-muted-foreground/80">
-            {first.label} → {last.label} · ₹ billion · Source: AMFI
+            {first.label} → {last.label} · ₹ Cr · Source: AMFI
             Monthly Report
           </p>
         </div>
@@ -76,7 +76,6 @@ export function PassiveShareInEquity({ trend }: Props) {
         bottomColor="hsl(28, 85%, 55%)"
         topColor="hsl(220, 60%, 35%)"
         lineColor="hsl(140, 55%, 35%)"
-        barUnitSuffix=""
         lineDomain={[0, Math.max(20, Math.ceil(maxShare(points) + 4))]}
       />
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[11.5px]">
@@ -112,7 +111,7 @@ export function PassiveShareInEquity({ trend }: Props) {
             Index Funds + Other ETFs (excludes Gold ETFs).
           </li>
           <li>
-            Bar height = absolute AAUM in ₹ billion at each March-end
+            Bar height = absolute AAUM in ₹ Cr at each March-end
             (and the most-recent Sep, labelled H1FY26).
           </li>
           <li>
@@ -128,9 +127,9 @@ export function PassiveShareInEquity({ trend }: Props) {
 
 interface FiscalPoint {
   label: string;
-  activeBn: number;
-  passiveBn: number;
-  totalBn: number;
+  activeCr: number;
+  passiveCr: number;
+  totalCr: number;
   sharePct: number;
 }
 
@@ -169,15 +168,15 @@ function selectFiscalYearEnds(
     .map((p): FiscalPoint | null => {
       const h = byMonth.get(p.month);
       if (!h) return null;
-      // ₹ crore → ₹ billion: divide by 100. (1 crore = 10 million;
-      // 1 billion = 100 crore.)
-      const activeBn = h.activeEquityAum / 100;
-      const passiveBn = h.etfIndexAum / 100;
+      // Keep values in ₹ Cr — the dashboard's canonical unit — so the
+      // chart's formatCompactCr / formatAxisCr render them as ₹ Lakh Cr.
+      const activeCr = h.activeEquityAum;
+      const passiveCr = h.etfIndexAum;
       return {
         label: p.label,
-        activeBn,
-        passiveBn,
-        totalBn: activeBn + passiveBn,
+        activeCr,
+        passiveCr,
+        totalCr: activeCr + passiveCr,
         sharePct: h.passiveSharePct,
       };
     })
