@@ -2406,16 +2406,56 @@ export default async function MonthlyPage({
                 is YoY % change in Equity net inflow, matching the &ldquo;Equity YoY&rdquo;
                 pill above.
               </p>
+            ) : monthlyFlowsLens === "share" ? (
+              <p className="inline-flex items-start gap-1.5">
+                <span>
+                  Each line is the segment&apos;s share of that month&apos;s total
+                  flow magnitude — its net flow ÷ (|equity| + |debt| + |liquid|)
+                  for the month, with the sign kept. It answers &ldquo;of all the
+                  money that moved this month, what share ran through each
+                  category, and in which direction.&rdquo; Rescaling away the raw
+                  size lets equity&apos;s steady signal sit on the same axis as
+                  debt and liquid&apos;s large swings.
+                </span>
+                <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes; it is split out here for readability." />
+              </p>
             ) : (
-              <p className="inline-flex items-center gap-1.5">
-                Liquid is shown separately for readability.
-                <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes. In share view, each value is divided by the sum of absolute flow magnitudes in that month, so signs (inflow vs outflow) stay intact." />
+              <p>
+                Each line is the category&apos;s net flow for the month — fresh
+                inflows minus redemptions — in ₹ Cr. A negative value means
+                redemptions outran inflows that month, so money left the category
+                on net.
               </p>
             )}
-            <ul className="list-disc space-y-0.5 pl-4">
-              <li>Positive bars mean money entered the category; negative bars mean it left.</li>
-              <li>Rising equity usually signals risk-on appetite; rising debt or liquid often signals defensive allocation.</li>
-              <li>Compare the current month to the trailing-12 average (the dotted line in Trend view) to spot unusually large moves.</li>
+            <ul className="list-disc space-y-1 pl-4">
+              <li>
+                <span className="font-medium text-foreground/80">
+                  Why Debt and Liquid swing so violently into negatives:
+                </span>{" "}
+                these are mostly corporate-treasury money, not retail. Companies
+                park surplus cash in liquid and short-duration debt funds, then
+                pull it out at quarter-ends — most sharply at the March
+                fiscal-year-end — for advance tax and balance-sheet needs, and
+                redeploy it the following month. That calendar cycle, not investor
+                sentiment, is what drives the deep dips below zero and the sharp
+                rebounds (see the March troughs and the April spikes).
+              </li>
+              <li>
+                <span className="font-medium text-foreground/80">
+                  Why Equity stays steady and positive:
+                </span>{" "}
+                equity net flow is anchored by automated monthly SIP money, which
+                is sticky and rarely reverses — so it holds up as a small positive
+                even in months when debt and liquid bleed out, barely moving
+                against their swings.
+              </li>
+              {monthlyFlowsView !== "bars" && (
+                <li>
+                  There is no dashed average line on this card — the italic line
+                  above the chart (&ldquo;+X% vs trailing 12-period average&rdquo;)
+                  is the spot-the-outlier read for the latest month instead.
+                </li>
+              )}
             </ul>
           </HowToRead>
         </ChartWithContext>
