@@ -44,8 +44,14 @@ interface BarSeriesProps {
   barCategoryGap?: string | number;
   /** Optional cycle-phase bands rendered as subtle background
    *  ReferenceAreas. Labels are matched against `data[].label`
-   *  exactly. Pass [] or omit to hide. */
-  cyclePhaseBands?: { fromLabel: string; toLabel: string; phase: "Correction" | "Peak" }[];
+   *  exactly. Pass [] or omit to hide. Each band may carry an
+   *  optional `color` to override the per-phase default fill. */
+  cyclePhaseBands?: {
+    fromLabel: string;
+    toLabel: string;
+    phase: "Correction" | "Peak";
+    color?: string;
+  }[];
   /** Controls how the signed series is filled:
    *  - "above-below": green area above 0, red area below 0 (auto for
    *     flow series crossing zero).
@@ -204,9 +210,10 @@ export function BarSeries({
           const labels = new Set(data.map((p) => p.label));
           if (!labels.has(b.fromLabel) || !labels.has(b.toLabel)) return null;
           const fill =
-            b.phase === "Correction"
+            b.color ??
+            (b.phase === "Correction"
               ? "hsl(var(--negative))"
-              : "hsl(var(--chart-3))";
+              : "hsl(var(--chart-3))");
           return (
             <ReferenceArea
               key={`${b.fromLabel}-${b.toLabel}-${i}`}

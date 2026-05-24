@@ -2270,15 +2270,38 @@ export default async function MonthlyPage({
                 const aaumEma = showShareRef
                   ? undefined
                   : exponentialMovingAverage(aaumTrendData, 12);
-                // Only the cycle bands whose endpoints fall inside the
-                // rendered window actually paint (BarSeries filters the
-                // same way), so the legend below lists exactly those.
-                const aaumLabels = new Set(aaumDisplayData.map((p) => p.label));
-                const visibleBands = cyclePhaseBands.filter(
-                  (b) => aaumLabels.has(b.fromLabel) && aaumLabels.has(b.toLabel)
-                );
-                const hasCorrection = visibleBands.some((b) => b.phase === "Correction");
-                const hasPeak = visibleBands.some((b) => b.phase === "Peak");
+                // Cycle bands for this card: recolour Peak green and give
+                // single-month runs (e.g. the 2024 Peak months) visible
+                // width by padding one month each side, so a point-in-time
+                // phase reads as a band like a multi-month run. Scoped to
+                // this card — the shared `cyclePhaseBands` is untouched.
+                const aaumLabels = aaumDisplayData.map((p) => p.label);
+                const aaumLabelIdx = new Map(aaumLabels.map((l, i) => [l, i]));
+                const aaumCycleBands = cyclePhaseBands
+                  .filter(
+                    (b) =>
+                      aaumLabelIdx.has(b.fromLabel) && aaumLabelIdx.has(b.toLabel)
+                  )
+                  .map((b) => {
+                    const fromIdx = aaumLabelIdx.get(b.fromLabel) as number;
+                    const toIdx = aaumLabelIdx.get(b.toLabel) as number;
+                    const lo = fromIdx === toIdx ? Math.max(0, fromIdx - 1) : fromIdx;
+                    const hi =
+                      fromIdx === toIdx
+                        ? Math.min(aaumLabels.length - 1, toIdx + 1)
+                        : toIdx;
+                    return {
+                      fromLabel: aaumLabels[lo],
+                      toLabel: aaumLabels[hi],
+                      phase: b.phase,
+                      color:
+                        b.phase === "Peak"
+                          ? "hsl(var(--positive))"
+                          : undefined,
+                    };
+                  });
+                const hasCorrection = aaumCycleBands.some((b) => b.phase === "Correction");
+                const hasPeak = aaumCycleBands.some((b) => b.phase === "Peak");
                 return (
                   <>
                     <BarSeries
@@ -2291,7 +2314,7 @@ export default async function MonthlyPage({
                       trendlineName={aaumEma ? "12-month EMA" : undefined}
                       referenceValue={showShareRef ? 100 : undefined}
                       referenceLabel={showShareRef ? "12-month avg" : undefined}
-                      cyclePhaseBands={cyclePhaseBands}
+                      cyclePhaseBands={aaumCycleBands}
                     />
                     {(hasCorrection || hasPeak) && (
                       <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
@@ -2311,7 +2334,7 @@ export default async function MonthlyPage({
                             <span
                               aria-hidden
                               className="inline-block h-2.5 w-2.5 rounded-sm"
-                              style={{ backgroundColor: "hsl(var(--chart-3) / 0.4)" }}
+                              style={{ backgroundColor: "hsl(var(--positive) / 0.4)" }}
                             />
                             Peak — stretched / euphoric inflows
                           </span>
