@@ -63,6 +63,12 @@ export function StackedBarsWithLine({
   const fmtBarFull = (n: number) => formatCompactCr(n);
   const fmtBarAxis = (n: number) => formatAxisCr(n);
   const fmtPct = (n: number) => `${n.toFixed(1)}%`;
+  // Give the bar (left) axis ~40% headroom above the tallest stack so the
+  // share line and its % labels float clearly above the bars — otherwise
+  // on the tall recent years the line sits right at the bar tops and its
+  // label collides with the bar-total label.
+  const maxTotal = Math.max(0, ...data.map((d) => d.total));
+  const { axisMax: leftMax, ticks: leftTicks } = niceAxis(maxTotal * 1.4);
   return (
     <ResponsiveContainer width="100%" height={height}>
       <ComposedChart
@@ -83,6 +89,8 @@ export function StackedBarsWithLine({
         />
         <YAxis
           yAxisId="left"
+          domain={[0, leftMax]}
+          ticks={leftTicks}
           stroke="hsl(var(--muted-foreground))"
           fontSize={11}
           tickLine={false}
@@ -199,4 +207,23 @@ export function StackedBarsWithLine({
       </ComposedChart>
     </ResponsiveContainer>
   );
+}
+
+/** Round a target axis maximum up to a clean value and return the matching
+ *  evenly-spaced ticks (~5 intervals), so the bar axis keeps round labels
+ *  even after headroom padding. */
+function niceAxis(target: number): { axisMax: number; ticks: number[] } {
+  if (!Number.isFinite(target) || target <= 0) {
+    return { axisMax: 0, ticks: [0] };
+  }
+  const rawStep = target / 5;
+  const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+  const norm = rawStep / mag;
+  const niceStep =
+    (norm <= 1 ? 1 : norm <= 1.5 ? 1.5 : norm <= 2 ? 2 : norm <= 3 ? 3 : norm <= 5 ? 5 : 10) *
+    mag;
+  const axisMax = Math.ceil(target / niceStep) * niceStep;
+  const ticks: number[] = [];
+  for (let t = 0; t <= axisMax + niceStep * 0.5; t += niceStep) ticks.push(t);
+  return { axisMax, ticks };
 }
