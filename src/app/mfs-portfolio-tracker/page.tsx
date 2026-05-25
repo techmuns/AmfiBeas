@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/layout/PageHeader";
-import { PortfolioTrackerView } from "@/components/data/PortfolioTrackerView";
+import { PortfolioTrackerTabs } from "@/components/data/PortfolioTrackerTabs";
 import { fundDirectory } from "@/data/portfolio-tracker";
+import { capFlows } from "@/data/cap-flows";
 
 export const metadata = {
   title: "MFs Portfolio Tracker — AmfiBeas",
@@ -14,11 +15,12 @@ export default function MfsPortfolioTrackerPage() {
         subtitle="Portfolio changes over the last 4 months for mutual fund schemes."
       />
       <p className="max-w-3xl text-sm text-muted-foreground">
-        Use the search bar below to check the month-over-month equity holdings of
-        a mutual fund scheme. Data is updated each month once the most recent
-        month&apos;s portfolio is available.
+        Search a scheme&apos;s month-over-month equity holdings, or switch to the
+        snapshots tab for what mutual funds are buying and selling by market-cap.
+        Data is updated each month once the most recent month&apos;s portfolio is
+        available.
       </p>
-      <PortfolioTrackerView funds={fundDirectory} />
+      <PortfolioTrackerTabs funds={fundDirectory} flows={capFlows} />
     </div>
   );
 }
