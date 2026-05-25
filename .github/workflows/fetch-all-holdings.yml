@@ -1,0 +1,63 @@
+name: Fetch all holdings (one-off)
+
+# One-off: for every scheme in rupeevest-scheme-list.json, fetch the RupeeVest
+# portfolio tracker, keep funds with latest AUM > MIN_AUM_CR, and commit their
+# equity holdings (holdings/<code>-<slug>.json + holdings/index.json) back to
+# this branch. Runs on a GitHub runner (open internet); this dev container
+# can't reach rupeevest. The data-only commit back does NOT re-trigger (paths
+# filter). Delete after use.
+
+on:
+  push:
+    branches: [claude/stoic-fermi-HC5aq]
+    paths:
+      - "scripts/fetch-all-holdings.ts"
+      - ".github/workflows/fetch-all-holdings.yml"
+  workflow_dispatch:
+    inputs:
+      min_aum_cr:
+        description: "Minimum latest AUM (Cr) to keep a fund"
+        default: "500"
+      max_schemes:
+        description: "Cap schemes processed (blank = all)"
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fetch-all-holdings-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fetch:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/stoic-fermi-HC5aq
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Fetch holdings
+        env:
+          MIN_AUM_CR: ${{ github.event.inputs.min_aum_cr || '500' }}
+          MAX_SCHEMES: ${{ github.event.inputs.max_schemes || '' }}
+          REQUEST_DELAY_MS: "200"
+        run: npx tsx scripts/fetch-all-holdings.ts
+      - name: Show log
+        if: always()
+        run: tail -n 80 scrape-debug/all-holdings-log.txt || true
+      - name: Commit result
+        if: always()
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then echo "nothing to commit"; exit 0; fi
+          git commit -m "data(scrape): RupeeVest equity holdings for funds >${MIN_AUM_CR:-500}Cr AUM"
+          git push origin HEAD:claude/stoic-fermi-HC5aq
