@@ -2953,9 +2953,19 @@ export default async function MonthlyPage({
                     Bars are the monthly net inflow in ₹ Cr; the dashed line
                     (right axis) is its YoY % change, which strips seasonality so
                     you can see whether a month beat the same month a year ago.
-                    Treat the big early-window YoY spikes with caution — they are
-                    base effects off a small year-ago denominator, so the recent,
-                    flatter YoY readings are the more reliable signal.
+                    YoY is suppressed (shown as &ldquo;—&rdquo;, with a gap in the
+                    line) for months whose year-ago base was near-zero or
+                    sign-flipped, because the % there is a base-effect artefact,
+                    not real momentum. The clearest example:{" "}
+                    <span className="font-medium text-foreground/80">
+                      November 2022 was a rare active-equity net <em>outflow</em>{" "}
+                      (−₹51.5 Cr)
+                    </span>
+                    , so November 2023&apos;s inflow of ₹19.9K Cr would otherwise
+                    read a meaningless <span className="text-negative font-medium">+38,654%</span>{" "}
+                    YoY — a year-on-year &ldquo;growth&rdquo; across an
+                    outflow→inflow swing is undefined, so we hide it rather than
+                    print the exploded figure.
                   </p>
                 ) : (
                   <p className="inline-flex items-start gap-1.5">

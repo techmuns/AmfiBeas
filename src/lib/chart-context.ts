@@ -178,11 +178,33 @@ function expectedPriorLabel(label: string, lag: number): string | null {
   return null;
 }
 
+/** A YoY / period-over-period % is only interpretable when the prior
+ *  base is a stable, same-signed, non-trivial quantity. The ratio
+ *  explodes or inverts when the base is zero, near-zero, or
+ *  sign-flipped versus the current value — e.g. a −₹51.5 Cr active-
+ *  equity outflow a year before a +₹19,855 Cr inflow yields a spurious
+ *  +38,654%. Returns false in those cases so callers surface "n/m"
+ *  (null) instead of a misleading headline number.
+ *
+ *  - Opposite sign (inflow ↔ outflow swing): a growth % is undefined.
+ *  - Near-zero base: |prior| under 2% of |latest| means the base was
+ *    effectively negligible, so the % is a base-effect artefact. */
+export function isYoyBaseMeaningful(latest: number, prior: number): boolean {
+  if (!Number.isFinite(latest) || !Number.isFinite(prior) || prior === 0) {
+    return false;
+  }
+  if (latest !== 0 && Math.sign(latest) !== Math.sign(prior)) return false;
+  if (Math.abs(prior) < 0.02 * Math.abs(latest)) return false;
+  return true;
+}
+
 /** Latest-point YoY % change vs a lag-N prior point. Returns null
  *  when the series is too short, when either anchor value isn't a
- *  finite number, or when the prior value is zero (would divide
- *  by zero). Mirrors the math the chartInsights() YoY rule uses so
- *  the header badge and the insight line stay in lockstep.
+ *  finite number, when the prior value is zero (would divide
+ *  by zero), or when the prior base is near-zero / sign-flipped (an
+ *  uninterpretable base effect — see {@link isYoyBaseMeaningful}).
+ *  Mirrors the math the chartInsights() YoY rule uses so the header
+ *  badge and the insight line stay in lockstep.
  *
  *  Prefers calendar-label lookup (e.g. for "2024-09" with lag=12, it
  *  finds "2023-09" by literal match), falling back to positional
@@ -207,6 +229,7 @@ export function latestYoyPct(
   if (!prior || !Number.isFinite(prior.value) || prior.value === 0) {
     return null;
   }
+  if (!isYoyBaseMeaningful(latest.value, prior.value)) return null;
   return ((latest.value - prior.value) / Math.abs(prior.value)) * 100;
 }
 
@@ -233,6 +256,9 @@ export function yoyPctSeries(
       if (prev === undefined || prev === 0 || !Number.isFinite(prev)) {
         return { label: p.label, value: null };
       }
+      if (!isYoyBaseMeaningful(p.value, prev)) {
+        return { label: p.label, value: null };
+      }
       return {
         label: p.label,
         value: ((p.value - prev) / Math.abs(prev)) * 100,
@@ -241,6 +267,9 @@ export function yoyPctSeries(
     if (i < lag) return { label: p.label, value: null };
     const prior = series[i - lag].value;
     if (prior === 0 || !Number.isFinite(prior)) {
+      return { label: p.label, value: null };
+    }
+    if (!isYoyBaseMeaningful(p.value, prior)) {
       return { label: p.label, value: null };
     }
     return {
