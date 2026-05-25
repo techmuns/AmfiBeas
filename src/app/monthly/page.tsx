@@ -2925,6 +2925,10 @@ export default async function MonthlyPage({
                   12,
                   activeEquityFlowDisplay.length
                 );
+                const flowCycleBands = renderedCycleBands(
+                  cyclePhaseBands,
+                  activeEquityFlowDisplay.map((p) => p.label as string)
+                );
                 return (
                   <>
                     <BarSeries
@@ -2937,13 +2941,14 @@ export default async function MonthlyPage({
                       signedFill="single"
                       trendline={useOverlay ? trailingAvg : undefined}
                       trendlineName={useOverlay ? "Trailing 12-month avg" : undefined}
-                      cyclePhaseBands={cyclePhaseBands}
+                      cyclePhaseBands={flowCycleBands}
                     />
                     {aeFlowLens === "absolute" && (
                       <div className="mt-2">
                         <VolatilityRibbon series={activeEquityFlowTrend} />
                       </div>
                     )}
+                    <CyclePhaseLegend bands={flowCycleBands} />
                   </>
                 );
               })()}
@@ -3446,20 +3451,27 @@ export default async function MonthlyPage({
                   12,
                   activeEquityAaumDisplay.length
                 );
+                const aeAaumCycleBands = renderedCycleBands(
+                  cyclePhaseBands,
+                  activeEquityAaumDisplay.map((p) => p.label as string)
+                );
                 return (
-                  <BarSeries
-                    data={activeEquityAaumDisplay}
-                    name="Active Equity AAUM"
-                    color="hsl(var(--chart-1))"
-                    valueFormat={aeAaumLens === "share" ? "pct" : "cr"}
-                    axisFormat={aeAaumLens === "share" ? "pct" : "cr"}
-                    labelFormat="month"
-                    cyclePhaseBands={cyclePhaseBands}
-                    signedFill="single"
-                    trendline={useOverlay ? trailingAvg : undefined}
-                    trendlineName={useOverlay ? "Trailing 12-month avg" : undefined}
-                    dynamicYDomain={aeAaumLens === "share"}
-                  />
+                  <>
+                    <BarSeries
+                      data={activeEquityAaumDisplay}
+                      name="Active Equity AAUM"
+                      color="hsl(var(--chart-1))"
+                      valueFormat={aeAaumLens === "share" ? "pct" : "cr"}
+                      axisFormat={aeAaumLens === "share" ? "pct" : "cr"}
+                      labelFormat="month"
+                      cyclePhaseBands={aeAaumCycleBands}
+                      signedFill="single"
+                      trendline={useOverlay ? trailingAvg : undefined}
+                      trendlineName={useOverlay ? "Trailing 12-month avg" : undefined}
+                      dynamicYDomain={aeAaumLens === "share"}
+                    />
+                    <CyclePhaseLegend bands={aeAaumCycleBands} />
+                  </>
                 );
               })() : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
