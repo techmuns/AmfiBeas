@@ -1,0 +1,567 @@
+{
+  "meta": {
+    "source": "https://www.rupeevest.com/Mutual-Fund-Portfolio-Tracker",
+    "endpoint": "https://www.rupeevest.com/home/get_mf_portfolio_tracker?schemecode=267",
+    "fund": "Nippon India ETF Nifty Bank BeES",
+    "schemecode": "267",
+    "classification": "Equity : ETFs",
+    "aumTotalCr": 7917.58,
+    "aumAsOf": "2026-04-30T00:00:00.000Z",
+    "scrapedAt": "2026-05-25T12:38:18.597Z",
+    "months": [
+      {
+        "label": "Apr-26",
+        "aumCr": "7917.6"
+      },
+      {
+        "label": "Mar-26",
+        "aumCr": "7162.3"
+      },
+      {
+        "label": "Feb-26",
+        "aumCr": "7978.9"
+      },
+      {
+        "label": "Jan-26",
+        "aumCr": "7922.5"
+      }
+    ],
+    "section": "Equity Holdings",
+    "extractionMethod": "json-endpoint",
+    "arrowLogic": "Per the tracker UI: arrow compares a month's share count to the next-older month (up=increase, down=decrease, flat/none=no change). Oldest column shows no arrow (flat/none). 'missing' = no holding reported that month."
+  },
+  "rows": [
+    {
+      "company_name": "HDFC Bank Limited",
+      "fincode": "100180",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "18.37",
+          "aum_pct_num": 18.37,
+          "shares_raw": "1,88,46,780",
+          "shares_num": 18846780,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "19.00",
+          "aum_pct_num": 19,
+          "shares_raw": "1,86,04,270",
+          "shares_num": 18604270,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "19.69",
+          "aum_pct_num": 19.69,
+          "shares_raw": "1,76,98,308",
+          "shares_num": 17698308,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "22.02",
+          "aum_pct_num": 22.02,
+          "shares_raw": "1,87,69,591",
+          "shares_num": 18769591,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "ICICI Bank Limited",
+      "fincode": "132174",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "13.55",
+          "aum_pct_num": 13.55,
+          "shares_raw": "84,89,658",
+          "shares_num": 8489658,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "14.11",
+          "aum_pct_num": 14.11,
+          "shares_raw": "83,81,501",
+          "shares_num": 8381501,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "16.13",
+          "aum_pct_num": 16.13,
+          "shares_raw": "93,33,280",
+          "shares_num": 9333280,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "18.17",
+          "aum_pct_num": 18.17,
+          "shares_raw": "1,06,24,838",
+          "shares_num": 10624838,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Axis Bank Limited",
+      "fincode": "132215",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "10.02",
+          "aum_pct_num": 10.02,
+          "shares_raw": "62,53,329",
+          "shares_num": 6253329,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "10.01",
+          "aum_pct_num": 10.01,
+          "shares_raw": "61,72,751",
+          "shares_num": 6172751,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "9.94",
+          "aum_pct_num": 9.94,
+          "shares_raw": "57,29,752",
+          "shares_num": 5729752,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "10.05",
+          "aum_pct_num": 10.05,
+          "shares_raw": "58,09,961",
+          "shares_num": 5809961,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "State Bank of India",
+      "fincode": "100112",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "9.93",
+          "aum_pct_num": 9.93,
+          "shares_raw": "73,60,616",
+          "shares_num": 7360616,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "9.94",
+          "aum_pct_num": 9.94,
+          "shares_raw": "72,66,026",
+          "shares_num": 7266026,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "10.67",
+          "aum_pct_num": 10.67,
+          "shares_raw": "70,87,427",
+          "shares_num": 7087427,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "10.42",
+          "aum_pct_num": 10.42,
+          "shares_raw": "76,64,226",
+          "shares_num": 7664226,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Kotak Mahindra Bank Limited",
+      "fincode": "100247",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "9.67",
+          "aum_pct_num": 9.67,
+          "shares_raw": "1,99,79,166",
+          "shares_num": 19979166,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "9.73",
+          "aum_pct_num": 9.73,
+          "shares_raw": "1,97,21,158",
+          "shares_num": 19721158,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "9.16",
+          "aum_pct_num": 9.16,
+          "shares_raw": "1,76,05,113",
+          "shares_num": 17605113,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "8.85",
+          "aum_pct_num": 8.85,
+          "shares_raw": "1,71,86,390",
+          "shares_num": 17186390,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "The Federal Bank Limited",
+      "fincode": "100469",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "6.26",
+          "aum_pct_num": 6.26,
+          "shares_raw": "1,72,86,478",
+          "shares_num": 17286478,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "6.18",
+          "aum_pct_num": 6.18,
+          "shares_raw": "1,70,62,649",
+          "shares_num": 17062649,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "5.55",
+          "aum_pct_num": 5.55,
+          "shares_raw": "1,47,56,524",
+          "shares_num": 14756524,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "5.01",
+          "aum_pct_num": 5.01,
+          "shares_raw": "1,38,05,115",
+          "shares_num": 13805115,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "IndusInd Bank Limited",
+      "fincode": "132187",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "5.35",
+          "aum_pct_num": 5.35,
+          "shares_raw": "46,24,946",
+          "shares_num": 4624946,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "4.80",
+          "aum_pct_num": 4.8,
+          "shares_raw": "45,65,036",
+          "shares_num": 4565036,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "4.72",
+          "aum_pct_num": 4.72,
+          "shares_raw": "39,37,163",
+          "shares_num": 3937163,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "4.15",
+          "aum_pct_num": 4.15,
+          "shares_raw": "36,69,422",
+          "shares_num": 3669422,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "AU Small Finance Bank Limited",
+      "fincode": "286335",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "4.96",
+          "aum_pct_num": 4.96,
+          "shares_raw": "38,69,203",
+          "shares_num": 3869203,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "4.49",
+          "aum_pct_num": 4.49,
+          "shares_raw": "38,19,076",
+          "shares_num": 3819076,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.96",
+          "aum_pct_num": 3.96,
+          "shares_raw": "33,00,217",
+          "shares_num": 3300217,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.76",
+          "aum_pct_num": 3.76,
+          "shares_raw": "30,34,440",
+          "shares_num": 3034440,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Bank of Baroda",
+      "fincode": "132134",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "4.34",
+          "aum_pct_num": 4.34,
+          "shares_raw": "1,30,28,539",
+          "shares_num": 13028539,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "4.45",
+          "aum_pct_num": 4.45,
+          "shares_raw": "1,28,59,923",
+          "shares_num": 12859923,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "4.45",
+          "aum_pct_num": 4.45,
+          "shares_raw": "1,10,31,986",
+          "shares_num": 11031986,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.86",
+          "aum_pct_num": 3.86,
+          "shares_raw": "1,02,17,148",
+          "shares_num": 10217148,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "IDFC First Bank Limited",
+      "fincode": "278580",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "4.12",
+          "aum_pct_num": 4.12,
+          "shares_raw": "4,68,37,896",
+          "shares_num": 46837896,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.80",
+          "aum_pct_num": 3.8,
+          "shares_raw": "4,62,31,273",
+          "shares_num": 46231273,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.60",
+          "aum_pct_num": 3.6,
+          "shares_raw": "3,91,04,076",
+          "shares_num": 39104076,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.78",
+          "aum_pct_num": 3.78,
+          "shares_raw": "3,58,22,286",
+          "shares_num": 35822286,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Canara Bank",
+      "fincode": "132483",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "4.05",
+          "aum_pct_num": 4.05,
+          "shares_raw": "2,38,38,139",
+          "shares_num": 23838139,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "4.06",
+          "aum_pct_num": 4.06,
+          "shares_raw": "2,35,29,237",
+          "shares_num": 23529237,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.90",
+          "aum_pct_num": 3.9,
+          "shares_raw": "1,97,88,927",
+          "shares_num": 19788927,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.35",
+          "aum_pct_num": 3.35,
+          "shares_raw": "1,79,84,581",
+          "shares_num": 17984581,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Punjab National Bank",
+      "fincode": "132461",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.37",
+          "aum_pct_num": 3.37,
+          "shares_raw": "2,43,79,502",
+          "shares_num": 24379502,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.38",
+          "aum_pct_num": 3.38,
+          "shares_raw": "2,40,64,187",
+          "shares_num": 24064187,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.40",
+          "aum_pct_num": 3.4,
+          "shares_raw": "2,09,54,008",
+          "shares_num": 20954008,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.16",
+          "aum_pct_num": 3.16,
+          "shares_raw": "1,99,99,892",
+          "shares_num": 19999892,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Yes Bank Limited",
+      "fincode": "132648",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.13",
+          "aum_pct_num": 3.13,
+          "shares_raw": "12,41,64,955",
+          "shares_num": 124164955,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.95",
+          "aum_pct_num": 2.95,
+          "shares_raw": "12,25,44,680",
+          "shares_num": 122544680,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.29",
+          "aum_pct_num": 2.29,
+          "shares_raw": "8,83,06,312",
+          "shares_num": 88306312,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.71",
+          "aum_pct_num": 1.71,
+          "shares_raw": "6,34,04,729",
+          "shares_num": 63404729,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Union Bank of India",
+      "fincode": "132477",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.86",
+          "aum_pct_num": 2.86,
+          "shares_raw": "1,36,62,537",
+          "shares_num": 13662537,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.09",
+          "aum_pct_num": 3.09,
+          "shares_raw": "1,34,84,375",
+          "shares_num": 13484375,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.52",
+          "aum_pct_num": 2.52,
+          "shares_raw": "99,20,970",
+          "shares_num": 9920970,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.69",
+          "aum_pct_num": 1.69,
+          "shares_raw": "73,86,067",
+          "shares_num": 7386067,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    }
+  ]
+}

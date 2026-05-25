@@ -1,0 +1,2087 @@
+{
+  "meta": {
+    "source": "https://www.rupeevest.com/Mutual-Fund-Portfolio-Tracker",
+    "endpoint": "https://www.rupeevest.com/home/get_mf_portfolio_tracker?schemecode=48472",
+    "fund": "WOC Pharma and Healthcare Fund-Reg(G)",
+    "schemecode": "48472",
+    "classification": "Equity : Sectoral - Pharma",
+    "aumTotalCr": 602.93,
+    "aumAsOf": "2026-04-30T00:00:00.000Z",
+    "scrapedAt": "2026-05-25T12:54:51.195Z",
+    "months": [
+      {
+        "label": "Apr-26",
+        "aumCr": "602.9"
+      },
+      {
+        "label": "Mar-26",
+        "aumCr": "556.4"
+      },
+      {
+        "label": "Feb-26",
+        "aumCr": "533"
+      },
+      {
+        "label": "Jan-26",
+        "aumCr": "491.9"
+      }
+    ],
+    "section": "Equity Holdings",
+    "extractionMethod": "json-endpoint",
+    "arrowLogic": "Per the tracker UI: arrow compares a month's share count to the next-older month (up=increase, down=decrease, flat/none=no change). Oldest column shows no arrow (flat/none). 'missing' = no holding reported that month."
+  },
+  "rows": [
+    {
+      "company_name": "Sun Pharmaceutical Industries Limited",
+      "fincode": "124715",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "10.47",
+          "aum_pct_num": 10.47,
+          "shares_raw": "3,49,042",
+          "shares_num": 349042,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "12.35",
+          "aum_pct_num": 12.35,
+          "shares_raw": "3,90,950",
+          "shares_num": 390950,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "11.85",
+          "aum_pct_num": 11.85,
+          "shares_raw": "3,63,557",
+          "shares_num": 363557,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "10.72",
+          "aum_pct_num": 10.72,
+          "shares_raw": "3,30,531",
+          "shares_num": 330531,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "JB Chemicals & Pharmaceuticals Limited",
+      "fincode": "106943",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "6.54",
+          "aum_pct_num": 6.54,
+          "shares_raw": "1,93,112",
+          "shares_num": 193112,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "8.90",
+          "aum_pct_num": 8.9,
+          "shares_raw": "2,39,995",
+          "shares_num": 239995,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "9.44",
+          "aum_pct_num": 9.44,
+          "shares_raw": "2,45,148",
+          "shares_num": 245148,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "9.11",
+          "aum_pct_num": 9.11,
+          "shares_raw": "2,39,709",
+          "shares_num": 239709,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Laurus Labs Limited",
+      "fincode": "271867",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "4.13",
+          "aum_pct_num": 4.13,
+          "shares_raw": "2,25,977",
+          "shares_num": 225977,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.93",
+          "aum_pct_num": 3.93,
+          "shares_raw": "2,20,148",
+          "shares_num": 220148,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "4.33",
+          "aum_pct_num": 4.33,
+          "shares_raw": "2,14,312",
+          "shares_num": 214312,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "4.41",
+          "aum_pct_num": 4.41,
+          "shares_raw": "2,24,792",
+          "shares_num": 224792,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Fortis Healthcare Limited",
+      "fincode": "132843",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "4.12",
+          "aum_pct_num": 4.12,
+          "shares_raw": "2,69,360",
+          "shares_num": 269360,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.85",
+          "aum_pct_num": 3.85,
+          "shares_raw": "2,69,360",
+          "shares_num": 269360,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "5.54",
+          "aum_pct_num": 5.54,
+          "shares_raw": "3,13,331",
+          "shares_num": 313331,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "5.33",
+          "aum_pct_num": 5.33,
+          "shares_raw": "3,07,731",
+          "shares_num": 307731,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Divi's Laboratories Limited",
+      "fincode": "132488",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "4.11",
+          "aum_pct_num": 4.11,
+          "shares_raw": "38,063",
+          "shares_num": 38063,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "5.31",
+          "aum_pct_num": 5.31,
+          "shares_raw": "49,727",
+          "shares_num": 49727,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "4.74",
+          "aum_pct_num": 4.74,
+          "shares_raw": "39,426",
+          "shares_num": 39426,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "5.48",
+          "aum_pct_num": 5.48,
+          "shares_raw": "44,514",
+          "shares_num": 44514,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Apollo Hospitals Enterprise Limited",
+      "fincode": "108869",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "4.02",
+          "aum_pct_num": 4.02,
+          "shares_raw": "31,779",
+          "shares_num": 31779,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "4.24",
+          "aum_pct_num": 4.24,
+          "shares_raw": "31,779",
+          "shares_num": 31779,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "5.08",
+          "aum_pct_num": 5.08,
+          "shares_raw": "34,621",
+          "shares_num": 34621,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "4.90",
+          "aum_pct_num": 4.9,
+          "shares_raw": "34,621",
+          "shares_num": 34621,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Glenmark Pharmaceuticals Limited",
+      "fincode": "132296",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.41",
+          "aum_pct_num": 3.41,
+          "shares_raw": "85,480",
+          "shares_num": 85480,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.17",
+          "aum_pct_num": 3.17,
+          "shares_raw": "82,809",
+          "shares_num": 82809,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Aurobindo Pharma Limited",
+      "fincode": "124804",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.33",
+          "aum_pct_num": 3.33,
+          "shares_raw": "1,44,682",
+          "shares_num": 144682,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.02",
+          "aum_pct_num": 3.02,
+          "shares_raw": "1,28,651",
+          "shares_num": 128651,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.32",
+          "aum_pct_num": 1.32,
+          "shares_raw": "57,494",
+          "shares_num": 57494,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Max Healthcare Institute Limited",
+      "fincode": "218071",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.31",
+          "aum_pct_num": 3.31,
+          "shares_raw": "2,00,774",
+          "shares_num": 200774,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.79",
+          "aum_pct_num": 3.79,
+          "shares_raw": "2,19,184",
+          "shares_num": 219184,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "5.88",
+          "aum_pct_num": 5.88,
+          "shares_raw": "2,86,899",
+          "shares_num": 286899,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "4.52",
+          "aum_pct_num": 4.52,
+          "shares_raw": "2,32,215",
+          "shares_num": 232215,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Krishna Institute Of Medical Sciences Limited",
+      "fincode": "221645",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.13",
+          "aum_pct_num": 3.13,
+          "shares_raw": "2,82,632",
+          "shares_num": 282632,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.16",
+          "aum_pct_num": 3.16,
+          "shares_raw": "2,82,632",
+          "shares_num": 282632,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.95",
+          "aum_pct_num": 3.95,
+          "shares_raw": "2,82,632",
+          "shares_num": 282632,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.71",
+          "aum_pct_num": 2.71,
+          "shares_raw": "2,20,599",
+          "shares_num": 220599,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Sai Life Sciences Limited",
+      "fincode": "209147",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.02",
+          "aum_pct_num": 3.02,
+          "shares_raw": "1,70,130",
+          "shares_num": 170130,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.77",
+          "aum_pct_num": 2.77,
+          "shares_raw": "1,58,572",
+          "shares_num": 158572,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.46",
+          "aum_pct_num": 2.46,
+          "shares_raw": "1,31,590",
+          "shares_num": 131590,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.05",
+          "aum_pct_num": 2.05,
+          "shares_raw": "1,20,696",
+          "shares_num": 120696,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Lupin Limited",
+      "fincode": "100257",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.97",
+          "aum_pct_num": 2.97,
+          "shares_raw": "77,552",
+          "shares_num": 77552,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "5.77",
+          "aum_pct_num": 5.77,
+          "shares_raw": "1,38,746",
+          "shares_num": 138746,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "5.29",
+          "aum_pct_num": 5.29,
+          "shares_raw": "1,22,432",
+          "shares_num": 122432,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "5.16",
+          "aum_pct_num": 5.16,
+          "shares_raw": "1,17,818",
+          "shares_num": 117818,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Neuland Laboratories Limited",
+      "fincode": "124558",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.64",
+          "aum_pct_num": 2.64,
+          "shares_raw": "10,622",
+          "shares_num": 10622,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.42",
+          "aum_pct_num": 1.42,
+          "shares_raw": "6,547",
+          "shares_num": 6547,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.46",
+          "aum_pct_num": 1.46,
+          "shares_raw": "6,069",
+          "shares_num": 6069,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.25",
+          "aum_pct_num": 2.25,
+          "shares_raw": "8,342",
+          "shares_num": 8342,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Acutaas Chemicals Limited",
+      "fincode": "232793",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.45",
+          "aum_pct_num": 2.45,
+          "shares_raw": "56,832",
+          "shares_num": 56832,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.61",
+          "aum_pct_num": 2.61,
+          "shares_raw": "56,832",
+          "shares_num": 56832,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.25",
+          "aum_pct_num": 2.25,
+          "shares_raw": "55,616",
+          "shares_num": 55616,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.97",
+          "aum_pct_num": 1.97,
+          "shares_raw": "50,548",
+          "shares_num": 50548,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Corona Remedies Limited",
+      "fincode": "320396",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.43",
+          "aum_pct_num": 2.43,
+          "shares_raw": "84,716",
+          "shares_num": 84716,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.27",
+          "aum_pct_num": 2.27,
+          "shares_raw": "81,030",
+          "shares_num": 81030,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.31",
+          "aum_pct_num": 2.31,
+          "shares_raw": "77,597",
+          "shares_num": 77597,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.03",
+          "aum_pct_num": 2.03,
+          "shares_raw": "67,449",
+          "shares_num": 67449,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Thyrocare Technologies Limited",
+      "fincode": "218764",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.98",
+          "aum_pct_num": 1.98,
+          "shares_raw": "2,98,037",
+          "shares_num": 298037,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.56",
+          "aum_pct_num": 1.56,
+          "shares_raw": "2,47,937",
+          "shares_num": 247937,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "0.99",
+          "aum_pct_num": 0.99,
+          "shares_raw": "1,34,158",
+          "shares_num": 134158,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.03",
+          "aum_pct_num": 1.03,
+          "shares_raw": "1,20,763",
+          "shares_num": 120763,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Narayana Hrudayalaya Limited",
+      "fincode": "218533",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.93",
+          "aum_pct_num": 1.93,
+          "shares_raw": "65,986",
+          "shares_num": 65986,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.72",
+          "aum_pct_num": 1.72,
+          "shares_raw": "59,465",
+          "shares_num": 59465,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.94",
+          "aum_pct_num": 1.94,
+          "shares_raw": "56,387",
+          "shares_num": 56387,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.93",
+          "aum_pct_num": 1.93,
+          "shares_raw": "53,609",
+          "shares_num": 53609,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Emcure Pharmaceuticals Limited",
+      "fincode": "208099",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.83",
+          "aum_pct_num": 1.83,
+          "shares_raw": "65,752",
+          "shares_num": 65752,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.89",
+          "aum_pct_num": 1.89,
+          "shares_raw": "65,752",
+          "shares_num": 65752,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.70",
+          "aum_pct_num": 1.7,
+          "shares_raw": "62,206",
+          "shares_num": 62206,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.55",
+          "aum_pct_num": 1.55,
+          "shares_raw": "52,238",
+          "shares_num": 52238,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Rainbow Childrens Medicare Limited",
+      "fincode": "274045",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.79",
+          "aum_pct_num": 1.79,
+          "shares_raw": "86,396",
+          "shares_num": 86396,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "0.80",
+          "aum_pct_num": 0.8,
+          "shares_raw": "38,461",
+          "shares_num": 38461,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Ajanta Pharma Limited",
+      "fincode": "132331",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.78",
+          "aum_pct_num": 1.78,
+          "shares_raw": "38,038",
+          "shares_num": 38038,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.11",
+          "aum_pct_num": 2.11,
+          "shares_raw": "41,807",
+          "shares_num": 41807,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.35",
+          "aum_pct_num": 2.35,
+          "shares_raw": "41,807",
+          "shares_num": 41807,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.56",
+          "aum_pct_num": 2.56,
+          "shares_raw": "45,309",
+          "shares_num": 45309,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Aether Industries Limited",
+      "fincode": "304714",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.56",
+          "aum_pct_num": 1.56,
+          "shares_raw": "80,175",
+          "shares_num": 80175,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.38",
+          "aum_pct_num": 1.38,
+          "shares_raw": "70,178",
+          "shares_num": 70178,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.26",
+          "aum_pct_num": 1.26,
+          "shares_raw": "70,178",
+          "shares_num": 70178,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.23",
+          "aum_pct_num": 1.23,
+          "shares_raw": "60,301",
+          "shares_num": 60301,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Navin Fluorine International Limited",
+      "fincode": "132504",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.44",
+          "aum_pct_num": 1.44,
+          "shares_raw": "12,754",
+          "shares_num": 12754,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.41",
+          "aum_pct_num": 1.41,
+          "shares_raw": "12,754",
+          "shares_num": 12754,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.60",
+          "aum_pct_num": 1.6,
+          "shares_raw": "13,625",
+          "shares_num": 13625,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.70",
+          "aum_pct_num": 1.7,
+          "shares_raw": "13,690",
+          "shares_num": 13690,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Onesource Specialty Pharma Limited",
+      "fincode": "318188",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.32",
+          "aum_pct_num": 1.32,
+          "shares_raw": "45,875",
+          "shares_num": 45875,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Shaily Engineering Plastics Limited",
+      "fincode": "101423",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.31",
+          "aum_pct_num": 1.31,
+          "shares_raw": "31,223",
+          "shares_num": 31223,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.58",
+          "aum_pct_num": 1.58,
+          "shares_raw": "42,262",
+          "shares_num": 42262,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.78",
+          "aum_pct_num": 1.78,
+          "shares_raw": "48,767",
+          "shares_num": 48767,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.90",
+          "aum_pct_num": 1.9,
+          "shares_raw": "48,767",
+          "shares_num": 48767,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Dr. Lal Path Labs Limited",
+      "fincode": "218763",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.29",
+          "aum_pct_num": 1.29,
+          "shares_raw": "56,703",
+          "shares_num": 56703,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.34",
+          "aum_pct_num": 1.34,
+          "shares_raw": "56,703",
+          "shares_num": 56703,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.17",
+          "aum_pct_num": 1.17,
+          "shares_raw": "44,690",
+          "shares_num": 44690,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Strides Pharma Science Limited",
+      "fincode": "132531",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.27",
+          "aum_pct_num": 1.27,
+          "shares_raw": "73,619",
+          "shares_num": 73619,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.24",
+          "aum_pct_num": 1.24,
+          "shares_raw": "73,619",
+          "shares_num": 73619,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.18",
+          "aum_pct_num": 1.18,
+          "shares_raw": "73,619",
+          "shares_num": 73619,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.31",
+          "aum_pct_num": 1.31,
+          "shares_raw": "73,619",
+          "shares_num": 73619,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Vijaya Diagnostic Centre Limited",
+      "fincode": "302427",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.25",
+          "aum_pct_num": 1.25,
+          "shares_raw": "66,668",
+          "shares_num": 66668,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "0.94",
+          "aum_pct_num": 0.94,
+          "shares_raw": "60,693",
+          "shares_num": 60693,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.14",
+          "aum_pct_num": 1.14,
+          "shares_raw": "60,693",
+          "shares_num": 60693,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.68",
+          "aum_pct_num": 1.68,
+          "shares_raw": "86,066",
+          "shares_num": 86066,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Kovai Medical Center and Hospital Limited",
+      "fincode": "123323",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.25",
+          "aum_pct_num": 1.25,
+          "shares_raw": "13,298",
+          "shares_num": 13298,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.20",
+          "aum_pct_num": 1.2,
+          "shares_raw": "13,298",
+          "shares_num": 13298,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.32",
+          "aum_pct_num": 1.32,
+          "shares_raw": "13,298",
+          "shares_num": 13298,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.35",
+          "aum_pct_num": 1.35,
+          "shares_raw": "12,258",
+          "shares_num": 12258,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Pfizer Limited",
+      "fincode": "100680",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.24",
+          "aum_pct_num": 1.24,
+          "shares_raw": "15,933",
+          "shares_num": 15933,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.35",
+          "aum_pct_num": 1.35,
+          "shares_raw": "15,933",
+          "shares_num": 15933,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.73",
+          "aum_pct_num": 1.73,
+          "shares_raw": "18,241",
+          "shares_num": 18241,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.49",
+          "aum_pct_num": 1.49,
+          "shares_raw": "16,083",
+          "shares_num": 16083,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Poly Medicure Limited",
+      "fincode": "131768",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.23",
+          "aum_pct_num": 1.23,
+          "shares_raw": "48,994",
+          "shares_num": 48994,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "0.70",
+          "aum_pct_num": 0.7,
+          "shares_raw": "32,752",
+          "shares_num": 32752,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "0.29",
+          "aum_pct_num": 0.29,
+          "shares_raw": "12,307",
+          "shares_num": 12307,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "0.60",
+          "aum_pct_num": 0.6,
+          "shares_raw": "19,258",
+          "shares_num": 19258,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Zydus Lifesciences Limited",
+      "fincode": "132321",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.14",
+          "aum_pct_num": 1.14,
+          "shares_raw": "76,901",
+          "shares_num": 76901,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "0.83",
+          "aum_pct_num": 0.83,
+          "shares_raw": "52,770",
+          "shares_num": 52770,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "0.49",
+          "aum_pct_num": 0.49,
+          "shares_raw": "28,460",
+          "shares_num": 28460,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "IPCA Laboratories Limited",
+      "fincode": "124494",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.02",
+          "aum_pct_num": 1.02,
+          "shares_raw": "40,227",
+          "shares_num": 40227,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.17",
+          "aum_pct_num": 2.17,
+          "shares_raw": "75,439",
+          "shares_num": 75439,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.96",
+          "aum_pct_num": 1.96,
+          "shares_raw": "68,409",
+          "shares_num": 68409,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "0.78",
+          "aum_pct_num": 0.78,
+          "shares_raw": "26,104",
+          "shares_num": 26104,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Aarti Pharmalabs Limited",
+      "fincode": "308020",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "0.96",
+          "aum_pct_num": 0.96,
+          "shares_raw": "78,109",
+          "shares_num": 78109,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "0.48",
+          "aum_pct_num": 0.48,
+          "shares_raw": "44,964",
+          "shares_num": 44964,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "0.61",
+          "aum_pct_num": 0.61,
+          "shares_raw": "44,964",
+          "shares_num": 44964,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.02",
+          "aum_pct_num": 1.02,
+          "shares_raw": "66,655",
+          "shares_num": 66655,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "AstraZeneca Pharma India Limited",
+      "fincode": "106820",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "0.95",
+          "aum_pct_num": 0.95,
+          "shares_raw": "6,948",
+          "shares_num": 6948,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.07",
+          "aum_pct_num": 1.07,
+          "shares_raw": "7,632",
+          "shares_num": 7632,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.48",
+          "aum_pct_num": 1.48,
+          "shares_raw": "8,906",
+          "shares_num": 8906,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.55",
+          "aum_pct_num": 1.55,
+          "shares_raw": "8,906",
+          "shares_num": 8906,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Senores Pharmaceuticals Limited",
+      "fincode": "316263",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "0.85",
+          "aum_pct_num": 0.85,
+          "shares_raw": "57,198",
+          "shares_num": 57198,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Sudeep Pharma Limited",
+      "fincode": "239342",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "0.74",
+          "aum_pct_num": 0.74,
+          "shares_raw": "62,868",
+          "shares_num": 62868,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "0.67",
+          "aum_pct_num": 0.67,
+          "shares_raw": "62,868",
+          "shares_num": 62868,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "0.75",
+          "aum_pct_num": 0.75,
+          "shares_raw": "62,868",
+          "shares_num": 62868,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "0.98",
+          "aum_pct_num": 0.98,
+          "shares_raw": "78,780",
+          "shares_num": 78780,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Supriya Lifescience Limited",
+      "fincode": "227331",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "0.73",
+          "aum_pct_num": 0.73,
+          "shares_raw": "63,332",
+          "shares_num": 63332,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "0.64",
+          "aum_pct_num": 0.64,
+          "shares_raw": "63,332",
+          "shares_num": 63332,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "0.84",
+          "aum_pct_num": 0.84,
+          "shares_raw": "68,038",
+          "shares_num": 68038,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "0.94",
+          "aum_pct_num": 0.94,
+          "shares_raw": "68,038",
+          "shares_num": 68038,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Anthem Biosciences Limited",
+      "fincode": "228049",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "0.73",
+          "aum_pct_num": 0.73,
+          "shares_raw": "57,568",
+          "shares_num": 57568,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "0.42",
+          "aum_pct_num": 0.42,
+          "shares_raw": "34,514",
+          "shares_num": 34514,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Innova Captab Limited",
+      "fincode": "306605",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "0.69",
+          "aum_pct_num": 0.69,
+          "shares_raw": "55,468",
+          "shares_num": 55468,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Zota Health Care Limited",
+      "fincode": "285652",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "0.63",
+          "aum_pct_num": 0.63,
+          "shares_raw": "28,827",
+          "shares_num": 28827,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "0.55",
+          "aum_pct_num": 0.55,
+          "shares_raw": "28,827",
+          "shares_num": 28827,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "0.66",
+          "aum_pct_num": 0.66,
+          "shares_raw": "28,827",
+          "shares_num": 28827,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "0.87",
+          "aum_pct_num": 0.87,
+          "shares_raw": "33,071",
+          "shares_num": 33071,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Procter & Gamble Health Limited",
+      "fincode": "100126",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "0.61",
+          "aum_pct_num": 0.61,
+          "shares_raw": "7,066",
+          "shares_num": 7066,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Mankind Pharma Limited",
+      "fincode": "211840",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "0.50",
+          "aum_pct_num": 0.5,
+          "shares_raw": "13,305",
+          "shares_num": 13305,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "0.24",
+          "aum_pct_num": 0.24,
+          "shares_raw": "5,652",
+          "shares_num": 5652,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Cohance Lifesciences Limited",
+      "fincode": "297629",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "0.33",
+          "aum_pct_num": 0.33,
+          "shares_raw": "41,722",
+          "shares_num": 41722,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Tatva Chintan Pharma Chem Limited",
+      "fincode": "223112",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "0.24",
+          "aum_pct_num": 0.24,
+          "shares_raw": "11,183",
+          "shares_num": 11183,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "0.21",
+          "aum_pct_num": 0.21,
+          "shares_raw": "11,183",
+          "shares_num": 11183,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "0.20",
+          "aum_pct_num": 0.2,
+          "shares_raw": "8,774",
+          "shares_num": 8774,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Orchid Pharma Limited",
+      "fincode": "124372",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "0.23",
+          "aum_pct_num": 0.23,
+          "shares_raw": "22,290",
+          "shares_num": 22290,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "0.19",
+          "aum_pct_num": 0.19,
+          "shares_raw": "22,290",
+          "shares_num": 22290,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "0.26",
+          "aum_pct_num": 0.26,
+          "shares_raw": "22,290",
+          "shares_num": 22290,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "0.32",
+          "aum_pct_num": 0.32,
+          "shares_raw": "22,290",
+          "shares_num": 22290,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Dr. Reddy's Laboratories Limited",
+      "fincode": "100124",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "0.74",
+          "aum_pct_num": 0.74,
+          "shares_raw": "32,993",
+          "shares_num": 32993,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Alkem Laboratories Limited",
+      "fincode": "212427",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "0.15",
+          "aum_pct_num": 0.15,
+          "shares_raw": "1,607",
+          "shares_num": 1607,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "0.54",
+          "aum_pct_num": 0.54,
+          "shares_raw": "5,134",
+          "shares_num": 5134,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.36",
+          "aum_pct_num": 3.36,
+          "shares_raw": "29,069",
+          "shares_num": 29069,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Abbott India Limited",
+      "fincode": "100488",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "0.58",
+          "aum_pct_num": 0.58,
+          "shares_raw": "1,168",
+          "shares_num": 1168,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.78",
+          "aum_pct_num": 1.78,
+          "shares_raw": "3,178",
+          "shares_num": 3178,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Shilpa Medicare Limited",
+      "fincode": "130549",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "0.52",
+          "aum_pct_num": 0.52,
+          "shares_raw": "82,592",
+          "shares_num": 82592,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "0.49",
+          "aum_pct_num": 0.49,
+          "shares_raw": "82,592",
+          "shares_num": 82592,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Dr.Agarwals Eye Hospital Limited",
+      "fincode": "126783",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "0.33",
+          "aum_pct_num": 0.33,
+          "shares_raw": "3,864",
+          "shares_num": 3864,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "0.59",
+          "aum_pct_num": 0.59,
+          "shares_raw": "6,286",
+          "shares_num": 6286,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Torrent Pharmaceuticals Limited",
+      "fincode": "100420",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "0.29",
+          "aum_pct_num": 0.29,
+          "shares_raw": "3,577",
+          "shares_num": 3577,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Eris Lifesciences Limited",
+      "fincode": "222255",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.36",
+          "aum_pct_num": 1.36,
+          "shares_raw": "48,562",
+          "shares_num": 48562,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Jupiter Life Line Hospitals Limited",
+      "fincode": "277614",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "0.82",
+          "aum_pct_num": 0.82,
+          "shares_raw": "29,865",
+          "shares_num": 29865,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Cipla Limited",
+      "fincode": "100087",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "0.80",
+          "aum_pct_num": 0.8,
+          "shares_raw": "29,879",
+          "shares_num": 29879,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    }
+  ]
+}

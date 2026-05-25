@@ -1,0 +1,833 @@
+{
+  "meta": {
+    "source": "https://www.rupeevest.com/Mutual-Fund-Portfolio-Tracker",
+    "endpoint": "https://www.rupeevest.com/home/get_mf_portfolio_tracker?schemecode=49044",
+    "fund": "Aditya Birla SL Nifty India Defence Index Fund-Reg(G)",
+    "schemecode": "49044",
+    "classification": "Equity : Index Funds",
+    "aumTotalCr": 1132.89,
+    "aumAsOf": "2026-04-30T00:00:00.000Z",
+    "scrapedAt": "2026-05-25T12:06:09.060Z",
+    "months": [
+      {
+        "label": "Apr-26",
+        "aumCr": "1132.9"
+      },
+      {
+        "label": "Mar-26",
+        "aumCr": "847.2"
+      },
+      {
+        "label": "Feb-26",
+        "aumCr": "900.4"
+      },
+      {
+        "label": "Jan-26",
+        "aumCr": "855.8"
+      }
+    ],
+    "section": "Equity Holdings",
+    "extractionMethod": "json-endpoint",
+    "arrowLogic": "Per the tracker UI: arrow compares a month's share count to the next-older month (up=increase, down=decrease, flat/none=no change). Oldest column shows no arrow (flat/none). 'missing' = no holding reported that month."
+  },
+  "rows": [
+    {
+      "company_name": "Hindustan Aeronautics Limited",
+      "fincode": "219494",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "19.97",
+          "aum_pct_num": 19.97,
+          "shares_raw": "5,21,386",
+          "shares_num": 521386,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "19.88",
+          "aum_pct_num": 19.88,
+          "shares_raw": "4,82,910",
+          "shares_num": 482910,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "16.90",
+          "aum_pct_num": 16.9,
+          "shares_raw": "3,88,735",
+          "shares_num": 388735,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "19.80",
+          "aum_pct_num": 19.8,
+          "shares_raw": "3,66,864",
+          "shares_num": 366864,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Bharat Electronics Limited",
+      "fincode": "100049",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "17.50",
+          "aum_pct_num": 17.5,
+          "shares_raw": "45,96,807",
+          "shares_num": 4596807,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "20.13",
+          "aum_pct_num": 20.13,
+          "shares_raw": "42,57,585",
+          "shares_num": 4257585,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "21.25",
+          "aum_pct_num": 21.25,
+          "shares_raw": "43,01,695",
+          "shares_num": 4301695,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "21.30",
+          "aum_pct_num": 21.3,
+          "shares_raw": "40,59,676",
+          "shares_num": 4059676,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Bharat Forge Limited",
+      "fincode": "100493",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "14.73",
+          "aum_pct_num": 14.73,
+          "shares_raw": "8,86,854",
+          "shares_num": 886854,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "16.24",
+          "aum_pct_num": 16.24,
+          "shares_raw": "8,21,409",
+          "shares_num": 821409,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "17.34",
+          "aum_pct_num": 17.34,
+          "shares_raw": "8,17,089",
+          "shares_num": 817089,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "12.99",
+          "aum_pct_num": 12.99,
+          "shares_raw": "7,71,119",
+          "shares_num": 771119,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Solar Industries India Limited",
+      "fincode": "132725",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "11.05",
+          "aum_pct_num": 11.05,
+          "shares_raw": "81,047",
+          "shares_num": 81047,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "10.70",
+          "aum_pct_num": 10.7,
+          "shares_raw": "75,066",
+          "shares_num": 75066,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "11.20",
+          "aum_pct_num": 11.2,
+          "shares_raw": "74,654",
+          "shares_num": 74654,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "11.10",
+          "aum_pct_num": 11.1,
+          "shares_raw": "70,454",
+          "shares_num": 70454,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Mazagon Dock Shipbuilders Limited",
+      "fincode": "219700",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "6.10",
+          "aum_pct_num": 6.1,
+          "shares_raw": "2,52,761",
+          "shares_num": 252761,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "5.71",
+          "aum_pct_num": 5.71,
+          "shares_raw": "2,34,109",
+          "shares_num": 234109,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "5.75",
+          "aum_pct_num": 5.75,
+          "shares_raw": "2,32,822",
+          "shares_num": 232822,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "6.61",
+          "aum_pct_num": 6.61,
+          "shares_raw": "2,19,723",
+          "shares_num": 219723,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Cochin Shipyard Limited",
+      "fincode": "219691",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "4.31",
+          "aum_pct_num": 4.31,
+          "shares_raw": "2,81,608",
+          "shares_num": 281608,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.67",
+          "aum_pct_num": 3.67,
+          "shares_raw": "2,60,827",
+          "shares_num": 260827,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "4.30",
+          "aum_pct_num": 4.3,
+          "shares_raw": "2,59,391",
+          "shares_num": 259391,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "4.75",
+          "aum_pct_num": 4.75,
+          "shares_raw": "2,44,798",
+          "shares_num": 244798,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "MTAR Technologies Limited",
+      "fincode": "208763",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "4.06",
+          "aum_pct_num": 4.06,
+          "shares_raw": "71,227",
+          "shares_num": 71227,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.70",
+          "aum_pct_num": 2.7,
+          "shares_raw": "65,971",
+          "shares_num": 65971,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.74",
+          "aum_pct_num": 2.74,
+          "shares_raw": "64,838",
+          "shares_num": 64838,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.10",
+          "aum_pct_num": 2.1,
+          "shares_raw": "61,190",
+          "shares_num": 61190,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Bharat Dynamics Limited",
+      "fincode": "212705",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.69",
+          "aum_pct_num": 3.69,
+          "shares_raw": "3,06,644",
+          "shares_num": 306644,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.68",
+          "aum_pct_num": 3.68,
+          "shares_raw": "2,84,015",
+          "shares_num": 284015,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.97",
+          "aum_pct_num": 3.97,
+          "shares_raw": "2,82,448",
+          "shares_num": 282448,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "4.79",
+          "aum_pct_num": 4.79,
+          "shares_raw": "2,66,557",
+          "shares_num": 266557,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Data Patterns India Private Limited",
+      "fincode": "222554",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.55",
+          "aum_pct_num": 3.55,
+          "shares_raw": "98,508",
+          "shares_num": 98508,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.27",
+          "aum_pct_num": 3.27,
+          "shares_raw": "91,239",
+          "shares_num": 91239,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.24",
+          "aum_pct_num": 3.24,
+          "shares_raw": "90,733",
+          "shares_num": 90733,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.67",
+          "aum_pct_num": 2.67,
+          "shares_raw": "85,629",
+          "shares_num": 85629,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Astra Microwave Products Limited",
+      "fincode": "132493",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.80",
+          "aum_pct_num": 2.8,
+          "shares_raw": "2,81,556",
+          "shares_num": 281556,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.63",
+          "aum_pct_num": 2.63,
+          "shares_raw": "2,60,779",
+          "shares_num": 260779,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.79",
+          "aum_pct_num": 2.79,
+          "shares_raw": "2,59,337",
+          "shares_num": 259337,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.81",
+          "aum_pct_num": 2.81,
+          "shares_raw": "2,44,747",
+          "shares_num": 244747,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Garden Reach Shipbuilders & Engineers Limited",
+      "fincode": "208196",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.52",
+          "aum_pct_num": 2.52,
+          "shares_raw": "97,459",
+          "shares_num": 97459,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.10",
+          "aum_pct_num": 2.1,
+          "shares_raw": "90,267",
+          "shares_num": 90267,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.43",
+          "aum_pct_num": 2.43,
+          "shares_raw": "89,766",
+          "shares_num": 89766,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.74",
+          "aum_pct_num": 2.74,
+          "shares_raw": "84,716",
+          "shares_num": 84716,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Zen Technologies Ltd",
+      "fincode": "190032",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.26",
+          "aum_pct_num": 2.26,
+          "shares_raw": "1,53,391",
+          "shares_num": 153391,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.14",
+          "aum_pct_num": 2.14,
+          "shares_raw": "1,42,071",
+          "shares_num": 142071,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.13",
+          "aum_pct_num": 2.13,
+          "shares_raw": "1,41,261",
+          "shares_num": 141261,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.21",
+          "aum_pct_num": 2.21,
+          "shares_raw": "1,33,313",
+          "shares_num": 133313,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "BEML Limited",
+      "fincode": "100048",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.03",
+          "aum_pct_num": 2.03,
+          "shares_raw": "1,27,228",
+          "shares_num": 127228,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.90",
+          "aum_pct_num": 1.9,
+          "shares_raw": "1,17,839",
+          "shares_num": 117839,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.19",
+          "aum_pct_num": 2.19,
+          "shares_raw": "1,17,186",
+          "shares_num": 117186,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.32",
+          "aum_pct_num": 2.32,
+          "shares_raw": "1,10,593",
+          "shares_num": 110593,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Dynamatic Technologies Ltd",
+      "fincode": "105242",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.32",
+          "aum_pct_num": 1.32,
+          "shares_raw": "12,967",
+          "shares_num": 12967,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.28",
+          "aum_pct_num": 1.28,
+          "shares_raw": "12,010",
+          "shares_num": 12010,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.34",
+          "aum_pct_num": 1.34,
+          "shares_raw": "11,985",
+          "shares_num": 11985,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.16",
+          "aum_pct_num": 1.16,
+          "shares_raw": "11,311",
+          "shares_num": 11311,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Apollo Micro Systems Ltd",
+      "fincode": "287382",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.16",
+          "aum_pct_num": 1.16,
+          "shares_raw": "4,42,759",
+          "shares_num": 442759,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "0.88",
+          "aum_pct_num": 0.88,
+          "shares_raw": "4,10,085",
+          "shares_num": 410085,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "AXISCADES Technologies Ltd",
+      "fincode": "132395",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.05",
+          "aum_pct_num": 1.05,
+          "shares_raw": "59,503",
+          "shares_num": 59503,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "0.99",
+          "aum_pct_num": 0.99,
+          "shares_raw": "55,112",
+          "shares_num": 55112,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Paras Defence & Space Technologies Ltd",
+      "fincode": "301603",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "0.83",
+          "aum_pct_num": 0.83,
+          "shares_raw": "1,18,158",
+          "shares_num": 118158,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "0.77",
+          "aum_pct_num": 0.77,
+          "shares_raw": "1,09,438",
+          "shares_num": 109438,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "0.77",
+          "aum_pct_num": 0.77,
+          "shares_raw": "1,08,833",
+          "shares_num": 108833,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "0.86",
+          "aum_pct_num": 0.86,
+          "shares_raw": "1,02,709",
+          "shares_num": 102709,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Mishra Dhatu Nigam Limited",
+      "fincode": "208745",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "0.56",
+          "aum_pct_num": 0.56,
+          "shares_raw": "1,62,508",
+          "shares_num": 162508,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "0.48",
+          "aum_pct_num": 0.48,
+          "shares_raw": "1,50,516",
+          "shares_num": 150516,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "0.58",
+          "aum_pct_num": 0.58,
+          "shares_raw": "1,49,685",
+          "shares_num": 149685,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "0.62",
+          "aum_pct_num": 0.62,
+          "shares_raw": "1,41,264",
+          "shares_num": 141264,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Aequs Ltd/India",
+      "fincode": "213862",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "0.45",
+          "aum_pct_num": 0.45,
+          "shares_raw": "2,71,209",
+          "shares_num": 271209,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "0.36",
+          "aum_pct_num": 0.36,
+          "shares_raw": "2,51,194",
+          "shares_num": 251194,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Cyient DLM Ltd",
+      "fincode": "209063",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "0.41",
+          "aum_pct_num": 0.41,
+          "shares_raw": "1,16,726",
+          "shares_num": 116726,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "0.48",
+          "aum_pct_num": 0.48,
+          "shares_raw": "1,10,159",
+          "shares_num": 110159,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Unimech Aerospace And Manufacturing Ltd",
+      "fincode": "316596",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "0.19",
+          "aum_pct_num": 0.19,
+          "shares_raw": "19,560",
+          "shares_num": 19560,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "0.19",
+          "aum_pct_num": 0.19,
+          "shares_raw": "18,460",
+          "shares_num": 18460,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    }
+  ]
+}

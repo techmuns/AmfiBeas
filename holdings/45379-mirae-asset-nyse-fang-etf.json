@@ -1,0 +1,453 @@
+{
+  "meta": {
+    "source": "https://www.rupeevest.com/Mutual-Fund-Portfolio-Tracker",
+    "endpoint": "https://www.rupeevest.com/home/get_mf_portfolio_tracker?schemecode=45379",
+    "fund": "Mirae Asset NYSE FANG+ ETF",
+    "schemecode": "45379",
+    "classification": "Equity : ETFs",
+    "aumTotalCr": 3748.74,
+    "aumAsOf": "2026-04-30T00:00:00.000Z",
+    "scrapedAt": "2026-05-25T12:34:59.987Z",
+    "months": [
+      {
+        "label": "Apr-26",
+        "aumCr": "3748.7"
+      },
+      {
+        "label": "Mar-26",
+        "aumCr": "3184.9"
+      },
+      {
+        "label": "Feb-26",
+        "aumCr": "3194"
+      },
+      {
+        "label": "Jan-26",
+        "aumCr": "3424.6"
+      }
+    ],
+    "section": "Equity Holdings",
+    "extractionMethod": "json-endpoint",
+    "arrowLogic": "Per the tracker UI: arrow compares a month's share count to the next-older month (up=increase, down=decrease, flat/none=no change). Oldest column shows no arrow (flat/none). 'missing' = no holding reported that month."
+  },
+  "rows": [
+    {
+      "company_name": "Broadcom Inc",
+      "fincode": "225172",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "11.93",
+          "aum_pct_num": 11.93,
+          "shares_raw": "1,12,476",
+          "shares_num": 112476,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "10.35",
+          "aum_pct_num": 10.35,
+          "shares_raw": "1,12,493",
+          "shares_num": 112493,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "10.44",
+          "aum_pct_num": 10.44,
+          "shares_raw": "1,14,753",
+          "shares_num": 114753,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "10.21",
+          "aum_pct_num": 10.21,
+          "shares_raw": "1,14,801",
+          "shares_num": 114801,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Amazon.Com Inc",
+      "fincode": "224342",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "11.40",
+          "aum_pct_num": 11.4,
+          "shares_raw": "1,69,317",
+          "shares_num": 169317,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "10.48",
+          "aum_pct_num": 10.48,
+          "shares_raw": "1,69,344",
+          "shares_num": 169344,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "10.11",
+          "aum_pct_num": 10.11,
+          "shares_raw": "1,69,077",
+          "shares_num": 169077,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "10.86",
+          "aum_pct_num": 10.86,
+          "shares_raw": "1,69,148",
+          "shares_num": 169148,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Alphabet Inc.",
+      "fincode": "279017",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "11.29",
+          "aum_pct_num": 11.29,
+          "shares_raw": "1,15,488",
+          "shares_num": 115488,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "9.87",
+          "aum_pct_num": 9.87,
+          "shares_raw": "1,15,506",
+          "shares_num": 115506,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "11.19",
+          "aum_pct_num": 11.19,
+          "shares_raw": "1,26,084",
+          "shares_num": 126084,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "11.44",
+          "aum_pct_num": 11.44,
+          "shares_raw": "1,26,137",
+          "shares_num": 126137,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Micron Technology Inc",
+      "fincode": "225206",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "10.11",
+          "aum_pct_num": 10.11,
+          "shares_raw": "76,959",
+          "shares_num": 76959,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "7.73",
+          "aum_pct_num": 7.73,
+          "shares_raw": "76,971",
+          "shares_num": 76971,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Nvidia Corporation",
+      "fincode": "225213",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "9.99",
+          "aum_pct_num": 9.99,
+          "shares_raw": "1,96,977",
+          "shares_num": 196977,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "10.21",
+          "aum_pct_num": 10.21,
+          "shares_raw": "1,97,007",
+          "shares_num": 197007,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "11.04",
+          "aum_pct_num": 11.04,
+          "shares_raw": "2,18,859",
+          "shares_num": 218859,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "11.23",
+          "aum_pct_num": 11.23,
+          "shares_raw": "2,18,950",
+          "shares_num": 218950,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Apple Inc.",
+      "fincode": "298292",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "9.80",
+          "aum_pct_num": 9.8,
+          "shares_raw": "1,42,172",
+          "shares_num": 142172,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "10.73",
+          "aum_pct_num": 10.73,
+          "shares_raw": "1,42,195",
+          "shares_num": 142195,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "10.35",
+          "aum_pct_num": 10.35,
+          "shares_raw": "1,37,624",
+          "shares_num": 137624,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "9.59",
+          "aum_pct_num": 9.59,
+          "shares_raw": "1,37,681",
+          "shares_num": 137681,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Microsoft Corporation",
+      "fincode": "218241",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "9.40",
+          "aum_pct_num": 9.4,
+          "shares_raw": "90,698",
+          "shares_num": 90698,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "9.98",
+          "aum_pct_num": 9.98,
+          "shares_raw": "90,712",
+          "shares_num": 90712,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "8.79",
+          "aum_pct_num": 8.79,
+          "shares_raw": "78,576",
+          "shares_num": 78576,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "9.08",
+          "aum_pct_num": 9.08,
+          "shares_raw": "78,609",
+          "shares_num": 78609,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Meta Platforms",
+      "fincode": "240763",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "8.97",
+          "aum_pct_num": 8.97,
+          "shares_raw": "57,716",
+          "shares_num": 57716,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "9.82",
+          "aum_pct_num": 9.82,
+          "shares_raw": "57,725",
+          "shares_num": 57725,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "10.63",
+          "aum_pct_num": 10.63,
+          "shares_raw": "57,600",
+          "shares_num": 57600,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "11.08",
+          "aum_pct_num": 11.08,
+          "shares_raw": "57,625",
+          "shares_num": 57625,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Netflix Inc.",
+      "fincode": "225210",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "8.92",
+          "aum_pct_num": 8.92,
+          "shares_raw": "3,75,234",
+          "shares_num": 375234,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "10.72",
+          "aum_pct_num": 10.72,
+          "shares_raw": "3,75,292",
+          "shares_num": 375292,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "10.82",
+          "aum_pct_num": 10.82,
+          "shares_raw": "3,94,680",
+          "shares_num": 394680,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "8.85",
+          "aum_pct_num": 8.85,
+          "shares_raw": "3,94,846",
+          "shares_num": 394846,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Palantir Technologies Inc. Class A",
+      "fincode": "317495",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "8.22",
+          "aum_pct_num": 8.22,
+          "shares_raw": "2,32,602",
+          "shares_num": 232602,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "10.11",
+          "aum_pct_num": 10.11,
+          "shares_raw": "2,32,638",
+          "shares_num": 232638,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "8.24",
+          "aum_pct_num": 8.24,
+          "shares_raw": "2,11,020",
+          "shares_num": 211020,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "8.30",
+          "aum_pct_num": 8.3,
+          "shares_raw": "2,11,108",
+          "shares_num": 211108,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Crowdstrike Holdings Inc",
+      "fincode": "303393",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "8.43",
+          "aum_pct_num": 8.43,
+          "shares_raw": "79,596",
+          "shares_num": 79596,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "9.43",
+          "aum_pct_num": 9.43,
+          "shares_raw": "79,629",
+          "shares_num": 79629,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    }
+  ]
+}

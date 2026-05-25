@@ -1,0 +1,567 @@
+{
+  "meta": {
+    "source": "https://www.rupeevest.com/Mutual-Fund-Portfolio-Tracker",
+    "endpoint": "https://www.rupeevest.com/home/get_mf_portfolio_tracker?schemecode=44435",
+    "fund": "UTI Nifty Bank ETF",
+    "schemecode": "44435",
+    "classification": "Equity : ETFs",
+    "aumTotalCr": 3387.04,
+    "aumAsOf": "2026-04-30T00:00:00.000Z",
+    "scrapedAt": "2026-05-25T12:53:43.840Z",
+    "months": [
+      {
+        "label": "Apr-26",
+        "aumCr": "3387"
+      },
+      {
+        "label": "Mar-26",
+        "aumCr": "3320.2"
+      },
+      {
+        "label": "Feb-26",
+        "aumCr": "4033.8"
+      },
+      {
+        "label": "Jan-26",
+        "aumCr": "3977.7"
+      }
+    ],
+    "section": "Equity Holdings",
+    "extractionMethod": "json-endpoint",
+    "arrowLogic": "Per the tracker UI: arrow compares a month's share count to the next-older month (up=increase, down=decrease, flat/none=no change). Oldest column shows no arrow (flat/none). 'missing' = no holding reported that month."
+  },
+  "rows": [
+    {
+      "company_name": "EQ - HDFC BANK LIMITED",
+      "fincode": "100180",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "18.37",
+          "aum_pct_num": 18.37,
+          "shares_raw": "80,63,485",
+          "shares_num": 8063485,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "19.01",
+          "aum_pct_num": 19.01,
+          "shares_raw": "86,25,681",
+          "shares_num": 8625681,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "19.69",
+          "aum_pct_num": 19.69,
+          "shares_raw": "89,48,549",
+          "shares_num": 8948549,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "22.02",
+          "aum_pct_num": 22.02,
+          "shares_raw": "94,25,331",
+          "shares_num": 9425331,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "EQ - ICICI BANK LTD",
+      "fincode": "132174",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "13.55",
+          "aum_pct_num": 13.55,
+          "shares_raw": "36,32,244",
+          "shares_num": 3632244,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "14.11",
+          "aum_pct_num": 14.11,
+          "shares_raw": "38,85,489",
+          "shares_num": 3885489,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "16.13",
+          "aum_pct_num": 16.13,
+          "shares_raw": "47,19,226",
+          "shares_num": 4719226,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "18.18",
+          "aum_pct_num": 18.18,
+          "shares_raw": "53,35,364",
+          "shares_num": 5335364,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "EQ - AXIS BANK LTD.",
+      "fincode": "132215",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "10.02",
+          "aum_pct_num": 10.02,
+          "shares_raw": "26,75,446",
+          "shares_num": 2675446,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "10.01",
+          "aum_pct_num": 10.01,
+          "shares_raw": "28,61,981",
+          "shares_num": 2861981,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "9.94",
+          "aum_pct_num": 9.94,
+          "shares_raw": "28,96,990",
+          "shares_num": 2896990,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "10.05",
+          "aum_pct_num": 10.05,
+          "shares_raw": "29,17,528",
+          "shares_num": 2917528,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "EQ - STATE BANK OF INDIA",
+      "fincode": "100112",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "9.93",
+          "aum_pct_num": 9.93,
+          "shares_raw": "31,49,193",
+          "shares_num": 3149193,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "9.94",
+          "aum_pct_num": 9.94,
+          "shares_raw": "33,68,758",
+          "shares_num": 3368758,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "10.68",
+          "aum_pct_num": 10.68,
+          "shares_raw": "35,83,556",
+          "shares_num": 3583556,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "10.42",
+          "aum_pct_num": 10.42,
+          "shares_raw": "38,48,664",
+          "shares_num": 3848664,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "EQ - KOTAK MAHINDRA BANK LTD.",
+      "fincode": "100247",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "9.67",
+          "aum_pct_num": 9.67,
+          "shares_raw": "85,47,958",
+          "shares_num": 8547958,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "9.73",
+          "aum_pct_num": 9.73,
+          "shares_raw": "91,43,936",
+          "shares_num": 9143936,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "9.16",
+          "aum_pct_num": 9.16,
+          "shares_raw": "89,01,084",
+          "shares_num": 8901084,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "8.85",
+          "aum_pct_num": 8.85,
+          "shares_raw": "86,30,311",
+          "shares_num": 8630311,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "EQ - FEDERAL BANK LTD.",
+      "fincode": "100469",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "6.27",
+          "aum_pct_num": 6.27,
+          "shares_raw": "73,95,914",
+          "shares_num": 7395914,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "6.18",
+          "aum_pct_num": 6.18,
+          "shares_raw": "79,11,570",
+          "shares_num": 7911570,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "5.55",
+          "aum_pct_num": 5.55,
+          "shares_raw": "74,60,708",
+          "shares_num": 7460708,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "5.01",
+          "aum_pct_num": 5.01,
+          "shares_raw": "69,32,371",
+          "shares_num": 6932371,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "EQ - INDUSIND BANK",
+      "fincode": "132187",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "5.35",
+          "aum_pct_num": 5.35,
+          "shares_raw": "19,78,759",
+          "shares_num": 1978759,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "4.80",
+          "aum_pct_num": 4.8,
+          "shares_raw": "21,16,720",
+          "shares_num": 2116720,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "4.72",
+          "aum_pct_num": 4.72,
+          "shares_raw": "19,90,574",
+          "shares_num": 1990574,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "4.15",
+          "aum_pct_num": 4.15,
+          "shares_raw": "18,42,636",
+          "shares_num": 1842636,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "EQ - AU SMALL FINANCE BANK LTD",
+      "fincode": "286335",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "4.97",
+          "aum_pct_num": 4.97,
+          "shares_raw": "16,55,419",
+          "shares_num": 1655419,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "4.49",
+          "aum_pct_num": 4.49,
+          "shares_raw": "17,70,837",
+          "shares_num": 1770837,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.96",
+          "aum_pct_num": 3.96,
+          "shares_raw": "16,68,533",
+          "shares_num": 1668533,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.76",
+          "aum_pct_num": 3.76,
+          "shares_raw": "15,23,773",
+          "shares_num": 1523773,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "EQ - BANK OF BARODA",
+      "fincode": "132134",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "4.34",
+          "aum_pct_num": 4.34,
+          "shares_raw": "55,74,179",
+          "shares_num": 5574179,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "4.45",
+          "aum_pct_num": 4.45,
+          "shares_raw": "59,62,821",
+          "shares_num": 5962821,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "4.45",
+          "aum_pct_num": 4.45,
+          "shares_raw": "55,77,608",
+          "shares_num": 5577608,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.86",
+          "aum_pct_num": 3.86,
+          "shares_raw": "51,30,639",
+          "shares_num": 5130639,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "EQ - IDFC FIRST BANK LTD",
+      "fincode": "278580",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "4.12",
+          "aum_pct_num": 4.12,
+          "shares_raw": "2,00,39,311",
+          "shares_num": 20039311,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.80",
+          "aum_pct_num": 3.8,
+          "shares_raw": "2,14,36,483",
+          "shares_num": 21436483,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.60",
+          "aum_pct_num": 3.6,
+          "shares_raw": "1,97,70,328",
+          "shares_num": 19770328,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.78",
+          "aum_pct_num": 3.78,
+          "shares_raw": "1,79,88,505",
+          "shares_num": 17988505,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "EQ - CANARA BANK",
+      "fincode": "132483",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "4.05",
+          "aum_pct_num": 4.05,
+          "shares_raw": "1,01,99,003",
+          "shares_num": 10199003,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "4.06",
+          "aum_pct_num": 4.06,
+          "shares_raw": "1,09,10,095",
+          "shares_num": 10910095,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.90",
+          "aum_pct_num": 3.9,
+          "shares_raw": "1,00,04,892",
+          "shares_num": 10004892,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.35",
+          "aum_pct_num": 3.35,
+          "shares_raw": "90,31,130",
+          "shares_num": 9031130,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "EQ - PUNJAB NATIONAL BANK",
+      "fincode": "132461",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.37",
+          "aum_pct_num": 3.37,
+          "shares_raw": "1,04,30,619",
+          "shares_num": 10430619,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.38",
+          "aum_pct_num": 3.38,
+          "shares_raw": "1,11,57,858",
+          "shares_num": 11157858,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.40",
+          "aum_pct_num": 3.4,
+          "shares_raw": "1,05,94,168",
+          "shares_num": 10594168,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.16",
+          "aum_pct_num": 3.16,
+          "shares_raw": "1,00,43,138",
+          "shares_num": 10043138,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "EQ - YES BANK LTD.",
+      "fincode": "132648",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.13",
+          "aum_pct_num": 3.13,
+          "shares_raw": "5,31,23,218",
+          "shares_num": 53123218,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.95",
+          "aum_pct_num": 2.95,
+          "shares_raw": "5,68,27,044",
+          "shares_num": 56827044,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.29",
+          "aum_pct_num": 2.29,
+          "shares_raw": "4,46,41,984",
+          "shares_num": 44641984,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.71",
+          "aum_pct_num": 1.71,
+          "shares_raw": "3,18,39,293",
+          "shares_num": 31839293,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "EQ - UNION BANK OF INDIA",
+      "fincode": "132477",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.86",
+          "aum_pct_num": 2.86,
+          "shares_raw": "58,45,434",
+          "shares_num": 5845434,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.09",
+          "aum_pct_num": 3.09,
+          "shares_raw": "62,52,988",
+          "shares_num": 6252988,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.51",
+          "aum_pct_num": 2.51,
+          "shares_raw": "50,15,462",
+          "shares_num": 5015462,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.69",
+          "aum_pct_num": 1.69,
+          "shares_raw": "37,08,984",
+          "shares_num": 3708984,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    }
+  ]
+}

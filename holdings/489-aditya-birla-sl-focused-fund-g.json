@@ -1,0 +1,1213 @@
+{
+  "meta": {
+    "source": "https://www.rupeevest.com/Mutual-Fund-Portfolio-Tracker",
+    "endpoint": "https://www.rupeevest.com/home/get_mf_portfolio_tracker?schemecode=489",
+    "fund": "Aditya Birla SL Focused Fund(G)",
+    "schemecode": "489",
+    "classification": "Equity : Focused",
+    "aumTotalCr": 7744.74,
+    "aumAsOf": "2026-04-30T00:00:00.000Z",
+    "scrapedAt": "2026-05-25T12:05:47.204Z",
+    "months": [
+      {
+        "label": "Apr-26",
+        "aumCr": "7744.7"
+      },
+      {
+        "label": "Mar-26",
+        "aumCr": "7132"
+      },
+      {
+        "label": "Feb-26",
+        "aumCr": "7971.3"
+      },
+      {
+        "label": "Jan-26",
+        "aumCr": "8068.1"
+      }
+    ],
+    "section": "Equity Holdings",
+    "extractionMethod": "json-endpoint",
+    "arrowLogic": "Per the tracker UI: arrow compares a month's share count to the next-older month (up=increase, down=decrease, flat/none=no change). Oldest column shows no arrow (flat/none). 'missing' = no holding reported that month."
+  },
+  "rows": [
+    {
+      "company_name": "Reliance Industries Limited",
+      "fincode": "100325",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "5.86",
+          "aum_pct_num": 5.86,
+          "shares_raw": "31,70,046",
+          "shares_num": 3170046,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "6.57",
+          "aum_pct_num": 6.57,
+          "shares_raw": "34,86,850",
+          "shares_num": 3486850,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "6.10",
+          "aum_pct_num": 6.1,
+          "shares_raw": "34,86,850",
+          "shares_num": 3486850,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "6.03",
+          "aum_pct_num": 6.03,
+          "shares_raw": "34,86,850",
+          "shares_num": 3486850,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "ICICI Bank Limited",
+      "fincode": "132174",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "5.69",
+          "aum_pct_num": 5.69,
+          "shares_raw": "34,87,746",
+          "shares_num": 3487746,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "5.90",
+          "aum_pct_num": 5.9,
+          "shares_raw": "34,87,746",
+          "shares_num": 3487746,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "6.03",
+          "aum_pct_num": 6.03,
+          "shares_raw": "34,87,746",
+          "shares_num": 3487746,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "6.41",
+          "aum_pct_num": 6.41,
+          "shares_raw": "38,14,545",
+          "shares_num": 3814545,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Infosys Limited",
+      "fincode": "100209",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "5.20",
+          "aum_pct_num": 5.2,
+          "shares_raw": "34,05,994",
+          "shares_num": 3405994,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "6.49",
+          "aum_pct_num": 6.49,
+          "shares_raw": "37,01,468",
+          "shares_num": 3701468,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "5.54",
+          "aum_pct_num": 5.54,
+          "shares_raw": "33,98,972",
+          "shares_num": 3398972,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "6.33",
+          "aum_pct_num": 6.33,
+          "shares_raw": "31,13,188",
+          "shares_num": 3113188,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "HDFC Bank Limited",
+      "fincode": "100180",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.99",
+          "aum_pct_num": 3.99,
+          "shares_raw": "40,07,378",
+          "shares_num": 4007378,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "4.11",
+          "aum_pct_num": 4.11,
+          "shares_raw": "40,07,378",
+          "shares_num": 4007378,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.64",
+          "aum_pct_num": 3.64,
+          "shares_raw": "32,70,326",
+          "shares_num": 3270326,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.77",
+          "aum_pct_num": 3.77,
+          "shares_raw": "32,70,326",
+          "shares_num": 3270326,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Bharti Airtel Limited",
+      "fincode": "132454",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.99",
+          "aum_pct_num": 3.99,
+          "shares_raw": "16,38,081",
+          "shares_num": 1638081,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "4.09",
+          "aum_pct_num": 4.09,
+          "shares_raw": "16,38,081",
+          "shares_num": 1638081,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.78",
+          "aum_pct_num": 3.78,
+          "shares_raw": "16,02,443",
+          "shares_num": 1602443,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "4.21",
+          "aum_pct_num": 4.21,
+          "shares_raw": "17,26,348",
+          "shares_num": 1726348,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "State Bank of India",
+      "fincode": "100112",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.92",
+          "aum_pct_num": 3.92,
+          "shares_raw": "28,44,690",
+          "shares_num": 2844690,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.91",
+          "aum_pct_num": 3.91,
+          "shares_raw": "28,44,690",
+          "shares_num": 2844690,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "4.29",
+          "aum_pct_num": 4.29,
+          "shares_raw": "28,44,690",
+          "shares_num": 2844690,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.80",
+          "aum_pct_num": 3.8,
+          "shares_raw": "28,44,690",
+          "shares_num": 2844690,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Axis Bank Limited",
+      "fincode": "132215",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.88",
+          "aum_pct_num": 3.88,
+          "shares_raw": "23,67,644",
+          "shares_num": 2367644,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.86",
+          "aum_pct_num": 3.86,
+          "shares_raw": "23,67,644",
+          "shares_num": 2367644,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "4.11",
+          "aum_pct_num": 4.11,
+          "shares_raw": "23,67,644",
+          "shares_num": 2367644,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "4.02",
+          "aum_pct_num": 4.02,
+          "shares_raw": "23,67,644",
+          "shares_num": 2367644,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Shriram Finance Ltd",
+      "fincode": "111218",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.77",
+          "aum_pct_num": 3.77,
+          "shares_raw": "31,17,892",
+          "shares_num": 3117892,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.81",
+          "aum_pct_num": 3.81,
+          "shares_raw": "31,17,892",
+          "shares_num": 3117892,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.97",
+          "aum_pct_num": 3.97,
+          "shares_raw": "29,28,238",
+          "shares_num": 2928238,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.95",
+          "aum_pct_num": 3.95,
+          "shares_raw": "31,28,231",
+          "shares_num": 3128231,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Larsen & Toubro Limited",
+      "fincode": "100510",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.77",
+          "aum_pct_num": 3.77,
+          "shares_raw": "7,26,619",
+          "shares_num": 726619,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "4.26",
+          "aum_pct_num": 4.26,
+          "shares_raw": "8,67,856",
+          "shares_num": 867856,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "4.66",
+          "aum_pct_num": 4.66,
+          "shares_raw": "8,67,856",
+          "shares_num": 867856,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "4.23",
+          "aum_pct_num": 4.23,
+          "shares_raw": "8,67,856",
+          "shares_num": 867856,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Tech Mahindra Limited",
+      "fincode": "132755",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.73",
+          "aum_pct_num": 3.73,
+          "shares_raw": "19,60,009",
+          "shares_num": 1960009,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.80",
+          "aum_pct_num": 3.8,
+          "shares_raw": "19,60,009",
+          "shares_num": 1960009,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.34",
+          "aum_pct_num": 3.34,
+          "shares_raw": "19,60,009",
+          "shares_num": 1960009,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "4.23",
+          "aum_pct_num": 4.23,
+          "shares_raw": "19,60,009",
+          "shares_num": 1960009,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "NTPC Limited",
+      "fincode": "132555",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.71",
+          "aum_pct_num": 3.71,
+          "shares_raw": "72,07,004",
+          "shares_num": 7207004,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.75",
+          "aum_pct_num": 3.75,
+          "shares_raw": "72,07,004",
+          "shares_num": 7207004,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.45",
+          "aum_pct_num": 3.45,
+          "shares_raw": "72,07,004",
+          "shares_num": 7207004,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.18",
+          "aum_pct_num": 3.18,
+          "shares_raw": "72,07,004",
+          "shares_num": 7207004,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Adani Ports and Special Economic Zone Limited",
+      "fincode": "132921",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.66",
+          "aum_pct_num": 3.66,
+          "shares_raw": "17,11,700",
+          "shares_num": 1711700,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.15",
+          "aum_pct_num": 3.15,
+          "shares_raw": "17,11,700",
+          "shares_num": 1711700,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.27",
+          "aum_pct_num": 3.27,
+          "shares_raw": "17,11,700",
+          "shares_num": 1711700,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.39",
+          "aum_pct_num": 3.39,
+          "shares_raw": "19,24,024",
+          "shares_num": 1924024,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Eternal Limited",
+      "fincode": "252306",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.43",
+          "aum_pct_num": 3.43,
+          "shares_raw": "1,07,43,387",
+          "shares_num": 10743387,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.45",
+          "aum_pct_num": 3.45,
+          "shares_raw": "1,07,43,387",
+          "shares_num": 10743387,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.89",
+          "aum_pct_num": 2.89,
+          "shares_raw": "93,52,730",
+          "shares_num": 9352730,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.17",
+          "aum_pct_num": 3.17,
+          "shares_raw": "93,52,730",
+          "shares_num": 9352730,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "SBI Life Insurance Company Limited",
+      "fincode": "211385",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.37",
+          "aum_pct_num": 3.37,
+          "shares_raw": "14,33,549",
+          "shares_num": 1433549,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.57",
+          "aum_pct_num": 3.57,
+          "shares_raw": "14,33,549",
+          "shares_num": 1433549,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.66",
+          "aum_pct_num": 3.66,
+          "shares_raw": "14,33,549",
+          "shares_num": 1433549,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.55",
+          "aum_pct_num": 3.55,
+          "shares_raw": "14,33,549",
+          "shares_num": 1433549,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "AU Small Finance Bank Limited",
+      "fincode": "286335",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.33",
+          "aum_pct_num": 3.33,
+          "shares_raw": "25,41,063",
+          "shares_num": 2541063,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.72",
+          "aum_pct_num": 2.72,
+          "shares_raw": "23,00,494",
+          "shares_num": 2300494,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.77",
+          "aum_pct_num": 2.77,
+          "shares_raw": "23,00,494",
+          "shares_num": 2300494,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.80",
+          "aum_pct_num": 2.8,
+          "shares_raw": "23,00,494",
+          "shares_num": 2300494,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Coforge Limited",
+      "fincode": "132541",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.23",
+          "aum_pct_num": 3.23,
+          "shares_raw": "20,90,639",
+          "shares_num": 2090639,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.27",
+          "aum_pct_num": 3.27,
+          "shares_raw": "20,90,639",
+          "shares_num": 2090639,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.89",
+          "aum_pct_num": 2.89,
+          "shares_raw": "19,42,289",
+          "shares_num": 1942289,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.57",
+          "aum_pct_num": 3.57,
+          "shares_raw": "17,42,289",
+          "shares_num": 1742289,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Phoenix Mills Limited",
+      "fincode": "103100",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.12",
+          "aum_pct_num": 3.12,
+          "shares_raw": "13,67,929",
+          "shares_num": 1367929,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.89",
+          "aum_pct_num": 2.89,
+          "shares_raw": "13,67,929",
+          "shares_num": 1367929,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.85",
+          "aum_pct_num": 2.85,
+          "shares_raw": "13,67,929",
+          "shares_num": 1367929,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.83",
+          "aum_pct_num": 2.83,
+          "shares_raw": "13,67,929",
+          "shares_num": 1367929,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Trent Limited",
+      "fincode": "100251",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.78",
+          "aum_pct_num": 2.78,
+          "shares_raw": "5,20,393",
+          "shares_num": 520393,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.40",
+          "aum_pct_num": 2.4,
+          "shares_raw": "5,20,393",
+          "shares_num": 520393,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.38",
+          "aum_pct_num": 2.38,
+          "shares_raw": "4,86,047",
+          "shares_num": 486047,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.28",
+          "aum_pct_num": 2.28,
+          "shares_raw": "4,86,047",
+          "shares_num": 486047,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Hindalco Industries Limited",
+      "fincode": "100440",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.76",
+          "aum_pct_num": 2.76,
+          "shares_raw": "20,62,294",
+          "shares_num": 2062294,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.23",
+          "aum_pct_num": 3.23,
+          "shares_raw": "26,07,567",
+          "shares_num": 2607567,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.43",
+          "aum_pct_num": 3.43,
+          "shares_raw": "29,56,139",
+          "shares_num": 2956139,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.53",
+          "aum_pct_num": 3.53,
+          "shares_raw": "29,56,139",
+          "shares_num": 2956139,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Voltas Limited",
+      "fincode": "100575",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.76",
+          "aum_pct_num": 2.76,
+          "shares_raw": "14,92,987",
+          "shares_num": 1492987,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.66",
+          "aum_pct_num": 2.66,
+          "shares_raw": "14,92,987",
+          "shares_num": 1492987,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.73",
+          "aum_pct_num": 2.73,
+          "shares_raw": "13,93,520",
+          "shares_num": 1393520,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.29",
+          "aum_pct_num": 2.29,
+          "shares_raw": "13,93,520",
+          "shares_num": 1393520,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "United Spirits Limited",
+      "fincode": "132432",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.70",
+          "aum_pct_num": 2.7,
+          "shares_raw": "15,78,086",
+          "shares_num": 1578086,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.70",
+          "aum_pct_num": 2.7,
+          "shares_raw": "15,78,086",
+          "shares_num": 1578086,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.56",
+          "aum_pct_num": 2.56,
+          "shares_raw": "14,76,181",
+          "shares_num": 1476181,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.49",
+          "aum_pct_num": 2.49,
+          "shares_raw": "14,76,181",
+          "shares_num": 1476181,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Sun Pharmaceutical Industries Limited",
+      "fincode": "124715",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.61",
+          "aum_pct_num": 2.61,
+          "shares_raw": "11,16,929",
+          "shares_num": 1116929,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.75",
+          "aum_pct_num": 2.75,
+          "shares_raw": "11,16,929",
+          "shares_num": 1116929,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.85",
+          "aum_pct_num": 2.85,
+          "shares_raw": "13,08,254",
+          "shares_num": 1308254,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.59",
+          "aum_pct_num": 2.59,
+          "shares_raw": "13,08,254",
+          "shares_num": 1308254,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Bajaj Auto Limited",
+      "fincode": "200132",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.25",
+          "aum_pct_num": 2.25,
+          "shares_raw": "1,73,986",
+          "shares_num": 173986,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.13",
+          "aum_pct_num": 3.13,
+          "shares_raw": "2,53,896",
+          "shares_num": 253896,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.18",
+          "aum_pct_num": 3.18,
+          "shares_raw": "2,53,896",
+          "shares_num": 253896,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.02",
+          "aum_pct_num": 3.02,
+          "shares_raw": "2,53,896",
+          "shares_num": 253896,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Biocon Limited",
+      "fincode": "132523",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.13",
+          "aum_pct_num": 2.13,
+          "shares_raw": "45,82,310",
+          "shares_num": 4582310,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.85",
+          "aum_pct_num": 1.85,
+          "shares_raw": "36,62,025",
+          "shares_num": 3662025,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.79",
+          "aum_pct_num": 1.79,
+          "shares_raw": "36,62,025",
+          "shares_num": 3662025,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.55",
+          "aum_pct_num": 1.55,
+          "shares_raw": "34,12,000",
+          "shares_num": 3412000,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Bajaj Finance Limited",
+      "fincode": "100034",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.11",
+          "aum_pct_num": 2.11,
+          "shares_raw": "17,40,390",
+          "shares_num": 1740390,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.96",
+          "aum_pct_num": 1.96,
+          "shares_raw": "17,40,390",
+          "shares_num": 1740390,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.17",
+          "aum_pct_num": 2.17,
+          "shares_raw": "17,40,390",
+          "shares_num": 1740390,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.01",
+          "aum_pct_num": 2.01,
+          "shares_raw": "17,40,390",
+          "shares_num": 1740390,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Mahindra & Mahindra Limited",
+      "fincode": "100520",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.91",
+          "aum_pct_num": 1.91,
+          "shares_raw": "4,76,400",
+          "shares_num": 476400,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.97",
+          "aum_pct_num": 1.97,
+          "shares_raw": "4,76,400",
+          "shares_num": 476400,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.50",
+          "aum_pct_num": 2.5,
+          "shares_raw": "5,86,872",
+          "shares_num": 586872,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.79",
+          "aum_pct_num": 2.79,
+          "shares_raw": "6,56,324",
+          "shares_num": 656324,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Havells India Limited",
+      "fincode": "117354",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.83",
+          "aum_pct_num": 1.83,
+          "shares_raw": "11,43,798",
+          "shares_num": 1143798,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.91",
+          "aum_pct_num": 1.91,
+          "shares_raw": "11,43,798",
+          "shares_num": 1143798,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.90",
+          "aum_pct_num": 1.9,
+          "shares_raw": "10,85,719",
+          "shares_num": 1085719,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.52",
+          "aum_pct_num": 1.52,
+          "shares_raw": "9,57,487",
+          "shares_num": 957487,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "UltraTech Cement Limited",
+      "fincode": "132538",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.79",
+          "aum_pct_num": 1.79,
+          "shares_raw": "1,19,772",
+          "shares_num": 119772,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.80",
+          "aum_pct_num": 1.8,
+          "shares_raw": "1,19,772",
+          "shares_num": 119772,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.46",
+          "aum_pct_num": 1.46,
+          "shares_raw": "91,775",
+          "shares_num": 91775,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.44",
+          "aum_pct_num": 1.44,
+          "shares_raw": "91,775",
+          "shares_num": 91775,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Whirlpool of India Limited",
+      "fincode": "100238",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.54",
+          "aum_pct_num": 1.54,
+          "shares_raw": "12,06,777",
+          "shares_num": 1206777,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.31",
+          "aum_pct_num": 1.31,
+          "shares_raw": "11,80,000",
+          "shares_num": 1180000,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.36",
+          "aum_pct_num": 1.36,
+          "shares_raw": "11,80,000",
+          "shares_num": 1180000,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.14",
+          "aum_pct_num": 1.14,
+          "shares_raw": "11,80,000",
+          "shares_num": 1180000,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Sona BLW Precision Forgings Limited",
+      "fincode": "214179",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "0.73",
+          "aum_pct_num": 0.73,
+          "shares_raw": "9,34,725",
+          "shares_num": 934725,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Tata Consumer Products Limited",
+      "fincode": "100800",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.20",
+          "aum_pct_num": 1.2,
+          "shares_raw": "8,39,645",
+          "shares_num": 839645,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.30",
+          "aum_pct_num": 1.3,
+          "shares_raw": "9,22,805",
+          "shares_num": 922805,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,719 @@
+{
+  "meta": {
+    "source": "https://www.rupeevest.com/Mutual-Fund-Portfolio-Tracker",
+    "endpoint": "https://www.rupeevest.com/home/get_mf_portfolio_tracker?schemecode=47989",
+    "fund": "Quant BFSI Fund-Reg(G)",
+    "schemecode": "47989",
+    "classification": "Equity : Sectoral - Financial Services",
+    "aumTotalCr": 753.02,
+    "aumAsOf": "2026-04-30T00:00:00.000Z",
+    "scrapedAt": "2026-05-25T12:42:18.662Z",
+    "months": [
+      {
+        "label": "Apr-26",
+        "aumCr": "753"
+      },
+      {
+        "label": "Mar-26",
+        "aumCr": "672.8"
+      },
+      {
+        "label": "Feb-26",
+        "aumCr": "771"
+      },
+      {
+        "label": "Jan-26",
+        "aumCr": "760.7"
+      }
+    ],
+    "section": "Equity Holdings",
+    "extractionMethod": "json-endpoint",
+    "arrowLogic": "Per the tracker UI: arrow compares a month's share count to the next-older month (up=increase, down=decrease, flat/none=no change). Oldest column shows no arrow (flat/none). 'missing' = no holding reported that month."
+  },
+  "rows": [
+    {
+      "company_name": "ICICI Prudential AMC Ltd",
+      "fincode": "208364",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "9.90",
+          "aum_pct_num": 9.9,
+          "shares_raw": "2,26,497",
+          "shares_num": 226497,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "9.64",
+          "aum_pct_num": 9.64,
+          "shares_raw": "2,31,630",
+          "shares_num": 231630,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "9.35",
+          "aum_pct_num": 9.35,
+          "shares_raw": "2,31,630",
+          "shares_num": 231630,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "5.02",
+          "aum_pct_num": 5.02,
+          "shares_raw": "1,28,496",
+          "shares_num": 128496,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Piramal Finance Ltd",
+      "fincode": "111072",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "9.42",
+          "aum_pct_num": 9.42,
+          "shares_raw": "3,54,878",
+          "shares_num": 354878,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "8.78",
+          "aum_pct_num": 8.78,
+          "shares_raw": "3,22,139",
+          "shares_num": 322139,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "9.16",
+          "aum_pct_num": 9.16,
+          "shares_raw": "4,06,360",
+          "shares_num": 406360,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "9.31",
+          "aum_pct_num": 9.31,
+          "shares_raw": "4,06,360",
+          "shares_num": 406360,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Nippon Life India Asset Management Ltd",
+      "fincode": "209078",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "9.12",
+          "aum_pct_num": 9.12,
+          "shares_raw": "6,79,624",
+          "shares_num": 679624,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "5.10",
+          "aum_pct_num": 5.1,
+          "shares_raw": "4,28,139",
+          "shares_num": 428139,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "5.17",
+          "aum_pct_num": 5.17,
+          "shares_raw": "4,28,139",
+          "shares_num": 428139,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.14",
+          "aum_pct_num": 2.14,
+          "shares_raw": "1,85,520",
+          "shares_num": 185520,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Capri Global Capital Limited",
+      "fincode": "131595",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "9.10",
+          "aum_pct_num": 9.1,
+          "shares_raw": "36,78,636",
+          "shares_num": 3678636,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "10.17",
+          "aum_pct_num": 10.17,
+          "shares_raw": "41,08,688",
+          "shares_num": 4108688,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "8.16",
+          "aum_pct_num": 8.16,
+          "shares_raw": "39,38,688",
+          "shares_num": 3938688,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "8.00",
+          "aum_pct_num": 8,
+          "shares_raw": "34,63,131",
+          "shares_num": 3463131,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "AU Small Finance Bank Ltd",
+      "fincode": "286335",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "8.32",
+          "aum_pct_num": 8.32,
+          "shares_raw": "6,16,605",
+          "shares_num": 616605,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "LIC Housing Finance Ltd",
+      "fincode": "100253",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "6.65",
+          "aum_pct_num": 6.65,
+          "shares_raw": "9,03,305",
+          "shares_num": 903305,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "6.65",
+          "aum_pct_num": 6.65,
+          "shares_raw": "9,03,305",
+          "shares_num": 903305,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "6.30",
+          "aum_pct_num": 6.3,
+          "shares_raw": "9,03,305",
+          "shares_num": 903305,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "6.25",
+          "aum_pct_num": 6.25,
+          "shares_raw": "9,03,305",
+          "shares_num": 903305,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Kotak Mahindra Bank Limited",
+      "fincode": "100247",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "5.45",
+          "aum_pct_num": 5.45,
+          "shares_raw": "10,71,469",
+          "shares_num": 1071469,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "8.43",
+          "aum_pct_num": 8.43,
+          "shares_raw": "16,03,469",
+          "shares_num": 1603469,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "8.65",
+          "aum_pct_num": 8.65,
+          "shares_raw": "16,03,469",
+          "shares_num": 1603469,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "8.61",
+          "aum_pct_num": 8.61,
+          "shares_raw": "16,03,469",
+          "shares_num": 1603469,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "RBL Bank Limited",
+      "fincode": "209068",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "4.83",
+          "aum_pct_num": 4.83,
+          "shares_raw": "10,80,668",
+          "shares_num": 1080668,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "ICICI Bank Limited",
+      "fincode": "132174",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "8.42",
+          "aum_pct_num": 8.42,
+          "shares_raw": "5,00,600",
+          "shares_num": 500600,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "9.37",
+          "aum_pct_num": 9.37,
+          "shares_raw": "5,23,788",
+          "shares_num": 523788,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "HDFC Life Insurance Co Ltd",
+      "fincode": "217389",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "7.69",
+          "aum_pct_num": 7.69,
+          "shares_raw": "9,84,328",
+          "shares_num": 984328,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "8.66",
+          "aum_pct_num": 8.66,
+          "shares_raw": "9,84,328",
+          "shares_num": 984328,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "9.16",
+          "aum_pct_num": 9.16,
+          "shares_raw": "9,84,328",
+          "shares_num": 984328,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "5.77",
+          "aum_pct_num": 5.77,
+          "shares_raw": "6,00,428",
+          "shares_num": 600428,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "OnEMI Technology Solutions Limited",
+      "fincode": "322110",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.47",
+          "aum_pct_num": 3.47,
+          "shares_raw": "15,26,850",
+          "shares_num": 1526850,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Manappuram Finance Ltd",
+      "fincode": "131213",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "9.34",
+          "aum_pct_num": 9.34,
+          "shares_raw": "23,80,705",
+          "shares_num": 2380705,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.20",
+          "aum_pct_num": 3.2,
+          "shares_raw": "8,56,705",
+          "shares_num": 856705,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.79",
+          "aum_pct_num": 2.79,
+          "shares_raw": "7,58,584",
+          "shares_num": 758584,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Shriram Finance Limited",
+      "fincode": "111218",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "8.93",
+          "aum_pct_num": 8.93,
+          "shares_raw": "6,89,214",
+          "shares_num": 689214,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "9.65",
+          "aum_pct_num": 9.65,
+          "shares_raw": "6,89,214",
+          "shares_num": 689214,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "8.77",
+          "aum_pct_num": 8.77,
+          "shares_raw": "6,53,825",
+          "shares_num": 653825,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "HDFC Asset Management Company Ltd",
+      "fincode": "208280",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "8.63",
+          "aum_pct_num": 8.63,
+          "shares_raw": "2,62,017",
+          "shares_num": 262017,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "9.17",
+          "aum_pct_num": 9.17,
+          "shares_raw": "2,62,017",
+          "shares_num": 262017,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "4.97",
+          "aum_pct_num": 4.97,
+          "shares_raw": "1,50,417",
+          "shares_num": 150417,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "HDFC Bank Limited",
+      "fincode": "100180",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "8.43",
+          "aum_pct_num": 8.43,
+          "shares_raw": "7,75,743",
+          "shares_num": 775743,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "8.93",
+          "aum_pct_num": 8.93,
+          "shares_raw": "7,75,743",
+          "shares_num": 775743,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "9.26",
+          "aum_pct_num": 9.26,
+          "shares_raw": "7,57,328",
+          "shares_num": 757328,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Adani Enterprises Limited",
+      "fincode": "112599",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.36",
+          "aum_pct_num": 3.36,
+          "shares_raw": "1,28,689",
+          "shares_num": 128689,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.61",
+          "aum_pct_num": 3.61,
+          "shares_raw": "1,28,689",
+          "shares_num": 128689,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.42",
+          "aum_pct_num": 3.42,
+          "shares_raw": "1,28,689",
+          "shares_num": 128689,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "ICICI Prudential Life Insurance Co Ltd",
+      "fincode": "210258",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "4.34",
+          "aum_pct_num": 4.34,
+          "shares_raw": "5,70,776",
+          "shares_num": 570776,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "4.87",
+          "aum_pct_num": 4.87,
+          "shares_raw": "5,70,776",
+          "shares_num": 570776,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "4.79",
+          "aum_pct_num": 4.79,
+          "shares_raw": "5,70,776",
+          "shares_num": 570776,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "Bajaj Finance Limited",
+      "fincode": "100034",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "5.26",
+          "aum_pct_num": 5.26,
+          "shares_raw": "4,30,677",
+          "shares_num": 430677,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    }
+  ]
+}

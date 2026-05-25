@@ -1,0 +1,681 @@
+{
+  "meta": {
+    "source": "https://www.rupeevest.com/Mutual-Fund-Portfolio-Tracker",
+    "endpoint": "https://www.rupeevest.com/home/get_mf_portfolio_tracker?schemecode=49234",
+    "fund": "Tata Nifty Capital Markets Index Fund-Reg(G)",
+    "schemecode": "49234",
+    "classification": "Equity : Index Funds",
+    "aumTotalCr": 644.14,
+    "aumAsOf": "2026-04-30T00:00:00.000Z",
+    "scrapedAt": "2026-05-25T12:49:49.529Z",
+    "months": [
+      {
+        "label": "Apr-26",
+        "aumCr": "644.1"
+      },
+      {
+        "label": "Mar-26",
+        "aumCr": "490.4"
+      },
+      {
+        "label": "Feb-26",
+        "aumCr": "496.3"
+      },
+      {
+        "label": "Jan-26",
+        "aumCr": "476.2"
+      }
+    ],
+    "section": "Equity Holdings",
+    "extractionMethod": "json-endpoint",
+    "arrowLogic": "Per the tracker UI: arrow compares a month's share count to the next-older month (up=increase, down=decrease, flat/none=no change). Oldest column shows no arrow (flat/none). 'missing' = no holding reported that month."
+  },
+  "rows": [
+    {
+      "company_name": "BSE LTD.",
+      "fincode": "207901",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "21.87",
+          "aum_pct_num": 21.87,
+          "shares_raw": "3,86,987",
+          "shares_num": 386987,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "19.75",
+          "aum_pct_num": 19.75,
+          "shares_raw": "3,60,905",
+          "shares_num": 360905,
+          "arrow": "down",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "20.80",
+          "aum_pct_num": 20.8,
+          "shares_raw": "3,81,326",
+          "shares_num": 381326,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "21.23",
+          "aum_pct_num": 21.23,
+          "shares_raw": "3,61,438",
+          "shares_num": 361438,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "MULTI COMMODITY EXCHANGE OF IND LTD.",
+      "fincode": "208766",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "17.93",
+          "aum_pct_num": 17.93,
+          "shares_raw": "3,88,665",
+          "shares_num": 388665,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "17.66",
+          "aum_pct_num": 17.66,
+          "shares_raw": "3,62,470",
+          "shares_num": 362470,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "17.53",
+          "aum_pct_num": 17.53,
+          "shares_raw": "3,56,052",
+          "shares_num": 356052,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "17.92",
+          "aum_pct_num": 17.92,
+          "shares_raw": "3,37,483",
+          "shares_num": 337483,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "HDFC ASSET MANAGEMENT COMPANY LTD.",
+      "fincode": "208280",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "13.07",
+          "aum_pct_num": 13.07,
+          "shares_raw": "3,10,375",
+          "shares_num": 310375,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "13.08",
+          "aum_pct_num": 13.08,
+          "shares_raw": "2,89,457",
+          "shares_num": 289457,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "15.44",
+          "aum_pct_num": 15.44,
+          "shares_raw": "2,84,022",
+          "shares_num": 284022,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "14.22",
+          "aum_pct_num": 14.22,
+          "shares_raw": "2,69,209",
+          "shares_num": 269209,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "360 ONE WAM LTD.",
+      "fincode": "228974",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "6.36",
+          "aum_pct_num": 6.36,
+          "shares_raw": "3,95,827",
+          "shares_num": 395827,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "7.15",
+          "aum_pct_num": 7.15,
+          "shares_raw": "3,69,150",
+          "shares_num": 369150,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "7.89",
+          "aum_pct_num": 7.89,
+          "shares_raw": "3,54,740",
+          "shares_num": 354740,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "8.01",
+          "aum_pct_num": 8.01,
+          "shares_raw": "3,36,239",
+          "shares_num": 336239,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "CENTRAL DEPOSITORY SERVICES (INDIA) LTD.",
+      "fincode": "207950",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "5.36",
+          "aum_pct_num": 5.36,
+          "shares_raw": "2,71,385",
+          "shares_num": 271385,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "5.78",
+          "aum_pct_num": 5.78,
+          "shares_raw": "2,53,095",
+          "shares_num": 253095,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "6.37",
+          "aum_pct_num": 6.37,
+          "shares_raw": "2,48,613",
+          "shares_num": 248613,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "6.53",
+          "aum_pct_num": 6.53,
+          "shares_raw": "2,35,647",
+          "shares_num": 235647,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "ANGEL ONE LTD.",
+      "fincode": "209902",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "4.73",
+          "aum_pct_num": 4.73,
+          "shares_raw": "9,86,475",
+          "shares_num": 986475,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "4.27",
+          "aum_pct_num": 4.27,
+          "shares_raw": "9,19,990",
+          "shares_num": 919990,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "4.23",
+          "aum_pct_num": 4.23,
+          "shares_raw": "8,99,510",
+          "shares_num": 899510,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "4.55",
+          "aum_pct_num": 4.55,
+          "shares_raw": "8,52,590",
+          "shares_num": 852590,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "NIPPON LIFE INDIA  ASSET MANAGEMENT LTD.",
+      "fincode": "209078",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "4.25",
+          "aum_pct_num": 4.25,
+          "shares_raw": "2,71,276",
+          "shares_num": 271276,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "4.14",
+          "aum_pct_num": 4.14,
+          "shares_raw": "2,52,993",
+          "shares_num": 252993,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "4.65",
+          "aum_pct_num": 4.65,
+          "shares_raw": "2,48,053",
+          "shares_num": 248053,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "4.34",
+          "aum_pct_num": 4.34,
+          "shares_raw": "2,35,116",
+          "shares_num": 235116,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "COMPUTER AGE MANAGEMENT SERVICES LTD",
+      "fincode": "210036",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "4.20",
+          "aum_pct_num": 4.2,
+          "shares_raw": "3,66,149",
+          "shares_num": 366149,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "4.36",
+          "aum_pct_num": 4.36,
+          "shares_raw": "3,41,472",
+          "shares_num": 341472,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "4.58",
+          "aum_pct_num": 4.58,
+          "shares_raw": "3,35,140",
+          "shares_num": 335140,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "4.64",
+          "aum_pct_num": 4.64,
+          "shares_raw": "3,17,661",
+          "shares_num": 317661,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "ANAND RATHI WEALTH LTD",
+      "fincode": "226156",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.63",
+          "aum_pct_num": 3.63,
+          "shares_raw": "64,959",
+          "shares_num": 64959,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.75",
+          "aum_pct_num": 3.75,
+          "shares_raw": "60,581",
+          "shares_num": 60581,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.68",
+          "aum_pct_num": 3.68,
+          "shares_raw": "59,435",
+          "shares_num": 59435,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.41",
+          "aum_pct_num": 3.41,
+          "shares_raw": "56,335",
+          "shares_num": 56335,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "BILLIONBRAINS GARAGE VENTURES LTD (GROWW)",
+      "fincode": "322541",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "3.11",
+          "aum_pct_num": 3.11,
+          "shares_raw": "9,30,509",
+          "shares_num": 930509,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.66",
+          "aum_pct_num": 2.66,
+          "shares_raw": "8,67,796",
+          "shares_num": 867796,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "MOTILAL OSWAL FINANCIAL SERVICE LTD.",
+      "fincode": "132892",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.95",
+          "aum_pct_num": 2.95,
+          "shares_raw": "2,37,231",
+          "shares_num": 237231,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.85",
+          "aum_pct_num": 2.85,
+          "shares_raw": "2,21,242",
+          "shares_num": 221242,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.16",
+          "aum_pct_num": 3.16,
+          "shares_raw": "2,16,292",
+          "shares_num": 216292,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.24",
+          "aum_pct_num": 3.24,
+          "shares_raw": "2,05,011",
+          "shares_num": 205011,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "KFIN TECHNOLOGIES LTD.",
+      "fincode": "305799",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.83",
+          "aum_pct_num": 2.83,
+          "shares_raw": "2,03,299",
+          "shares_num": 203299,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "3.39",
+          "aum_pct_num": 3.39,
+          "shares_raw": "1,89,597",
+          "shares_num": 189597,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "3.59",
+          "aum_pct_num": 3.59,
+          "shares_raw": "1,86,042",
+          "shares_num": 186042,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "3.75",
+          "aum_pct_num": 3.75,
+          "shares_raw": "1,76,339",
+          "shares_num": 176339,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "ICICI PRUDENTIAL ASSET MANAGEMENT COMPANY LTD",
+      "fincode": "208364",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.72",
+          "aum_pct_num": 2.72,
+          "shares_raw": "53,176",
+          "shares_num": 53176,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.83",
+          "aum_pct_num": 2.83,
+          "shares_raw": "49,592",
+          "shares_num": 49592,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "-",
+          "aum_pct_num": null,
+          "shares_raw": "-",
+          "shares_num": null,
+          "arrow": "missing",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "NUVAMA WEALTH MANAGEMENT LTD",
+      "fincode": "208089",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.41",
+          "aum_pct_num": 2.41,
+          "shares_raw": "1,17,240",
+          "shares_num": 117240,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.59",
+          "aum_pct_num": 2.59,
+          "shares_raw": "1,09,339",
+          "shares_num": 109339,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.66",
+          "aum_pct_num": 2.66,
+          "shares_raw": "1,06,061",
+          "shares_num": 106061,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.84",
+          "aum_pct_num": 2.84,
+          "shares_raw": "1,00,529",
+          "shares_num": 100529,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "INDIAN ENERGY EXCHANGE LTD.",
+      "fincode": "224623",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "2.35",
+          "aum_pct_num": 2.35,
+          "shares_raw": "12,10,790",
+          "shares_num": 1210790,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "2.64",
+          "aum_pct_num": 2.64,
+          "shares_raw": "11,29,187",
+          "shares_num": 1129187,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "2.81",
+          "aum_pct_num": 2.81,
+          "shares_raw": "11,09,193",
+          "shares_num": 1109193,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "2.80",
+          "aum_pct_num": 2.8,
+          "shares_raw": "10,51,344",
+          "shares_num": 1051344,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "ADITYA BIRLA SUN LIFE AMC LTD.",
+      "fincode": "209979",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "1.75",
+          "aum_pct_num": 1.75,
+          "shares_raw": "1,10,868",
+          "shares_num": 110868,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.85",
+          "aum_pct_num": 1.85,
+          "shares_raw": "1,03,396",
+          "shares_num": 103396,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.83",
+          "aum_pct_num": 1.83,
+          "shares_raw": "1,01,450",
+          "shares_num": 101450,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.53",
+          "aum_pct_num": 1.53,
+          "shares_raw": "96,159",
+          "shares_num": 96159,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    },
+    {
+      "company_name": "UTI ASSET MANAGEMENT COMPANY LTD.",
+      "fincode": "209492",
+      "months": {
+        "apr_26": {
+          "aum_pct_raw": "0.94",
+          "aum_pct_num": 0.94,
+          "shares_raw": "64,002",
+          "shares_num": 64002,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "mar_26": {
+          "aum_pct_raw": "1.14",
+          "aum_pct_num": 1.14,
+          "shares_raw": "59,688",
+          "shares_num": 59688,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "feb_26": {
+          "aum_pct_raw": "1.16",
+          "aum_pct_num": 1.16,
+          "shares_raw": "58,365",
+          "shares_num": 58365,
+          "arrow": "up",
+          "arrow_raw": null
+        },
+        "jan_26": {
+          "aum_pct_raw": "1.13",
+          "aum_pct_num": 1.13,
+          "shares_raw": "55,321",
+          "shares_num": 55321,
+          "arrow": "flat/none",
+          "arrow_raw": null
+        }
+      }
+    }
+  ]
+}
