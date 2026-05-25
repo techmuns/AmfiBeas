@@ -1,25 +1,34 @@
 /**
  * ONE-OFF throwaway scraper (not part of the ingest pipeline).
  *
- * Renders RupeeVest's Mutual Fund Portfolio Tracker in headless Chromium,
- * selects a single fund, and extracts its EQUITY HOLDINGS table:
- *   company name + per-month { % of AUM, No. of Shares, change arrow }.
+ * RupeeVest's Portfolio Tracker is driven by two public JSON endpoints that
+ * the page itself calls:
+ *   GET /home/get_search_data            -> { search_data:[{schemecode,s_name1}], search_data_nfo:[...] }
+ *   GET /home/get_mf_portfolio_tracker?schemecode=CODE
+ *        -> { fund_info:[{s_name,aumtotal,aumdate,classification}],
+ *             month_name:[m0,m1,m2,m3],            // m0 = most recent
+ *             MonthwiseAUM:[{aum},...],
+ *             stock_data:[ [ {fincode,noshares,percent_aum}, ... ] (per month) ],
+ *             stock_mapping:{ fincode: companyName }, ... (debt fields ignored) }
  *
- * The container Claude runs in cannot reach rupeevest.com (network
- * allowlist), so this is executed on a GitHub Actions runner, which has
- * open internet. It ALWAYS dumps rich diagnostics (full page HTML, the
- * equity-table HTML, a screenshot, a step log) under ./scrape-debug so the
- * parse can be re-done locally with cheerio if the in-CI parse is imperfect.
+ * The change arrows shown in the UI are NOT in the data; the page derives them
+ * by comparing each month's share count to the next-older month
+ * (incr / decr / nochange), and shows no arrow on the oldest column. We
+ * replicate that exactly. EQUITY HOLDINGS ONLY.
  *
- * Runs best-effort and exits 0 even on partial failure, so the workflow
- * still commits the diagnostics.
+ * Claude's container can't reach rupeevest (network allowlist), so this runs on
+ * a GitHub Actions runner. We load the page once for cookies, then fetch the
+ * endpoints via the browser context's request (shares cookies/origin). The raw
+ * tracker JSON is always dumped to ./scrape-debug so parsing can be redone
+ * locally with no further network access. Exits 0 even on partial failure.
  */
-import { chromium, type Page } from "playwright";
+import { chromium, type APIRequestContext } from "playwright";
 import fs from "node:fs";
 import path from "node:path";
 
 const FUND = process.env.FUND_NAME ?? "Kotak Arbitrage Fund(G)";
-const PAGE_URL = "https://www.rupeevest.com/Mutual-Fund-Portfolio-Tracker";
+const ORIGIN = "https://www.rupeevest.com";
+const PAGE_URL = `${ORIGIN}/Mutual-Fund-Portfolio-Tracker`;
 const OUT_DIR = process.cwd();
 const DEBUG_DIR = path.join(OUT_DIR, "scrape-debug");
 const CSV_FILE = path.join(OUT_DIR, "kotak-arbitrage-fund-g-equity-holdings.csv");
@@ -27,223 +36,184 @@ const JSON_FILE = path.join(OUT_DIR, "kotak-arbitrage-fund-g-equity-holdings.jso
 
 fs.mkdirSync(DEBUG_DIR, { recursive: true });
 const logLines: string[] = [];
-function L(msg: string) {
+const L = (msg: string) => {
   const line = `[${new Date().toISOString()}] ${msg}`;
   console.log(line);
   logLines.push(line);
-}
-function dump(name: string, content: string) {
+};
+const dump = (name: string, content: string) => {
   fs.writeFileSync(path.join(DEBUG_DIR, name), content);
   L(`dumped scrape-debug/${name} (${content.length} bytes)`);
-}
+};
 
-// ---------- value / arrow normalization (run in Node) ----------
-function slugMonth(label: string): string {
-  return label
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-}
-function parsePct(raw: string): number | null {
-  const c = raw.replace(/[%,\s₹]/g, "");
-  if (!c) return null;
-  const n = Number(c);
+const AJAX_HEADERS = {
+  "X-Requested-With": "XMLHttpRequest",
+  Referer: PAGE_URL,
+  Accept: "application/json, text/javascript, */*; q=0.01",
+  "Accept-Language": "en-US,en;q=0.9",
+};
+
+const norm = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
+const slugMonth = (label: string) =>
+  label.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+
+function toNumOrNull(v: unknown): number | null {
+  if (v == null) return null;
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  const s = String(v).replace(/[,\s₹%]/g, "");
+  if (s === "" || s === "-" || s.toLowerCase() === "null") return null;
+  const n = Number(s);
   return Number.isFinite(n) ? n : null;
 }
-function parseShares(raw: string): number | null {
-  const c = raw.replace(/[,\s₹]/g, "");
-  if (!c || !/\d/.test(c)) return null;
-  const n = Number(c);
-  return Number.isFinite(n) ? n : null;
-}
-type Arrow = "up" | "down" | "flat/none" | "missing" | "unknown";
-function normalizeArrow(cellHtml: string, cellText: string): { arrow: Arrow; raw: string | null } {
-  const h = cellHtml.toLowerCase();
-  const hasUpChar = /[▲▴↑⬆]/.test(cellText) || /[▲▴↑⬆]/.test(cellHtml);
-  const hasDownChar = /[▼▾↓⬇]/.test(cellText) || /[▼▾↓⬇]/.test(cellHtml);
-  const upClass = /(caret-up|arrow-up|fa-(caret|arrow|sort)-up|triangle-up|text-success|text-green|increase|positive|green|up-arrow|\bup\b)/.test(h);
-  const downClass = /(caret-down|arrow-down|fa-(caret|arrow|sort)-down|triangle-down|text-danger|text-red|decrease|negative|\bred\b|down-arrow|\bdown\b)/.test(h);
-  const hasIndicatorMarkup = /<(i|span|svg|img)/.test(h);
 
-  // Capture the raw indicator snippet for the JSON when there is markup.
-  const rawSnippet = hasIndicatorMarkup ? cellHtml.trim().slice(0, 400) : null;
-
-  if (hasUpChar || (upClass && !downClass)) return { arrow: "up", raw: rawSnippet };
-  if (hasDownChar || (downClass && !upClass)) return { arrow: "down", raw: rawSnippet };
-
-  const txt = cellText.trim();
-  if (txt === "" || txt === "-" || txt === "—" || txt.toLowerCase() === "na") {
-    return { arrow: "missing", raw: rawSnippet };
+// Indian digit grouping: 36165750 -> "3,61,65,750" (matches the tracker UI).
+function indianFmt(n: number): string {
+  const neg = n < 0;
+  let s = String(Math.abs(Math.round(n)));
+  if (s.length > 3) {
+    const last3 = s.slice(-3);
+    const rest = s.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ",");
+    s = `${rest},${last3}`;
   }
-  // A value is present but no directional indicator was found.
-  if (!hasIndicatorMarkup) return { arrow: "flat/none", raw: null };
-  return { arrow: "unknown", raw: rawSnippet };
+  return neg ? `-${s}` : s;
 }
 
-// ---------- DOM extraction (run in browser) ----------
-interface RawTable {
-  label: string | null;
-  outerHTML: string;
-  headerRows: string[][]; // each header row's cell texts
-  bodyRows: { cells: { text: string; html: string }[] }[];
+type Arrow = "up" | "down" | "flat/none" | "missing" | "unknown";
+
+// Faithful replication of the page's incr/decr/nochange logic.
+// shares[0] = most recent month ... shares[3] = oldest. i is the month index.
+function arrowFor(shares: (number | null)[], i: number): Arrow {
+  const cur = shares[i];
+  if (cur == null) return "missing"; // no holding reported that month
+  if (i >= shares.length - 1) return "flat/none"; // oldest column: UI shows no arrow
+  const prev = shares[i + 1]; // next-older month
+  if (prev == null) return "up"; // had none before, has now -> incr
+  if (cur > prev) return "up";
+  if (cur < prev) return "down";
+  return "flat/none"; // nochange
 }
-async function extractTables(page: Page): Promise<RawTable[]> {
-  return page.evaluate(() => {
-    function prevInOrder(node: Element): Element | null {
-      if (node.previousElementSibling) {
-        let n: Element = node.previousElementSibling;
-        while (n.lastElementChild) n = n.lastElementChild;
-        return n;
-      }
-      return node.parentElement;
-    }
-    function precedingHeading(table: Element): string | null {
-      let cur = prevInOrder(table);
-      let steps = 0;
-      while (cur && steps < 600) {
-        const txt = (cur.textContent ?? "").replace(/\s+/g, " ").trim();
-        if (txt.length > 0 && txt.length < 60 && /(equity|debt|other|derivative|money market).{0,30}holdings/i.test(txt)) {
-          return txt;
-        }
-        cur = prevInOrder(cur);
-        steps++;
-      }
+
+interface SearchEntry {
+  schemecode: string | number;
+  s_name1: string;
+}
+
+async function getJson(req: APIRequestContext, url: string, tag: string): Promise<any | null> {
+  try {
+    const res = await req.get(url, { headers: AJAX_HEADERS, timeout: 60000 });
+    L(`${tag}: HTTP ${res.status()} ${res.statusText()}`);
+    const body = await res.text();
+    if (!res.ok()) {
+      dump(`${tag}-error-body.txt`, body.slice(0, 2000));
       return null;
     }
-    const tables = Array.from(document.querySelectorAll("table"));
-    return tables
-      .map((t) => {
-        const headerRows: string[][] = [];
-        const thead = t.querySelector("thead");
-        const headerTrs = thead
-          ? Array.from(thead.querySelectorAll("tr"))
-          : Array.from(t.querySelectorAll("tr")).slice(0, 2);
-        for (const tr of headerTrs) {
-          headerRows.push(
-            Array.from(tr.querySelectorAll("th,td")).map((c) =>
-              (c.textContent ?? "").replace(/\s+/g, " ").trim()
-            )
-          );
-        }
-        const tbody = t.querySelector("tbody") ?? t;
-        const bodyTrs = Array.from(tbody.querySelectorAll("tr")).filter(
-          (tr) => !thead || !thead.contains(tr)
-        );
-        const bodyRows = bodyTrs.map((tr) => ({
-          cells: Array.from(tr.querySelectorAll("td,th")).map((c) => ({
-            text: (c.textContent ?? "").replace(/\s+/g, " ").trim(),
-            html: (c as HTMLElement).innerHTML,
-          })),
-        }));
-        return {
-          label: precedingHeading(t),
-          outerHTML: t.outerHTML,
-          headerRows,
-          bodyRows,
-        };
-      })
-      .filter((t) => t.bodyRows.length > 0);
-  });
-}
-
-// Pick the equity holdings table among candidates.
-function pickEquityTable(tables: RawTable[]): RawTable | null {
-  const looksLikeHoldings = (t: RawTable) =>
-    t.headerRows.some((r) => r.some((c) => /%\s*of\s*aum/i.test(c))) ||
-    t.headerRows.some((r) => r.some((c) => /no\.?\s*of\s*shares/i.test(c)));
-  const candidates = tables.filter(looksLikeHoldings);
-  const equity = candidates.find((t) => t.label && /equity/i.test(t.label));
-  if (equity) return equity;
-  // Fallback: first holdings-like table that is NOT labelled debt/other.
-  const notDebt = candidates.find((t) => !t.label || !/debt|other|derivative|money market/i.test(t.label));
-  return notDebt ?? candidates[0] ?? null;
-}
-
-// Build month columns from the header rows.
-// Header has a month row (Apr-26 / Mar-26 ...) each spanning two sub-columns
-// (% of AUM, No. of Shares), and a sub-header row. We map body columns by
-// position: col0 = company, then pairs (pct, shares) per month.
-function deriveMonths(table: RawTable): string[] {
-  const monthRe = /^[A-Za-z]{3,9}[\s\-'’]+\d{2,4}$/;
-  for (const row of table.headerRows) {
-    const months = row.filter((c) => monthRe.test(c.trim()));
-    if (months.length >= 1) return months.map((m) => m.trim());
+    try {
+      return JSON.parse(body);
+    } catch {
+      dump(`${tag}-nonjson-body.txt`, body.slice(0, 4000));
+      L(`${tag}: response was not JSON`);
+      return null;
+    }
+  } catch (e) {
+    L(`${tag}: request failed: ${(e as Error).message}`);
+    return null;
   }
-  // Fallback: scan all header cells.
-  const flat = table.headerRows.flat().filter((c) => monthRe.test(c.trim()));
-  return flat.map((m) => m.trim());
 }
 
+function findScheme(search: any): { code: string; name: string } | null {
+  const pools: SearchEntry[] = [
+    ...(Array.isArray(search?.search_data) ? search.search_data : []),
+    ...(Array.isArray(search?.search_data_nfo) ? search.search_data_nfo : []),
+  ];
+  L(`search pool size: ${pools.length}`);
+  const target = norm(FUND);
+  const targetCompact = target.replace(/\s+/g, "");
+  const kotak = pools.filter((e) => /kotak arbitrage/i.test(e?.s_name1 ?? ""));
+  dump(
+    "kotak-candidates.json",
+    JSON.stringify(kotak.map((e) => ({ schemecode: e.schemecode, s_name1: e.s_name1 })), null, 2)
+  );
+  L(`kotak-arbitrage candidates: ${kotak.length}`);
+
+  const exact = pools.find((e) => norm(e.s_name1 ?? "") === target);
+  const compact = pools.find((e) => norm(e.s_name1 ?? "").replace(/\s+/g, "") === targetCompact);
+  const contains = pools.find((e) => norm(e.s_name1 ?? "").includes(target));
+  const firstKotak = kotak[0];
+  const hit = exact ?? compact ?? contains ?? firstKotak;
+  if (!hit) return null;
+  return { code: String(hit.schemecode), name: hit.s_name1 };
+}
+
+interface MonthCell {
+  aum_pct_raw: string;
+  aum_pct_num: number | null;
+  shares_raw: string;
+  shares_num: number | null;
+  arrow: Arrow;
+  arrow_raw: string | null;
+}
 interface OutRow {
   company_name: string;
-  months: Record<
-    string,
-    {
-      aum_pct_raw: string;
-      aum_pct_num: number | null;
-      shares_raw: string;
-      shares_num: number | null;
-      arrow: Arrow;
-      arrow_raw: string | null;
-    }
-  >;
+  fincode: string;
+  months: Record<string, MonthCell>;
 }
 
-function buildRows(table: RawTable, months: string[]): OutRow[] {
-  const out: OutRow[] = [];
-  for (const br of table.bodyRows) {
-    if (br.cells.length < 2) continue;
-    const company = br.cells[0].text;
-    if (!company || /^(total|grand total)/i.test(company)) continue;
-    // Heuristic: data cells after company come in (pct, shares) pairs per month.
-    const dataCells = br.cells.slice(1);
-    const row: OutRow = { company_name: company, months: {} };
-    months.forEach((m, i) => {
-      const pctCell = dataCells[i * 2];
-      const sharesCell = dataCells[i * 2 + 1];
-      const slug = slugMonth(m);
-      const aumRaw = pctCell?.text ?? "";
-      const shRaw = sharesCell?.text ?? "";
-      // Arrow usually rides the shares cell; fall back to the pct cell.
-      const aShares = sharesCell ? normalizeArrow(sharesCell.html, sharesCell.text) : null;
-      const aPct = pctCell ? normalizeArrow(pctCell.html, pctCell.text) : null;
-      let arrow: Arrow = "missing";
-      let arrowRaw: string | null = null;
-      for (const cand of [aShares, aPct]) {
-        if (cand && (cand.arrow === "up" || cand.arrow === "down")) {
-          arrow = cand.arrow;
-          arrowRaw = cand.raw;
-          break;
-        }
+function buildRows(data: any, monthLabels: string[]): OutRow[] {
+  const stockData: any[][] = Array.isArray(data?.stock_data) ? data.stock_data : [];
+  const mapping: Record<string, string> = data?.stock_mapping ?? {};
+  const n = monthLabels.length;
+
+  // Per fincode: arrays of percent_aum and noshares indexed by month.
+  const pctByFin = new Map<string, (string | null)[]>();
+  const shrByFin = new Map<string, (number | null)[]>();
+  const order: string[] = [];
+
+  for (let i = 0; i < n; i++) {
+    const monthArr = Array.isArray(stockData[i]) ? stockData[i] : [];
+    for (const h of monthArr) {
+      const fin = String(h.fincode);
+      if (!pctByFin.has(fin)) {
+        pctByFin.set(fin, Array(n).fill(null));
+        shrByFin.set(fin, Array(n).fill(null));
+        order.push(fin);
       }
-      if (arrow === "missing") {
-        const fallback = aShares ?? aPct;
-        if (fallback) {
-          arrow = fallback.arrow;
-          arrowRaw = fallback.raw;
-        }
-      }
-      row.months[slug] = {
-        aum_pct_raw: aumRaw,
-        aum_pct_num: parsePct(aumRaw),
-        shares_raw: shRaw,
-        shares_num: parseShares(shRaw),
-        arrow,
-        arrow_raw: arrowRaw,
-      };
-    });
-    out.push(row);
+      pctByFin.get(fin)![i] = h.percent_aum == null ? null : String(h.percent_aum);
+      shrByFin.get(fin)![i] = toNumOrNull(h.noshares);
+    }
   }
-  return out;
+
+  const slugs = monthLabels.map(slugMonth);
+  const rows: OutRow[] = [];
+  for (const fin of order) {
+    const pct = pctByFin.get(fin)!;
+    const shr = shrByFin.get(fin)!;
+    const months: Record<string, MonthCell> = {};
+    for (let i = 0; i < n; i++) {
+      const pctNum = toNumOrNull(pct[i]);
+      const shrNum = shr[i];
+      months[slugs[i]] = {
+        aum_pct_raw: pct[i] == null ? "-" : String(pct[i]),
+        aum_pct_num: pctNum,
+        shares_raw: shrNum == null ? "-" : indianFmt(shrNum),
+        shares_num: shrNum,
+        arrow: arrowFor(shr, i),
+        arrow_raw: null,
+      };
+    }
+    rows.push({
+      company_name: mapping[fin] ?? `#${fin}`,
+      fincode: fin,
+      months,
+    });
+  }
+  return rows;
 }
 
 function csvEscape(v: string): string {
-  if (/[",\n]/.test(v)) return `"${v.replace(/"/g, '""')}"`;
-  return v;
+  return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
 }
-function writeCsv(rows: OutRow[], months: string[]): void {
-  const slugs = months.map(slugMonth);
+function writeCsv(rows: OutRow[], monthLabels: string[]): void {
+  const slugs = monthLabels.map(slugMonth);
   const header = ["company_name"];
   for (const s of slugs) {
     header.push(
@@ -260,11 +230,11 @@ function writeCsv(rows: OutRow[], months: string[]): void {
     for (const s of slugs) {
       const m = r.months[s];
       cells.push(
-        m?.aum_pct_raw ?? "",
-        m?.aum_pct_num != null ? String(m.aum_pct_num) : "",
-        m?.shares_raw ?? "",
-        m?.shares_num != null ? String(m.shares_num) : "",
-        m?.arrow ?? ""
+        m.aum_pct_raw,
+        m.aum_pct_num != null ? String(m.aum_pct_num) : "",
+        m.shares_raw,
+        m.shares_num != null ? String(m.shares_num) : "",
+        m.arrow
       );
     }
     lines.push(cells.map(csvEscape).join(","));
@@ -273,104 +243,8 @@ function writeCsv(rows: OutRow[], months: string[]): void {
   L(`wrote ${CSV_FILE} (${rows.length} data rows)`);
 }
 
-async function trySelectFund(page: Page): Promise<boolean> {
-  // Enumerate inputs for diagnostics.
-  const inputs = await page.$$eval("input", (els) =>
-    els.map((e, i) => ({
-      i,
-      id: (e as HTMLInputElement).id,
-      name: (e as HTMLInputElement).name,
-      type: (e as HTMLInputElement).type,
-      placeholder: (e as HTMLInputElement).placeholder,
-      cls: e.className,
-      visible: !!(e as HTMLElement).offsetParent,
-    }))
-  );
-  dump("inputs.json", JSON.stringify(inputs, null, 2));
-
-  // Candidate fund-search inputs: prefer placeholders/ids hinting fund/scheme,
-  // excluding the top-nav "Search mutual funds here..." box.
-  const ranked = inputs
-    .filter((x) => x.visible && (x.type === "text" || x.type === "search" || !x.type))
-    .filter((x) => !/search mutual funds here/i.test(x.placeholder ?? ""))
-    .sort((a, b) => {
-      const score = (x: typeof a) =>
-        (/fund|scheme|portfolio/i.test(`${x.id} ${x.name} ${x.placeholder} ${x.cls}`) ? 2 : 0) +
-        (/search/i.test(`${x.id} ${x.name} ${x.placeholder}`) ? 1 : 0);
-      return score(b) - score(a);
-    });
-  L(`fund-input candidates (ranked): ${JSON.stringify(ranked.map((r) => r.i))}`);
-
-  const order = [...ranked.map((r) => r.i)];
-  for (const idx of order) {
-    try {
-      const input = page.locator("input").nth(idx);
-      await input.scrollIntoViewIfNeeded({ timeout: 5000 });
-      await input.click({ timeout: 5000 });
-      await input.fill("");
-      await input.type(FUND, { delay: 60 });
-      L(`typed fund into input #${idx}; waiting for suggestions`);
-      await page.waitForTimeout(2000);
-      dump(`after-type-input-${idx}.html`, await page.content());
-
-      // Try to click an autocomplete suggestion matching the fund.
-      const suggSelectors = [
-        ".ui-menu-item",
-        ".autocomplete-suggestion",
-        ".tt-suggestion",
-        ".typeahead .dropdown-menu li",
-        ".dropdown-menu li",
-        "ul li a",
-        "li",
-      ];
-      for (const sel of suggSelectors) {
-        const sugg = page.locator(sel, { hasText: /Kotak Arbitrage/i }).first();
-        if ((await sugg.count()) > 0) {
-          await sugg.click({ timeout: 4000 });
-          L(`clicked suggestion via selector "${sel}"`);
-          await page.waitForTimeout(2500);
-          return true;
-        }
-      }
-      // No suggestion list found — try pressing Enter to submit.
-      await input.press("Enter");
-      L(`pressed Enter on input #${idx}`);
-      await page.waitForTimeout(2500);
-      // Heuristic success check: page now mentions the fund near "Fund Name".
-      const hasFund = await page
-        .locator(`text=/Kotak Arbitrage/i`)
-        .first()
-        .count();
-      if (hasFund > 0) return true;
-    } catch (e) {
-      L(`input #${idx} attempt failed: ${(e as Error).message}`);
-    }
-  }
-  return false;
-}
-
-async function tryDownload(page: Page): Promise<void> {
-  try {
-    const dl = page.locator("a,button", { hasText: /^\s*download\s*$/i }).first();
-    if ((await dl.count()) === 0) {
-      L("no Download button found");
-      return;
-    }
-    const [download] = await Promise.all([
-      page.waitForEvent("download", { timeout: 15000 }),
-      dl.click(),
-    ]);
-    const suggested = download.suggestedFilename();
-    const dest = path.join(DEBUG_DIR, `download-${suggested || "file"}`);
-    await download.saveAs(dest);
-    L(`saved site download -> ${dest}`);
-  } catch (e) {
-    L(`download attempt failed/skipped: ${(e as Error).message}`);
-  }
-}
-
 async function main() {
-  L(`fund="${FUND}"  url=${PAGE_URL}`);
+  L(`fund="${FUND}"  origin=${ORIGIN}`);
   const browser = await chromium.launch({ headless: true });
   const ctx = await browser.newContext({
     userAgent:
@@ -379,71 +253,75 @@ async function main() {
     locale: "en-IN",
     timezoneId: "Asia/Kolkata",
   });
-  const page = await ctx.newPage();
   let ok = false;
   try {
+    const page = await ctx.newPage();
     await page.goto(PAGE_URL, { waitUntil: "domcontentloaded", timeout: 90000 });
-    await page.waitForTimeout(3000);
-    dump("page-initial.html", await page.content());
-    await page.screenshot({ path: path.join(DEBUG_DIR, "page-initial.png"), fullPage: true });
+    await page.waitForTimeout(2000);
+    L("page loaded (session cookies established)");
 
-    const selected = await trySelectFund(page);
-    L(`fund selection reported: ${selected}`);
+    const search = await getJson(ctx.request, `${ORIGIN}/home/get_search_data`, "get_search_data");
+    if (!search) throw new Error("could not load get_search_data");
 
-    // Wait for an Equity Holdings table to populate (best-effort).
-    try {
-      await page.waitForSelector("text=/Equity Holdings/i", { timeout: 20000 });
-    } catch {
-      L("did not see 'Equity Holdings' heading within timeout");
-    }
-    await page.waitForTimeout(2500);
+    const scheme = findScheme(search);
+    if (!scheme) throw new Error(`fund not found in search data: ${FUND}`);
+    L(`matched scheme: code=${scheme.code} name="${scheme.name}"`);
 
-    dump("page-after-select.html", await page.content());
-    await page.screenshot({ path: path.join(DEBUG_DIR, "page-after-select.png"), fullPage: true });
+    const tracker = await getJson(
+      ctx.request,
+      `${ORIGIN}/home/get_mf_portfolio_tracker?schemecode=${encodeURIComponent(scheme.code)}`,
+      "get_mf_portfolio_tracker"
+    );
+    if (!tracker) throw new Error("could not load get_mf_portfolio_tracker");
+    dump("tracker.json", JSON.stringify(tracker, null, 2));
 
-    await tryDownload(page);
+    const info = Array.isArray(tracker.fund_info) ? tracker.fund_info[0] : null;
+    L(`fund_info: s_name="${info?.s_name}" classification="${info?.classification}" aumtotal=${info?.aumtotal} aumdate=${info?.aumdate}`);
 
-    const tables = await extractTables(page);
-    L(`found ${tables.length} non-empty tables; labels=${JSON.stringify(tables.map((t) => t.label))}`);
-    const equity = pickEquityTable(tables);
-    if (!equity) {
-      L("could not identify an Equity Holdings table");
-    } else {
-      dump("equity-table.html", equity.outerHTML);
-      dump("equity-table-structured.json", JSON.stringify(equity, null, 2));
-      const months = deriveMonths(equity);
-      L(`derived months: ${JSON.stringify(months)}`);
-      if (months.length > 0) {
-        const rows = buildRows(equity, months);
-        L(`built ${rows.length} equity rows`);
-        if (rows.length > 0) {
-          const payload = {
-            meta: {
-              source: PAGE_URL,
-              fund: FUND,
-              scrapedAt: new Date().toISOString(),
-              months,
-              extractionMethod: "dom",
-              note:
-                "One-off scrape via GitHub Actions. Arrows normalized to up/down/flat-none/missing/unknown; arrow_raw holds source markup where ambiguous.",
-            },
-            rows,
-          };
-          fs.writeFileSync(JSON_FILE, JSON.stringify(payload, null, 2) + "\n");
-          L(`wrote ${JSON_FILE}`);
-          writeCsv(rows, months);
-          ok = true;
-        }
-      }
-    }
+    const monthLabels: string[] = (Array.isArray(tracker.month_name) ? tracker.month_name : [])
+      .map((m: unknown) => String(m).trim())
+      .filter((m: string) => m.length > 0);
+    L(`month_name: ${JSON.stringify(monthLabels)}`);
+    const monthlyAum = (Array.isArray(tracker.MonthwiseAUM) ? tracker.MonthwiseAUM : []).map(
+      (a: any) => a?.aum ?? null
+    );
+
+    if (monthLabels.length === 0) throw new Error("no month labels in tracker payload");
+
+    const rows = buildRows(tracker, monthLabels);
+    L(`built ${rows.length} equity rows`);
+    if (rows.length === 0) throw new Error("no equity rows parsed (stock_data empty?)");
+
+    const payload = {
+      meta: {
+        source: PAGE_URL,
+        endpoint: `${ORIGIN}/home/get_mf_portfolio_tracker?schemecode=${scheme.code}`,
+        fund: info?.s_name ?? scheme.name,
+        requestedFund: FUND,
+        schemecode: scheme.code,
+        classification: info?.classification ?? null,
+        aumTotalCr: info?.aumtotal ?? null,
+        aumAsOf: info?.aumdate ?? null,
+        scrapedAt: new Date().toISOString(),
+        months: monthLabels.map((label, i) => ({ label, aumCr: monthlyAum[i] ?? null })),
+        section: "Equity Holdings",
+        extractionMethod: "json-endpoint",
+        arrowLogic:
+          "Per the tracker UI: arrow compares a month's share count to the next-older month (up=increase, down=decrease, flat/none=no change). Oldest column shows no arrow (flat/none). 'missing' = no holding reported that month.",
+      },
+      rows,
+    };
+    fs.writeFileSync(JSON_FILE, JSON.stringify(payload, null, 2) + "\n");
+    L(`wrote ${JSON_FILE}`);
+    writeCsv(rows, monthLabels);
+    ok = true;
   } catch (e) {
-    L(`FATAL during scrape: ${(e as Error).stack ?? (e as Error).message}`);
+    L(`FATAL: ${(e as Error).stack ?? (e as Error).message}`);
   } finally {
     dump("log.txt", logLines.join("\n") + "\n");
     await browser.close();
   }
   L(ok ? "SUCCESS: data files written" : "PARTIAL: see scrape-debug for diagnostics");
-  // Always exit 0 so the workflow commits diagnostics.
   process.exit(0);
 }
 
