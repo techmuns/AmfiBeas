@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { KpiCard } from "@/components/ui/KpiCard";
+import { LensToggle } from "@/components/ui/LensToggle";
 import { AreaTrend } from "@/components/charts/AreaTrend";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { AmcCompareSelector } from "@/components/compare/AmcCompareSelector";
@@ -12,7 +13,6 @@ import {
   amcDetail,
   amcGrowthMetrics,
   amcMarketShareSeries,
-  amcRankSeries,
   resolveAmcSlug,
 } from "@/data/amc-detail";
 import {
@@ -67,10 +67,13 @@ export default async function ComparePage({
   const aaumB = amcAaumSeries(slugB);
   const shareA = amcMarketShareSeries(slugA);
   const shareB = amcMarketShareSeries(slugB);
-  const rankA = amcRankSeries(slugA);
-  const rankB = amcRankSeries(slugB);
   const growthA = amcGrowthMetrics(slugA);
   const growthB = amcGrowthMetrics(slugB);
+
+  // Which series the merged overlay card shows. URL-driven so the
+  // selection survives reload / sharing and keeps the chosen AMCs.
+  const overlayMetric: "aaum" | "qoq" | "share" =
+    sp.overlay === "qoq" ? "qoq" : sp.overlay === "share" ? "share" : "aaum";
 
   const trend = (n: number | null | undefined) =>
     n === null || n === undefined
@@ -115,20 +118,33 @@ export default async function ComparePage({
     [slugB]: shareByLabelB.get(label) ?? null,
   }));
 
-  const rankByLabelA = new Map(rankA.map((p) => [p.fiscalLabel, p.rank]));
-  const rankByLabelB = new Map(rankB.map((p) => [p.fiscalLabel, p.rank]));
-  const rankOverlayLabels = sortFiscalLabelsChronologically(
+  // QoQ growth overlay — quarter-on-quarter % change of each AMC's
+  // AAUM, aligned on the shared label set. First quarter of each series
+  // has no prior point, so it's omitted (never zero-filled).
+  const qoqSeries = (series: { fiscalLabel: string; avgAum: number }[]) => {
+    const out: { label: string; value: number }[] = [];
+    for (let i = 1; i < series.length; i++) {
+      const cur = series[i].avgAum;
+      const prev = series[i - 1].avgAum;
+      if (prev > 0) {
+        out.push({ label: series[i].fiscalLabel, value: ((cur - prev) / prev) * 100 });
+      }
+    }
+    return out;
+  };
+  const qoqA = qoqSeries(aaumA);
+  const qoqB = qoqSeries(aaumB);
+  const qoqByLabelA = new Map(qoqA.map((q) => [q.label, q.value]));
+  const qoqByLabelB = new Map(qoqB.map((q) => [q.label, q.value]));
+  const qoqOverlayLabels = sortFiscalLabelsChronologically(
     Array.from(
-      new Set([
-        ...rankA.map((p) => p.fiscalLabel),
-        ...rankB.map((p) => p.fiscalLabel),
-      ])
+      new Set([...qoqA.map((q) => q.label), ...qoqB.map((q) => q.label)])
     )
   );
-  const rankOverlay = rankOverlayLabels.map((label) => ({
+  const qoqOverlay = qoqOverlayLabels.map((label) => ({
     label,
-    [slugA]: rankByLabelA.get(label) ?? null,
-    [slugB]: rankByLabelB.get(label) ?? null,
+    [slugA]: qoqByLabelA.get(label) ?? null,
+    [slugB]: qoqByLabelB.get(label) ?? null,
   }));
 
   return (
@@ -250,6 +266,7 @@ export default async function ComparePage({
                         value: p.avgAum,
                       }))}
                       name="AAUM"
+                      labelFormat="none"
                     />
                   ) : (
                     <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
@@ -263,109 +280,48 @@ export default async function ComparePage({
         </section>
 
       <Card
-        title="AAUM Overlay"
-        subtitleNode={
-          <div className="space-y-0.5">
-            <p className="text-xs text-muted-foreground">
-              Both AMCs&rsquo; MF AAUM plotted on the same axis. The further apart the lines, the wider the scale gap.
-            </p>
-            <p className="text-[11px] text-muted-foreground/80">
-              ₹ Cr · Source: AMFI Fundwise AAUM
-            </p>
-          </div>
+        title={
+          overlayMetric === "qoq"
+            ? "QoQ Growth Overlay"
+            : overlayMetric === "share"
+              ? "Market Share Overlay"
+              : "AAUM Overlay"
         }
-      >
-        {overlayData.length > 0 ? (
-          <MultiLine
-            data={overlayData}
-            xKey="label"
-            valueFormat="cr"
-            axisFormat="cr"
-            labelFormat="none"
-            lines={[
-              {
-                key: slugA,
-                name: detailA?.displayName ?? slugA,
-                color: "hsl(var(--chart-1))",
-              },
-              {
-                key: slugB,
-                name: detailB?.displayName ?? slugB,
-                color: "hsl(var(--chart-3))",
-              },
+        action={
+          <LensToggle
+            basePath="/compare"
+            paramName="overlay"
+            defaultValue="aaum"
+            lenses={[
+              { value: "aaum", label: "AAUM" },
+              { value: "qoq", label: "QoQ Growth" },
+              { value: "share", label: "Market Share" },
             ]}
+            active={overlayMetric}
+            preserveParams={{ a: slugA, b: slugB }}
           />
-        ) : (
-          <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-            No overlapping AAUM data
-          </div>
-        )}
-      </Card>
-
-      <Card
-        title="QoQ Growth Overlay"
-        subtitleNode={
-          <div className="space-y-0.5">
-            <p className="text-xs text-muted-foreground">
-              Both AMCs&rsquo; quarter-on-quarter growth on one chart. Strips out scale differences — focuses on momentum.
-            </p>
-            <p className="text-[11px] text-muted-foreground/80">
-              % change vs prior quarter · Source: AMFI Fundwise AAUM
-            </p>
-          </div>
         }
       >
         {(() => {
-          const qoqA: { label: string; value: number }[] = [];
-          for (let i = 1; i < aaumA.length; i++) {
-            const cur = aaumA[i].avgAum;
-            const prev = aaumA[i - 1].avgAum;
-            if (prev > 0) {
-              qoqA.push({
-                label: aaumA[i].fiscalLabel,
-                value: ((cur - prev) / prev) * 100,
-              });
-            }
-          }
-          const qoqB: { label: string; value: number }[] = [];
-          for (let i = 1; i < aaumB.length; i++) {
-            const cur = aaumB[i].avgAum;
-            const prev = aaumB[i - 1].avgAum;
-            if (prev > 0) {
-              qoqB.push({
-                label: aaumB[i].fiscalLabel,
-                value: ((cur - prev) / prev) * 100,
-              });
-            }
-          }
-          const labels = sortFiscalLabelsChronologically(
-            Array.from(
-              new Set([
-                ...qoqA.map((q) => q.label),
-                ...qoqB.map((q) => q.label),
-              ])
-            )
-          );
-          const aMap = new Map(qoqA.map((q) => [q.label, q.value]));
-          const bMap = new Map(qoqB.map((q) => [q.label, q.value]));
-          const data = labels.map((label) => ({
-            label,
-            [slugA]: aMap.get(label) ?? null,
-            [slugB]: bMap.get(label) ?? null,
-          }));
-          if (data.length === 0) {
-            return (
-              <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                Insufficient history
-              </div>
-            );
-          }
-          return (
+          const data =
+            overlayMetric === "qoq"
+              ? qoqOverlay
+              : overlayMetric === "share"
+                ? shareOverlay
+                : overlayData;
+          const fmt = overlayMetric === "aaum" ? "cr" : "pct";
+          const emptyMsg =
+            overlayMetric === "qoq"
+              ? "Insufficient history"
+              : overlayMetric === "share"
+                ? "No share history"
+                : "No overlapping AAUM data";
+          return data.length > 0 ? (
             <MultiLine
               data={data}
               xKey="label"
-              valueFormat="pct"
-              axisFormat="pct"
+              valueFormat={fmt}
+              axisFormat={fmt}
               labelFormat="none"
               lines={[
                 {
@@ -380,91 +336,13 @@ export default async function ComparePage({
                 },
               ]}
             />
+          ) : (
+            <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+              {emptyMsg}
+            </div>
           );
         })()}
       </Card>
-
-      <section className="grid gap-4 lg:grid-cols-2">
-        <Card
-          title="Market Share Overlay"
-          subtitleNode={
-            <div className="space-y-0.5">
-              <p className="text-xs text-muted-foreground">
-                Both AMCs&rsquo; share of industry MF AAUM. Shows who has been gaining or losing ground.
-              </p>
-              <p className="text-[11px] text-muted-foreground/80">
-                % of industry MF AAUM · Source: AMFI Fundwise AAUM
-              </p>
-            </div>
-          }
-        >
-          {shareOverlay.length > 0 ? (
-            <MultiLine
-              data={shareOverlay}
-              xKey="label"
-              valueFormat="pct"
-              axisFormat="pct"
-              labelFormat="none"
-              lines={[
-                {
-                  key: slugA,
-                  name: detailA?.displayName ?? slugA,
-                  color: "hsl(var(--chart-1))",
-                },
-                {
-                  key: slugB,
-                  name: detailB?.displayName ?? slugB,
-                  color: "hsl(var(--chart-3))",
-                },
-              ]}
-            />
-          ) : (
-            <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-              No share history
-            </div>
-          )}
-        </Card>
-
-        <Card
-          title="Rank Overlay"
-          subtitleNode={
-            <div className="space-y-0.5">
-              <p className="text-xs text-muted-foreground">
-                Both AMCs&rsquo; rank in the industry by AAUM each quarter. Lower number = larger AMC.
-              </p>
-              <p className="text-[11px] text-muted-foreground/80">
-                Source: AMFI Fundwise AAUM
-              </p>
-            </div>
-          }
-        >
-          {rankOverlay.length > 0 ? (
-            <MultiLine
-              data={rankOverlay}
-              xKey="label"
-              valueFormat="count"
-              axisFormat="count"
-              labelFormat="none"
-              lines={[
-                {
-                  key: slugA,
-                  name: detailA?.displayName ?? slugA,
-                  color: "hsl(var(--chart-1))",
-                },
-                {
-                  key: slugB,
-                  name: detailB?.displayName ?? slugB,
-                  color: "hsl(var(--chart-3))",
-                },
-              ]}
-            />
-          ) : (
-            <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-              No rank history
-            </div>
-          )}
-        </Card>
-      </section>
 
       {detailA && detailB && (
         <Card
