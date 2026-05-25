@@ -1,0 +1,49 @@
+name: Fetch scheme list (one-off)
+
+# One-off: pull RupeeVest's full scheme universe (names + codes) on a GitHub
+# runner (open internet) and commit rupeevest-scheme-list.json back to this
+# branch. Triggered by pushing the script/workflow; the data-only commit back
+# does NOT re-trigger (paths filter). Delete after use.
+
+on:
+  push:
+    branches: [claude/stoic-fermi-HC5aq]
+    paths:
+      - "scripts/fetch-scheme-list.ts"
+      - ".github/workflows/fetch-scheme-list.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fetch-scheme-list-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fetch:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/stoic-fermi-HC5aq
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx tsx scripts/fetch-scheme-list.ts
+      - name: Show log
+        if: always()
+        run: cat scrape-debug/scheme-list-log.txt || true
+      - name: Commit result
+        if: always()
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then echo "nothing to commit"; exit 0; fi
+          git commit -m "data(scrape): RupeeVest scheme universe (names + codes)"
+          git push origin HEAD:claude/stoic-fermi-HC5aq
