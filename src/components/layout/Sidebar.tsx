@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   CalendarDays,
-  CalendarRange,
+  // CalendarRange, // hidden along with the /quarterly nav item
   FileBarChart,
   Building2,
   ArrowLeftRight,
@@ -21,7 +21,9 @@ import { cn } from "@/lib/cn";
 const nav = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
   { href: "/monthly", label: "Monthly", icon: CalendarDays },
-  { href: "/quarterly", label: "Quarterly", icon: CalendarRange },
+  // Quarterly hidden from the nav for now (route still live at /quarterly).
+  // To unhide: restore this line and the CalendarRange import above.
+  // { href: "/quarterly", label: "Quarterly", icon: CalendarRange },
   { href: "/amc", label: "AMCs", icon: Building2 },
   { href: "/compare", label: "Compare", icon: ArrowLeftRight },
   { href: "/financials", label: "Financials", icon: FileBarChart },
