@@ -1043,11 +1043,18 @@ export default async function MonthlyPage({
   const activeEquityTrend = monthlyTrend("activeEquityAaum", aeAaumMonths);
   const activeEquityFullHistory = monthlyTrend("activeEquityAaum", 10_000);
   const activeEquityShareTrend = monthlyActiveEquityShareTrend(24);
-  // Equity AAUM breakdown over the full window where all three series
-  // are available: 2019-05 → latest. The only earlier row (2019-04)
-  // lacks the ETF & Index field, so it's filtered out.
+  // Equity AAUM breakdown, restricted to months where ALL THREE series
+  // (Active Equity / ETF & Index / Arbitrage) were extracted. Months
+  // missing any segment — e.g. early-2020 reports that predate AMFI's
+  // separate Solution-oriented Sub-Total — are dropped from BOTH the
+  // ₹ Cr and the % view, so the share denominator is never a partial
+  // sum (which previously rendered e.g. ETF & Index = 100% in Feb-2020).
   const equityBreakdown = monthlyEquityBreakdown(10_000).filter(
-    (r) => r.month >= "2019-05"
+    (r) =>
+      r.month >= "2019-05" &&
+      typeof r.activeEquity === "number" &&
+      typeof r.etfIndex === "number" &&
+      typeof r.arbitrage === "number"
   );
   const equityBreakdownHasData = equityBreakdown.some(
     (r) => r.activeEquity !== null || r.etfIndex !== null || r.arbitrage !== null
