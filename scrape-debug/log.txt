@@ -1,22 +1,14 @@
-[2026-05-25T10:55:10.992Z] fund="Kotak Arbitrage Fund(G)"  url=https://www.rupeevest.com/Mutual-Fund-Portfolio-Tracker
-[2026-05-25T10:55:17.669Z] dumped scrape-debug/page-initial.html (119933 bytes)
-[2026-05-25T10:55:17.972Z] dumped scrape-debug/inputs.json (965 bytes)
-[2026-05-25T10:55:17.972Z] fund-input candidates (ranked): [3,4,5]
-[2026-05-25T10:55:19.531Z] typed fund into input #3; waiting for suggestions
-[2026-05-25T10:55:21.542Z] dumped scrape-debug/after-type-input-3.html (97812 bytes)
-[2026-05-25T10:55:21.577Z] pressed Enter on input #3
-[2026-05-25T10:55:25.581Z] typed fund into input #4; waiting for suggestions
-[2026-05-25T10:55:27.593Z] dumped scrape-debug/after-type-input-4.html (97787 bytes)
-[2026-05-25T10:55:27.609Z] pressed Enter on input #4
-[2026-05-25T10:55:31.623Z] typed fund into input #5; waiting for suggestions
-[2026-05-25T10:55:33.634Z] dumped scrape-debug/after-type-input-5.html (97659 bytes)
-[2026-05-25T10:55:33.649Z] pressed Enter on input #5
-[2026-05-25T10:55:36.155Z] fund selection reported: false
-[2026-05-25T10:55:38.672Z] dumped scrape-debug/page-after-select.html (97659 bytes)
-[2026-05-25T10:55:38.847Z] saved site download -> /home/runner/work/AmfiBeas/AmfiBeas/scrape-debug/download-Canara_Rob_Large_Cap_Fund-Reg(G).csv
-[2026-05-25T10:55:38.851Z] FATAL during scrape: page.evaluate: ReferenceError: __name is not defined
-    at eval (eval at evaluate (:302:30), <anonymous>:1:180)
-    at UtilityScript.evaluate (<anonymous>:304:16)
-    at UtilityScript.<anonymous> (<anonymous>:1:44)
-    at extractTables (/home/runner/work/AmfiBeas/AmfiBeas/scripts/scrape-kotak.ts:92:15)
-    at main (/home/runner/work/AmfiBeas/AmfiBeas/scripts/scrape-kotak.ts:406:26)
+[2026-05-25T11:02:21.222Z] fund="Kotak Arbitrage Fund(G)"  origin=https://www.rupeevest.com
+[2026-05-25T11:02:25.668Z] page loaded (session cookies established)
+[2026-05-25T11:02:27.434Z] get_search_data: HTTP 200 OK
+[2026-05-25T11:02:27.436Z] search pool size: 2133
+[2026-05-25T11:02:27.437Z] dumped scrape-debug/kotak-candidates.json (76 bytes)
+[2026-05-25T11:02:27.437Z] kotak-arbitrage candidates: 1
+[2026-05-25T11:02:27.437Z] matched scheme: code=1979 name="Kotak Arbitrage Fund(G)"
+[2026-05-25T11:02:28.544Z] get_mf_portfolio_tracker: HTTP 200 OK
+[2026-05-25T11:02:28.546Z] dumped scrape-debug/tracker.json (125502 bytes)
+[2026-05-25T11:02:28.547Z] fund_info: s_name="Kotak Arbitrage Fund(G)" classification="Hybrid : Arbitrage" aumtotal=69951.21 aumdate=2026-04-30T00:00:00.000Z
+[2026-05-25T11:02:28.547Z] month_name: ["Apr-26","Mar-26","Feb-26","Jan-26"]
+[2026-05-25T11:02:28.549Z] built 209 equity rows
+[2026-05-25T11:02:28.550Z] wrote /home/runner/work/AmfiBeas/AmfiBeas/kotak-arbitrage-fund-g-equity-holdings.json
+[2026-05-25T11:02:28.551Z] wrote /home/runner/work/AmfiBeas/AmfiBeas/kotak-arbitrage-fund-g-equity-holdings.csv (209 data rows)
