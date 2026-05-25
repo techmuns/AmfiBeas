@@ -22,88 +22,158 @@ interface CohortJourneyMapProps {
   className?: string;
 }
 
+const toneOf = (dpp: number) =>
+  dpp > 0.1
+    ? "hsl(var(--positive))"
+    : dpp < -0.1
+      ? "hsl(var(--negative))"
+      : "hsl(var(--muted-foreground))";
+
+const markerOf = (dpp: number) =>
+  dpp > 0.1
+    ? "url(#arrow-up)"
+    : dpp < -0.1
+      ? "url(#arrow-down)"
+      : "url(#arrow-flat)";
+
 /**
- * Cohort Journey Map. Each AMC drawn as an arrow on a 2D canvas:
- *   - x-axis: the journey through time (left → right)
- *   - y-axis: market share %
- *   - arrow tail: AMC's share at the EARLIEST quarter on record
- *   - arrow head: AMC's share at the LATEST quarter
- *   - colour: green for share gainers, red for share losers
+ * Market-share movement as a rank "bump" chart. Each AMC is a line
+ * between its league-table rank (by market share) at the earliest
+ * quarter and at the latest quarter:
+ *   - y-axis: rank, 1 = largest share at the top
+ *   - line tail: rank at the EARLIEST quarter on record
+ *   - line head (arrow): rank at the LATEST quarter
+ *   - colour: green = share gainer, red = share loser, grey = flat
  *
- * Visualises the structural shifts in the industry as a single
- * image of converging / diverging arrows.
+ * Ranking the y-axis gives every AMC its own evenly-spaced row, so the
+ * long tail of small AMCs no longer collapses into one unreadable band
+ * the way it did on an absolute-share axis. End labels are de-collided
+ * (nudged to a minimum gap, with a leader line back to the true rank)
+ * so they never stack.
  */
 export function CohortJourneyMap({
   points,
   height = 340,
   className,
 }: CohortJourneyMapProps) {
-  const layout = useMemo(() => {
+  const model = useMemo(() => {
     if (points.length === 0) return null;
-    const padding = { top: 24, bottom: 32, left: 60, right: 100 };
+    const padding = { top: 28, bottom: 32, left: 44, right: 150 };
     const vw = 880;
     const innerW = vw - padding.left - padding.right;
     const innerH = height - padding.top - padding.bottom;
-    const allShares = points.flatMap((p) => [
-      p.startMarketSharePct,
-      p.endMarketSharePct,
-    ]);
-    const yMax = Math.max(...allShares) * 1.05;
-    const yMin = 0;
-    const yScale = (v: number) =>
-      padding.top + innerH - ((v - yMin) / (yMax - yMin)) * innerH;
+    const n = points.length;
+
+    // League-table ranks by share at each end (1 = largest share).
+    const startRank = new Map(
+      [...points]
+        .sort((a, b) => b.startMarketSharePct - a.startMarketSharePct)
+        .map((p, i) => [p.amcSlug, i + 1])
+    );
+    const endRank = new Map(
+      [...points]
+        .sort((a, b) => b.endMarketSharePct - a.endMarketSharePct)
+        .map((p, i) => [p.amcSlug, i + 1])
+    );
+
+    const yScale = (rank: number) =>
+      padding.top + ((rank - 1) / Math.max(1, n - 1)) * innerH;
     const startX = padding.left + 12;
     const endX = padding.left + innerW - 12;
+
+    // De-collide end labels: order by their true rank-y, push each down
+    // to a minimum gap, then clamp the cluster back inside the plot if it
+    // overflows the bottom. A leader line is drawn whenever a label is
+    // nudged off its true position.
+    const minGap = 12;
+    const maxY = padding.top + innerH;
+    const labels = points
+      .map((p) => ({ p, trueY: yScale(endRank.get(p.amcSlug) as number), y: 0 }))
+      .sort((a, b) => a.trueY - b.trueY);
+    let lastY = -Infinity;
+    for (const it of labels) {
+      it.y = Math.max(it.trueY, lastY + minGap);
+      lastY = it.y;
+    }
+    if (labels.length && labels[labels.length - 1].y > maxY) {
+      let limit = maxY;
+      for (let i = labels.length - 1; i >= 0; i--) {
+        if (labels[i].y > limit) labels[i].y = limit;
+        limit = labels[i].y - minGap;
+      }
+    }
+
+    // Rank ticks for the left axis (always show #1 and the last rank).
+    const rankTicks = Array.from(
+      new Set([1, ...[5, 10, 15, 20].filter((r) => r < n), n])
+    ).sort((a, b) => a - b);
 
     return {
       vw,
       padding,
-      innerW,
       innerH,
-      yMax,
-      yMin,
+      startRank,
+      endRank,
       yScale,
       startX,
       endX,
+      labels,
+      rankTicks,
     };
   }, [points, height]);
 
-  if (!layout || points.length === 0) return null;
-  const { vw, padding, innerH, yMax, yScale, startX, endX } = layout;
-
-  // Y-axis tick values
-  const ticks: number[] = [];
-  const tickStep = yMax > 5 ? Math.ceil(yMax / 5) : 1;
-  for (let v = 0; v <= yMax; v += tickStep) ticks.push(v);
+  if (!model || points.length === 0) return null;
+  const {
+    vw,
+    padding,
+    innerH,
+    startRank,
+    endRank,
+    yScale,
+    startX,
+    endX,
+    labels,
+    rankTicks,
+  } = model;
 
   return (
     <div className={cn("w-full overflow-x-auto", className)}>
       <svg viewBox={`0 0 ${vw} ${height}`} className="block w-full" style={{ minWidth: 600 }}>
-        {/* Y-axis grid + ticks */}
-        {ticks.map((t) => (
-          <g key={t}>
+        {/* Y-axis: rank rows (1 = largest share, at the top) */}
+        <text
+          x={padding.left - 6}
+          y={padding.top - 13}
+          textAnchor="end"
+          fontSize="9.5"
+          fill="hsl(var(--muted-foreground))"
+        >
+          Rank
+        </text>
+        {rankTicks.map((r) => (
+          <g key={r}>
             <line
               x1={padding.left}
               x2={vw - padding.right}
-              y1={yScale(t)}
-              y2={yScale(t)}
+              y1={yScale(r)}
+              y2={yScale(r)}
               stroke="hsl(var(--border))"
               strokeDasharray="2 3"
               strokeWidth={0.5}
             />
             <text
               x={padding.left - 6}
-              y={yScale(t)}
+              y={yScale(r)}
               dominantBaseline="middle"
               textAnchor="end"
               fontSize="10"
               fill="hsl(var(--muted-foreground))"
               className="tabular"
             >
-              {t.toFixed(0)}%
+              {`#${r}`}
             </text>
           </g>
         ))}
+
         {/* X-axis labels */}
         <text
           x={startX}
@@ -126,7 +196,7 @@ export function CohortJourneyMap({
           {points[0].endQuarterLabel}
         </text>
 
-        {/* Arrow definitions for gainers / losers */}
+        {/* Arrow definitions for gainers / losers / flat */}
         <defs>
           <marker
             id="arrow-up"
@@ -163,51 +233,57 @@ export function CohortJourneyMap({
           </marker>
         </defs>
 
-        {/* Per-AMC journey arrows */}
+        {/* Per-AMC rank journeys */}
         {points.map((p) => {
-          const sy = yScale(p.startMarketSharePct);
-          const ey = yScale(p.endMarketSharePct);
-          const tone =
-            p.shareDeltaPp > 0.1
-              ? "hsl(var(--positive))"
-              : p.shareDeltaPp < -0.1
-                ? "hsl(var(--negative))"
-                : "hsl(var(--muted-foreground))";
-          const marker =
-            p.shareDeltaPp > 0.1
-              ? "url(#arrow-up)"
-              : p.shareDeltaPp < -0.1
-                ? "url(#arrow-down)"
-                : "url(#arrow-flat)";
+          const sr = startRank.get(p.amcSlug) as number;
+          const er = endRank.get(p.amcSlug) as number;
+          const sy = yScale(sr);
+          const ey = yScale(er);
           return (
-            <g key={p.amcSlug}>
-              <line
-                x1={startX}
-                y1={sy}
-                x2={endX}
-                y2={ey}
-                stroke={tone}
-                strokeOpacity={0.55}
-                strokeWidth={1.6}
-                markerEnd={marker}
-              >
-                <title>
-                  {`${p.displayName}: ${p.startMarketSharePct.toFixed(2)}% → ${p.endMarketSharePct.toFixed(2)}% (${p.shareDeltaPp >= 0 ? "+" : ""}${p.shareDeltaPp.toFixed(2)}pp)`}
-                </title>
-              </line>
-              {/* End-cap label for the larger AMCs only — top 7 by latest AUM */}
-              {p.endMarketSharePct >= 2 && (
-                <text
-                  x={endX + 4}
-                  y={ey}
-                  dominantBaseline="middle"
-                  fontSize="9"
-                  fill="hsl(var(--foreground))"
-                  className="tabular"
-                >
-                  {p.displayName}
-                </text>
+            <line
+              key={p.amcSlug}
+              x1={startX}
+              y1={sy}
+              x2={endX}
+              y2={ey}
+              stroke={toneOf(p.shareDeltaPp)}
+              strokeOpacity={0.55}
+              strokeWidth={1.6}
+              markerEnd={markerOf(p.shareDeltaPp)}
+            >
+              <title>
+                {`${p.displayName}: rank #${sr} → #${er} · ${p.startMarketSharePct.toFixed(2)}% → ${p.endMarketSharePct.toFixed(2)}% (${p.shareDeltaPp >= 0 ? "+" : ""}${p.shareDeltaPp.toFixed(2)}pp)`}
+              </title>
+            </line>
+          );
+        })}
+
+        {/* De-collided end labels, one per AMC, with a leader line back to
+            the true rank position when nudged. */}
+        {labels.map(({ p, trueY, y }) => {
+          const labelX = endX + 14;
+          const nudged = Math.abs(y - trueY) > 0.5;
+          return (
+            <g key={`lbl-${p.amcSlug}`}>
+              {nudged && (
+                <polyline
+                  points={`${endX + 7},${trueY} ${labelX - 3},${y}`}
+                  fill="none"
+                  stroke={toneOf(p.shareDeltaPp)}
+                  strokeOpacity={0.4}
+                  strokeWidth={0.5}
+                />
               )}
+              <text
+                x={labelX}
+                y={y}
+                dominantBaseline="middle"
+                fontSize="9"
+                fill="hsl(var(--foreground))"
+                className="tabular"
+              >
+                {p.displayName}
+              </text>
             </g>
           );
         })}
