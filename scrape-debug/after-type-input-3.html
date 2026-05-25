@@ -1,0 +1,1681 @@
+<!DOCTYPE html><html lang="en"><head>
+<link href="https://www.rupeevest.com/assets/manifest.json" rel="preconnect" crossorigin="">
+<link rel="preload" href="/assets/fonts/fontello.woff2" as="font" type="font/woff2" crossorigin="">
+<link rel="stylesheet" media="all" href="/assets/application-b8940d57a72387e2cfd30e87ed19b12385bdeae49c04f7e46e00df0f18f8790a.css" data-turbolinks-track="true"> 
+<meta name="google-site-verification" content="4LE6VIdJUgFlzaOwnEfooQp7PBbiGIw1xywE0tdOLgg">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta property="fb:app_id" content="810867582403573">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#17406B">
+<title>Mutual Fund Portfolio Tracker | RupeeVest</title>
+<meta name="description" content="Track Mutual Fund Portfolio changes over the last 4 months. Mutual funds full portfolio holdings. Stocks bought by mutual funds. Stocks sold by mutual funds.">
+<meta property="og:site_name" content="RupeeVest">
+<meta property="og:image" content="https://www.rupeevest.com/assets/logo_fb.png">
+<meta property="og:title" content="Mutual Fund Portfolio Tracker | RupeeVest">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.rupeevest.com/Mutual-Fund-Portfolio-Tracker">
+<meta property="og:description" content="Track Mutual Fund Portfolio changes over the last 4 months. Mutual funds full portfolio holdings. Stocks bought by mutual funds. Stocks sold by mutual funds.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:site" content="RupeeVest">
+<meta name="twitter:title" content="Mutual Fund Portfolio Tracker | RupeeVest">
+<meta name="twitter:description" content="Track Mutual Fund Portfolio changes over the last 4 months. Mutual funds full portfolio holdings. Stocks bought by mutual funds. Stocks sold by mutual funds.">
+<meta name="twitter:image" content="https://www.rupeevest.com/assets/logo_fb.png">
+
+<link rel="stylesheet" media="screen" href="/assets/mf_tracker-165faeeeb0afc59b5ed6b877870b8982b2af7726ff67618d57affe672a9efa0f.css">
+<link rel="canonical" href="https://www.rupeevest.com/Mutual-Fund-Portfolio-Tracker">
+
+<meta name="csrf-param" content="authenticity_token">
+<meta name="csrf-token" content="SP+I0iUWD71uBkl66yfdhVMZ2HArvuxKhnvPuL/Rq8u3Q0wK17m1WOEOhQsP8mwkIUG7GPewGyBluB1WtttNQA==">
+<link rel="manifest" href="/assets/manifest.json"> 
+<link rel="apple-touch-icon" href="/assets/logoManifest-192.png">
+<!-- Google tag (gtag.js) -->
+<script src="https://pagead2.googlesyndication.com/pagead/managed/js/adsense/m202605220101/show_ads_impl_fy2021.js?bust=31098763"></script><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-PF6FQSDD2X"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-PF6FQSDD2X');
+</script>
+<meta http-equiv="origin-trial" content="AlK2UR5SkAlj8jjdEc9p3F3xuFYlF6LYjAML3EOqw1g26eCwWPjdmecULvBH5MVPoqKYrOfPhYVL71xAXI1IBQoAAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3NTgwNjcxOTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="Amm8/NmvvQfhwCib6I7ZsmUxiSCfOxWxHayJwyU1r3gRIItzr7bNQid6O8ZYaE1GSQTa69WwhPC9flq/oYkRBwsAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3NTgwNjcxOTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="A9nrunKdU5m96PSN1XsSGr3qOP0lvPFUB2AiAylCDlN5DTl17uDFkpQuHj1AFtgWLxpLaiBZuhrtb2WOu7ofHwEAAACKeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElNdWx0aW1vZGFsSW5wdXQiLCJleHBpcnkiOjE3NzQzMTA0MDAsImlzU3ViZG9tYWluIjp0cnVlLCJpc1RoaXJkUGFydHkiOnRydWV9"><meta http-equiv="origin-trial" content="A93bovR+QVXNx2/38qDbmeYYf1wdte9EO37K9eMq3r+541qo0byhYU899BhPB7Cv9QqD7wIbR1B6OAc9kEfYCA4AAACQeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElNdWx0aW1vZGFsSW5wdXQiLCJleHBpcnkiOjE3NzQzMTA0MDAsImlzU3ViZG9tYWluIjp0cnVlLCJpc1RoaXJkUGFydHkiOnRydWV9"><meta http-equiv="origin-trial" content="A1S5fojrAunSDrFbD8OfGmFHdRFZymSM/1ss3G+NEttCLfHkXvlcF6LGLH8Mo5PakLO1sCASXU1/gQf6XGuTBgwAAACQeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElNdWx0aW1vZGFsSW5wdXQiLCJleHBpcnkiOjE3NzQzMTA0MDAsImlzU3ViZG9tYWluIjp0cnVlLCJpc1RoaXJkUGFydHkiOnRydWV9"><script async="" src="https://fundingchoicesmessages.google.com/i/ca-pub-8174005371123548?href=https%3A%2F%2Fwww.rupeevest.com%2FMutual-Fund-Portfolio-Tracker&amp;ers=2"></script><script async="" src="https://fundingchoicesmessages.google.com/f/AGSKWxVM564jgYd8rMvD1PrwRidxpYmm1TFR3tq9miWhUnL9N1FZDny-sMV1xOAL5U5-8CPcK-JKV9-gmXEuXt21kOH4mkmav3uSmS7iiN_M-uKuveXq7km0IP5p13LI_66DHx6SC2_GNg==?fccs=W251bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLFsxNzc5NzA2NTE0LDg5MzAwMDAwMF0sbnVsbCxudWxsLG51bGwsW251bGwsWzddXSwiaHR0cHM6Ly93d3cucnVwZWV2ZXN0LmNvbS9NdXR1YWwtRnVuZC1Qb3J0Zm9saW8tVHJhY2tlciIsbnVsbCxbWzgsIktoNG54N21lNl80Il0sWzksImVuLUdCIl0sWzE4LCJbW1tudWxsLDIxODFdXV0iXSxbMzUsIjE3Nzk3MDY1MTQiXSxbMTksIjIiXSxbMTcsIlswXSJdLFsyNCwiIl0sWzI5LCJmYWxzZSJdXV0"></script><script async="" src="https://fundingchoicesmessages.google.com/f/AGSKWxU3DCYP8e8x0xWuEzaoGDVi_zUALPZBhrtBv-7EwAgThy08IwKnTRzeyTll5TxcEESIWQD7kSdo6Ttzz7B14K0razO8IU3l5-zMITJ6bzWamOxzLt2zfN3Szqb2BdrDzv_G3_bKNw==?fccs=W251bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLFsxNzc5NzA2NTE0LDkyNzAwMDAwMF0sbnVsbCxudWxsLG51bGwsW251bGwsWzcsOV0sbnVsbCwyLG51bGwsImVuIl0sImh0dHBzOi8vd3d3LnJ1cGVldmVzdC5jb20vTXV0dWFsLUZ1bmQtUG9ydGZvbGlvLVRyYWNrZXIiLG51bGwsW1s4LCJLaDRueDdtZTZfNCJdLFs5LCJlbi1HQiJdLFsxOCwiW1tbbnVsbCwyMTgxXV1dIl0sWzM1LCIxNzc5NzA2NTE0Il0sWzE5LCIyIl0sWzE3LCJbMF0iXSxbMjQsIiJdLFsyOSwiZmFsc2UiXV1d"></script><script async="" src="https://fundingchoicesmessages.google.com/f/AGSKWxW8Y0gWWNnOG0l9AcjuA2ATZa-dD7poSXwLRPG3BLj-Wg6kf32vTMI2bTtw8xe0kz4aW30fIPAxHIo2jFeirVTi-tsYUa1f0EIYV1IET-QqqQNd06q88DtQEtDXFH4QxBx4kwCxzA==?fccs=W251bGwsbnVsbCxudWxsLG51bGwsbnVsbCxudWxsLFsxNzc5NzA2NTE1LDY0MjAwMDAwMF0sbnVsbCxudWxsLG51bGwsW251bGwsWzcsOSw2XSxudWxsLDIsbnVsbCwiZW4iLG51bGwsbnVsbCxudWxsLG51bGwsbnVsbCwxXSwiaHR0cHM6Ly93d3cucnVwZWV2ZXN0LmNvbS9NdXR1YWwtRnVuZC1Qb3J0Zm9saW8tVHJhY2tlciIsbnVsbCxbWzgsIktoNG54N21lNl80Il0sWzksImVuLUdCIl0sWzE4LCJbW1tudWxsLDIxODFdXV0iXSxbMzUsIjE3Nzk3MDY1MTQiXSxbMTksIjIiXSxbMTcsIlswXSJdLFsyNCwiIl0sWzI5LCJmYWxzZSJdXV0"></script></head>
+
+<body id="rv_mftracker_body">
+
+   <a href="#" class="ChatBtn"><span class="d-none d-xl-block"><span class="ChatText">Let's Chat ?</span><span class="ChatArrowUp float-right"></span></span><span class="d-xl-none"><span class="icon icon-chat"><span class="sr-only">Let's Chat?</span></span></span></a>
+
+   <div class="nav-rv">
+      <nav class="navbar navbar-expand-md fixed-top">
+        <div class="container">
+            <a class="nav-link pl-md-0" href="/"><img alt="RupeeVest" src="/assets/logo_rv-1228b27726ce39e669c2f4093e3655bb4ceb09b8614027cd7a970523b72142a9.png"><span class="sr-only">(current)</span></a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerMobile" aria-controls="navbarTogglerMobile" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="icon icon-menu"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarTogglerMobile">
+                <ul class="navbar-nav">
+                    <li id="Searchli" class="nav-item order-1 order-md-4">
+                        <div class="input-group">
+                            <input type="text" id="fund_names" class="form-control ui-autocomplete-input" placeholder="Search mutual funds here..." aria-label="Search mutual funds here" autocomplete="off" style="">
+                            <div class="input-group-append">
+                                <span class="input-group-text" id="fund_click"><span class="icon icon-search"></span></span>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown order-2 order-md-1">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownWhyRupeeVest" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                          Why RupeeVest
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdownWhyRupeeVest">                        
+                            <a class="dropdown-item" href="/#how-it-works1-scroll">How It Works</a>
+                            <a class="dropdown-item" href="/Mutual-Funds/Security">Security</a>
+                            <a class="dropdown-item" href="/Mutual-Funds/About-Us">About Us</a>
+                           <!--  <a href="https://blog.rupeevest.com" target = "_blank" rel='noopener' class="dropdown-item">Blog</a> -->
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown order-3 order-md-2">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownWhatWeOffer" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                         What We Offer
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdownWhatWeOffer">
+
+                            <a class="dropdown-item" href="/Mutual-Funds-India/Best-Mutual-Funds">Mutual Funds</a>
+                            <a class="dropdown-item" href="/Mutual-Funds/Portfolio-Investment">Mutual Fund Portfolios</a>
+                            <a class="dropdown-item" href="/Fixed-Deposit/FD-Interest-Rates">Fixed Deposits</a>
+                            <a class="dropdown-item" href="/Mutual-Funds-India/NRI">NRI Services</a>
+                            <a class="dropdown-item" href="/rupeevest-partner">RupeeVest Partner</a>                       
+                        </div>
+                    </li>
+
+                    <li class="nav-item dropdown order-4 order-md-3">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownTools" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                         Tools
+                        </a>                    
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/Mutual-Funds-India/Screener">MF Screener</a></li>
+                            <li><a class="dropdown-item" href="/Mutual-Fund-Comparison">MF Comparison</a></li>
+                            <li><a class="dropdown-item" href="/Mutual-Funds/Rolling-Return">MF Rolling Return</a></li>
+                            <li><a class="dropdown-item" href="/Mutual-Fund-Calculator/Sip-Return">MF SIP Return</a></li>
+                            <li><a class="dropdown-item" href="/Mutual-Fund-Portfolio-Tracker">MF Portfolio Tracker</a></li>
+                            <li><a class="dropdown-item" href="/Mutual-Fund-Holdings">Stocks Held by MFs</a></li>
+                            <li><a class="dropdown-item" href="/Mutual-Fund-Debt-Holdings">Debt Held by MFs</a></li>
+                            <li class="dropdown-submenu">
+                                <a href="#" data-toggle="dropdown" class="dropdown-toggle-right dropdown-item">Financial Planning</a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/Mutual-Funds/Power-of-Compounding">Power of Compounding</a></li>
+                                    <li><a class="dropdown-item" href="/Mutual-Funds/Tax-Saving-Mutual-Funds">Save Tax</a></li>                                
+                                </ul>
+                            </li>
+                            <li class="dropdown-submenu">
+                                <a href="#" data-toggle="dropdown" class="dropdown-toggle-right dropdown-item">Calculators</a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/Mutual-Fund-Calculator/Sip-Calculator">SIP Calculator</a></li>
+                                    <li><a class="dropdown-item" href="/Fixed-Deposit/FD-Calculator">FD Calculator</a></li>
+                                    <li><a class="dropdown-item" href="/Mutual-Fund-Calculator/CAGR">CAGR Calculator</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    
+                    
+                    <li class="nav-item ml-md-auto unsigned order-last">                    
+                        <a class="nav-link" href="/users/signin">Login&nbsp;/&nbsp;Sign&nbsp;Up</a>
+                    </li>                    
+
+       
+                </ul>            
+            </div>
+        </div>
+      </nav>
+    </div>
+
+
+
+   
+<div id="rv_mfTracker"> 
+
+  <div class="InvsHead">
+    <div class="container">
+      <div class="row">
+        <div class="col-12">
+          <h1>Mutual Fund Portfolio Tracker</h1>
+        </div>      
+      </div>
+    </div>
+  </div>
+  <div class="container minhcont">  
+
+    <div class="row">
+      <div class="col-12">
+        <p>Please use the search bar below to check the portfolio changes over the last 4 months of over 2,000 mutual funds. The data is updated every month when the portfolio of the most recent month is available.</p>
+      </div>
+    </div>
+
+  <!-- +++++++++++++++ Advertisememt +++++++++++++++ -->
+  <div class="row">            
+    <div class="col-12 mb-3"> 
+      <script async="" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>      
+      <ins class="adsbygoogle" style="display: inline-block; min-width: 200px; max-width: 1110px; width: 1110px; height: 90px;" data-ad-client="ca-pub-8174005371123548" data-ad-slot="7782798664" data-adsbygoogle-status="done" data-ad-status="unfilled"><div id="aswift_0_host" style="border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; height: 90px; width: 1110px; margin: 0px; padding: 0px; position: relative; visibility: visible; background-color: transparent; display: inline-block;"><iframe id="aswift_0" name="aswift_0" style="left:0;position:absolute;top:0;border:0;width:1110px;height:90px;min-height:auto;max-height:none;min-width:auto;max-width:none;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" width="1110" height="90" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" allow="attribution-reporting; run-ad-auction" src="https://googleads.g.doubleclick.net/pagead/ads?client=ca-pub-8174005371123548&amp;output=html&amp;h=90&amp;slotname=7782798664&amp;adk=3196566857&amp;adf=1036844549&amp;pi=t.ma~as.7782798664&amp;w=1110&amp;lmt=1779706514&amp;rafmt=12&amp;format=1110x90&amp;url=https%3A%2F%2Fwww.rupeevest.com%2FMutual-Fund-Portfolio-Tracker&amp;asro=0&amp;aiactd=0&amp;aicctd=0&amp;ailctd=0&amp;aimartd=4&amp;aieuf=1&amp;aicrs=1&amp;uach=WyJXaW5kb3dzIiwiMTAuMCIsIng4NiIsIiIsIjE0Ny4wLjc3MjcuMTUiLG51bGwsMCxudWxsLCI2NCIsW1siSGVhZGxlc3NDaHJvbWUiLCIxNDcuMC43NzI3LjE1Il0sWyJOb3QuQS9CcmFuZCIsIjguMC4wLjAiXSxbIkNocm9taXVtIiwiMTQ3LjAuNzcyNy4xNSJdXSwwXQ..&amp;abgtt=9&amp;dt=1779706514223&amp;bpp=4&amp;bdt=566&amp;idt=74&amp;shv=r20260520&amp;mjsv=m202605220101&amp;ptt=9&amp;saldr=aa&amp;abxe=1&amp;cookie_enabled=1&amp;eoidce=1&amp;correlator=1159792827551&amp;frm=20&amp;pv=2&amp;u_tz=330&amp;u_his=2&amp;u_h=900&amp;u_w=1440&amp;u_ah=900&amp;u_aw=1440&amp;u_cd=24&amp;u_sd=1&amp;dmc=16&amp;adx=165&amp;ady=188&amp;biw=1440&amp;bih=900&amp;scr_x=0&amp;scr_y=0&amp;eid=31098654%2C95390787%2C31098763%2C95390277%2C95391807&amp;oid=2&amp;pvsid=3465319923325762&amp;tmod=894990220&amp;uas=0&amp;nvt=1&amp;fc=640&amp;brdim=0%2C0%2C0%2C0%2C1440%2C0%2C1440%2C900%2C1440%2C900&amp;vis=1&amp;rsz=%7C%7CeE%7C&amp;abl=CS&amp;pfx=0&amp;fu=256&amp;bc=31&amp;bz=1&amp;ifi=1&amp;uci=a!1&amp;fsb=1&amp;dtd=95" data-google-container-id="a!1" tabindex="0" title="Advertisement" aria-label="Advertisement" data-load-complete="true"></iframe></div></ins>
+      <script>
+           (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+    </div>
+  </div>
+
+    <div class="row Search_Here">
+      <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
+        <form method="post" action="/Mutual-Fund-Comparison" id="comp_sch">
+          <div class="input-group">
+            <input type="hidden" id="ids" name="ids" style="">
+            <input type="text" class="form-control ui-autocomplete-input" id="srch-term" aria-label="Add funds" placeholder="Search Mutual Funds here..." autocomplete="off" style="">
+            <div class="input-group-append">
+              <div class="input-group-text"><span class="icon-search" aria-hidden="true"></span></div>
+            </div>   
+            <button class="btn btn-primary add_button d_none" id="add_btn_search">Add</button>              
+          </div>                
+        </form>
+      </div>
+    </div>
+    
+    <!--  ALL of My code should be from here -->
+
+    <div class="row">            
+      <div class="col-12 d-md-flex" id="fund_info_dv"> 
+        <div class="FundCat flex-grow-1">
+          <div>
+            <span>Fund Name -&nbsp;</span><strong><span id="name_fund">Canara Rob Large Cap Fund-Reg(G)</span></strong>
+          </div>
+          <div class="mt-2">
+            <span>Category -&nbsp;</span><span id="fund_catesgory">Equity : Large Cap</span>
+          </div>
+          <!-- <div class="">
+             <p class="d_inline">Aum (in ₹ cr):&nbsp;</p><h2 class="d_inline" id="aum"></h2>
+             <h6 class="d_inline"><em> <span id="aum_date">(As on <span id="date_as_on"></span>)</span></em></h6>
+          </div> -->
+        </div> 
+        <div>
+          <button id="download_smf" class="btn btn-default btn-sm float-md-right">Download</button> 
+        </div>        
+      </div>
+    </div>
+
+    <div class="row">  
+      <div class="col-12">
+        <div id="main_table_data" class="table-responsive"><div id="stock_ret_data_1_wrapper" class="dataTables_wrapper no-footer"><div id="stock_ret_data_1_filter" class="dataTables_filter"><label>Search:<input type="search" class="" placeholder="Search Here" aria-controls="stock_ret_data_1" style=""></label></div><table id="stock_ret_data_1" class="table table-bordered table-striped table-sm sortable-theme-bootstrap dataTable no-footer" data-sortable="" role="grid" aria-describedby="stock_ret_data_1_info" style="width: 1113px;"> <caption><h4>Equity Holdings</h4></caption><thead><tr role="row"><th rowspan="2" class="sorting" tabindex="0" aria-controls="stock_ret_data_1" colspan="1" aria-label="Company: activate to sort column ascending" style="width: 305.4px;">Company</th><th colspan="2" rowspan="1">Apr-26<br><span class="m1aum">AUM:&nbsp;₹&nbsp;16,542.2&nbsp;(Cr.)</span></th><th colspan="2" rowspan="1">Mar-26<br><span class="m1aum">AUM:&nbsp;₹&nbsp;15,235&nbsp;(Cr.)</span></th><th colspan="2" rowspan="1">Feb-26<br><span class="m1aum">AUM:&nbsp;₹&nbsp;17,103.6&nbsp;(Cr.)</span></th><th colspan="2" rowspan="1">Jan-26<br><span class="m1aum">AUM:&nbsp;₹&nbsp;17,092.2&nbsp;(Cr.)</span></th></tr><tr role="row"><th class="sorting_desc" tabindex="0" aria-controls="stock_ret_data_1" rowspan="1" colspan="1" aria-sort="descending" aria-label="% of AUM: activate to sort column ascending" style="width: 76.4px;">% of AUM</th><th class="sorting" tabindex="0" aria-controls="stock_ret_data_1" rowspan="1" colspan="1" aria-label="No. of Shares: activate to sort column ascending" style="width: 99.4px;">No. of Shares</th><th class="sorting" tabindex="0" aria-controls="stock_ret_data_1" rowspan="1" colspan="1" aria-label="% of AUM: activate to sort column ascending" style="width: 76.4px;">% of AUM</th><th class="sorting" tabindex="0" aria-controls="stock_ret_data_1" rowspan="1" colspan="1" aria-label="No. of Shares: activate to sort column ascending" style="width: 99.4px;">No. of Shares</th><th class="sorting" tabindex="0" aria-controls="stock_ret_data_1" rowspan="1" colspan="1" aria-label="% of AUM: activate to sort column ascending" style="width: 76.4px;">% of AUM</th><th class="sorting" tabindex="0" aria-controls="stock_ret_data_1" rowspan="1" colspan="1" aria-label="No. of Shares: activate to sort column ascending" style="width: 99.4px;">No. of Shares</th><th class="sorting" tabindex="0" aria-controls="stock_ret_data_1" rowspan="1" colspan="1" aria-label="% of AUM: activate to sort column ascending" style="width: 76.4px;">% of AUM</th><th class="sorting" tabindex="0" aria-controls="stock_ret_data_1" rowspan="1" colspan="1" aria-label="No. of Shares: activate to sort column ascending" style="width: 99.4px;">No. of Shares</th></tr></thead><tbody><tr class="odd"><td valign="top" colspan="9" class="dataTables_empty">No matching records found</td></tr></tbody></table><div class="dataTables_info" id="stock_ret_data_1_info" role="status" aria-live="polite">Showing 0 to 0 of 0 entries (filtered from 60 total entries)</div></div></div>
+        <h6 class="note eqNote d_none" style="display: block;"><span class="incr"></span> <span class="decr"></span> indicates an increase or decrease in shareholding as compared to last month</h6>
+      </div>
+      <div class="col-12">
+        <div id="main_table_data_db" class="table-responsive"></div>
+      </div>
+      <div class="col-12">
+        <div id="main_table_data_ms" class="table-responsive"><div id="stock_ret_data_4_wrapper" class="dataTables_wrapper no-footer"><div id="stock_ret_data_4_filter" class="dataTables_filter"><label>Search:<input type="search" class="" placeholder="Search Here" aria-controls="stock_ret_data_4" style=""></label></div><table id="stock_ret_data_4" class="table table-bordered table-striped table-sm sortable-theme-bootstrap dataTable no-footer" data-sortable="" role="grid" aria-describedby="stock_ret_data_4_info" style="width: 1112px;"> <caption><h4>Miscellaneous Holdings</h4></caption><thead><tr role="row"><th rowspan="2" class="sorting" tabindex="0" aria-controls="stock_ret_data_4" colspan="1" aria-label="Instrument: activate to sort column ascending" style="width: 393.4px;">Instrument</th><th colspan="1" rowspan="1">Apr-26<br><span class="m1aum">AUM:&nbsp;₹&nbsp;16,542.2&nbsp;(Cr.)</span> </th><th colspan="1" rowspan="1">Mar-26<br><span class="m1aum">AUM:&nbsp;₹&nbsp;15,235&nbsp;(Cr.)</span> </th><th colspan="1" rowspan="1">Feb-26<br><span class="m1aum">AUM:&nbsp;₹&nbsp;17,103.6&nbsp;(Cr.)</span> </th><th colspan="1" rowspan="1">Jan-26<br><span class="m1aum">AUM:&nbsp;₹&nbsp;17,092.2&nbsp;(Cr.)</span> </th></tr><tr role="row"><th class="sorting_desc" tabindex="0" aria-controls="stock_ret_data_4" rowspan="1" colspan="1" aria-sort="descending" aria-label="% of AUM: activate to sort column ascending" style="width: 168.4px;">% of AUM</th><th class="sorting" tabindex="0" aria-controls="stock_ret_data_4" rowspan="1" colspan="1" aria-label="% of AUM: activate to sort column ascending" style="width: 155.4px;">% of AUM</th><th class="sorting" tabindex="0" aria-controls="stock_ret_data_4" rowspan="1" colspan="1" aria-label="% of AUM: activate to sort column ascending" style="width: 168.4px;">% of AUM</th><th class="sorting" tabindex="0" aria-controls="stock_ret_data_4" rowspan="1" colspan="1" aria-label="% of AUM: activate to sort column ascending" style="width: 168.4px;">% of AUM</th></tr></thead><tbody><tr role="row" class="odd"><td>6.00% TVS Motor Co Ltd NCRPS ** (Preference Shares)</td><td class="sorting_1">0.01</td><td>0.01</td><td>0.01</td><td>0.01</td></tr></tbody></table><div class="dataTables_info" id="stock_ret_data_4_info" role="status" aria-live="polite">Showing 1 to 1 of 1 entries</div></div></div>
+      </div>
+      <div class="col-12">
+        <div id="main_table_data_cs" class="table-responsive"><div id="stock_ret_data_3_wrapper" class="dataTables_wrapper no-footer"><div id="stock_ret_data_3_filter" class="dataTables_filter"><label>Search:<input type="search" class="" placeholder="Search Here" aria-controls="stock_ret_data_3" style=""></label></div><table id="stock_ret_data_3" class="table table-bordered table-striped table-sm sortable-theme-bootstrap dataTable no-footer" data-sortable="" role="grid" aria-describedby="stock_ret_data_3_info" style="width: 1111px;"><caption><h4>Cash &amp; Cash Equivalents</h4></caption><thead><tr role="row"><th rowspan="2" class="sorting" tabindex="0" aria-controls="stock_ret_data_3" colspan="1" aria-label="Instrument: activate to sort column ascending" style="width: 215.4px;">Instrument</th><th colspan="1" rowspan="1">Apr-26<br><span class="m1aum">AUM:&nbsp;₹&nbsp;16,542.2&nbsp;(Cr.)</span> </th><th colspan="1" rowspan="1">Mar-26<br><span class="m1aum">AUM:&nbsp;₹&nbsp;15,235&nbsp;(Cr.)</span> </th><th colspan="1" rowspan="1">Feb-26<br><span class="m1aum">AUM:&nbsp;₹&nbsp;17,103.6&nbsp;(Cr.)</span> </th><th colspan="1" rowspan="1">Jan-26<br><span class="m1aum">AUM:&nbsp;₹&nbsp;17,092.2&nbsp;(Cr.)</span> </th></tr><tr role="row"><th class="sorting_desc" tabindex="0" aria-controls="stock_ret_data_3" rowspan="1" colspan="1" aria-sort="descending" aria-label="% of AUM: activate to sort column ascending" style="width: 213.4px;">% of AUM</th><th class="sorting" tabindex="0" aria-controls="stock_ret_data_3" rowspan="1" colspan="1" aria-label="% of AUM: activate to sort column ascending" style="width: 197.4px;">% of AUM</th><th class="sorting" tabindex="0" aria-controls="stock_ret_data_3" rowspan="1" colspan="1" aria-label="% of AUM: activate to sort column ascending" style="width: 213.4px;">% of AUM</th><th class="sorting" tabindex="0" aria-controls="stock_ret_data_3" rowspan="1" colspan="1" aria-label="% of AUM: activate to sort column ascending" style="width: 213.4px;">% of AUM</th></tr></thead><tbody><tr role="row" class="odd"><td>Tri-Party Repo (TREPS)</td><td class="sorting_1">3.54</td><td>2.71</td><td>2.89</td><td>2.70</td></tr><tr role="row" class="even"><td>Net Current Asset</td><td class="sorting_1">0.21</td><td>-0.07</td><td>-0.07</td><td>-0.07</td></tr></tbody></table><div class="dataTables_info" id="stock_ret_data_3_info" role="status" aria-live="polite">Showing 1 to 2 of 2 entries</div></div></div>
+      </div>      
+    </div> 
+
+  </div>
+  <!--  <div class="container" id="container_graph"></div> -->         
+  <footer>
+    <div class="top_footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-md-9">
+                    <ul class="footerList">
+                        <li><a href="/Mutual-Fund-Investment/Contact">Contact Us</a> <span class="footpipe">|</span></li>
+                        <!-- <li><a href="https://blog.rupeevest.com/" target = "_blank" rel='noopener'>Blog</a> <span class="footpipe">|</span></li> --> 
+                        <li><a href="/Mutual-Fund-Investment/FAQ">FAQs</a> <span class="footpipe">|</span></li>
+                        <li><a href="/Mutual-Fund-Investment/Glossary">Glossary</a> <span class="footpipe">|</span></li>
+                        <li><a href="/Mutual-Fund-Investment/Download">Downloads</a> <span class="footpipe d-none d-sm-inline-block">|</span></li>
+                        <li><a href="/rupeevest-partner">RupeeVest Partner</a></li>
+                    </ul>
+                </div>
+                <div class="col-12 col-md-3 text-md-right">
+                    <ul class="footerSocial">
+                        <li><a href="https://twitter.com/RupeeVest" title="Twitter" class="twitter" target="_blank" rel="noopener"><span class="d_none">Twitter</span><span class="icon icon-twitter"></span></a>&nbsp;&nbsp;</li>
+                        <li><a href="https://www.linkedin.com/company/rupeevest/" title="Linkedin" class="linkedin" target="_blank" rel="noopener"><span class="d_none">LinkedIn</span><span class="icon icon-linkedin"></span></a>&nbsp;&nbsp;</li>
+                        <li><a href="https://www.facebook.com/rupeevest" title="Facebook" class="facebook" target="_blank" rel="noopener"><span class="d_none">Facebook</span><span class="icon icon-facebook"></span></a>&nbsp;&nbsp;</li>                                             
+                    </ul>
+                </div>                    
+            </div>
+        </div>
+    </div>
+    <div class="bot_footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <img alt="RupeeVest Logo" src="/assets/logo_only_white-eeb7888ead2d676ceb6092cf593e1de0ebf914e652ece7d6069b23758ba9600e.png">
+                    <p>The Better Way To Invest - RupeeVest</p> 
+                    <ul class="PhnMail">
+                        <li class="">
+                            <a href="tel:+918777416306"><span class="icon-phone"></span>&nbsp;+91-8777416306</a>
+                        </li>
+                        <li class="pl-sm-4">
+                            <a data-name="care" data-domain="rupeevest" data-tld="com" href="#" class="cryptedmail" onclick="window.location.href = 'mailto:' + this.dataset.name + '@' + this.dataset.domain + '.' + this.dataset.tld"><span class="icon-mail-alt"></span>&nbsp;<span class="sr-only">Mail to careAtrupeevestDotcom</span></a>
+                        </li>
+                    </ul>                       
+                    <div>
+                        <small>AMFI Registered Mutual Fund Distributor: ARN-110558</small>
+                        <ul class="footDetails">
+                            <li class="pr-2"><a href="/Privacy-Policy">Privacy Policy</a></li>
+                            <li class="pl-2"><a href="/Terms-and-Conditions">Terms and Conditions</a></li>
+                        </ul>
+                        <small>© Copyright 2026. All rights reserved.</small>
+                        <hr class="mini central">
+                    </div>
+                </div>
+                <div class="col-12 footerDisclaimer">
+                    <p>Mutual fund investments are subject to market risks. Please read the scheme information and other related documents carefully before investing. Past performance of the schemes is neither an indicator nor a guarantee of future performance.</p>                
+                    <p>Please consider your specific investment requirements, risk tolerance, investment goal, time frame and the cost associated with the investment before choosing a mutual fund / fixed deposit, or designing a portfolio of mutual funds that suits your needs.</p>
+                    <p>RV Financial Services Pvt. Ltd. has gathered the data, information, statistics from sources believed to be highly reliable and true. All necessary precautions have been taken to avoid any error, lapse or insufficiency, however, no representations or warranties are made (express or implied) as to the reliability, accuracy or completeness of such information. The Company cannot be held liable for any loss arising directly or indirectly from the use of, or any action taken in on, any information appearing herein.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+</div>
+
+
+  <script src="/assets/application-2f79500676a1b61911cb11a9c0c1d5bc8e40775cac17fd2f97a0e78c4083f3ee.js" data-turbolinks-track="true"></script>
+
+<script>
+
+$('.dropdown-submenu > a').on("click", function(e) {
+    var submenu = $(this);
+    $('.dropdown-submenu .dropdown-menu').removeClass('show');
+    submenu.next('.dropdown-menu').addClass('show');
+    e.stopPropagation();
+});
+
+$('.dropdown').on("hidden.bs.dropdown", function() {
+    // hide any open menus when parent closes
+    $('.dropdown-menu.show').removeClass('show');
+});
+
+
+var map_global={};// global map for fund search
+var idleTime_gbl = 30; // to logout after time out
+
+$("#fund_names").click(function(){
+        if(Object.keys(map_global).length==0)
+                fundname_search();
+        });
+
+  $("#fund_names").autocomplete({
+        select: function (a, b) {
+            $(this).val(b.item.value);
+            // alert(b.item.value)
+            // setvalue_schemename();
+            var obj = document.getElementById("fund_names").value;
+            // alert(obj);
+            window.location = "/Mutual-Funds-India/"+map_global[obj];
+        }
+    });
+  
+ function fundname_search()
+{
+    // console.log("Called-=-=-=-=-=-");
+
+    $.ajax({
+        type:'GET',
+        url: '/home/get_search_data',
+        datatype:'json',
+        success:function(searchdata, textStatus, jqXHR) {
+                 
+                
+                         var schemename = [];
+                         var schemename_with_nfo = [];
+
+                         map = {};
+                         for(var i =0;i <= searchdata.search_data.length-1;i++)
+                         {
+                            var item1 = searchdata.search_data[i];
+                            var scheme_code = item1.schemecode;
+                            var s_name = item1.s_name1;
+
+                            schemename.push(item1.s_name1);
+                            
+                            schemename_with_nfo.push(item1.s_name1);
+
+                            map_global[s_name]=scheme_code;
+
+                            //-----------sip return------------------
+                            s_name_temp = item1.s_name1                            
+                            s_name_temp=s_name_temp.replace(/-/g,' ');
+                            map[s_name_temp] = item1.schemecode
+                            // console.log("HERE 1111");
+
+                         }
+
+                         // for population NFO
+                         for(var i =0;i <= searchdata.search_data_nfo.length-1;i++){
+                            var item1 = searchdata.search_data_nfo[i];
+                            var scheme_code = item1.schemecode;
+                            var s_name = item1.s_name1;
+                            // schemename.push(item1.s_name1);
+                            // schemename_with_nfo.push(item1.s_name1);
+
+                            map_global[s_name]=scheme_code;
+                            // console.log("HERE 2222")
+                         }
+
+                       // debugger;
+
+                        $("#fund_names").autocomplete ( {
+    source: function (requestObj, responseFunc) {
+                var matchArry   = schemename.slice (); //-- Copy the array
+                var srchTerms   = $.trim (requestObj.term).split (/\s+/);
+
+                //--- For each search term, remove non-matches.
+                $.each (srchTerms, function (J, term) {
+                    var regX    = new RegExp (term, "i");
+                    matchArry   = $.map (matchArry, function (item) {
+                        return regX.test (item)  ?  item  : null;
+                    } );
+                } );
+
+                //--- Return the match results.
+                responseFunc (matchArry);
+            },
+         open: function (event, ui) {
+//--- This function provides no hooks to the results list, so we have to trust the selector, for now. 
+                var resultsList = $("ul.ui-autocomplete > li.ui-menu-item > a");
+                var srchTerm    = $.trim ( $("#fund_names").val () ).split (/\s+/).join ('|');
+
+                //--- Loop through the results list and highlight the terms.
+                resultsList.each ( function () {
+                    var jThis   = $(this);
+                    var regX    = new RegExp ('(' + srchTerm + ')', "ig");
+                    var oldTxt  = jThis.text ();
+
+                    jThis.html (oldTxt.replace (regX, '<span class="srchHilite">$1</span>') );
+                } );
+            }
+        });
+      // ----------------------------comparison------------------------
+           $("#srch-term").autocomplete ( {
+              source: function (requestObj, responseFunc) {
+                var matchArry   = schemename.slice (); //-- Copy the array
+                var srchTerms   = $.trim (requestObj.term).split (/\s+/);
+
+                //--- For each search term, remove non-matches.
+                $.each (srchTerms, function (J, term) {
+                    var regX    = new RegExp (term, "i");
+                    matchArry   = $.map (matchArry, function (item) {
+                        return regX.test (item)  ?  item  : null;
+                    } );
+                } );
+
+                responseFunc (matchArry);
+            },
+         open: function (event, ui) {
+//*--- This function provides no hooks to the results list, so we have to trust the selector, for now. 
+                var resultsList = $("ul.ui-autocomplete > li.ui-menu-item > a");
+                var srchTerm    = $.trim ( $("#srch-term").val () ).split (/\s+/).join ('|');
+
+                //--- Loop through the results list and highlight the terms.
+                resultsList.each ( function () {
+                    var jThis   = $(this);
+                    var regX    = new RegExp ('(' + srchTerm + ')', "ig");
+                    var oldTxt  = jThis.text ();
+
+                    jThis.html (oldTxt.replace (regX, '<span class="srchHilite">$1</span>') );
+                } );
+            }
+        });
+        
+    //---------------------------------sip return-----------------------------
+
+                   $("#fund_names_sip").autocomplete ( {
+    source: function (requestObj, responseFunc) {
+                var matchArry   = schemename.slice (); //-- Copy the array
+                var srchTerms   = $.trim (requestObj.term).split (/\s+/);
+
+                //--- For each search term, remove non-matches.
+                $.each (srchTerms, function (J, term) {
+                    var regX    = new RegExp (term, "i");
+                    matchArry   = $.map (matchArry, function (item) {
+                        return regX.test (item)  ?  item  : null;
+                    } );
+                } );
+
+                //--- Return the match results.
+                responseFunc (matchArry);
+            },
+         open: function (event, ui) {
+//--- This function provides no hooks to the results list, so we have to trust the selector, for now.
+                
+                var resultsList = $("ul.ui-autocomplete > li.ui-menu-item > a");
+                var srchTerm    = $.trim ( $("#fund_names_sip").val () ).split (/\s+/).join ('|');
+
+                //--- Loop through the results list and highlight the terms.
+                resultsList.each ( function () {
+                    var jThis   = $(this);
+                    var regX    = new RegExp ('(' + srchTerm + ')', "ig");
+                    var oldTxt  = jThis.text ();
+
+                    jThis.html (oldTxt.replace (regX, '<span class="srchHilite">$1</span>') );
+                } );
+            }
+        });
+
+
+        //------------------------rolling return-------------------------------
+
+              $("#fund_rolling").autocomplete ( {
+    source: function (requestObj, responseFunc) {
+                var matchArry   = schemename.slice (); //-- Copy the array
+                var srchTerms   = $.trim (requestObj.term).split (/\s+/);
+
+                //--- For each search term, remove non-matches.
+                $.each (srchTerms, function (J, term) {
+                    var regX    = new RegExp (term, "i");
+                    matchArry   = $.map (matchArry, function (item) {
+                        return regX.test (item)  ?  item  : null;
+                    } );
+                } );
+
+                responseFunc (matchArry);
+            },
+         open: function (event, ui) {
+        //--- This function provides no hooks to the results list, so we have to trust the selector, for now.
+                var resultsList = $("ul.ui-autocomplete > li.ui-menu-item > a");
+                var srchTerm    = $.trim ( $("#fund_rolling").val () ).split (/\s+/).join ('|');
+
+                //--- Loop through the results list and highlight the terms.
+                resultsList.each ( function () {
+                    var jThis   = $(this);
+                    var regX    = new RegExp ('(' + srchTerm + ')', "ig");
+                    var oldTxt  = jThis.text ();
+
+                    jThis.html (oldTxt.replace (regX, '<span class="srchHilite">$1</span>') );
+                } );
+            }
+        });
+        },
+         error:function(jqXHR, textStatus, errorThrown) {
+         }
+ })
+}
+
+function commaSeparateNumber(val)
+    {
+       x=val.toString();
+        var afterPoint = '';
+        if(x.indexOf('.') > 0)
+           afterPoint = x.substring(x.indexOf('.'),x.length);
+        x = Math.floor(x);
+        x=x.toString();
+        var lastThree = x.substring(x.length-3);
+        var otherNumbers = x.substring(0,x.length-3);
+        if(otherNumbers != '')
+            lastThree = ',' + lastThree;
+        var res = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree + afterPoint;  
+        return res;
+    }
+
+
+</script><ul id="ui-id-1" tabindex="0" class="ui-menu ui-widget ui-widget-content ui-autocomplete ui-front" unselectable="on" style="display: none; max-width: 330px;"></ul><div role="status" aria-live="assertive" aria-relevant="additions" class="ui-helper-hidden-accessible"></div> 
+
+
+<script src="/assets/js/dataTables.min-06eae2bcedc1b4723c7c58b59b852631380f18f2e8ac0b0ae75b8080502fedc0.js"></script>
+<script src="/assets/ui/moment.min-592115dd8db772d1de720c962f64ef90382b733b90b95b0c68a2c31929c5ee79.js"></script>
+
+<script>
+  //  $(window).scroll(function(){
+  //   if ( $(window).width() > 767) {
+  //     if ($(this).scrollTop() > 80) {
+  //         $('#comparison_fund').addClass('fixed-top container');
+  //         $('#rv_comparison #comparison_fund').css({"padding-top": "4rem", "background":"#fff", "z-index":"1"});
+  //         $('#comparison_basic').css({"padding-top": "9.5rem"});
+  //     } else {
+  //         $('#comparison_fund').removeClass('fixed-top container');
+  //         $('#rv_comparison #comparison_fund').css({"padding-top": "0", "background":"#fff", "z-index":"1"});
+  //         $('#comparison_basic').css({"padding-top": "0"});
+  //     }
+  //   }
+  // });
+var array_id=[];
+var color_arr=['#2d94e7','#85c953','#a55fa9','#00C78C'];
+
+var id ="8217-931"
+var array_id1=[]
+// s_code=s_code.replace(/&quot;/g,'');
+// s_code=s_code.replace("[",'');
+// s_code=s_code.replace("]",'');
+// s_code=s_code.replace(/ /g,'');
+
+
+  $(document).ready(function()
+    {
+              // if(Object.keys(map_global).length==0){
+              //   fundname_search();
+              // }
+                      
+                    
+            //alert(id1);
+             var id1=id.split('-');
+            if(id1!="")
+            {
+             for(var t=0;t<id1.length;t++)
+             {
+              // alert(id1.length)
+              // alert(id1)
+                array_id.push(id1[t]);
+             }
+            $("#show_page").show();
+            // console.log(array_id1);
+             //generate_chart(array_id,color_arr);
+             //compare_value()
+           }
+
+         $("#srch-term").click(function(){
+              if(Object.keys(map_global).length==0)
+                      fundname_search();
+         
+    })
+            $("#srch-term").autocomplete({
+                    select: function (a, b) 
+                    {
+                      $(this).val(b.item.value);
+                        $("#add_btn_search").click();
+                    }
+               });  
+
+
+
+            genrate_tracker(array_id[0])
+         
+    });
+
+
+
+
+//       jQuery(document).ready(function($) {
+
+//   if (window.history && window.history.pushState) {
+
+//     window.history.pushState('forward', null, null);
+
+//     $(window).on('popstate', function() {
+//       // alert('Back button was pressed.');
+//       location.replace(document.referrer);
+//     });
+
+//   }
+// });
+ 
+
+ $("#download_smf").click(function(e)
+ {
+      var fund_name = $("#name_fund").text().replace(/\ /g,"_");
+      export_table_to_csv(fund_name+".csv");
+
+ });
+
+// after clicking the add button / selecting the fund thisfunctionwill execute:- 
+
+  $("#add_btn_search").click(function(e){
+    e.preventDefault();
+    if( $("#srch-term").val()!="" && map_global[$("#srch-term").val()]!=undefined)
+    { 
+        
+       genrate_tracker(map_global[$("#srch-term").val()]);
+
+         //add_scheme();
+    }
+    
+  });
+
+     
+
+
+function genrate_tracker(scode)
+{
+  
+  //alert(scode);
+  $("#main_table_data").html("");
+   $.ajax({
+               type: 'GET',
+               headers : {"X-Robots-Tag":"noindex"},
+               url: '/home/get_mf_portfolio_tracker',
+               data :{schemecode:scode},
+               dataType: 'json',
+               // data: { 'iin' : $('#client_name').val()},
+               success: function(data)
+               {
+                  console.log(data);
+                  $("#srch-term").val(data.fund_info[0].s_name);
+                  $("#name_fund").text(data.fund_info[0].s_name);
+               
+                  var date = moment(data.fund_info[0].aumdate).format('Do MMM-YY');
+
+                  $("#aum").text(data.fund_info[0].aumtotal);
+                  $("#date_as_on").text(date);
+
+                  $("#fund_info_dv").removeClass("d_none");
+                  
+                  $("#fund_catesgory").text(data.fund_info[0].classification);
+
+                  // data.stock_data[0].fincode
+                  // data.stock_data[0].invdate
+                  // data.stock_data[0].noshares
+                  // data.stock_data[0].percent_aum
+
+                  var stock_data_final_aum = {};
+                  var stock_data_final_share = {};
+                   
+
+                                        
+                  if(data.stock_data.length > 0)
+                  {
+                      for(i=0;i<data.stock_data.length;i++)
+                      {
+                         for(j=0;j<data.stock_data[i].length;j++)
+                         {
+                           if(stock_data_final_aum [data.stock_data[i][j].fincode]!=undefined)
+                            {
+                                
+                                var x= stock_data_final_aum [data.stock_data[i][j].fincode];
+                                x[i] = data.stock_data[i][j].percent_aum;
+                                stock_data_final_aum [data.stock_data[i][j].fincode] = x;
+                            }
+                            else
+                            {
+                                var a=["-","-","-","-"];
+                                a[i]= data.stock_data[i][j].percent_aum;
+                                stock_data_final_aum [data.stock_data[i][j].fincode] = a;
+                                
+                            }
+
+                            if(stock_data_final_share [data.stock_data[i][j].fincode]!=undefined)
+                            {
+                                
+                                var x= stock_data_final_share [data.stock_data[i][j].fincode];
+                                x[i] = data.stock_data[i][j].noshares;
+                                stock_data_final_share [data.stock_data[i][j].fincode] = x;
+                            }
+                            else
+                            {
+                               
+                                var a=["-","-","-","-"];
+                                a[i]= data.stock_data[i][j].noshares;
+                                stock_data_final_share [data.stock_data[i][j].fincode] = a;
+                            }
+                         }
+
+                      }
+                          var mapping = data.stock_mapping;
+
+                      console.log(stock_data_final_aum);
+                      console.log(stock_data_final_share);
+                      MonthwiseAUM = ["-", "-", "-", "-"]
+                      for(aum_count=0; aum_count<=3; aum_count++){
+                        if(data.MonthwiseAUM[aum_count].aum != "-"){
+                          MonthwiseAUM[aum_count] = commaSeparateNumber(data.MonthwiseAUM[aum_count].aum);
+                        }
+                      }
+                      
+
+                         var th = "<table id='stock_ret_data_1' class='table table-bordered table-striped table-sm sortable-theme-bootstrap' data-sortable> <caption><h4>Equity Holdings</h4></caption><thead><tr><th rowspan='2'>Company</th ><th colspan='2'>"+data.month_name[0]+"<br><span class='m1aum'>AUM:&nbsp;&#8377;&nbsp;"+MonthwiseAUM[0]+"&nbsp;(Cr.)</span></th><th colspan='2'>"+data.month_name[1]+"<br><span class='m1aum' >AUM:&nbsp;&#8377;&nbsp;"+MonthwiseAUM[1]+"&nbsp;(Cr.)</span></th><th colspan='2'>"+data.month_name[2]+"<br><span class='m1aum' >AUM:&nbsp;&#8377;&nbsp;"+MonthwiseAUM[2]+"&nbsp;(Cr.)</span></th><th colspan='2'>"+data.month_name[3]+"<br><span class='m1aum' >AUM:&nbsp;&#8377;&nbsp;"+MonthwiseAUM[3]+"&nbsp;(Cr.)</span></th></tr><tr><th>% of AUM</th><th>No. of Shares</th><th>% of AUM</th><th>No. of Shares</th><th>% of AUM</th><th>No. of Shares</th><th>% of AUM</th><th>No. of Shares</th></tr></thead>";
+                     var k = 0
+                     for (var key in stock_data_final_aum) 
+                     {
+                          var mn0cls,mn1cls,mn2cls;
+                          
+                          
+                           if(stock_data_final_share[key][2]!="-" && stock_data_final_share[key][3]=="-")
+                          {
+                            mn2cls='incr'; 
+                          }
+                          else if(stock_data_final_share[key][2] > stock_data_final_share[key][3])
+                          {
+                            mn2cls='incr';
+                          }                          
+                          else if(stock_data_final_share[key][2] < stock_data_final_share[key][3])
+                          {
+                            mn2cls='decr'; 
+                          }
+                          else
+                          {
+                            mn2cls='nochange'; 
+                          }
+
+                          if(stock_data_final_share[key][1]!="-" && stock_data_final_share[key][2]=="-")
+                          {
+                            mn1cls='incr'; 
+                          }
+                          else if(stock_data_final_share[key][1] > stock_data_final_share[key][2])
+                          {
+                            mn1cls='incr';
+                          }
+                          else if(stock_data_final_share[key][1] < stock_data_final_share[key][2])
+                          {
+                            mn1cls='decr'; 
+                          }
+                          else
+                          {
+                            mn1cls='nochange'; 
+                          }
+
+                          if(stock_data_final_share[key][0]!="-" && stock_data_final_share[key][1]=="-")
+                          {
+                            mn0cls='incr'; 
+                          }  
+                          else if(stock_data_final_share[key][0] > stock_data_final_share[key][1])
+                          {
+                            mn0cls='incr';
+                          }
+                          else if(stock_data_final_share[key][0] < stock_data_final_share[key][1])
+                          {
+                            mn0cls='decr'; 
+                          }
+                          else
+                          {
+                            mn0cls='nochange'; 
+                          }
+
+                          if(k==0)
+                          {
+                             tblData = th + "<tbody><tr>"+"<td><a href='/Mutual-Fund-Holdings/"+key+"'>"+mapping[key]+"</a></td>"+"<td>"+stock_data_final_aum[key][0]+"</td>"+"<td>"+(stock_data_final_share[key][0]!="-" ? commaSeparateNumber(stock_data_final_share[key][0]):"-")+"<span id='mon0_nos' class='"+mn0cls+"'></span>"+"</td>"+"<td>"+stock_data_final_aum[key][1]+"</td>"+"<td>"+(stock_data_final_share[key][1]!="-" ? commaSeparateNumber(stock_data_final_share[key][1]) : "-")+"<span id='mon1_nos' class='"+mn1cls+"'></span>"+"<td>"+stock_data_final_aum[key][2]+"</td>"+"<td>"+(stock_data_final_share[key][2] !="-" ? commaSeparateNumber(stock_data_final_share[key][2]) : "-")+"<span id='mon2_nos' class='"+mn2cls+"'></span>"+"</td>"+"<td>"+stock_data_final_aum[key][3]+"</td>"+"<td>"+(stock_data_final_share[key][3]!="-" ? commaSeparateNumber(stock_data_final_share[key][3]):"-")+"<span id='mon3_nos'></span>"+"</td>"+"</td>"+"</tr>"
+                          }
+                          else
+                          {
+                              tblData = tblData + "<tr>"+"<td><a href='/Mutual-Fund-Holdings/"+key+"'>"+mapping[key]+"</a></td>"+"<td>"+stock_data_final_aum[key][0]+"</td>"+"<td>"+((stock_data_final_share[key][0]!="-" && stock_data_final_share[key][0]!=null)? commaSeparateNumber(stock_data_final_share[key][0]):"-")+"<span id='mon0_nos' class='"+mn0cls+"'></span>"+"</td>"+"<td>"+stock_data_final_aum[key][1]+"</td>"+"<td>"+((stock_data_final_share[key][1]!="-" && stock_data_final_share[key][1]!=null)? commaSeparateNumber(stock_data_final_share[key][1]) : "-")+"<span id='mon1_nos' class='"+mn1cls+"'></span>"+"<td>"+stock_data_final_aum[key][2]+"</td>"+"<td>"+((stock_data_final_share[key][2]!="-" && stock_data_final_share[key][2]!=null) ? commaSeparateNumber(stock_data_final_share[key][2]): "-")+"<span id='mon2_nos' class='"+mn2cls+"'></span>"+"</td>"+"<td>"+stock_data_final_aum[key][3]+"</td>"+"<td>"+((stock_data_final_share[key][3]!="-" && stock_data_final_share[key][3]!=null)? commaSeparateNumber(stock_data_final_share[key][3]):"-")+"</td>"+"</td>"+"</tr>";
+                          }
+
+                          k=k+1;
+
+                     }
+
+                     tblData = tblData+"</tbody></table>";
+
+                     $("#main_table_data").html("");
+                     $("#main_table_data").html(tblData);
+                      $(".eqNote").show();
+                    
+
+                     $('#stock_ret_data_1').DataTable({
+                     "paging": false,
+                     "ordering": true,
+                     "info": true,
+                     "searching": true,"order": [[ 1, "desc" ]]
+                });
+
+                     $("#stock_ret_data_1_filter input[placeholder]").attr("placeholder", "Search Here");
+
+                 }
+                 else
+                 {
+                    $("#main_table_data").html("");
+                    $(".eqNote").hide();
+
+                 }
+
+                  // debt DATA
+
+                  var stock_data_final_aum = {};
+                 // var stock_data_final_share = {};
+                  var tblData=""
+                  
+                  if(data.stock_data_debt.length > 0)
+                  {
+
+                    //alert("hereeeeee");
+                      for(var i=0;i<data.stock_data_debt.length;i++)
+                      {
+                         for(var j=0;j<data.stock_data_debt[i].length;j++)
+                         {
+                           if(stock_data_final_aum [data.stock_data_debt[i][j].fincode]!=undefined)
+                            {
+                                
+                                var x= stock_data_final_aum [data.stock_data_debt[i][j].fincode];
+                                x[i] = data.stock_data_debt[i][j].percent_aum;
+                                stock_data_final_aum [data.stock_data_debt[i][j].fincode] = x;
+                            }
+                            else
+                            {
+                                var a=["-","-","-","-"];
+                                a[i]= data.stock_data_debt[i][j].percent_aum;
+                                stock_data_final_aum [data.stock_data_debt[i][j].fincode] = a;
+                                
+                            }
+
+                            // if(stock_data_final_share [data.stock_data_debt[i][j].fincode]!=undefined)
+                            // {
+                                
+                            //     var x= stock_data_final_share [data.stock_data_debt[i][j].fincode];
+                            //     x[i] = data.stock_data_debt[i][j].noshares;
+                            //     stock_data_final_share [data.stock_data_debt[i][j].fincode] = x;
+                            // }
+                            // else
+                            // {
+                               
+                            //     var a=["-","-","-","-"];
+                            //     a[i]= data.stock_data_debt[i][j].noshares;
+                            //     stock_data_final_share [data.stock_data_debt[i][j].fincode] = a;
+                            // }
+                         }
+
+                      }
+                          var mapping = data.stock_mapping_debt;
+                      console.log(stock_data_final_aum);
+                      //console.log(stock_data_final_share);
+
+                        
+                 
+                         var th = "<table id='stock_ret_data_2' class='table table-bordered table-striped table-sm sortable-theme-bootstrap' data-sortable> <caption><h4>Debt Holdings</h4></caption><thead><tr><th rowspan='2'>Instrument</th ><th colspan='1'>"+data.month_name[0]+"<br><span class='m1aum'>AUM:&nbsp;&#8377;&nbsp;"+commaSeparateNumber(data.MonthwiseAUM[0].aum)+"&nbsp;(Cr.)</span> </th><th colspan='1'>"+data.month_name[1]+"<br><span class='m1aum'>AUM:&nbsp;&#8377;&nbsp;"+commaSeparateNumber(data.MonthwiseAUM[1].aum)+"&nbsp;(Cr.)</span> </th><th colspan='1'>"+data.month_name[2]+"<br><span class='m1aum'>AUM:&nbsp;&#8377;&nbsp;"+commaSeparateNumber(data.MonthwiseAUM[2].aum)+"&nbsp;(Cr.)</span> </th><th colspan='1'>"+data.month_name[3]+"<br><span class='m1aum'>AUM:&nbsp;&#8377;&nbsp;"+commaSeparateNumber(data.MonthwiseAUM[3].aum)+"&nbsp;(Cr.)</span> </th></tr><tr><th>% of AUM</th><th>% of AUM</th><th>% of AUM</th><th>% of AUM</th></tr></thead>";
+                     var k = 0;
+                     for (var key in stock_data_final_aum) 
+                     {
+                          var mn0cls,mn1cls,mn2cls;
+                          
+                          
+
+                          // if(stock_data_final_share[key][2] > stock_data_final_share[key][3])
+                          // {
+                          //   mn2cls='incr';
+                          // }
+                          // else if(stock_data_final_share[key][2] < stock_data_final_share[key][3])
+                          // {
+                          //   mn2cls='decr'; 
+                          // }
+                          // else
+                          // {
+                          //   mn2cls='nochange'; 
+                          // }
+
+                          // if(stock_data_final_share[key][1] > stock_data_final_share[key][2])
+                          // {
+                          //   mn1cls='incr';
+                          // }
+                          // else if(stock_data_final_share[key][1] < stock_data_final_share[key][2])
+                          // {
+                          //   mn1cls='decr'; 
+                          // }
+                          // else
+                          // {
+                          //   mn1cls='nochange'; 
+                          // }
+
+                          // if(stock_data_final_share[key][0] > stock_data_final_share[key][1])
+                          // {
+                          //   mn0cls='incr';
+                          // }
+                          // else if(stock_data_final_share[key][0] < stock_data_final_share[key][1])
+                          // {
+                          //   mn0cls='decr'; 
+                          // }
+                          // else
+                          // {
+                          //   mn0cls='nochange'; 
+                          // }
+
+                          if(k==0)
+                          {
+                             tblData = th + "<tbody><tr>"+"<td>"+mapping[key]+"</td>"+"<td>"+stock_data_final_aum[key][0]+"</td>"+"<td>"+stock_data_final_aum[key][1]+"</td><td>"+stock_data_final_aum[key][2]+"</td>"+"<td>"+stock_data_final_aum[key][3]+"</td>"+"</tr>"
+                          }
+                          else
+                          {
+                              tblData = tblData + "<tr>"+"<td>"+mapping[key]+"</td>"+"<td>"+stock_data_final_aum[key][0]+"</td>"+"<td>"+stock_data_final_aum[key][1]+"</td>"+"<td>"+stock_data_final_aum[key][2]+"</td>"+"<td>"+stock_data_final_aum[key][3]+"</td>"+"</tr>";
+                          }
+                          k=k+1;
+                     }
+
+                     tblData = tblData+"</tbody></table>";
+
+                     $("#main_table_data_db").html("");
+                     $("#main_table_data_db").html(tblData);
+
+                          $('#stock_ret_data_2').DataTable({
+                     "paging": false,
+                     "ordering": true,
+                     "info": true,
+                     "searching": true,"order": [[ 1, "desc" ]]
+                });
+
+                     $("#stock_ret_data_2_filter input[placeholder]").attr("placeholder", "Search Here");
+
+                 }
+                 else
+                 {
+                  //alert("in else");
+                    $("#main_table_data_db").html("");
+                 }
+
+
+                 // CASH & CASH DATA
+
+
+                 var stock_data_final_aum = {};
+                  // var stock_data_final_share = {};
+                  var tblData=""
+                 
+                  if(data.stock_data_cash.length > 0)
+                  {
+
+                    //alert("hereeeeee");
+                      for(var i=0;i<data.stock_data_cash.length;i++)
+                      {
+                         for(var j=0;j<data.stock_data_cash[i].length;j++)
+                         {
+                           if(stock_data_final_aum [data.stock_data_cash[i][j].fincode]!=undefined)
+                            {
+                                
+                                var x= stock_data_final_aum [data.stock_data_cash[i][j].fincode];
+                                x[i] = data.stock_data_cash[i][j].percent_aum;
+                                stock_data_final_aum [data.stock_data_cash[i][j].fincode] = x;
+                            }
+                            else
+                            {
+                                var a=["-","-","-","-"];
+                                a[i]= data.stock_data_cash[i][j].percent_aum;
+                                stock_data_final_aum [data.stock_data_cash[i][j].fincode] = a;
+                                
+                            }
+
+                            // if(stock_data_final_share [data.stock_data_cash[i][j].fincode]!=undefined)
+                            // {
+                                
+                            //     var x= stock_data_final_share [data.stock_data_cash[i][j].fincode];
+                            //     x[i] = data.stock_data_cash[i][j].noshares;
+                            //     stock_data_final_share [data.stock_data_cash[i][j].fincode] = x;
+                            // }
+                            // else
+                            // {
+                               
+                            //     var a=["-","-","-","-"];
+                            //     a[i]= data.stock_data_cash[i][j].noshares;
+                            //     stock_data_final_share [data.stock_data_cash[i][j].fincode] = a;
+                            // }
+                         }
+
+                      }
+                          var mapping = data.stock_mapping_cash;
+                      console.log(stock_data_final_aum);
+                      // console.log(stock_data_final_share);
+
+                      // debugger;
+
+                        
+                 
+                         var th = "<table id='stock_ret_data_3' class='table table-bordered table-striped table-sm sortable-theme-bootstrap' data-sortable><caption><h4>Cash & Cash Equivalents</h4></caption><thead><tr><th rowspan='2'>Instrument</th ><th colspan='1'>"+data.month_name[0]+"<br><span class='m1aum'>AUM:&nbsp;&#8377;&nbsp;"+commaSeparateNumber(data.MonthwiseAUM[0].aum)+"&nbsp;(Cr.)</span> </th><th colspan='1'>"+data.month_name[1]+"<br><span class='m1aum'>AUM:&nbsp;&#8377;&nbsp;"+commaSeparateNumber(data.MonthwiseAUM[1].aum)+"&nbsp;(Cr.)</span> </th><th colspan='1'>"+data.month_name[2]+"<br><span class='m1aum'>AUM:&nbsp;&#8377;&nbsp;"+commaSeparateNumber(data.MonthwiseAUM[2].aum)+"&nbsp;(Cr.)</span> </th><th colspan='1'>"+data.month_name[3]+"<br><span class='m1aum'>AUM:&nbsp;&#8377;&nbsp;"+commaSeparateNumber(data.MonthwiseAUM[3].aum)+"&nbsp;(Cr.)</span> </th></tr><tr><th>% of AUM</th><th>% of AUM</th><th>% of AUM</th><th>% of AUM</th></tr></thead>";
+                     var k = 0;
+                     for (var key in stock_data_final_aum) 
+                     {
+                          var mn0cls,mn1cls,mn2cls;
+                          
+                          mn0cls='nochange';
+                          mn1cls='nochange';
+                          mn2cls='nochange';
+
+                        //  if(stock_data_final_share[key][2]!="-" && stock_data_final_share[key][3]!="-")
+                        //  {
+                        //      if(stock_data_final_share[key][2] > stock_data_final_share[key][3])
+                        //     {
+                        //       mn2cls='incr';
+                        //     }
+                        //     else if(stock_data_final_share[key][2] < stock_data_final_share[key][3])
+                        //     {
+                        //       mn2cls='decr'; 
+                        //     }
+                        //     else
+                        //     {
+                        //       mn2cls='nochange'; 
+                        //     }
+                        //  }
+                          
+                        // if(stock_data_final_share[key][2]!="-" && stock_data_final_share[key][1]!="-")
+                        //  { 
+                        //     if(stock_data_final_share[key][1] > stock_data_final_share[key][2])
+                        //     {
+                        //       mn1cls='incr';
+                        //     }
+                        //     else if(stock_data_final_share[key][1] < stock_data_final_share[key][2])
+                        //     {
+                        //       mn1cls='decr'; 
+                        //     }
+                        //     else
+                        //     {
+                        //       mn1cls='nochange'; 
+                        //     }
+                        // }
+                        // if(stock_data_final_share[key][0]!="-" && stock_data_final_share[key][1]!="-")
+                        // {
+                        //   if(stock_data_final_share[key][0] > stock_data_final_share[key][1])
+                        //   {
+                        //     mn0cls='incr';
+                        //   }
+                        //   else if(stock_data_final_share[key][0] < stock_data_final_share[key][1])
+                        //   {
+                        //     mn0cls='decr'; 
+                        //   }
+                        //   else
+                        //   {
+                        //     mn0cls='nochange'; 
+                        //   }
+                        // }
+                          
+                          if(k==0)
+                          {
+                             tblData = th + "<tbody><tr>"+"<td>"+mapping[key]+"</td>"+"<td>"+stock_data_final_aum[key][0]+"</td>"+"<td>"+stock_data_final_aum[key][1]+"</td><td>"+stock_data_final_aum[key][2]+"</td>"+"<td>"+stock_data_final_aum[key][3]+"</td>"+"</tr>"
+                          }
+                          else
+                          {
+                              tblData = tblData + "<tr>"+"<td>"+mapping[key]+"</td>"+"<td>"+stock_data_final_aum[key][0]+"</td>"+"<td>"+stock_data_final_aum[key][1]+"</td>"+"<td>"+stock_data_final_aum[key][2]+"</td>"+"<td>"+stock_data_final_aum[key][3]+"</td>"+"</tr>";
+                          }
+                          // if(k==0)
+                          // {
+
+
+                          //   //debugger;
+                          //    tblData = th + "<tbody><tr>"+"<td>"+mapping[key]+"</td>"+"<td>"+stock_data_final_aum[key][0]+"</td>"+"<td>"+((stock_data_final_share[key][0]!="-" && stock_data_final_share[key][0]!=null)? commaSeparateNumber(stock_data_final_share[key][0]):"-")+"<span id='mon0_nos' class='"+mn0cls+"'></span>"+"</td>"+"<td>"+stock_data_final_aum[key][1]+"</td>"+"<td>"+((stock_data_final_share[key][1]!="-" && stock_data_final_share[key][1]!=null)? commaSeparateNumber(stock_data_final_share[key][1]) : "-")+"<span id='mon1_nos' class='"+mn1cls+"'></span>"+"<td>"+stock_data_final_aum[key][2]+"</td>"+"<td>"+((stock_data_final_share[key][2] !="-" && stock_data_final_share[key][2]!=null)? commaSeparateNumber(stock_data_final_share[key][2]) : "-")+"<span id='mon2_nos' class='"+mn2cls+"'></span>"+"</td>"+"<td>"+stock_data_final_aum[key][3]+"</td>"+"<td>"+((stock_data_final_share[key][3]!="-" && stock_data_final_share[key][3]!=null) ? commaSeparateNumber(stock_data_final_share[key][3]):"-")+"<span id='mon3_nos'></span>"+"</td>"+"</td>"+"</tr>"
+                          // }
+                          // else
+                          // {
+                          //     tblData = tblData + "<tr>"+"<td>"+mapping[key]+"</td>"+"<td>"+stock_data_final_aum[key][0]+"</td>"+"<td>"+((stock_data_final_share[key][0]!="-" && stock_data_final_share[key][0]!=null)? commaSeparateNumber(stock_data_final_share[key][0]):"-")+"<span id='mon0_nos' class='"+mn0cls+"'></span>"+"</td>"+"<td>"+stock_data_final_aum[key][1]+"</td>"+"<td>"+((stock_data_final_share[key][1]!="-" && stock_data_final_share[key][1]!=null)? commaSeparateNumber(stock_data_final_share[key][1]) : "-")+"<span id='mon1_nos' class='"+mn1cls+"'></span>"+"<td>"+stock_data_final_aum[key][2]+"</td>"+"<td>"+((stock_data_final_share[key][2]!="-" && stock_data_final_share[key][2]!=null)? commaSeparateNumber(stock_data_final_share[key][2]): "-")+"<span id='mon2_nos' class='"+mn2cls+"'></span>"+"</td>"+"<td>"+stock_data_final_aum[key][3]+"</td>"+"<td>"+((stock_data_final_share[key][3]!="-" && stock_data_final_share[key][3]!=null)? commaSeparateNumber(stock_data_final_share[key][3]):"-")+"</td>"+"</td>"+"</tr>";
+                          // }
+                          k=k+1;
+                     }
+
+                     tblData = tblData+"</tbody></table>";
+
+                     $("#main_table_data_cs").html("");
+                     $("#main_table_data_cs").html(tblData);
+
+                          $('#stock_ret_data_3').DataTable({
+                     "paging": false,
+                     "ordering": true,
+                     "info": true,
+                     "searching": true,"order": [[ 1, "desc" ]]
+                });
+
+                     $("#stock_ret_data_3_filter input[placeholder]").attr("placeholder", "Search Here");
+
+                 }
+                 else
+                 {
+                  //alert("in else");
+                    $("#main_table_data_cs").html("");
+                 }
+
+      // MIsc DATA
+
+         var stock_data_final_aum = {};
+                  //var stock_data_final_share = {};
+                  var tblData=""
+                 
+                  if(data.stock_data_misc.length > 0)
+                  {
+
+                    //alert("hereeeeee");
+                      for(var i=0;i<data.stock_data_misc.length;i++)
+                      {
+                         for(var j=0;j<data.stock_data_misc[i].length;j++)
+                         {
+                           if(stock_data_final_aum [data.stock_data_misc[i][j].fincode]!=undefined)
+                            {
+                                
+                                var x= stock_data_final_aum [data.stock_data_misc[i][j].fincode];
+                                x[i] = data.stock_data_misc[i][j].percent_aum;
+                                stock_data_final_aum [data.stock_data_misc[i][j].fincode] = x;
+                            }
+                            else
+                            {
+                                var a=["-","-","-","-"];
+                                a[i]= data.stock_data_misc[i][j].percent_aum;
+                                stock_data_final_aum [data.stock_data_misc[i][j].fincode] = a;
+                                
+                            }
+
+                            // if(stock_data_final_share [data.stock_data_misc[i][j].fincode]!=undefined)
+                            // {
+                                
+                            //     var x= stock_data_final_share [data.stock_data_misc[i][j].fincode];
+                            //     x[i] = data.stock_data_misc[i][j].noshares;
+                            //     stock_data_final_share [data.stock_data_misc[i][j].fincode] = x;
+                            // }
+                            // else
+                            // {
+                               
+                            //     var a=["-","-","-","-"];
+                            //     a[i]= data.stock_data_misc[i][j].noshares;
+                            //     stock_data_final_share [data.stock_data_misc[i][j].fincode] = a;
+                            // }
+                         }
+
+                      }
+                          var mapping = data.stock_mapping_misc;
+                      console.log(stock_data_final_aum);
+                      // console.log(stock_data_final_share);
+
+                      // debugger;
+
+                        
+                 
+                         var th = "<table id='stock_ret_data_4' class='table table-bordered table-striped table-sm sortable-theme-bootstrap' data-sortable> <caption><h4>Miscellaneous Holdings</h4></caption><thead><tr><th rowspan='2'>Instrument</th ><th colspan='1'>"+data.month_name[0]+"<br><span class='m1aum'>AUM:&nbsp;&#8377;&nbsp;"+commaSeparateNumber(data.MonthwiseAUM[0].aum)+"&nbsp;(Cr.)</span> </th><th colspan='1'>"+data.month_name[1]+"<br><span class='m1aum'>AUM:&nbsp;&#8377;&nbsp;"+commaSeparateNumber(data.MonthwiseAUM[1].aum)+"&nbsp;(Cr.)</span> </th><th colspan='1'>"+data.month_name[2]+"<br><span class='m1aum'>AUM:&nbsp;&#8377;&nbsp;"+commaSeparateNumber(data.MonthwiseAUM[2].aum)+"&nbsp;(Cr.)</span> </th><th colspan='1'>"+data.month_name[3]+"<br><span class='m1aum'>AUM:&nbsp;&#8377;&nbsp;"+commaSeparateNumber(data.MonthwiseAUM[3].aum)+"&nbsp;(Cr.)</span> </th></tr><tr><th>% of AUM</th><th>% of AUM</th><th>% of AUM</th><th>% of AUM</th></tr></thead>";
+                     var k = 0;
+                     for (var key in stock_data_final_aum) 
+                     {
+                          var mn0cls,mn1cls,mn2cls;
+                          
+                          mn0cls='nochange';
+                          mn1cls='nochange';
+                          mn2cls='nochange';
+
+                        //  if(stock_data_final_share[key][2]!="-" && stock_data_final_share[key][3]!="-")
+                        //  {
+                        //      if(stock_data_final_share[key][2] > stock_data_final_share[key][3])
+                        //     {
+                        //       mn2cls='incr';
+                        //     }
+                        //     else if(stock_data_final_share[key][2] < stock_data_final_share[key][3])
+                        //     {
+                        //       mn2cls='decr'; 
+                        //     }
+                        //     else
+                        //     {
+                        //       mn2cls='nochange'; 
+                        //     }
+                        //  }
+                          
+                        // if(stock_data_final_share[key][2]!="-" && stock_data_final_share[key][1]!="-")
+                        //  { 
+                        //     if(stock_data_final_share[key][1] > stock_data_final_share[key][2])
+                        //     {
+                        //       mn1cls='incr';
+                        //     }
+                        //     else if(stock_data_final_share[key][1] < stock_data_final_share[key][2])
+                        //     {
+                        //       mn1cls='decr'; 
+                        //     }
+                        //     else
+                        //     {
+                        //       mn1cls='nochange'; 
+                        //     }
+                        // }
+                        // if(stock_data_final_share[key][0]!="-" && stock_data_final_share[key][1]!="-")
+                        // {
+                        //   if(stock_data_final_share[key][0] > stock_data_final_share[key][1])
+                        //   {
+                        //     mn0cls='incr';
+                        //   }
+                        //   else if(stock_data_final_share[key][0] < stock_data_final_share[key][1])
+                        //   {
+                        //     mn0cls='decr'; 
+                        //   }
+                        //   else
+                        //   {
+                        //     mn0cls='nochange'; 
+                        //   }
+                        // }
+                          
+
+                          // if(k==0)
+                          // {
+
+
+                          //   //debugger;
+                          //    tblData = th + "<tbody><tr>"+"<td>"+mapping[key]+"</td>"+"<td>"+stock_data_final_aum[key][0]+"</td>"+"<td>"+((stock_data_final_share[key][0]!="-" && stock_data_final_share[key][0]!=null)? commaSeparateNumber(stock_data_final_share[key][0]):"-")+"<span id='mon0_nos' class='"+mn0cls+"'></span>"+"</td>"+"<td>"+stock_data_final_aum[key][1]+"</td>"+"<td>"+((stock_data_final_share[key][1]!="-" && stock_data_final_share[key][1]!=null)? commaSeparateNumber(stock_data_final_share[key][1]) : "-")+"<span id='mon1_nos' class='"+mn1cls+"'></span>"+"<td>"+stock_data_final_aum[key][2]+"</td>"+"<td>"+((stock_data_final_share[key][2] !="-" && stock_data_final_share[key][2]!=null)? commaSeparateNumber(stock_data_final_share[key][2]) : "-")+"<span id='mon2_nos' class='"+mn2cls+"'></span>"+"</td>"+"<td>"+stock_data_final_aum[key][3]+"</td>"+"<td>"+((stock_data_final_share[key][3]!="-" && stock_data_final_share[key][3]!=null) ? commaSeparateNumber(stock_data_final_share[key][3]):"-")+"<span id='mon3_nos'></span>"+"</td>"+"</td>"+"</tr>"
+                          // }
+                          // else
+                          // {
+                          //     tblData = tblData + "<tr>"+"<td>"+mapping[key]+"</td>"+"<td>"+stock_data_final_aum[key][0]+"</td>"+"<td>"+((stock_data_final_share[key][0]!="-" && stock_data_final_share[key][0]!=null)? commaSeparateNumber(stock_data_final_share[key][0]):"-")+"<span id='mon0_nos' class='"+mn0cls+"'></span>"+"</td>"+"<td>"+stock_data_final_aum[key][1]+"</td>"+"<td>"+((stock_data_final_share[key][1]!="-" && stock_data_final_share[key][1]!=null)? commaSeparateNumber(stock_data_final_share[key][1]) : "-")+"<span id='mon1_nos' class='"+mn1cls+"'></span>"+"<td>"+stock_data_final_aum[key][2]+"</td>"+"<td>"+((stock_data_final_share[key][2]!="-" && stock_data_final_share[key][2]!=null)? commaSeparateNumber(stock_data_final_share[key][2]): "-")+"<span id='mon2_nos' class='"+mn2cls+"'></span>"+"</td>"+"<td>"+stock_data_final_aum[key][3]+"</td>"+"<td>"+((stock_data_final_share[key][3]!="-" && stock_data_final_share[key][3]!=null)? commaSeparateNumber(stock_data_final_share[key][3]):"-")+"</td>"+"</td>"+"</tr>";
+                          // }
+
+                           if(k==0)
+                          {
+                             tblData = th + "<tbody><tr>"+"<td>"+mapping[key]+"</td>"+"<td>"+stock_data_final_aum[key][0]+"</td>"+"<td>"+stock_data_final_aum[key][1]+"</td><td>"+stock_data_final_aum[key][2]+"</td>"+"<td>"+stock_data_final_aum[key][3]+"</td>"+"</tr>"
+                          }
+                          else
+                          {
+                              tblData = tblData + "<tr>"+"<td>"+mapping[key]+"</td>"+"<td>"+stock_data_final_aum[key][0]+"</td>"+"<td>"+stock_data_final_aum[key][1]+"</td>"+"<td>"+stock_data_final_aum[key][2]+"</td>"+"<td>"+stock_data_final_aum[key][3]+"</td>"+"</tr>";
+                          }
+                          k=k+1;
+                     }
+
+                     tblData = tblData+"</tbody></table>";
+
+                     $("#main_table_data_ms").html("");
+                     $("#main_table_data_ms").html(tblData);
+
+                          $('#stock_ret_data_4').DataTable({
+                     "paging": false,
+                     "ordering": true,
+                     "info": true,
+                     "searching": true,"order": [[ 1, "desc" ]]
+                });
+
+                     $("#stock_ret_data_4_filter input[placeholder]").attr("placeholder", "Search Here");
+
+                 }
+                 else
+                 {
+                  //alert("in else");
+                    $("#main_table_data_ms").html("");
+                 }
+
+
+
+               }
+             });
+
+}
+     
+function export_table_to_csv(filename)
+{
+  // alert("b");
+  var csv = [];
+  var id=["stock_ret_data_1","stock_ret_data_2","stock_ret_data_3","stock_ret_data_4"]
+  for(var k=0;k<=3;k++)
+  {
+    var rows = document.querySelectorAll("table#"+id[k]+" thead tr");
+     console.log("rows");
+    console.log(rows);
+
+
+
+          
+    if (rows.length>0)
+      {
+          for (var i = 0; i < rows.length; i++) 
+          {
+            var row = [], cols = rows[i].querySelectorAll("th");
+            
+            if(i==0)
+            {
+              csv.push(row.join(",")); 
+              if(id[k]=="stock_ret_data_1")
+              {
+                  row.push("Equity Holdings");
+                  csv.push(row.join(",")); 
+                  row = [];
+              }
+              else if(id[k]=="stock_ret_data_2")
+              {
+                  row.push("Debt Holdings");
+                  csv.push(row.join(",")); 
+                  row = [];
+              }
+              else if(id[k]=="stock_ret_data_3")
+              {
+                  row.push("Cash & Cash Equivalents");
+                  csv.push(row.join(",")); 
+                  row = [];
+              }
+              else
+              {
+                  row.push("Miscellaneous Holdings");
+                  csv.push(row.join(",")); 
+                  row = [];
+              }
+            }
+
+             //debugger;
+                for (var j = 0; j < cols.length; j++) 
+                {
+                  console.log("columns  :");
+                console.log(cols[j].innerHTML);
+                // debugger;
+                    // row.push(cols[j].innerText);
+
+                    if(i==1 && j==0)
+                    {
+                      row.push("");
+                      row.push(cols[j].innerHTML);
+
+                    }
+                    // else if(((i==0 && j==1) || (i==0 && j==2) || (i==0 && j==3) || (i==0 && j==4)) && id[k]=="stock_ret_data_1")
+                    else if(((i==0 && j==1) || (i==0 && j==2) || (i==0 && j==3) || (i==0 && j==4)))
+                    {
+                       //row.push(cols[j].innerHTML);
+                      row.push(cols[j].innerHTML.replace(/<\/?span[^>]*>/g,"").replace(/&nbsp/g,"").replace(/<br>/g," ").replace(/,/g,"").replace(/;/g,""));
+                       if(k==0)
+                       {
+                          row.push("");
+                       }
+                       
+                    }
+                    else
+                    {
+                       row.push(cols[j].innerHTML);
+                    }
+                   
+                    // if(cols.length==3)
+                    // // if(id[k]=="holding_table" )
+                    // {
+                    //   // alert("aa");
+                    //   if (cols[j].innerHTML=="Sector")
+                    //   {
+                    //     row.push("");
+                    //     // row.push("");
+                    // }
+                    //   // csv.push(row.join(","));
+                    // } 
+                    // if(id[k]=="holding_table-2" || id[k]=="holding_table-3")
+                    // {
+                    //   // alert("aa");
+                    //   row.push("");
+                    //   row.push("");
+                    //   // csv.push(row.join(","));
+                    // }   
+                }
+            csv.push(row.join(",")); 
+
+          }
+        var rows = document.querySelectorAll("table#"+id[k]+" tbody tr");
+        // console.log(rows);
+        
+          for (var i = 0; i < rows.length; i++) {
+          var row = [], cols = rows[i].querySelectorAll("td");
+          
+              for (var j = 0; j < cols.length; j++)
+              { 
+                  row.push(cols[j].textContent.replace(/,/g, ""));
+                  //  if(cols.length==3)
+                  // // if(id[k]=="holding_table" )
+                  // {
+                  //   // alert("aa");
+                  //   if (j==1)
+                  //   {
+                  //     row.push("");
+                  //     // row.push("");
+                  // }
+                  //   // csv.push(row.join(","));
+                  // } 
+                  // if(id[k]=="holding_table-2" || id[k]=="holding_table-3")
+                  // {
+                  //   // alert("aa");
+                  //   row.push("");
+                  //   row.push("");
+                  //   // csv.push(row.join(","));
+                  // }  
+                }
+              
+          csv.push(row.join(","));    
+        }
+    }
+
+    row=[]
+          csv.push(row.join(",")); 
+  }
+  row=[]
+          csv.push(row.join(",")); 
+          row=[];
+          row.push("Disclaimer -   All necessary precautions have been taken to avoid any error \n lapse or insufficiency in preparing this report  however  no representations \n or warranties are made (express or implied) as to the reliability \n accuracy or completeness of such information. The Company cannot \nbe held liable for the contents of this report or for any action taken on its basis.")
+          csv.push(row.join(",")); 
+    // Download CSV
+    download_csv(csv.join("\n"), filename);
+
+
+
+}
+
+function download_csv(csv, filename) {
+    var csvFile;
+    var downloadLink;
+
+    // CSV FILE
+    csvFile = new Blob([csv], {type: "text/csv"});
+
+    // Download link
+    downloadLink = document.createElement("a");
+
+    // File name
+    downloadLink.download = filename;
+
+    // We have to create a link to the file
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+
+    // Make sure that the link is not displayed
+    downloadLink.style.display = "none";
+
+    // Add the link to your DOM
+    document.body.appendChild(downloadLink);
+
+    // Lanzamos
+    downloadLink.click();
+   
+}            
+            
+
+
+
+
+                
+
+
+
+
+
+
+
+// $.datepicker.setDefaults({
+//     dateFormat: 'yy-mm-dd',
+//     onSelect: function () {
+//         this.onchange();
+//         this.onblur();
+//     },
+//      beforeShow: function (input, inst) {
+//         setTimeout(function () {
+//             inst.dpDiv.css({
+//                 // top: 100,
+//                 // left: 980
+//                 left: '76.39%'
+//             });
+//         }, 0);
+//     }
+// });
+
+   
+
+// maximum width of search dropdown     
+window.onload = function() {
+  var IndSearchWidth = document.getElementById('srch-term').offsetWidth;
+  $("#ui-id-2").css("max-width", IndSearchWidth);
+};
+
+</script>
+
+ 
+
+<script>
+
+
+// maximum width of search dropdown
+function searchHere() {
+    var searchWidth = document.getElementById('fund_names').offsetWidth;
+    $("#ui-id-1").css("max-width", searchWidth);
+}
+
+    searchHere();   // for desktop view
+    $(document).on('click','.navbar-toggler',function(){
+       searchHere();   // for mobile view
+    });
+
+// $(document).ready(function() {
+
+$(window).on("load",function(){ 
+    // Tawk_API = Tawk_API || {};
+Tawk_API.onChatEnded = function(){
+   document.cookie="tawk=";
+   document.cookie="tawk_mini=";
+};
+
+Tawk_API.onChatStarted = function(){
+   document.cookie="tawk=1";
+};
+Tawk_API.onChatMinimized = function(){
+    
+    if(getCookie("tawk")==1)
+    {
+        document.cookie="tawk_mini=1";
+        document.cookie="tawk=1";
+    }
+};
+if(getCookie("tawk")==1)
+{
+
+     $(".ChatBtn").hide();
+
+    (function(){
+    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+    s1.async=true;
+    s1.src='https://embed.tawk.to/57a9aed3e9f0aee203a91398/default';
+    s1.charset='UTF-8';
+    s1.setAttribute('crossorigin','*');
+    s0.parentNode.insertBefore(s1,s0);
+    })();
+   
+
+}
+
+         
+// function setvalue_schemename()
+// {
+//     var obj = document.getElementById("fund_names").value;
+//     // alert(obj);
+//     window.location = "/Mutual-Funds-India/"+map_global[obj];
+// }
+
+$(document).on('click','.ChatBtn',function()
+{
+    $(".ChatBtn").hide();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/57a9aed3e9f0aee203a91398/default';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
+ 
+
+})();
+
+})
+Tawk_API.onLoad = function() {
+    
+        if(getCookie("tawk_mini")==1 && getCookie("tawk")==1)
+        {
+            Tawk_API.minimize();
+        }
+        else
+        {
+            Tawk_API.maximize();
+        }
+       
+     };
+
+    var mq = window.matchMedia("screen and (max-width: 767px)");
+    if (mq.matches) { 
+        // $('.menu-back .dropdown').find('.right-caret').removeClass('right-caret').addClass('caret');
+
+        $('.menu-back').find('.dropdown').removeClass('dropdown').addClass('dropdown-toogle');
+       
+        /*$("#click_1").click(function(e){
+            e.stopPropagation();
+            $('#mob_tools_id').addClass("open");
+            $('#click_1').addClass('open');
+            $('#click_2').removeClass('open');
+        });
+
+        $("#click_2").click(function(e){
+            e.stopPropagation();
+            $('#mob_tools_id').addClass("open");
+            $('#click_2').addClass('open');
+            $('#click_1').removeClass('open');
+        });*/
+
+       /* $(".AppHowItWorks").click(function(){
+            $('.menu-back').find('.navbar-collapse').removeClass('right');
+        }); */       
+     
+
+    }
+
+    var mqScroll = window.matchMedia("screen and (min-width: 768px)");
+    if (mqScroll.matches) { 
+       $(window).scroll(function(){  
+            $('.ui-autocomplete').hide(); 
+        });
+    }
+
+
+    jQuery(function($){
+        $('.nav-rv .navbar-toggler').click(function(){
+            $('.nav-rv .navbar-collapse').toggleClass('right');
+
+            if( $('.nav-rv .navbar-collapse').hasClass('right')) {
+                $('.nav-rv .navbar-toggler .icon').removeClass('icon-menu').addClass('icon-cancel');
+            }
+            else {
+                $('.nav-rv .navbar-toggler .icon').removeClass('icon-cancel').addClass('icon-menu');
+            }
+            if( $('.nav-rv .navbar-collapse').hasClass('show')) {
+                    $('body').css({overflow: 'auto', height: '100vh'});
+            }
+            else {                
+                    $('body').css({overflow: 'hidden', height: '100vh'});
+            }
+
+        });
+    });
+
+
+});
+
+// For table inside popover
+$(function() {
+    $.fn.popover.Constructor.Default.whiteList.table = [];
+    $.fn.popover.Constructor.Default.whiteList.tr = [];
+    $.fn.popover.Constructor.Default.whiteList.td = [];
+    $.fn.popover.Constructor.Default.whiteList.th = [];
+    $.fn.popover.Constructor.Default.whiteList.div = [];
+    $.fn.popover.Constructor.Default.whiteList.tbody = [];
+    $.fn.popover.Constructor.Default.whiteList.thead = [];
+    //$.fn.popover.Constructor.Default.whiteList.chart = [];
+});
+
+
+function isTouchDevice(){
+    return true == ("ontouchstart" in window || window.DocumentTouch && document instanceof DocumentTouch);
+}
+
+
+</script>
+<script> 
+var Tawk_API=Tawk_API||{},Tawk_LoadStart=new Date();function getCookie(cname){var name=cname+"=";var decodedCookie=decodeURIComponent(document.cookie);var ca=decodedCookie.split(';');for(var i=0;i<ca.length;i++){var c=ca[i];while(c.charAt(0)==' '){c=c.substring(1)}
+if(c.indexOf(name)==0){return c.substring(name.length,c.length)}}
+return""}
+</script>
+<!-- Google Analytics -->
+<script>
+ window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ ga('create', 'UA-93666912-1', 'auto');
+ ga('send', 'pageview');
+</script>
+<script async="" src="https://www.google-analytics.com/analytics.js"></script> 
+<!-- End Google Analytics -->
+<!--<script>
+// if ('serviceWorker' in navigator) {
+//   window.addEventListener('load', function() {
+//     navigator.serviceWorker.register('/sw.js').then(function(registration) {
+//       // Registration was successful
+//       console.log('ServiceWorker registration successful with scope: ', registration.scope);
+     
+//     }, function(err) {
+//       // registration failed :(
+//       console.log('ServiceWorker registration failed: ', err);
+//     });
+
+//   });
+// }
+// </script> -->
+<script>
+if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('/service-worker.js');
+                }
+</script>
+
+
+<ins class="adsbygoogle adsbygoogle-noablate" data-ad-hi="true" data-adsbygoogle-status="done" style="display: none !important;" data-ad-status="unfilled"><div id="aswift_1_host" style="border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; height: 0px; width: 0px; margin: 0px; padding: 0px; position: relative; visibility: visible; background-color: transparent; display: inline-block;"><iframe id="aswift_1" name="aswift_1" style="left:0;position:absolute;top:0;border:0;width:undefinedpx;height:undefinedpx;min-height:auto;max-height:none;min-width:auto;max-width:none;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" allow="attribution-reporting; run-ad-auction" src="https://googleads.g.doubleclick.net/pagead/ads?client=ca-pub-8174005371123548&amp;output=html&amp;adk=4217843745&amp;adf=4094428539&amp;lmt=1779706514&amp;plaf=1%3A2%2C2%3A2%2C7%3A2&amp;plat=1%3A128%2C2%3A128%2C3%3A128%2C4%3A128%2C8%3A128%2C9%3A32776%2C16%3A8388608%2C17%3A32%2C24%3A32%2C25%3A32%2C30%3A1081344%2C32%3A32%2C41%3A32%2C42%3A32%2C43%3A32%2C44%3A32&amp;format=0x0&amp;url=https%3A%2F%2Fwww.rupeevest.com%2FMutual-Fund-Portfolio-Tracker&amp;pra=7&amp;asro=0&amp;aiactd=0&amp;aicctd=0&amp;ailctd=0&amp;aimartd=4&amp;aieuf=1&amp;aicrs=1&amp;uach=WyJXaW5kb3dzIiwiMTAuMCIsIng4NiIsIiIsIjE0Ny4wLjc3MjcuMTUiLG51bGwsMCxudWxsLCI2NCIsW1siSGVhZGxlc3NDaHJvbWUiLCIxNDcuMC43NzI3LjE1Il0sWyJOb3QuQS9CcmFuZCIsIjguMC4wLjAiXSxbIkNocm9taXVtIiwiMTQ3LjAuNzcyNy4xNSJdXSwwXQ..&amp;abgtt=9&amp;dt=1779706514641&amp;bpp=3&amp;bdt=984&amp;idt=3&amp;shv=r20260520&amp;mjsv=m202605220101&amp;ptt=9&amp;saldr=aa&amp;abxe=1&amp;cookie_enabled=1&amp;eoidce=1&amp;prev_fmts=1110x90&amp;nras=1&amp;correlator=1159792827551&amp;frm=20&amp;pv=1&amp;u_tz=330&amp;u_his=2&amp;u_h=900&amp;u_w=1440&amp;u_ah=900&amp;u_aw=1440&amp;u_cd=24&amp;u_sd=1&amp;dmc=16&amp;adx=-12245933&amp;ady=-12245933&amp;biw=1440&amp;bih=900&amp;scr_x=0&amp;scr_y=0&amp;eid=31098654%2C95390787%2C31098763%2C95390277%2C95391807&amp;oid=2&amp;pvsid=3465319923325762&amp;tmod=894990220&amp;uas=0&amp;nvt=1&amp;fsapi=1&amp;fc=896&amp;brdim=0%2C0%2C0%2C0%2C1440%2C0%2C1440%2C900%2C1440%2C900&amp;vis=1&amp;rsz=%7C%7Cs%7C&amp;abl=NS&amp;fu=32768&amp;bc=31&amp;bz=1&amp;ifi=2&amp;uci=a!2&amp;fsb=1&amp;dtd=7" data-google-container-id="a!2" tabindex="0" title="Advertisement" aria-label="Advertisement" data-load-complete="true"></iframe></div></ins><ul id="ui-id-2" tabindex="0" class="ui-menu ui-widget ui-widget-content ui-autocomplete ui-front" unselectable="on" style="display: none; max-width: 405px;"></ul><div role="status" aria-live="assertive" aria-relevant="additions" class="ui-helper-hidden-accessible"></div><iframe name="googlefcPresent" style="display: none; width: 0px; height: 0px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; z-index: -1000; left: -1000px; top: -1000px;"></iframe><iframe name="__tcfapiLocator" src="about:blank" style="display: none; width: 0px; height: 0px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; z-index: -1000; left: -1000px; top: -1000px;"></iframe><iframe name="googlefcInactive" src="about:blank" style="display: none; width: 0px; height: 0px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; z-index: -1000; left: -1000px; top: -1000px;"></iframe><iframe name="googlefcLoaded" src="about:blank" style="display: none; width: 0px; height: 0px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; z-index: -1000; left: -1000px; top: -1000px;"></iframe><iframe src="https://www.google.com/recaptcha/api2/aframe" width="0" height="0" style="display: none;"></iframe></body><iframe id="google_esf" name="google_esf" src="https://googleads.g.doubleclick.net/pagead/html/r20260520/r20190131/zrt_lookup_fy2021.html" style="display: none;"></iframe></html>
