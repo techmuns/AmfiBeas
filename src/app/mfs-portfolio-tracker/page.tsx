@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PortfolioTrackerView } from "@/components/data/PortfolioTrackerView";
-import { fundPortfolios } from "@/data/portfolio-tracker";
+import { fundDirectory } from "@/data/portfolio-tracker";
 
 export const metadata = {
   title: "MFs Portfolio Tracker — AmfiBeas",
@@ -18,7 +18,7 @@ export default function MfsPortfolioTrackerPage() {
         a mutual fund scheme. Data is updated each month once the most recent
         month&apos;s portfolio is available.
       </p>
-      <PortfolioTrackerView funds={fundPortfolios} />
+      <PortfolioTrackerView funds={fundDirectory} />
     </div>
   );
 }

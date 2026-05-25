@@ -1,13 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Search, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Search, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
+  type FundDirectoryEntry,
   type FundPortfolio,
   type HoldingArrow,
   monthSlug,
 } from "@/data/portfolio-tracker";
+
+const MAX_SUGGESTIONS = 60;
 
 function ArrowMark({ arrow }: { arrow: HoldingArrow }) {
   if (arrow === "up")
@@ -32,37 +35,77 @@ function formatAum(aumCr: string | number | null): string {
   return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
 }
 
-export function PortfolioTrackerView({ funds }: { funds: FundPortfolio[] }) {
-  const [selectedCode, setSelectedCode] = useState(
-    funds[0]?.meta.schemecode ?? ""
-  );
-  const [query, setQuery] = useState(funds[0]?.meta.fund ?? "");
+export function PortfolioTrackerView({ funds }: { funds: FundDirectoryEntry[] }) {
+  const [selectedCode, setSelectedCode] = useState(funds[0]?.schemecode ?? "");
+  const [query, setQuery] = useState(funds[0]?.fund ?? "");
   const [focused, setFocused] = useState(false);
   const [holdingQuery, setHoldingQuery] = useState("");
 
-  const selected =
-    funds.find((f) => f.meta.schemecode === selectedCode) ?? funds[0] ?? null;
+  // Fetched holdings, keyed by schemecode, so re-selecting never refetches.
+  const [loaded, setLoaded] = useState<Record<string, FundPortfolio>>({});
+  const [errored, setErrored] = useState<Record<string, true>>({});
+  const [reloadNonce, setReloadNonce] = useState(0);
+
+  const selectedEntry =
+    funds.find((f) => f.schemecode === selectedCode) ?? funds[0] ?? null;
+
+  const portfolio = selectedEntry ? loaded[selectedEntry.schemecode] ?? null : null;
+  const hasError = selectedEntry ? Boolean(errored[selectedEntry.schemecode]) : false;
+  const loading = Boolean(selectedEntry) && !portfolio && !hasError;
+
+  // Load the selected fund's holdings on demand (stale fetches are aborted).
+  useEffect(() => {
+    if (!selectedEntry) return;
+    const code = selectedEntry.schemecode;
+    if (loaded[code] || errored[code]) return;
+    const ctrl = new AbortController();
+    fetch(selectedEntry.path, { signal: ctrl.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json() as Promise<FundPortfolio>;
+      })
+      .then((data) => setLoaded((prev) => ({ ...prev, [code]: data })))
+      .catch((e: unknown) => {
+        if ((e as Error).name === "AbortError") return;
+        setErrored((prev) => ({ ...prev, [code]: true }));
+      });
+    return () => ctrl.abort();
+  }, [selectedEntry, loaded, errored, reloadNonce]);
+
+  function retry() {
+    if (!selectedEntry) return;
+    const code = selectedEntry.schemecode;
+    setErrored((prev) => {
+      const next = { ...prev };
+      delete next[code];
+      return next;
+    });
+    setReloadNonce((n) => n + 1);
+  }
 
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return funds.filter((f) => !q || f.meta.fund.toLowerCase().includes(q));
+    const matched = q
+      ? funds.filter((f) => f.fund.toLowerCase().includes(q))
+      : funds;
+    return matched.slice(0, MAX_SUGGESTIONS);
   }, [funds, query]);
 
-  const months = selected?.meta.months ?? [];
+  const months = portfolio?.meta.months ?? [];
   const slugs = months.map((m) => monthSlug(m.label));
 
   const holdings = useMemo(() => {
-    if (!selected) return [];
+    if (!portfolio) return [];
     const q = holdingQuery.trim().toLowerCase();
-    if (!q) return selected.rows;
-    return selected.rows.filter((r) =>
+    if (!q) return portfolio.rows;
+    return portfolio.rows.filter((r) =>
       r.company_name.toLowerCase().includes(q)
     );
-  }, [selected, holdingQuery]);
+  }, [portfolio, holdingQuery]);
 
-  function pick(f: FundPortfolio) {
-    setSelectedCode(f.meta.schemecode);
-    setQuery(f.meta.fund);
+  function pick(f: FundDirectoryEntry) {
+    setSelectedCode(f.schemecode);
+    setQuery(f.fund);
     setHoldingQuery("");
     setFocused(false);
   }
@@ -98,7 +141,7 @@ export function PortfolioTrackerView({ funds }: { funds: FundPortfolio[] }) {
         {focused && suggestions.length > 0 && (
           <ul className="absolute z-10 mt-1 max-h-72 w-full overflow-y-auto rounded-md border bg-card py-1 shadow-md">
             {suggestions.map((f) => (
-              <li key={f.meta.schemecode}>
+              <li key={f.schemecode}>
                 <button
                   type="button"
                   // mousedown fires before the input's blur, so the pick lands
@@ -108,13 +151,13 @@ export function PortfolioTrackerView({ funds }: { funds: FundPortfolio[] }) {
                   }}
                   className={cn(
                     "flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-accent",
-                    f.meta.schemecode === selectedCode && "bg-accent/60"
+                    f.schemecode === selectedCode && "bg-accent/60"
                   )}
                 >
-                  <span>{f.meta.fund}</span>
-                  {f.meta.classification && (
+                  <span>{f.fund}</span>
+                  {f.classification && (
                     <span className="shrink-0 text-xs text-muted-foreground">
-                      {f.meta.classification}
+                      {f.classification}
                     </span>
                   )}
                 </button>
@@ -124,7 +167,7 @@ export function PortfolioTrackerView({ funds }: { funds: FundPortfolio[] }) {
         )}
       </div>
 
-      {!selected ? (
+      {!selectedEntry ? (
         <div className="flex h-32 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
           No fund selected.
         </div>
@@ -134,11 +177,16 @@ export function PortfolioTrackerView({ funds }: { funds: FundPortfolio[] }) {
           <div className="rounded-lg border bg-card px-5 py-4 text-sm">
             <div>
               Fund Name -{" "}
-              <span className="font-semibold">{selected.meta.fund}</span>
+              <span className="font-semibold">{selectedEntry.fund}</span>
             </div>
-            {selected.meta.classification && (
+            {selectedEntry.classification && (
               <div className="mt-1 text-muted-foreground">
-                Category - {selected.meta.classification}
+                Category - {selectedEntry.classification}
+              </div>
+            )}
+            {selectedEntry.aumTotalCr != null && (
+              <div className="mt-1 text-muted-foreground">
+                Latest AUM - ₹ {formatAum(selectedEntry.aumTotalCr)} Cr.
               </div>
             )}
           </div>
@@ -147,7 +195,7 @@ export function PortfolioTrackerView({ funds }: { funds: FundPortfolio[] }) {
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-base font-semibold tracking-tight">
-                {selected.meta.section || "Equity Holdings"}
+                {portfolio?.meta.section || "Equity Holdings"}
               </h2>
               <div className="relative">
                 <input
@@ -156,7 +204,8 @@ export function PortfolioTrackerView({ funds }: { funds: FundPortfolio[] }) {
                   onChange={(e) => setHoldingQuery(e.target.value)}
                   placeholder="Search Here"
                   aria-label="Search holdings by company"
-                  className="w-56 rounded-md border bg-background py-1.5 pl-3 pr-8 text-sm placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+                  disabled={!portfolio}
+                  className="w-56 rounded-md border bg-background py-1.5 pl-3 pr-8 text-sm placeholder:text-muted-foreground focus:border-foreground focus:outline-none disabled:opacity-50"
                 />
                 {holdingQuery && (
                   <button
@@ -171,72 +220,93 @@ export function PortfolioTrackerView({ funds }: { funds: FundPortfolio[] }) {
               </div>
             </div>
 
-            <div className="overflow-x-auto rounded-md border bg-card">
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr className="bg-muted/60 text-xs">
-                    <th
-                      rowSpan={2}
-                      className="border-b border-r px-3 py-2 text-left font-medium align-bottom"
-                    >
-                      Company
-                    </th>
-                    {months.map((m) => (
-                      <th
-                        key={m.label}
-                        colSpan={2}
-                        className="border-b border-l px-3 py-2 text-center font-medium"
-                      >
-                        <div>{m.label}</div>
-                        <div className="text-[11px] font-normal text-muted-foreground">
-                          AUM: ₹ {formatAum(m.aumCr)} (Cr.)
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                  <tr className="bg-muted/60 text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {months.map((m) => (
-                      <FragmentSubHead key={m.label} />
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {holdings.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={1 + months.length * 2}
-                        className="px-3 py-8 text-center text-muted-foreground"
-                      >
-                        No holdings match &ldquo;{holdingQuery}&rdquo;.
-                      </td>
-                    </tr>
-                  ) : (
-                    holdings.map((row) => (
-                      <tr
-                        key={row.fincode}
-                        className="border-b last:border-0 hover:bg-accent/40"
-                      >
-                        <td className="border-r px-3 py-2.5 font-medium">
-                          {row.company_name}
-                        </td>
-                        {slugs.map((slug) => {
-                          const cell = row.months[slug];
-                          return (
-                            <Cells key={slug} cell={cell} />
-                          );
-                        })}
+            {loading ? (
+              <div className="flex h-40 items-center justify-center gap-2 rounded-md border bg-card text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading holdings…
+              </div>
+            ) : hasError ? (
+              <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-md border border-dashed text-sm text-muted-foreground">
+                <span className="text-negative">
+                  Couldn&apos;t load holdings for this fund.
+                </span>
+                <button
+                  type="button"
+                  onClick={retry}
+                  className="rounded-md border px-3 py-1 text-xs hover:bg-accent"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : portfolio ? (
+              <>
+                <div className="overflow-x-auto rounded-md border bg-card">
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-muted/60 text-xs">
+                        <th
+                          rowSpan={2}
+                          className="border-b border-r px-3 py-2 text-left font-medium align-bottom"
+                        >
+                          Company
+                        </th>
+                        {months.map((m) => (
+                          <th
+                            key={m.label}
+                            colSpan={2}
+                            className="border-b border-l px-3 py-2 text-center font-medium"
+                          >
+                            <div>{m.label}</div>
+                            <div className="text-[11px] font-normal text-muted-foreground">
+                              AUM: ₹ {formatAum(m.aumCr)} (Cr.)
+                            </div>
+                          </th>
+                        ))}
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                      <tr className="bg-muted/60 text-[11px] uppercase tracking-wide text-muted-foreground">
+                        {months.map((m) => (
+                          <FragmentSubHead key={m.label} />
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {holdings.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={1 + months.length * 2}
+                            className="px-3 py-8 text-center text-muted-foreground"
+                          >
+                            No holdings match &ldquo;{holdingQuery}&rdquo;.
+                          </td>
+                        </tr>
+                      ) : (
+                        holdings.map((row) => (
+                          <tr
+                            key={row.fincode}
+                            className="border-b last:border-0 hover:bg-accent/40"
+                          >
+                            <td className="border-r px-3 py-2.5 font-medium">
+                              {row.company_name}
+                            </td>
+                            {slugs.map((slug) => {
+                              const cell = row.months[slug];
+                              return <Cells key={slug} cell={cell} />;
+                            })}
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
 
-            <p className="text-xs text-muted-foreground">
-              {selected.rows.length} equity holdings · arrows compare a month&apos;s
-              share count to the next-older month ({months.map((m) => m.label).join(" → ")});
-              the oldest column shows no arrow. Source: {selected.meta.source}.
-            </p>
+                <p className="text-xs text-muted-foreground">
+                  {portfolio.rows.length} equity holdings · arrows compare a
+                  month&apos;s share count to the next-older month (
+                  {months.map((m) => m.label).join(" → ")}); the oldest column
+                  shows no arrow. Source: {portfolio.meta.source}.
+                </p>
+              </>
+            ) : null}
           </div>
         </>
       )}
