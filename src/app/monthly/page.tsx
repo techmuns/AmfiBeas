@@ -84,6 +84,7 @@ import { marketWrap } from "@/data/market-wrap";
 import { CoachPill } from "@/components/ui/CoachPill";
 import { EpisodeReplayStrip } from "@/components/ui/EpisodeReplayStrip";
 import { HeadlineCard } from "@/components/ui/HeadlineCard";
+import { KeyTakeaway, DeltaCr } from "@/components/ui/KeyTakeaway";
 import { StickyContextFooter } from "@/components/ui/StickyContextFooter";
 import { LensToggle } from "@/components/ui/LensToggle";
 import { MoodGauge } from "@/components/ui/MoodGauge";
@@ -1912,6 +1913,35 @@ export default async function MonthlyPage({
   const activeEquityMixRead = activeEquityMixSectionRead();
   const foliosNfoRead = foliosNfoSectionRead();
 
+  // Ambit-style headline for the Snapshot card: net inflow level, its
+  // MoM ₹ change, SIP contribution share, and equity's share of gross
+  // flows. Built from already-computed values (selected row + flows).
+  const netInflowHeadline = (() => {
+    if (!amfiSelected || typeof amfiSelected.netInflow !== "number") return null;
+    const rows = amfiMonthlyRows();
+    const idx = rows.findIndex((r) => r.month === amfiSelected.month);
+    const prev = idx > 0 ? rows[idx - 1] : null;
+    const ni = amfiSelected.netInflow;
+    const prevNi =
+      prev && typeof prev.netInflow === "number" ? prev.netInflow : null;
+    const sipShare =
+      typeof amfiSelected.sipContribution === "number" && ni > 0
+        ? (amfiSelected.sipContribution / ni) * 100
+        : null;
+    const lf = monthlyFlowsRows[monthlyFlowsRows.length - 1];
+    let equityShare: number | null = null;
+    if (lf && typeof lf.equity === "number") {
+      const e = Math.abs(lf.equity);
+      const d = typeof lf.debt === "number" ? Math.abs(lf.debt) : 0;
+      const l = typeof lf.liquid === "number" ? Math.abs(lf.liquid) : 0;
+      const tot = e + d + l;
+      if (tot > 0) equityShare = (e / tot) * 100;
+    }
+    return { month: amfiSelected.month, ni, prevNi, sipShare, equityShare };
+  })();
+  const fmtNi = (v: number) =>
+    v >= 0 ? formatCompactCrSafe(v) : "−" + formatCompactCrSafe(-v);
+
   // ---- Snapshot tab "What changed this month?" intro ----------------
   // Composes a live summary using INDUSTRY-WIDE signals that the
   // HeadlineCard below does not already surface (HeadlineCard owns
@@ -2383,6 +2413,34 @@ export default async function MonthlyPage({
           </div>
         }
       >
+        {netInflowHeadline && (
+          <KeyTakeaway
+            className="mb-4"
+            headline={
+              <>
+                Industry net inflow in {netInflowHeadline.month} was ₹
+                {fmtNi(netInflowHeadline.ni)}
+                {netInflowHeadline.prevNi !== null && (
+                  <>
+                    {" "}
+                    (<DeltaCr cr={netInflowHeadline.ni - netInflowHeadline.prevNi} />{" "}
+                    MoM)
+                  </>
+                )}
+                {netInflowHeadline.sipShare !== null && (
+                  <>
+                    ; SIPs contributed {netInflowHeadline.sipShare.toFixed(0)}% of
+                    it
+                  </>
+                )}
+                {netInflowHeadline.equityShare !== null && (
+                  <>, and equity took {netInflowHeadline.equityShare.toFixed(0)}% of gross flows</>
+                )}
+                .
+              </>
+            }
+          />
+        )}
         {amfiCardsToRender.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {amfiCardsToRender.map((c) => (
@@ -3135,6 +3193,36 @@ export default async function MonthlyPage({
           watchNext="Which categories show a sustained rise in net-inflow share before AUM share follows."
         />
       )}
+
+      {activeTab === "categories" &&
+        rotation &&
+        rotation.gainers.length > 0 &&
+        rotation.losers.length > 0 &&
+        (() => {
+          const topGainer = rotation.gainers[0];
+          const topLoser = rotation.losers.reduce((m, e) =>
+            e.deltaSharePct < m.deltaSharePct ? e : m
+          );
+          return (
+            <KeyTakeaway
+              headline={
+                <>
+                  Over the last {rotation.windowMonths}M,{" "}
+                  <strong>{topGainer.label}</strong> gained the most
+                  active-equity flow share (
+                  <span className="text-positive">
+                    +{topGainer.deltaSharePct.toFixed(2)}pp
+                  </span>
+                  ), while <strong>{topLoser.label}</strong> lost the most (
+                  <span className="text-negative">
+                    {topLoser.deltaSharePct.toFixed(2)}pp
+                  </span>
+                  ).
+                </>
+              }
+            />
+          );
+        })()}
 
       {activeTab === "categories" && rotation && (
         <CategoryRotationCard rotation={rotation} />

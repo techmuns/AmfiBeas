@@ -23,6 +23,7 @@ import {
   type AmcQuadrantPoint,
 } from "@/data/amc-peer-universe";
 import { LensToggle } from "@/components/ui/LensToggle";
+import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
 import { cn } from "@/lib/cn";
 import {
   DashboardTabs,
@@ -72,6 +73,28 @@ export default async function AmcListPage({
 
   // Market-share movement arrows over the full available window.
   const journeyPoints = cohortJourneyMap(20) ?? [];
+
+  // Leaderboard read for the share-movement card: biggest share gainer /
+  // loser over the window and the top-5 concentration.
+  const shareLeaders =
+    journeyPoints.length >= 4
+      ? (() => {
+          const byDelta = [...journeyPoints].sort(
+            (a, b) => b.shareDeltaPp - a.shareDeltaPp
+          );
+          const top5 = [...journeyPoints]
+            .sort((a, b) => b.endMarketSharePct - a.endMarketSharePct)
+            .slice(0, 5)
+            .reduce((s, p) => s + p.endMarketSharePct, 0);
+          return {
+            gainer: byDelta[0],
+            loser: byDelta[byDelta.length - 1],
+            top5,
+            start: journeyPoints[0].startQuarterLabel,
+            end: journeyPoints[0].endQuarterLabel,
+          };
+        })()
+      : null;
 
   // AMC Roster cards — top 12 AMCs by AAUM, with their AAUM
   // sparkline pulled from amc-detail. The card grid replaces the
@@ -275,6 +298,34 @@ export default async function AmcListPage({
             </div>
           }
         >
+          {shareLeaders && (
+            <KeyTakeaway
+              className="mb-3"
+              headline={
+                <>
+                  Over {shareLeaders.start} → {shareLeaders.end},{" "}
+                  <strong>{shareLeaders.gainer.displayName}</strong> gained the
+                  most market share (
+                  <span className="text-positive">
+                    +{shareLeaders.gainer.shareDeltaPp.toFixed(2)}pp
+                  </span>{" "}
+                  to {shareLeaders.gainer.endMarketSharePct.toFixed(2)}%), while{" "}
+                  <strong>{shareLeaders.loser.displayName}</strong> lost the most
+                  (
+                  <span className="text-negative">
+                    {shareLeaders.loser.shareDeltaPp.toFixed(2)}pp
+                  </span>{" "}
+                  to {shareLeaders.loser.endMarketSharePct.toFixed(2)}%).
+                </>
+              }
+              detail={
+                <>
+                  Top-5 AMCs now hold {shareLeaders.top5.toFixed(1)}% of cohort
+                  AAUM.
+                </>
+              }
+            />
+          )}
           <CohortJourneyMap points={journeyPoints} />
           <p className="mt-3 text-[11px] text-muted-foreground">
             Green arrows = share gainers · red = share losers · grey = roughly flat.

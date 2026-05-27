@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
 import {
   type FundDirectoryEntry,
   type FundPortfolio,
@@ -102,6 +103,39 @@ export function PortfolioTrackerView({ funds }: { funds: FundDirectoryEntry[] })
       r.company_name.toLowerCase().includes(q)
     );
   }, [portfolio, holdingQuery]);
+
+  // Month-over-month read for the selected fund: biggest weight add/trim
+  // and the top-10 concentration shift, in percentage points of AUM.
+  const flowSummary = useMemo(() => {
+    if (!portfolio || portfolio.meta.months.length < 2) return null;
+    const cur = monthSlug(portfolio.meta.months[0].label);
+    const prev = monthSlug(portfolio.meta.months[1].label);
+    const clean = (s: string) =>
+      s.replace(/^eq\s*-\s*/i, "").replace(/^[\s^*#~]+/, "").replace(/[£@*#~]+$/, "").trim();
+    let topAdd: { name: string; d: number } | null = null;
+    let topTrim: { name: string; d: number } | null = null;
+    const curPcts: number[] = [];
+    const prevPcts: number[] = [];
+    for (const r of portfolio.rows) {
+      const c = r.months[cur]?.aum_pct_num ?? 0;
+      const p = r.months[prev]?.aum_pct_num ?? 0;
+      const d = c - p;
+      if (!topAdd || d > topAdd.d) topAdd = { name: clean(r.company_name), d };
+      if (!topTrim || d < topTrim.d) topTrim = { name: clean(r.company_name), d };
+      curPcts.push(c);
+      prevPcts.push(p);
+    }
+    const top10 = (arr: number[]) =>
+      arr.slice().sort((a, b) => b - a).slice(0, 10).reduce((s, x) => s + x, 0);
+    const concCur = top10(curPcts);
+    return {
+      label: portfolio.meta.months[0].label,
+      topAdd,
+      topTrim,
+      concCur,
+      concDelta: concCur - top10(prevPcts),
+    };
+  }, [portfolio]);
 
   function pick(f: FundDirectoryEntry) {
     setSelectedCode(f.schemecode);
@@ -240,6 +274,43 @@ export function PortfolioTrackerView({ funds }: { funds: FundDirectoryEntry[] })
               </div>
             ) : portfolio ? (
               <>
+                {flowSummary && flowSummary.topAdd && flowSummary.topTrim && (
+                  <KeyTakeaway
+                    headline={
+                      <>
+                        In {flowSummary.label}, {selectedEntry.fund} raised its
+                        weight most in{" "}
+                        <strong>{flowSummary.topAdd.name}</strong> (
+                        <span className="text-positive">
+                          +{flowSummary.topAdd.d.toFixed(2)}pp
+                        </span>
+                        ) and trimmed{" "}
+                        <strong>{flowSummary.topTrim.name}</strong> (
+                        <span className="text-negative">
+                          {flowSummary.topTrim.d.toFixed(2)}pp
+                        </span>
+                        ).
+                      </>
+                    }
+                    detail={
+                      <>
+                        Top-10 holdings = {flowSummary.concCur.toFixed(1)}% of
+                        equity AUM (
+                        <span
+                          className={
+                            flowSummary.concDelta >= 0
+                              ? "text-positive"
+                              : "text-negative"
+                          }
+                        >
+                          {flowSummary.concDelta >= 0 ? "+" : ""}
+                          {flowSummary.concDelta.toFixed(1)}pp
+                        </span>{" "}
+                        MoM).
+                      </>
+                    }
+                  />
+                )}
                 <div className="overflow-x-auto rounded-md border bg-card">
                   <table className="w-full border-collapse text-sm">
                     <thead>
