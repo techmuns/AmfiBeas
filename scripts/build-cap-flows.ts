@@ -249,7 +249,7 @@ function main() {
       universe: "Active equity schemes only (excludes ETFs, index, international and hybrid funds)",
       activeEquityFunds: fundCount,
       metric:
-        "Net Rs Cr bought/sold = change in aggregate shares held x current implied price. Excludes corporate actions (split/bonus). Buyer/seller AMCs ranked by net share change.",
+        "Net Rs Cr bought/sold = change in aggregate shares held x current implied price. Excludes corporate actions (split/bonus).",
       topN: TOP_N,
     },
     large: card("large"),

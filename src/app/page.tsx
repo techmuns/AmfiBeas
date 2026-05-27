@@ -5,7 +5,6 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { IndustryNarrative } from "@/components/data/IndustryNarrative";
 import {
   industryQuarterly,
-  latestMonth,
   latestQuarter,
   yoyChangeQuarterly,
 } from "@/data/aggregate";
@@ -70,7 +69,7 @@ export default function HomePage() {
     <div className="space-y-6">
       <PageHeader
         title="Overview"
-        subtitle={`Industry snapshot · ${latestMonth()} (operating) · ${formatQuarterLabelLong(latestQuarter())} (financial)`}
+        subtitle="Industry snapshot"
       />
 
       <section className="space-y-3">

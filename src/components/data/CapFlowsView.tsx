@@ -77,14 +77,6 @@ export function CapFlowsView({ flows }: { flows: CapFlows }) {
   ];
   return (
     <div className="space-y-6">
-      <p className="max-w-3xl text-sm text-muted-foreground">
-        Net buying and selling by <strong>active equity</strong> mutual-fund
-        schemes in <strong>{meta.monthCur}</strong> (vs {meta.monthPrev}),
-        bucketed by market-cap. Net ₹ Cr is the change in aggregate shares held
-        valued at the current price, so it reflects actual buying/selling rather
-        than price moves.
-      </p>
-
       {tiers.map((t) => (
         <div key={t.key} className="space-y-3">
           <h2 className="text-base font-semibold tracking-tight">{t.label}</h2>
@@ -104,10 +96,7 @@ export function CapFlowsView({ flows }: { flows: CapFlows }) {
       ))}
 
       <p className="max-w-3xl text-xs text-muted-foreground">
-        {meta.universe}; {meta.activeEquityFunds} schemes. {meta.metric} Large /
-        Mid cap per the provided classification lists; Small-cap = any other
-        listed stock (demerger/unlisted and foreign holdings excluded). Source:
-        RupeeVest portfolio data.
+        {meta.universe}; {meta.activeEquityFunds} schemes. {meta.metric}
       </p>
     </div>
   );
