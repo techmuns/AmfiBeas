@@ -5,6 +5,11 @@ import { Search, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
 import {
+  formatCompactCrSafe,
+  formatPctSafe,
+  formatSharesMillions,
+} from "@/lib/format";
+import {
   type FundDirectoryEntry,
   type FundPortfolio,
   type HoldingArrow,
@@ -29,11 +34,12 @@ function ArrowMark({ arrow }: { arrow: HoldingArrow }) {
   return null;
 }
 
-function formatAum(aumCr: string | number | null): string {
-  if (aumCr === null || aumCr === "" || aumCr === "-") return "—";
+/** Coerce a TrackerMonth's aumCr (string | number | null) to a number-or-null
+ *  for the shared formatCompactCrSafe helper. */
+function aumNum(aumCr: string | number | null): number | null {
+  if (aumCr === null || aumCr === "" || aumCr === "-") return null;
   const n = typeof aumCr === "number" ? aumCr : Number(aumCr);
-  if (!Number.isFinite(n)) return String(aumCr);
-  return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+  return Number.isFinite(n) ? n : null;
 }
 
 export function PortfolioTrackerView({ funds }: { funds: FundDirectoryEntry[] }) {
@@ -220,7 +226,7 @@ export function PortfolioTrackerView({ funds }: { funds: FundDirectoryEntry[] })
             )}
             {selectedEntry.aumTotalCr != null && (
               <div className="mt-1 text-muted-foreground">
-                Latest AUM - ₹ {formatAum(selectedEntry.aumTotalCr)} Cr.
+                Latest AUM — {formatCompactCrSafe(selectedEntry.aumTotalCr)}
               </div>
             )}
           </div>
@@ -282,12 +288,12 @@ export function PortfolioTrackerView({ funds }: { funds: FundDirectoryEntry[] })
                         weight most in{" "}
                         <strong>{flowSummary.topAdd.name}</strong> (
                         <span className="text-positive">
-                          +{flowSummary.topAdd.d.toFixed(2)}pp
+                          +{flowSummary.topAdd.d.toFixed(1)}pp
                         </span>
                         ) and trimmed{" "}
                         <strong>{flowSummary.topTrim.name}</strong> (
                         <span className="text-negative">
-                          {flowSummary.topTrim.d.toFixed(2)}pp
+                          {flowSummary.topTrim.d.toFixed(1)}pp
                         </span>
                         ).
                       </>
@@ -329,7 +335,7 @@ export function PortfolioTrackerView({ funds }: { funds: FundDirectoryEntry[] })
                           >
                             <div>{m.label}</div>
                             <div className="text-[11px] font-normal text-muted-foreground">
-                              AUM: ₹ {formatAum(m.aumCr)} (Cr.)
+                              AUM: {formatCompactCrSafe(aumNum(m.aumCr))}
                             </div>
                           </th>
                         ))}
@@ -392,7 +398,7 @@ function FragmentSubHead() {
         % of AUM
       </th>
       <th className="border-b px-3 py-1.5 text-right font-medium">
-        No. of Shares
+        Shares (M)
       </th>
     </>
   );
@@ -403,23 +409,21 @@ function Cells({
 }: {
   cell:
     | {
-        aum_pct_raw: string;
-        shares_raw: string;
+        aum_pct_num: number | null;
+        shares_num: number | null;
         arrow: HoldingArrow;
       }
     | undefined;
 }) {
-  const pct = cell ? cell.aum_pct_raw : "-";
-  const shares = cell ? cell.shares_raw : "-";
   const arrow = cell ? cell.arrow : "missing";
   return (
     <>
       <td className="border-l px-3 py-2.5 text-right tabular text-muted-foreground">
-        {pct === "-" ? "—" : pct}
+        {formatPctSafe(cell?.aum_pct_num, 1)}
       </td>
       <td className="px-3 py-2.5 text-right tabular">
         <span className="inline-flex items-center justify-end gap-1">
-          {shares === "-" ? "—" : shares} <ArrowMark arrow={arrow} />
+          {formatSharesMillions(cell?.shares_num)} <ArrowMark arrow={arrow} />
         </span>
       </td>
     </>

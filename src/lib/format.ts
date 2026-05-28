@@ -168,6 +168,14 @@ export function formatCroreCountSafe(
   return formatOrUnavailable(value, (v) => `${(v / 1e7).toFixed(2)} Cr`);
 }
 
+/** Share count formatted in millions (e.g. 69,131,134 → "69.1 M"). Used
+ *  for per-holding share columns in the Portfolio Tracker. */
+export function formatSharesMillions(
+  value: number | null | undefined
+): string {
+  return formatOrUnavailable(value, (v) => `${(v / 1e6).toFixed(1)} M`);
+}
+
 /** Percentage with safe fallback. */
 export function formatPctSafe(
   value: number | null | undefined,
