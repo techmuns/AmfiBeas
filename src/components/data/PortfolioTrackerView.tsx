@@ -7,7 +7,7 @@ import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
 import {
   formatCompactCrSafe,
   formatPctSafe,
-  formatSharesMillions,
+  formatSharesIndian,
 } from "@/lib/format";
 import {
   type FundDirectoryEntry,
@@ -398,7 +398,7 @@ function FragmentSubHead() {
         % of AUM
       </th>
       <th className="border-b px-3 py-1.5 text-right font-medium">
-        Shares (M)
+        Shares
       </th>
     </>
   );
@@ -423,7 +423,7 @@ function Cells({
       </td>
       <td className="px-3 py-2.5 text-right tabular">
         <span className="inline-flex items-center justify-end gap-1">
-          {formatSharesMillions(cell?.shares_num)} <ArrowMark arrow={arrow} />
+          {formatSharesIndian(cell?.shares_num)} <ArrowMark arrow={arrow} />
         </span>
       </td>
     </>

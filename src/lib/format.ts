@@ -168,12 +168,17 @@ export function formatCroreCountSafe(
   return formatOrUnavailable(value, (v) => `${(v / 1e7).toFixed(2)} Cr`);
 }
 
-/** Share count formatted in millions (e.g. 69,131,134 → "69.1 M"). Used
- *  for per-holding share columns in the Portfolio Tracker. */
-export function formatSharesMillions(
+/** Share count formatted in Indian units (e.g. 289,500,000 → "28.9 Cr",
+ *  450,000 → "4.5 L"). Values >= 1 crore render as Cr; smaller values render
+ *  as L. Used for per-holding share columns in the Portfolio Tracker. */
+export function formatSharesIndian(
   value: number | null | undefined
 ): string {
-  return formatOrUnavailable(value, (v) => `${(v / 1e6).toFixed(1)} M`);
+  return formatOrUnavailable(value, (v) => {
+    const abs = Math.abs(v);
+    if (abs >= 1e7) return `${(v / 1e7).toFixed(1)} Cr`;
+    return `${(v / 1e5).toFixed(1)} L`;
+  });
 }
 
 /** Percentage with safe fallback. */
