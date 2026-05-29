@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
+import { SameCategoryFunds } from "@/components/data/SameCategoryFunds";
 import {
   formatCompactCrSafe,
   formatPctSafe,
@@ -17,6 +18,7 @@ import {
 } from "@/data/portfolio-tracker";
 
 const MAX_SUGGESTIONS = 60;
+const MAX_PEER_ROWS = 10;
 
 function ArrowMark({ arrow }: { arrow: HoldingArrow }) {
   if (arrow === "up")
@@ -78,6 +80,65 @@ export function PortfolioTrackerView({ funds }: { funds: FundDirectoryEntry[] })
       });
     return () => ctrl.abort();
   }, [selectedEntry, loaded, errored, reloadNonce]);
+
+  // Funds sharing the selected fund's category, sorted by AUM desc. The
+  // SameCategoryFunds section renders top-9 peers + selected (pinned), with
+  // the cohort total surfaced in the subtitle.
+  const sameCategoryFunds = useMemo(() => {
+    if (!selectedEntry?.classification) return [] as FundDirectoryEntry[];
+    return funds
+      .filter((f) => f.classification === selectedEntry.classification)
+      .slice()
+      .sort((a, b) => (b.aumTotalCr ?? 0) - (a.aumTotalCr ?? 0));
+  }, [funds, selectedEntry]);
+
+  const peerRows = useMemo(() => {
+    if (!selectedEntry) return [] as FundDirectoryEntry[];
+    const others = sameCategoryFunds.filter(
+      (f) => f.schemecode !== selectedEntry.schemecode
+    );
+    return [selectedEntry, ...others.slice(0, MAX_PEER_ROWS - 1)];
+  }, [sameCategoryFunds, selectedEntry]);
+
+  // Ref mirrors of loaded/errored so the peer-fetch effect can dedup without
+  // putting them in deps — which would otherwise abort other in-flight peers
+  // each time one resolves and updates state.
+  const loadedRef = useRef(loaded);
+  const erroredRef = useRef(errored);
+  useEffect(() => {
+    loadedRef.current = loaded;
+  }, [loaded]);
+  useEffect(() => {
+    erroredRef.current = errored;
+  }, [errored]);
+
+  // Fan-out fetch peer holdings in parallel. Aborts only on cohort change
+  // (peers array reference), not on per-peer state updates.
+  useEffect(() => {
+    if (peerRows.length === 0) return;
+    const ctrls: AbortController[] = [];
+    for (const p of peerRows) {
+      const code = p.schemecode;
+      if (loadedRef.current[code] || erroredRef.current[code]) continue;
+      const ctrl = new AbortController();
+      ctrls.push(ctrl);
+      fetch(p.path, { signal: ctrl.signal })
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json() as Promise<FundPortfolio>;
+        })
+        .then((data) =>
+          setLoaded((prev) => (prev[code] ? prev : { ...prev, [code]: data }))
+        )
+        .catch((e: unknown) => {
+          if ((e as Error).name === "AbortError") return;
+          setErrored((prev) =>
+            prev[code] ? prev : { ...prev, [code]: true }
+          );
+        });
+    }
+    return () => ctrls.forEach((c) => c.abort());
+  }, [peerRows]);
 
   function retry() {
     if (!selectedEntry) return;
@@ -315,6 +376,17 @@ export function PortfolioTrackerView({ funds }: { funds: FundDirectoryEntry[] })
                         MoM).
                       </>
                     }
+                  />
+                )}
+                {selectedEntry.classification && (
+                  <SameCategoryFunds
+                    selectedCode={selectedEntry.schemecode}
+                    category={selectedEntry.classification}
+                    cohortSize={sameCategoryFunds.length}
+                    latestMonth={portfolio.meta.months[0]?.label ?? null}
+                    peers={peerRows}
+                    loaded={loaded}
+                    errored={errored}
                   />
                 )}
                 <div className="overflow-x-auto rounded-md border bg-card">
