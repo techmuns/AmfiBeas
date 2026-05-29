@@ -6,6 +6,11 @@ import { cn } from "@/lib/cn";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
 import { SameCategoryFunds } from "@/components/data/SameCategoryFunds";
 import {
+  DashboardTabs,
+  type DashboardTabDef,
+} from "@/components/layout/DashboardTabs";
+import type { TrackerTabId } from "@/components/data/PortfolioTrackerTabs";
+import {
   formatCompactCrSafe,
   formatPctSafe,
   formatSharesIndian,
@@ -44,7 +49,17 @@ function aumNum(aumCr: string | number | null): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function PortfolioTrackerView({ funds }: { funds: FundDirectoryEntry[] }) {
+export function PortfolioTrackerView({
+  funds,
+  tabs,
+  activeTab,
+  searchParams,
+}: {
+  funds: FundDirectoryEntry[];
+  tabs: readonly DashboardTabDef[];
+  activeTab: TrackerTabId;
+  searchParams: Record<string, string | string[] | undefined>;
+}) {
   const [selectedCode, setSelectedCode] = useState(funds[0]?.schemecode ?? "");
   const [query, setQuery] = useState(funds[0]?.fund ?? "");
   const [focused, setFocused] = useState(false);
@@ -211,9 +226,31 @@ export function PortfolioTrackerView({ funds }: { funds: FundDirectoryEntry[] })
     setFocused(false);
   }
 
+  const loaderUi = (
+    <div className="flex h-40 items-center justify-center gap-2 rounded-md border bg-card text-sm text-muted-foreground">
+      <Loader2 className="h-4 w-4 animate-spin" />
+      Loading holdings…
+    </div>
+  );
+
+  const errorUi = (
+    <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-md border border-dashed text-sm text-muted-foreground">
+      <span className="text-negative">
+        Couldn&apos;t load holdings for this fund.
+      </span>
+      <button
+        type="button"
+        onClick={retry}
+        className="rounded-md border px-3 py-1 text-xs hover:bg-accent"
+      >
+        Retry
+      </button>
+    </div>
+  );
+
   return (
     <div className="space-y-5">
-      {/* Fund search */}
+      {/* Global fund picker — visible above the tab strip across every tab. */}
       <div className="relative max-w-xl">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
@@ -240,7 +277,7 @@ export function PortfolioTrackerView({ funds }: { funds: FundDirectoryEntry[] })
           </button>
         )}
         {focused && suggestions.length > 0 && (
-          <ul className="absolute z-10 mt-1 max-h-72 w-full overflow-y-auto rounded-md border bg-card py-1 shadow-md">
+          <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-md border bg-card py-1 shadow-md">
             {suggestions.map((f) => (
               <li key={f.schemecode}>
                 <button
@@ -268,197 +305,243 @@ export function PortfolioTrackerView({ funds }: { funds: FundDirectoryEntry[] })
         )}
       </div>
 
+      {/* URL-driven tab strip — preserves every non-`tab` query param so per-tab
+       *  deep links and future controls survive switches. */}
+      <DashboardTabs
+        basePath="/mfs-portfolio-tracker"
+        tabs={tabs}
+        activeId={activeTab}
+        searchParams={searchParams}
+      />
+
       {!selectedEntry ? (
         <div className="flex h-32 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
           No fund selected.
         </div>
       ) : (
         <>
-          {/* Fund name + category header */}
-          <div className="rounded-lg border bg-card px-5 py-4 text-sm">
-            <div>
-              Fund Name -{" "}
-              <span className="font-semibold">{selectedEntry.fund}</span>
-            </div>
-            {selectedEntry.classification && (
-              <div className="mt-1 text-muted-foreground">
-                Category - {selectedEntry.classification}
-              </div>
-            )}
-            {selectedEntry.aumTotalCr != null && (
-              <div className="mt-1 text-muted-foreground">
-                Latest AUM — {formatCompactCrSafe(selectedEntry.aumTotalCr)}
-              </div>
-            )}
-          </div>
-
-          {/* Equity holdings */}
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-base font-semibold tracking-tight">
-                {portfolio?.meta.section || "Equity Holdings"}
-              </h2>
-              <div className="relative">
-                <input
-                  type="search"
-                  value={holdingQuery}
-                  onChange={(e) => setHoldingQuery(e.target.value)}
-                  placeholder="Search Here"
-                  aria-label="Search holdings by company"
-                  disabled={!portfolio}
-                  className="w-56 rounded-md border bg-background py-1.5 pl-3 pr-8 text-sm placeholder:text-muted-foreground focus:border-foreground focus:outline-none disabled:opacity-50"
-                />
-                {holdingQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setHoldingQuery("")}
-                    aria-label="Clear holdings filter"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="flex h-40 items-center justify-center gap-2 rounded-md border bg-card text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Loading holdings…
-              </div>
-            ) : hasError ? (
-              <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-md border border-dashed text-sm text-muted-foreground">
-                <span className="text-negative">
-                  Couldn&apos;t load holdings for this fund.
-                </span>
-                <button
-                  type="button"
-                  onClick={retry}
-                  className="rounded-md border px-3 py-1 text-xs hover:bg-accent"
-                >
-                  Retry
-                </button>
-              </div>
-            ) : portfolio ? (
-              <>
-                {flowSummary && flowSummary.topAdd && flowSummary.topTrim && (
-                  <KeyTakeaway
-                    headline={
-                      <>
-                        In {flowSummary.label}, {selectedEntry.fund} raised its
-                        weight most in{" "}
-                        <strong>{flowSummary.topAdd.name}</strong> (
-                        <span className="text-positive">
-                          +{flowSummary.topAdd.d.toFixed(1)}pp
-                        </span>
-                        ) and trimmed{" "}
-                        <strong>{flowSummary.topTrim.name}</strong> (
-                        <span className="text-negative">
-                          {flowSummary.topTrim.d.toFixed(1)}pp
-                        </span>
-                        ).
-                      </>
-                    }
-                    detail={
-                      <>
-                        Top-10 holdings = {flowSummary.concCur.toFixed(1)}% of
-                        equity AUM (
-                        <span
-                          className={
-                            flowSummary.concDelta >= 0
-                              ? "text-positive"
-                              : "text-negative"
-                          }
-                        >
-                          {flowSummary.concDelta >= 0 ? "+" : ""}
-                          {flowSummary.concDelta.toFixed(1)}pp
-                        </span>{" "}
-                        MoM).
-                      </>
-                    }
-                  />
-                )}
-                {selectedEntry.classification && (
-                  <SameCategoryFunds
-                    selectedCode={selectedEntry.schemecode}
-                    category={selectedEntry.classification}
-                    cohortSize={sameCategoryFunds.length}
-                    latestMonth={portfolio.meta.months[0]?.label ?? null}
-                    peers={peerRows}
-                    loaded={loaded}
-                    errored={errored}
-                  />
-                )}
-                <div className="overflow-x-auto rounded-md border bg-card">
-                  <table className="w-full border-collapse text-sm">
-                    <thead>
-                      <tr className="bg-muted/60 text-xs">
-                        <th
-                          rowSpan={2}
-                          className="border-b border-r px-3 py-2 text-left font-medium align-bottom"
-                        >
-                          Company
-                        </th>
-                        {months.map((m) => (
-                          <th
-                            key={m.label}
-                            colSpan={2}
-                            className="border-b border-l px-3 py-2 text-center font-medium"
-                          >
-                            <div>{m.label}</div>
-                            <div className="text-[11px] font-normal text-muted-foreground">
-                              AUM: {formatCompactCrSafe(aumNum(m.aumCr))}
-                            </div>
-                          </th>
-                        ))}
-                      </tr>
-                      <tr className="bg-muted/60 text-[11px] uppercase tracking-wide text-muted-foreground">
-                        {months.map((m) => (
-                          <FragmentSubHead key={m.label} />
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {holdings.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan={1 + months.length * 2}
-                            className="px-3 py-8 text-center text-muted-foreground"
-                          >
-                            No holdings match &ldquo;{holdingQuery}&rdquo;.
-                          </td>
-                        </tr>
-                      ) : (
-                        holdings.map((row) => (
-                          <tr
-                            key={row.fincode}
-                            className="border-b last:border-0 hover:bg-accent/40"
-                          >
-                            <td className="border-r px-3 py-2.5 font-medium">
-                              {row.company_name}
-                            </td>
-                            {slugs.map((slug) => {
-                              const cell = row.months[slug];
-                              return <Cells key={slug} cell={cell} />;
-                            })}
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+          {activeTab === "overview" && (
+            <>
+              {/* Fund name + category header — Overview tab only */}
+              <div className="rounded-lg border bg-card px-5 py-4 text-sm">
+                <div>
+                  Fund Name -{" "}
+                  <span className="font-semibold">{selectedEntry.fund}</span>
                 </div>
+                {selectedEntry.classification && (
+                  <div className="mt-1 text-muted-foreground">
+                    Category - {selectedEntry.classification}
+                  </div>
+                )}
+                {selectedEntry.aumTotalCr != null && (
+                  <div className="mt-1 text-muted-foreground">
+                    Latest AUM — {formatCompactCrSafe(selectedEntry.aumTotalCr)}
+                  </div>
+                )}
+              </div>
 
-                <p className="text-xs text-muted-foreground">
-                  {portfolio.rows.length} equity holdings · arrows compare a
-                  month&apos;s share count to the next-older month (
-                  {months.map((m) => m.label).join(" → ")}); the oldest column
-                  shows no arrow. Source: {portfolio.meta.source}.
-                </p>
-              </>
-            ) : null}
-          </div>
+              {loading ? (
+                loaderUi
+              ) : hasError ? (
+                errorUi
+              ) : portfolio &&
+                flowSummary &&
+                flowSummary.topAdd &&
+                flowSummary.topTrim ? (
+                <KeyTakeaway
+                  headline={
+                    <>
+                      In {flowSummary.label}, {selectedEntry.fund} raised its
+                      weight most in{" "}
+                      <strong>{flowSummary.topAdd.name}</strong> (
+                      <span className="text-positive">
+                        +{flowSummary.topAdd.d.toFixed(1)}pp
+                      </span>
+                      ) and trimmed{" "}
+                      <strong>{flowSummary.topTrim.name}</strong> (
+                      <span className="text-negative">
+                        {flowSummary.topTrim.d.toFixed(1)}pp
+                      </span>
+                      ).
+                    </>
+                  }
+                  detail={
+                    <>
+                      Top-10 holdings = {flowSummary.concCur.toFixed(1)}% of
+                      equity AUM (
+                      <span
+                        className={
+                          flowSummary.concDelta >= 0
+                            ? "text-positive"
+                            : "text-negative"
+                        }
+                      >
+                        {flowSummary.concDelta >= 0 ? "+" : ""}
+                        {flowSummary.concDelta.toFixed(1)}pp
+                      </span>{" "}
+                      MoM).
+                    </>
+                  }
+                />
+              ) : null}
+            </>
+          )}
+
+          {activeTab === "holdings" && (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-base font-semibold tracking-tight">
+                  {portfolio?.meta.section || "Equity Holdings"}
+                </h2>
+                <div className="relative">
+                  <input
+                    type="search"
+                    value={holdingQuery}
+                    onChange={(e) => setHoldingQuery(e.target.value)}
+                    placeholder="Search Here"
+                    aria-label="Search holdings by company"
+                    disabled={!portfolio}
+                    className="w-56 rounded-md border bg-background py-1.5 pl-3 pr-8 text-sm placeholder:text-muted-foreground focus:border-foreground focus:outline-none disabled:opacity-50"
+                  />
+                  {holdingQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setHoldingQuery("")}
+                      aria-label="Clear holdings filter"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {loading ? (
+                loaderUi
+              ) : hasError ? (
+                errorUi
+              ) : portfolio ? (
+                <>
+                  <div className="overflow-x-auto rounded-md border bg-card">
+                    <table className="w-full border-collapse text-sm">
+                      <thead>
+                        <tr className="bg-muted/60 text-xs">
+                          <th
+                            rowSpan={2}
+                            className="border-b border-r px-3 py-2 text-left font-medium align-bottom"
+                          >
+                            Company
+                          </th>
+                          {months.map((m) => (
+                            <th
+                              key={m.label}
+                              colSpan={2}
+                              className="border-b border-l px-3 py-2 text-center font-medium"
+                            >
+                              <div>{m.label}</div>
+                              <div className="text-[11px] font-normal text-muted-foreground">
+                                AUM: {formatCompactCrSafe(aumNum(m.aumCr))}
+                              </div>
+                            </th>
+                          ))}
+                        </tr>
+                        <tr className="bg-muted/60 text-[11px] uppercase tracking-wide text-muted-foreground">
+                          {months.map((m) => (
+                            <FragmentSubHead key={m.label} />
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {holdings.length === 0 ? (
+                          <tr>
+                            <td
+                              colSpan={1 + months.length * 2}
+                              className="px-3 py-8 text-center text-muted-foreground"
+                            >
+                              No holdings match &ldquo;{holdingQuery}&rdquo;.
+                            </td>
+                          </tr>
+                        ) : (
+                          holdings.map((row) => (
+                            <tr
+                              key={row.fincode}
+                              className="border-b last:border-0 hover:bg-accent/40"
+                            >
+                              <td className="border-r px-3 py-2.5 font-medium">
+                                {row.company_name}
+                              </td>
+                              {slugs.map((slug) => {
+                                const cell = row.months[slug];
+                                return <Cells key={slug} cell={cell} />;
+                              })}
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground">
+                    {portfolio.rows.length} equity holdings · arrows compare a
+                    month&apos;s share count to the next-older month (
+                    {months.map((m) => m.label).join(" → ")}); the oldest column
+                    shows no arrow. Source: {portfolio.meta.source}.
+                  </p>
+                </>
+              ) : null}
+            </div>
+          )}
+
+          {activeTab === "peers" && (
+            <>
+              {loading ? (
+                loaderUi
+              ) : hasError ? (
+                errorUi
+              ) : portfolio && selectedEntry.classification ? (
+                <SameCategoryFunds
+                  selectedCode={selectedEntry.schemecode}
+                  category={selectedEntry.classification}
+                  cohortSize={sameCategoryFunds.length}
+                  latestMonth={portfolio.meta.months[0]?.label ?? null}
+                  peers={peerRows}
+                  loaded={loaded}
+                  errored={errored}
+                />
+              ) : portfolio && !selectedEntry.classification ? (
+                <div className="rounded-md border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">
+                  No peer cohort available — this fund has no classification.
+                </div>
+              ) : null}
+            </>
+          )}
+
+          {activeTab === "head-to-head" && (
+            <PlaceholderCard
+              title="Head-to-head"
+              body="Coming soon: direct competitor comparison (e.g. HDFC Flexi Cap vs ICICI Flexi Cap)."
+            />
+          )}
+
+          {activeTab === "trends" && (
+            <PlaceholderCard
+              title="Trends"
+              body="Coming soon: allocation trends and NAV-based returns."
+            />
+          )}
         </>
       )}
+    </div>
+  );
+}
+
+function PlaceholderCard({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="rounded-lg border border-dashed bg-card px-5 py-10 text-center">
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground">
+        {body}
+      </p>
     </div>
   );
 }
