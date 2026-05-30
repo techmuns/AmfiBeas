@@ -1,0 +1,77 @@
+name: NAV history backfill dry run (temporary, manual)
+
+# TEMPORARY production-shaped backfill DRY-RUN (Phase 3.2H). Manual trigger
+# only — NO schedule. Fetches AMFI historical NAV in 75-day chunks across a
+# 15-month window for the full 1,036-fund matched universe, then writes only
+# data/debug/nav-history-backfill-dryrun-report.json plus 5 sample per-fund
+# files under data/debug/sample-nav-history/. Both directories are gitignored.
+#
+# Today the `commit` input defaults to false and the workflow has NO commit
+# step. The input is parked here as a placeholder so a later phase can switch
+# to writing public/nav-history/ without renaming the workflow, but it has
+# zero effect until that phase ships.
+#
+# Production per-fund files (public/nav-history/) are NOT written here.
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are you running the Stage-1 backfill dry run? (optional)"
+        required: false
+        type: string
+      commit:
+        description: "Reserved for a later phase. Today this input has NO effect; the dry-run never commits."
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+# Read-only: the dry-run never pushes or commits. Artifact upload needs no
+# write scope on repo contents.
+permissions:
+  contents: read
+
+concurrency:
+  group: nav-history-backfill-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backfill-dryrun:
+    runs-on: ubuntu-22.04
+    # Stage-1: 7 windows × ≤120s fetch + 1.5s polite delay + parse + 3× retry
+    # budget on the worst window ≈ comfortable inside 30 min; 45 absorbs slow
+    # AMFI portal days.
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run Stage-1 backfill dry-run (1,036 funds, 15 months, 75-day chunks)
+        # The script exits non-zero when (no usable windows) OR (guardrails
+        # fail) OR (report can't be written). continue-on-error keeps the
+        # artifact step reachable so a partial diagnostic is always preserved.
+        continue-on-error: true
+        run: npx tsx scripts/ingest/nav-history-backfill.ts
+      - name: Upload dry-run report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nav-history-backfill-dryrun-report
+          path: data/debug/nav-history-backfill-dryrun-report.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Upload sample per-fund history files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nav-history-backfill-sample-files
+          path: data/debug/sample-nav-history/
+          if-no-files-found: warn
+          retention-days: 14
