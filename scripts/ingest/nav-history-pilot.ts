@@ -31,7 +31,6 @@ const REPORT_PATH = path.join(REPORT_DIR, "nav-history-pilot-report.json");
 const USER_AGENT =
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 const POLITE_DELAY_MS = 400;
-const AMFI_CROSSCHECK_FUNDS = 3;
 const AMFI_WINDOW_DAYS = 16;
 const NAV_TOLERANCE_PCT = 0.5; // |Δ| within 0.5% of NAV counts as a match
 
@@ -320,6 +319,29 @@ function round2(n: number): number { return Math.round(n * 100) / 100; }
 // AMFI cross-check (recent window, all schemes)
 // ---------------------------------------------------------------------------
 
+interface PilotPresenceCheck {
+  schemecode: string;
+  amfiSchemeCode: number;
+  isin: string | null;
+  presentInParsedByCode: number; // rows parseNavAll returned with this schemeCode
+  presentInRawByCode: number;    // /(?:^|;|\n)\s*<code>\s*;/ hits in the raw body
+  presentInRawByIsin: number;    // /<isin>/ hits in the raw body (0 if isin null)
+}
+
+interface AmfiResponseDiagnostics {
+  distinctSchemeCodeCount: number;
+  distinctSchemeCodeSampleHead: number[];   // first 10 distinct codes seen, in order
+  distinctSchemeCodeSampleTail: number[];   // last 10 distinct codes seen, in order
+  sectionsFound: string[];                  // section-header lines from raw (capped)
+  amcsFoundCount: number;                   // distinct non-`;` lines (i.e. AMC headers)
+  amcsFoundSample: string[];                // first 20 distinct AMC names
+  dateMin: string | null;                   // ISO YYYY-MM-DD across parsed rows
+  dateMax: string | null;
+  topDatesByCount: Array<{ date: string; count: number }>; // top 5
+  firstParsedRows: Array<{ schemeCode: number; schemeName: string; isin?: string; navDate: string; isoDate: string | null }>;
+  pilotPresence: PilotPresenceCheck[];
+}
+
 interface AmfiCrossCheck {
   attempted: boolean;
   reachable: boolean;
@@ -336,10 +358,109 @@ interface AmfiCrossCheck {
   windowTo: string;
   rowsParsed: number;
   results: CrossCheckResult[];
+  // --- response diagnostics (Phase 3.2D) ---
+  diagnostics?: AmfiResponseDiagnostics;
+}
+
+/** Count occurrences of a regex pattern in raw text without retaining match objects.
+ *  `re` must carry the /g flag. Uses exec-loop to avoid allocating per match. */
+function regexCount(text: string, re: RegExp): number {
+  let n = 0;
+  re.lastIndex = 0;
+  while (re.exec(text) !== null) n += 1;
+  return n;
+}
+
+const SECTION_LINE_RE = /^(Open|Close|Interval) Ended Schemes.*/i;
+
+/** Diagnostic scan of the AMFI historical response. Cheap second pass over the
+ *  already-fetched text + parsed rows; tells us whether the filter was looking
+ *  in the wrong place vs whether the codes simply aren't in the response. */
+function computeResponseDiagnostics(
+  text: string,
+  rows: ReturnType<typeof parseNavAll>,
+  funds: Array<{ schemecode: string; amfiSchemeCode: number; isin: string | null }>
+): AmfiResponseDiagnostics {
+  // Distinct scheme codes
+  const distinctCodes = new Set<number>();
+  const distinctSeq: number[] = [];
+  for (const r of rows) {
+    if (distinctCodes.has(r.schemeCode)) continue;
+    distinctCodes.add(r.schemeCode);
+    distinctSeq.push(r.schemeCode);
+  }
+  // Sections + AMCs from raw (mirrors parseNavAll's heuristic: section regex,
+  // 'Scheme Code' header, then non-';' lines = AMC names).
+  const sectionsSet = new Set<string>();
+  const amcsSet = new Set<string>();
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (SECTION_LINE_RE.test(line)) { sectionsSet.add(line); continue; }
+    if (line.startsWith("Scheme Code")) continue;
+    if (!line.includes(";")) amcsSet.add(line);
+  }
+  const sectionsFound = Array.from(sectionsSet).slice(0, 30);
+  const amcsFoundSample = Array.from(amcsSet).slice(0, 20);
+
+  // Dates
+  const byDate = new Map<string, number>();
+  let dateMin: string | null = null;
+  let dateMax: string | null = null;
+  for (const r of rows) {
+    const iso = ddMMMyyyyToIso(r.date);
+    if (!iso) continue;
+    byDate.set(iso, (byDate.get(iso) ?? 0) + 1);
+    if (!dateMin || iso < dateMin) dateMin = iso;
+    if (!dateMax || iso > dateMax) dateMax = iso;
+  }
+  const topDatesByCount = Array.from(byDate.entries())
+    .sort((a, b) => b[1] - a[1]).slice(0, 5)
+    .map(([date, count]) => ({ date, count }));
+
+  // First 20 parsed rows (the most informative artifact — shows exact shape).
+  const firstParsedRows = rows.slice(0, 20).map((r) => ({
+    schemeCode: r.schemeCode,
+    schemeName: r.schemeName,
+    isin: r.isin,
+    navDate: r.date,
+    isoDate: ddMMMyyyyToIso(r.date),
+  }));
+
+  // Pilot presence: by parsed scheme code, and raw-text regex by code + ISIN.
+  const pilotPresence: PilotPresenceCheck[] = funds.map((f) => {
+    let parsedHits = 0;
+    for (const r of rows) if (r.schemeCode === f.amfiSchemeCode) parsedHits += 1;
+    // Raw regex by code: number bounded by start-of-line OR `;` OR newline on
+    // either side, followed by `;` (the schemeCode is the leftmost field of
+    // each scheme line in NAVAll format).
+    const codeRe = new RegExp(`(?:^|[;\\n])\\s*${f.amfiSchemeCode}\\s*;`, "g");
+    const isinRe = f.isin ? new RegExp(f.isin.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g") : null;
+    return {
+      schemecode: f.schemecode,
+      amfiSchemeCode: f.amfiSchemeCode,
+      isin: f.isin,
+      presentInParsedByCode: parsedHits,
+      presentInRawByCode: regexCount(text, codeRe),
+      presentInRawByIsin: isinRe ? regexCount(text, isinRe) : 0,
+    };
+  });
+
+  return {
+    distinctSchemeCodeCount: distinctCodes.size,
+    distinctSchemeCodeSampleHead: distinctSeq.slice(0, 10),
+    distinctSchemeCodeSampleTail: distinctSeq.slice(-10),
+    sectionsFound,
+    amcsFoundCount: amcsSet.size,
+    amcsFoundSample,
+    dateMin, dateMax, topDatesByCount,
+    firstParsedRows,
+    pilotPresence,
+  };
 }
 
 async function runAmfiCrossCheck(
-  funds: Array<{ schemecode: string; fundName: string; amfiSchemeCode: number; series: SeriesPoint[] }>
+  funds: Array<{ schemecode: string; fundName: string; amfiSchemeCode: number; isin: string | null; series: SeriesPoint[] }>
 ): Promise<AmfiCrossCheck> {
   const windowTo = utcShiftToDDMMMYYYY(0);
   const windowFrom = utcShiftToDDMMMYYYY(AMFI_WINDOW_DAYS);
@@ -371,6 +492,11 @@ async function runAmfiCrossCheck(
   } catch (e) {
     return { ...diag, reachable: true, parseError: `parseNavAll threw: ${(e as Error).message}`, failureReason: "AMFI body received but parseNavAll failed", rowsParsed: 0, results: [] };
   }
+
+  // Phase 3.2D: response diagnostics computed against the full pilot set, not
+  // just the cross-check subset, so the report shows presence-by-code/by-ISIN
+  // for every pilot fund regardless of how many we sliced for the comparison.
+  const diagnostics = computeResponseDiagnostics(res.text, rows, funds.map((f) => ({ schemecode: f.schemecode, amfiSchemeCode: f.amfiSchemeCode, isin: f.isin })));
 
   // amfiSchemeCode → (isoDate → nav)
   const wanted = new Set(funds.map((f) => f.amfiSchemeCode));
@@ -414,7 +540,7 @@ async function runAmfiCrossCheck(
     });
   }
   const parseError = rows.length === 0 ? "AMFI body received but parseNavAll returned 0 rows" : undefined;
-  return { ...diag, reachable: true, parseError, rowsParsed: rows.length, results };
+  return { ...diag, reachable: true, parseError, rowsParsed: rows.length, results, diagnostics };
 }
 
 // ---------------------------------------------------------------------------
@@ -481,14 +607,13 @@ async function main(): Promise<void> {
 
   const okResults = fetchResults.filter((r) => r.status === "ok");
 
-  // 2. AMFI historical request — ALWAYS attempted (Phase 3.2C), keyed off the
-  // pilot AMFI scheme codes, NOT MFAPI success. This independently measures
-  // whether AMFI historical is reachable from CI even when MFAPI is down. The
-  // MFAPI series (if any) is passed in for the tolerance comparison; an empty
-  // series still yields amfiPointsFound per code.
-  const crossFunds = pilot.slice(0, AMFI_CROSSCHECK_FUNDS).map((f) => ({
+  // 2. AMFI historical request — ALWAYS attempted (Phase 3.2C), keyed off ALL
+  // pilot AMFI scheme codes (Phase 3.2D widened from the first 3 so the
+  // per-pilot presence diagnostic covers every fund). Independent of MFAPI
+  // success. ISIN is passed through for the response-diagnostics raw scan.
+  const crossFunds = pilot.map((f) => ({
     schemecode: f.schemecode, fundName: f.fundName, amfiSchemeCode: f.amfiSchemeCode,
-    series: seriesByCode.get(f.schemecode) ?? [],
+    isin: f.isin, series: seriesByCode.get(f.schemecode) ?? [],
   }));
   let crossCheck: AmfiCrossCheck;
   if (crossFunds.length === 0) {
@@ -609,7 +734,24 @@ function printSummary(
   info(`AMFI historical: attempted=${cross.attempted} reachable=${cross.reachable} HTTP=${cross.httpStatus ?? "-"} ct=${cross.contentType ?? "-"} rows=${cross.rowsParsed}`);
   if (cross.failureReason) info(`   AMFI failureReason: ${cross.failureReason}`);
   if (cross.bodyPreview && !cross.reachable) info(`   AMFI bodyPreview: ${cross.bodyPreview.slice(0, 200)}`);
-  for (const r of cross.results) info(`   amfi ${r.amfiSchemeCode} ${r.schemecode}: amfiPts=${r.amfiPointsFound} compared=${r.comparedDates} within=${r.withinTolerance} maxΔ%=${r.maxPctDiff ?? "-"}`);
+  // Phase 3.2D response diagnostics — surface enough in the log alone to
+  // diagnose why amfiPts can be 0 despite rows>0 (scheme universe / parser /
+  // filter key). The full structure is in the artifact.
+  if (cross.diagnostics) {
+    const d = cross.diagnostics;
+    info(`   AMFI diag: distinctSchemeCodes=${d.distinctSchemeCodeCount} sections=${d.sectionsFound.length} amcs=${d.amcsFoundCount} dateRange=${d.dateMin ?? "-"}..${d.dateMax ?? "-"}`);
+    info(`   AMFI distinct-code head: ${d.distinctSchemeCodeSampleHead.join(",")}`);
+    info(`   AMFI distinct-code tail: ${d.distinctSchemeCodeSampleTail.join(",")}`);
+    info(`   AMFI sections found (first 5): ${d.sectionsFound.slice(0, 5).join(" | ") || "(none)"}`);
+    info(`   AMFI AMCs found (first 5):     ${d.amcsFoundSample.slice(0, 5).join(" | ") || "(none)"}`);
+    info(`   AMFI topDates: ${d.topDatesByCount.map((x) => `${x.date}=${x.count}`).join(" ")}`);
+    if (d.firstParsedRows.length > 0) {
+      const f = d.firstParsedRows[0];
+      info(`   AMFI first parsed row: code=${f.schemeCode} name=${f.schemeName.slice(0, 60)} isin=${f.isin ?? "-"} date=${f.navDate}(iso=${f.isoDate ?? "-"})`);
+    }
+    for (const p of d.pilotPresence) info(`   pilot ${p.amfiSchemeCode} ${p.schemecode}: parsed=${p.presentInParsedByCode} rawByCode=${p.presentInRawByCode} rawByIsin=${p.presentInRawByIsin}`);
+  }
+  for (const r of cross.results) info(`   amfi-cmp ${r.amfiSchemeCode} ${r.schemecode}: amfiPts=${r.amfiPointsFound} compared=${r.comparedDates} within=${r.withinTolerance} maxΔ%=${r.maxPctDiff ?? "-"}`);
   info(`x-check within-tol: ${verdict.crossCheckWithinTolerancePct ?? "n/a"}%  (compared=${verdict.crossCheckComparedDates})`);
   info(`Period coverage (of usable funds): ${["1M", "3M", "6M", "1Y", "3Y", "5Y", "since_inception"].map((k) => `${k}=${periodCoverage[k]}`).join(" ")}`);
   info(`Recommendation: ${recommendation}`);
