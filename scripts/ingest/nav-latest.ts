@@ -37,6 +37,17 @@ const OUTPUT_PATH = path.resolve(process.cwd(), "src/data/snapshots/mf-latest-na
 const USER_AGENT =
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
+// Production guardrails (Phase 3.1B). The snapshot is written ONLY when every
+// floor is cleared; otherwise the script keeps the previous snapshot and exits
+// non-zero so the scheduled workflow fails (and skips its commit step) rather
+// than committing degraded NAV data. False positives / coverage regressions
+// are worse than a stale-but-good snapshot.
+const GUARD = {
+  minProductionFunds: 1000, // catastrophic-drop floor (expected ~1036)
+  minMatchRateWithHoldingsPct: 95, // the accepted crosswalk floor
+  minOverridesLoaded: 19, // curated overrides file must still load
+};
+
 interface LatestNavRow {
   schemecode: string;
   fundName: string;
@@ -163,6 +174,35 @@ async function main(): Promise<void> {
       policy: "Production set = exact + high (auto) + override only. medium/low/ambiguous/unmatched/rejected excluded.",
     },
   };
+
+  // --- Production guardrails: never write/commit a degraded snapshot --------
+  const guardFailures: string[] = [];
+  if (snapshot.source !== "AMFI") guardFailures.push(`source must be "AMFI" (got "${snapshot.source}")`);
+  if (!snapshot.feedDate) guardFailures.push("feedDate is missing/empty");
+  if (snapshot.navRowsFromFeed <= 0) guardFailures.push("navRowsFromFeed must be > 0");
+  if (funds.length <= 0) guardFailures.push("production NAV rows must be > 0");
+  if (funds.length < GUARD.minProductionFunds) {
+    guardFailures.push(`funds.length ${funds.length} below floor ${GUARD.minProductionFunds}`);
+  }
+  if (snapshot.crosswalkCoverage.matchRateWithHoldingsPct < GUARD.minMatchRateWithHoldingsPct) {
+    guardFailures.push(
+      `matchRateWithHoldingsPct ${snapshot.crosswalkCoverage.matchRateWithHoldingsPct} below floor ${GUARD.minMatchRateWithHoldingsPct}`
+    );
+  }
+  if (overrides.size < GUARD.minOverridesLoaded) {
+    guardFailures.push(`overridesLoaded ${overrides.size} below floor ${GUARD.minOverridesLoaded}`);
+  }
+
+  if (guardFailures.length > 0) {
+    warn("Production guardrails FAILED — keeping previous snapshot, NOT writing:");
+    for (const g of guardFailures) warn(`  - ${g}`);
+    process.exit(1);
+  }
+  info(
+    `guardrails passed (funds=${funds.length}≥${GUARD.minProductionFunds}, ` +
+      `matchRateWithHoldings=${snapshot.crosswalkCoverage.matchRateWithHoldingsPct}%≥${GUARD.minMatchRateWithHoldingsPct}%, ` +
+      `overridesLoaded=${overrides.size}≥${GUARD.minOverridesLoaded}, overrideMatched=${cw.overrideMatches.length})`
+  );
 
   await fs.mkdir(path.dirname(OUTPUT_PATH), { recursive: true });
   await fs.writeFile(OUTPUT_PATH, JSON.stringify(snapshot, null, 2) + "\n", "utf8");

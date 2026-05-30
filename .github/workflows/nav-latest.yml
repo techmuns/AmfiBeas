@@ -1,14 +1,23 @@
-name: NAV latest snapshot (manual validation)
+name: NAV latest snapshot (daily)
 
-# TEMPORARY manual-only validation job for Phase 3.1A. NO schedule yet — the
-# daily cron is added only after the first snapshot is reviewed and approved.
-# Runs scripts/ingest/nav-latest.ts (AMFI NAVAll + shared crosswalk + curated
-# overrides), uploads the snapshot as an artifact for review, and — matching
-# the existing ingest.yml convention — commits the snapshot to the branch if
-# it changed. Production set is exact + high + override only; the script
-# keeps-last-good (exits without writing) if the feed is unreachable.
+# Daily latest-NAV refresh (Phase 3.1B). Runs scripts/ingest/nav-latest.ts
+# (AMFI NAVAll + shared crosswalk + curated overrides), uploads the snapshot
+# as an artifact, and — matching the existing ingest.yml convention — commits
+# src/data/snapshots/mf-latest-nav.json to the branch when it changes.
+#
+# Safety: production set is exact + high + override only; the script
+# keeps-last-good (exits non-zero WITHOUT writing) if the AMFI feed is
+# unreachable OR if any production guardrail fails (funds floor, ≥95% holdings
+# coverage, overrides loaded). A failed generate step halts the job before the
+# commit step, so a degraded snapshot can never be committed.
 
 on:
+  # Daily 20:00 UTC = 01:30 IST (next day). SEBI requires AMCs to upload NAV to
+  # AMFI by ~23:00 IST on each business day, so 01:30 IST captures the day's
+  # NAV with comfortable margin (and absorbs GitHub's scheduler delay). Offset
+  # from the weekly ingest cron (Mon 02:30 UTC) so the two never collide.
+  schedule:
+    - cron: "0 20 * * *"
   workflow_dispatch:
     inputs:
       commit:
@@ -50,7 +59,11 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
       - name: Commit snapshot
-        if: ${{ inputs.commit == 'true' }}
+        # Scheduled runs always commit (no inputs on a cron trigger); manual
+        # runs honour the commit toggle (default true, false = artifact only).
+        # This step only runs when the prior generate step SUCCEEDED, so a
+        # guardrail/fetch failure (non-zero exit) skips the commit entirely.
+        if: ${{ github.event_name == 'schedule' || inputs.commit == 'true' }}
         run: |
           if [ -z "$(git status --porcelain src/data/snapshots/mf-latest-nav.json)" ]; then
             echo "No snapshot changes."
@@ -59,5 +72,5 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/data/snapshots/mf-latest-nav.json
-          git commit -m "chore(data): refresh latest NAV snapshot ($(date -u +%Y-%m-%d))"
+          git commit -m "chore(data): refresh latest mutual fund NAV snapshot ($(date -u +%Y-%m-%d))"
           git push
