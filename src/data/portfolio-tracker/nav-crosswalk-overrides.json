@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "version": 1,
+    "note": "Manual RupeeVest → AMFI scheme-code/ISIN crosswalk overrides. Reviewed mappings used by scripts/ingest/nav-source-discovery.ts. An override entry takes precedence over the name-matching engine and is treated as confidence='override'. Either amfiSchemeCode or isin must be set (both is fine); the other fields are documentation."
+  },
+  "overrides": []
+}

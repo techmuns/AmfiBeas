@@ -1,27 +1,20 @@
 /**
- * NAV source-discovery harness (Phase 3.0B → 3.0C bridge).
+ * NAV source-discovery harness (Phase 3.0C: crosswalk repair).
  *
- * READ-ONLY, SAMPLE-SCOPED discovery. Tests which NAV source gives us the
- * cleanest path to latest + historical NAV for our RupeeVest-keyed fund
- * universe, BEFORE any production ingestion, snapshot, workflow schedule,
- * or Trends UI is built.
+ * READ-ONLY, SAMPLE-SCOPED discovery + repair. Probes AMFI / RupeeVest /
+ * MFAPI, then writes a single gitignored report at
+ * data/debug/nav-source-discovery-report.json and a smaller review file at
+ * data/debug/nav-crosswalk-review.json. No production snapshot is touched.
  *
- * Probes (each independent; a failure in one never aborts the others):
- *   1. AMFI    — fetch NAVAll.txt, run the full RupeeVest→AMFI crosswalk,
- *                report match-rate (overall, with-holdings, by class, by AMC),
- *                unmatched + low-confidence lists.
- *   2. RupeeVest — for a small sample of our schemecodes, probe candidate
- *                NAV endpoints (only the holdings endpoint is confirmed) and
- *                report whether NAV / history / ISIN / AMFI-code are exposed
- *                by our native schemecode (which would avoid the crosswalk).
- *   3. MFAPI   — for a few high-confidence AMFI matches, confirm historical
- *                NAV by AMFI scheme code and cross-check latest NAV vs AMFI.
- *
- * Output: ONE gitignored report at data/debug/nav-source-discovery-report.json
- * plus a concise stdout summary. Writes NOTHING to src/data/** or public/**.
- * Not wired into the ingest orchestrator. Intended to run from the temporary
- * .github/workflows/nav-source-discovery.yml (workflow_dispatch) and upload
- * the report as an artifact.
+ * Crosswalk policy (Phase 3.0C):
+ *  - Manual overrides from src/data/portfolio-tracker/nav-crosswalk-overrides.json
+ *    are applied first; an override that points to an AMFI scheme not in the
+ *    current feed is surfaced as a rejected risky entry, never silently dropped.
+ *  - Auto-accept ONLY `exact` and `high` confidence tiers. `medium` and `low`
+ *    matches are kept in the review list, not the production crosswalk.
+ *  - Guards reject (not downgrade) candidates whose digit tokens (e.g. Nifty
+ *    50 vs Nifty Next 50) or critical tokens (next/momentum/fof/etc.) differ.
+ *  - Ambiguous picks are surfaced as `ambiguous`, never picked silently.
  *
  * Run: npx tsx scripts/ingest/nav-source-discovery.ts
  */
@@ -37,15 +30,17 @@ const INDEX_PATH = path.resolve(
   process.cwd(),
   "src/data/portfolio-tracker/index.json"
 );
+const OVERRIDES_PATH = path.resolve(
+  process.cwd(),
+  "src/data/portfolio-tracker/nav-crosswalk-overrides.json"
+);
 const REPORT_DIR = path.resolve(process.cwd(), "data/debug");
 const REPORT_PATH = path.join(REPORT_DIR, "nav-source-discovery-report.json");
+const REVIEW_PATH = path.join(REPORT_DIR, "nav-crosswalk-review.json");
 
-const RULE_VERSION = 2;
+const RULE_VERSION = 3;
 const MEDIUM_MIN = 0.85;
 const LOW_MIN = 0.7;
-
-// Sample sizes for the sample-only (non-AMFI) probes. Kept small + polite —
-// discovery, not ingestion.
 const RV_VALIDATION_SAMPLE = 10;
 const RV_ENDPOINT_DISCOVERY_SAMPLE = 3;
 const MFAPI_SAMPLE = 5;
@@ -66,19 +61,17 @@ interface IndexFund {
   rowCount: number;
   file: string | null;
 }
-interface IndexFile {
-  meta: Record<string, unknown>;
-  funds: IndexFund[];
-}
+interface IndexFile { meta: Record<string, unknown>; funds: IndexFund[] }
 
 type Plan = "direct" | "regular" | "unknown";
 type Option = "growth" | "idcw" | "unknown";
-type Confidence = "exact" | "high" | "medium" | "low";
+type Confidence = "exact" | "high" | "medium" | "low" | "override";
 
 interface NormalizedName {
   plan: Plan;
   option: Option;
   isEtf: boolean;
+  isFof: boolean;
   tokens: string[];
   tokenKey: string;
 }
@@ -97,6 +90,7 @@ interface MatchRow {
   matchedBy: string;
   jaccard: number;
 }
+
 interface UnmatchedRow {
   schemecode: string;
   fundName: string;
@@ -105,8 +99,32 @@ interface UnmatchedRow {
   bestCandidate?: { amfiSchemeCode: number; amfiSchemeName: string; jaccard: number };
 }
 
+interface RejectedRow {
+  schemecode: string;
+  fundName: string;
+  classification: string | null;
+  reason: string;
+  rejectedCandidate?: { amfiSchemeCode: number; amfiSchemeName: string; jaccard: number };
+}
+
+interface OverrideEntry {
+  schemecode: string | number;
+  fundName?: string;
+  amfiSchemeCode?: number;
+  isin?: string;
+  amfiSchemeName?: string;
+  reason?: string;
+  manual?: boolean;
+  reviewedBy?: string;
+  reviewedAt?: string;
+}
+interface OverridesFile {
+  meta?: { version?: number; note?: string; lastUpdated?: string };
+  overrides: OverrideEntry[];
+}
+
 // ---------------------------------------------------------------------------
-// Small fetch/JSON utilities (permissive — capture status, never throw)
+// Probe utility (small JSON walker for source-discovery probes)
 // ---------------------------------------------------------------------------
 
 interface ProbeResult {
@@ -120,18 +138,11 @@ interface ProbeResult {
   fieldHits?: FieldHit[];
   error?: string;
 }
-interface FieldHit {
-  path: string;
-  sample: string;
-}
+interface FieldHit { path: string; sample: string }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
-}
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
 
 function topLevelKeys(v: unknown, limit = 40): string[] {
   if (Array.isArray(v)) {
@@ -146,31 +157,18 @@ const NAV_KEY_RE = /(^|_)nav($|_)|netasset|net_asset|navvalue|latest_nav|nav_dat
 const ISIN_KEY_RE = /isin/i;
 const AMFI_KEY_RE = /amfi|scheme.?code|schemecode/i;
 
-/** Walk a JSON value (bounded depth/breadth) collecting keys that look like
- *  NAV / ISIN / AMFI-code fields, with a short sample of each value. */
-function scanFields(
-  v: unknown,
-  hits: FieldHit[] = [],
-  pathPrefix = "",
-  depth = 0,
-  maxHits = 16
-): FieldHit[] {
+function scanFields(v: unknown, hits: FieldHit[] = [], prefix = "", depth = 0, maxHits = 16): FieldHit[] {
   if (depth > 4 || hits.length >= maxHits) return hits;
   if (Array.isArray(v)) {
-    for (let i = 0; i < Math.min(v.length, 2); i++) {
-      scanFields(v[i], hits, `${pathPrefix}[${i}]`, depth + 1, maxHits);
-    }
+    for (let i = 0; i < Math.min(v.length, 2); i++) scanFields(v[i], hits, `${prefix}[${i}]`, depth + 1, maxHits);
     return hits;
   }
   if (isRecord(v)) {
     for (const [k, val] of Object.entries(v)) {
       if (hits.length >= maxHits) break;
-      const here = pathPrefix ? `${pathPrefix}.${k}` : k;
+      const here = prefix ? `${prefix}.${k}` : k;
       if (NAV_KEY_RE.test(k) || ISIN_KEY_RE.test(k) || AMFI_KEY_RE.test(k)) {
-        const sample =
-          typeof val === "object" && val !== null
-            ? JSON.stringify(val).slice(0, 80)
-            : String(val).slice(0, 80);
+        const sample = typeof val === "object" && val !== null ? JSON.stringify(val).slice(0, 80) : String(val).slice(0, 80);
         hits.push({ path: here, sample });
       }
       scanFields(val, hits, here, depth + 1, maxHits);
@@ -191,55 +189,82 @@ async function probe(url: string, timeoutMs = 30_000): Promise<ProbeResult> {
     const text = await res.text();
     let jsonParseable = false;
     let parsed: unknown = null;
-    try {
-      parsed = JSON.parse(text);
-      jsonParseable = true;
-    } catch {
-      /* not JSON */
-    }
+    try { parsed = JSON.parse(text); jsonParseable = true; } catch { /* not JSON */ }
     return {
-      url,
-      ok: res.ok,
-      status: res.status,
-      contentType,
-      bytes: text.length,
-      jsonParseable,
+      url, ok: res.ok, status: res.status, contentType, bytes: text.length, jsonParseable,
       topLevelKeys: jsonParseable ? topLevelKeys(parsed) : undefined,
       fieldHits: jsonParseable ? scanFields(parsed) : undefined,
     };
   } catch (e) {
-    return {
-      url,
-      ok: false,
-      status: null,
-      contentType: null,
-      bytes: null,
-      jsonParseable: false,
-      error: (e as Error).message,
-    };
+    return { url, ok: false, status: null, contentType: null, bytes: null, jsonParseable: false, error: (e as Error).message };
   } finally {
     clearTimeout(t);
   }
 }
 
 // ---------------------------------------------------------------------------
-// Name normalizer + matcher (carried over from the AMFI crosswalk)
+// AMC aliases (Phase 3.0C: grounded in committed amc-master.json AMC names)
 // ---------------------------------------------------------------------------
 
+// Each alias is applied to the LOWERCASED scheme name on BOTH RupeeVest and
+// AMFI sides. The goal is to normalize the AMC portion of every scheme name
+// to the AMFI canonical spelling (so token sets converge). Aliases are
+// regex'd as whole words to avoid mangling unrelated tokens.
 const AMC_ALIASES: Array<[RegExp, string]> = [
   [/\bicici pru\b/g, "icici prudential"],
   [/\baditya birla sl\b/g, "aditya birla sun life"],
   [/\babsl\b/g, "aditya birla sun life"],
+  [/\bcanara rob\b/g, "canara robeco"],
   [/\bdsp blackrock\b/g, "dsp"],
-  [/\bl&t\b/g, "lnt"],
+  [/\bfranklin india\b/g, "franklin templeton"],
+  [/\bfranklin\b(?! templeton)/g, "franklin templeton"],
+  [/\bl&t\b/g, "hsbc"], // L&T MF was acquired by HSBC; AMFI scheme names use HSBC
+  [/\blnt\b/g, "hsbc"],
   [/\bhdfc amc\b/g, "hdfc"],
   [/\bsbi mf\b/g, "sbi"],
+  [/\bppfas\b/g, "parag parikh"],
+  [/\bpgim india\b/g, "pgim india"],
+  [/\bpgim\b(?! india)/g, "pgim india"],
+  [/\bwhite oak\b/g, "whiteoak"],
+  [/\bwoc\b/g, "whiteoak capital"],
+  [/\biifl\b/g, "360 one"],
+  [/\bidfc\b/g, "bandhan"],
+  [/\bbnp paribas\b/g, "baroda bnp paribas"],
+  [/\bbaroda bnp\b(?! paribas)/g, "baroda bnp paribas"],
+  [/\bedelweiss mf\b/g, "edelweiss"],
+  [/\bsundaram mf\b/g, "sundaram"],
+  [/\bboi\b/g, "bank of india"],
+  [/\btrustmf\b/g, "trust"],
+  [/\btwc\b/g, "the wealth company"],
+  [/\bjm financial\b/g, "jm financial"],
+  [/\bjm\b(?! financial)/g, "jm financial"],
+  // Strip the boilerplate AMC suffix that AMFI adds in some scheme names.
+  [/\bmutual fund\b/g, " "],
 ];
+
+// Strict tokens — must be present on both sides or neither. They distinguish
+// near-identical schemes that fuzzy matching would otherwise collapse.
+// (Fund-of-fund vs ETF, momentum-strategy variants, PSU/private theming.)
+const CRITICAL_TOKENS = new Set<string>([
+  "next", "alpha", "momentum", "quality", "value", "low", "vol", "volatility",
+  "equal", "weighted", "select", "edge",
+  "midcap", "smallcap", "largecap", "micro",
+  "psu", "private", "public",
+  "fof",
+  "esg", "shariah",
+  "smart", "beta",
+  "passive", "active",
+  "sdl", "tbill",
+  "manufacturing", "consumption",
+  "elss",
+  "long", "short", "ultra", "medium", "dynamic", // duration markers in debt
+]);
 
 const NOISE_TOKENS = new Set([
   "fund", "scheme", "mutual", "the", "option", "plan", "direct", "regular",
   "reg", "dir", "growth", "g", "idcw", "dividend", "div", "payout",
-  "reinvestment", "reinv", "an", "open", "ended", "of", "and",
+  "reinvestment", "reinv", "an", "open", "ended", "of", "and", "to",
+  "category", "schemes",
 ]);
 
 function detectPlan(lower: string): Plan {
@@ -253,9 +278,9 @@ function detectOption(lower: string): Option {
   if (/\((g|growth)\)/.test(lower) || /\bgrowth\b/.test(lower)) return "growth";
   return "unknown";
 }
-function detectEtf(lower: string): boolean {
-  return /\b(etf|exchange traded|fof|index fund)\b/.test(lower);
-}
+function detectEtf(lower: string): boolean { return /\b(etf|exchange traded)\b/.test(lower); }
+function detectFof(lower: string): boolean { return /\bfof\b|\bfund of funds?\b|\bfund-of-fund\b/.test(lower); }
+function detectIndexFund(lower: string): boolean { return /\bindex fund\b/.test(lower); }
 
 function normalize(name: string): NormalizedName {
   let s = name.toLowerCase().trim();
@@ -263,14 +288,22 @@ function normalize(name: string): NormalizedName {
   const plan = detectPlan(s);
   const option = detectOption(s);
   const isEtf = detectEtf(s);
+  const isFof = detectFof(s);
+  const isIndexFund = detectIndexFund(s);
   s = s.replace(/\([^)]*\)/g, " ");
   s = s.replace(/[-_/.,&'"]+/g, " ");
   s = s.replace(/[^a-z0-9 ]+/g, " ");
   s = s.replace(/\s+/g, " ").trim();
-  const tokens = s.split(" ").filter((t) => t && !NOISE_TOKENS.has(t)).sort();
+  const raw = s.split(" ").filter((t) => t && !NOISE_TOKENS.has(t));
+  // Inject typed markers so they survive noise filtering and participate in
+  // both tokenKey equality AND guard checks.
+  if (isFof) raw.push("fof");
+  if (isEtf && !raw.includes("etf")) raw.push("etf");
+  if (isIndexFund && !raw.includes("indexfund")) raw.push("indexfund");
+  raw.sort();
   const uniq: string[] = [];
-  for (const t of tokens) if (uniq[uniq.length - 1] !== t) uniq.push(t);
-  return { plan, option, isEtf, tokens: uniq, tokenKey: uniq.join(" ") };
+  for (const t of raw) if (uniq[uniq.length - 1] !== t) uniq.push(t);
+  return { plan, option, isEtf, isFof, tokens: uniq, tokenKey: uniq.join(" ") };
 }
 
 function jaccard(a: string[], b: string[]): number {
@@ -284,7 +317,8 @@ function jaccard(a: string[], b: string[]): number {
 }
 
 function planOptionCompatible(a: NormalizedName, b: NormalizedName): boolean {
-  if (a.isEtf || b.isEtf) {
+  // ETFs/FoFs carry plan=unknown legitimately on both sides; tolerate that.
+  if (a.isEtf || b.isEtf || a.isFof || b.isFof) {
     return a.plan === b.plan || a.plan === "unknown" || b.plan === "unknown";
   }
   if (a.plan !== "unknown" && b.plan !== "unknown" && a.plan !== b.plan) return false;
@@ -292,55 +326,98 @@ function planOptionCompatible(a: NormalizedName, b: NormalizedName): boolean {
   return true;
 }
 
-interface AmfiIndexed {
-  nav: SchemeNav;
-  norm: NormalizedName;
-}
-interface BestMatch {
-  amfi: AmfiIndexed;
-  confidence: Confidence;
-  jaccard: number;
-  matchedBy: string;
-  ambiguous: boolean;
+/** Returns { ok: true } if the pair clears the false-positive guards; else
+ *  returns the reason. Guards REJECT (the candidate is not picked); they do
+ *  not downgrade tier. False positives are worse than unmatched funds. */
+function passesGuards(rv: NormalizedName, am: NormalizedName): { ok: boolean; reason?: string } {
+  // Guard A: digit-token sets must be identical (catches Nifty 50 vs Nifty
+  // Next 50, Nifty 100 vs Nifty 500, etc.).
+  const rvD = rv.tokens.filter((t) => /^\d+$/.test(t));
+  const amD = am.tokens.filter((t) => /^\d+$/.test(t));
+  if (rvD.length !== amD.length) {
+    return { ok: false, reason: `digit-token count mismatch (rv=[${rvD.join(",")}] amfi=[${amD.join(",")}])` };
+  }
+  const rvSet = new Set(rvD);
+  for (const d of amD) if (!rvSet.has(d)) return { ok: false, reason: `digit token "${d}" only on amfi side` };
+  // Guard B: critical tokens must match symmetrically.
+  for (const t of CRITICAL_TOKENS) {
+    const inR = rv.tokens.includes(t);
+    const inA = am.tokens.includes(t);
+    if (inR !== inA) return { ok: false, reason: `critical token "${t}" present on ${inR ? "rupeevest" : "amfi"} side only` };
+  }
+  // Guard C: ETF must match ETF; FoF must match FoF; index fund must match
+  // index fund. Captured via isEtf/isFof flags as a belt-and-braces check on
+  // top of the "etf"/"fof"/"indexfund" tokens.
+  if (rv.isEtf !== am.isEtf) return { ok: false, reason: "ETF flag mismatch" };
+  if (rv.isFof !== am.isFof) return { ok: false, reason: "FoF flag mismatch" };
+  return { ok: true };
 }
 
-function findBestMatch(rv: NormalizedName, amfi: AmfiIndexed[]): BestMatch | null {
+interface AmfiIndexed { nav: SchemeNav; norm: NormalizedName }
+
+type MatchOutcome =
+  | { kind: "match"; amfi: AmfiIndexed; confidence: Exclude<Confidence, "override">; jaccard: number; matchedBy: string }
+  | { kind: "ambiguous"; amfi: AmfiIndexed; jaccard: number; reason: string }
+  | { kind: "rejected"; amfi: AmfiIndexed; jaccard: number; reason: string }
+  | { kind: "none" };
+
+function findBestMatch(rv: NormalizedName, amfi: AmfiIndexed[]): MatchOutcome {
+  // Pass 1: exact tokenKey + plan/option compatible.
   const exactKey = amfi.filter(
     (a) => a.norm.tokenKey === rv.tokenKey && planOptionCompatible(a.norm, rv)
   );
-  if (exactKey.length === 1) {
-    return { amfi: exactKey[0], confidence: "exact", jaccard: 1, matchedBy: "exact tokens + plan + option", ambiguous: false };
+  // Exact-tokenKey candidates have identical token sets, so digit/critical
+  // guards always pass; only ETF/FoF flags could still disagree. Filter.
+  const exactSafe = exactKey.filter((a) => passesGuards(rv, a.norm).ok);
+  if (exactSafe.length === 1) {
+    return { kind: "match", amfi: exactSafe[0], confidence: "exact", jaccard: 1, matchedBy: "exact tokens + plan + option" };
   }
-  if (exactKey.length > 1) {
-    const tighter = exactKey.filter(
+  if (exactSafe.length > 1) {
+    const tighter = exactSafe.filter(
       (a) => a.norm.plan === rv.plan && a.norm.option === rv.option && a.norm.plan !== "unknown" && a.norm.option !== "unknown"
     );
     if (tighter.length === 1) {
-      return { amfi: tighter[0], confidence: "exact", jaccard: 1, matchedBy: "exact tokens + strict plan + strict option", ambiguous: false };
+      return { kind: "match", amfi: tighter[0], confidence: "exact", jaccard: 1, matchedBy: "exact tokens + strict plan + strict option" };
     }
-    return { amfi: exactKey[0], confidence: "low", jaccard: 1, matchedBy: `ambiguous: ${exactKey.length} AMFI schemes share this normalized name`, ambiguous: true };
+    return { kind: "ambiguous", amfi: exactSafe[0], jaccard: 1, reason: `${exactSafe.length} AMFI schemes share this normalized name` };
   }
+
+  // Pass 2: fuzzy. Score every plan/option-compatible candidate. Apply
+  // guards before considering for the best slot — guard failures go to a
+  // "rejected" slot so we can surface them even if we end up unmatched.
   let best: AmfiIndexed | null = null;
   let bestJ = 0;
   let runnerJ = 0;
+  let rejected: { am: AmfiIndexed; j: number; reason: string } | null = null;
+
   for (const a of amfi) {
     if (!planOptionCompatible(a.norm, rv)) continue;
     const j = jaccard(a.norm.tokens, rv.tokens);
-    if (j > bestJ) {
-      runnerJ = bestJ;
-      bestJ = j;
-      best = a;
-    } else if (j > runnerJ) {
-      runnerJ = j;
+    if (j < LOW_MIN) continue;
+    const g = passesGuards(rv, a.norm);
+    if (!g.ok) {
+      if (!rejected || j > rejected.j) rejected = { am: a, j, reason: g.reason! };
+      continue;
     }
+    if (j > bestJ) { runnerJ = bestJ; bestJ = j; best = a; }
+    else if (j > runnerJ) { runnerJ = j; }
   }
-  if (!best || bestJ < LOW_MIN) return null;
-  const ambiguous = bestJ - runnerJ < 0.05 && runnerJ >= LOW_MIN;
-  let confidence: Confidence;
+
+  if (!best) {
+    return rejected
+      ? { kind: "rejected", amfi: rejected.am, jaccard: rejected.j, reason: rejected.reason }
+      : { kind: "none" };
+  }
+
+  if (bestJ - runnerJ < 0.05 && runnerJ >= LOW_MIN) {
+    return { kind: "ambiguous", amfi: best, jaccard: bestJ, reason: `near-tie with runner-up (Δ=${(bestJ - runnerJ).toFixed(3)})` };
+  }
+
+  let confidence: Exclude<Confidence, "override">;
   let matchedBy: string;
   if (bestJ >= 1) {
     confidence = "high";
-    matchedBy = "tokens identical (no plan/option marker on one side)";
+    matchedBy = "tokens identical (plan/option marker missing on one side)";
   } else if (bestJ >= MEDIUM_MIN) {
     confidence = "medium";
     matchedBy = `Jaccard ${bestJ.toFixed(3)} (plan+option compatible)`;
@@ -348,7 +425,104 @@ function findBestMatch(rv: NormalizedName, amfi: AmfiIndexed[]): BestMatch | nul
     confidence = "low";
     matchedBy = `Jaccard ${bestJ.toFixed(3)} (plan+option compatible)`;
   }
-  return { amfi: best, confidence, jaccard: bestJ, matchedBy, ambiguous };
+  return { kind: "match", amfi: best, confidence, jaccard: bestJ, matchedBy };
+}
+
+// ---------------------------------------------------------------------------
+// Overrides
+// ---------------------------------------------------------------------------
+
+async function loadOverrides(): Promise<{ map: Map<string, OverrideEntry>; meta: OverridesFile["meta"] | undefined; size: number }> {
+  try {
+    const text = await fs.readFile(OVERRIDES_PATH, "utf8");
+    const data = JSON.parse(text) as OverridesFile;
+    const map = new Map<string, OverrideEntry>();
+    for (const o of data.overrides ?? []) map.set(String(o.schemecode), o);
+    return { map, meta: data.meta, size: map.size };
+  } catch {
+    return { map: new Map(), meta: undefined, size: 0 };
+  }
+}
+
+function applyOverride(
+  fund: IndexFund,
+  override: OverrideEntry,
+  amfi: AmfiIndexed[]
+): { kind: "match"; match: MatchRow } | { kind: "rejected"; row: RejectedRow } | { kind: "invalid"; row: RejectedRow } {
+  const fundName = fund.fundName ?? fund.name;
+  const schemecode = String(fund.schemecode);
+  if (!override.amfiSchemeCode && !override.isin) {
+    return {
+      kind: "invalid",
+      row: { schemecode, fundName, classification: fund.classification, reason: "override missing both amfiSchemeCode and isin" },
+    };
+  }
+  const target = amfi.find(
+    (a) =>
+      (override.amfiSchemeCode !== undefined && a.nav.schemeCode === override.amfiSchemeCode) ||
+      (override.isin !== undefined && a.nav.isin === override.isin)
+  );
+  if (!target) {
+    return {
+      kind: "rejected",
+      row: {
+        schemecode, fundName, classification: fund.classification,
+        reason: `override points to AMFI scheme code=${override.amfiSchemeCode ?? "?"} isin=${override.isin ?? "?"} not present in current feed`,
+      },
+    };
+  }
+  return {
+    kind: "match",
+    match: {
+      schemecode, fundName, classification: fund.classification,
+      amfiSchemeCode: target.nav.schemeCode,
+      amfiSchemeName: target.nav.schemeName,
+      amfiAmcName: target.nav.amcName,
+      isin: target.nav.isin ?? null,
+      nav: target.nav.nav, navDate: target.nav.date,
+      confidence: "override",
+      matchedBy: override.reason ?? "manual override",
+      jaccard: 1,
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Probe 1: AMFI + crosswalk (full universe)
+// ---------------------------------------------------------------------------
+
+interface AmfiProbeSummary {
+  totalFunds: number;
+  fundsWithHoldings: number;
+  autoMatched: number;
+  overrideMatched: number;
+  totalMatched: number;
+  reviewMatches: { medium: number; low: number };
+  ambiguous: number;
+  rejectedRisky: number;
+  unmatched: number;
+  invalidOverrides: number;
+  matchRateOverallPct: number;
+  matchRateWithHoldingsPct: number;
+  autoOnlyMatchRateWithHoldingsPct: number;
+}
+
+interface AmfiProbeResult {
+  reachable: boolean;
+  error?: string;
+  feedDate?: string;
+  navRowsFromFeed?: number;
+  overridesLoaded?: number;
+  summary?: AmfiProbeSummary;
+  coverageByClassification?: unknown[];
+  coverageByAmc?: unknown[];
+  autoMatchesSample?: MatchRow[];
+  overrideMatches?: MatchRow[];
+  reviewMatches?: MatchRow[];
+  ambiguous?: UnmatchedRow[];
+  rejectedRisky?: RejectedRow[];
+  unmatched?: UnmatchedRow[];
+  _autoMatches?: MatchRow[]; // internal, stripped before serialization
 }
 
 function pct(matched: number, total: number): number {
@@ -361,44 +535,19 @@ function amcPrefix(fundName: string): string {
   const first = parts[0] ?? "unknown";
   const second = parts[1] ?? "";
   const compound = `${first} ${second}`;
-  const knownCompounds = [
+  const known = [
     "aditya birla", "nippon india", "icici pru", "icici prudential",
-    "franklin india", "edelweiss mf", "sundaram mf", "white oak",
-    "old bridge", "bandhan mutual", "navi mutual", "tata mutual",
-    "kotak mahindra", "lic mf", "dsp blackrock",
+    "franklin india", "franklin templeton", "edelweiss mf", "sundaram mf",
+    "white oak", "whiteoak capital", "old bridge", "bandhan mutual",
+    "navi mutual", "tata mutual", "kotak mahindra", "lic mf", "dsp blackrock",
+    "baroda bnp", "bank of", "the wealth", "jm financial", "jio blackrock",
+    "mahindra manulife", "mirae asset", "motilal oswal", "pgim india",
+    "bajaj finserv", "360 one",
   ];
-  return knownCompounds.includes(compound) ? compound : first;
+  return known.includes(compound) ? compound : first;
 }
 
-// ---------------------------------------------------------------------------
-// Probe 1: AMFI crosswalk (full universe)
-// ---------------------------------------------------------------------------
-
-interface AmfiProbeResult {
-  reachable: boolean;
-  error?: string;
-  feedDate?: string;
-  navRowsFromFeed?: number;
-  summary?: {
-    totalFunds: number;
-    fundsWithHoldings: number;
-    matched: number;
-    unmatched: number;
-    matchRateOverallPct: number;
-    matchRateWithHoldingsPct: number;
-    byTier: Record<Confidence, number>;
-    lowConfidenceCount: number;
-  };
-  coverageByClassification?: unknown[];
-  coverageByAmc?: unknown[];
-  matchesSample?: MatchRow[];
-  lowConfidence?: MatchRow[];
-  unmatched?: UnmatchedRow[];
-  // retained for downstream MFAPI probe (not all serialized verbosely)
-  _matches?: MatchRow[];
-}
-
-async function runAmfiProbe(funds: IndexFund[]): Promise<AmfiProbeResult> {
+async function runAmfiProbe(funds: IndexFund[], overrides: Map<string, OverrideEntry>): Promise<AmfiProbeResult> {
   info(`[amfi] fetching ${NAV_URL}`);
   let text: string;
   try {
@@ -406,7 +555,6 @@ async function runAmfiProbe(funds: IndexFund[]): Promise<AmfiProbeResult> {
     if (!r.ok || r.bytes === null || r.bytes < 1000) {
       return { reachable: false, error: r.error ?? `HTTP ${r.status ?? "?"} (bytes=${r.bytes ?? 0})` };
     }
-    // probe() already consumed the body for status; refetch text directly.
     const res = await fetch(NAV_URL, { headers: { "user-agent": USER_AGENT } });
     if (!res.ok) return { reachable: false, error: `HTTP ${res.status}` };
     text = await res.text();
@@ -424,12 +572,18 @@ async function runAmfiProbe(funds: IndexFund[]): Promise<AmfiProbeResult> {
 
   const amfiIndexed: AmfiIndexed[] = navs.map((n) => ({ nav: n, norm: normalize(n.schemeName) }));
 
-  const matches: MatchRow[] = [];
+  const autoMatches: MatchRow[] = [];
+  const overrideMatches: MatchRow[] = [];
+  const reviewMatches: MatchRow[] = [];
+  const ambiguous: UnmatchedRow[] = [];
+  const rejectedRisky: RejectedRow[] = [];
   const unmatched: UnmatchedRow[] = [];
+  const invalidOverrides: RejectedRow[] = [];
+
   const coverageByClass = new Map<string, { total: number; matched: number; totalWithHoldings: number; matchedWithHoldings: number }>();
   const coverageByAmc = new Map<string, { total: number; matched: number }>();
-  const tierCounts: Record<Confidence, number> = { exact: 0, high: 0, medium: 0, low: 0 };
   let matchedWithHoldings = 0;
+  let autoMatchedWithHoldings = 0;
 
   for (const f of funds) {
     const fundName = f.fundName ?? f.name;
@@ -446,81 +600,121 @@ async function runAmfiProbe(funds: IndexFund[]): Promise<AmfiProbeResult> {
     const amcB = coverageByAmc.get(amc)!;
     amcB.total += 1;
 
-    const rv = normalize(fundName);
-    const best = findBestMatch(rv, amfiIndexed);
-
-    if (!best || best.ambiguous) {
-      let bestCandidate: UnmatchedRow["bestCandidate"];
-      if (best?.amfi) {
-        bestCandidate = { amfiSchemeCode: best.amfi.nav.schemeCode, amfiSchemeName: best.amfi.nav.schemeName, jaccard: best.jaccard };
-      } else {
-        let bj = 0;
-        let bc: AmfiIndexed | null = null;
-        for (const a of amfiIndexed) {
-          if (!planOptionCompatible(a.norm, rv)) continue;
-          const j = jaccard(a.norm.tokens, rv.tokens);
-          if (j > bj) { bj = j; bc = a; }
-        }
-        if (bc) bestCandidate = { amfiSchemeCode: bc.nav.schemeCode, amfiSchemeName: bc.nav.schemeName, jaccard: bj };
+    // 1. Override path takes precedence.
+    const ovr = overrides.get(schemecode);
+    if (ovr) {
+      const r = applyOverride(f, ovr, amfiIndexed);
+      if (r.kind === "match") {
+        overrideMatches.push(r.match);
+        clsB.matched += 1;
+        if (hasHoldings) { clsB.matchedWithHoldings += 1; matchedWithHoldings += 1; }
+        amcB.matched += 1;
+        continue;
       }
-      unmatched.push({
-        schemecode, fundName, classification,
-        reason: !best
-          ? rv.tokens.length === 0 ? "rupeevest name normalized to empty token set" : "no AMFI candidate above Jaccard 0.70 in same plan+option"
-          : best.matchedBy,
-        bestCandidate,
-      });
+      if (r.kind === "invalid") invalidOverrides.push(r.row);
+      else rejectedRisky.push(r.row);
       continue;
     }
 
-    matches.push({
+    // 2. Name-normalized matching.
+    const rv = normalize(fundName);
+    const outcome = findBestMatch(rv, amfiIndexed);
+
+    if (outcome.kind === "match") {
+      const row: MatchRow = {
+        schemecode, fundName, classification,
+        amfiSchemeCode: outcome.amfi.nav.schemeCode,
+        amfiSchemeName: outcome.amfi.nav.schemeName,
+        amfiAmcName: outcome.amfi.nav.amcName,
+        isin: outcome.amfi.nav.isin ?? null,
+        nav: outcome.amfi.nav.nav, navDate: outcome.amfi.nav.date,
+        confidence: outcome.confidence,
+        matchedBy: outcome.matchedBy, jaccard: outcome.jaccard,
+      };
+      if (outcome.confidence === "exact" || outcome.confidence === "high") {
+        autoMatches.push(row);
+        clsB.matched += 1;
+        if (hasHoldings) { clsB.matchedWithHoldings += 1; matchedWithHoldings += 1; autoMatchedWithHoldings += 1; }
+        amcB.matched += 1;
+      } else {
+        // medium / low — NOT auto-accepted; surfaced for review.
+        reviewMatches.push(row);
+      }
+      continue;
+    }
+    if (outcome.kind === "ambiguous") {
+      ambiguous.push({
+        schemecode, fundName, classification,
+        reason: outcome.reason,
+        bestCandidate: { amfiSchemeCode: outcome.amfi.nav.schemeCode, amfiSchemeName: outcome.amfi.nav.schemeName, jaccard: outcome.jaccard },
+      });
+      continue;
+    }
+    if (outcome.kind === "rejected") {
+      rejectedRisky.push({
+        schemecode, fundName, classification,
+        reason: outcome.reason,
+        rejectedCandidate: { amfiSchemeCode: outcome.amfi.nav.schemeCode, amfiSchemeName: outcome.amfi.nav.schemeName, jaccard: outcome.jaccard },
+      });
+      continue;
+    }
+    // none — capture best-but-below-threshold candidate for diagnostics.
+    let bj = 0; let bc: AmfiIndexed | null = null;
+    for (const a of amfiIndexed) {
+      if (!planOptionCompatible(a.norm, rv)) continue;
+      const j = jaccard(a.norm.tokens, rv.tokens);
+      if (j > bj) { bj = j; bc = a; }
+    }
+    unmatched.push({
       schemecode, fundName, classification,
-      amfiSchemeCode: best.amfi.nav.schemeCode,
-      amfiSchemeName: best.amfi.nav.schemeName,
-      amfiAmcName: best.amfi.nav.amcName,
-      isin: best.amfi.nav.isin ?? null,
-      nav: best.amfi.nav.nav,
-      navDate: best.amfi.nav.date,
-      confidence: best.confidence,
-      matchedBy: best.matchedBy,
-      jaccard: best.jaccard,
+      reason: rv.tokens.length === 0 ? "rupeevest name normalized to empty token set" : "no AMFI candidate above Jaccard 0.70 in same plan+option",
+      bestCandidate: bc ? { amfiSchemeCode: bc.nav.schemeCode, amfiSchemeName: bc.nav.schemeName, jaccard: bj } : undefined,
     });
-    tierCounts[best.confidence] += 1;
-    clsB.matched += 1;
-    if (hasHoldings) { clsB.matchedWithHoldings += 1; matchedWithHoldings += 1; }
-    amcB.matched += 1;
   }
+
+  // Move invalid overrides into rejectedRisky for visibility too (with type tag).
+  for (const inv of invalidOverrides) rejectedRisky.push(inv);
 
   const totalFunds = funds.length;
   const fundsWithHoldings = funds.filter((f) => f.file).length;
-  const coverageByClassification = Array.from(coverageByClass.entries())
+  const totalMatched = autoMatches.length + overrideMatches.length;
+  const coverageByClassificationOut = Array.from(coverageByClass.entries())
     .map(([k, v]) => ({
       classification: k, total: v.total, matched: v.matched, pct: pct(v.matched, v.total),
-      totalWithHoldings: v.totalWithHoldings, matchedWithHoldings: v.matchedWithHoldings, pctWithHoldings: pct(v.matchedWithHoldings, v.totalWithHoldings),
+      totalWithHoldings: v.totalWithHoldings, matchedWithHoldings: v.matchedWithHoldings,
+      pctWithHoldings: pct(v.matchedWithHoldings, v.totalWithHoldings),
     }))
     .sort((a, b) => a.pct - b.pct);
   const coverageByAmcOut = Array.from(coverageByAmc.entries())
     .map(([k, v]) => ({ amc: k, total: v.total, matched: v.matched, pct: pct(v.matched, v.total) }))
     .sort((a, b) => a.pct - b.pct);
-  const lowConfidence = matches.filter((m) => m.confidence === "low" || m.confidence === "medium");
+
+  const summary: AmfiProbeSummary = {
+    totalFunds, fundsWithHoldings,
+    autoMatched: autoMatches.length,
+    overrideMatched: overrideMatches.length,
+    totalMatched,
+    reviewMatches: {
+      medium: reviewMatches.filter((m) => m.confidence === "medium").length,
+      low: reviewMatches.filter((m) => m.confidence === "low").length,
+    },
+    ambiguous: ambiguous.length,
+    rejectedRisky: rejectedRisky.length,
+    unmatched: unmatched.length,
+    invalidOverrides: invalidOverrides.length,
+    matchRateOverallPct: pct(totalMatched, totalFunds),
+    matchRateWithHoldingsPct: pct(matchedWithHoldings, fundsWithHoldings),
+    autoOnlyMatchRateWithHoldingsPct: pct(autoMatchedWithHoldings, fundsWithHoldings),
+  };
 
   return {
     reachable: true,
-    feedDate,
-    navRowsFromFeed: navs.length,
-    summary: {
-      totalFunds, fundsWithHoldings,
-      matched: matches.length, unmatched: unmatched.length,
-      matchRateOverallPct: pct(matches.length, totalFunds),
-      matchRateWithHoldingsPct: pct(matchedWithHoldings, fundsWithHoldings),
-      byTier: tierCounts, lowConfidenceCount: lowConfidence.length,
-    },
-    coverageByClassification,
-    coverageByAmc: coverageByAmcOut,
-    matchesSample: matches.slice(0, 50),
-    lowConfidence,
-    unmatched,
-    _matches: matches,
+    feedDate, navRowsFromFeed: navs.length,
+    overridesLoaded: overrides.size,
+    summary, coverageByClassification: coverageByClassificationOut, coverageByAmc: coverageByAmcOut,
+    autoMatchesSample: autoMatches.slice(0, 50),
+    overrideMatches, reviewMatches, ambiguous, rejectedRisky, unmatched,
+    _autoMatches: autoMatches,
   };
 }
 
@@ -529,11 +723,7 @@ async function runAmfiProbe(funds: IndexFund[]): Promise<AmfiProbeResult> {
 // ---------------------------------------------------------------------------
 
 const RV_BASE = "https://www.rupeevest.com/home";
-interface RvCandidate {
-  name: string;
-  confirmed: boolean;
-  build: (code: string) => string;
-}
+interface RvCandidate { name: string; confirmed: boolean; build: (code: string) => string }
 const RV_CANDIDATES: RvCandidate[] = [
   { name: "get_mf_portfolio_tracker (CONFIRMED holdings endpoint)", confirmed: true, build: (c) => `${RV_BASE}/get_mf_portfolio_tracker?schemecode=${c}` },
   { name: "get_mf_nav (candidate)", confirmed: false, build: (c) => `${RV_BASE}/get_mf_nav?schemecode=${c}` },
@@ -582,8 +772,6 @@ async function runRupeeVestProbe(funds: IndexFund[]): Promise<RvProbeResult> {
     }
   }
 
-  // If a NAV-bearing endpoint was found, validate it across a wider sample.
-  const validation: Array<{ schemecode: string; result: ProbeResult }> = [];
   const firstWorking = RV_CANDIDATES.find((c) => workingNavEndpoints.has(c.name));
   if (firstWorking) {
     const validationSet = withHoldings.slice(0, RV_VALIDATION_SAMPLE);
@@ -591,7 +779,7 @@ async function runRupeeVestProbe(funds: IndexFund[]): Promise<RvProbeResult> {
     for (const f of validationSet) {
       const code = String(f.schemecode);
       const result = await probe(firstWorking.build(code), 30_000);
-      validation.push({ schemecode: code, result });
+      endpointDiscovery.push({ schemecode: code, candidate: `${firstWorking.name} [validation]`, confirmed: false, result });
       if (result.ok && result.jsonParseable) {
         const hits = result.fieldHits ?? [];
         if (hits.some((h) => /hist/i.test(h.path))) exposesHistory = true;
@@ -599,12 +787,9 @@ async function runRupeeVestProbe(funds: IndexFund[]): Promise<RvProbeResult> {
       }
       await sleep(POLITE_DELAY_MS);
     }
-    endpointDiscovery.push(
-      ...validation.map((v) => ({ schemecode: v.schemecode, candidate: `${firstWorking.name} [validation]`, confirmed: false, result: v.result }))
-    );
   }
 
-  const avoidsCrosswalk = exposesNav; // native schemecode → NAV ⇒ no AMFI crosswalk needed
+  const avoidsCrosswalk = exposesNav;
   const verdict = exposesNav
     ? `RupeeVest exposes NAV by our native schemecode via "${[...workingNavEndpoints].join(", ")}" — this can AVOID the AMFI crosswalk.${exposesHistory ? " History fields detected." : " No obvious history fields detected (may need a separate endpoint)."}`
     : "No candidate RupeeVest NAV endpoint returned NAV-bearing JSON. Only the holdings endpoint is confirmed; RupeeVest-by-schemecode NAV is NOT established by this probe. Crosswalk path (AMFI/MFAPI) remains necessary unless a real RupeeVest NAV endpoint is identified.";
@@ -617,7 +802,7 @@ async function runRupeeVestProbe(funds: IndexFund[]): Promise<RvProbeResult> {
 }
 
 // ---------------------------------------------------------------------------
-// Probe 3: MFAPI (sample-only, by AMFI scheme code from the crosswalk)
+// Probe 3: MFAPI (sample-only, by AMFI scheme code)
 // ---------------------------------------------------------------------------
 
 const MFAPI_BASE = "https://api.mfapi.in/mf";
@@ -646,17 +831,14 @@ async function runMfapiProbe(matches: MatchRow[] | undefined): Promise<MfapiProb
   if (highConf.length === 0) {
     return { ...base, skipped: "No high-confidence AMFI matches available (AMFI probe unreachable or zero matches); cannot key MFAPI by AMFI scheme code.", verdict: "Skipped — depends on AMFI crosswalk." };
   }
-
   info(`[mfapi] latest cross-check on ${highConf.length} AMFI codes`);
-  let within = 0;
-  let comparable = 0;
+  let within = 0; let comparable = 0;
   for (const m of highConf) {
     const r = await probe(`${MFAPI_BASE}/${m.amfiSchemeCode}/latest`, 30_000);
     let mfapiNav: number | null = null;
     let mfapiDate: string | null = null;
     if (r.ok && r.jsonParseable) {
-      // MFAPI latest shape: { meta:{...}, data:[{ date, nav }], status }
-      const hits = scanFields(r); // reuse generic walk
+      const hits = scanFields(r);
       const navHit = hits.find((h) => /(^|\.)nav$/i.test(h.path) || /\.nav$/i.test(h.path));
       const dateHit = hits.find((h) => /date/i.test(h.path));
       mfapiNav = navHit ? extractNumber(navHit.sample.replace(/"/g, "")) : null;
@@ -671,15 +853,11 @@ async function runMfapiProbe(matches: MatchRow[] | undefined): Promise<MfapiProb
     });
     await sleep(POLITE_DELAY_MS);
   }
-
   info(`[mfapi] history check on ${Math.min(2, highConf.length)} AMFI codes`);
   for (const m of highConf.slice(0, 2)) {
     const r = await probe(`${MFAPI_BASE}/${m.amfiSchemeCode}`, 45_000);
-    let points: number | null = null;
-    let firstDate: string | null = null;
-    let lastDate: string | null = null;
+    let points: number | null = null; let firstDate: string | null = null; let lastDate: string | null = null;
     if (r.ok && r.jsonParseable) {
-      // We avoided full parse; re-fetch and parse minimally for counts.
       try {
         const res = await fetch(`${MFAPI_BASE}/${m.amfiSchemeCode}`, { headers: { "user-agent": USER_AGENT } });
         const j = (await res.json()) as { data?: Array<{ date?: string; nav?: string }> };
@@ -692,14 +870,66 @@ async function runMfapiProbe(matches: MatchRow[] | undefined): Promise<MfapiProb
     base.history.push({ schemecode: m.schemecode, amfiSchemeCode: m.amfiSchemeCode, points, firstDate, lastDate, status: r.status });
     await sleep(POLITE_DELAY_MS);
   }
-
   const matchesAmfiLatest = comparable > 0 ? within === comparable : null;
-  const verdict =
-    base.historyAvailable
-      ? `MFAPI serves historical NAV by AMFI scheme code (sample confirmed). Latest NAV cross-check vs AMFI: ${comparable > 0 ? `${within}/${comparable} within tolerance` : "not comparable"}. Suitable as the historical-NAV fallback once the crosswalk is solved.`
-      : `MFAPI did not return usable history in this sample (status/availability recorded). Latest cross-check: ${comparable > 0 ? `${within}/${comparable} within tolerance` : "not comparable"}.`;
-
+  const verdict = base.historyAvailable
+    ? `MFAPI serves historical NAV by AMFI scheme code (sample confirmed). Latest NAV cross-check vs AMFI: ${comparable > 0 ? `${within}/${comparable} within tolerance` : "not comparable"}. Suitable as the historical-NAV fallback once the crosswalk is reliable.`
+    : `MFAPI did not return usable history in this sample (status/availability recorded). Latest cross-check: ${comparable > 0 ? `${within}/${comparable} within tolerance` : "not comparable"}.`;
   return { ...base, matchesAmfiLatest, verdict };
+}
+
+// ---------------------------------------------------------------------------
+// Recommendation + summary
+// ---------------------------------------------------------------------------
+
+function buildRecommendation(
+  amfi: AmfiProbeResult, rv: RvProbeResult | { error: string }, mf: MfapiProbeResult | { error: string }
+): string {
+  const parts: string[] = [];
+  if (amfi.reachable && amfi.summary) {
+    const r = amfi.summary.matchRateWithHoldingsPct;
+    const aor = amfi.summary.autoOnlyMatchRateWithHoldingsPct;
+    parts.push(
+      r >= 95
+        ? `AMFI reachable; total match-rate (auto+override) for funds-with-holdings = ${r}% (auto-only ${aor}%; ≥95% → AMFI viable as primary).`
+        : `AMFI reachable; total match-rate (auto+override) for funds-with-holdings = ${r}% (auto-only ${aor}%; <95% → keep filling overrides / improving normalization before AMFI is primary).`
+    );
+  } else {
+    parts.push(`AMFI NOT reachable from this runner (${amfi.error ?? "unknown"}). Re-evaluate primary source.`);
+  }
+  if ("avoidsCrosswalk" in rv) parts.push(rv.avoidsCrosswalk ? "RupeeVest serves NAV by native schemecode → crosswalk-free path available." : "RupeeVest NAV-by-schemecode NOT established.");
+  else parts.push(`RupeeVest probe errored (${rv.error}).`);
+  if ("historyAvailable" in mf) parts.push(mf.historyAvailable ? "MFAPI confirmed for historical NAV fallback." : (mf.skipped ?? "MFAPI history not confirmed in sample."));
+  else parts.push(`MFAPI probe errored (${mf.error}).`);
+  return parts.join(" ");
+}
+
+function printSummary(amfi: AmfiProbeResult, rv: RvProbeResult | { error: string }, mf: MfapiProbeResult | { error: string }, overridesLoaded: number): void {
+  info("================= NAV SOURCE DISCOVERY SUMMARY =================");
+  info(`Overrides loaded: ${overridesLoaded}`);
+  if (amfi.reachable && amfi.summary) {
+    const s = amfi.summary;
+    info(`AMFI: reachable · feedDate=${amfi.feedDate ?? "?"} · navRows=${amfi.navRowsFromFeed}`);
+    info(`  auto-matched (exact+high):       ${s.autoMatched}`);
+    info(`  override-matched:                ${s.overrideMatched}`);
+    info(`  TOTAL matched (auto+override):   ${s.totalMatched} / ${s.totalFunds} = ${s.matchRateOverallPct}%`);
+    info(`  match-rate funds-with-holdings:  ${s.matchRateWithHoldingsPct}%  (auto-only ${s.autoOnlyMatchRateWithHoldingsPct}%)`);
+    info(`  review (medium/low, NOT auto):   medium=${s.reviewMatches.medium} low=${s.reviewMatches.low}`);
+    info(`  ambiguous:                       ${s.ambiguous}`);
+    info(`  rejected-risky (incl. invalid overrides=${s.invalidOverrides}): ${s.rejectedRisky}`);
+    info(`  unmatched:                       ${s.unmatched}`);
+    const worst = (amfi.coverageByClassification ?? []).slice(0, 5) as Array<{ classification: string; matchedWithHoldings: number; totalWithHoldings: number; pctWithHoldings: number }>;
+    info("  worst-5 classifications by w/holdings coverage:");
+    for (const c of worst) info(`    ${c.classification}: ${c.matchedWithHoldings}/${c.totalWithHoldings} (${c.pctWithHoldings}%)`);
+  } else {
+    info(`AMFI: NOT reachable — ${amfi.error ?? "unknown"}`);
+  }
+  if ("verdict" in rv) info(`RupeeVest: ${rv.verdict}`);
+  else info(`RupeeVest: ERROR ${rv.error}`);
+  if ("verdict" in mf) info(`MFAPI: ${mf.skipped ?? mf.verdict}`);
+  else info(`MFAPI: ERROR ${mf.error}`);
+  info("===============================================================");
+  info(`Full report:  ${path.relative(process.cwd(), REPORT_PATH)}`);
+  info(`Review file:  ${path.relative(process.cwd(), REVIEW_PATH)}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -713,30 +943,22 @@ async function main(): Promise<void> {
   const fundsWithHoldings = indexFile.funds.filter((f) => f.file).length;
   info(`index: ${totalFunds} funds (${fundsWithHoldings} with holdings)`);
 
-  // Probes — independent; per-probe failure is captured, never fatal.
+  const overrides = await loadOverrides();
+  info(`overrides: ${overrides.size} loaded from ${path.relative(process.cwd(), OVERRIDES_PATH)}`);
+
   let amfi: AmfiProbeResult = { reachable: false, error: "probe not run" };
   let rupeevest: RvProbeResult | { error: string };
   let mfapi: MfapiProbeResult | { error: string };
 
-  try {
-    amfi = await runAmfiProbe(indexFile.funds);
-  } catch (e) {
-    amfi = { reachable: false, error: (e as Error).message };
-  }
-  try {
-    rupeevest = await runRupeeVestProbe(indexFile.funds);
-  } catch (e) {
-    rupeevest = { error: (e as Error).message };
-  }
-  try {
-    mfapi = await runMfapiProbe(amfi._matches);
-  } catch (e) {
-    mfapi = { error: (e as Error).message };
-  }
+  try { amfi = await runAmfiProbe(indexFile.funds, overrides.map); }
+  catch (e) { amfi = { reachable: false, error: (e as Error).message }; }
+  try { rupeevest = await runRupeeVestProbe(indexFile.funds); }
+  catch (e) { rupeevest = { error: (e as Error).message }; }
+  try { mfapi = await runMfapiProbe(amfi._autoMatches); }
+  catch (e) { mfapi = { error: (e as Error).message }; }
 
-  // Strip the internal _matches before serializing.
   const amfiOut = { ...amfi };
-  delete amfiOut._matches;
+  delete amfiOut._autoMatches;
 
   const report = {
     meta: {
@@ -744,9 +966,11 @@ async function main(): Promise<void> {
       dryRun: true,
       ruleVersion: RULE_VERSION,
       indexPath: "src/data/portfolio-tracker/index.json",
+      overridesPath: "src/data/portfolio-tracker/nav-crosswalk-overrides.json",
       thresholds: { MEDIUM_MIN, LOW_MIN },
       samples: { RV_ENDPOINT_DISCOVERY_SAMPLE, RV_VALIDATION_SAMPLE, MFAPI_SAMPLE },
-      note: "Read-only NAV source discovery. Not a production snapshot. Not wired to the dashboard or the ingest orchestrator. Sample-scoped for RupeeVest/MFAPI.",
+      autoAcceptPolicy: "Auto-accept ONLY exact+high tiers. Medium/low go to review.",
+      note: "Read-only NAV source discovery + crosswalk repair. Not a production snapshot. Not wired to dashboard or ingest orchestrator. Sample-scoped for RupeeVest/MFAPI.",
     },
     recommendation: buildRecommendation(amfi, rupeevest, mfapi),
     amfi: amfiOut,
@@ -754,65 +978,28 @@ async function main(): Promise<void> {
     mfapi,
   };
 
+  // Smaller human-actionable review file: just what a reviewer needs to fill
+  // overrides / fix names. No coverage breakdowns, no probe-3 detail.
+  const review = {
+    meta: {
+      generatedAt: nowIso(),
+      ruleVersion: RULE_VERSION,
+      summary: amfi.summary,
+      note: "Items requiring human review before they can become production crosswalk entries. Use these to fill src/data/portfolio-tracker/nav-crosswalk-overrides.json.",
+    },
+    reviewMatches: amfi.reviewMatches ?? [],
+    ambiguous: amfi.ambiguous ?? [],
+    rejectedRisky: amfi.rejectedRisky ?? [],
+    unmatched: amfi.unmatched ?? [],
+  };
+
   await fs.mkdir(REPORT_DIR, { recursive: true });
   await fs.writeFile(REPORT_PATH, JSON.stringify(report, null, 2) + "\n", "utf8");
+  await fs.writeFile(REVIEW_PATH, JSON.stringify(review, null, 2) + "\n", "utf8");
   info(`wrote ${path.relative(process.cwd(), REPORT_PATH)}`);
+  info(`wrote ${path.relative(process.cwd(), REVIEW_PATH)}`);
 
-  printSummary(amfi, rupeevest, mfapi);
-}
-
-function buildRecommendation(
-  amfi: AmfiProbeResult,
-  rv: RvProbeResult | { error: string },
-  mf: MfapiProbeResult | { error: string }
-): string {
-  const parts: string[] = [];
-  if (amfi.reachable && amfi.summary) {
-    const r = amfi.summary.matchRateWithHoldingsPct;
-    parts.push(
-      r >= 95
-        ? `AMFI reachable; crosswalk match-rate for funds-with-holdings = ${r}% (≥95% → AMFI viable as primary).`
-        : `AMFI reachable; crosswalk match-rate for funds-with-holdings = ${r}% (<95% → needs manual overrides or ISIN join before AMFI is primary).`
-    );
-  } else {
-    parts.push(`AMFI NOT reachable from this runner (${amfi.error ?? "unknown"}). Re-evaluate primary source.`);
-  }
-  if ("avoidsCrosswalk" in rv) {
-    parts.push(rv.avoidsCrosswalk ? "RupeeVest can serve NAV by our native schemecode → crosswalk-free path available." : "RupeeVest NAV-by-schemecode NOT established by probe.");
-  } else parts.push(`RupeeVest probe errored (${rv.error}).`);
-  if ("historyAvailable" in mf) {
-    parts.push(mf.historyAvailable ? "MFAPI confirmed for historical NAV fallback." : (mf.skipped ?? "MFAPI history not confirmed in sample."));
-  } else parts.push(`MFAPI probe errored (${mf.error}).`);
-  return parts.join(" ");
-}
-
-function printSummary(
-  amfi: AmfiProbeResult,
-  rv: RvProbeResult | { error: string },
-  mf: MfapiProbeResult | { error: string }
-): void {
-  info("================= NAV SOURCE DISCOVERY SUMMARY =================");
-  if (amfi.reachable && amfi.summary) {
-    const s = amfi.summary;
-    info(`AMFI: reachable · feedDate=${amfi.feedDate ?? "?"} · navRows=${amfi.navRowsFromFeed}`);
-    info(`  match overall: ${s.matched}/${s.totalFunds} (${s.matchRateOverallPct}%)`);
-    info(`  match w/holdings: ${s.matchRateWithHoldingsPct}% · tiers exact=${s.byTier.exact} high=${s.byTier.high} medium=${s.byTier.medium} low=${s.byTier.low}`);
-    info(`  unmatched=${s.unmatched} · low/medium-confidence=${s.lowConfidenceCount}`);
-    const worst = (amfi.coverageByClassification ?? []).slice(0, 5) as Array<{ classification: string; matched: number; total: number; pct: number }>;
-    for (const c of worst) info(`    worst-class ${c.classification}: ${c.matched}/${c.total} (${c.pct}%)`);
-  } else {
-    info(`AMFI: NOT reachable — ${amfi.error ?? "unknown"}`);
-  }
-  if ("verdict" in rv) {
-    info(`RupeeVest: exposesNav=${rv.exposesNav} history=${rv.exposesHistory} isin/amfi=${rv.exposesIsinOrAmfi} avoidsCrosswalk=${rv.avoidsCrosswalk}`);
-    info(`  ${rv.verdict}`);
-  } else info(`RupeeVest: ERROR ${rv.error}`);
-  if ("verdict" in mf) {
-    info(`MFAPI: historyAvailable=${mf.historyAvailable} matchesAmfiLatest=${mf.matchesAmfiLatest ?? "n/a"}`);
-    info(`  ${mf.skipped ?? mf.verdict}`);
-  } else info(`MFAPI: ERROR ${mf.error}`);
-  info("===============================================================");
-  info(`Full report: ${path.relative(process.cwd(), REPORT_PATH)}`);
+  printSummary(amfi, rupeevest, mfapi, overrides.size);
 }
 
 main().catch((e) => {
