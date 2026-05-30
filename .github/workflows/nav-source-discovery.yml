@@ -1,0 +1,52 @@
+name: NAV source discovery (temporary, manual)
+
+# TEMPORARY read-only discovery job (Phase 3.0B). Manual trigger only — NO
+# schedule. It does NOT write production snapshots, does NOT commit data, and
+# does NOT touch the dashboard. It runs scripts/ingest/nav-source-discovery.ts,
+# which probes AMFI / RupeeVest / MFAPI (sample-scoped) and writes a single
+# gitignored report to data/debug/nav-source-discovery-report.json, uploaded
+# below as an artifact. Delete this workflow once the source path is chosen.
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are you running discovery? (optional note)"
+        required: false
+        type: string
+
+# Read-only: the job never pushes or commits. Artifact upload needs no write
+# scope on repo contents.
+permissions:
+  contents: read
+
+concurrency:
+  group: nav-discovery-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  discover:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run NAV source discovery (read-only, sample-scoped)
+        # The harness catches per-probe failures and still writes a report,
+        # so an unreachable source is itself a recorded finding rather than a
+        # hard failure. continue-on-error keeps the artifact step reachable.
+        continue-on-error: true
+        run: npx tsx scripts/ingest/nav-source-discovery.ts
+      - name: Upload discovery report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nav-source-discovery-report
+          path: data/debug/nav-source-discovery-report.json
+          if-no-files-found: warn
+          retention-days: 14
