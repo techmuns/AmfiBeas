@@ -6,9 +6,9 @@ import { cn } from "@/lib/cn";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
 import { SameCategoryFunds } from "@/components/data/SameCategoryFunds";
 import {
-  HoldingsVsCategoryChart,
-  type HoldingsVsCategoryRow,
-} from "@/components/data/HoldingsVsCategoryChart";
+  SectorAllocationChart,
+  type SectorAllocationRow,
+} from "@/components/data/SectorAllocationChart";
 import {
   DashboardTabs,
   type DashboardTabDef,
@@ -25,6 +25,7 @@ import {
   type HoldingArrow,
   monthSlug,
 } from "@/data/portfolio-tracker";
+import { classifySector, UNCLASSIFIED } from "@/data/sector-classification";
 
 const MAX_SUGGESTIONS = 60;
 const MAX_PEER_ROWS = 10;
@@ -246,72 +247,65 @@ export function PortfolioTrackerView({
     };
   }, [portfolio]);
 
-  // Latest-month peer-average % of AUM per fincode, across the loaded subset
-  // of peerAvgRows. Peers that don't hold a stock contribute 0% to the sum
-  // (and 1 to the denominator) — the correct treatment for a category-average
-  // baseline. Recomputes when any peer's holdings land.
-  const peerAvgByFincode = useMemo(() => {
-    const result = new Map<string, { avg: number; count: number }>();
-    if (!portfolio || peerAvgRows.length === 0) return result;
-    const curSlug = monthSlug(portfolio.meta.months[0]?.label ?? "");
-    if (!curSlug) return result;
-    // Build per-peer fincode → aum_pct lookup once.
-    const peerIndexes: Array<Map<string, number>> = [];
-    for (const p of peerAvgRows) {
-      const data = loaded[p.schemecode];
-      if (!data) continue;
-      const idx = new Map<string, number>();
-      for (const r of data.rows) {
-        idx.set(r.fincode, r.months[curSlug]?.aum_pct_num ?? 0);
-      }
-      peerIndexes.push(idx);
-    }
-    const K = peerIndexes.length;
-    if (K === 0) return result;
-    for (const row of portfolio.rows) {
-      let sum = 0;
-      for (const idx of peerIndexes) sum += idx.get(row.fincode) ?? 0;
-      result.set(row.fincode, { avg: sum / K, count: K });
-    }
-    return result;
-  }, [peerAvgRows, portfolio, loaded]);
-
-  // K of N for the chart subtitle.
+  // K of N peers loaded — drives the chart subtitle and the peer-average
+  // denominator. Peers that haven't loaded yet are excluded from the average.
   const peerAvgLoadedCount = useMemo(() => {
     let n = 0;
     for (const p of peerAvgRows) if (loaded[p.schemecode]) n++;
     return n;
   }, [peerAvgRows, loaded]);
 
-  // Top-10 holdings of the selected fund (by latest % of AUM), paired with
-  // the same-category peer average per stock. Feeds the Overview-tab
-  // "Top Holdings v/s Category Average" paired-bar chart.
-  const holdingsVsCategory = useMemo<HoldingsVsCategoryRow[]>(() => {
+  // Sector allocation of the selected fund vs the same-category peer average,
+  // for the latest month. Each holding is bucketed via classifySector
+  // (curated fincode map + name fallback); weights are summed per sector. The
+  // peer average sums each loaded peer's per-sector weight and divides by the
+  // peer count (peers absent from a sector contribute 0). Feeds the
+  // Overview-tab "Sector Allocation v/s Category Average" chart.
+  const sectorVsCategory = useMemo<SectorAllocationRow[]>(() => {
     if (!portfolio) return [];
     const curSlug = monthSlug(portfolio.meta.months[0]?.label ?? "");
     if (!curSlug) return [];
-    const clean = (s: string) =>
-      s
-        .replace(/^eq\s*-\s*/i, "")
-        .replace(/^[\s^*#~]+/, "")
-        .replace(/[£@*#~]+$/, "")
-        .replace(/\s+(Ltd\.?|Limited)$/i, "")
-        .trim();
-    return portfolio.rows
-      .map((r) => ({
-        fincode: r.fincode,
-        label: clean(r.company_name),
-        fund: r.months[curSlug]?.aum_pct_num ?? null,
-      }))
-      .filter((r) => r.fund !== null)
-      .sort((a, b) => (b.fund ?? 0) - (a.fund ?? 0))
-      .slice(0, 10)
-      .map((r) => ({
-        label: r.label,
-        fund: r.fund,
-        peerAvg: peerAvgByFincode.get(r.fincode)?.avg ?? null,
-      }));
-  }, [portfolio, peerAvgByFincode]);
+
+    const sectorTotals = (data: FundPortfolio, slug: string) => {
+      const m = new Map<string, number>();
+      for (const r of data.rows) {
+        const w = r.months[slug]?.aum_pct_num ?? 0;
+        if (!w) continue;
+        const s = classifySector(r.fincode, r.company_name);
+        m.set(s, (m.get(s) ?? 0) + w);
+      }
+      return m;
+    };
+
+    const fundSectors = sectorTotals(portfolio, curSlug);
+
+    const peerSum = new Map<string, number>();
+    let K = 0;
+    for (const p of peerAvgRows) {
+      const data = loaded[p.schemecode];
+      if (!data) continue;
+      K++;
+      const pSlug = monthSlug(data.meta.months[0]?.label ?? "");
+      if (!pSlug) continue;
+      for (const [s, w] of sectorTotals(data, pSlug)) {
+        peerSum.set(s, (peerSum.get(s) ?? 0) + w);
+      }
+    }
+
+    const sectors = new Set<string>([...fundSectors.keys(), ...peerSum.keys()]);
+    const rows: SectorAllocationRow[] = [...sectors].map((s) => ({
+      label: s,
+      fund: fundSectors.get(s) ?? 0,
+      peerAvg: K > 0 ? (peerSum.get(s) ?? 0) / K : null,
+    }));
+    // Unclassified sinks to the end; everything else by fund weight desc.
+    rows.sort(
+      (a, b) =>
+        (a.label === UNCLASSIFIED ? 1 : 0) - (b.label === UNCLASSIFIED ? 1 : 0) ||
+        (b.fund ?? 0) - (a.fund ?? 0)
+    );
+    return rows.slice(0, 12);
+  }, [portfolio, peerAvgRows, loaded]);
 
   function pick(f: FundDirectoryEntry) {
     setSelectedCode(f.schemecode);
@@ -480,23 +474,23 @@ export function PortfolioTrackerView({
               ) : null}
 
               {portfolio &&
-                holdingsVsCategory.length > 0 &&
+                sectorVsCategory.length > 0 &&
                 selectedEntry.classification && (
                   <div className="rounded-lg border bg-card px-5 py-4">
                     <div className="mb-1">
                       <h2 className="text-base font-semibold tracking-tight">
-                        Top Holdings v/s Category Average
+                        Sector Allocation v/s Category Average
                       </h2>
                       <p className="text-xs text-muted-foreground">
-                        Top {holdingsVsCategory.length} holdings by % of AUM,
-                        compared with the average across the top-
-                        {peerAvgRows.length} same-category peers by AUM (
-                        {peerAvgLoadedCount} of {peerAvgRows.length} loaded).
-                        Peers that don&apos;t hold a stock count as 0%.
+                        Sector mix (% of AUM) for the selected fund vs the
+                        average across the top-{peerAvgRows.length} same-category
+                        peers by AUM ({peerAvgLoadedCount} of {peerAvgRows.length}{" "}
+                        loaded). Holdings outside the sector map show as
+                        Unclassified.
                       </p>
                     </div>
-                    <HoldingsVsCategoryChart
-                      data={holdingsVsCategory}
+                    <SectorAllocationChart
+                      data={sectorVsCategory}
                       fundName={selectedEntry.fund}
                       peerLabel={selectedEntry.classification}
                     />

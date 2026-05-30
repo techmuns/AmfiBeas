@@ -12,31 +12,31 @@ import {
 } from "recharts";
 import { ChartTooltip } from "@/components/charts/Tooltip";
 
-export interface HoldingsVsCategoryRow {
+export interface SectorAllocationRow {
   label: string;
   fund: number | null;
   peerAvg: number | null;
 }
 
 interface Props {
-  data: HoldingsVsCategoryRow[];
+  data: SectorAllocationRow[];
   fundName: string;
   peerLabel: string;
   height?: number;
 }
 
-/** Paired-bar comparison: selected fund's % of AUM per stock against the
- *  same-category peer average. Drives the "Top Holdings v/s Category
- *  Average" card on the Overview tab. */
-export function HoldingsVsCategoryChart({
+/** Paired-bar comparison: selected fund's sector allocation (% of AUM)
+ *  against the same-category peer average. Drives the "Sector Allocation
+ *  v/s Category Average" card on the Overview tab. */
+export function SectorAllocationChart({
   data,
   fundName,
   peerLabel,
-  height = 320,
+  height = 360,
 }: Props) {
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <BarChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 60 }}>
+      <BarChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 70 }}>
         <CartesianGrid
           stroke="hsl(var(--border))"
           vertical={false}
@@ -49,9 +49,9 @@ export function HoldingsVsCategoryChart({
           tickLine={false}
           axisLine={false}
           interval={0}
-          angle={-30}
+          angle={-35}
           textAnchor="end"
-          height={70}
+          height={90}
         />
         <YAxis
           tickFormatter={(v) => `${v}%`}
@@ -63,11 +63,7 @@ export function HoldingsVsCategoryChart({
         />
         <Tooltip
           cursor={{ fill: "hsl(var(--accent))", opacity: 0.35 }}
-          content={
-            <ChartTooltip
-              formatValue={(n) => `${n.toFixed(1)}%`}
-            />
-          }
+          content={<ChartTooltip formatValue={(n) => `${n.toFixed(1)}%`} />}
         />
         <Legend
           wrapperStyle={{ fontSize: 11, paddingTop: 8 }}

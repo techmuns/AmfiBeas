@@ -1,0 +1,2420 @@
+{
+  "meta": {
+    "description": "Curated fincode -> sector map for mutual-fund equity holdings, used by the Sector Allocation v/s Category Average chart. Sectors follow a Capitaline/Rupeevest-style taxonomy.",
+    "coverageNote": "Covers the top ~480 stocks by aggregate active-equity weight (~91% of weight). Holdings not present here fall back to name-based Overseas Equity / Mutual Fund detection, else 'Unclassified'.",
+    "sectorCount": 19,
+    "stockCount": 477,
+    "generatedFrom": "manual classification (one-off generator)"
+  },
+  "overseasNamePatterns": [
+    " inc",
+    " inc.",
+    " corp",
+    " corporation",
+    " plc",
+    " ag",
+    " nv",
+    " sa",
+    " ltd usa",
+    " adr",
+    " com stk",
+    " cl a",
+    " cl b",
+    "nasdaq",
+    "nyse"
+  ],
+  "mutualFundNamePatterns": [
+    "mutual fund",
+    "liquid fund",
+    " etf",
+    "index fund",
+    "mf units"
+  ],
+  "stocks": [
+    [
+      "100645",
+      "Agri",
+      "Deepak Fertilizers and Petrochemicals Corporation Limited"
+    ],
+    [
+      "106285",
+      "Agri",
+      "Bayer Cropscience Limited"
+    ],
+    [
+      "106395",
+      "Agri",
+      "Coromandel International Limited"
+    ],
+    [
+      "112070",
+      "Agri",
+      "UPL Limited"
+    ],
+    [
+      "112573",
+      "Agri",
+      "Avanti Feeds Limited"
+    ],
+    [
+      "123642",
+      "Agri",
+      "PI Industries Litmited"
+    ],
+    [
+      "209344",
+      "Agri",
+      "Sumitomo Chemical India Limited"
+    ],
+    [
+      "241214",
+      "Agri",
+      "Paradeep Phosphates Limited"
+    ],
+    [
+      "100086",
+      "Automobile and Ancillaries",
+      "Exide Industries Limited"
+    ],
+    [
+      "100182",
+      "Automobile and Ancillaries",
+      "Hero MotoCorp Limited"
+    ],
+    [
+      "100290",
+      "Automobile and Ancillaries",
+      "MRF Limited"
+    ],
+    [
+      "100403",
+      "Automobile and Ancillaries",
+      "Sundram Fasteners Limited"
+    ],
+    [
+      "100477",
+      "Automobile and Ancillaries",
+      "Ashok Leyland Limited"
+    ],
+    [
+      "100493",
+      "Automobile and Ancillaries",
+      "Bharat Forge Limited"
+    ],
+    [
+      "100495",
+      "Automobile and Ancillaries",
+      "Escorts Kubota Limited"
+    ],
+    [
+      "100520",
+      "Automobile and Ancillaries",
+      "Mahindra & Mahindra Limited"
+    ],
+    [
+      "100530",
+      "Automobile and Ancillaries",
+      "Bosch Limited"
+    ],
+    [
+      "100570",
+      "Automobile and Ancillaries",
+      "Tata Motors Passenger Vehicles Limited"
+    ],
+    [
+      "100877",
+      "Automobile and Ancillaries",
+      "Apollo Tyres Limited"
+    ],
+    [
+      "100878",
+      "Automobile and Ancillaries",
+      "CEAT Limited"
+    ],
+    [
+      "102355",
+      "Automobile and Ancillaries",
+      "Balkrishna Industries Limited"
+    ],
+    [
+      "105200",
+      "Automobile and Ancillaries",
+      "Eicher Motors Limited"
+    ],
+    [
+      "105714",
+      "Automobile and Ancillaries",
+      "Gabriel India Limited"
+    ],
+    [
+      "105790",
+      "Automobile and Ancillaries",
+      "Schaeffler India Limited"
+    ],
+    [
+      "117334",
+      "Automobile and Ancillaries",
+      "Samvardhana Motherson International Limited"
+    ],
+    [
+      "132343",
+      "Automobile and Ancillaries",
+      "TVS Motor Company Limited"
+    ],
+    [
+      "132500",
+      "Automobile and Ancillaries",
+      "Maruti Suzuki India Limited"
+    ],
+    [
+      "132539",
+      "Automobile and Ancillaries",
+      "Minda Industries Ltd."
+    ],
+    [
+      "132756",
+      "Automobile and Ancillaries",
+      "CIE Automotive India Limited"
+    ],
+    [
+      "132796",
+      "Automobile and Ancillaries",
+      "Lumax Auto Technologies Limited"
+    ],
+    [
+      "200132",
+      "Automobile and Ancillaries",
+      "Bajaj Auto Limited"
+    ],
+    [
+      "200515",
+      "Automobile and Ancillaries",
+      "ZF Commercial Vehicle Control Systems India Limited"
+    ],
+    [
+      "208361",
+      "Automobile and Ancillaries",
+      "Hyundai Motor India Limited"
+    ],
+    [
+      "211595",
+      "Automobile and Ancillaries",
+      "Belrise Industries Limited"
+    ],
+    [
+      "211740",
+      "Automobile and Ancillaries",
+      "Happy Forgings Limited"
+    ],
+    [
+      "212793",
+      "Automobile and Ancillaries",
+      "Carraro India Limited"
+    ],
+    [
+      "213597",
+      "Automobile and Ancillaries",
+      "Minda Corporation Limited"
+    ],
+    [
+      "214084",
+      "Automobile and Ancillaries",
+      "Sansera Engineering Limited"
+    ],
+    [
+      "214179",
+      "Automobile and Ancillaries",
+      "Sona BLW Precision Forgings Limited"
+    ],
+    [
+      "215216",
+      "Automobile and Ancillaries",
+      "Craftsman Automation Limited"
+    ],
+    [
+      "215477",
+      "Automobile and Ancillaries",
+      "Endurance Technologies Limited"
+    ],
+    [
+      "218771",
+      "Automobile and Ancillaries",
+      "Shriram Pistons & Rings Limited"
+    ],
+    [
+      "249675",
+      "Automobile and Ancillaries",
+      "Sedemac Mechatronics Limited"
+    ],
+    [
+      "269404",
+      "Automobile and Ancillaries",
+      "Tube Investments Of India Limited"
+    ],
+    [
+      "284650",
+      "Automobile and Ancillaries",
+      "Pricol Limited"
+    ],
+    [
+      "294388",
+      "Automobile and Ancillaries",
+      "Ather Energy Limited"
+    ],
+    [
+      "302921",
+      "Automobile and Ancillaries",
+      "SJS Enterprises Pvt Limited"
+    ],
+    [
+      "305013",
+      "Automobile and Ancillaries",
+      "Motherson Sumi Wiring India Limited"
+    ],
+    [
+      "320775",
+      "Automobile and Ancillaries",
+      "KSH International Limited"
+    ],
+    [
+      "321331",
+      "Automobile and Ancillaries",
+      "Tenneco Clean Air India Limited"
+    ],
+    [
+      "322918",
+      "Automobile and Ancillaries",
+      "Tata Motors Commercial Vehicles Limited"
+    ],
+    [
+      "100002",
+      "Capital Goods",
+      "ABB India Limited"
+    ],
+    [
+      "100048",
+      "Capital Goods",
+      "BEML Limited"
+    ],
+    [
+      "100049",
+      "Capital Goods",
+      "Bharat Electronics Limited"
+    ],
+    [
+      "100093",
+      "Capital Goods",
+      "CG Power and Industrial Solutions Limited"
+    ],
+    [
+      "100103",
+      "Capital Goods",
+      "Bharat Heavy Electricals Limited"
+    ],
+    [
+      "100210",
+      "Capital Goods",
+      "Ingersoll Rand (India) Limited"
+    ],
+    [
+      "100249",
+      "Capital Goods",
+      "KSB Limited"
+    ],
+    [
+      "100411",
+      "Capital Goods",
+      "Thermax Limited"
+    ],
+    [
+      "100472",
+      "Capital Goods",
+      "SKF India Limited"
+    ],
+    [
+      "100480",
+      "Capital Goods",
+      "Cummins India Limited"
+    ],
+    [
+      "100550",
+      "Capital Goods",
+      "Siemens Limited"
+    ],
+    [
+      "103960",
+      "Capital Goods",
+      "Bharat Bijlee Limited"
+    ],
+    [
+      "105283",
+      "Capital Goods",
+      "Kirloskar Pneumatic Company Limited"
+    ],
+    [
+      "105700",
+      "Capital Goods",
+      "Elecon Engineering Company Limited"
+    ],
+    [
+      "106076",
+      "Capital Goods",
+      "Grindwell Norton Limited"
+    ],
+    [
+      "109488",
+      "Capital Goods",
+      "Graphite India Limited."
+    ],
+    [
+      "109631",
+      "Capital Goods",
+      "HEG Limited"
+    ],
+    [
+      "113375",
+      "Capital Goods",
+      "Carborundum Universal Limited"
+    ],
+    [
+      "117174",
+      "Capital Goods",
+      "Honeywell Automation India Limited"
+    ],
+    [
+      "117569",
+      "Capital Goods",
+      "KEI Industries Limited ‡"
+    ],
+    [
+      "122113",
+      "Capital Goods",
+      "Timken India Limited"
+    ],
+    [
+      "122205",
+      "Capital Goods",
+      "Praj Industries Limited"
+    ],
+    [
+      "122275",
+      "Capital Goods",
+      "GE Vernova T&D India Limited"
+    ],
+    [
+      "131431",
+      "Capital Goods",
+      "Shakti Pumps (India) Limited"
+    ],
+    [
+      "132259",
+      "Capital Goods",
+      "Apar Industries Limited"
+    ],
+    [
+      "132493",
+      "Capital Goods",
+      "Astra Microwave Products Limited"
+    ],
+    [
+      "132683",
+      "Capital Goods",
+      "AIA Engineering Limited"
+    ],
+    [
+      "132757",
+      "Capital Goods",
+      "Voltamp Transformers Limited"
+    ],
+    [
+      "200115",
+      "Capital Goods",
+      "Titagarh Rail Systems Limited"
+    ],
+    [
+      "208433",
+      "Capital Goods",
+      "Inox India Limited"
+    ],
+    [
+      "208763",
+      "Capital Goods",
+      "Mtar Technologies Limited"
+    ],
+    [
+      "208977",
+      "Capital Goods",
+      "Powerica Limited"
+    ],
+    [
+      "209024",
+      "Capital Goods",
+      "R R Kabel Limited"
+    ],
+    [
+      "211337",
+      "Capital Goods",
+      "Polycab India Limited"
+    ],
+    [
+      "212705",
+      "Capital Goods",
+      "Bharat Dynamics Limited"
+    ],
+    [
+      "216065",
+      "Capital Goods",
+      "Jyoti CNC Automation Ltd."
+    ],
+    [
+      "219494",
+      "Capital Goods",
+      "Hindustan Aeronautics Limited"
+    ],
+    [
+      "222554",
+      "Capital Goods",
+      "Data Patterns (India) Limited"
+    ],
+    [
+      "222961",
+      "Capital Goods",
+      "Kirloskar Oil Engines Limited"
+    ],
+    [
+      "223187",
+      "Capital Goods",
+      "Kaynes Technology India Private Ltd"
+    ],
+    [
+      "223658",
+      "Capital Goods",
+      "TD Power Systems Limited"
+    ],
+    [
+      "226076",
+      "Capital Goods",
+      "Triveni Turbine Limited"
+    ],
+    [
+      "229820",
+      "Capital Goods",
+      "Schneider Electric Infrastructure Limited"
+    ],
+    [
+      "232353",
+      "Capital Goods",
+      "RHI Magnesita India Limited"
+    ],
+    [
+      "244937",
+      "Capital Goods",
+      "PTC Industries Limited"
+    ],
+    [
+      "255331",
+      "Capital Goods",
+      "Tega Industries Ltd. (Locked In Shares) $"
+    ],
+    [
+      "288028",
+      "Capital Goods",
+      "Atlanta Electricals Limited"
+    ],
+    [
+      "296765",
+      "Capital Goods",
+      "Hitachi Energy India Limited"
+    ],
+    [
+      "304549",
+      "Capital Goods",
+      "Syrma SGS Technology Limited"
+    ],
+    [
+      "307061",
+      "Capital Goods",
+      "Avalon Technologies Limited"
+    ],
+    [
+      "312314",
+      "Capital Goods",
+      "Azad Engineering Ltd."
+    ],
+    [
+      "317106",
+      "Capital Goods",
+      "Quality Power Electrical Eqp Ltd"
+    ],
+    [
+      "320028",
+      "Capital Goods",
+      "Siemens Energy India Limited"
+    ],
+    [
+      "322950",
+      "Capital Goods",
+      "SKF India (Industrial) Limited"
+    ],
+    [
+      "100233",
+      "Cement & Construction Materials",
+      "Kajaria Ceramics Limited"
+    ],
+    [
+      "100260",
+      "Cement & Construction Materials",
+      "The Ramco Cements Limited"
+    ],
+    [
+      "100380",
+      "Cement & Construction Materials",
+      "JK Lakshmi Cement Limited"
+    ],
+    [
+      "100387",
+      "Cement & Construction Materials",
+      "Shree Cement Limited"
+    ],
+    [
+      "100425",
+      "Cement & Construction Materials",
+      "Ambuja Cements Limited"
+    ],
+    [
+      "130005",
+      "Cement & Construction Materials",
+      "The India Cements Limited"
+    ],
+    [
+      "132538",
+      "Cement & Construction Materials",
+      "UltraTech Cement Limited"
+    ],
+    [
+      "132548",
+      "Cement & Construction Materials",
+      "Century Plyboards (India) Limited"
+    ],
+    [
+      "132644",
+      "Cement & Construction Materials",
+      "JK Cement Limited"
+    ],
+    [
+      "216147",
+      "Cement & Construction Materials",
+      "Nuvoco Vistas Corporation Limited"
+    ],
+    [
+      "226611",
+      "Cement & Construction Materials",
+      "JSW Cement Limited"
+    ],
+    [
+      "293380",
+      "Cement & Construction Materials",
+      "Dalmia Cement (Bharat) Ltd."
+    ],
+    [
+      "100027",
+      "Chemicals",
+      "Atul Limited"
+    ],
+    [
+      "100331",
+      "Chemicals",
+      "Pidilite Industries Limited"
+    ],
+    [
+      "100655",
+      "Chemicals",
+      "Garware Hi-Tech Films Limited"
+    ],
+    [
+      "100710",
+      "Chemicals",
+      "Akzo Nobel India Limited"
+    ],
+    [
+      "100770",
+      "Chemicals",
+      "Tata Chemicals Limited"
+    ],
+    [
+      "100820",
+      "Chemicals",
+      "Asian Paints(India) Ltd."
+    ],
+    [
+      "101423",
+      "Chemicals",
+      "Shaily Engineering Plastics Limited"
+    ],
+    [
+      "103806",
+      "Chemicals",
+      "SRF Limited"
+    ],
+    [
+      "106401",
+      "Chemicals",
+      "Deepak Nitrite Limited"
+    ],
+    [
+      "109480",
+      "Chemicals",
+      "Berger Paints (I) Limited"
+    ],
+    [
+      "109930",
+      "Chemicals",
+      "Supreme Industries Limited"
+    ],
+    [
+      "123457",
+      "Chemicals",
+      "Linde India Limited"
+    ],
+    [
+      "124200",
+      "Chemicals",
+      "Vinati Organics Limited"
+    ],
+    [
+      "124208",
+      "Chemicals",
+      "Aarti Industries Limited"
+    ],
+    [
+      "132504",
+      "Chemicals",
+      "Navin Fluorine International Limited"
+    ],
+    [
+      "132725",
+      "Chemicals",
+      "Solar Industries India Limited"
+    ],
+    [
+      "132830",
+      "Chemicals",
+      "Astral Limited"
+    ],
+    [
+      "232793",
+      "Chemicals",
+      "Acutaas Chemicals Limited"
+    ],
+    [
+      "295872",
+      "Chemicals",
+      "Gujarat Fluorochemicals Limited"
+    ],
+    [
+      "301578",
+      "Chemicals",
+      "Jubilant Ingrevia Limited"
+    ],
+    [
+      "301912",
+      "Chemicals",
+      "Clean Science and Technology Limited"
+    ],
+    [
+      "304714",
+      "Chemicals",
+      "Aether Industries Limited"
+    ],
+    [
+      "100294",
+      "Construction & Infrastructure",
+      "NCC Limited"
+    ],
+    [
+      "100510",
+      "Construction & Infrastructure",
+      "Larsen & Toubro Limited"
+    ],
+    [
+      "109496",
+      "Construction & Infrastructure",
+      "Cemindia Projects Limited"
+    ],
+    [
+      "122287",
+      "Construction & Infrastructure",
+      "Kalpataru Projects International Limited"
+    ],
+    [
+      "132178",
+      "Construction & Infrastructure",
+      "Engineers India Limited"
+    ],
+    [
+      "132714",
+      "Construction & Infrastructure",
+      "KEC International Limited"
+    ],
+    [
+      "132754",
+      "Construction & Infrastructure",
+      "GMR Airports Limited"
+    ],
+    [
+      "132811",
+      "Construction & Infrastructure",
+      "Ahluwalia Contracts (India) Limited"
+    ],
+    [
+      "200057",
+      "Construction & Infrastructure",
+      "Afcons Infrastructure Limited"
+    ],
+    [
+      "200094",
+      "Construction & Infrastructure",
+      "PNC Infratech Limited"
+    ],
+    [
+      "220869",
+      "Construction & Infrastructure",
+      "Techno Electric & Engineering Company Limited"
+    ],
+    [
+      "237831",
+      "Construction & Infrastructure",
+      "JSW Infrastructure Limited"
+    ],
+    [
+      "251940",
+      "Construction & Infrastructure",
+      "G R Infraprojects Limited"
+    ],
+    [
+      "252076",
+      "Construction & Infrastructure",
+      "Power Mech Projects Limited"
+    ],
+    [
+      "100067",
+      "Consumer Durables",
+      "Blue Star Limited"
+    ],
+    [
+      "100114",
+      "Consumer Durables",
+      "Titan Company Limited"
+    ],
+    [
+      "100238",
+      "Consumer Durables",
+      "Whirlpool of India Limited"
+    ],
+    [
+      "100575",
+      "Consumer Durables",
+      "Voltas Limited ‡"
+    ],
+    [
+      "117354",
+      "Consumer Durables",
+      "Havells India Limited"
+    ],
+    [
+      "123025",
+      "Consumer Durables",
+      "Safari Industries (India) Limited"
+    ],
+    [
+      "200054",
+      "Consumer Durables",
+      "V-Guard Industries Limited"
+    ],
+    [
+      "208607",
+      "Consumer Durables",
+      "LG Electronics India Limited"
+    ],
+    [
+      "208727",
+      "Consumer Durables",
+      "Metro Brands Limited"
+    ],
+    [
+      "210072",
+      "Consumer Durables",
+      "Dixon Technologies (India) Limited"
+    ],
+    [
+      "210949",
+      "Consumer Durables",
+      "Aditya Infotech Limited"
+    ],
+    [
+      "219236",
+      "Consumer Durables",
+      "Thangamayil Jewellery Limited"
+    ],
+    [
+      "222264",
+      "Consumer Durables",
+      "PG Electroplast Limited"
+    ],
+    [
+      "223788",
+      "Consumer Durables",
+      "The Ethos Ltd."
+    ],
+    [
+      "225154",
+      "Consumer Durables",
+      "Amber Enterprises India Limited ‡"
+    ],
+    [
+      "226720",
+      "Consumer Durables",
+      "Kalyan Jewellers India Limited"
+    ],
+    [
+      "280713",
+      "Consumer Durables",
+      "Crompton Greaves Consumer Electricals Limited"
+    ],
+    [
+      "283206",
+      "Consumer Durables",
+      "Aditya Vision Limited"
+    ],
+    [
+      "288401",
+      "Consumer Durables",
+      "Orient Electric Limited"
+    ],
+    [
+      "291768",
+      "Consumer Durables",
+      "Sky Gold And Diamonds Limited"
+    ],
+    [
+      "311742",
+      "Consumer Durables",
+      "Doms Industries Limited"
+    ],
+    [
+      "100300",
+      "Diversified",
+      "GRASIM INDUSTRIES LTD."
+    ],
+    [
+      "112599",
+      "Diversified",
+      "Adani Enterprises Limited"
+    ],
+    [
+      "123395",
+      "Diversified",
+      "3M India Limited"
+    ],
+    [
+      "100084",
+      "Energy",
+      "CESC Limited"
+    ],
+    [
+      "100104",
+      "Energy",
+      "Hindustan Petroleum Corporation Limited"
+    ],
+    [
+      "100312",
+      "Energy",
+      "Oil & Natural Gas Corporation Limited"
+    ],
+    [
+      "100325",
+      "Energy",
+      "Reliance Industries Limited"
+    ],
+    [
+      "100400",
+      "Energy",
+      "The Tata Power Company Limited"
+    ],
+    [
+      "100547",
+      "Energy",
+      "Bharat Petroleum Corporation Limited"
+    ],
+    [
+      "113683",
+      "Energy",
+      "NLC India Ltd. (Neyveli Lignite Corporation Ltd.)"
+    ],
+    [
+      "130965",
+      "Energy",
+      "Indian Oil Corporation Limited"
+    ],
+    [
+      "132155",
+      "Energy",
+      "GAIL (India) Limited"
+    ],
+    [
+      "132514",
+      "Energy",
+      "Indraprastha Gas Limited"
+    ],
+    [
+      "132522",
+      "Energy",
+      "PETRONET LNG LTD."
+    ],
+    [
+      "132524",
+      "Energy",
+      "PTC India Limited"
+    ],
+    [
+      "132555",
+      "Energy",
+      "NTPC Limited"
+    ],
+    [
+      "132667",
+      "Energy",
+      "Suzlon Energy Limited"
+    ],
+    [
+      "132702",
+      "Energy",
+      "Gujarat State Petronet Limited"
+    ],
+    [
+      "132779",
+      "Energy",
+      "Torrent Power Limited"
+    ],
+    [
+      "132898",
+      "Energy",
+      "Power Grid Corporation of India Limited"
+    ],
+    [
+      "200091",
+      "Energy",
+      "Oil India Limited"
+    ],
+    [
+      "208461",
+      "Energy",
+      "JSW Energy Limited"
+    ],
+    [
+      "208661",
+      "Energy",
+      "Mahanagar Gas Limited"
+    ],
+    [
+      "209867",
+      "Energy",
+      "Adani Power (Mundra) Limited"
+    ],
+    [
+      "213046",
+      "Energy",
+      "Emmvee Photovoltaic Power Limited"
+    ],
+    [
+      "216369",
+      "Energy",
+      "NHPC Limited"
+    ],
+    [
+      "217126",
+      "Energy",
+      "Malco Energy Limited"
+    ],
+    [
+      "219300",
+      "Energy",
+      "Coal India Limited"
+    ],
+    [
+      "221877",
+      "Energy",
+      "Waaree Energies Limited"
+    ],
+    [
+      "226019",
+      "Energy",
+      "Talwandi Sabo Power Limited"
+    ],
+    [
+      "249927",
+      "Energy",
+      "Gujarat Gas Limited"
+    ],
+    [
+      "271875",
+      "Energy",
+      "Adani Energy Solutions Limited"
+    ],
+    [
+      "289554",
+      "Energy",
+      "Adani Green Energy Limited"
+    ],
+    [
+      "293537",
+      "Energy",
+      "Clean Max Enviro Energy Solutions Ltd. A"
+    ],
+    [
+      "314935",
+      "Energy",
+      "Premier Energies Limited"
+    ],
+    [
+      "317139",
+      "Energy",
+      "NTPC Green Energy Limited"
+    ],
+    [
+      "100034",
+      "Financials",
+      "Bajaj Finance Limited"
+    ],
+    [
+      "100092",
+      "Financials",
+      "CRISIL Limited"
+    ],
+    [
+      "100112",
+      "Financials",
+      "State Bank of India"
+    ],
+    [
+      "100180",
+      "Financials",
+      "HDFC Bank Limited"
+    ],
+    [
+      "100247",
+      "Financials",
+      "Kotak Mahindra Bank Limited"
+    ],
+    [
+      "100253",
+      "Financials",
+      "LIC Housing Finance Limited"
+    ],
+    [
+      "100271",
+      "Financials",
+      "Max Financial Services Limited"
+    ],
+    [
+      "100469",
+      "Financials",
+      "The Federal Bank Limited"
+    ],
+    [
+      "100490",
+      "Financials",
+      "Bajaj Holdings & Investment Limited"
+    ],
+    [
+      "104973",
+      "Financials",
+      "Cholamandalam Financial Holdings Limited"
+    ],
+    [
+      "111072",
+      "Financials",
+      "Piramal Finance Limited"
+    ],
+    [
+      "111196",
+      "Financials",
+      "Can Fin Homes Limited"
+    ],
+    [
+      "111218",
+      "Financials",
+      "Shriram Finance Limited"
+    ],
+    [
+      "111243",
+      "Financials",
+      "Cholamandalam Investment and Finance Company Limited"
+    ],
+    [
+      "120056",
+      "Financials",
+      "TVS Holdings Limited"
+    ],
+    [
+      "124000",
+      "Financials",
+      "Poonawalla Fincorp Limited"
+    ],
+    [
+      "131213",
+      "Financials",
+      "Manappuram Finance Limited"
+    ],
+    [
+      "131595",
+      "Financials",
+      "Capri Global Capital Limited"
+    ],
+    [
+      "132134",
+      "Financials",
+      "Bank of Baroda"
+    ],
+    [
+      "132149",
+      "Financials",
+      "Bank of India"
+    ],
+    [
+      "132174",
+      "Financials",
+      "ICICI Bank Limited"
+    ],
+    [
+      "132187",
+      "Financials",
+      "IndusInd Bank Limited"
+    ],
+    [
+      "132215",
+      "Financials",
+      "Axis Bank Limited"
+    ],
+    [
+      "132218",
+      "Financials",
+      "The South Indian Bank Limited"
+    ],
+    [
+      "132461",
+      "Financials",
+      "Punjab National Bank"
+    ],
+    [
+      "132477",
+      "Financials",
+      "Union Bank Of India"
+    ],
+    [
+      "132483",
+      "Financials",
+      "Canara Bank"
+    ],
+    [
+      "132525",
+      "Financials",
+      "BANK OF MAHARASHTRA"
+    ],
+    [
+      "132720",
+      "Financials",
+      "Mahindra & Mahindra Financial Services Limited"
+    ],
+    [
+      "132772",
+      "Financials",
+      "DCB Bank Limited"
+    ],
+    [
+      "132810",
+      "Financials",
+      "Power Finance Corporation Limited"
+    ],
+    [
+      "132814",
+      "Financials",
+      "Indian Bank"
+    ],
+    [
+      "132892",
+      "Financials",
+      "Motilal Oswal Financial Services Limited"
+    ],
+    [
+      "190003",
+      "Financials",
+      "Karur Vysya Bank Limited"
+    ],
+    [
+      "190071",
+      "Financials",
+      "Sundaram Finance Limited"
+    ],
+    [
+      "200055",
+      "Financials",
+      "Rural Electrification Corporation Ltd."
+    ],
+    [
+      "205198",
+      "Financials",
+      "Bajaj Finserv Limited"
+    ],
+    [
+      "207901",
+      "Financials",
+      "Bombay Stock Exchange Limited (BSE)"
+    ],
+    [
+      "207950",
+      "Financials",
+      "Central Depository Services (India) Limited"
+    ],
+    [
+      "208089",
+      "Financials",
+      "Nuvama Wealth Management Limited"
+    ],
+    [
+      "208280",
+      "Financials",
+      "HDFC Asset Management Company Limited"
+    ],
+    [
+      "208364",
+      "Financials",
+      "ICICI Prudential Asset Management Company Limited"
+    ],
+    [
+      "208766",
+      "Financials",
+      "Multi Commodity Exchange of India Limited"
+    ],
+    [
+      "209068",
+      "Financials",
+      "RBL Bank Limited"
+    ],
+    [
+      "209078",
+      "Financials",
+      "Nippon Life India Asset Management Limited"
+    ],
+    [
+      "209492",
+      "Financials",
+      "UTI Asset Management Company Limited"
+    ],
+    [
+      "209902",
+      "Financials",
+      "Angel One Limited"
+    ],
+    [
+      "209979",
+      "Financials",
+      "Aditya Birla Sun Life AMC Limited"
+    ],
+    [
+      "210036",
+      "Financials",
+      "Computer Age Management Services Limited"
+    ],
+    [
+      "210258",
+      "Financials",
+      "ICICI Prudential Life Insurance Company Limited"
+    ],
+    [
+      "210850",
+      "Financials",
+      "Tata Capital Limited"
+    ],
+    [
+      "211385",
+      "Financials",
+      "SBI Life Insurance Company Limited"
+    ],
+    [
+      "213327",
+      "Financials",
+      "Housing & Urban Development Corporation Limited"
+    ],
+    [
+      "217376",
+      "Financials",
+      "Life Insurance Corporation of India"
+    ],
+    [
+      "217379",
+      "Financials",
+      "ICICI Lombard General Insurance Company Limited"
+    ],
+    [
+      "217389",
+      "Financials",
+      "HDFC Life Insurance Company Limited"
+    ],
+    [
+      "217396",
+      "Financials",
+      "Canara HSBC Life Insurance Company Limited"
+    ],
+    [
+      "217400",
+      "Financials",
+      "Star Health And Allied Insurance Company Limited"
+    ],
+    [
+      "217757",
+      "Financials",
+      "PNB Housing Finance Limited"
+    ],
+    [
+      "218756",
+      "Financials",
+      "HDB Financial Services Limited"
+    ],
+    [
+      "220350",
+      "Financials",
+      "L&T Finance Limited ‡"
+    ],
+    [
+      "221661",
+      "Financials",
+      "Aadhar Housing Finance Limited"
+    ],
+    [
+      "221790",
+      "Financials",
+      "Muthoot Finance Limited"
+    ],
+    [
+      "221842",
+      "Financials",
+      "CreditAccess Grameen Limited"
+    ],
+    [
+      "225051",
+      "Financials",
+      "SBI Cards and Payment Services Limited"
+    ],
+    [
+      "228974",
+      "Financials",
+      "360 ONE WAM Ltd (Prev IIFL Wealth Management Ltd)"
+    ],
+    [
+      "235955",
+      "Financials",
+      "Home First Finance Company India Limited"
+    ],
+    [
+      "242461",
+      "Financials",
+      "ADITYA BIRLA CAPITAL LTD"
+    ],
+    [
+      "251791",
+      "Financials",
+      "Aptus Value Housing Finance India Limited"
+    ],
+    [
+      "254493",
+      "Financials",
+      "PB Fintech Limited"
+    ],
+    [
+      "267615",
+      "Financials",
+      "Aavas Financiers Limited"
+    ],
+    [
+      "273033",
+      "Financials",
+      "Equitas Small Finance Bank Limited"
+    ],
+    [
+      "278580",
+      "Financials",
+      "IDFC First Bank Limited"
+    ],
+    [
+      "278701",
+      "Financials",
+      "Five Star Business Finance Limited"
+    ],
+    [
+      "279527",
+      "Financials",
+      "Bandhan Bank Limited"
+    ],
+    [
+      "286335",
+      "Financials",
+      "AU Small Finance Bank Limited"
+    ],
+    [
+      "287237",
+      "Financials",
+      "Ujjivan Small Finance Bank Limited"
+    ],
+    [
+      "294914",
+      "Financials",
+      "Go Digit General Insurance Limited"
+    ],
+    [
+      "303180",
+      "Financials",
+      "PRUDENT CORPORATE ADVISORY SERVICES Limited"
+    ],
+    [
+      "305799",
+      "Financials",
+      "KFIN Technologies Limited"
+    ],
+    [
+      "322541",
+      "Financials",
+      "Billionbrains Garage Ventures Limited (Groww)"
+    ],
+    [
+      "100038",
+      "FMCG",
+      "Balrampur Chini Mills Limited"
+    ],
+    [
+      "100096",
+      "FMCG",
+      "Dabur India Limited"
+    ],
+    [
+      "100163",
+      "FMCG",
+      "Godfrey Phillips India Limited"
+    ],
+    [
+      "100459",
+      "FMCG",
+      "Procter & Gamble Hygiene and Health Care Limited"
+    ],
+    [
+      "100696",
+      "FMCG",
+      "Hindustan Unilever Limited"
+    ],
+    [
+      "100790",
+      "FMCG",
+      "Nestle India Limited"
+    ],
+    [
+      "100800",
+      "FMCG",
+      "Tata Consumer Products Limited"
+    ],
+    [
+      "100825",
+      "FMCG",
+      "Britannia Industries Limited"
+    ],
+    [
+      "100830",
+      "FMCG",
+      "Colgate Palmolive (India) Limited"
+    ],
+    [
+      "100875",
+      "FMCG",
+      "ITC Limited"
+    ],
+    [
+      "107815",
+      "FMCG",
+      "Gillette India Limited"
+    ],
+    [
+      "119600",
+      "FMCG",
+      "CCL Products (India) Limited"
+    ],
+    [
+      "131162",
+      "FMCG",
+      "Emami Limited"
+    ],
+    [
+      "131335",
+      "FMCG",
+      "Zydus Wellness Limited"
+    ],
+    [
+      "131642",
+      "FMCG",
+      "Marico Limited"
+    ],
+    [
+      "132424",
+      "FMCG",
+      "Godrej Consumer Products Limited"
+    ],
+    [
+      "132432",
+      "FMCG",
+      "United Spirits Limited"
+    ],
+    [
+      "132478",
+      "FMCG",
+      "United Breweries Limited"
+    ],
+    [
+      "132497",
+      "FMCG",
+      "Radico Khaitan Limited"
+    ],
+    [
+      "132783",
+      "FMCG",
+      "LT Foods Limited"
+    ],
+    [
+      "200007",
+      "FMCG",
+      "Jyothy Laboratories Ltd"
+    ],
+    [
+      "209232",
+      "FMCG",
+      "Bikaji Foods International Limited"
+    ],
+    [
+      "209550",
+      "FMCG",
+      "Varun Beverages Limited"
+    ],
+    [
+      "223478",
+      "FMCG",
+      "Mrs. Bectors Food Specialities Limited"
+    ],
+    [
+      "231440",
+      "FMCG",
+      "Allied Blenders And Distillers Limited"
+    ],
+    [
+      "100087",
+      "Healthcare",
+      "Cipla Limited"
+    ],
+    [
+      "100124",
+      "Healthcare",
+      "Dr. Reddy's Laboratories Limited"
+    ],
+    [
+      "100126",
+      "Healthcare",
+      "Procter & Gamble Health Limited"
+    ],
+    [
+      "100257",
+      "Healthcare",
+      "Lupin Limited"
+    ],
+    [
+      "100420",
+      "Healthcare",
+      "Torrent Pharmaceuticals Limited"
+    ],
+    [
+      "100488",
+      "Healthcare",
+      "Abbott India Limited"
+    ],
+    [
+      "100660",
+      "Healthcare",
+      "GlaxoSmithKline Pharmaceuticals Limited"
+    ],
+    [
+      "100680",
+      "Healthcare",
+      "Pfizer Limited"
+    ],
+    [
+      "106820",
+      "Healthcare",
+      "AstraZeneca Pharma India Limited"
+    ],
+    [
+      "106943",
+      "Healthcare",
+      "J.B. Chemicals & Pharmaceuticals Limited"
+    ],
+    [
+      "108869",
+      "Healthcare",
+      "Apollo Hospitals Enterprise Limited"
+    ],
+    [
+      "124494",
+      "Healthcare",
+      "IPCA Laboratories Limited"
+    ],
+    [
+      "124558",
+      "Healthcare",
+      "Neuland Laboratories Limited"
+    ],
+    [
+      "124715",
+      "Healthcare",
+      "Sun Pharmaceutical Industries Limited"
+    ],
+    [
+      "124804",
+      "Healthcare",
+      "Aurobindo Pharma Limited"
+    ],
+    [
+      "130019",
+      "Healthcare",
+      "Jubilant Pharmova Limited"
+    ],
+    [
+      "131768",
+      "Healthcare",
+      "Poly Medicure Limited"
+    ],
+    [
+      "132296",
+      "Healthcare",
+      "Glenmark Pharmaceuticals Limited"
+    ],
+    [
+      "132300",
+      "Healthcare",
+      "Wockhardt Limited"
+    ],
+    [
+      "132321",
+      "Healthcare",
+      "Zydus Lifesciences Limited"
+    ],
+    [
+      "132331",
+      "Healthcare",
+      "Ajanta Pharmaceuticals Limited"
+    ],
+    [
+      "132488",
+      "Healthcare",
+      "Divi''s Laboratories Limited"
+    ],
+    [
+      "132523",
+      "Healthcare",
+      "Biocon Limited"
+    ],
+    [
+      "132843",
+      "Healthcare",
+      "Fortis Healthcare India Ltd"
+    ],
+    [
+      "208099",
+      "Healthcare",
+      "Emcure Pharmaceuticals Limited"
+    ],
+    [
+      "209147",
+      "Healthcare",
+      "Sai Life Sciences Limited"
+    ],
+    [
+      "209373",
+      "Healthcare",
+      "Syngene International Limited"
+    ],
+    [
+      "210217",
+      "Healthcare",
+      "Healthcare Global Enterprises Limited"
+    ],
+    [
+      "211840",
+      "Healthcare",
+      "Mankind Pharma Limited"
+    ],
+    [
+      "212427",
+      "Healthcare",
+      "Alkem Laboratories Limited"
+    ],
+    [
+      "218071",
+      "Healthcare",
+      "Max Healthcare Institute Limited"
+    ],
+    [
+      "218533",
+      "Healthcare",
+      "Narayana Hrudayalaya Limited"
+    ],
+    [
+      "218763",
+      "Healthcare",
+      "Dr. Lal Path Labs Limited"
+    ],
+    [
+      "218764",
+      "Healthcare",
+      "Thyrocare Technologies Limited"
+    ],
+    [
+      "221033",
+      "Healthcare",
+      "Aster DM Healthcare Limited"
+    ],
+    [
+      "221645",
+      "Healthcare",
+      "Krishna Institute Of Medical Sciences Limited"
+    ],
+    [
+      "222255",
+      "Healthcare",
+      "Eris Lifesciences Limited"
+    ],
+    [
+      "224849",
+      "Healthcare",
+      "Alembic Pharmaceuticals Limited"
+    ],
+    [
+      "232604",
+      "Healthcare",
+      "MedPlus Health Services Limited"
+    ],
+    [
+      "235355",
+      "Healthcare",
+      "Gland Pharma Limited"
+    ],
+    [
+      "235506",
+      "Healthcare",
+      "Metropolis Healthcare Limited"
+    ],
+    [
+      "254962",
+      "Healthcare",
+      "Rubicon Research Limited"
+    ],
+    [
+      "271867",
+      "Healthcare",
+      "Laurus Labs Limited"
+    ],
+    [
+      "274041",
+      "Healthcare",
+      "Dr Agarwals Health Care Limited"
+    ],
+    [
+      "274045",
+      "Healthcare",
+      "Rainbow Childrens Medicare Limited"
+    ],
+    [
+      "277614",
+      "Healthcare",
+      "Jupiter Life Line Hospitals Limited"
+    ],
+    [
+      "279664",
+      "Healthcare",
+      "Global Health Limited"
+    ],
+    [
+      "302427",
+      "Healthcare",
+      "Vijaya Diagnostic Centre Limited"
+    ],
+    [
+      "307332",
+      "Healthcare",
+      "Piramal Pharma Limited"
+    ],
+    [
+      "315602",
+      "Healthcare",
+      "Sanofi Consumer Healthcare India Limited"
+    ],
+    [
+      "318188",
+      "Healthcare",
+      "Onesource Specialty Pharma Limited"
+    ],
+    [
+      "320396",
+      "Healthcare",
+      "Corona Remedies Limited"
+    ],
+    [
+      "100483",
+      "Media and Communications",
+      "Tata Communications Limited"
+    ],
+    [
+      "132374",
+      "Media and Communications",
+      "Sterlite Technologies Limited"
+    ],
+    [
+      "132454",
+      "Media and Communications",
+      "Bharti Airtel Limited"
+    ],
+    [
+      "132689",
+      "Media and Communications",
+      "PVR INOX Limited"
+    ],
+    [
+      "132733",
+      "Media and Communications",
+      "SUN TV Network Limited"
+    ],
+    [
+      "207872",
+      "Media and Communications",
+      "Bharti Hexacom Limited"
+    ],
+    [
+      "209967",
+      "Media and Communications",
+      "Indus Towers Ltd (Prev Bharti Infratel Ltd)"
+    ],
+    [
+      "229238",
+      "Media and Communications",
+      "Affle (India) Limited"
+    ],
+    [
+      "274066",
+      "Media and Communications",
+      "Amagi Media Labs Limited"
+    ],
+    [
+      "100113",
+      "Metals & Mining",
+      "Steel Authority of India Limited"
+    ],
+    [
+      "100188",
+      "Metals & Mining",
+      "Hindustan Zinc Limited"
+    ],
+    [
+      "100228",
+      "Metals & Mining",
+      "JSW Steel Limited"
+    ],
+    [
+      "100295",
+      "Metals & Mining",
+      "Vedanta Limited"
+    ],
+    [
+      "100440",
+      "Metals & Mining",
+      "Hindalco Industries Limited"
+    ],
+    [
+      "100470",
+      "Metals & Mining",
+      "Tata Steel Limited"
+    ],
+    [
+      "112455",
+      "Metals & Mining",
+      "Lloyds Metals And Energy Limited"
+    ],
+    [
+      "117146",
+      "Metals & Mining",
+      "Usha Martin Limited"
+    ],
+    [
+      "120111",
+      "Metals & Mining",
+      "Ratnamani Metals & Tubes Limited"
+    ],
+    [
+      "126371",
+      "Metals & Mining",
+      "NMDC Limited"
+    ],
+    [
+      "132144",
+      "Metals & Mining",
+      "Welspun Corp Limited"
+    ],
+    [
+      "132234",
+      "Metals & Mining",
+      "National Aluminium Company Limited"
+    ],
+    [
+      "132286",
+      "Metals & Mining",
+      "Jindal Steel & Power Limited"
+    ],
+    [
+      "132508",
+      "Metals & Mining",
+      "Jindal Stainless Limited"
+    ],
+    [
+      "190059",
+      "Metals & Mining",
+      "APL Apollo Tubes Limited"
+    ],
+    [
+      "207837",
+      "Metals & Mining",
+      "Bansal Wire Industries Limited"
+    ],
+    [
+      "319986",
+      "Metals & Mining",
+      "Jain Resource Recycling Limited"
+    ],
+    [
+      "324996",
+      "Metals & Mining",
+      "Vedanta Aluminium Metal Limited"
+    ],
+    [
+      "324997",
+      "Metals & Mining",
+      "Vedanta Iron And Steel Limited"
+    ],
+    [
+      "218241",
+      "Overseas Equity",
+      "Microsoft Corporation"
+    ],
+    [
+      "219464",
+      "Overseas Equity",
+      "Cognizant Technology Solutions Cl A Com Stk"
+    ],
+    [
+      "279017",
+      "Overseas Equity",
+      "Alphabet Inc A"
+    ],
+    [
+      "100040",
+      "Realty",
+      "Aditya Birla Real Estate Limited"
+    ],
+    [
+      "103100",
+      "Realty",
+      "The Phoenix Mills Limited"
+    ],
+    [
+      "132313",
+      "Realty",
+      "Mahindra Lifespace Developers Limited"
+    ],
+    [
+      "132784",
+      "Realty",
+      "Sobha Limited"
+    ],
+    [
+      "132868",
+      "Realty",
+      "DLF Limited"
+    ],
+    [
+      "200020",
+      "Realty",
+      "Brigade Enterprises Limited."
+    ],
+    [
+      "208238",
+      "Realty",
+      "Godrej Properties Limited"
+    ],
+    [
+      "213838",
+      "Realty",
+      "Prestige Estates Projects Limited"
+    ],
+    [
+      "220018",
+      "Realty",
+      "Oberoi Realty Limited"
+    ],
+    [
+      "297249",
+      "Realty",
+      "Wework India Management Limited"
+    ],
+    [
+      "100251",
+      "Services",
+      "Trent Limited"
+    ],
+    [
+      "100620",
+      "Services",
+      "The Great Eastern Shipping Company Limited"
+    ],
+    [
+      "100840",
+      "Services",
+      "EIH Limited"
+    ],
+    [
+      "100850",
+      "Services",
+      "The Indian Hotels Company Limited"
+    ],
+    [
+      "105533",
+      "Services",
+      "Westlife Foodworld Limited"
+    ],
+    [
+      "131344",
+      "Services",
+      "Container Corporation of India Limited"
+    ],
+    [
+      "132921",
+      "Services",
+      "Adani Ports and Special Economic Zone Limited"
+    ],
+    [
+      "207959",
+      "Services",
+      "Chalet Hotels Limited"
+    ],
+    [
+      "208045",
+      "Services",
+      "Devyani International Limited"
+    ],
+    [
+      "213429",
+      "Services",
+      "Lemon Tree Hotels Limited"
+    ],
+    [
+      "215367",
+      "Services",
+      "Jubilant Foodworks Limited"
+    ],
+    [
+      "222055",
+      "Services",
+      "InterGlobe Aviation Limited"
+    ],
+    [
+      "223595",
+      "Services",
+      "Avenue Supermarts Limited"
+    ],
+    [
+      "228017",
+      "Services",
+      "Travel Food Services Limited"
+    ],
+    [
+      "233063",
+      "Services",
+      "Lenskart Solutions Limited"
+    ],
+    [
+      "234556",
+      "Services",
+      "CMS Info Systems Limited"
+    ],
+    [
+      "237191",
+      "Services",
+      "V-Mart Retail Limited"
+    ],
+    [
+      "289108",
+      "Services",
+      "Delhivery Limited"
+    ],
+    [
+      "293602",
+      "Services",
+      "Zinka Logistics Solutions Ltd"
+    ],
+    [
+      "293665",
+      "Services",
+      "Arvind Fashions Limited"
+    ],
+    [
+      "296214",
+      "Services",
+      "Restaurant Brands Asia Limited"
+    ],
+    [
+      "302988",
+      "Services",
+      "Fsn Ecommerce Ventures Limited (Nykaa)"
+    ],
+    [
+      "303107",
+      "Services",
+      "Sapphire Foods India Limited"
+    ],
+    [
+      "304682",
+      "Services",
+      "TBO Tek Limited"
+    ],
+    [
+      "316659",
+      "Services",
+      "International Gemmological Institute (India) Ltd."
+    ],
+    [
+      "317201",
+      "Services",
+      "Leela Palaces Hotels & Resorts Limited"
+    ],
+    [
+      "317635",
+      "Services",
+      "Vishal Mega Mart Limited"
+    ],
+    [
+      "318678",
+      "Services",
+      "ITC Hotels Limited"
+    ],
+    [
+      "323260",
+      "Services",
+      "Shadowfax Technologies Private Limited"
+    ],
+    [
+      "100209",
+      "Technology",
+      "Infosys Limited"
+    ],
+    [
+      "104067",
+      "Technology",
+      "Zensar Technologies Limited"
+    ],
+    [
+      "107685",
+      "Technology",
+      "Wipro Limited"
+    ],
+    [
+      "126299",
+      "Technology",
+      "MphasiS Limited."
+    ],
+    [
+      "132129",
+      "Technology",
+      "Hexaware Technologies Limited"
+    ],
+    [
+      "132175",
+      "Technology",
+      "Cyient Limited"
+    ],
+    [
+      "132221",
+      "Technology",
+      "Sonata Software Limited"
+    ],
+    [
+      "132281",
+      "Technology",
+      "HCL Technologies Limited"
+    ],
+    [
+      "132400",
+      "Technology",
+      "Birlasoft Limited"
+    ],
+    [
+      "132466",
+      "Technology",
+      "Oracle Financial Services Software Limited"
+    ],
+    [
+      "132540",
+      "Technology",
+      "Tata Consultancy Services Limited"
+    ],
+    [
+      "132541",
+      "Technology",
+      "Coforge Limited"
+    ],
+    [
+      "132755",
+      "Technology",
+      "Tech Mahindra Limited"
+    ],
+    [
+      "132777",
+      "Technology",
+      "Info Edge (India) Limited"
+    ],
+    [
+      "132809",
+      "Technology",
+      "Firstsource Solutions Limited"
+    ],
+    [
+      "200017",
+      "Technology",
+      "eClerx Services Limited"
+    ],
+    [
+      "208883",
+      "Technology",
+      "One 97 Communications Limited"
+    ],
+    [
+      "210590",
+      "Technology",
+      "Persistent Systems Limited"
+    ],
+    [
+      "215584",
+      "Technology",
+      "Fractal Analytics Limited"
+    ],
+    [
+      "216156",
+      "Technology",
+      "Larsen & Toubro Infotech Ltd"
+    ],
+    [
+      "229852",
+      "Technology",
+      "Pine Labs Limited"
+    ],
+    [
+      "250870",
+      "Technology",
+      "Inventurus Knowledge Solutions Limited"
+    ],
+    [
+      "252306",
+      "Technology",
+      "Eternal Limited"
+    ],
+    [
+      "268618",
+      "Technology",
+      "L&T Technology Services Limited"
+    ],
+    [
+      "275316",
+      "Technology",
+      "CarTrade Tech Limited"
+    ],
+    [
+      "290269",
+      "Technology",
+      "Indiamart Intermesh Limited"
+    ],
+    [
+      "293862",
+      "Technology",
+      "Swiggy Limited ‡"
+    ],
+    [
+      "294320",
+      "Technology",
+      "KPIT Technologies Limited"
+    ],
+    [
+      "303157",
+      "Technology",
+      "Rategain Travel Technologies Limited"
+    ],
+    [
+      "304684",
+      "Technology",
+      "Capillary Technologies India Limited"
+    ],
+    [
+      "315904",
+      "Technology",
+      "Sagility India Ltd"
+    ],
+    [
+      "320350",
+      "Technology",
+      "Urban Company Ltd."
+    ],
+    [
+      "322366",
+      "Technology",
+      "Physicswallah Limited"
+    ],
+    [
+      "323093",
+      "Technology",
+      "Meesho Limited"
+    ],
+    [
+      "100101",
+      "Textiles",
+      "Arvind Limited"
+    ],
+    [
+      "132630",
+      "Textiles",
+      "Gokaldas Exports Limited"
+    ],
+    [
+      "132808",
+      "Textiles",
+      "Pearl Global Industries Limited"
+    ],
+    [
+      "132827",
+      "Textiles",
+      "Page Industries Limited"
+    ],
+    [
+      "132889",
+      "Textiles",
+      "K.P.R. Mill Limited"
+    ]
+  ]
+}
