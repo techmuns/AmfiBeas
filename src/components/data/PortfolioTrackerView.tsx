@@ -5,6 +5,7 @@ import { Search, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
 import { SameCategoryFunds } from "@/components/data/SameCategoryFunds";
+import { OwUwChip } from "@/components/data/OwUwChip";
 import {
   DashboardTabs,
   type DashboardTabDef,
@@ -24,6 +25,10 @@ import {
 
 const MAX_SUGGESTIONS = 60;
 const MAX_PEER_ROWS = 10;
+// Peer-average cohort cap. Top-N same-category peers by AUM are fetched
+// and averaged to compute the OW/UW chips in the Holdings tab. Bounds
+// the worst-case fetch (Thematic, n=91 → 20 fetches instead of 91).
+const MAX_PEER_AVG_PEERS = 20;
 
 function ArrowMark({ arrow }: { arrow: HoldingArrow }) {
   if (arrow === "up")
@@ -115,6 +120,24 @@ export function PortfolioTrackerView({
     return [selectedEntry, ...others.slice(0, MAX_PEER_ROWS - 1)];
   }, [sameCategoryFunds, selectedEntry]);
 
+  // Top-N same-category peers by AUM EXCLUDING the selected fund — the set
+  // averaged into the OW/UW chip baseline. min(MAX_PEER_AVG_PEERS, cohort − 1).
+  const peerAvgRows = useMemo(() => {
+    if (!selectedEntry) return [] as FundDirectoryEntry[];
+    return sameCategoryFunds
+      .filter((f) => f.schemecode !== selectedEntry.schemecode)
+      .slice(0, MAX_PEER_AVG_PEERS);
+  }, [sameCategoryFunds, selectedEntry]);
+
+  // Top-21 including self — the FETCH cohort. Slightly wider than peerAvgRows
+  // so we always have ≥20 non-self peers available even when the selected fund
+  // is itself ranked in the top-20 by AUM. The selected fund's own holdings
+  // are already fetched by the selected-fund effect; the dup is harmless
+  // because the loadedRef check dedups before issuing.
+  const peerAvgFetchTargets = useMemo(() => {
+    return sameCategoryFunds.slice(0, MAX_PEER_AVG_PEERS + 1);
+  }, [sameCategoryFunds]);
+
   // Ref mirrors of loaded/errored so the peer-fetch effect can dedup without
   // putting them in deps — which would otherwise abort other in-flight peers
   // each time one resolves and updates state.
@@ -127,12 +150,13 @@ export function PortfolioTrackerView({
     erroredRef.current = errored;
   }, [errored]);
 
-  // Fan-out fetch peer holdings in parallel. Aborts only on cohort change
-  // (peers array reference), not on per-peer state updates.
+  // Fan-out fetch peer holdings in parallel. Bounded at MAX_PEER_AVG_PEERS+1
+  // requests per category (vs ~91 uncapped for Thematic). Aborts only on
+  // cohort change (array reference), not on per-peer state updates.
   useEffect(() => {
-    if (peerRows.length === 0) return;
+    if (peerAvgFetchTargets.length === 0) return;
     const ctrls: AbortController[] = [];
-    for (const p of peerRows) {
+    for (const p of peerAvgFetchTargets) {
       const code = p.schemecode;
       if (loadedRef.current[code] || erroredRef.current[code]) continue;
       const ctrl = new AbortController();
@@ -153,7 +177,7 @@ export function PortfolioTrackerView({
         });
     }
     return () => ctrls.forEach((c) => c.abort());
-  }, [peerRows]);
+  }, [peerAvgFetchTargets]);
 
   function retry() {
     if (!selectedEntry) return;
@@ -218,6 +242,43 @@ export function PortfolioTrackerView({
       concDelta: concCur - top10(prevPcts),
     };
   }, [portfolio]);
+
+  // Latest-month peer-average % of AUM per fincode, across the loaded subset
+  // of peerAvgRows. Peers that don't hold a stock contribute 0% to the sum
+  // (and 1 to the denominator) — the correct treatment for a category-average
+  // baseline. Recomputes when any peer's holdings land.
+  const peerAvgByFincode = useMemo(() => {
+    const result = new Map<string, { avg: number; count: number }>();
+    if (!portfolio || peerAvgRows.length === 0) return result;
+    const curSlug = monthSlug(portfolio.meta.months[0]?.label ?? "");
+    if (!curSlug) return result;
+    // Build per-peer fincode → aum_pct lookup once.
+    const peerIndexes: Array<Map<string, number>> = [];
+    for (const p of peerAvgRows) {
+      const data = loaded[p.schemecode];
+      if (!data) continue;
+      const idx = new Map<string, number>();
+      for (const r of data.rows) {
+        idx.set(r.fincode, r.months[curSlug]?.aum_pct_num ?? 0);
+      }
+      peerIndexes.push(idx);
+    }
+    const K = peerIndexes.length;
+    if (K === 0) return result;
+    for (const row of portfolio.rows) {
+      let sum = 0;
+      for (const idx of peerIndexes) sum += idx.get(row.fincode) ?? 0;
+      result.set(row.fincode, { avg: sum / K, count: K });
+    }
+    return result;
+  }, [peerAvgRows, portfolio, loaded]);
+
+  // K of N for the footer caption.
+  const peerAvgLoadedCount = useMemo(() => {
+    let n = 0;
+    for (const p of peerAvgRows) if (loaded[p.schemecode]) n++;
+    return n;
+  }, [peerAvgRows, loaded]);
 
   function pick(f: FundDirectoryEntry) {
     setSelectedCode(f.schemecode);
@@ -470,9 +531,23 @@ export function PortfolioTrackerView({
                               <td className="border-r px-3 py-2.5 font-medium">
                                 {row.company_name}
                               </td>
-                              {slugs.map((slug) => {
+                              {slugs.map((slug, mi) => {
                                 const cell = row.months[slug];
-                                return <Cells key={slug} cell={cell} />;
+                                const isLatest = mi === 0;
+                                const peerInfo = isLatest
+                                  ? peerAvgByFincode.get(row.fincode)
+                                  : undefined;
+                                return (
+                                  <Cells
+                                    key={slug}
+                                    cell={cell}
+                                    peerInfo={peerInfo}
+                                    peerTarget={
+                                      isLatest ? peerAvgRows.length : undefined
+                                    }
+                                    showChip={isLatest}
+                                  />
+                                );
                               })}
                             </tr>
                           ))
@@ -487,6 +562,15 @@ export function PortfolioTrackerView({
                     {months.map((m) => m.label).join(" → ")}); the oldest column
                     shows no arrow. Source: {portfolio.meta.source}.
                   </p>
+                  {peerAvgRows.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      OW/UW chips compare each holding&apos;s latest % of AUM
+                      against the average across the top-{peerAvgRows.length}{" "}
+                      same-category peers by AUM ({peerAvgLoadedCount} of{" "}
+                      {peerAvgRows.length} loaded). Peers that don&apos;t hold
+                      a stock count as 0%.
+                    </p>
+                  )}
                 </>
               ) : null}
             </div>
@@ -561,6 +645,9 @@ function FragmentSubHead() {
 
 function Cells({
   cell,
+  peerInfo,
+  peerTarget,
+  showChip,
 }: {
   cell:
     | {
@@ -569,12 +656,25 @@ function Cells({
         arrow: HoldingArrow;
       }
     | undefined;
+  peerInfo?: { avg: number; count: number };
+  peerTarget?: number;
+  showChip?: boolean;
 }) {
   const arrow = cell ? cell.arrow : "missing";
   return (
     <>
       <td className="border-l px-3 py-2.5 text-right tabular text-muted-foreground">
-        {formatPctSafe(cell?.aum_pct_num, 1)}
+        <span className="inline-flex items-center justify-end gap-2 whitespace-nowrap">
+          <span>{formatPctSafe(cell?.aum_pct_num, 1)}</span>
+          {showChip && (
+            <OwUwChip
+              selectedPct={cell?.aum_pct_num ?? null}
+              peerAvg={peerInfo?.avg ?? null}
+              peerCount={peerInfo?.count ?? 0}
+              peerTarget={peerTarget}
+            />
+          )}
+        </span>
       </td>
       <td className="px-3 py-2.5 text-right tabular">
         <span className="inline-flex items-center justify-end gap-1">
