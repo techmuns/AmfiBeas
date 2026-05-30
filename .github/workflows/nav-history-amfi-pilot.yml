@@ -1,0 +1,55 @@
+name: NAV AMFI history chunk pilot (temporary, manual)
+
+# TEMPORARY read-only pilot (Phase 3.2F). Manual trigger only — NO schedule.
+# Fetches AMFI historical NAV across 75-day chunks (15 months by default) for
+# the 12 representative pilot funds, computes 1M/3M/6M/1Y returns, and writes
+# a gitignored report at data/debug/nav-history-amfi-pilot-report.json,
+# uploaded below as an artifact. Does NOT write production history files, does
+# NOT commit anything, does NOT touch the dashboard. Delete this workflow once
+# the chunked-backfill path is validated.
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are you running the chunked AMFI history pilot? (optional)"
+        required: false
+        type: string
+
+# Read-only: the job never pushes or commits. Artifact upload needs no write
+# scope on repo contents.
+permissions:
+  contents: read
+
+concurrency:
+  group: nav-history-amfi-pilot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pilot:
+    runs-on: ubuntu-22.04
+    # 15 chunks × ~1.2s polite delay + per-window fetch + parse ≈ a few minutes;
+    # 20-min ceiling absorbs any AMFI portal slowness without overrunning.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run AMFI chunked historical pilot (12 funds, 15 months, 75-day chunks)
+        # The pilot exits non-zero only when NO window yields usable rows; the
+        # report is always written first. continue-on-error keeps the upload
+        # step reachable so partial findings are preserved.
+        continue-on-error: true
+        run: npx tsx scripts/ingest/nav-history-amfi-pilot.ts
+      - name: Upload pilot report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nav-history-amfi-pilot-report
+          path: data/debug/nav-history-amfi-pilot-report.json
+          if-no-files-found: warn
+          retention-days: 14
