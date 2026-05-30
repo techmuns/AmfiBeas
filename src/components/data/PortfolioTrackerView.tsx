@@ -6,6 +6,10 @@ import { cn } from "@/lib/cn";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
 import { SameCategoryFunds } from "@/components/data/SameCategoryFunds";
 import {
+  PortfolioHeadToHead,
+  isLikelySameScheme,
+} from "@/components/data/PortfolioHeadToHead";
+import {
   SectorAllocationChart,
   type SectorAllocationRow,
 } from "@/components/data/SectorAllocationChart";
@@ -73,6 +77,9 @@ export function PortfolioTrackerView({
   const [query, setQuery] = useState(funds[0]?.fund ?? "");
   const [focused, setFocused] = useState(false);
   const [holdingQuery, setHoldingQuery] = useState("");
+  // Head-to-head fund B — null means "use the variant-skipped default
+  // for the current A". Cleared whenever A changes (see effect below).
+  const [bUserPick, setBUserPick] = useState<string | null>(null);
 
   // Fetched holdings, keyed by schemecode, so re-selecting never refetches.
   const [loaded, setLoaded] = useState<Record<string, FundPortfolio>>({});
@@ -186,6 +193,85 @@ export function PortfolioTrackerView({
   function retry() {
     if (!selectedEntry) return;
     const code = selectedEntry.schemecode;
+    setErrored((prev) => {
+      const next = { ...prev };
+      delete next[code];
+      return next;
+    });
+    setReloadNonce((n) => n + 1);
+  }
+
+  // Head-to-head: same-category cohort with A removed. The picker UI
+  // surfaces every entry here verbatim (including variant twins of A).
+  const bCandidates = useMemo(() => {
+    if (!selectedEntry) return [] as FundDirectoryEntry[];
+    return sameCategoryFunds.filter(
+      (f) => f.schemecode !== selectedEntry.schemecode
+    );
+  }, [sameCategoryFunds, selectedEntry]);
+
+  // Default B = largest non-variant peer by AUM (variant skip per
+  // Revision 2). If every candidate is a flagged variant of A, fall back
+  // to the largest non-A candidate so the tab still functions.
+  const defaultBCode = useMemo(() => {
+    if (!selectedEntry || bCandidates.length === 0) return null;
+    const preferred = bCandidates.find(
+      (c) => !isLikelySameScheme(selectedEntry, c)
+    );
+    return preferred?.schemecode ?? bCandidates[0]?.schemecode ?? null;
+  }, [bCandidates, selectedEntry]);
+
+  const effectiveBCode = bUserPick ?? defaultBCode;
+  const effectiveBEntry = effectiveBCode
+    ? funds.find((f) => f.schemecode === effectiveBCode) ?? null
+    : null;
+  const bPortfolio = effectiveBCode ? loaded[effectiveBCode] ?? undefined : undefined;
+  const bErrored = effectiveBCode ? Boolean(errored[effectiveBCode]) : false;
+  const bLoading = Boolean(effectiveBCode) && !bPortfolio && !bErrored;
+
+  // Revision 1: every A-change clears the user's B pick so default-B
+  // re-derives against the new cohort. Done unconditionally — we do not
+  // try to preserve an old B even when it would still be a valid peer.
+  // Set-during-render pattern (React's recommended "adjusting state on
+  // prop change" approach) avoids the extra commit an effect would add.
+  const [prevSelectedCode, setPrevSelectedCode] = useState(selectedCode);
+  if (prevSelectedCode !== selectedCode) {
+    setPrevSelectedCode(selectedCode);
+    setBUserPick(null);
+  }
+
+  // Dedicated fetch for B when it sits OUTSIDE the top-21 peer fetch
+  // cohort. Uses refs (loadedRef/erroredRef) so unrelated peer landings
+  // don't abort and restart this fetch.
+  useEffect(() => {
+    const code = effectiveBCode;
+    if (!code) return;
+    if (loadedRef.current[code] || erroredRef.current[code]) return;
+    const entry = funds.find((f) => f.schemecode === code);
+    if (!entry) return;
+    const ctrl = new AbortController();
+    fetch(entry.path, { signal: ctrl.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json() as Promise<FundPortfolio>;
+      })
+      .then((data) =>
+        setLoaded((prev) => (prev[code] ? prev : { ...prev, [code]: data }))
+      )
+      .catch((e: unknown) => {
+        if ((e as Error).name === "AbortError") return;
+        setErrored((prev) => (prev[code] ? prev : { ...prev, [code]: true }));
+      });
+    return () => ctrl.abort();
+  }, [effectiveBCode, funds, reloadNonce]);
+
+  function pickB(code: string) {
+    setBUserPick(code);
+  }
+
+  function retryB() {
+    if (!effectiveBCode) return;
+    const code = effectiveBCode;
     setErrored((prev) => {
       const next = { ...prev };
       delete next[code];
@@ -629,10 +715,36 @@ export function PortfolioTrackerView({
           )}
 
           {activeTab === "head-to-head" && (
-            <PlaceholderCard
-              title="Head-to-head"
-              body="Coming soon: direct competitor comparison (e.g. HDFC Flexi Cap vs ICICI Flexi Cap)."
-            />
+            <>
+              {loading ? (
+                loaderUi
+              ) : hasError ? (
+                errorUi
+              ) : !portfolio ? null : !selectedEntry.classification ? (
+                <div className="rounded-md border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">
+                  Head-to-head requires a categorised equity fund — this fund
+                  has no classification.
+                </div>
+              ) : sameCategoryFunds.length <= 1 ? (
+                <div className="rounded-md border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">
+                  No same-category peers available in{" "}
+                  {selectedEntry.classification}.
+                </div>
+              ) : (
+                <PortfolioHeadToHead
+                  aEntry={selectedEntry}
+                  aPortfolio={portfolio}
+                  bEntry={effectiveBEntry}
+                  bPortfolio={bPortfolio}
+                  bLoading={bLoading}
+                  bErrored={bErrored}
+                  onPickB={pickB}
+                  onRetryB={retryB}
+                  bCandidates={bCandidates}
+                  category={selectedEntry.classification}
+                />
+              )}
+            </>
           )}
 
           {activeTab === "trends" && (
