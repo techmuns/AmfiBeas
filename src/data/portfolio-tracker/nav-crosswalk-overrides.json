@@ -1,7 +1,217 @@
 {
   "meta": {
     "version": 1,
-    "note": "Manual RupeeVest → AMFI scheme-code/ISIN crosswalk overrides. Reviewed mappings used by scripts/ingest/nav-source-discovery.ts. An override entry takes precedence over the name-matching engine and is treated as confidence='override'. Either amfiSchemeCode or isin must be set (both is fine); the other fields are documentation."
+    "note": "Manual RupeeVest → AMFI scheme-code/ISIN crosswalk overrides. Reviewed mappings used by scripts/ingest/nav-source-discovery.ts. An override entry takes precedence over the name-matching engine and is treated as confidence='override'. Either amfiSchemeCode or isin must be set (both is fine); the other fields are documentation. When ISIN is null, the override is keyed by amfiSchemeCode alone — the script's invalid-override sanity check (both keys must agree) is skipped, and the canonical ISIN can be populated from the feed in a later pass."
   },
-  "overrides": []
+  "overrides": [
+    {
+      "schemecode": "301",
+      "fundName": "Aditya Birla SL Dividend Yield Fund-Reg(G)",
+      "amfiSchemeCode": 101738,
+      "isin": null,
+      "amfiSchemeName": "Aditya Birla Sun Life Dividend Yield Fund - Growth - Regular Plan",
+      "reason": "Ambiguous review (2 AMFI normalized-name candidates). RV is -Reg(G) = Regular+Growth; AMFI 101738 explicit 'Growth - Regular Plan'.",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    },
+    {
+      "schemecode": "2709",
+      "fundName": "SBI Arbitrage Opportunities Fund-Reg(G)",
+      "amfiSchemeCode": 104457,
+      "isin": "INF200K01156",
+      "amfiSchemeName": "SBI Arbitrage Opportunities Fund - Regular Plan - Gr",
+      "reason": "Low-tier review match (Jaccard 0.75). AMFI uses the 'Gr' abbreviation for Growth, which the tokenizer can't equate to 'Growth'. Same SBI AMC, Regular plan. ISIN verified from review artifact.",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    },
+    {
+      "schemecode": "3367",
+      "fundName": "Franklin India Dividend Yield Fund(G)",
+      "amfiSchemeCode": 118527,
+      "isin": null,
+      "amfiSchemeName": "Franklin India Dividend Yield Fund - Direct - Growth",
+      "reason": "Ambiguous review (4 AMFI normalized-name candidates: Direct/Regular × Growth/IDCW). RV (G) = Direct+Growth (RV convention); AMFI 118527 explicit 'Direct - Growth'.",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    },
+    {
+      "schemecode": "4228",
+      "fundName": "Kotak Infra & Eco Reform Fund(G)",
+      "amfiSchemeCode": 133801,
+      "isin": null,
+      "amfiSchemeName": "Kotak Infrastructure & Economic Reform Fund- Direct Plan- Growth Option",
+      "reason": "Unmatched (Jaccard 0.6). RV abbreviates Infra→Infrastructure and Eco→Economic, which the tokenizer didn't equate. Same Kotak AMC, Direct+Growth per RV (G) convention.",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    },
+    {
+      "schemecode": "4584",
+      "fundName": "DSP Natural Res & New Energy Fund-Reg(G)",
+      "amfiSchemeCode": 108202,
+      "isin": null,
+      "amfiSchemeName": "DSP Natural Resources And New Energy Fund - Regular - Growth",
+      "reason": "Unmatched (Jaccard 0.667). RV abbreviates Res→Resources. Same DSP AMC, Energy/Power sectoral, Regular+Growth.",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    },
+    {
+      "schemecode": "17588",
+      "fundName": "ICICI Pru Dividend Yield Equity Fund(G)",
+      "amfiSchemeCode": 129312,
+      "isin": null,
+      "amfiSchemeName": "ICICI Prudential Dividend Yield Equity Fund Direct Plan Growth Option",
+      "reason": "Ambiguous review (4 AMFI normalized-name candidates: Direct/Regular × Growth/IDCW). RV (G) = Direct+Growth; AMFI 129312 explicit 'Direct Plan Growth Option'.",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    },
+    {
+      "schemecode": "33800",
+      "fundName": "Baroda BNP Paribas Aggressive Hybrid Fund-Reg(G)",
+      "amfiSchemeCode": 150258,
+      "isin": "INF251K01OW4",
+      "amfiSchemeName": "Baroda BNP Paribas Aggressive Hybrid Fund- REGULAT PLAN -GROWTH OPTION",
+      "reason": "Low-tier review (Jaccard 0.833). AMFI scheme name has a 'REGULAT' typo for 'Regular'. Same AMC, plan, growth option. ISIN verified from review artifact.",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    },
+    {
+      "schemecode": "34004",
+      "fundName": "Axis Childrens Fund-No Lock in-Reg(G)",
+      "amfiSchemeCode": 135766,
+      "isin": null,
+      "amfiSchemeName": "Axis Children's Fund - No Lock in - Regular Plan - Growth",
+      "reason": "Unmatched (Jaccard 0.571). RV 'Childrens' vs AMFI 'Children's' tokenize differently (apostrophe stripped to space). Identical scheme: Axis Children's Fund, No Lock in, Regular+Growth.",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    },
+    {
+      "schemecode": "34008",
+      "fundName": "Axis Childrens Fund-Compulsory Lock in-Reg(G)",
+      "amfiSchemeCode": 135759,
+      "isin": null,
+      "amfiSchemeName": "Axis Children's Fund - Lock in - Regular Growth",
+      "reason": "Unmatched (Jaccard 0.429). RV 'Childrens' apostrophe issue + 'Compulsory Lock in' vs 'Lock in'. Axis has exactly two variants: 'Lock in' (the compulsory-until-18 plan) and 'No Lock in' (schemecode 34004 above). RV 'Compulsory Lock in' maps to AMFI 'Lock in' by elimination.",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    },
+    {
+      "schemecode": "34199",
+      "fundName": "SBI Childrens Fund-Investment Plan-Reg(G)",
+      "amfiSchemeCode": 148489,
+      "isin": null,
+      "amfiSchemeName": "SBI Children's Fund - Investment Plan - Regular Plan - Growth",
+      "reason": "Unmatched (Jaccard 0.4). RV 'Childrens' vs AMFI 'Children's' apostrophe issue. Identical scheme: SBI Children's Fund, Investment Plan, Regular+Growth.",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    },
+    {
+      "schemecode": "37338",
+      "fundName": "UTI Nifty Next 50 ETF",
+      "amfiSchemeCode": 141665,
+      "isin": "INF789F1AUW9",
+      "amfiSchemeName": "UTI Nifty Next 50 Exchange Traded Fund",
+      "reason": "Low-tier review (Jaccard 0.714). 'ETF' vs 'Exchange Traded Fund' — token-set differs by abbreviation. Same UTI Nifty Next 50 underlying. ISIN verified from review artifact.",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    },
+    {
+      "schemecode": "41017",
+      "fundName": "Tata Nifty 50 ETF",
+      "amfiSchemeCode": 145801,
+      "isin": null,
+      "amfiSchemeName": "Tata Nifty 50 Exchange Traded Fund",
+      "reason": "Unmatched (Jaccard 0.667). 'ETF' vs 'Exchange Traded Fund' abbreviation. Same Tata AMC, same Nifty 50 underlying.",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    },
+    {
+      "schemecode": "41332",
+      "fundName": "LIC MF Dividend Yield Fund-Reg(G)",
+      "amfiSchemeCode": 152019,
+      "isin": null,
+      "amfiSchemeName": "LIC MF Dividend Yield Fund-Regular Plan-Growth",
+      "reason": "Ambiguous review (2 AMFI normalized-name candidates). RV -Reg(G) = Regular+Growth; AMFI 152019 explicit 'Regular Plan-Growth'.",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    },
+    {
+      "schemecode": "43789",
+      "fundName": "Motilal Oswal Nifty Bank Index Fund-Reg(G)",
+      "amfiSchemeCode": 147619,
+      "isin": "INF247L01882",
+      "amfiSchemeName": "Motilal Oswal Nifty Bank Index - Regular Plan",
+      "reason": "Low-tier review (Jaccard 0.833). AMFI scheme name omits 'Fund' suffix. Same Motilal Oswal Nifty Bank Index, Regular plan. ISIN verified from review artifact.",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    },
+    {
+      "schemecode": "43811",
+      "fundName": "Motilal Oswal Nifty Smallcap 250 Index Fund-Reg(G)",
+      "amfiSchemeCode": 147624,
+      "isin": "INF247L01924",
+      "amfiSchemeName": "Motilal Oswal Nifty Smallcap 250 Index - Regular Plan",
+      "reason": "Medium-tier review (Jaccard 0.857). AMFI scheme name omits 'Fund' suffix. Same Motilal Oswal Nifty Smallcap 250 Index, Regular plan. ISIN verified from review artifact.",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    },
+    {
+      "schemecode": "45374",
+      "fundName": "Tata Dividend Yield Fund-Reg(G)",
+      "amfiSchemeCode": 148948,
+      "isin": null,
+      "amfiSchemeName": "Tata Dividend Yield Fund-Regular Plan-Growth",
+      "reason": "Ambiguous review (3 AMFI normalized-name candidates: Direct/Regular × Growth/IDCW). RV -Reg(G) = Regular+Growth; AMFI 148948 explicit 'Regular Plan-Growth'.",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    },
+    {
+      "schemecode": "48472",
+      "fundName": "WOC Pharma and Healthcare Fund-Reg(G)",
+      "amfiSchemeCode": 152348,
+      "isin": null,
+      "amfiSchemeName": "WhiteOak Capital Pharma and Heathcare Fund Regular Plan Growth",
+      "reason": "Unmatched (Jaccard 0.6). AMFI typo 'Heathcare' (missing 'l') breaks token match with RV 'Healthcare'. Same WhiteOak Capital AMC (WOC alias resolves).",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    },
+    {
+      "schemecode": "49067",
+      "fundName": "Baroda BNP Paribas Dividend Yield Fund-Reg(G)",
+      "amfiSchemeCode": 152807,
+      "isin": null,
+      "amfiSchemeName": "Baroda BNP Paribas Dividend Yield Fund - Regular Plan - Growth Option",
+      "reason": "Ambiguous review (2 AMFI normalized-name candidates). RV -Reg(G) = Regular+Growth; AMFI 152807 explicit 'Regular Plan - Growth Option'.",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    },
+    {
+      "schemecode": "50688",
+      "fundName": "Canara Rob Banking & Financial Services Fund-Reg(G)",
+      "amfiSchemeCode": 154248,
+      "isin": null,
+      "amfiSchemeName": "Canara Robeco Banking and Financials Services Fund - Regular Plan - Growth",
+      "reason": "Unmatched (Jaccard 0.667). AMFI 'Financials' (with s) vs RV 'Financial' tokenize differently. Same Canara Robeco AMC (Canara Rob alias resolves).",
+      "manual": true,
+      "reviewedBy": "Claude",
+      "reviewedAt": "2026-05-30"
+    }
+  ]
 }
