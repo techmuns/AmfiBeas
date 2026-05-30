@@ -1,0 +1,63 @@
+name: NAV latest snapshot (manual validation)
+
+# TEMPORARY manual-only validation job for Phase 3.1A. NO schedule yet — the
+# daily cron is added only after the first snapshot is reviewed and approved.
+# Runs scripts/ingest/nav-latest.ts (AMFI NAVAll + shared crosswalk + curated
+# overrides), uploads the snapshot as an artifact for review, and — matching
+# the existing ingest.yml convention — commits the snapshot to the branch if
+# it changed. Production set is exact + high + override only; the script
+# keeps-last-good (exits without writing) if the feed is unreachable.
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: "Commit the snapshot to the branch? (false = artifact only)"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nav-latest-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  nav-latest:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate latest NAV snapshot
+        run: npm run ingest:nav:latest
+      - name: Upload snapshot artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mf-latest-nav
+          path: src/data/snapshots/mf-latest-nav.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Commit snapshot
+        if: ${{ inputs.commit == 'true' }}
+        run: |
+          if [ -z "$(git status --porcelain src/data/snapshots/mf-latest-nav.json)" ]; then
+            echo "No snapshot changes."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/snapshots/mf-latest-nav.json
+          git commit -m "chore(data): refresh latest NAV snapshot ($(date -u +%Y-%m-%d))"
+          git push
