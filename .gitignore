@@ -14,6 +14,10 @@ next-env.d.ts
 *.tsbuildinfo
 coverage
 
+# Dry-run / debug outputs (e.g. nav-crosswalk-report.json from Phase 3.0B).
+# Not for commit unless explicitly approved.
+data/debug/
+
 # OpenNext
 .open-next
 
