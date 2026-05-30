@@ -89,9 +89,17 @@ interface FundFetchResult {
   isin: string | null;
   matchConfidence: string;
   status: "ok" | "error";
+  // --- request diagnostics (Phase 3.2C) ---
+  url: string;
+  requestedAt: string;
   httpStatus: number | null;
+  contentType: string | null;
+  bodyPreview: string | null;
+  parseError?: string;
+  failureReason?: string;
   error?: string;
   responseMs: number;
+  // --- parsed result ---
   points: number;
   firstDate: string | null;
   lastDate: string | null;
@@ -104,6 +112,7 @@ interface CrossCheckResult {
   schemecode: string;
   amfiSchemeCode: number;
   fundName: string;
+  amfiPointsFound: number; // distinct AMFI NAV dates for this code in the window (independent of MFAPI)
   comparedDates: number;
   withinTolerance: number;
   matchRatePct: number;
@@ -159,20 +168,42 @@ function dayDiff(isoStart: string, isoEnd: string): number {
 }
 
 // ---------------------------------------------------------------------------
-// Fetch helper (permissive — never throws)
+// Fetch helper (permissive — never throws; captures rich diagnostics)
 // ---------------------------------------------------------------------------
 
-interface FetchOut { ok: boolean; status: number | null; text: string | null; error?: string; ms: number }
+const BODY_PREVIEW_LIMIT = 1024; // bytes of response body retained for diagnosis
+
+function makePreview(text: string): string {
+  const head = text.slice(0, BODY_PREVIEW_LIMIT).replace(/\s+/g, " ").trim();
+  return text.length > BODY_PREVIEW_LIMIT ? `${head} … [truncated, total ${text.length} bytes]` : head;
+}
+
+interface FetchOut {
+  ok: boolean;
+  status: number | null;
+  text: string | null;
+  contentType: string | null;
+  bodyPreview: string | null;
+  requestedAt: string;
+  error?: string;
+  ms: number;
+}
 async function politeFetch(url: string, timeoutMs = 45_000): Promise<FetchOut> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   const t0 = Date.now();
+  const requestedAt = new Date(t0).toISOString();
   try {
     const res = await fetch(url, { signal: ctrl.signal, headers: { "user-agent": USER_AGENT, accept: "application/json,text/plain,*/*" } });
     const text = await res.text();
-    return { ok: res.ok, status: res.status, text, ms: Date.now() - t0 };
+    return {
+      ok: res.ok, status: res.status, text,
+      contentType: res.headers.get("content-type"),
+      bodyPreview: makePreview(text),
+      requestedAt, ms: Date.now() - t0,
+    };
   } catch (e) {
-    return { ok: false, status: null, text: null, error: (e as Error).message, ms: Date.now() - t0 };
+    return { ok: false, status: null, text: null, contentType: null, bodyPreview: null, requestedAt, error: (e as Error).message, ms: Date.now() - t0 };
   } finally {
     clearTimeout(t);
   }
@@ -184,10 +215,24 @@ async function politeFetch(url: string, timeoutMs = 45_000): Promise<FetchOut> {
 
 interface MfapiResponse { meta?: Record<string, unknown>; data?: Array<{ date?: string; nav?: string }>; status?: string }
 
-function parseMfapiSeries(text: string): SeriesPoint[] {
+interface MfapiParse {
+  series: SeriesPoint[];
+  parseError: string | null; // set when a 200 body could not be turned into a series
+  shapeOk: boolean; // true when JSON parsed AND had a `data` array
+  rawCount: number; // raw `data` rows seen (pre-filter)
+}
+
+function parseMfapiSeries(text: string): MfapiParse {
   let json: MfapiResponse;
-  try { json = JSON.parse(text) as MfapiResponse; } catch { return []; }
-  const data = Array.isArray(json.data) ? json.data : [];
+  try {
+    json = JSON.parse(text) as MfapiResponse;
+  } catch (e) {
+    return { series: [], parseError: `JSON parse failed: ${(e as Error).message}`, shapeOk: false, rawCount: 0 };
+  }
+  if (!Array.isArray(json.data)) {
+    return { series: [], parseError: "response JSON has no 'data' array", shapeOk: false, rawCount: 0 };
+  }
+  const data = json.data;
   const out: SeriesPoint[] = [];
   for (const row of data) {
     if (!row.date || !row.nav) continue;
@@ -197,7 +242,12 @@ function parseMfapiSeries(text: string): SeriesPoint[] {
     out.push({ date: iso, nav });
   }
   out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0)); // ISO sorts lexically
-  return out;
+  return {
+    series: out,
+    parseError: out.length === 0 ? `data array had ${data.length} rows but 0 usable NAV points` : null,
+    shapeOk: true,
+    rawCount: data.length,
+  };
 }
 
 /** Last point on or before targetIso (nearest-prior); null if none. */
@@ -274,6 +324,14 @@ interface AmfiCrossCheck {
   attempted: boolean;
   reachable: boolean;
   error?: string;
+  // --- request diagnostics (Phase 3.2C) ---
+  url: string;
+  requestedAt: string | null;
+  httpStatus: number | null;
+  contentType: string | null;
+  bodyPreview: string | null;
+  parseError?: string;
+  failureReason?: string;
   windowFrom: string;
   windowTo: string;
   rowsParsed: number;
@@ -286,12 +344,34 @@ async function runAmfiCrossCheck(
   const windowTo = utcShiftToDDMMMYYYY(0);
   const windowFrom = utcShiftToDDMMMYYYY(AMFI_WINDOW_DAYS);
   const url = `${AMFI_HISTORY_BASE}?frmdt=${windowFrom}&todt=${windowTo}`;
-  info(`[amfi] cross-check window ${windowFrom} → ${windowTo}`);
+  info(`[amfi] historical request ${windowFrom} → ${windowTo}`);
   const res = await politeFetch(url, 60_000);
+  const diag = {
+    attempted: true as const,
+    url,
+    requestedAt: res.requestedAt,
+    httpStatus: res.status,
+    contentType: res.contentType,
+    bodyPreview: res.bodyPreview,
+    windowFrom,
+    windowTo,
+  };
   if (!res.ok || !res.text || res.text.length < 200) {
-    return { attempted: true, reachable: false, error: res.error ?? `HTTP ${res.status ?? "?"} (bytes=${res.text?.length ?? 0})`, windowFrom, windowTo, rowsParsed: 0, results: [] };
+    return {
+      ...diag, reachable: false,
+      error: res.error ?? `HTTP ${res.status ?? "?"} (bytes=${res.text?.length ?? 0})`,
+      failureReason: res.error ? `network error: ${res.error}` : `HTTP ${res.status ?? "?"} or body too short (bytes=${res.text?.length ?? 0})`,
+      rowsParsed: 0, results: [],
+    };
   }
-  const rows = parseNavAll(res.text);
+
+  let rows: ReturnType<typeof parseNavAll>;
+  try {
+    rows = parseNavAll(res.text);
+  } catch (e) {
+    return { ...diag, reachable: true, parseError: `parseNavAll threw: ${(e as Error).message}`, failureReason: "AMFI body received but parseNavAll failed", rowsParsed: 0, results: [] };
+  }
+
   // amfiSchemeCode → (isoDate → nav)
   const wanted = new Set(funds.map((f) => f.amfiSchemeCode));
   const byCode = new Map<number, Map<string, number>>();
@@ -306,31 +386,35 @@ async function runAmfiCrossCheck(
   const results: CrossCheckResult[] = [];
   for (const f of funds) {
     const amfiMap = byCode.get(f.amfiSchemeCode);
-    if (!amfiMap || amfiMap.size === 0) {
-      results.push({ schemecode: f.schemecode, amfiSchemeCode: f.amfiSchemeCode, fundName: f.fundName, comparedDates: 0, withinTolerance: 0, matchRatePct: 0, maxAbsDiff: null, maxPctDiff: null });
-      continue;
-    }
+    const amfiPointsFound = amfiMap?.size ?? 0;
+    // Compare against MFAPI only when we actually have an MFAPI series; an
+    // empty series still yields amfiPointsFound so we learn AMFI reachability
+    // and per-code presence even when MFAPI was down.
     const mfapiByDate = new Map(f.series.map((p) => [p.date, p.nav]));
     let compared = 0, within = 0, maxAbs = 0, maxPct = 0;
-    for (const [iso, amfiNav] of amfiMap) {
-      const mfapiNav = mfapiByDate.get(iso);
-      if (mfapiNav === undefined) continue;
-      compared += 1;
-      const absDiff = Math.abs(mfapiNav - amfiNav);
-      const pctDiff = amfiNav !== 0 ? (absDiff / amfiNav) * 100 : 0;
-      if (pctDiff <= NAV_TOLERANCE_PCT) within += 1;
-      if (absDiff > maxAbs) maxAbs = absDiff;
-      if (pctDiff > maxPct) maxPct = pctDiff;
+    if (amfiMap) {
+      for (const [iso, amfiNav] of amfiMap) {
+        const mfapiNav = mfapiByDate.get(iso);
+        if (mfapiNav === undefined) continue;
+        compared += 1;
+        const absDiff = Math.abs(mfapiNav - amfiNav);
+        const pctDiff = amfiNav !== 0 ? (absDiff / amfiNav) * 100 : 0;
+        if (pctDiff <= NAV_TOLERANCE_PCT) within += 1;
+        if (absDiff > maxAbs) maxAbs = absDiff;
+        if (pctDiff > maxPct) maxPct = pctDiff;
+      }
     }
     results.push({
       schemecode: f.schemecode, amfiSchemeCode: f.amfiSchemeCode, fundName: f.fundName,
+      amfiPointsFound,
       comparedDates: compared, withinTolerance: within,
       matchRatePct: compared > 0 ? round2((within / compared) * 100) : 0,
       maxAbsDiff: compared > 0 ? round2(maxAbs) : null,
       maxPctDiff: compared > 0 ? round2(maxPct) : null,
     });
   }
-  return { attempted: true, reachable: true, windowFrom, windowTo, rowsParsed: rows.length, results };
+  const parseError = rows.length === 0 ? "AMFI body received but parseNavAll returned 0 rows" : undefined;
+  return { ...diag, reachable: true, parseError, rowsParsed: rows.length, results };
 }
 
 // ---------------------------------------------------------------------------
@@ -356,52 +440,64 @@ async function main(): Promise<void> {
   const fetchResults: FundFetchResult[] = [];
   const seriesByCode = new Map<string, SeriesPoint[]>();
   for (const f of pilot) {
+    const url = `${MFAPI_BASE}/${f.amfiSchemeCode}`;
     info(`[mfapi] ${f.schemecode} → ${f.amfiSchemeCode} (${f.fundName})`);
-    const res = await politeFetch(`${MFAPI_BASE}/${f.amfiSchemeCode}`, 45_000);
+    const res = await politeFetch(url, 45_000);
     const base: FundFetchResult = {
       schemecode: f.schemecode, fundName: f.fundName, classification: f.classification,
       amfiSchemeCode: f.amfiSchemeCode, isin: f.isin, matchConfidence: f.matchConfidence,
-      status: "error", httpStatus: res.status, responseMs: res.ms,
+      status: "error",
+      url, requestedAt: res.requestedAt, httpStatus: res.status, contentType: res.contentType, bodyPreview: res.bodyPreview,
+      responseMs: res.ms,
       points: 0, firstDate: null, lastDate: null, latestNav: null, returns: {}, dataAvailability: {},
     };
     if (!res.ok || !res.text) {
       base.error = res.error ?? `HTTP ${res.status ?? "?"}`;
+      base.failureReason = res.error ? `network error: ${res.error}` : `non-OK HTTP ${res.status ?? "?"}`;
       fetchResults.push(base);
       await sleep(POLITE_DELAY_MS);
       continue;
     }
-    const series = parseMfapiSeries(res.text);
-    if (series.length === 0) {
-      base.error = "no usable NAV points in MFAPI response";
+    const parsed = parseMfapiSeries(res.text);
+    if (parsed.series.length === 0) {
+      base.error = parsed.parseError ?? "no usable NAV points in MFAPI response";
+      base.parseError = parsed.parseError ?? undefined;
+      base.failureReason = parsed.shapeOk
+        ? `HTTP 200 but ${parsed.parseError}`
+        : `HTTP 200 but response not in expected {meta,data} shape: ${parsed.parseError}`;
       fetchResults.push(base);
       await sleep(POLITE_DELAY_MS);
       continue;
     }
-    seriesByCode.set(f.schemecode, series);
-    const { returns, availability } = computeReturns(series);
+    seriesByCode.set(f.schemecode, parsed.series);
+    const { returns, availability } = computeReturns(parsed.series);
     fetchResults.push({
       ...base, status: "ok",
-      points: series.length, firstDate: series[0].date, lastDate: series[series.length - 1].date,
-      latestNav: series[series.length - 1].nav, returns, dataAvailability: availability,
+      points: parsed.series.length, firstDate: parsed.series[0].date, lastDate: parsed.series[parsed.series.length - 1].date,
+      latestNav: parsed.series[parsed.series.length - 1].nav, returns, dataAvailability: availability,
     });
     await sleep(POLITE_DELAY_MS);
   }
 
   const okResults = fetchResults.filter((r) => r.status === "ok");
 
-  // 2. AMFI cross-check for the first few funds that have MFAPI series.
-  const crossFunds = okResults.slice(0, AMFI_CROSSCHECK_FUNDS).map((r) => ({
-    schemecode: r.schemecode, fundName: r.fundName, amfiSchemeCode: r.amfiSchemeCode,
-    series: seriesByCode.get(r.schemecode) ?? [],
+  // 2. AMFI historical request — ALWAYS attempted (Phase 3.2C), keyed off the
+  // pilot AMFI scheme codes, NOT MFAPI success. This independently measures
+  // whether AMFI historical is reachable from CI even when MFAPI is down. The
+  // MFAPI series (if any) is passed in for the tolerance comparison; an empty
+  // series still yields amfiPointsFound per code.
+  const crossFunds = pilot.slice(0, AMFI_CROSSCHECK_FUNDS).map((f) => ({
+    schemecode: f.schemecode, fundName: f.fundName, amfiSchemeCode: f.amfiSchemeCode,
+    series: seriesByCode.get(f.schemecode) ?? [],
   }));
   let crossCheck: AmfiCrossCheck;
   if (crossFunds.length === 0) {
-    crossCheck = { attempted: false, reachable: false, error: "no MFAPI series available to cross-check", windowFrom: "", windowTo: "", rowsParsed: 0, results: [] };
+    crossCheck = { attempted: false, reachable: false, error: "no pilot funds resolved", url: "", requestedAt: null, httpStatus: null, contentType: null, bodyPreview: null, windowFrom: "", windowTo: "", rowsParsed: 0, results: [] };
   } else {
     try {
       crossCheck = await runAmfiCrossCheck(crossFunds);
     } catch (e) {
-      crossCheck = { attempted: true, reachable: false, error: (e as Error).message, windowFrom: "", windowTo: "", rowsParsed: 0, results: [] };
+      crossCheck = { attempted: true, reachable: false, error: (e as Error).message, failureReason: `runAmfiCrossCheck threw: ${(e as Error).message}`, url: "", requestedAt: null, httpStatus: null, contentType: null, bodyPreview: null, windowFrom: "", windowTo: "", rowsParsed: 0, results: [] };
     }
   }
 
@@ -425,7 +521,7 @@ async function main(): Promise<void> {
     summary: buildVerdictText(okResults.length, fetchResults.length, crossCheck, crossRatePct),
   };
 
-  const recommendation = buildRecommendation(okResults.length, fetchResults.length, crossCheck.reachable, crossRatePct);
+  const recommendation = buildRecommendation(okResults.length, fetchResults.length, crossCheck, crossRatePct);
 
   const report = {
     meta: {
@@ -460,39 +556,61 @@ async function main(): Promise<void> {
     warn(`could not write report: ${(e as Error).message}`);
   }
 
-  printSummary(verdict, crossCheck, periodCoverage, recommendation);
+  printSummary(verdict, crossCheck, periodCoverage, recommendation, fetchResults);
 
-  // Exit non-zero only if no usable MFAPI histories OR report unwritable.
-  if (!verdict.mfapiUsable) { warn("no usable MFAPI histories fetched"); process.exit(1); }
+  // Exit non-zero only if NO usable historical data was obtained from EITHER
+  // source (MFAPI series OR AMFI rows) — or the report could not be written.
+  // The diagnostic report is always written first regardless.
+  const anyHistorical = verdict.mfapiUsable || (crossCheck.reachable && crossCheck.rowsParsed > 0);
   if (!wrote) process.exit(1);
+  if (!anyHistorical) { warn("no usable historical data from MFAPI or AMFI"); process.exit(1); }
 }
 
 function buildVerdictText(ok: number, total: number, cross: AmfiCrossCheck, crossRate: number | null): string {
   const parts = [`MFAPI: ${ok}/${total} pilot funds returned usable history.`];
-  if (!cross.attempted) parts.push("AMFI cross-check not attempted (no MFAPI series).");
-  else if (!cross.reachable) parts.push(`AMFI cross-check endpoint NOT reachable from runner (${cross.error}). MFAPI-only pilot results stand; AMFI cross-check deferred.`);
-  else parts.push(`AMFI cross-check reachable: ${crossRate ?? "n/a"}% of overlapping NAVs within ${NAV_TOLERANCE_PCT}% tolerance across ${cross.results.length} funds.`);
+  if (!cross.attempted) parts.push("AMFI historical not attempted (no pilot funds resolved).");
+  else if (!cross.reachable) parts.push(`AMFI historical endpoint NOT reachable from runner (${cross.failureReason ?? cross.error}).`);
+  else {
+    const amfiPts = cross.results.reduce((s, r) => s + r.amfiPointsFound, 0);
+    parts.push(`AMFI historical reachable: ${cross.rowsParsed} rows parsed, ${amfiPts} NAV points across ${cross.results.length} pilot codes.`);
+    if (crossRate !== null) parts.push(`Overlap cross-check: ${crossRate}% within ${NAV_TOLERANCE_PCT}% tolerance.`);
+    else parts.push("No MFAPI series to compare against (cross-check tolerance n/a).");
+  }
   return parts.join(" ");
 }
 
-function buildRecommendation(ok: number, total: number, amfiReachable: boolean, crossRate: number | null): string {
-  if (ok === 0) return "BLOCK: MFAPI returned no usable history for any pilot fund. Re-evaluate MFAPI reachability / keying before any backfill.";
-  if (ok < total) return `PROCEED WITH CARE: MFAPI usable for ${ok}/${total}. Backfill design must record per-fund availability and fall back to AMFI historical for misses.`;
-  if (amfiReachable && crossRate !== null && crossRate >= 99) return "PROCEED: MFAPI full-coverage on pilot and agrees with AMFI within tolerance. Recommend Phase 3.2C — MFAPI backfill (small batch, e.g. 50 funds) with AMFI forward-accrual, cross-checked.";
-  if (amfiReachable && crossRate !== null) return `REVIEW: MFAPI full-coverage but only ${crossRate}% within tolerance vs AMFI. Inspect deltas before trusting MFAPI as backfill.`;
-  return "PROCEED (MFAPI-only validation): MFAPI full-coverage on pilot; AMFI cross-check unreachable from runner. Recommend retrying AMFI cross-check, else proceed to a small MFAPI backfill with later AMFI reconciliation.";
+function buildRecommendation(ok: number, total: number, cross: AmfiCrossCheck, crossRate: number | null): string {
+  const amfiUsable = cross.reachable && cross.rowsParsed > 0;
+  // MFAPI entirely down.
+  if (ok === 0) {
+    if (amfiUsable) return "PIVOT TO AMFI: MFAPI returned no usable history (likely transient 502), BUT AMFI historical IS reachable from CI and returned rows for the pilot codes. Recommend Phase 3.2D — AMFI historical chunked backfill as primary, with MFAPI as a later cross-check/recovery source.";
+    return "BLOCK: neither MFAPI nor AMFI historical produced usable data from CI. Inspect the captured contentType/bodyPreview for each (anti-bot HTML / 5xx / network) before choosing a source.";
+  }
+  if (ok < total) return `PROCEED WITH CARE: MFAPI usable for ${ok}/${total}. Backfill must record per-fund availability and fall back to AMFI historical for misses${amfiUsable ? " (AMFI historical confirmed reachable)" : ""}.`;
+  if (crossRate !== null && crossRate >= 99) return "PROCEED: MFAPI full-coverage on pilot and agrees with AMFI within tolerance. Recommend a small MFAPI backfill batch with AMFI forward-accrual, cross-checked.";
+  if (crossRate !== null) return `REVIEW: MFAPI full-coverage but only ${crossRate}% within tolerance vs AMFI. Inspect deltas before trusting MFAPI as backfill.`;
+  return `PROCEED (MFAPI-only): MFAPI full-coverage on pilot; AMFI overlap cross-check not available (${amfiUsable ? "AMFI reachable but no MFAPI overlap dates" : cross.failureReason ?? "AMFI unreachable"}). Recommend retrying AMFI cross-check before a larger backfill.`;
 }
 
 function printSummary(
   verdict: { mfapiOk: number; mfapiFailed: number; amfiCrossCheckReachable: boolean; crossCheckComparedDates: number; crossCheckWithinTolerancePct: number | null },
   cross: AmfiCrossCheck,
   periodCoverage: Record<string, number>,
-  recommendation: string
+  recommendation: string,
+  fetchResults: FundFetchResult[]
 ): void {
   info("================= NAV HISTORY PILOT SUMMARY =================");
   info(`MFAPI usable:   ${verdict.mfapiOk}  ·  failed: ${verdict.mfapiFailed}`);
-  info(`AMFI x-check:   reachable=${verdict.amfiCrossCheckReachable}  compared=${verdict.crossCheckComparedDates}  within-tol=${verdict.crossCheckWithinTolerancePct ?? "n/a"}%`);
-  if (cross.reachable) for (const r of cross.results) info(`   ${r.schemecode} ${r.fundName}: ${r.withinTolerance}/${r.comparedDates} within tol · maxΔ=${r.maxAbsDiff ?? "-"} (${r.maxPctDiff ?? "-"}%)`);
+  // One line per MFAPI fund so the logs alone show status + content-type.
+  for (const r of fetchResults) {
+    const tag = r.status === "ok" ? `ok pts=${r.points} ${r.firstDate}..${r.lastDate}` : `ERR ${r.failureReason ?? r.error}`;
+    info(`   mfapi ${r.amfiSchemeCode} ${r.schemecode}: HTTP ${r.httpStatus ?? "-"} ct=${r.contentType ?? "-"} · ${tag}`);
+  }
+  info(`AMFI historical: attempted=${cross.attempted} reachable=${cross.reachable} HTTP=${cross.httpStatus ?? "-"} ct=${cross.contentType ?? "-"} rows=${cross.rowsParsed}`);
+  if (cross.failureReason) info(`   AMFI failureReason: ${cross.failureReason}`);
+  if (cross.bodyPreview && !cross.reachable) info(`   AMFI bodyPreview: ${cross.bodyPreview.slice(0, 200)}`);
+  for (const r of cross.results) info(`   amfi ${r.amfiSchemeCode} ${r.schemecode}: amfiPts=${r.amfiPointsFound} compared=${r.comparedDates} within=${r.withinTolerance} maxΔ%=${r.maxPctDiff ?? "-"}`);
+  info(`x-check within-tol: ${verdict.crossCheckWithinTolerancePct ?? "n/a"}%  (compared=${verdict.crossCheckComparedDates})`);
   info(`Period coverage (of usable funds): ${["1M", "3M", "6M", "1Y", "3Y", "5Y", "since_inception"].map((k) => `${k}=${periodCoverage[k]}`).join(" ")}`);
   info(`Recommendation: ${recommendation}`);
   info("============================================================");
