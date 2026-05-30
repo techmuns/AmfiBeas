@@ -38,7 +38,7 @@ const REPORT_DIR = path.resolve(process.cwd(), "data/debug");
 const REPORT_PATH = path.join(REPORT_DIR, "nav-source-discovery-report.json");
 const REVIEW_PATH = path.join(REPORT_DIR, "nav-crosswalk-review.json");
 
-const RULE_VERSION = 3;
+const RULE_VERSION = 4;
 const MEDIUM_MIN = 0.85;
 const LOW_MIN = 0.7;
 const RV_VALIDATION_SAMPLE = 10;
@@ -282,9 +282,107 @@ function detectEtf(lower: string): boolean { return /\b(etf|exchange traded)\b/.
 function detectFof(lower: string): boolean { return /\bfof\b|\bfund of funds?\b|\bfund-of-fund\b/.test(lower); }
 function detectIndexFund(lower: string): boolean { return /\bindex fund\b/.test(lower); }
 
+// Raw-level compound rewrites applied before tokenization. Use these only
+// when the abbreviation is unambiguous AND the expansion's tokens already
+// match AMFI's canonical spelling. Each is whole-word anchored.
+const RAW_COMPOUND_REWRITES: Array<[RegExp, string]> = [
+  [/\bfinserv\b/g, "financial services"],
+  [/\bfin serv\b/g, "financial services"],
+  [/\bfin servs\b/g, "financial services"],
+];
+
+// Per-token expansions applied AFTER noise filtering. Both sides go through
+// the same map, so an abbreviation on one side and the full word on the
+// other converge to the same token. Each entry must be unambiguous in fund-
+// scheme context — abbreviations with multiple meanings (e.g. cons →
+// conservative vs consumption) are deliberately omitted.
+const TOKEN_EXPANSIONS: Record<string, string> = {
+  corp: "corporate",
+  opp: "opportunities",
+  opps: "opportunities",
+  mfg: "manufacturing",
+  infra: "infrastructure",
+  sav: "savings",
+  adv: "advantage",
+  serv: "services",
+  servs: "services",
+  fin: "financial",
+};
+
+// AMC fingerprint — used in passesGuards to reject cross-AMC near-matches
+// (e.g. UTI Momentum 30 vs Bandhan Momentum 30, or UTI Nifty200 Quality 30
+// vs SBI Nifty200 Quality 30). Compound entries are checked first; the
+// fingerprint is derived from the token set, not token order. Returning
+// null means "AMC could not be identified" — in that case the guard is
+// skipped (conservative; we don't reject on missing fingerprint).
+const AMC_FINGERPRINTS: Array<{ key: string; required: string[] }> = [
+  { key: "absl",            required: ["aditya", "birla", "sun", "life"] },
+  { key: "icici",           required: ["icici", "prudential"] },
+  { key: "baroda-bnp",      required: ["baroda", "bnp"] },
+  { key: "franklin",        required: ["franklin", "templeton"] },
+  { key: "mahindra-manu",   required: ["mahindra", "manulife"] },
+  { key: "mirae",           required: ["mirae"] },
+  { key: "motilal",         required: ["motilal"] },
+  { key: "parag-parikh",    required: ["parag", "parikh"] },
+  { key: "pgim",            required: ["pgim"] },
+  { key: "bandhan",         required: ["bandhan"] },
+  { key: "canara",          required: ["canara"] },
+  { key: "whiteoak",        required: ["whiteoak"] },
+  { key: "360one",          required: ["360", "one"] },
+  { key: "kotak",           required: ["kotak"] },
+  { key: "hsbc",            required: ["hsbc"] },
+  { key: "dsp",             required: ["dsp"] },
+  { key: "sbi",             required: ["sbi"] },
+  { key: "hdfc",            required: ["hdfc"] },
+  { key: "uti",             required: ["uti"] },
+  { key: "axis",            required: ["axis"] },
+  { key: "tata",            required: ["tata"] },
+  { key: "nippon",          required: ["nippon"] },
+  { key: "edelweiss",       required: ["edelweiss"] },
+  { key: "sundaram",        required: ["sundaram"] },
+  { key: "invesco",         required: ["invesco"] },
+  { key: "lic",             required: ["lic"] },
+  { key: "groww",           required: ["groww"] },
+  { key: "jm-financial",    required: ["jm", "financial"] },
+  { key: "navi",            required: ["navi"] },
+  { key: "trust",           required: ["trust"] },
+  { key: "quantum",         required: ["quantum"] },
+  { key: "quant",           required: ["quant"] },
+  { key: "taurus",          required: ["taurus"] },
+  { key: "shriram",         required: ["shriram"] },
+  { key: "helios",          required: ["helios"] },
+  { key: "samco",           required: ["samco"] },
+  { key: "zerodha",         required: ["zerodha"] },
+  { key: "nj",              required: ["nj"] },
+  { key: "ppfas",           required: ["ppfas"] },
+  { key: "bajaj-finserv",   required: ["bajaj"] },
+  { key: "union",           required: ["union"] },
+  { key: "itimf",           required: ["iti"] },
+  { key: "old-bridge",      required: ["old", "bridge"] },
+  { key: "wealth-co",       required: ["wealth", "company"] },
+  { key: "bank-of-india",   required: ["bank", "india"] },
+  { key: "jio-blackrock",   required: ["jio"] },
+  { key: "angel-one",       required: ["angel", "one"] },
+];
+
+/** Identify an AMC fingerprint from a normalized token list. Returns null
+ *  when no required-token block fully matches — used by the AMC-mismatch
+ *  guard, which only fires when BOTH sides identify a fingerprint and they
+ *  disagree. Order matters: more specific (multi-token) fingerprints come
+ *  first so e.g. ICICI Prudential isn't swallowed by a bare "icici" rule.
+ */
+function extractAmcKey(tokens: string[]): string | null {
+  const set = new Set(tokens);
+  for (const f of AMC_FINGERPRINTS) {
+    if (f.required.every((t) => set.has(t))) return f.key;
+  }
+  return null;
+}
+
 function normalize(name: string): NormalizedName {
   let s = name.toLowerCase().trim();
   for (const [re, sub] of AMC_ALIASES) s = s.replace(re, sub);
+  for (const [re, sub] of RAW_COMPOUND_REWRITES) s = s.replace(re, sub);
   const plan = detectPlan(s);
   const option = detectOption(s);
   const isEtf = detectEtf(s);
@@ -293,16 +391,28 @@ function normalize(name: string): NormalizedName {
   s = s.replace(/\([^)]*\)/g, " ");
   s = s.replace(/[-_/.,&'"]+/g, " ");
   s = s.replace(/[^a-z0-9 ]+/g, " ");
+  // Split letter↔digit transitions so "Nifty50" and "Nifty 50" tokenize the
+  // same way. This is the single biggest source of false negatives in the
+  // index-fund / ETF cohort (RupeeVest often writes "Nifty500" / "Bse100";
+  // AMFI always uses a space).
+  s = s.replace(/([a-z])(\d)/g, "$1 $2");
+  s = s.replace(/(\d)([a-z])/g, "$1 $2");
+  // Canonicalize size-cap tokens to a single joined form so "Large Cap" and
+  // "Largecap" converge, while "Large & Mid Cap" survives as a distinct
+  // ["large", "midcap"] set that the critical-token guards keep separate
+  // from plain "Large Cap" → ["largecap"].
+  s = s.replace(/\b(mid|small|large|micro|mega) cap\b/g, "$1cap");
   s = s.replace(/\s+/g, " ").trim();
   const raw = s.split(" ").filter((t) => t && !NOISE_TOKENS.has(t));
-  // Inject typed markers so they survive noise filtering and participate in
-  // both tokenKey equality AND guard checks.
-  if (isFof) raw.push("fof");
-  if (isEtf && !raw.includes("etf")) raw.push("etf");
-  if (isIndexFund && !raw.includes("indexfund")) raw.push("indexfund");
-  raw.sort();
+  // Per-token expansion: applied symmetrically on both sides so RupeeVest's
+  // "Corp"/"Opp"/"Mfg"/etc. converge with AMFI's full words.
+  const expanded = raw.map((t) => TOKEN_EXPANSIONS[t] ?? t);
+  if (isFof) expanded.push("fof");
+  if (isEtf && !expanded.includes("etf")) expanded.push("etf");
+  if (isIndexFund && !expanded.includes("indexfund")) expanded.push("indexfund");
+  expanded.sort();
   const uniq: string[] = [];
-  for (const t of raw) if (uniq[uniq.length - 1] !== t) uniq.push(t);
+  for (const t of expanded) if (uniq[uniq.length - 1] !== t) uniq.push(t);
   return { plan, option, isEtf, isFof, tokens: uniq, tokenKey: uniq.join(" ") };
 }
 
@@ -350,6 +460,16 @@ function passesGuards(rv: NormalizedName, am: NormalizedName): { ok: boolean; re
   // top of the "etf"/"fof"/"indexfund" tokens.
   if (rv.isEtf !== am.isEtf) return { ok: false, reason: "ETF flag mismatch" };
   if (rv.isFof !== am.isFof) return { ok: false, reason: "FoF flag mismatch" };
+  // Guard D: AMC fingerprint mismatch. When both sides resolve to a known
+  // AMC and those AMCs differ, reject — this stops cross-AMC false positives
+  // like UTI Momentum 30 vs Bandhan Momentum 30 even when their token sets
+  // are otherwise near-identical. If either side is unidentifiable, skip the
+  // guard (conservative — don't reject on missing fingerprint).
+  const amcRv = extractAmcKey(rv.tokens);
+  const amcAm = extractAmcKey(am.tokens);
+  if (amcRv && amcAm && amcRv !== amcAm) {
+    return { ok: false, reason: `AMC fingerprint mismatch (rupeevest=${amcRv} amfi=${amcAm})` };
+  }
   return { ok: true };
 }
 
@@ -457,11 +577,24 @@ function applyOverride(
       row: { schemecode, fundName, classification: fund.classification, reason: "override missing both amfiSchemeCode and isin" },
     };
   }
-  const target = amfi.find(
-    (a) =>
-      (override.amfiSchemeCode !== undefined && a.nav.schemeCode === override.amfiSchemeCode) ||
-      (override.isin !== undefined && a.nav.isin === override.isin)
-  );
+  // If both keys are supplied, they MUST point at the same AMFI row.
+  // Otherwise the override is inconsistent and we refuse to apply it.
+  const byCode = override.amfiSchemeCode !== undefined
+    ? amfi.find((a) => a.nav.schemeCode === override.amfiSchemeCode)
+    : undefined;
+  const byIsin = override.isin !== undefined
+    ? amfi.find((a) => a.nav.isin === override.isin)
+    : undefined;
+  if (byCode && byIsin && byCode !== byIsin) {
+    return {
+      kind: "invalid",
+      row: {
+        schemecode, fundName, classification: fund.classification,
+        reason: `override amfiSchemeCode=${override.amfiSchemeCode} and isin=${override.isin} point to different AMFI rows`,
+      },
+    };
+  }
+  const target = byCode ?? byIsin;
   if (!target) {
     return {
       kind: "rejected",
