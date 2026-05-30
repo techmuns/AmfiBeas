@@ -5,7 +5,10 @@ import { Search, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
 import { SameCategoryFunds } from "@/components/data/SameCategoryFunds";
-import { OwUwChip } from "@/components/data/OwUwChip";
+import {
+  HoldingsVsCategoryChart,
+  type HoldingsVsCategoryRow,
+} from "@/components/data/HoldingsVsCategoryChart";
 import {
   DashboardTabs,
   type DashboardTabDef,
@@ -273,12 +276,42 @@ export function PortfolioTrackerView({
     return result;
   }, [peerAvgRows, portfolio, loaded]);
 
-  // K of N for the footer caption.
+  // K of N for the chart subtitle.
   const peerAvgLoadedCount = useMemo(() => {
     let n = 0;
     for (const p of peerAvgRows) if (loaded[p.schemecode]) n++;
     return n;
   }, [peerAvgRows, loaded]);
+
+  // Top-10 holdings of the selected fund (by latest % of AUM), paired with
+  // the same-category peer average per stock. Feeds the Overview-tab
+  // "Top Holdings v/s Category Average" paired-bar chart.
+  const holdingsVsCategory = useMemo<HoldingsVsCategoryRow[]>(() => {
+    if (!portfolio) return [];
+    const curSlug = monthSlug(portfolio.meta.months[0]?.label ?? "");
+    if (!curSlug) return [];
+    const clean = (s: string) =>
+      s
+        .replace(/^eq\s*-\s*/i, "")
+        .replace(/^[\s^*#~]+/, "")
+        .replace(/[£@*#~]+$/, "")
+        .replace(/\s+(Ltd\.?|Limited)$/i, "")
+        .trim();
+    return portfolio.rows
+      .map((r) => ({
+        fincode: r.fincode,
+        label: clean(r.company_name),
+        fund: r.months[curSlug]?.aum_pct_num ?? null,
+      }))
+      .filter((r) => r.fund !== null)
+      .sort((a, b) => (b.fund ?? 0) - (a.fund ?? 0))
+      .slice(0, 10)
+      .map((r) => ({
+        label: r.label,
+        fund: r.fund,
+        peerAvg: peerAvgByFincode.get(r.fincode)?.avg ?? null,
+      }));
+  }, [portfolio, peerAvgByFincode]);
 
   function pick(f: FundDirectoryEntry) {
     setSelectedCode(f.schemecode);
@@ -445,6 +478,30 @@ export function PortfolioTrackerView({
                   }
                 />
               ) : null}
+
+              {portfolio &&
+                holdingsVsCategory.length > 0 &&
+                selectedEntry.classification && (
+                  <div className="rounded-lg border bg-card px-5 py-4">
+                    <div className="mb-1">
+                      <h2 className="text-base font-semibold tracking-tight">
+                        Top Holdings v/s Category Average
+                      </h2>
+                      <p className="text-xs text-muted-foreground">
+                        Top {holdingsVsCategory.length} holdings by % of AUM,
+                        compared with the average across the top-
+                        {peerAvgRows.length} same-category peers by AUM (
+                        {peerAvgLoadedCount} of {peerAvgRows.length} loaded).
+                        Peers that don&apos;t hold a stock count as 0%.
+                      </p>
+                    </div>
+                    <HoldingsVsCategoryChart
+                      data={holdingsVsCategory}
+                      fundName={selectedEntry.fund}
+                      peerLabel={selectedEntry.classification}
+                    />
+                  </div>
+                )}
             </>
           )}
 
@@ -531,23 +588,9 @@ export function PortfolioTrackerView({
                               <td className="border-r px-3 py-2.5 font-medium">
                                 {row.company_name}
                               </td>
-                              {slugs.map((slug, mi) => {
+                              {slugs.map((slug) => {
                                 const cell = row.months[slug];
-                                const isLatest = mi === 0;
-                                const peerInfo = isLatest
-                                  ? peerAvgByFincode.get(row.fincode)
-                                  : undefined;
-                                return (
-                                  <Cells
-                                    key={slug}
-                                    cell={cell}
-                                    peerInfo={peerInfo}
-                                    peerTarget={
-                                      isLatest ? peerAvgRows.length : undefined
-                                    }
-                                    showChip={isLatest}
-                                  />
-                                );
+                                return <Cells key={slug} cell={cell} />;
                               })}
                             </tr>
                           ))
@@ -562,15 +605,6 @@ export function PortfolioTrackerView({
                     {months.map((m) => m.label).join(" → ")}); the oldest column
                     shows no arrow. Source: {portfolio.meta.source}.
                   </p>
-                  {peerAvgRows.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      OW/UW chips compare each holding&apos;s latest % of AUM
-                      against the average across the top-{peerAvgRows.length}{" "}
-                      same-category peers by AUM ({peerAvgLoadedCount} of{" "}
-                      {peerAvgRows.length} loaded). Peers that don&apos;t hold
-                      a stock count as 0%.
-                    </p>
-                  )}
                 </>
               ) : null}
             </div>
@@ -645,9 +679,6 @@ function FragmentSubHead() {
 
 function Cells({
   cell,
-  peerInfo,
-  peerTarget,
-  showChip,
 }: {
   cell:
     | {
@@ -656,25 +687,12 @@ function Cells({
         arrow: HoldingArrow;
       }
     | undefined;
-  peerInfo?: { avg: number; count: number };
-  peerTarget?: number;
-  showChip?: boolean;
 }) {
   const arrow = cell ? cell.arrow : "missing";
   return (
     <>
       <td className="border-l px-3 py-2.5 text-right tabular text-muted-foreground">
-        <span className="inline-flex items-center justify-end gap-2 whitespace-nowrap">
-          <span>{formatPctSafe(cell?.aum_pct_num, 1)}</span>
-          {showChip && (
-            <OwUwChip
-              selectedPct={cell?.aum_pct_num ?? null}
-              peerAvg={peerInfo?.avg ?? null}
-              peerCount={peerInfo?.count ?? 0}
-              peerTarget={peerTarget}
-            />
-          )}
-        </span>
+        {formatPctSafe(cell?.aum_pct_num, 1)}
       </td>
       <td className="px-3 py-2.5 text-right tabular">
         <span className="inline-flex items-center justify-end gap-1">
