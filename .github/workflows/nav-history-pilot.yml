@@ -1,0 +1,53 @@
+name: NAV history pilot (temporary, manual)
+
+# TEMPORARY read-only pilot (Phase 3.2B). Manual trigger only — NO schedule.
+# Validates MFAPI historical backfill against AMFI historical data for 12
+# representative funds. Does NOT write production history files, does NOT
+# commit anything, does NOT touch the dashboard. Runs
+# scripts/ingest/nav-history-pilot.ts, which writes a gitignored report to
+# data/debug/nav-history-pilot-report.json, uploaded below as an artifact.
+# Delete this workflow once the historical-source path is chosen.
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are you running the history pilot? (optional note)"
+        required: false
+        type: string
+
+# Read-only: the job never pushes or commits. Artifact upload needs no write
+# scope on repo contents.
+permissions:
+  contents: read
+
+concurrency:
+  group: nav-history-pilot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pilot:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run NAV history pilot (read-only, 12 funds)
+        # The pilot exits non-zero only when NO usable MFAPI history is fetched
+        # or the report can't be written; continue-on-error keeps the artifact
+        # step reachable so partial findings are always preserved.
+        continue-on-error: true
+        run: npx tsx scripts/ingest/nav-history-pilot.ts
+      - name: Upload pilot report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nav-history-pilot-report
+          path: data/debug/nav-history-pilot-report.json
+          if-no-files-found: warn
+          retention-days: 14
