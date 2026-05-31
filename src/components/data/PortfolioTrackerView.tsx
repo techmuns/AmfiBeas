@@ -9,6 +9,7 @@ import {
   PortfolioHeadToHead,
   isLikelySameScheme,
 } from "@/components/data/PortfolioHeadToHead";
+import { PortfolioTrendsTab } from "@/components/data/PortfolioTrendsTab";
 import {
   SectorAllocationChart,
   type SectorAllocationRow,
@@ -748,24 +749,13 @@ export function PortfolioTrackerView({
           )}
 
           {activeTab === "trends" && (
-            <PlaceholderCard
-              title="Trends"
-              body="Coming soon: allocation trends and NAV-based returns."
+            <PortfolioTrendsTab
+              schemecode={selectedEntry.schemecode}
+              fundName={selectedEntry.fund}
             />
           )}
         </>
       )}
-    </div>
-  );
-}
-
-function PlaceholderCard({ title, body }: { title: string; body: string }) {
-  return (
-    <div className="rounded-lg border border-dashed bg-card px-5 py-10 text-center">
-      <p className="text-sm font-medium text-foreground">{title}</p>
-      <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground">
-        {body}
-      </p>
     </div>
   );
 }
