@@ -248,7 +248,7 @@ interface SeriesPoint { date: string; nav: number } // ISO YYYY-MM-DD
 
 interface WindowResult {
   index: number;
-  role: "main" | "pre-buffer";
+  role: "main" | "pre-buffer" | "older-main" | "split-half" | "split-quarter";
   url: string;
   windowFrom: string; // DD-MMM-YYYY
   windowTo: string;
@@ -257,7 +257,11 @@ interface WindowResult {
   httpStatus: number | null;
   contentType: string | null;
   bytes: number | null;
-  bodyPreview: string | null;     // first 240 chars when HTTP 200 returns suspiciously-tiny body
+  // Phase 3.7B: bodyPreview widened to 500 chars on zero-row windows so the
+  // diagnostic carries enough of AMFI's HTML frameset/error page to identify
+  // the failure mode unambiguously. Existing 240-char behavior on Stages
+  // 1/2 preserved (only Stage-3 / incremental writes the wider preview).
+  bodyPreview: string | null;
   responseMs: number;
   headerSeen: boolean;
   totalDataLines: number;
@@ -267,6 +271,14 @@ interface WindowResult {
   dateMin: string | null;
   dateMax: string | null;
   zeroRowFlag: boolean;           // HTTP 200 + bytes < 50_000 + validRowCount === 0
+  // Phase 3.7B: zero-row deep diagnostics. `isHtmlFrameset` true when the
+  // tiny body looks like AMFI's HTML shell (frameset/script tags) rather
+  // than the expected semicolon-delimited NAV report.
+  isHtmlFrameset?: boolean;
+  // For split windows (role === "split-half" | "split-quarter"): the
+  // top-level parent window that triggered the split.
+  splitOfWindowFrom?: string;
+  splitOfWindowTo?: string;
   error?: string;
   failureReason?: string;
 }
@@ -413,6 +425,44 @@ function dayDiffDays(isoA: string, isoB: string): number {
   return Math.round((Date.UTC(yb, mb - 1, db) - Date.UTC(ya, ma - 1, da)) / 86_400_000);
 }
 function round2(n: number): number { return Math.round(n * 100) / 100; }
+
+// ---------------------------------------------------------------------------
+// Phase 3.7B helpers (Stage-3 incremental)
+// ---------------------------------------------------------------------------
+
+/** Subtract N days from an ISO date, returning ISO. Negative N adds days. */
+function isoSubDays(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const ms = Date.UTC(y, m - 1, d) - days * 86_400_000;
+  return toIso(new Date(ms));
+}
+
+/** Parse a YYYY-MM-DD ISO into a UTC Date. */
+function isoToDate(iso: string): Date {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d));
+}
+
+/** Build an ordered (oldest first) list of windows covering [fromIso, toIso]
+ *  in chunks of `chunkDays` days (max). The last window may be shorter. All
+ *  windows carry the same role tag (the Stage-3 incremental flow doesn't use
+ *  the pre-buffer pattern because the older-only range already starts at
+ *  (5Y target − buffer) by construction). */
+function buildOlderOnlyWindows(fromIso: string, toIso: string, chunkDays: number, role: "older-main" = "older-main"): Array<{ from: Date; to: Date; role: typeof role }> {
+  const windows: Array<{ from: Date; to: Date; role: typeof role }> = [];
+  if (fromIso > toIso) return windows;
+  let cursor = isoToDate(fromIso).getTime();
+  const end = isoToDate(toIso).getTime();
+  while (cursor <= end) {
+    const fromDate = new Date(cursor);
+    const tentativeToMs = cursor + (chunkDays - 1) * 86_400_000;
+    const toMs = Math.min(tentativeToMs, end);
+    const toDate = new Date(toMs);
+    windows.push({ from: fromDate, to: toDate, role });
+    cursor = toMs + 86_400_000;
+  }
+  return windows;
+}
 
 // ---------------------------------------------------------------------------
 // Fetch (with 3× exponential-backoff retry per window)
@@ -750,10 +800,598 @@ interface ManifestFile {
 }
 
 // ---------------------------------------------------------------------------
+// Phase 3.7B — Stage-3 incremental (older-only) dry-run
+// ---------------------------------------------------------------------------
+//
+// Background
+//   The Phase 3.7A full-refetch Stage-3 dry-run failed: 21/26 AMFI windows
+//   returned HTTP 200 with tiny ~14 KB HTML frameset bodies (0 valid rows),
+//   and the asOf-anchor was being derived from the partial fetched series
+//   (so feedLastDate degraded to 2023-05-02 and the 5Y target collapsed to
+//   2018-05-02). Phase 3.7B replaces the Stage-3 path with an incremental
+//   flow that:
+//     1) Derives a STABLE asOf from the already-committed mf-history-manifest
+//        (Stage-2 production). Never reads from the partial fetched series.
+//     2) Fetches only the older missing range [5Y target − buffer,
+//        earliestExistingFirstDate − 1]. Already-committed Stage-2 data is
+//        the keep-last-good base — we don't re-fetch it.
+//     3) On any window that returns HTTP 200 with a zero-row tiny body, we
+//        split it into halves and retry (75-day → 30-day → 14-day floor) so
+//        AMFI's occasional empty responses don't take the whole run down.
+//     4) Merges fetched older rows with each fund's existing
+//        public/nav-history/{schemecode}.json series in MEMORY ONLY.
+//     5) Writes a Stage-3 dry-run report + per-sample merged JSONs under
+//        data/debug/ (gitignored). NEVER touches public/ this phase.
+// ---------------------------------------------------------------------------
+
+interface ExistingHistoryFile {
+  meta: {
+    schemecode: string;
+    amfiSchemeCode: number;
+    firstDate: string | null;
+    lastDate: string | null;
+    points: number;
+    stage: number;
+  };
+  series: Array<[string, number]>;
+}
+
+interface AdaptiveSplitContext {
+  targetCodes: Set<number>;
+  seriesByCode: Map<number, Map<string, number>>;
+  results: WindowResult[];
+  nextIndex: () => number;
+  minChunkDays: number; // below this we stop splitting and accept the failure
+  zeroRowParents: Set<string>; // logical-parent window keys whose split sub-windows have any success
+  deadlineMs: number; // absolute deadline ms — if exceeded we stop fetching
+}
+
+function looksLikeHtmlFrameset(s: string): boolean {
+  return /<frameset|<frame |<html|<body|<title|<script/i.test(s);
+}
+
+/** Fetch one [fromDate, toDate] window, parse its rows into seriesByCode,
+ *  record a WindowResult, and on a zero-row tiny-body HTTP 200 response,
+ *  split into two halves and recurse (subject to minChunkDays floor and the
+ *  run deadline). Logs each attempt. Tolerant of HTTP failures: those are
+ *  reported but not split (a network failure is a different failure mode
+ *  from a zero-row response). */
+async function fetchWindowAdaptive(
+  fromDate: Date,
+  toDate: Date,
+  role: WindowResult["role"],
+  parent: { from: string; to: string } | null,
+  ctx: AdaptiveSplitContext,
+): Promise<void> {
+  if (Date.now() > ctx.deadlineMs) return;
+  const spanDays = Math.max(1, Math.round((toDate.getTime() - fromDate.getTime()) / 86_400_000) + 1);
+  const windowFrom = toDDMMMYYYY(fromDate);
+  const windowTo = toDDMMMYYYY(toDate);
+  const url = `${AMFI_HISTORY_BASE}?frmdt=${windowFrom}&todt=${windowTo}`;
+  info(`[amfi] window [${role}] ${windowFrom} → ${windowTo}  (${spanDays}d)`);
+  const res = await fetchWithRetry(url);
+
+  const base: WindowResult = {
+    index: ctx.nextIndex(),
+    role,
+    url,
+    windowFrom,
+    windowTo,
+    requestedAt: res.requestedAt,
+    attempts: res.attempts,
+    httpStatus: res.status,
+    contentType: res.contentType,
+    bytes: res.bytes,
+    bodyPreview: null,
+    responseMs: res.ms,
+    headerSeen: false,
+    totalDataLines: 0,
+    validRowCount: 0,
+    skippedCount: 0,
+    targetRowsParsed: 0,
+    dateMin: null,
+    dateMax: null,
+    zeroRowFlag: false,
+    splitOfWindowFrom: parent?.from,
+    splitOfWindowTo: parent?.to,
+  };
+  if (!res.ok || !res.text || res.text.length < 200) {
+    base.error = res.error ?? `HTTP ${res.status ?? "?"} (bytes=${res.bytes ?? 0})`;
+    base.failureReason = res.error
+      ? `network error after ${res.attempts} attempt(s): ${res.error}`
+      : `HTTP ${res.status ?? "?"} after ${res.attempts} attempt(s)`;
+    base.bodyPreview = res.text ? res.text.slice(0, 500) : null;
+    ctx.results.push(base);
+    info(`   FAIL ${base.failureReason}`);
+    await sleep(POLITE_DELAY_MS);
+    return;
+  }
+
+  let stats: ParseStats;
+  try {
+    stats = parseHistoricalInto(res.text, ctx.targetCodes, ctx.seriesByCode);
+  } catch (e) {
+    base.error = (e as Error).message;
+    base.failureReason = `parser threw: ${(e as Error).message}`;
+    ctx.results.push(base);
+    info(`   FAIL parser threw: ${(e as Error).message}`);
+    await sleep(POLITE_DELAY_MS);
+    return;
+  }
+  base.headerSeen = stats.headerSeen;
+  base.totalDataLines = stats.totalDataLines;
+  base.validRowCount = stats.validRowCount;
+  base.skippedCount = stats.skippedCount;
+  base.targetRowsParsed = stats.targetRowsParsed;
+  base.dateMin = stats.dateMin;
+  base.dateMax = stats.dateMax;
+
+  // Zero-row detector: HTTP 200 + small body + 0 valid target rows. AMFI
+  // sometimes returns a 14 KB HTML frameset for an unhappy window combo.
+  const tinyEmpty = res.bytes !== null && res.bytes < 50_000 && stats.validRowCount === 0;
+  if (!tinyEmpty) {
+    ctx.results.push(base);
+    if (parent) ctx.zeroRowParents.add(`${parent.from}→${parent.to}`); // a sub-window succeeded
+    info(`   OK   bytes=${res.bytes} valid=${stats.validRowCount} target=${stats.targetRowsParsed} dates=${stats.dateMin}..${stats.dateMax}`);
+    await sleep(POLITE_DELAY_MS);
+    return;
+  }
+
+  // Zero-row: capture deeper diagnostics and decide whether to split.
+  const previewWide = (res.text ?? "").slice(0, 500);
+  base.zeroRowFlag = true;
+  base.bodyPreview = previewWide;
+  base.isHtmlFrameset = looksLikeHtmlFrameset(previewWide);
+  base.failureReason = `HTTP 200 but body too small (${res.bytes} bytes) and 0 valid rows${base.isHtmlFrameset ? " — body looks like an HTML frameset/error page" : ""}`;
+  ctx.results.push(base);
+  info(`   ZERO bytes=${res.bytes} valid=0 htmlFrameset=${base.isHtmlFrameset ?? false} — splitting=${spanDays > ctx.minChunkDays}`);
+  await sleep(POLITE_DELAY_MS);
+
+  if (spanDays <= ctx.minChunkDays) return; // below the floor: accept the failure
+  // Split into halves. The next role-tag step down indicates split depth.
+  const nextRole: WindowResult["role"] =
+    role === "split-half" || role === "split-quarter" ? "split-quarter" : "split-half";
+  const midMs = Math.floor((fromDate.getTime() + toDate.getTime()) / 2);
+  const leftTo = new Date(midMs);
+  const rightFrom = new Date(midMs + 86_400_000);
+  const grandparent = parent ?? { from: toIso(fromDate), to: toIso(toDate) };
+  await fetchWindowAdaptive(fromDate, leftTo, nextRole, grandparent, ctx);
+  await fetchWindowAdaptive(rightFrom, toDate, nextRole, grandparent, ctx);
+}
+
+async function readExistingHistoryFile(schemecode: string): Promise<ExistingHistoryFile | null> {
+  const p = path.resolve(process.cwd(), "public/nav-history", `${schemecode}.json`);
+  try {
+    const txt = await fs.readFile(p, "utf8");
+    return JSON.parse(txt) as ExistingHistoryFile;
+  } catch {
+    return null;
+  }
+}
+
+async function mainStage3Incremental(): Promise<void> {
+  const runStart = Date.now();
+  const generatedAt = nowIso();
+
+  // --- 1. Read the existing committed manifest (keep-last-good base) -----
+  info(`reading existing manifest at ${path.relative(process.cwd(), PRODUCTION_MANIFEST_PATH)}`);
+  let existingManifest: ManifestFile;
+  try {
+    existingManifest = JSON.parse(await fs.readFile(PRODUCTION_MANIFEST_PATH, "utf8")) as ManifestFile;
+  } catch (e) {
+    warn(`could not read existing manifest: ${(e as Error).message}`);
+    warn(`Stage-3 incremental requires the Stage-2 manifest to be already committed (the keep-last-good base).`);
+    process.exit(1);
+  }
+  info(`existing manifest: stage=${existingManifest.stage} totalFunds=${existingManifest.totalFunds} fundsAvailable=${existingManifest.fundsAvailable}`);
+  if (existingManifest.stage < 2) {
+    warn(`existing manifest stage=${existingManifest.stage}; Stage-3 incremental expects Stage-2 (or higher) as the base.`);
+    process.exit(1);
+  }
+
+  // --- 2. Stable asOf + universe-wide earliest committed firstDate -------
+  let stableAsOfDate: string | null = null;
+  let earliestExistingFirstDate: string | null = null;
+  let latestExistingFirstDate: string | null = null;
+  for (const m of existingManifest.funds) {
+    if (m.lastDate && (!stableAsOfDate || m.lastDate > stableAsOfDate)) stableAsOfDate = m.lastDate;
+    if (m.firstDate) {
+      if (!earliestExistingFirstDate || m.firstDate < earliestExistingFirstDate) earliestExistingFirstDate = m.firstDate;
+      if (!latestExistingFirstDate || m.firstDate > latestExistingFirstDate) latestExistingFirstDate = m.firstDate;
+    }
+  }
+  if (!stableAsOfDate || !earliestExistingFirstDate) {
+    warn(`existing manifest has no usable firstDate/lastDate; cannot derive stable asOf.`);
+    process.exit(1);
+  }
+
+  // --- 3. Sanity cross-check against the latest-NAV snapshot --------------
+  const latest = JSON.parse(await fs.readFile(LATEST_SNAPSHOT_PATH, "utf8")) as LatestSnapshot;
+  const universe = latest.funds;
+  if (universe.length !== existingManifest.totalFunds) {
+    warn(`universe size mismatch: latest snapshot has ${universe.length}, manifest has ${existingManifest.totalFunds}`);
+  }
+
+  const fiveYTarget = subPeriod(stableAsOfDate, 0, 5);
+  const olderFetchFromIso = isoSubDays(fiveYTarget, BUFFER_DAYS);
+  const olderFetchToIso = isoSubDays(earliestExistingFirstDate, 1);
+  const needsOlderFetch = olderFetchFromIso <= olderFetchToIso;
+  info(`Stage-3 incremental anchors:`);
+  info(`   stableAsOfDate         = ${stableAsOfDate}`);
+  info(`   earliestExistingFirst  = ${earliestExistingFirstDate}`);
+  info(`   latestExistingFirst    = ${latestExistingFirstDate}`);
+  info(`   5Y target              = ${fiveYTarget}`);
+  info(`   older fetch range      = ${olderFetchFromIso} → ${olderFetchToIso}  (needed=${needsOlderFetch})`);
+
+  // --- 4. Build older-only windows + fetch with adaptive split -----------
+  const targetCodes = new Set(universe.map((f) => f.amfiSchemeCode));
+  const seriesByCode = new Map<number, Map<string, number>>();
+  const windowResults: WindowResult[] = [];
+  let nextIdx = 0;
+  const ctx: AdaptiveSplitContext = {
+    targetCodes,
+    seriesByCode,
+    results: windowResults,
+    nextIndex: () => nextIdx++,
+    minChunkDays: 14,
+    zeroRowParents: new Set<string>(),
+    deadlineMs: runStart + RUN_DEADLINE_MS,
+  };
+  if (needsOlderFetch) {
+    const olderWindows = buildOlderOnlyWindows(olderFetchFromIso, olderFetchToIso, CHUNK_DAYS, "older-main");
+    info(`Stage-3 older-only windows: ${olderWindows.length} × ≤${CHUNK_DAYS}d`);
+    for (const w of olderWindows) {
+      if (Date.now() > ctx.deadlineMs) { warn(`run deadline hit; stopping`); break; }
+      await fetchWindowAdaptive(w.from, w.to, "older-main", null, ctx);
+    }
+  }
+  const aborted = Date.now() > ctx.deadlineMs;
+
+  const windowsOk = windowResults.filter((w) => !w.error && w.validRowCount > 0).length;
+  const windowsFailed = windowResults.filter((w) => Boolean(w.error)).length;
+  // Unresolved zero-row windows = parent windows where neither the parent
+  // nor any of its splits ever produced valid rows. (A parent whose split
+  // children succeeded is RESOLVED — adaptive recovery worked.)
+  const unresolvedZeroRows = (() => {
+    let n = 0;
+    for (const w of windowResults) {
+      if (!w.zeroRowFlag) continue;
+      if (w.role === "split-half" || w.role === "split-quarter") continue;
+      // Top-level zero-row: did any sub-window of it succeed?
+      const key = `${w.windowFrom}→${w.windowTo}`;
+      // splitOfWindowFrom matches the top-level parent's windowFrom for
+      // child windows; we look it up by the parent's own ISO range encoded
+      // in ctx.zeroRowParents.
+      const parentKey = `${ddMMMyyyyToIso(w.windowFrom)}→${ddMMMyyyyToIso(w.windowTo)}`;
+      if (!ctx.zeroRowParents.has(parentKey) && !ctx.zeroRowParents.has(key)) n += 1;
+    }
+    return n;
+  })();
+  const totalValidRowsAdded = windowResults.reduce((s, w) => s + (w.error ? 0 : w.validRowCount), 0);
+
+  // --- 5. Per-fund merge: read existing series + add older fetched rows --
+  const perFundCoverage: PerFundCoverage[] = [];
+  const fundsWithPoints: number[] = [];
+  const mergeIssues: Array<{ schemecode: string; reason: string }> = [];
+  let fundsWithExistingHistory = 0;
+  let fundsWithOlderAdditions = 0;
+  let totalOlderRowsAdded = 0;
+
+  for (const f of universe) {
+    let existingSeries: Array<[string, number]> = [];
+    let existingPoints = 0;
+    const existing = await readExistingHistoryFile(f.schemecode);
+    if (existing) {
+      existingSeries = existing.series;
+      existingPoints = existing.meta.points;
+      fundsWithExistingHistory += 1;
+    } else {
+      mergeIssues.push({ schemecode: f.schemecode, reason: "no existing history file under public/nav-history/" });
+    }
+    const byDate = new Map<string, number>();
+    for (const [d, n] of existingSeries) byDate.set(d, n);
+    let olderAdded = 0;
+    const fetched = seriesByCode.get(f.amfiSchemeCode);
+    if (fetched) {
+      for (const [d, n] of fetched) {
+        if (!byDate.has(d) && d < (existing?.meta.firstDate ?? "9999-12-31")) {
+          byDate.set(d, n);
+          olderAdded += 1;
+        }
+      }
+    }
+    if (olderAdded > 0) { fundsWithOlderAdditions += 1; totalOlderRowsAdded += olderAdded; }
+    const dates = Array.from(byDate.keys()).sort();
+    const series: SeriesPoint[] = dates.map((d) => ({ date: d, nav: byDate.get(d)! }));
+    const firstDate = series[0]?.date ?? null;
+    const lastDate = series[series.length - 1]?.date ?? null;
+    const latestNav = lastDate ? byDate.get(lastDate) ?? null : null;
+    const { returns, availability } = computeReturns(series);
+    perFundCoverage.push({
+      schemecode: f.schemecode, fundName: f.fundName, classification: f.classification,
+      amfiSchemeCode: f.amfiSchemeCode, isin: f.isin, hasHoldings: f.hasHoldings,
+      points: series.length, firstDate, lastDate, latestNav,
+      returns, dataAvailability: availability,
+    });
+    if (series.length > 0) fundsWithPoints.push(f.amfiSchemeCode);
+    void existingPoints;
+  }
+
+  const matchedCoveragePct = round2((fundsWithPoints.length / universe.length) * 100);
+  const periodCoverage = {
+    "1M": perFundCoverage.filter((f) => f.dataAvailability["1M"]).length,
+    "3M": perFundCoverage.filter((f) => f.dataAvailability["3M"]).length,
+    "6M": perFundCoverage.filter((f) => f.dataAvailability["6M"]).length,
+    "1Y": perFundCoverage.filter((f) => f.dataAvailability["1Y"]).length,
+    "3Y": perFundCoverage.filter((f) => f.dataAvailability["3Y"]).length,
+    "5Y": perFundCoverage.filter((f) => f.dataAvailability["5Y"]).length,
+  };
+
+  // --- 6. Eligibility-aware 5Y partition (Phase 3.5D pattern @ 5Y) -------
+  const eligible5Y = (() => {
+    const eligible: typeof perFundCoverage = [];
+    const ineligible: typeof perFundCoverage = [];
+    for (const f of perFundCoverage) {
+      if (f.firstDate && f.firstDate <= fiveYTarget) eligible.push(f);
+      else ineligible.push(f);
+    }
+    const eligibleAvailable = eligible.filter((f) => f.dataAvailability["5Y"]).length;
+    const eligibleCoveragePct = eligible.length > 0 ? round2((eligibleAvailable / eligible.length) * 100) : 0;
+    return { eligible, ineligible, eligibleAvailable, eligibleCoveragePct };
+  })();
+  const threeYTarget = subPeriod(stableAsOfDate, 0, 3);
+  const eligible3Y = (() => {
+    const eligible: typeof perFundCoverage = [];
+    const ineligible: typeof perFundCoverage = [];
+    for (const f of perFundCoverage) {
+      if (f.firstDate && f.firstDate <= threeYTarget) eligible.push(f);
+      else ineligible.push(f);
+    }
+    const eligibleAvailable = eligible.filter((f) => f.dataAvailability["3Y"]).length;
+    const eligibleCoveragePct = eligible.length > 0 ? round2((eligibleAvailable / eligible.length) * 100) : 0;
+    return { eligible, ineligible, eligibleAvailable, eligibleCoveragePct };
+  })();
+
+  // --- 7. Guardrails (Stage-3 incremental specific) ----------------------
+  // Spec (Phase 3.7B):
+  //   - zeroRow windows resolved to 0 after adaptive splitting (or block)
+  //   - universe coverage 1036/1036 (incremental keeps existing data intact)
+  //   - 1Y and 3Y must not regress vs the existing manifest's coverage
+  //   - eligible 5Y >= 99% gates promotion
+  //   - total 5Y is informational
+  const oneYCoveragePct = round2((periodCoverage["1Y"] / universe.length) * 100);
+  const threeYCoveragePct = round2((periodCoverage["3Y"] / universe.length) * 100);
+  const fiveYCoveragePct = round2((periodCoverage["5Y"] / universe.length) * 100);
+  const guardFailures: string[] = [];
+  if (matchedCoveragePct < GUARD.minMatchedCoveragePct) {
+    guardFailures.push(`matchedCoveragePct ${matchedCoveragePct} < floor ${GUARD.minMatchedCoveragePct}`);
+  }
+  if (oneYCoveragePct < GUARD.min1YCoveragePct) {
+    guardFailures.push(`1Y coverage ${oneYCoveragePct}% < floor ${GUARD.min1YCoveragePct}%`);
+  }
+  if (GUARD.minEligible3YCoveragePct > 0 && eligible3Y.eligible.length > 0 && eligible3Y.eligibleCoveragePct < GUARD.minEligible3YCoveragePct) {
+    guardFailures.push(`eligible 3Y coverage ${eligible3Y.eligibleCoveragePct}% (${eligible3Y.eligibleAvailable}/${eligible3Y.eligible.length}) < floor ${GUARD.minEligible3YCoveragePct}%`);
+  }
+  if (GUARD.minEligible5YCoveragePct > 0) {
+    if (eligible5Y.eligible.length === 0) {
+      guardFailures.push(`eligible-5Y partition is empty (fiveYTarget=${fiveYTarget}) — anchor or merge broken`);
+    } else if (eligible5Y.eligibleCoveragePct < GUARD.minEligible5YCoveragePct) {
+      guardFailures.push(`eligible 5Y coverage ${eligible5Y.eligibleCoveragePct}% (${eligible5Y.eligibleAvailable}/${eligible5Y.eligible.length}) < floor ${GUARD.minEligible5YCoveragePct}% — inspect missingEligible5YSample in the report`);
+    }
+  }
+  if (unresolvedZeroRows > 0) {
+    guardFailures.push(`${unresolvedZeroRows} unresolved zero-row window(s) after adaptive split — see windows[].bodyPreview / isHtmlFrameset / failureReason; promotion blocked`);
+  }
+  // No-regression vs the existing manifest's per-period coverage.
+  if (typeof existingManifest.periodCoverage["1Y"] === "number" && periodCoverage["1Y"] < existingManifest.periodCoverage["1Y"]) {
+    guardFailures.push(`1Y coverage regressed: merged ${periodCoverage["1Y"]} < existing manifest ${existingManifest.periodCoverage["1Y"]}`);
+  }
+  if (typeof existingManifest.periodCoverage["3Y"] === "number" && periodCoverage["3Y"] < existingManifest.periodCoverage["3Y"]) {
+    guardFailures.push(`3Y coverage regressed: merged ${periodCoverage["3Y"]} < existing manifest ${existingManifest.periodCoverage["3Y"]}`);
+  }
+  if (aborted) guardFailures.push("run deadline hit before all older windows completed");
+  const guardPass = guardFailures.length === 0;
+
+  // --- 8. Stage-3 dry-run NEVER writes production. -----------------------
+  // Phase 3.7B is strictly diagnostic; the public-write branch is not even
+  // wired up here. WRITE_MODE === "production" is currently a noop for
+  // Stage 3 (the dispatch above lands here regardless), so production files
+  // stay exactly as they were (keep-last-good).
+
+  // --- 9. Sample MERGED files (always written under data/debug for review)
+  await fs.mkdir(SAMPLE_DIR, { recursive: true });
+  const sampleSummaries: Array<{
+    schemecode: string; fundName: string; path: string; points: number;
+    firstDate: string | null; lastDate: string | null;
+    existingPoints: number; olderRowsAdded: number;
+  }> = [];
+  for (const code of SAMPLE_PILOT_SCHEMECODES) {
+    const fund = universe.find((f) => f.schemecode === code);
+    if (!fund) continue;
+    const existing = await readExistingHistoryFile(code);
+    const byDate = new Map<string, number>();
+    const existingFirstDate = existing?.meta.firstDate ?? null;
+    if (existing) for (const [d, n] of existing.series) byDate.set(d, n);
+    const fetched = seriesByCode.get(fund.amfiSchemeCode);
+    let olderAdded = 0;
+    if (fetched) for (const [d, n] of fetched) {
+      if (!byDate.has(d) && d < (existingFirstDate ?? "9999-12-31")) { byDate.set(d, n); olderAdded += 1; }
+    }
+    const dates = Array.from(byDate.keys()).sort();
+    const series: SeriesPoint[] = dates.map((d) => ({ date: d, nav: byDate.get(d)! }));
+    const file = buildSampleFile(fund, series, windowResults, generatedAt);
+    const out = path.join(SAMPLE_DIR, `${code}.json`);
+    await fs.writeFile(out, JSON.stringify(file, null, 2) + "\n", "utf8");
+    sampleSummaries.push({
+      schemecode: code, fundName: fund.fundName,
+      path: path.relative(process.cwd(), out),
+      points: series.length,
+      firstDate: file.meta.firstDate, lastDate: file.meta.lastDate,
+      existingPoints: existing?.meta.points ?? 0,
+      olderRowsAdded: olderAdded,
+    });
+  }
+
+  // --- 10. Report --------------------------------------------------------
+  const verdict = {
+    writeMode: "dryrun" as const,
+    stage: 3 as const,
+    mode: "stage3-incremental",
+    universeCount: universe.length,
+    windowsAttempted: windowResults.length,
+    windowsOk,
+    windowsFailed,
+    zeroRowWindows: windowResults.filter((w) => w.zeroRowFlag).length,
+    unresolvedZeroRows,
+    abortedEarly: aborted,
+    totalValidRowsAdded,
+    fundsWithExistingHistory,
+    fundsWithOlderAdditions,
+    totalOlderRowsAdded,
+    fundsWithAnyPoint: fundsWithPoints.length,
+    matchedCoveragePct,
+    oneYCoveragePct,
+    threeYCoveragePct,
+    fiveYCoveragePct,
+    eligible3YFunds: eligible3Y.eligible.length,
+    eligible3YAvailable: eligible3Y.eligibleAvailable,
+    eligible3YCoveragePct: eligible3Y.eligibleCoveragePct,
+    ineligible3YFunds: eligible3Y.ineligible.length,
+    threeYTargetDate: threeYTarget,
+    eligible5YFunds: eligible5Y.eligible.length,
+    eligible5YAvailable: eligible5Y.eligibleAvailable,
+    eligible5YCoveragePct: eligible5Y.eligibleCoveragePct,
+    ineligible5YFunds: eligible5Y.ineligible.length,
+    fiveYTargetDate: fiveYTarget,
+    stableAsOfDate,
+    earliestExistingFirstDate,
+    latestExistingFirstDate,
+    existingStage: existingManifest.stage,
+    periodCoverage,
+    guardPass,
+    guardFailures,
+    productionAttempted: false,
+  };
+
+  // Top-15 zero-row diagnostic rows for the report (full list is in windows[]).
+  const zeroRowSample = windowResults.filter((w) => w.zeroRowFlag).slice(0, 15).map((w) => ({
+    role: w.role,
+    windowFrom: w.windowFrom,
+    windowTo: w.windowTo,
+    splitOfWindowFrom: w.splitOfWindowFrom ?? null,
+    splitOfWindowTo: w.splitOfWindowTo ?? null,
+    httpStatus: w.httpStatus,
+    contentType: w.contentType,
+    bytes: w.bytes,
+    isHtmlFrameset: w.isHtmlFrameset ?? null,
+    bodyPreview: w.bodyPreview,
+    failureReason: w.failureReason,
+  }));
+
+  const recommendation = (() => {
+    if (!guardPass) return `BLOCK: Stage-3 dry-run guardrails failed (${guardFailures.join(" · ")}). Existing public/nav-history files were left untouched (keep-last-good).`;
+    return `PROCEED (Stage-3 incremental dry-run): stableAsOf ${stableAsOfDate}; merged-series coverage 1Y=${periodCoverage["1Y"]} 3Y=${periodCoverage["3Y"]} 5Y=${periodCoverage["5Y"]}; eligible 5Y ${eligible5Y.eligibleAvailable}/${eligible5Y.eligible.length} = ${eligible5Y.eligibleCoveragePct}% (≥99%); ${eligible5Y.ineligible.length} funds genuinely young. Next step: design Phase 3.7C to land the merged series in public/nav-history/ (separate phase — Stage-3 production write is intentionally NOT wired here).`;
+  })();
+
+  const report = {
+    meta: {
+      generatedAt,
+      writeMode: "dryrun",
+      dryRun: true,
+      stage: 3,
+      mode: "stage3-incremental",
+      monthsBack: TOTAL_MONTHS_BACK,
+      chunkDays: CHUNK_DAYS,
+      minChunkDays: ctx.minChunkDays,
+      politeDelayMs: POLITE_DELAY_MS,
+      runDeadlineMinutes: RUN_DEADLINE_MS / 60_000,
+      ruleVersion: RULE_VERSION,
+      parserVersion: PARSER_VERSION,
+      source: "AMFI historical (DownloadNAVHistoryReport_Po.aspx)",
+      latestSnapshot: "src/data/snapshots/mf-latest-nav.json",
+      note: "Phase 3.7B Stage-3 INCREMENTAL dry-run — fetches only the older [5Y target − buffer, earliestExistingFirstDate − 1] range and merges with the committed Stage-2 series in memory. Adaptive split on zero-row HTTP 200. NEVER writes public/nav-history/.",
+    },
+    anchorDiagnostics: {
+      stableAsOfDate,
+      existingStage: existingManifest.stage,
+      earliestExistingFirstDate,
+      latestExistingFirstDate,
+      fiveYTargetDate: fiveYTarget,
+      olderFetchFrom: olderFetchFromIso,
+      olderFetchTo: olderFetchToIso,
+      olderFetchNeeded: needsOlderFetch,
+      bufferConfigDays: BUFFER_DAYS,
+      bufferDaysBefore5Y: dayDiffDays(olderFetchFromIso, fiveYTarget),
+    },
+    guardrails: GUARD,
+    verdict,
+    windows: windowResults,
+    zeroRowSample,
+    merge: {
+      fundsWithExistingHistory,
+      fundsWithOlderAdditions,
+      totalOlderRowsAdded,
+      mergeIssuesTotal: mergeIssues.length,
+      mergeIssuesSample: mergeIssues.slice(0, 25),
+    },
+    universeCoverage: {
+      universeCount: universe.length,
+      fundsWithAnyPoint: fundsWithPoints.length,
+      matchedCoveragePct,
+      periodCoverage,
+      // Stage-3 specific breakdown
+      missingEligible5YTotal: eligible5Y.eligible.filter((f) => !f.dataAvailability["5Y"]).length,
+      missingEligible5YSample: eligible5Y.eligible
+        .filter((f) => !f.dataAvailability["5Y"])
+        .slice(0, 50)
+        .map((f) => ({ schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, firstDate: f.firstDate, lastDate: f.lastDate, points: f.points })),
+      ineligible5YFundsTotal: eligible5Y.ineligible.length,
+      ineligible5YFundsSample: eligible5Y.ineligible.slice(0, 25).map((f) => ({ schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, firstDate: f.firstDate, lastDate: f.lastDate, points: f.points })),
+    },
+    perFundCoverageSample: perFundCoverage.slice(0, 25),
+    sampleFiles: sampleSummaries,
+    recommendation,
+  };
+
+  await fs.mkdir(REPORT_DIR, { recursive: true });
+  let wrote = false;
+  try {
+    await fs.writeFile(REPORT_PATH, JSON.stringify(report, null, 2) + "\n", "utf8");
+    wrote = true;
+    info(`wrote ${path.relative(process.cwd(), REPORT_PATH)}`);
+  } catch (e) {
+    warn(`could not write report: ${(e as Error).message}`);
+  }
+
+  info(`======== STAGE-3 INCREMENTAL DRY-RUN SUMMARY ========`);
+  info(`Stable asOf: ${stableAsOfDate}  ·  existing stage=${existingManifest.stage}  ·  manifest firstDate range ${earliestExistingFirstDate}..${latestExistingFirstDate}`);
+  info(`5Y target: ${fiveYTarget}  ·  older fetch range: ${olderFetchFromIso} → ${olderFetchToIso} (needed=${needsOlderFetch})  ·  buffer before 5Y: ${dayDiffDays(olderFetchFromIso, fiveYTarget)}d`);
+  info(`Windows attempted=${windowResults.length} ok=${windowsOk} failed=${windowsFailed} zeroRow=${windowResults.filter((w) => w.zeroRowFlag).length} unresolvedZeroRow=${unresolvedZeroRows} aborted=${aborted}  ·  totalValidRowsAdded=${totalValidRowsAdded}`);
+  info(`Merge: ${fundsWithOlderAdditions}/${fundsWithExistingHistory} funds gained older rows; ${totalOlderRowsAdded} rows added; ${mergeIssues.length} merge issues`);
+  info(`Universe coverage: ${fundsWithPoints.length}/${universe.length} = ${matchedCoveragePct}% have ≥1 point`);
+  info(`Merged period coverage: 1M=${periodCoverage["1M"]} 3M=${periodCoverage["3M"]} 6M=${periodCoverage["6M"]} 1Y=${periodCoverage["1Y"]} 3Y=${periodCoverage["3Y"]} 5Y=${periodCoverage["5Y"]} (1Y=${oneYCoveragePct}% 3Y=${threeYCoveragePct}% 5Y=${fiveYCoveragePct}% total-universe; informational)`);
+  info(`Eligible 3Y (firstDate ≤ ${threeYTarget}): ${eligible3Y.eligibleAvailable}/${eligible3Y.eligible.length} = ${eligible3Y.eligibleCoveragePct}%`);
+  info(`Eligible 5Y (firstDate ≤ ${fiveYTarget}): ${eligible5Y.eligibleAvailable}/${eligible5Y.eligible.length} = ${eligible5Y.eligibleCoveragePct}% (guard floor)  ·  ${eligible5Y.ineligible.length} genuinely-young funds excluded`);
+  info(`Guardrails: ${guardPass ? "PASS" : "FAIL · " + guardFailures.join(" · ")}`);
+  for (const s of sampleSummaries) info(`   sample ${s.schemecode}: ${s.fundName}  pts=${s.points} (existing ${s.existingPoints}, +${s.olderRowsAdded} older) ${s.firstDate ?? "-"}..${s.lastDate ?? "-"} → ${s.path}`);
+  info(`Recommendation: ${recommendation}`);
+  info(`Production attempted: false  ·  Stage-3 production write is intentionally NOT wired in Phase 3.7B`);
+  info(`=====================================================`);
+
+  if (!wrote) process.exit(1);
+  if (!guardPass) { warn(`guardrails failed: ${guardFailures.join(" · ")}`); process.exit(1); }
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
 async function main(): Promise<void> {
+  // Phase 3.7B: dispatch Stage 3 to the incremental flow (older-only fetch
+  // + merge with existing committed history + adaptive split on zero-row).
+  // Stages 1/2 keep the proven full-fetch flow below unchanged.
+  if (STAGE === 3) return mainStage3Incremental();
+
   const runStart = Date.now();
   const generatedAt = nowIso();
   info(`reading ${path.relative(process.cwd(), LATEST_SNAPSHOT_PATH)}`);
@@ -982,7 +1620,9 @@ async function main(): Promise<void> {
   const eligible5YAvailable = eligible5YPartition.eligibleAvailable;
   const eligible5YCoveragePct = eligible5YPartition.eligibleCoveragePct;
   const ineligible5YCount = eligible5YPartition.ineligible.length;
-  const missingEligible5Y = eligible5YPartition.eligible.filter((f) => !f.dataAvailability["5Y"]);
+  // Phase 3.7B: missingEligible5Y was previously listed in the legacy main
+  // path's universeCoverage; Stage-3 now reports it from the incremental
+  // flow instead, so this list isn't needed here.
 
   const guardFailures: string[] = [];
   for (const w of windowResults) {
@@ -1244,36 +1884,23 @@ async function main(): Promise<void> {
             .slice(0, 50)
             .map((f) => ({ schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, firstDate: f.firstDate, lastDate: f.lastDate, points: f.points }))
         : null,
-      ineligible3YFundsTotal: STAGE === 2 || STAGE === 3 ? ineligible3YCount : null,
-      ineligible3YFundsSample: STAGE === 2 || STAGE === 3
+      ineligible3YFundsTotal: STAGE === 2 ? ineligible3YCount : null,
+      ineligible3YFundsSample: STAGE === 2
         ? eligible3YPartition.ineligible
             .slice(0, 25)
             .map((f) => ({ schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, firstDate: f.firstDate, lastDate: f.lastDate, points: f.points }))
         : null,
-      // Phase 3.7A: same shape applied at 5Y. Stage 1/2 won't have 5Y in
-      // their dataAvailability so these lists would be the whole holding-
-      // bearing universe — kept null on those stages to avoid noise.
-      fundsMissing5YTotal: STAGE === 3
-        ? perFundCoverage.filter((f) => f.points > 0 && !f.dataAvailability["5Y"]).length
-        : null,
-      fundsMissing5YSample: STAGE === 3
-        ? perFundCoverage
-            .filter((f) => f.points > 0 && !f.dataAvailability["5Y"])
-            .slice(0, 50)
-            .map((f) => ({ schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, firstDate: f.firstDate, lastDate: f.lastDate, points: f.points }))
-        : null,
-      missingEligible5YTotal: STAGE === 3 ? missingEligible5Y.length : null,
-      missingEligible5YSample: STAGE === 3
-        ? missingEligible5Y
-            .slice(0, 50)
-            .map((f) => ({ schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, firstDate: f.firstDate, lastDate: f.lastDate, points: f.points }))
-        : null,
-      ineligible5YFundsTotal: STAGE === 3 ? ineligible5YCount : null,
-      ineligible5YFundsSample: STAGE === 3
-        ? eligible5YPartition.ineligible
-            .slice(0, 25)
-            .map((f) => ({ schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, firstDate: f.firstDate, lastDate: f.lastDate, points: f.points }))
-        : null,
+      // Phase 3.7B: Stage 3 no longer enters this block (dispatched to
+      // mainStage3Incremental above); the 5Y breakdowns live in the
+      // Stage-3 incremental report instead. The fields below stay `null`
+      // on Stages 1/2 — empty by construction since neither stage
+      // computes 5Y availability.
+      fundsMissing5YTotal: null,
+      fundsMissing5YSample: null,
+      missingEligible5YTotal: null,
+      missingEligible5YSample: null,
+      ineligible5YFundsTotal: null,
+      ineligible5YFundsSample: null,
     },
     perFundCoverageSample: perFundCoverage.slice(0, 25),
     sampleFiles: sampleSummaries,

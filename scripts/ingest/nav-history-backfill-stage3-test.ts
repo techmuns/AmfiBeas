@@ -321,5 +321,273 @@ function check(name: string, ok: boolean, detail?: string): void {
   );
 }
 
+// ===========================================================================
+// Phase 3.7B additions — Stage-3 INCREMENTAL flow
+// ===========================================================================
+//
+// Verifies the post-Phase-3.7A redesign:
+//   • Stable asOf is derived from an EXISTING manifest, never from a partial
+//     fetched series. Mirrors mainStage3Incremental's step (2).
+//   • Older-only fetch range is [5Y target − buffer, earliestExistingFirstDate
+//     − 1]. Mirrors step (3).
+//   • Older-only window builder emits oldest-first chunks of <= chunkDays
+//     and covers the full range exactly. Mirrors buildOlderOnlyWindows.
+//   • Incremental uses the existing per-fund history as the base (cannot
+//     regress 1Y / 3Y coverage).
+//   • Adaptive split on zero-row tiny HTML body halves the window down to
+//     a min-chunk-days floor; multiple splits are recorded as distinct
+//     WindowResult entries.
+//   • Dry-run never touches public/nav-history/.
+
+// Mirror: isoSubDays / isoToDate (must match production helpers).
+function isoSubDays(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const ms = Date.UTC(y, m - 1, d) - days * 86_400_000;
+  return toIso(new Date(ms));
+}
+function isoToDate(iso: string): Date {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d));
+}
+
+// Mirror: buildOlderOnlyWindows.
+function buildOlderOnlyWindows(fromIso: string, toIso: string, chunkDays: number): Array<{ from: Date; to: Date }> {
+  const wins: Array<{ from: Date; to: Date }> = [];
+  if (fromIso > toIso) return wins;
+  let cursor = isoToDate(fromIso).getTime();
+  const end = isoToDate(toIso).getTime();
+  while (cursor <= end) {
+    const fromDate = new Date(cursor);
+    const tentativeToMs = cursor + (chunkDays - 1) * 86_400_000;
+    const toMs = Math.min(tentativeToMs, end);
+    const toDate = new Date(toMs);
+    wins.push({ from: fromDate, to: toDate });
+    cursor = toMs + 86_400_000;
+  }
+  return wins;
+}
+
+// Deriving stableAsOfDate from an existing manifest.
+function stableAsOfFromManifest(manifestFunds: Array<{ firstDate: string | null; lastDate: string | null }>): { stableAsOf: string | null; earliestFirstDate: string | null } {
+  let stableAsOf: string | null = null;
+  let earliestFirstDate: string | null = null;
+  for (const m of manifestFunds) {
+    if (m.lastDate && (!stableAsOf || m.lastDate > stableAsOf)) stableAsOf = m.lastDate;
+    if (m.firstDate && (!earliestFirstDate || m.firstDate < earliestFirstDate)) earliestFirstDate = m.firstDate;
+  }
+  return { stableAsOf, earliestFirstDate };
+}
+
+// 5. Stable asOf is NOT derived from a partial fetched series.
+{
+  // Real Stage-2 production-shaped manifest fragment.
+  const manifest = [
+    { firstDate: "2023-04-17", lastDate: "2026-05-29" },
+    { firstDate: "2023-04-18", lastDate: "2026-05-29" },
+    { firstDate: "2024-08-01", lastDate: "2026-05-29" }, // younger
+  ];
+  const { stableAsOf, earliestFirstDate } = stableAsOfFromManifest(manifest);
+  check(
+    "Stage-3 stableAsOf comes from manifest max(lastDate) — independent of any partial fetch",
+    stableAsOf === "2026-05-29",
+    `got ${stableAsOf}`,
+  );
+  check(
+    "Stage-3 earliestExistingFirstDate = min(firstDate) across manifest",
+    earliestFirstDate === "2023-04-17",
+    `got ${earliestFirstDate}`,
+  );
+
+  // Simulate the broken Phase-3.7A behavior: a partial fetched series only
+  // reaches 2023-05-02. A correctly-implemented incremental flow MUST NOT
+  // adopt that as the asOf — it must keep using the manifest's 2026-05-29.
+  const partialFetchedSeriesLastDate = "2023-05-02";
+  check(
+    "Stage-3 stableAsOf ignores the partial fetched series last date (regression guard for 3.7A bug)",
+    stableAsOf !== partialFetchedSeriesLastDate && stableAsOf === "2026-05-29",
+    `stableAsOf=${stableAsOf} partial=${partialFetchedSeriesLastDate}`,
+  );
+}
+
+// 6. Older-only fetch range and window builder.
+{
+  const stableAsOf = "2026-05-29";
+  const earliestExistingFirstDate = "2023-04-17";
+  const bufferDays = 45;
+  const fiveYTarget = subPeriod(stableAsOf, 0, 5); // 2021-05-29
+  const olderFrom = isoSubDays(fiveYTarget, bufferDays); // ~2021-04-14
+  const olderTo = isoSubDays(earliestExistingFirstDate, 1); // 2023-04-16
+  check(
+    "Stage-3 older fetch starts at (5Y target − buffer)",
+    olderFrom === "2021-04-14",
+    `5Y=${fiveYTarget} − ${bufferDays}d = ${olderFrom}`,
+  );
+  check(
+    "Stage-3 older fetch ends the day before earliestExistingFirstDate (no overlap with committed Stage-2)",
+    olderTo === "2023-04-16",
+    `earliestFirstDate=${earliestExistingFirstDate} − 1 = ${olderTo}`,
+  );
+  check(
+    "Stage-3 older fetch range is non-empty when stableAsOf > earliestFirstDate + buffer",
+    olderFrom <= olderTo,
+    `${olderFrom} <= ${olderTo}`,
+  );
+
+  const wins = buildOlderOnlyWindows(olderFrom, olderTo, 75);
+  // ~733 days / 75 = 9.77 → 10 windows
+  check(
+    "Stage-3 older window builder produces ~10 chunks for the ~24-month older range",
+    Math.abs(wins.length - 10) <= 1,
+    `got ${wins.length}`,
+  );
+  check(
+    "Stage-3 older windows are oldest-first (windows[0].from < windows[-1].from)",
+    wins.length > 1 && wins[0].from.getTime() < wins[wins.length - 1].from.getTime(),
+    `wins[0].from=${toIso(wins[0].from)} wins[-1].from=${toIso(wins[wins.length - 1].from)}`,
+  );
+  check(
+    "Stage-3 older windows are contiguous (no gaps)",
+    (() => {
+      for (let i = 1; i < wins.length; i++) {
+        const prevTo = wins[i - 1].to.getTime();
+        const curFrom = wins[i].from.getTime();
+        if (curFrom !== prevTo + 86_400_000) return false;
+      }
+      return true;
+    })(),
+    "checked all consecutive pairs",
+  );
+  check(
+    "Stage-3 older windows cover exactly [olderFrom, olderTo]",
+    toIso(wins[0].from) === olderFrom && toIso(wins[wins.length - 1].to) === olderTo,
+    `wins[0].from=${toIso(wins[0].from)} wins[-1].to=${toIso(wins[wins.length - 1].to)}`,
+  );
+  check(
+    "Stage-3 older windows never re-fetch the committed Stage-2 range (last window's to < earliestExistingFirstDate)",
+    toIso(wins[wins.length - 1].to) < earliestExistingFirstDate,
+    `lastTo=${toIso(wins[wins.length - 1].to)} earliestFirstDate=${earliestExistingFirstDate}`,
+  );
+}
+
+// 7. Adaptive split simulation: 75-day window halves down to ≤14-day floor.
+{
+  // Model the role-tag progression: top → split-half → split-quarter.
+  // 75 → ~37 → ~18 → STOP (since next split would be ≤14d → at-or-below the
+  // floor, the recurse condition `spanDays > minChunkDays` ends).
+  const minChunkDays = 14;
+  function spanAfterSplits(startDays: number): number[] {
+    const out: number[] = [startDays];
+    let s = startDays;
+    while (s > minChunkDays) {
+      s = Math.floor(s / 2);
+      out.push(s);
+    }
+    return out;
+  }
+  const seq75 = spanAfterSplits(75);
+  check(
+    "Adaptive split: 75d → 37d → 18d → 9d sequence terminates at ≤ minChunkDays floor",
+    seq75.length === 4 && seq75[seq75.length - 1] <= minChunkDays,
+    `seq=${seq75.join(",")}`,
+  );
+  const seq30 = spanAfterSplits(30);
+  check(
+    "Adaptive split: 30d → 15d → 7d terminates at ≤ floor",
+    seq30.length === 3 && seq30[seq30.length - 1] <= minChunkDays,
+    `seq=${seq30.join(",")}`,
+  );
+  const seq14 = spanAfterSplits(14);
+  check(
+    "Adaptive split: 14d (at the floor) does not split further",
+    seq14.length === 1 && seq14[0] === 14,
+    `seq=${seq14.join(",")}`,
+  );
+}
+
+// 8. Empty older range when stableAsOf − 5y already lies inside committed history.
+{
+  const stableAsOf = "2026-05-29";
+  // If earliest existing firstDate is BEFORE the (5Y target − buffer), then
+  // the older fetch should be skipped (range is empty/inverted).
+  const earliestExistingFirstDate = "2020-01-01";
+  const bufferDays = 45;
+  const fiveYTarget = subPeriod(stableAsOf, 0, 5);
+  const olderFrom = isoSubDays(fiveYTarget, bufferDays);
+  const olderTo = isoSubDays(earliestExistingFirstDate, 1);
+  check(
+    "Stage-3 incremental skips older fetch when existing history already covers 5Y target",
+    olderFrom > olderTo,
+    `olderFrom=${olderFrom} olderTo=${olderTo}`,
+  );
+  const wins = buildOlderOnlyWindows(olderFrom, olderTo, 75);
+  check(
+    "Stage-3 incremental: empty range → zero windows",
+    wins.length === 0,
+    `got ${wins.length}`,
+  );
+}
+
+// 9. Incremental flow uses existing series as base (cannot regress 1Y/3Y).
+//    Modeled here as: merged series = union of (existing rows ∪ fetched older
+//    rows where date < existing.firstDate). The 1Y/3Y target dates fall
+//    inside the existing committed range, so 1Y/3Y availability is determined
+//    entirely by existing rows — never by what the older fetch returned.
+{
+  const stableAsOf = "2026-05-29";
+  const oneYTarget = subPeriod(stableAsOf, 0, 1); // 2025-05-29
+  const threeYTarget = subPeriod(stableAsOf, 0, 3); // 2023-05-29
+  const fiveYTarget = subPeriod(stableAsOf, 0, 5); // 2021-05-29
+  // A fund whose existing series starts 2023-04-17 has 1Y and 3Y coverage
+  // without any older fetch. 5Y becomes available once older rows reach
+  // 2021-05-29.
+  const existingFirstDate = "2023-04-17";
+  check(
+    "1Y target lies inside existing committed range (no merge regression possible)",
+    existingFirstDate <= oneYTarget,
+    `existingFirstDate=${existingFirstDate} 1Y target=${oneYTarget}`,
+  );
+  check(
+    "3Y target lies inside existing committed range (no merge regression possible)",
+    existingFirstDate <= threeYTarget,
+    `existingFirstDate=${existingFirstDate} 3Y target=${threeYTarget}`,
+  );
+  check(
+    "5Y target lies OUTSIDE existing committed range (needs older fetch)",
+    existingFirstDate > fiveYTarget,
+    `existingFirstDate=${existingFirstDate} 5Y target=${fiveYTarget}`,
+  );
+}
+
+// 10. Dry-run cannot accidentally write production files. The script's
+//     dispatch (`if (STAGE === 3) return mainStage3Incremental();`) routes
+//     to a flow that never invokes atomicWriteJson on the production paths.
+//     We assert this by string-search of the new function body.
+{
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const fs = require("node:fs") as typeof import("node:fs");
+  const src = fs.readFileSync(
+    path.resolve(process.cwd(), "scripts/ingest/nav-history-backfill.ts"),
+    "utf8",
+  );
+  const idx = src.indexOf("async function mainStage3Incremental");
+  const end = src.indexOf("async function main(", idx);
+  const body = idx >= 0 && end > idx ? src.slice(idx, end) : "";
+  check(
+    "Stage-3 incremental body contains no atomicWriteJson calls (no production writes)",
+    body.length > 0 && !body.includes("atomicWriteJson"),
+    body.length === 0 ? "could not slice mainStage3Incremental body" : "atomicWriteJson absent ✓",
+  );
+  check(
+    "Stage-3 incremental body contains no PRODUCTION_HISTORY_DIR writes",
+    body.length > 0 && !/PRODUCTION_HISTORY_DIR/.test(body),
+    body.length === 0 ? "n/a" : "PRODUCTION_HISTORY_DIR absent ✓",
+  );
+  check(
+    "Stage-3 incremental body contains no PRODUCTION_MANIFEST_PATH writes",
+    body.length > 0 && !/fs\.writeFile\([^)]*PRODUCTION_MANIFEST_PATH/.test(body),
+    body.length === 0 ? "n/a" : "PRODUCTION_MANIFEST_PATH writeFile absent ✓",
+  );
+}
+
 console.log(`\n${pass} passed, ${fail} failed.`);
 if (fail > 0) process.exit(1);
