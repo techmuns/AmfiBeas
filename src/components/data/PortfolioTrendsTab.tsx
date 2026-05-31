@@ -16,13 +16,23 @@ import mfReturns from "@/data/snapshots/mf-returns.json";
 import mfCategoryReturns from "@/data/snapshots/mf-category-returns.json";
 import mfHistoryManifest from "@/data/snapshots/mf-history-manifest.json";
 
-type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y";
+type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y";
 // All selectable periods, smallest → largest. Order is also the render
 // order of KPI cards and timeframe buttons.
-const PERIODS: PeriodKey[] = ["1M", "3M", "6M", "1Y", "3Y"];
-// Periods that exist as placeholder buttons but aren't selectable yet.
-// 3Y went live in Phase 3.6C; 5Y stays gated until the next backfill.
-const DISABLED_PERIODS: ReadonlyArray<"5Y"> = ["5Y"];
+const PERIODS: PeriodKey[] = ["1M", "3M", "6M", "1Y", "3Y", "5Y"];
+// 3Y went live in Phase 3.6C; 5Y went live in Phase 3.8C. No periods are
+// gated as placeholder buttons any more — kept as an empty array so the
+// renderer below stays parameterized for any future addition.
+const DISABLED_PERIODS: ReadonlyArray<never> = [];
+// Default-on-fresh-load order: never auto-selects 3Y or 5Y. User explicit
+// selections persist across fund changes via the fallback logic below.
+const DEFAULT_ORDER: ReadonlyArray<PeriodKey> = ["1Y", "6M", "3M", "1M"];
+// Fallback order when an explicitly-selected 5Y becomes unavailable on a
+// new fund: prefer 3Y first (it's the next-longest CAGR), then descend
+// through the regular default order. Other periods (3Y / 1Y / 6M / 3M /
+// 1M) just use DEFAULT_ORDER when their selected period becomes
+// unavailable — matches the Phase 3.6C behavior.
+const FALLBACK_FROM_5Y: ReadonlyArray<PeriodKey> = ["3Y", "1Y", "6M", "3M", "1M"];
 
 // ---------------------------------------------------------------------------
 // Snapshot types (subsetting the committed JSONs)
@@ -164,14 +174,21 @@ export function PortfolioTrendsTab({ schemecode, fundName }: PortfolioTrendsTabP
   const [period, setPeriod] = useState<PeriodKey | null>(defaultPeriod);
 
   // On fund change: keep the user's current period if the new fund still
-  // supports it (so a 3Y selection persists when switching between two funds
-  // that both have 3Y); otherwise fall back to defaultPeriod (best of
-  // 1Y → 6M → 3M → 1M; never auto-selects 3Y).
+  // supports it (so a 5Y or 3Y selection persists when switching between
+  // two funds that both have the same period). Otherwise fall back to:
+  //   - if previously on 5Y: FALLBACK_FROM_5Y (3Y → 1Y → 6M → 3M → 1M)
+  //   - otherwise: DEFAULT_ORDER (1Y → 6M → 3M → 1M)
+  // Either way, fresh-load default never auto-selects 3Y or 5Y.
   const [prevSchemecode, setPrevSchemecode] = useState(schemecode);
   if (prevSchemecode !== schemecode) {
     setPrevSchemecode(schemecode);
     const stillAvailable = period && returnRow?.dataAvailability[period];
-    setPeriod(stillAvailable ? period : defaultPeriod);
+    if (stillAvailable) {
+      // Keep the current period.
+    } else {
+      const order = period === "5Y" ? FALLBACK_FROM_5Y : DEFAULT_ORDER;
+      setPeriod(firstAvailableFromOrder(returnRow, order));
+    }
   }
 
   // On-demand history fetch, cached at component scope. Cache by schemecode.
@@ -380,7 +397,6 @@ function buildFreshnessLine(
     parts.push(`History: pending Stage-${HISTORY_STAGE} backfill for this fund`);
   }
   parts.push("Source: AMFI historical + AMFI latest NAV");
-  parts.push("5Y pending future backfill");
   return parts.join(" · ");
 }
 
@@ -398,7 +414,7 @@ function KpiRow({
   latestRow: LatestFund | undefined;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
       <NavKpiCard returnRow={returnRow} latestRow={latestRow} />
       {PERIODS.map((p) => (
         <ReturnKpiCard
@@ -459,7 +475,7 @@ function ReturnKpiCard({
         : value < 0
           ? "text-negative"
           : "";
-  const isCagr = period === "3Y";
+  const isCagr = period === "3Y" || period === "5Y";
   return (
     <div className="rounded-lg border bg-card px-4 py-3">
       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
@@ -483,7 +499,7 @@ function ReturnKpiCard({
         <div className="mt-0.5 text-[10px] tabular text-muted-foreground/80">
           {value === null
             ? isCagr
-              ? "no 3Y history"
+              ? `no ${period} history`
               : "no return"
             : (e as { peerCount: number }).peerCount < 5
               ? `n=${(e as { peerCount: number }).peerCount} < 5`
@@ -517,10 +533,8 @@ function TimeframeSelector({
       {PERIODS.map((p) => {
         const avail = availability[p];
         const active = period === p;
-        const unavailableTitle =
-          p === "3Y"
-            ? "Not enough 3Y history for this fund."
-            : `Not enough ${p} history for this fund.`;
+        const isCagr = p === "3Y" || p === "5Y";
+        const unavailableTitle = `Not enough ${p} history for this fund.`;
         return (
           <button
             key={p}
@@ -536,7 +550,7 @@ function TimeframeSelector({
             )}
             aria-pressed={active}
             aria-disabled={!avail}
-            title={avail ? (p === "3Y" ? "3Y (CAGR)" : undefined) : unavailableTitle}
+            title={avail ? (isCagr ? `${p} (CAGR)` : undefined) : unavailableTitle}
           >
             {p}
           </button>
@@ -681,7 +695,7 @@ function CategoryStrip({
     NonNullable<typeof fundEntry>,
     { statsAvailable: true }
   >;
-  const periodLabel = period === "3Y" ? "3Y CAGR" : period;
+  const periodLabel = period === "3Y" || period === "5Y" ? `${period} CAGR` : period;
   return (
     <div className="rounded-lg border bg-card px-4 py-3 text-sm">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 tabular">
@@ -753,8 +767,16 @@ function toneOf(n: number): "pos" | "neg" | "muted" {
 function firstAvailablePeriod(
   returnRow: ReturnsFund | undefined,
 ): PeriodKey | null {
+  // Default-on-fresh-load: walks DEFAULT_ORDER (1Y → 6M → 3M → 1M). Never
+  // auto-selects 3Y or 5Y on a fresh page load.
+  return firstAvailableFromOrder(returnRow, DEFAULT_ORDER);
+}
+
+function firstAvailableFromOrder(
+  returnRow: ReturnsFund | undefined,
+  order: ReadonlyArray<PeriodKey>,
+): PeriodKey | null {
   if (!returnRow) return null;
-  const order: PeriodKey[] = ["1Y", "6M", "3M", "1M"];
   for (const k of order) if (returnRow.dataAvailability[k]) return k;
   return null;
 }

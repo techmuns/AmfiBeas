@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 
-type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y";
+type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y";
 
 export interface PeerRankRow {
   schemecode: string;
@@ -55,7 +55,7 @@ export function TrendsPeerTable({
   period,
   cohortLabel,
 }: Props) {
-  const periodLabel = period === "3Y" ? "3Y CAGR" : `${period} return`;
+  const periodLabel = period === "3Y" || period === "5Y" ? `${period} CAGR` : `${period} return`;
   if (rows.length === 0) {
     return (
       <section className="space-y-2">
