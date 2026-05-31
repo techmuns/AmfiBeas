@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 
-type PeriodKey = "1M" | "3M" | "6M" | "1Y";
+type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y";
 
 export interface PeerRankRow {
   schemecode: string;
@@ -55,13 +55,14 @@ export function TrendsPeerTable({
   period,
   cohortLabel,
 }: Props) {
+  const periodLabel = period === "3Y" ? "3Y CAGR" : `${period} return`;
   if (rows.length === 0) {
     return (
       <section className="space-y-2">
         <div>
           <h2 className="text-base font-semibold tracking-tight">Peer ranking</h2>
           <p className="text-xs text-muted-foreground">
-            Funds in the same cohort, sorted by {period} return.
+            Funds in the same cohort, sorted by {periodLabel}.
           </p>
         </div>
         <div className="rounded-md border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">
@@ -104,7 +105,7 @@ export function TrendsPeerTable({
             <tr className="bg-muted/60 text-xs text-muted-foreground">
               <th className="px-3 py-2 text-left font-medium">Fund</th>
               <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
-                {period} return
+                {periodLabel}
               </th>
               <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
                 Rank

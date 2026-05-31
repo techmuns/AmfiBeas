@@ -16,9 +16,13 @@ import mfReturns from "@/data/snapshots/mf-returns.json";
 import mfCategoryReturns from "@/data/snapshots/mf-category-returns.json";
 import mfHistoryManifest from "@/data/snapshots/mf-history-manifest.json";
 
-type PeriodKey = "1M" | "3M" | "6M" | "1Y";
-const STAGE1_PERIODS: PeriodKey[] = ["1M", "3M", "6M", "1Y"];
-const DISABLED_PERIODS: ReadonlyArray<"3Y" | "5Y"> = ["3Y", "5Y"];
+type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y";
+// All selectable periods, smallest → largest. Order is also the render
+// order of KPI cards and timeframe buttons.
+const PERIODS: PeriodKey[] = ["1M", "3M", "6M", "1Y", "3Y"];
+// Periods that exist as placeholder buttons but aren't selectable yet.
+// 3Y went live in Phase 3.6C; 5Y stays gated until the next backfill.
+const DISABLED_PERIODS: ReadonlyArray<"5Y"> = ["5Y"];
 
 // ---------------------------------------------------------------------------
 // Snapshot types (subsetting the committed JSONs)
@@ -38,14 +42,11 @@ interface LatestSnapshot {
   funds: LatestFund[];
 }
 
-interface ReturnCell {
-  value: number;
-  kind: "simple";
-  startDate: string;
-  startNav: number;
-  endDate: string;
-  endNav: number;
-}
+// Phase 3.6C: 1M/3M/6M/1Y stay "simple"; 3Y is "cagr" with an extra
+// `years` field (mirrors mf-returns.json's two shapes).
+type ReturnCell =
+  | { value: number; kind: "simple"; startDate: string; startNav: number; endDate: string; endNav: number }
+  | { value: number; kind: "cagr"; startDate: string; startNav: number; endDate: string; endNav: number; years: number };
 interface ReturnsFund {
   schemecode: string;
   amfiSchemeCode: number;
@@ -76,6 +77,7 @@ interface ManifestFund {
   available: boolean;
 }
 interface ManifestSnapshot {
+  stage: number;
   funds: ManifestFund[];
 }
 
@@ -110,6 +112,7 @@ const returnsByCode = new Map(
 const manifestByCode = new Map(
   (mfHistoryManifest as unknown as ManifestSnapshot).funds.map((f) => [f.schemecode, f]),
 );
+const HISTORY_STAGE = (mfHistoryManifest as unknown as ManifestSnapshot).stage;
 const categoryByCode = new Map(
   (mfCategoryReturns as unknown as CategorySnapshot).fundRanks.map((f) => [f.schemecode, f]),
 );
@@ -160,11 +163,15 @@ export function PortfolioTrendsTab({ schemecode, fundName }: PortfolioTrendsTabP
   );
   const [period, setPeriod] = useState<PeriodKey | null>(defaultPeriod);
 
-  // Reset / re-derive period whenever the selected fund changes.
+  // On fund change: keep the user's current period if the new fund still
+  // supports it (so a 3Y selection persists when switching between two funds
+  // that both have 3Y); otherwise fall back to defaultPeriod (best of
+  // 1Y → 6M → 3M → 1M; never auto-selects 3Y).
   const [prevSchemecode, setPrevSchemecode] = useState(schemecode);
   if (prevSchemecode !== schemecode) {
     setPrevSchemecode(schemecode);
-    setPeriod(defaultPeriod);
+    const stillAvailable = period && returnRow?.dataAvailability[period];
+    setPeriod(stillAvailable ? period : defaultPeriod);
   }
 
   // On-demand history fetch, cached at component scope. Cache by schemecode.
@@ -367,13 +374,13 @@ function buildFreshnessLine(
   const parts: string[] = [`NAV as of ${formatDMY(feedDate)}`];
   if (historyAvailable && manifestRow?.firstDate && manifestRow.lastDate) {
     parts.push(
-      `History ${formatIsoDate(manifestRow.firstDate)} → ${formatIsoDate(manifestRow.lastDate)} (Stage-1, ${manifestRow.points} pts)`,
+      `History ${formatIsoDate(manifestRow.firstDate)} → ${formatIsoDate(manifestRow.lastDate)} (Stage-${HISTORY_STAGE}, ${manifestRow.points} pts)`,
     );
   } else {
-    parts.push("History: pending Stage-1 backfill for this fund");
+    parts.push(`History: pending Stage-${HISTORY_STAGE} backfill for this fund`);
   }
   parts.push("Source: AMFI historical + AMFI latest NAV");
-  parts.push("3Y/5Y pending future backfill");
+  parts.push("5Y pending future backfill");
   return parts.join(" · ");
 }
 
@@ -391,9 +398,9 @@ function KpiRow({
   latestRow: LatestFund | undefined;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       <NavKpiCard returnRow={returnRow} latestRow={latestRow} />
-      {STAGE1_PERIODS.map((p) => (
+      {PERIODS.map((p) => (
         <ReturnKpiCard
           key={p}
           period={p}
@@ -452,10 +459,11 @@ function ReturnKpiCard({
         : value < 0
           ? "text-negative"
           : "";
+  const isCagr = period === "3Y";
   return (
     <div className="rounded-lg border bg-card px-4 py-3">
       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-        {period} return
+        {period} return{isCagr ? " (CAGR)" : ""}
       </div>
       <div
         className={cn(
@@ -473,9 +481,13 @@ function ReturnKpiCard({
         </div>
       ) : e && !e.statsAvailable ? (
         <div className="mt-0.5 text-[10px] tabular text-muted-foreground/80">
-          {(e as { peerCount: number }).peerCount < 5
-            ? `n=${(e as { peerCount: number }).peerCount} < 5`
-            : "no peer stats"}
+          {value === null
+            ? isCagr
+              ? "no 3Y history"
+              : "no return"
+            : (e as { peerCount: number }).peerCount < 5
+              ? `n=${(e as { peerCount: number }).peerCount} < 5`
+              : "no peer stats"}
         </div>
       ) : (
         <div className="mt-0.5 text-[10px] tabular text-muted-foreground/80">
@@ -502,9 +514,13 @@ function TimeframeSelector({
   return (
     <div className="flex flex-wrap items-center gap-2 text-xs">
       <span className="text-muted-foreground">Timeframe:</span>
-      {STAGE1_PERIODS.map((p) => {
+      {PERIODS.map((p) => {
         const avail = availability[p];
         const active = period === p;
+        const unavailableTitle =
+          p === "3Y"
+            ? "Not enough 3Y history for this fund."
+            : `Not enough ${p} history for this fund.`;
         return (
           <button
             key={p}
@@ -520,7 +536,7 @@ function TimeframeSelector({
             )}
             aria-pressed={active}
             aria-disabled={!avail}
-            title={avail ? undefined : "Not enough history for this fund"}
+            title={avail ? (p === "3Y" ? "3Y (CAGR)" : undefined) : unavailableTitle}
           >
             {p}
           </button>
@@ -533,7 +549,7 @@ function TimeframeSelector({
           disabled
           className="cursor-not-allowed rounded-md border border-dashed border-border px-2.5 py-1 text-xs tabular text-muted-foreground/80"
           aria-disabled
-          title="Coming after future backfill (Stage-2 / Stage-3)"
+          title="Coming after future backfill"
         >
           {p}
         </button>
@@ -602,6 +618,7 @@ function ChartSlot({
       </div>
     );
   }
+  const isCagr = r.kind === "cagr";
   return (
     <div className="rounded-lg border bg-card px-3 py-3">
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2 px-1">
@@ -621,6 +638,7 @@ function ChartSlot({
         >
           {r.value > 0 ? "+" : ""}
           {r.value.toFixed(1)}% over {period}
+          {isCagr ? " (CAGR)" : ""}
         </p>
       </div>
       <NavPerformanceChart
@@ -663,10 +681,11 @@ function CategoryStrip({
     NonNullable<typeof fundEntry>,
     { statsAvailable: true }
   >;
+  const periodLabel = period === "3Y" ? "3Y CAGR" : period;
   return (
     <div className="rounded-lg border bg-card px-4 py-3 text-sm">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 tabular">
-        <Stat label={`${period} fund`} value={`${signed(stats.return)}%`} tone={toneOf(stats.return)} />
+        <Stat label={`${periodLabel} fund`} value={`${signed(stats.return)}%`} tone={toneOf(stats.return)} />
         <Stat label="Avg" value={`${signed(stats.categoryAverage)}%`} />
         <Stat label="Median" value={`${signed(stats.categoryMedian)}%`} />
         <Stat
