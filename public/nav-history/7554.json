@@ -12,13 +12,13 @@
     "isEtf": false,
     "isFof": false,
     "firstDate": "2021-04-15",
-    "lastDate": "2026-05-30",
-    "points": 1726,
+    "lastDate": "2026-05-31",
+    "points": 1727,
     "stage": 3,
     "ruleVersion": 1,
     "parserVersion": 1,
     "generatedAt": "2026-05-31T13:53:00.710Z",
-    "lastForwardAppendAt": null,
+    "lastForwardAppendAt": "2026-05-31T17:22:58.908Z",
     "provenance": {
       "backfillSource": "AMFI DownloadNAVHistoryReport_Po.aspx",
       "backfillWindows": [
@@ -179,7 +179,7 @@
           "role": "stage3-older"
         }
       ],
-      "forwardSource": "AMFI NAVAll.txt (via scripts/ingest/nav-latest.ts) — to be wired in a later phase",
+      "forwardSource": "AMFI NAVAll.txt (via scripts/ingest/nav-latest.ts → mf-latest-nav.json)",
       "parser": "scripts/ingest/nav-history-backfill.ts:parseHistoricalInto",
       "parserVersion": 1,
       "stage3": {
@@ -188,7 +188,16 @@
         "stage3MergeAt": "2026-05-31T13:53:00.710Z",
         "baseStage": 2,
         "baseFirstDate": "2023-04-16"
-      }
+      },
+      "forwardAppends": [
+        {
+          "navDate": "2026-05-31",
+          "nav": 2890.0429,
+          "feedDate": "29-May-2026",
+          "appendedAt": "2026-05-31T17:22:58.908Z",
+          "latestSnapshotGeneratedAt": "2026-05-30T20:59:38.974Z"
+        }
+      ]
     }
   },
   "series": [
@@ -7095,6 +7104,10 @@
     [
       "2026-05-30",
       2889.5274
+    ],
+    [
+      "2026-05-31",
+      2890.0429
     ]
   ]
 }
