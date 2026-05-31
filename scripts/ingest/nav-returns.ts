@@ -9,6 +9,7 @@
  * Stage-1 supported periods: 1M / 3M / 6M / 1Y (simple).
  * Stage-2 adds: 3Y (CAGR, using actual elapsed years between the
  *               selected start and end dates).
+ * Stage-3 adds: 5Y (CAGR, same formula at the 5-year anchor).
  *
  * Validates against the manifest BEFORE writing: file count must equal the
  * manifest's totalFunds, each available fund must have a history file with
@@ -37,9 +38,9 @@ const RULE_VERSION = 1;
 // 3M/6M/1Y "close to" tolerance is ±0.5% of the manifest's value (small —
 // the manifest and the per-fund files were built from the same fetch, so the
 // counts should be identical; the tolerance is there only as a safety net
-// for any cross-day rounding around the asOfDate anchor). 3Y is checked
-// exactly: introduced in Phase 3.6A and the matching manifest value
-// (Stage-2) is the single source of truth.
+// for any cross-day rounding around the asOfDate anchor). 3Y and 5Y are
+// checked exactly: introduced in Phases 3.6A / 3.8A respectively, and the
+// matching manifest values are the single source of truth.
 const GUARD = {
   expectedFundCount: 1036,
   exact1M: 1036,                      // 1M must be exactly the full universe
@@ -47,6 +48,7 @@ const GUARD = {
   approx6M: 1022,
   approx1Y: 995,
   exact3Y: 826,                       // Stage-2 manifest: 826 funds carry a 3Y CAGR
+  exact5Y: 637,                       // Stage-3 manifest: 637 funds carry a 5Y CAGR
   approxTolerancePct: 0.5,
 };
 
@@ -79,9 +81,10 @@ interface ManifestFile {
   totalFunds: number;
   fundsAvailable: number;
   fundsMissing: number;
-  // periodCoverage in the on-disk manifest includes "3Y" on Stage-2
-  // builds. We tolerate either shape and read "3Y" if present.
-  periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y"?: number };
+  // periodCoverage in the on-disk manifest includes "3Y" on Stage-2 builds
+  // and adds "5Y" on Stage-3 builds. We tolerate either shape and read each
+  // optional key if present.
+  periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y"?: number; "5Y"?: number };
   ruleVersion: number;
   parserVersion: number;
   funds: ManifestFund[];
@@ -111,12 +114,12 @@ interface HistoryFile {
   series: Array<[string, number]>; // ascending [isoDate, nav]
 }
 
-type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y";
+type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y";
 
-// Phase 3.6A: 1M/3M/6M/1Y stay simple. 3Y is annualized (CAGR) using the
-// actual elapsed years between the selected start and end dates, not the
-// nominal 3.0; this keeps the formula honest when nearest-prior anchors
-// a few days before/after the exact target boundary.
+// Phase 3.6A/3.8A: 1M/3M/6M/1Y stay simple. 3Y and 5Y are annualized
+// (CAGR) using the actual elapsed years between the selected start and end
+// dates, not the nominal 3.0/5.0; this keeps the formula honest when
+// nearest-prior anchors a few days before/after the exact target boundary.
 type SimpleReturnCell = {
   value: number;
   kind: "simple";
@@ -191,7 +194,8 @@ function elapsedYears(startIso: string, endIso: string): number {
 
 type PeriodSpec =
   | { key: "1M" | "3M" | "6M" | "1Y"; months: number; years: number; kind: "simple" }
-  | { key: "3Y"; months: 0; years: 3; kind: "cagr" };
+  | { key: "3Y"; months: 0; years: 3; kind: "cagr" }
+  | { key: "5Y"; months: 0; years: 5; kind: "cagr" };
 
 const PERIODS: PeriodSpec[] = [
   { key: "1M", months: 1, years: 0, kind: "simple" },
@@ -199,11 +203,12 @@ const PERIODS: PeriodSpec[] = [
   { key: "6M", months: 6, years: 0, kind: "simple" },
   { key: "1Y", months: 0, years: 1, kind: "simple" },
   { key: "3Y", months: 0, years: 3, kind: "cagr" },
+  { key: "5Y", months: 0, years: 5, kind: "cagr" },
 ];
 
 function computeReturns(series: SeriesPoint[]): { returns: Partial<Record<PeriodKey, ReturnCell>>; availability: Record<PeriodKey, boolean> } {
   const returns: Partial<Record<PeriodKey, ReturnCell>> = {};
-  const availability: Record<PeriodKey, boolean> = { "1M": false, "3M": false, "6M": false, "1Y": false, "3Y": false };
+  const availability: Record<PeriodKey, boolean> = { "1M": false, "3M": false, "6M": false, "1Y": false, "3Y": false, "5Y": false };
   if (series.length < 2) return { returns, availability };
   const end = series[series.length - 1];
   const firstDate = series[0].date;
@@ -331,7 +336,7 @@ async function main(): Promise<void> {
   });
 
   const rows: ReturnRow[] = [];
-  let availability1M = 0, availability3M = 0, availability6M = 0, availability1Y = 0, availability3Y = 0;
+  let availability1M = 0, availability3M = 0, availability6M = 0, availability1Y = 0, availability3Y = 0, availability5Y = 0;
 
   for (const mFund of sortedManifestFunds) {
     const filePath = path.resolve(process.cwd(), mFund.path);
@@ -350,7 +355,7 @@ async function main(): Promise<void> {
     const { returns, availability } = computeReturns(series);
 
     // Sanity-check the computed return values are finite numbers.
-    for (const k of ["1M", "3M", "6M", "1Y", "3Y"] as PeriodKey[]) {
+    for (const k of ["1M", "3M", "6M", "1Y", "3Y", "5Y"] as PeriodKey[]) {
       const r = returns[k];
       if (r && (!Number.isFinite(r.value) || !Number.isFinite(r.startNav) || !Number.isFinite(r.endNav))) {
         issues.push({ schemecode: mFund.schemecode, reason: `${k} computed non-finite values` });
@@ -369,6 +374,7 @@ async function main(): Promise<void> {
     if (availability["6M"]) availability6M += 1;
     if (availability["1Y"]) availability1Y += 1;
     if (availability["3Y"]) availability3Y += 1;
+    if (availability["5Y"]) availability5Y += 1;
 
     rows.push({
       schemecode: mFund.schemecode,
@@ -418,6 +424,13 @@ async function main(): Promise<void> {
   if (manifest.periodCoverage["3Y"] !== undefined && manifest.periodCoverage["3Y"] !== availability3Y) {
     validationFailures.push(`3Y coverage ${availability3Y} != manifest.periodCoverage["3Y"] ${manifest.periodCoverage["3Y"]}`);
   }
+  // Phase 3.8A: same exact-equality check at 5Y (Stage-3 manifest).
+  if (availability5Y !== GUARD.exact5Y) {
+    validationFailures.push(`5Y coverage ${availability5Y} != exact ${GUARD.exact5Y}`);
+  }
+  if (manifest.periodCoverage["5Y"] !== undefined && manifest.periodCoverage["5Y"] !== availability5Y) {
+    validationFailures.push(`5Y coverage ${availability5Y} != manifest.periodCoverage["5Y"] ${manifest.periodCoverage["5Y"]}`);
+  }
   if (issues.length > 0) {
     validationFailures.push(`${issues.length} per-fund validation issues`);
   }
@@ -441,8 +454,8 @@ async function main(): Promise<void> {
     generatedAt,
     source: "computed from public/nav-history",
     // historyStage tracks which Stage the source history was produced by.
-    // Stage-2 introduces 3Y; the field is read by downstream UIs to decide
-    // which periods to expose.
+    // Stage-2 introduces 3Y; Stage-3 introduces 5Y. The field is read by
+    // downstream UIs to decide which periods to expose.
     historyStage: manifest.stage,
     historyManifestGeneratedAt: manifest.generatedAt,
     asOfDate,
@@ -453,6 +466,7 @@ async function main(): Promise<void> {
       "6M": availability6M,
       "1Y": availability1Y,
       "3Y": availability3Y,
+      "5Y": availability5Y,
     },
     funds: rows,
   };
@@ -463,8 +477,8 @@ async function main(): Promise<void> {
 
   info("================ MF RETURNS SNAPSHOT SUMMARY ================");
   info(`asOfDate: ${asOfDate ?? "?"}  ·  rows: ${rows.length}  ·  historyStage: ${manifest.stage}`);
-  info(`Period coverage: 1M=${availability1M} 3M=${availability3M} 6M=${availability6M} 1Y=${availability1Y} 3Y=${availability3Y}`);
-  info(`Manifest expected: 1M=${manifest.periodCoverage["1M"]} 3M=${manifest.periodCoverage["3M"]} 6M=${manifest.periodCoverage["6M"]} 1Y=${manifest.periodCoverage["1Y"]} 3Y=${manifest.periodCoverage["3Y"] ?? "(absent)"}`);
+  info(`Period coverage: 1M=${availability1M} 3M=${availability3M} 6M=${availability6M} 1Y=${availability1Y} 3Y=${availability3Y} 5Y=${availability5Y}`);
+  info(`Manifest expected: 1M=${manifest.periodCoverage["1M"]} 3M=${manifest.periodCoverage["3M"]} 6M=${manifest.periodCoverage["6M"]} 1Y=${manifest.periodCoverage["1Y"]} 3Y=${manifest.periodCoverage["3Y"] ?? "(absent)"} 5Y=${manifest.periodCoverage["5Y"] ?? "(absent)"}`);
   info(`Guardrails: PASS`);
   info("============================================================");
 }
