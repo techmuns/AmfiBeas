@@ -671,7 +671,7 @@ check(
   );
 }
 
-// 17. Workflow commit wiring for Phase 3.9C.
+// 17. Workflow trigger + commit wiring for Phase 3.9D (scheduled + manual).
 {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const fs = require("node:fs") as typeof import("node:fs");
@@ -679,20 +679,57 @@ check(
     path.resolve(process.cwd(), ".github/workflows/nav-history-forward.yml"),
     "utf8",
   );
+  // Trigger model: workflow_run (chained after nav-latest) + workflow_dispatch.
   check(
-    "workflow: still workflow_dispatch only (no schedule)",
-    /workflow_dispatch:/.test(yml) && !/^\s*schedule:/m.test(yml),
-    "dispatch present, no schedule",
+    "workflow: workflow_run trigger present, keyed on the nav-latest workflow name",
+    /workflow_run:/.test(yml) && /workflows: \["NAV latest snapshot \(daily\)"\]/.test(yml),
+    "workflow_run on nav-latest present",
   );
   check(
-    "workflow: run step sets NAV_HISTORY_FORWARD_WRITE_MODE from commit input",
-    /NAV_HISTORY_FORWARD_WRITE_MODE: \$\{\{ inputs\.commit == 'true' && 'production' \|\| 'dryrun' \}\}/.test(yml),
-    "env wiring present",
+    "workflow: workflow_run listens for the 'completed' type",
+    /types: \[completed\]/.test(yml),
+    "completed type present",
   );
   check(
-    "workflow: commit step gated on commit == 'true' AND run success",
-    /inputs\.commit == 'true' && steps\.run\.outcome == 'success'/.test(yml),
+    "workflow: manual workflow_dispatch is preserved (commit toggle still available)",
+    /workflow_dispatch:/.test(yml) && /commit:/.test(yml),
+    "dispatch + commit input present",
+  );
+  check(
+    "workflow: NO cron schedule (chained on workflow_run, not a guessed offset)",
+    !/^\s*schedule:/m.test(yml),
+    "no schedule key",
+  );
+  // Job-level gate: dispatch always runs; workflow_run only on upstream success.
+  check(
+    "workflow: job gated — dispatch always, workflow_run only when upstream succeeded",
+    /if: \$\{\{ github\.event_name == 'workflow_dispatch' \|\| github\.event\.workflow_run\.conclusion == 'success' \}\}/.test(yml),
+    "job-level if present",
+  );
+  // Production mode for workflow_run OR manual commit=true.
+  check(
+    "workflow: production mode when workflow_run OR commit=='true'",
+    /NAV_HISTORY_FORWARD_WRITE_MODE: \$\{\{ \(github\.event_name == 'workflow_run' \|\| inputs\.commit == 'true'\) && 'production' \|\| 'dryrun' \}\}/.test(yml),
+    "env mode resolution present",
+  );
+  // Commit gate mirrors the production-mode condition AND run success.
+  check(
+    "workflow: commit step gated on (workflow_run || commit=='true') AND run success",
+    /if: \$\{\{ \(github\.event_name == 'workflow_run' \|\| inputs\.commit == 'true'\) && steps\.run\.outcome == 'success' \}\}/.test(yml),
     "commit gate present",
+  );
+  // Explicit checkout ref so the workflow_run path reads the freshly
+  // committed mf-latest-nav.json (head_sha points at the pre-commit SHA).
+  check(
+    "workflow: checkout pins ref: main (reads the freshly committed latest-NAV snapshot)",
+    /uses: actions\/checkout@v4/.test(yml) && /\n\s*ref: main\b/.test(yml),
+    "checkout ref: main present",
+  );
+  // Concurrency serializes without cancelling an in-flight data write.
+  check(
+    "workflow: concurrency cancel-in-progress: false (never cancel an in-flight production write)",
+    /cancel-in-progress: false/.test(yml),
+    "cancel-in-progress false present",
   );
   check(
     "workflow: commit message is 'chore(data): daily forward NAV refresh'",
