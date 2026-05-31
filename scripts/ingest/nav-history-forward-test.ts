@@ -396,32 +396,39 @@ check(
     path.resolve(process.cwd(), "scripts/ingest/nav-history-forward.ts"),
     "utf8",
   );
-  // Confirm no string referencing public/nav-history/ as a write target
-  // appears outside the readExistingHistoryFile path. The path constant
-  // HISTORY_DIR is used ONLY inside readExistingHistoryFile.
-  const writesToPublic =
-    /(?:fs\.writeFile|fs\.mkdir|atomicWriteJson)\([^)]*HISTORY_DIR/.test(src) ||
-    /(?:fs\.writeFile|fs\.mkdir|atomicWriteJson)\([^)]*public\/nav-history/.test(src);
+  // Phase 3.9C: production writes to public/nav-history/ + src/data/snapshots/
+  // now EXIST but must be gated behind the production guard. The dry-run path
+  // (the default) still touches only data/debug/. We assert (a) the writes
+  // exist, and (b) they live inside the `WRITE_MODE === "production" && guardPass`
+  // block, never in the dry-run path.
+  const prodGateIdx = src.indexOf('WRITE_MODE === "production" && guardPass');
+  const historyWriteIdx = src.indexOf("atomicWriteJson(path.join(HISTORY_DIR,");
+  const manifestWriteIdx = src.indexOf("atomicWriteJson(MANIFEST_PATH,");
   check(
-    "no production write: nav-history-forward.ts never writes to public/nav-history/",
-    !writesToPublic,
-    writesToPublic ? "found a write to HISTORY_DIR/public/nav-history" : "no production write ✓",
+    "gated write: per-fund history write lives AFTER the production gate",
+    prodGateIdx > 0 && historyWriteIdx > prodGateIdx,
+    `gate=${prodGateIdx} historyWrite=${historyWriteIdx}`,
   );
-  const writesToSnapshots =
-    /(?:fs\.writeFile|atomicWriteJson)\([^)]*src\/data\/snapshots/.test(src) ||
-    /(?:fs\.writeFile|atomicWriteJson)\([^)]*LATEST_PATH/.test(src) ||
-    /(?:fs\.writeFile|atomicWriteJson)\([^)]*MANIFEST_PATH/.test(src);
   check(
-    "no production write: nav-history-forward.ts never writes to src/data/snapshots/",
-    !writesToSnapshots,
-    writesToSnapshots ? "found a write to src/data/snapshots" : "no production write ✓",
+    "gated write: manifest write lives AFTER the production gate",
+    prodGateIdx > 0 && manifestWriteIdx > prodGateIdx,
+    `gate=${prodGateIdx} manifestWrite=${manifestWriteIdx}`,
   );
-  // All debug writes go to data/debug/
-  const writesDebug = /data\/debug/.test(src) && /fs\.writeFile/.test(src);
+  // The dry-run sample/summary writes (data/debug) must be gated on dry-run
+  // so a production run never reconstructs (and double-appends) sample files.
+  const dryRunGateIdx = src.indexOf('if (WRITE_MODE === "dryrun") {');
+  const sampleWriteIdx = src.indexOf("path.join(SAMPLE_DIR,");
   check(
-    "debug writes: nav-history-forward.ts does write to data/debug/ (gitignored)",
-    writesDebug,
-    "data/debug write path present ✓",
+    "gated write: sample/summary debug writes are inside the dry-run guard",
+    dryRunGateIdx > 0 && sampleWriteIdx > dryRunGateIdx,
+    `dryRunGate=${dryRunGateIdx} sampleWrite=${sampleWriteIdx}`,
+  );
+  // The report itself always writes to data/debug/ (both modes).
+  const writesDebugReport = /fs\.writeFile\(REPORT_PATH/.test(src) && /data\/debug/.test(src);
+  check(
+    "debug writes: dry-run report always written to data/debug/ (gitignored)",
+    writesDebugReport,
+    "data/debug report write present ✓",
   );
 }
 
@@ -552,6 +559,160 @@ check(
     "import-guard: production script wraps main() in a process.argv entry-check",
     hasGuard && hasGuardedMain,
     `hasGuard=${hasGuard} hasGuardedMain=${hasGuardedMain}`,
+  );
+}
+
+// ===========================================================================
+// Phase 3.9C additions — production write mode
+// ===========================================================================
+
+// 15. Production-write gating truth table (mirror of the script's gate
+//     `WRITE_MODE === "production" && guardPass`).
+{
+  function shouldWrite(writeMode: "dryrun" | "production", guardPass: boolean): boolean {
+    return writeMode === "production" && guardPass;
+  }
+  check("prod-gate: dryrun + pass → no write", shouldWrite("dryrun", true) === false, "");
+  check("prod-gate: dryrun + fail → no write", shouldWrite("dryrun", false) === false, "");
+  check("prod-gate: production + fail → no write (keep-last-good)", shouldWrite("production", false) === false, "");
+  check("prod-gate: production + pass → write", shouldWrite("production", true) === true, "");
+}
+
+// 16. Source inspection of the production block.
+{
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const fs = require("node:fs") as typeof import("node:fs");
+  const src = fs.readFileSync(
+    path.resolve(process.cwd(), "scripts/ingest/nav-history-forward.ts"),
+    "utf8",
+  );
+
+  check(
+    "prod: WRITE_MODE is env-driven (NAV_HISTORY_FORWARD_WRITE_MODE === 'production')",
+    /NAV_HISTORY_FORWARD_WRITE_MODE === "production"/.test(src),
+    "env switch present",
+  );
+  check(
+    "prod: production write block is gated on WRITE_MODE === 'production' && guardPass",
+    /WRITE_MODE === "production" && guardPass/.test(src),
+    "gate present",
+  );
+  check(
+    "prod: only would-append funds are written (loop over `wouldAppend`)",
+    /for \(const a of wouldAppend\)/.test(src),
+    "iterates wouldAppend, not the full universe",
+  );
+  check(
+    "prod: per-fund history files written via atomicWriteJson",
+    /atomicWriteJson\(path\.join\(HISTORY_DIR, `\$\{a\.schemecode\}\.json`\), file\)/.test(src),
+    "atomic per-fund write present",
+  );
+  check(
+    "prod: manifest written via atomicWriteJson to MANIFEST_PATH",
+    /atomicWriteJson\(MANIFEST_PATH, newManifest\)/.test(src),
+    "atomic manifest write present",
+  );
+  // Manifest must be written AFTER the per-fund loop. Compare source indices.
+  const perFundWriteIdx = src.indexOf("atomicWriteJson(path.join(HISTORY_DIR,");
+  const manifestWriteIdx = src.indexOf("atomicWriteJson(MANIFEST_PATH,");
+  check(
+    "prod: manifest is written AFTER all per-fund history files (torn-write safety)",
+    perFundWriteIdx > 0 && manifestWriteIdx > 0 && manifestWriteIdx > perFundWriteIdx,
+    `perFund=${perFundWriteIdx} manifest=${manifestWriteIdx}`,
+  );
+  // Returns regen must come after the manifest write; category after returns.
+  const returnsRegenIdx = src.indexOf('execFileSync("npm", ["run", "ingest:nav:returns"]');
+  const categoryRegenIdx = src.indexOf('execFileSync("npm", ["run", "ingest:nav:category-returns"]');
+  check(
+    "prod: mf-returns regen runs AFTER the manifest write",
+    returnsRegenIdx > 0 && returnsRegenIdx > manifestWriteIdx,
+    `manifest=${manifestWriteIdx} returnsRegen=${returnsRegenIdx}`,
+  );
+  check(
+    "prod: mf-category-returns regen runs AFTER mf-returns regen",
+    categoryRegenIdx > 0 && categoryRegenIdx > returnsRegenIdx,
+    `returnsRegen=${returnsRegenIdx} categoryRegen=${categoryRegenIdx}`,
+  );
+  check(
+    "prod: category regen is gated on returns regen succeeding",
+    /if \(production\.returnsRegenerated\) \{[\s\S]*?ingest:nav:category-returns/.test(src),
+    "category gated on returns",
+  );
+  // productionOk requires manifest + both regens to have succeeded.
+  check(
+    "prod: productionOk requires manifestWritten && returnsRegenerated && categoryRegenerated",
+    /productionOk\s*=[\s\S]*?production\.manifestWritten[\s\S]*?production\.returnsRegenerated[\s\S]*?production\.categoryRegenerated/.test(src),
+    "productionOk composite present",
+  );
+  // The final exit propagates a failed production write.
+  check(
+    "prod: non-zero exit when production write did not complete cleanly",
+    /WRITE_MODE === "production" && !productionOk[\s\S]*?process\.exit\(1\)/.test(src),
+    "exit-on-incomplete present",
+  );
+  // Samples/summaries are dry-run only (no double-append in production).
+  check(
+    "prod: sample + summary writes are gated on dry-run (no double-append in production)",
+    /if \(WRITE_MODE === "dryrun"\) \{[\s\S]*?SAMPLE_DIR[\s\S]*?CATEGORY_SUMMARY_PATH/.test(src),
+    "dry-run-only debug writes",
+  );
+  // firstDate must not change across a forward append.
+  check(
+    "prod: forward append asserts firstDate is unchanged",
+    /firstDate changed by forward append/.test(src),
+    "firstDate-unchanged guard present",
+  );
+  // never overwrite existing same-date: merge only appends the new latest
+  // (would-append branch only entered when latestIso > lastDate).
+  check(
+    "prod: merged series is existingSeries + the single new latest point",
+    /const merged: Array<\[string, number\]> = \[\.\.\.existing\.series, \[a\.latestNavDate, latestRow\.nav\]\]/.test(src),
+    "single-point append",
+  );
+}
+
+// 17. Workflow commit wiring for Phase 3.9C.
+{
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const fs = require("node:fs") as typeof import("node:fs");
+  const yml = fs.readFileSync(
+    path.resolve(process.cwd(), ".github/workflows/nav-history-forward.yml"),
+    "utf8",
+  );
+  check(
+    "workflow: still workflow_dispatch only (no schedule)",
+    /workflow_dispatch:/.test(yml) && !/^\s*schedule:/m.test(yml),
+    "dispatch present, no schedule",
+  );
+  check(
+    "workflow: run step sets NAV_HISTORY_FORWARD_WRITE_MODE from commit input",
+    /NAV_HISTORY_FORWARD_WRITE_MODE: \$\{\{ inputs\.commit == 'true' && 'production' \|\| 'dryrun' \}\}/.test(yml),
+    "env wiring present",
+  );
+  check(
+    "workflow: commit step gated on commit == 'true' AND run success",
+    /inputs\.commit == 'true' && steps\.run\.outcome == 'success'/.test(yml),
+    "commit gate present",
+  );
+  check(
+    "workflow: commit message is 'chore(data): daily forward NAV refresh'",
+    /git commit -m "chore\(data\): daily forward NAV refresh"/.test(yml),
+    "commit message present",
+  );
+  check(
+    "workflow: git add scopes exactly the four production paths",
+    /git add public\/nav-history src\/data\/snapshots\/mf-history-manifest\.json src\/data\/snapshots\/mf-returns\.json src\/data\/snapshots\/mf-category-returns\.json/.test(yml),
+    "git add scope present",
+  );
+  check(
+    "workflow: no-op clean exit when git has no changes",
+    /No forward-refresh changes to commit\./.test(yml),
+    "no-op guard present",
+  );
+  check(
+    "workflow: permissions contents: write (needed for commit)",
+    /permissions:\s*\n\s*contents: write/.test(yml),
+    "write permission present",
   );
 }
 

@@ -1,31 +1,36 @@
 name: NAV history forward refresh (manual)
 
-# MANUAL daily forward NAV refresh — Phase 3.9B (DRY RUN only).
+# MANUAL daily forward NAV refresh — Phase 3.9C.
 # workflow_dispatch only; NO schedule (scheduling lands in Phase 3.9D
 # after a clean manual production run has been verified).
 #
 # Reads the already-committed src/data/snapshots/mf-latest-nav.json
-# (refreshed daily by nav-latest.yml) and simulates appending the
-# latest NAV onto each fund's existing public/nav-history/{schemecode}
-# .json IN MEMORY. Produces a dry-run report + sample proposed merged
-# files + proposed periodCoverage summaries under data/debug/, uploaded
-# as artifacts.
+# (refreshed daily by nav-latest.yml) and appends the latest NAV onto
+# each fund's existing public/nav-history/{schemecode}.json.
 #
-# Strict dry-run: this workflow does NOT touch public/nav-history/ or
-# src/data/snapshots/. There is no commit step in Phase 3.9B. The
-# `commit` input is declared (default "false") so the trigger UI stays
-# stable across phases; in Phase 3.9C it will gate a production
-# write + commit step.
+#   commit = false (default) → DRY RUN: simulate in memory; write a
+#     dry-run report + sample proposed merged files + proposed
+#     periodCoverage summaries under data/debug/ (gitignored), uploaded
+#     as artifacts. NEVER touches public/nav-history/ or
+#     src/data/snapshots/. No commit.
+#
+#   commit = true → PRODUCTION: the script runs with
+#     NAV_HISTORY_FORWARD_WRITE_MODE=production and (when all guardrails
+#     pass) atomic-writes only the CHANGED per-fund history files, then
+#     the manifest, then regenerates mf-returns.json +
+#     mf-category-returns.json. The commit step lands exactly those four
+#     paths IF the script exited cleanly. Keep-last-good: a non-zero exit
+#     blocks the commit and the ephemeral runner is discarded.
 
 on:
   workflow_dispatch:
     inputs:
       reason:
-        description: "Why are you running this dry-run? (optional)"
+        description: "Why are you running this? (optional)"
         required: false
         type: string
       commit:
-        description: "PLACEHOLDER for Phase 3.9C. In 3.9B only `false` is honored — no production write or commit happens regardless of this value."
+        description: "false = dry run (artifact only; DEFAULT). true = production write (append changed history + manifest + returns + category) and commit."
         required: false
         default: "false"
         type: choice
@@ -33,21 +38,21 @@ on:
           - "false"
           - "true"
 
+# contents:write needed only when commit=true; harmless for dry runs.
 permissions:
-  # Read-only in Phase 3.9B (dry-run, no commit). Bumped to contents:write
-  # in Phase 3.9C when the commit step lands.
-  contents: read
+  contents: write
 
 concurrency:
   group: nav-history-forward-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  forward-dryrun:
+  forward:
     runs-on: ubuntu-22.04
-    # Forward append reads ~1,036 small history files + computes per-period
-    # availability — comfortably inside 10 min; 20 min ceiling for headroom.
-    timeout-minutes: 20
+    # Forward append reads ~1,036 small history files, writes the changed
+    # subset, then regenerates returns + category (a few minutes each).
+    # 30-minute ceiling for comfortable headroom.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -56,12 +61,18 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Run forward-refresh dry-run
-        # Exits non-zero on guardrail failure; continue-on-error keeps the
+      - name: Run forward refresh (mode = ${{ inputs.commit == 'true' && 'production' || 'dryrun' }})
+        # The script exits non-zero on any guardrail failure OR an
+        # incomplete production write (partial per-fund writes, or a failed
+        # returns/category regeneration). continue-on-error keeps the
         # artifact-upload steps reachable so a partial diagnostic is always
-        # preserved.
+        # preserved. The commit step has NO continue-on-error and is gated
+        # on this step's success (see its `if:`), so a non-zero exit blocks
+        # the commit.
         id: run
         continue-on-error: true
+        env:
+          NAV_HISTORY_FORWARD_WRITE_MODE: ${{ inputs.commit == 'true' && 'production' || 'dryrun' }}
         run: npm run ingest:nav:forward
       - name: Upload dry-run report
         if: ${{ always() }}
@@ -89,9 +100,26 @@ jobs:
           path: data/debug/sample-nav-history-forward/
           if-no-files-found: warn
           retention-days: 14
-      - name: Fail the job if the dry-run failed
-        # The dry-run report has been uploaded above; now propagate the
-        # script's exit status so the run is correctly red on guardrail
-        # failure (rather than silently green because of continue-on-error).
+      - name: Commit production data
+        # Runs ONLY when commit=true AND the forward script exited 0 (all
+        # guardrails passed AND the production write + both regenerations
+        # completed). Commits exactly the four production paths. If git has
+        # no changes (e.g. a no-op run where no fund advanced), the step is
+        # a clean no-op.
+        if: ${{ inputs.commit == 'true' && steps.run.outcome == 'success' }}
+        run: |
+          if [ -z "$(git status --porcelain public/nav-history src/data/snapshots/mf-history-manifest.json src/data/snapshots/mf-returns.json src/data/snapshots/mf-category-returns.json)" ]; then
+            echo "No forward-refresh changes to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/nav-history src/data/snapshots/mf-history-manifest.json src/data/snapshots/mf-returns.json src/data/snapshots/mf-category-returns.json
+          git commit -m "chore(data): daily forward NAV refresh"
+          git push
+      - name: Fail the job if the run failed
+        # Propagate the script's exit status so a guardrail/production-write
+        # failure shows the run as red (rather than green via
+        # continue-on-error). The artifacts above were already uploaded.
         if: ${{ steps.run.outcome == 'failure' }}
         run: exit 1
