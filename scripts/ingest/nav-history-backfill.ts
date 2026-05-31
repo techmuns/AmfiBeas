@@ -57,6 +57,7 @@ const USER_AGENT =
 // distinct path so it can never collide with Stage 1.
 interface StageConfig {
   totalMonthsBack: number;
+  bufferDays: number;
   chunkDays: number;
   politeDelayMs: number;
   fetchTimeoutMs: number;
@@ -81,6 +82,10 @@ interface StageConfig {
 const STAGE_CONFIGS: Record<1 | 2, StageConfig> = {
   1: {
     totalMonthsBack: 15,
+    // Stage 1's longest period is 1Y; 15 months already leaves ~90 days of
+    // lead-in before the 1Y anchor, so no extra buffer is needed (kept 0 to
+    // preserve the validated Stage-1 window set exactly).
+    bufferDays: 0,
     chunkDays: 75,
     politeDelayMs: 1500,
     fetchTimeoutMs: 120_000,
@@ -103,6 +108,12 @@ const STAGE_CONFIGS: Record<1 | 2, StageConfig> = {
   },
   2: {
     totalMonthsBack: 36, // 3 years
+    // 45-day lead-in BEFORE the 36-month mark so the fetched series starts
+    // comfortably before the (asOf − 3y) anchor — fixes the Phase 3.5A 3Y=0
+    // bug where the window began at/after the anchor. ~45 days absorbs the
+    // today-vs-asOf gap plus weekend/holiday market closures around the
+    // boundary. Adds ~1 window (≈16 total).
+    bufferDays: 45,
     chunkDays: 75,
     politeDelayMs: 1500,
     fetchTimeoutMs: 120_000,
@@ -135,6 +146,7 @@ const STAGE_CONFIGS: Record<1 | 2, StageConfig> = {
 
 const CONFIG = STAGE_CONFIGS[STAGE];
 const TOTAL_MONTHS_BACK = CONFIG.totalMonthsBack;
+const BUFFER_DAYS = CONFIG.bufferDays;
 const CHUNK_DAYS = CONFIG.chunkDays;
 const POLITE_DELAY_MS = CONFIG.politeDelayMs;
 const FETCH_TIMEOUT_MS = CONFIG.fetchTimeoutMs;
@@ -296,9 +308,21 @@ function subPeriod(iso: string, months: number, years: number): string {
   const nd = Math.min(d, dim);
   return `${ny}-${String(nm).padStart(2, "0")}-${String(nd).padStart(2, "0")}`;
 }
-function buildWindows(monthsBack: number, chunkDays: number): Array<{ from: Date; to: Date }> {
+/** Build oldest→newest fetch windows spanning `monthsBack` months PLUS a
+ *  `bufferDays` lead-in. The buffer matters for annualised returns: the NAV
+ *  return rule uses the nearest NAV on/before the target start date, so the
+ *  fetched history must begin COMFORTABLY before (asOf − N years), not merely
+ *  at it. "36 months back from today" lands at/after the 3Y anchor (asOf is a
+ *  few days before today, and markets are closed on the boundary days), which
+ *  is exactly why Stage-2's first run produced 3Y coverage = 0. The buffer
+ *  pushes the start ~`bufferDays` earlier so a real NAV point exists at/before
+ *  the anchor. */
+function buildWindows(monthsBack: number, chunkDays: number, bufferDays = 0): Array<{ from: Date; to: Date }> {
   const today = new Date();
-  const earliest = utcShiftMonths(monthsBack);
+  const monthAnchored = utcShiftMonths(monthsBack);
+  const earliest = bufferDays > 0
+    ? utcShiftDays(bufferDays, monthAnchored.getTime())
+    : monthAnchored;
   const wins: Array<{ from: Date; to: Date }> = [];
   let toDate = today;
   while (toDate > earliest) {
@@ -307,6 +331,15 @@ function buildWindows(monthsBack: number, chunkDays: number): Array<{ from: Date
     toDate = utcShiftDays(1, fromDate.getTime());
   }
   return wins.reverse(); // oldest first → newer windows overwrite via last-write-wins
+}
+function toIso(d: Date): string {
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+}
+/** Whole-day difference isoB − isoA (positive when isoB is later). */
+function dayDiffDays(isoA: string, isoB: string): number {
+  const [ya, ma, da] = isoA.split("-").map(Number);
+  const [yb, mb, db] = isoB.split("-").map(Number);
+  return Math.round((Date.UTC(yb, mb - 1, db) - Date.UTC(ya, ma - 1, da)) / 86_400_000);
 }
 function round2(n: number): number { return Math.round(n * 100) / 100; }
 
@@ -658,10 +691,11 @@ async function main(): Promise<void> {
 
   const targetCodes = new Set(universe.map((f) => f.amfiSchemeCode));
 
-  const windows = buildWindows(TOTAL_MONTHS_BACK, CHUNK_DAYS);
+  const windows = buildWindows(TOTAL_MONTHS_BACK, CHUNK_DAYS, BUFFER_DAYS);
   const requestedRangeFrom = toDDMMMYYYY(windows[0].from);
   const requestedRangeTo = toDDMMMYYYY(windows[windows.length - 1].to);
-  info(`Stage-${STAGE} range: ${requestedRangeFrom} → ${requestedRangeTo}  ·  ${windows.length} windows × ${CHUNK_DAYS} days`);
+  const fetchStartIso = toIso(windows[0].from);
+  info(`Stage-${STAGE} range: ${requestedRangeFrom} → ${requestedRangeTo}  ·  ${windows.length} windows × ${CHUNK_DAYS} days · buffer ${BUFFER_DAYS}d`);
 
   const seriesByCode = new Map<number, Map<string, number>>();
   const windowResults: WindowResult[] = [];
@@ -754,6 +788,24 @@ async function main(): Promise<void> {
   const fundsMissingHistory = perFundCoverage.filter((f) => f.points === 0).map((f) => ({
     schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, amfiSchemeCode: f.amfiSchemeCode,
   }));
+
+  // --- Anchor diagnostics (makes any future range/anchor bug obvious) ------
+  // feedLastDate = the latest NAV date seen across all funds (≈ the feed's
+  // as-of date). The 3Y return anchor is subPeriod(feedLastDate, 0, 3); the
+  // fetch must start before it. bufferDaysBefore3YTarget > 0 means the fetch
+  // start safely precedes the anchor (the fix); ≤ 0 reproduces the 3.5A bug.
+  let feedLastDate: string | null = null;
+  for (const f of perFundCoverage) {
+    if (f.lastDate && (!feedLastDate || f.lastDate > feedLastDate)) feedLastDate = f.lastDate;
+  }
+  const threeYTarget = feedLastDate ? subPeriod(feedLastDate, 0, 3) : null;
+  const anchorDiagnostics = {
+    feedLastDate,
+    fetchStartDate: fetchStartIso,
+    threeYTargetDate: threeYTarget,
+    bufferDaysBefore3YTarget: threeYTarget ? dayDiffDays(fetchStartIso, threeYTarget) : null,
+    bufferConfigDays: BUFFER_DAYS,
+  };
 
   // --- Guardrails -----------------------------------------------------------
   const windowsOk = windowResults.filter((w) => !w.error && w.validRowCount > 0).length;
@@ -934,6 +986,7 @@ async function main(): Promise<void> {
         : "DRY RUN — writes only data/debug/. Production per-fund files (public/nav-history/) are NOT written. ISIN is diagnostic only; extraction is keyed on AMFI scheme code.",
     },
     requestedRange: { from: requestedRangeFrom, to: requestedRangeTo, windowCount: windows.length },
+    anchorDiagnostics,
     guardrails: GUARD,
     production,
     verdict,
@@ -974,7 +1027,7 @@ async function main(): Promise<void> {
     warn(`could not write report: ${(e as Error).message}`);
   }
 
-  printSummary(verdict, windowResults, sampleSummaries, recommendation, production);
+  printSummary(verdict, windowResults, sampleSummaries, recommendation, production, anchorDiagnostics);
 
   // Exit non-zero if NO usable windows OR the report couldn't be written OR
   // any guardrail failed (incl. production-write partial failure). The
@@ -1023,10 +1076,12 @@ function printSummary(
   windows: WindowResult[],
   samples: Array<{ schemecode: string; fundName: string; path: string; points: number; firstDate: string | null; lastDate: string | null }>,
   recommendation: string,
-  production: { attempted: boolean; wroteFiles: number; manifestPath: string | null; skippedReason?: string; perFundWriteErrors: Array<{ schemecode: string; error: string }> }
+  production: { attempted: boolean; wroteFiles: number; manifestPath: string | null; skippedReason?: string; perFundWriteErrors: Array<{ schemecode: string; error: string }> },
+  anchor: { feedLastDate: string | null; fetchStartDate: string; threeYTargetDate: string | null; bufferDaysBefore3YTarget: number | null; bufferConfigDays: number },
 ): void {
   info(`======== STAGE-${v.stage} NAV HISTORY BACKFILL SUMMARY (${v.writeMode.toUpperCase()}) =======`);
   info(`Universe matched funds: ${v.universeCount}`);
+  info(`Anchor: feedLastDate=${anchor.feedLastDate ?? "-"} fetchStart=${anchor.fetchStartDate} 3Y-target=${anchor.threeYTargetDate ?? "-"} bufferBefore3Y=${anchor.bufferDaysBefore3YTarget ?? "-"}d (config ${anchor.bufferConfigDays}d)`);
   info(`Windows: attempted=${v.windowsAttempted} ok=${v.windowsOk} failed=${v.windowsFailed} aborted=${v.abortedEarly} totalValidRows=${v.totalValidRows}`);
   for (const w of windows) {
     const tag = w.error ? `ERR ${w.failureReason ?? w.error}` : `ok valid=${w.validRowCount} target=${w.targetRowsParsed} ${w.dateMin}..${w.dateMax}`;
