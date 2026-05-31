@@ -193,6 +193,7 @@ interface SeriesPoint { date: string; nav: number } // ISO YYYY-MM-DD
 
 interface WindowResult {
   index: number;
+  role: "main" | "pre-buffer";
   url: string;
   windowFrom: string; // DD-MMM-YYYY
   windowTo: string;
@@ -201,6 +202,7 @@ interface WindowResult {
   httpStatus: number | null;
   contentType: string | null;
   bytes: number | null;
+  bodyPreview: string | null;     // first 240 chars when HTTP 200 returns suspiciously-tiny body
   responseMs: number;
   headerSeen: boolean;
   totalDataLines: number;
@@ -209,6 +211,7 @@ interface WindowResult {
   targetRowsParsed: number;
   dateMin: string | null;
   dateMax: string | null;
+  zeroRowFlag: boolean;           // HTTP 200 + bytes < 50_000 + validRowCount === 0
   error?: string;
   failureReason?: string;
 }
@@ -308,29 +311,42 @@ function subPeriod(iso: string, months: number, years: number): string {
   const nd = Math.min(d, dim);
   return `${ny}-${String(nm).padStart(2, "0")}-${String(nd).padStart(2, "0")}`;
 }
-/** Build oldest→newest fetch windows spanning `monthsBack` months PLUS a
- *  `bufferDays` lead-in. The buffer matters for annualised returns: the NAV
- *  return rule uses the nearest NAV on/before the target start date, so the
- *  fetched history must begin COMFORTABLY before (asOf − N years), not merely
- *  at it. "36 months back from today" lands at/after the 3Y anchor (asOf is a
- *  few days before today, and markets are closed on the boundary days), which
- *  is exactly why Stage-2's first run produced 3Y coverage = 0. The buffer
- *  pushes the start ~`bufferDays` earlier so a real NAV point exists at/before
- *  the anchor. */
-function buildWindows(monthsBack: number, chunkDays: number, bufferDays = 0): Array<{ from: Date; to: Date }> {
+export interface WindowSpec { from: Date; to: Date; role: "main" | "pre-buffer" }
+
+/** Build oldest→newest fetch windows.
+ *
+ *  The `main` windows span EXACTLY `monthsBack` months from `today`, in
+ *  `chunkDays`-day chunks. This is the proven Stage-2 schedule
+ *  (31-May-2023 → 31-May-2026 in 75-day chunks) that returned 100% universe
+ *  coverage in the Phase 3.5A dry-run.
+ *
+ *  When `bufferDays > 0` we PREPEND ONE additional pre-buffer window of
+ *  exactly `bufferDays` ending the day before the first main window. That
+ *  window's sole job is to provide a NAV point on/before the (asOf − N years)
+ *  anchor so annualised returns (3Y/5Y) compute correctly. It does NOT shift
+ *  the main schedule — Phase 3.5C confirmed that shifting the whole grid
+ *  triggers empty 200-byte responses from AMFI for windows ≥2. */
+function buildWindows(monthsBack: number, chunkDays: number, bufferDays = 0): WindowSpec[] {
   const today = new Date();
-  const monthAnchored = utcShiftMonths(monthsBack);
-  const earliest = bufferDays > 0
-    ? utcShiftDays(bufferDays, monthAnchored.getTime())
-    : monthAnchored;
-  const wins: Array<{ from: Date; to: Date }> = [];
+  const earliest = utcShiftMonths(monthsBack);
+  const mains: WindowSpec[] = [];
   let toDate = today;
   while (toDate > earliest) {
     const fromDate = new Date(Math.max(earliest.getTime(), toDate.getTime() - (chunkDays - 1) * 86_400_000));
-    wins.push({ from: fromDate, to: toDate });
+    mains.push({ from: fromDate, to: toDate, role: "main" });
     toDate = utcShiftDays(1, fromDate.getTime());
   }
-  return wins.reverse(); // oldest first → newer windows overwrite via last-write-wins
+  mains.reverse(); // oldest first → newer windows overwrite via last-write-wins
+
+  if (bufferDays <= 0) return mains;
+
+  // Prepend ONE pre-buffer window ending the day before the first main
+  // window. Width = bufferDays so the pre-buffer's `from` lands ~`bufferDays`
+  // before the 3Y target.
+  const firstMain = mains[0];
+  const preTo = utcShiftDays(1, firstMain.from.getTime());
+  const preFrom = utcShiftDays(bufferDays - 1, preTo.getTime());
+  return [{ from: preFrom, to: preTo, role: "pre-buffer" }, ...mains];
 }
 function toIso(d: Date): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
@@ -713,19 +729,20 @@ async function main(): Promise<void> {
     const windowFrom = toDDMMMYYYY(w.from);
     const windowTo = toDDMMMYYYY(w.to);
     const url = `${AMFI_HISTORY_BASE}?frmdt=${windowFrom}&todt=${windowTo}`;
-    info(`[amfi] window ${i + 1}/${windows.length}  ${windowFrom} → ${windowTo}`);
+    info(`[amfi] window ${i + 1}/${windows.length}  [${w.role}] ${windowFrom} → ${windowTo}`);
     const res = await fetchWithRetry(url);
 
     const base: WindowResult = {
-      index: i, url, windowFrom, windowTo,
+      index: i, role: w.role, url, windowFrom, windowTo,
       requestedAt: res.requestedAt, attempts: res.attempts,
-      httpStatus: res.status, contentType: res.contentType, bytes: res.bytes, responseMs: res.ms,
+      httpStatus: res.status, contentType: res.contentType, bytes: res.bytes, bodyPreview: null, responseMs: res.ms,
       headerSeen: false, totalDataLines: 0, validRowCount: 0, skippedCount: 0, targetRowsParsed: 0,
-      dateMin: null, dateMax: null,
+      dateMin: null, dateMax: null, zeroRowFlag: false,
     };
     if (!res.ok || !res.text || res.text.length < 200) {
       base.error = res.error ?? `HTTP ${res.status ?? "?"} (bytes=${res.bytes ?? 0})`;
       base.failureReason = res.error ? `network error after ${res.attempts} attempt(s): ${res.error}` : `HTTP ${res.status ?? "?"} after ${res.attempts} attempt(s)`;
+      base.bodyPreview = res.text ? res.text.slice(0, 240) : null;
       windowResults.push(base);
       info(`   FAIL ${base.failureReason}`);
       await sleep(POLITE_DELAY_MS);
@@ -750,9 +767,19 @@ async function main(): Promise<void> {
     base.targetRowsParsed = stats.targetRowsParsed;
     base.dateMin = stats.dateMin;
     base.dateMax = stats.dateMax;
+    // Phase 3.5C diagnostic: HTTP 200 with a suspiciously-tiny body that
+    // produced zero rows. AMFI sometimes returns 14 KB header-and-footer
+    // shells for malformed window combos; surface those for inspection
+    // instead of letting them quietly drag universe coverage down.
+    const tinyEmpty = res.bytes !== null && res.bytes < 50_000 && stats.validRowCount === 0;
+    if (tinyEmpty) {
+      base.zeroRowFlag = true;
+      base.bodyPreview = (res.text ?? "").slice(0, 240);
+      base.failureReason = `HTTP 200 but body too small (${res.bytes} bytes) and 0 valid rows — likely an empty AMFI response for this window combo`;
+    }
     if (stats.validRowCount > 0) { anyValidWindow = true; totalValidRows += stats.validRowCount; }
     windowResults.push(base);
-    info(`   OK   bytes=${res.bytes} valid=${stats.validRowCount} skipped=${stats.skippedCount} targetRows=${stats.targetRowsParsed} dates=${stats.dateMin}..${stats.dateMax}`);
+    info(`   ${tinyEmpty ? "ZERO" : "OK  "} bytes=${res.bytes} valid=${stats.validRowCount} skipped=${stats.skippedCount} targetRows=${stats.targetRowsParsed} dates=${stats.dateMin}..${stats.dateMax}`);
 
     await sleep(POLITE_DELAY_MS);
   }
@@ -799,17 +826,43 @@ async function main(): Promise<void> {
     if (f.lastDate && (!feedLastDate || f.lastDate > feedLastDate)) feedLastDate = f.lastDate;
   }
   const threeYTarget = feedLastDate ? subPeriod(feedLastDate, 0, 3) : null;
+  const preBufferWindow = windowResults.find((w) => w.role === "pre-buffer");
+  const firstMainWindow = windowResults.find((w) => w.role === "main");
+  const preFromIso = preBufferWindow ? ddMMMyyyyToIso(preBufferWindow.windowFrom) : null;
+  const preToIso = preBufferWindow ? ddMMMyyyyToIso(preBufferWindow.windowTo) : null;
   const anchorDiagnostics = {
     feedLastDate,
-    fetchStartDate: fetchStartIso,
     threeYTargetDate: threeYTarget,
+    fetchStartDate: fetchStartIso, // = pre-buffer's `from` when present, else first main's `from`
+    preBuffer: preBufferWindow
+      ? {
+          from: preBufferWindow.windowFrom,
+          to: preBufferWindow.windowTo,
+          fromIso: preFromIso,
+          toIso: preToIso,
+          bytes: preBufferWindow.bytes,
+          validRows: preBufferWindow.validRowCount,
+          targetRows: preBufferWindow.targetRowsParsed,
+        }
+      : null,
+    firstMain: firstMainWindow
+      ? { from: firstMainWindow.windowFrom, to: firstMainWindow.windowTo }
+      : null,
     bufferDaysBefore3YTarget: threeYTarget ? dayDiffDays(fetchStartIso, threeYTarget) : null,
     bufferConfigDays: BUFFER_DAYS,
+    threeYTargetInPreBuffer:
+      preFromIso && preToIso && threeYTarget
+        ? preFromIso <= threeYTarget && threeYTarget <= preToIso
+        : null,
   };
 
   // --- Guardrails -----------------------------------------------------------
   const windowsOk = windowResults.filter((w) => !w.error && w.validRowCount > 0).length;
   const windowsFailed = windowResults.filter((w) => Boolean(w.error)).length;
+  // Phase 3.5C: "zero-row" = HTTP 200 + suspiciously-tiny body + 0 valid rows.
+  // Counted separately from `windowsFailed` (which counts true errors) so the
+  // diagnostic is obvious in the verdict / log.
+  const zeroRowWindows = windowResults.filter((w) => w.zeroRowFlag).length;
   const oneYCoveragePct = round2((periodCoverage["1Y"] / universe.length) * 100);
   const threeYCoveragePct = round2((periodCoverage["3Y"] / universe.length) * 100);
   const guardFailures: string[] = [];
@@ -817,6 +870,9 @@ async function main(): Promise<void> {
     if (!w.error && w.validRowCount > 0 && w.validRowCount < GUARD.minValidRowsPerWindow) {
       guardFailures.push(`window ${w.index + 1} (${w.windowFrom}→${w.windowTo}) valid=${w.validRowCount} < floor ${GUARD.minValidRowsPerWindow}`);
     }
+  }
+  if (zeroRowWindows > 0) {
+    guardFailures.push(`${zeroRowWindows} window(s) returned HTTP 200 but 0 valid rows with tiny body — see windows[].bodyPreview / failureReason`);
   }
   if (totalValidRows < GUARD.minTotalValidRows) {
     guardFailures.push(`totalValidRows ${totalValidRows} < floor ${GUARD.minTotalValidRows}`);
@@ -952,6 +1008,7 @@ async function main(): Promise<void> {
     windowsAttempted: windowResults.length,
     windowsOk,
     windowsFailed,
+    zeroRowWindows,
     abortedEarly: aborted,
     totalValidRows,
     fundsWithAnyPoint: fundsWithPoints.length,
@@ -1072,20 +1129,39 @@ function buildRecommendation(
 }
 
 function printSummary(
-  v: { writeMode: "dryrun" | "production"; stage: 1 | 2; universeCount: number; windowsAttempted: number; windowsOk: number; windowsFailed: number; abortedEarly: boolean; totalValidRows: number; fundsWithAnyPoint: number; fundsMissingHistoryCount: number; matchedCoveragePct: number; oneYCoveragePct: number; threeYCoveragePct: number; periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y": number }; guardPass: boolean; guardFailures: string[] },
+  v: { writeMode: "dryrun" | "production"; stage: 1 | 2; universeCount: number; windowsAttempted: number; windowsOk: number; windowsFailed: number; zeroRowWindows: number; abortedEarly: boolean; totalValidRows: number; fundsWithAnyPoint: number; fundsMissingHistoryCount: number; matchedCoveragePct: number; oneYCoveragePct: number; threeYCoveragePct: number; periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y": number }; guardPass: boolean; guardFailures: string[] },
   windows: WindowResult[],
   samples: Array<{ schemecode: string; fundName: string; path: string; points: number; firstDate: string | null; lastDate: string | null }>,
   recommendation: string,
   production: { attempted: boolean; wroteFiles: number; manifestPath: string | null; skippedReason?: string; perFundWriteErrors: Array<{ schemecode: string; error: string }> },
-  anchor: { feedLastDate: string | null; fetchStartDate: string; threeYTargetDate: string | null; bufferDaysBefore3YTarget: number | null; bufferConfigDays: number },
+  anchor: {
+    feedLastDate: string | null;
+    fetchStartDate: string;
+    threeYTargetDate: string | null;
+    bufferDaysBefore3YTarget: number | null;
+    bufferConfigDays: number;
+    preBuffer: { from: string; to: string; bytes: number | null; validRows: number; targetRows: number } | null;
+    firstMain: { from: string; to: string } | null;
+    threeYTargetInPreBuffer: boolean | null;
+  },
 ): void {
   info(`======== STAGE-${v.stage} NAV HISTORY BACKFILL SUMMARY (${v.writeMode.toUpperCase()}) =======`);
   info(`Universe matched funds: ${v.universeCount}`);
-  info(`Anchor: feedLastDate=${anchor.feedLastDate ?? "-"} fetchStart=${anchor.fetchStartDate} 3Y-target=${anchor.threeYTargetDate ?? "-"} bufferBefore3Y=${anchor.bufferDaysBefore3YTarget ?? "-"}d (config ${anchor.bufferConfigDays}d)`);
-  info(`Windows: attempted=${v.windowsAttempted} ok=${v.windowsOk} failed=${v.windowsFailed} aborted=${v.abortedEarly} totalValidRows=${v.totalValidRows}`);
+  info(`Anchor: feedLastDate=${anchor.feedLastDate ?? "-"} 3Y-target=${anchor.threeYTargetDate ?? "-"} fetchStart=${anchor.fetchStartDate} bufferBefore3Y=${anchor.bufferDaysBefore3YTarget ?? "-"}d (config ${anchor.bufferConfigDays}d)`);
+  if (anchor.preBuffer) {
+    info(`Pre-buffer:  ${anchor.preBuffer.from}→${anchor.preBuffer.to} · bytes=${anchor.preBuffer.bytes ?? "-"} valid=${anchor.preBuffer.validRows} target=${anchor.preBuffer.targetRows} · 3Y-target-in-window=${anchor.threeYTargetInPreBuffer}`);
+  } else {
+    info(`Pre-buffer:  (not used)`);
+  }
+  if (anchor.firstMain) info(`First main:  ${anchor.firstMain.from}→${anchor.firstMain.to}`);
+  info(`Windows: attempted=${v.windowsAttempted} ok=${v.windowsOk} failed=${v.windowsFailed} zeroRow=${v.zeroRowWindows} aborted=${v.abortedEarly} totalValidRows=${v.totalValidRows}`);
   for (const w of windows) {
-    const tag = w.error ? `ERR ${w.failureReason ?? w.error}` : `ok valid=${w.validRowCount} target=${w.targetRowsParsed} ${w.dateMin}..${w.dateMax}`;
-    info(`   ${w.index + 1}: ${w.windowFrom}→${w.windowTo} attempts=${w.attempts} HTTP=${w.httpStatus ?? "-"} ct=${w.contentType ?? "-"} bytes=${w.bytes ?? "-"} ${w.responseMs}ms · ${tag}`);
+    const tag = w.error
+      ? `ERR ${w.failureReason ?? w.error}`
+      : w.zeroRowFlag
+        ? `ZERO bytes=${w.bytes} valid=0 — body preview: ${(w.bodyPreview ?? "").slice(0, 120)}`
+        : `ok valid=${w.validRowCount} target=${w.targetRowsParsed} ${w.dateMin}..${w.dateMax}`;
+    info(`   ${w.index + 1}[${w.role}]: ${w.windowFrom}→${w.windowTo} attempts=${w.attempts} HTTP=${w.httpStatus ?? "-"} ct=${w.contentType ?? "-"} bytes=${w.bytes ?? "-"} ${w.responseMs}ms · ${tag}`);
   }
   info(`Universe coverage: ${v.fundsWithAnyPoint}/${v.universeCount} = ${v.matchedCoveragePct}% have ≥1 point; missing=${v.fundsMissingHistoryCount}`);
   info(`Period coverage (funds with availability): 1M=${v.periodCoverage["1M"]} 3M=${v.periodCoverage["3M"]} 6M=${v.periodCoverage["6M"]} 1Y=${v.periodCoverage["1Y"]} 3Y=${v.periodCoverage["3Y"]}  ·  1Y=${v.oneYCoveragePct}% 3Y=${v.threeYCoveragePct}%`);
