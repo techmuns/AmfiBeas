@@ -47,10 +47,11 @@ const OUTPUT_PATH = path.resolve(process.cwd(), "src/data/snapshots/mf-category-
 
 const RULE_VERSION = 1;
 const MIN_PEER_COUNT = 5;
-// Phase 3.6B: 3Y is sourced directly from mf-returns.json (CAGR values
-// produced by Phase 3.6A). We do NOT recompute fund-level returns here;
-// this script only ranks/aggregates what mf-returns has already produced.
-const PERIODS = ["1M", "3M", "6M", "1Y", "3Y"] as const;
+// Phase 3.6B/3.8B: 3Y and 5Y are sourced directly from mf-returns.json
+// (CAGR values produced by Phases 3.6A / 3.8A). We do NOT recompute
+// fund-level returns here; this script only ranks/aggregates what
+// mf-returns has already produced.
+const PERIODS = ["1M", "3M", "6M", "1Y", "3Y", "5Y"] as const;
 type PeriodKey = (typeof PERIODS)[number];
 
 // ---------------------------------------------------------------------------
@@ -60,9 +61,9 @@ type PeriodKey = (typeof PERIODS)[number];
 type Plan = "direct" | "regular" | "unknown";
 type OptionKind = "growth" | "idcw" | "unknown";
 
-// Phase 3.6B: 1M/3M/6M/1Y stay "simple"; 3Y is "cagr" with an extra
-// `years` field. Only `value` is consumed here — the ranking logic treats
-// every period uniformly.
+// Phase 3.6B/3.8B: 1M/3M/6M/1Y stay "simple"; 3Y and 5Y are "cagr" with
+// an extra `years` field. Only `value` is consumed here — the ranking
+// logic treats every period uniformly.
 type ReturnCell =
   | { value: number; kind: "simple"; startDate: string; startNav: number; endDate: string; endNav: number }
   | { value: number; kind: "cagr"; startDate: string; startNav: number; endDate: string; endNav: number; years: number };
@@ -396,12 +397,12 @@ async function main(): Promise<void> {
   // ---------------------------------------------------------------------------
   // 5. Coverage summary.
   // ---------------------------------------------------------------------------
-  const cohortsWithStatsByPeriod: Record<PeriodKey, number> = { "1M": 0, "3M": 0, "6M": 0, "1Y": 0, "3Y": 0 };
+  const cohortsWithStatsByPeriod: Record<PeriodKey, number> = { "1M": 0, "3M": 0, "6M": 0, "1Y": 0, "3Y": 0, "5Y": 0 };
   for (const [, stats] of cohortPeriodStats) for (const p of PERIODS) if (stats[p]) cohortsWithStatsByPeriod[p] += 1;
 
-  const fundsWithRankByPeriod: Record<PeriodKey, number> = { "1M": 0, "3M": 0, "6M": 0, "1Y": 0, "3Y": 0 };
-  const fundsWithoutStatsByPeriod: Record<PeriodKey, number> = { "1M": 0, "3M": 0, "6M": 0, "1Y": 0, "3Y": 0 };
-  const reasonCounts: Record<PeriodKey, Map<string, number>> = { "1M": new Map(), "3M": new Map(), "6M": new Map(), "1Y": new Map(), "3Y": new Map() };
+  const fundsWithRankByPeriod: Record<PeriodKey, number> = { "1M": 0, "3M": 0, "6M": 0, "1Y": 0, "3Y": 0, "5Y": 0 };
+  const fundsWithoutStatsByPeriod: Record<PeriodKey, number> = { "1M": 0, "3M": 0, "6M": 0, "1Y": 0, "3Y": 0, "5Y": 0 };
+  const reasonCounts: Record<PeriodKey, Map<string, number>> = { "1M": new Map(), "3M": new Map(), "6M": new Map(), "1Y": new Map(), "3Y": new Map(), "5Y": new Map() };
   for (const fr of fundRanks) {
     for (const p of PERIODS) {
       const e = fr.periodRanks[p];
@@ -415,7 +416,7 @@ async function main(): Promise<void> {
       }
     }
   }
-  const fundsWithoutStatsTopReasonsByPeriod: Record<PeriodKey, Array<{ reason: string; count: number }>> = { "1M": [], "3M": [], "6M": [], "1Y": [], "3Y": [] };
+  const fundsWithoutStatsTopReasonsByPeriod: Record<PeriodKey, Array<{ reason: string; count: number }>> = { "1M": [], "3M": [], "6M": [], "1Y": [], "3Y": [], "5Y": [] };
   for (const p of PERIODS) {
     fundsWithoutStatsTopReasonsByPeriod[p] = Array.from(reasonCounts[p].entries())
       .map(([reason, count]) => ({ reason, count }))
