@@ -1,10 +1,14 @@
 /**
- * Phase 3.3A — computed fund returns snapshot (Stage-1 periods only).
+ * Phase 3.3A — computed fund returns snapshot.
  *
- * Reads the committed Stage-1 history manifest + per-fund history files,
- * computes simple 1M / 3M / 6M / 1Y returns per fund (point-to-point, with
- * the nearest-prior NAV as the anchor for weekend/holiday targets), and
- * writes a deterministic snapshot at src/data/snapshots/mf-returns.json.
+ * Reads the committed history manifest + per-fund history files, computes
+ * point-to-point returns per fund (nearest-prior NAV anchor for
+ * weekend/holiday targets), and writes a deterministic snapshot at
+ * src/data/snapshots/mf-returns.json.
+ *
+ * Stage-1 supported periods: 1M / 3M / 6M / 1Y (simple).
+ * Stage-2 adds: 3Y (CAGR, using actual elapsed years between the
+ *               selected start and end dates).
  *
  * Validates against the manifest BEFORE writing: file count must equal the
  * manifest's totalFunds, each available fund must have a history file with
@@ -14,7 +18,7 @@
  *
  * Does NOT touch public/nav-history files, the manifest, the latest-NAV
  * snapshot, or anything else under src/data/snapshots/. Does NOT compute
- * category averages/medians/quartiles (those come later phases).
+ * category averages/medians/quartiles (those come in later phases).
  *
  * Run: npm run ingest:nav:returns   (tsx scripts/ingest/nav-returns.ts)
  */
@@ -33,13 +37,16 @@ const RULE_VERSION = 1;
 // 3M/6M/1Y "close to" tolerance is ±0.5% of the manifest's value (small —
 // the manifest and the per-fund files were built from the same fetch, so the
 // counts should be identical; the tolerance is there only as a safety net
-// for any cross-day rounding around the asOfDate anchor).
+// for any cross-day rounding around the asOfDate anchor). 3Y is checked
+// exactly: introduced in Phase 3.6A and the matching manifest value
+// (Stage-2) is the single source of truth.
 const GUARD = {
   expectedFundCount: 1036,
   exact1M: 1036,                      // 1M must be exactly the full universe
   approx3M: 1029,                     // see manifest
   approx6M: 1022,
   approx1Y: 995,
+  exact3Y: 826,                       // Stage-2 manifest: 826 funds carry a 3Y CAGR
   approxTolerancePct: 0.5,
 };
 
@@ -56,6 +63,9 @@ interface ManifestFund {
   lastDate: string | null;
   points: number;
   available: boolean;
+  // Phase 3.6A: the manifest's availablePeriods only ever covers the
+  // periods baked into the manifest writer (Stage-1's nav-history-backfill
+  // emits 1M/3M/6M/1Y; 3Y is computed here, not stored in the manifest).
   availablePeriods: Array<"1M" | "3M" | "6M" | "1Y">;
   path: string;
 }
@@ -67,7 +77,9 @@ interface ManifestFile {
   totalFunds: number;
   fundsAvailable: number;
   fundsMissing: number;
-  periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number };
+  // periodCoverage in the on-disk manifest includes "3Y" on Stage-2
+  // builds. We tolerate either shape and read "3Y" if present.
+  periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y"?: number };
   ruleVersion: number;
   parserVersion: number;
   funds: ManifestFund[];
@@ -97,16 +109,30 @@ interface HistoryFile {
   series: Array<[string, number]>; // ascending [isoDate, nav]
 }
 
-type PeriodKey = "1M" | "3M" | "6M" | "1Y";
+type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y";
 
-interface ReturnCell {
+// Phase 3.6A: 1M/3M/6M/1Y stay simple. 3Y is annualized (CAGR) using the
+// actual elapsed years between the selected start and end dates, not the
+// nominal 3.0; this keeps the formula honest when nearest-prior anchors
+// a few days before/after the exact target boundary.
+type SimpleReturnCell = {
   value: number;
   kind: "simple";
   startDate: string;
   startNav: number;
   endDate: string;
   endNav: number;
-}
+};
+type CagrReturnCell = {
+  value: number;
+  kind: "cagr";
+  startDate: string;
+  startNav: number;
+  endDate: string;
+  endNav: number;
+  years: number; // actual elapsed years between startDate and endDate
+};
+type ReturnCell = SimpleReturnCell | CagrReturnCell;
 
 interface ReturnRow {
   schemecode: string;
@@ -150,16 +176,32 @@ function nearestPrior(series: SeriesPoint[], target: string): SeriesPoint | null
 
 function round4(n: number): number { return Math.round(n * 10000) / 10000; }
 
-const PERIODS: Array<{ key: PeriodKey; months: number; years: number }> = [
-  { key: "1M", months: 1, years: 0 },
-  { key: "3M", months: 3, years: 0 },
-  { key: "6M", months: 6, years: 0 },
-  { key: "1Y", months: 0, years: 1 },
+// Elapsed years between two ISO YYYY-MM-DD dates, computed deterministically
+// in UTC. 365.25 absorbs leap years; the CAGR formula is forgiving enough
+// that this is more than accurate for fund-return reporting.
+function elapsedYears(startIso: string, endIso: string): number {
+  const [sy, sm, sd] = startIso.split("-").map(Number);
+  const [ey, em, ed] = endIso.split("-").map(Number);
+  const startMs = Date.UTC(sy, sm - 1, sd);
+  const endMs = Date.UTC(ey, em - 1, ed);
+  return (endMs - startMs) / (86400_000 * 365.25);
+}
+
+type PeriodSpec =
+  | { key: "1M" | "3M" | "6M" | "1Y"; months: number; years: number; kind: "simple" }
+  | { key: "3Y"; months: 0; years: 3; kind: "cagr" };
+
+const PERIODS: PeriodSpec[] = [
+  { key: "1M", months: 1, years: 0, kind: "simple" },
+  { key: "3M", months: 3, years: 0, kind: "simple" },
+  { key: "6M", months: 6, years: 0, kind: "simple" },
+  { key: "1Y", months: 0, years: 1, kind: "simple" },
+  { key: "3Y", months: 0, years: 3, kind: "cagr" },
 ];
 
 function computeReturns(series: SeriesPoint[]): { returns: Partial<Record<PeriodKey, ReturnCell>>; availability: Record<PeriodKey, boolean> } {
   const returns: Partial<Record<PeriodKey, ReturnCell>> = {};
-  const availability: Record<PeriodKey, boolean> = { "1M": false, "3M": false, "6M": false, "1Y": false };
+  const availability: Record<PeriodKey, boolean> = { "1M": false, "3M": false, "6M": false, "1Y": false, "3Y": false };
   if (series.length < 2) return { returns, availability };
   const end = series[series.length - 1];
   const firstDate = series[0].date;
@@ -168,12 +210,30 @@ function computeReturns(series: SeriesPoint[]): { returns: Partial<Record<Period
     if (firstDate > target) continue;
     const start = nearestPrior(series, target);
     if (!start || start.nav <= 0) continue;
-    returns[p.key] = {
-      value: round4((end.nav / start.nav - 1) * 100),
-      kind: "simple",
-      startDate: start.date, startNav: start.nav,
-      endDate: end.date, endNav: end.nav,
-    };
+    if (p.kind === "simple") {
+      returns[p.key] = {
+        value: round4((end.nav / start.nav - 1) * 100),
+        kind: "simple",
+        startDate: start.date, startNav: start.nav,
+        endDate: end.date, endNav: end.nav,
+      };
+    } else {
+      // CAGR with actual elapsed years between the resolved start and end
+      // dates. If years is non-positive (degenerate same-day) or the ratio
+      // isn't positive, skip — keep dataAvailability honest.
+      const years = elapsedYears(start.date, end.date);
+      if (!(years > 0) || !(end.nav > 0) || !(start.nav > 0)) continue;
+      const ratio = end.nav / start.nav;
+      const cagrPct = (Math.pow(ratio, 1 / years) - 1) * 100;
+      if (!Number.isFinite(cagrPct)) continue;
+      returns[p.key] = {
+        value: round4(cagrPct),
+        kind: "cagr",
+        startDate: start.date, startNav: start.nav,
+        endDate: end.date, endNav: end.nav,
+        years: round4(years),
+      };
+    }
     availability[p.key] = true;
   }
   return { returns, availability };
@@ -269,7 +329,7 @@ async function main(): Promise<void> {
   });
 
   const rows: ReturnRow[] = [];
-  let availability1M = 0, availability3M = 0, availability6M = 0, availability1Y = 0;
+  let availability1M = 0, availability3M = 0, availability6M = 0, availability1Y = 0, availability3Y = 0;
 
   for (const mFund of sortedManifestFunds) {
     const filePath = path.resolve(process.cwd(), mFund.path);
@@ -288,10 +348,15 @@ async function main(): Promise<void> {
     const { returns, availability } = computeReturns(series);
 
     // Sanity-check the computed return values are finite numbers.
-    for (const k of ["1M", "3M", "6M", "1Y"] as PeriodKey[]) {
+    for (const k of ["1M", "3M", "6M", "1Y", "3Y"] as PeriodKey[]) {
       const r = returns[k];
       if (r && (!Number.isFinite(r.value) || !Number.isFinite(r.startNav) || !Number.isFinite(r.endNav))) {
         issues.push({ schemecode: mFund.schemecode, reason: `${k} computed non-finite values` });
+        returns[k] = undefined;
+        availability[k] = false;
+      }
+      if (r && r.kind === "cagr" && (!Number.isFinite(r.years) || r.years <= 0)) {
+        issues.push({ schemecode: mFund.schemecode, reason: `${k} CAGR has non-finite or non-positive years` });
         returns[k] = undefined;
         availability[k] = false;
       }
@@ -301,6 +366,7 @@ async function main(): Promise<void> {
     if (availability["3M"]) availability3M += 1;
     if (availability["6M"]) availability6M += 1;
     if (availability["1Y"]) availability1Y += 1;
+    if (availability["3Y"]) availability3Y += 1;
 
     rows.push({
       schemecode: mFund.schemecode,
@@ -341,6 +407,15 @@ async function main(): Promise<void> {
   if (!approxOk(availability1Y, GUARD.approx1Y)) {
     validationFailures.push(`1Y coverage ${availability1Y} not within ${GUARD.approxTolerancePct}% of expected ${GUARD.approx1Y}`);
   }
+  // Phase 3.6A: 3Y must equal the manifest exactly. The computation runs
+  // off the same per-fund history files the manifest was built from, so an
+  // off-by-one here would indicate a logic divergence, not noise.
+  if (availability3Y !== GUARD.exact3Y) {
+    validationFailures.push(`3Y coverage ${availability3Y} != exact ${GUARD.exact3Y}`);
+  }
+  if (manifest.periodCoverage["3Y"] !== undefined && manifest.periodCoverage["3Y"] !== availability3Y) {
+    validationFailures.push(`3Y coverage ${availability3Y} != manifest.periodCoverage["3Y"] ${manifest.periodCoverage["3Y"]}`);
+  }
   if (issues.length > 0) {
     validationFailures.push(`${issues.length} per-fund validation issues`);
   }
@@ -363,7 +438,10 @@ async function main(): Promise<void> {
   const snapshot = {
     generatedAt,
     source: "computed from public/nav-history",
-    historyStage: 1 as const,
+    // historyStage tracks which Stage the source history was produced by.
+    // Stage-2 introduces 3Y; the field is read by downstream UIs to decide
+    // which periods to expose.
+    historyStage: manifest.stage,
     historyManifestGeneratedAt: manifest.generatedAt,
     asOfDate,
     ruleVersion: RULE_VERSION,
@@ -372,6 +450,7 @@ async function main(): Promise<void> {
       "3M": availability3M,
       "6M": availability6M,
       "1Y": availability1Y,
+      "3Y": availability3Y,
     },
     funds: rows,
   };
@@ -381,9 +460,9 @@ async function main(): Promise<void> {
   info(`wrote ${path.relative(process.cwd(), OUTPUT_PATH)}`);
 
   info("================ MF RETURNS SNAPSHOT SUMMARY ================");
-  info(`asOfDate: ${asOfDate ?? "?"}  ·  rows: ${rows.length}`);
-  info(`Period coverage: 1M=${availability1M} 3M=${availability3M} 6M=${availability6M} 1Y=${availability1Y}`);
-  info(`Manifest expected: 1M=${manifest.periodCoverage["1M"]} 3M=${manifest.periodCoverage["3M"]} 6M=${manifest.periodCoverage["6M"]} 1Y=${manifest.periodCoverage["1Y"]}`);
+  info(`asOfDate: ${asOfDate ?? "?"}  ·  rows: ${rows.length}  ·  historyStage: ${manifest.stage}`);
+  info(`Period coverage: 1M=${availability1M} 3M=${availability3M} 6M=${availability6M} 1Y=${availability1Y} 3Y=${availability3Y}`);
+  info(`Manifest expected: 1M=${manifest.periodCoverage["1M"]} 3M=${manifest.periodCoverage["3M"]} 6M=${manifest.periodCoverage["6M"]} 1Y=${manifest.periodCoverage["1Y"]} 3Y=${manifest.periodCoverage["3Y"] ?? "(absent)"}`);
   info(`Guardrails: PASS`);
   info("============================================================");
 }
