@@ -73,7 +73,12 @@ interface StageConfig {
     minTotalValidRows: number;
     minMatchedCoveragePct: number;
     min1YCoveragePct: number;
-    min3YCoveragePct: number; // 0 on Stage 1 (3Y not attempted)
+    // Phase 3.5D: eligibility-aware 3Y floor. Measured against the funds
+    // that are *eligible* for a 3Y return (firstDate ≤ feedLastDate − 3y),
+    // not the full universe — so genuinely-young funds (launched inside the
+    // 3Y window) cannot drag the metric below the floor. Set to 0 on Stage 1
+    // where 3Y isn't attempted.
+    minEligible3YCoveragePct: number;
     maxFailedWindows: number;
     expectedFileCount: number;
   };
@@ -101,7 +106,7 @@ const STAGE_CONFIGS: Record<1 | 2, StageConfig> = {
       minTotalValidRows: 50_000,
       minMatchedCoveragePct: 95,
       min1YCoveragePct: 95,
-      min3YCoveragePct: 0, // Stage 1 cannot produce 3Y; guard disabled.
+      minEligible3YCoveragePct: 0, // Stage 1 cannot produce 3Y; guard disabled.
       maxFailedWindows: 1, // 7 windows → ≤1 fail
       expectedFileCount: 1036,
     },
@@ -132,12 +137,14 @@ const STAGE_CONFIGS: Record<1 | 2, StageConfig> = {
       minTotalValidRows: 100_000, // larger total span → higher floor
       minMatchedCoveragePct: 95,
       min1YCoveragePct: 95,
-      // 3Y coverage may be below 95% legitimately — some funds genuinely
-      // launched within the last 3 years. The dry-run uses a soft 80% floor
-      // so guardrails fail loudly only on a real extraction problem; the
-      // report's verdict text distinguishes "below floor" from "extraction
-      // looks healthy but younger funds exist".
-      min3YCoveragePct: 80,
+      // Phase 3.5D: eligibility-aware 3Y floor. The blunt 80% total-universe
+      // floor (Phase 3.5A/B/C) was failing on legitimately-young funds —
+      // ~169 of the 1,036-fund universe launched inside the 3Y window and
+      // can't physically have a 3Y return regardless of extraction quality.
+      // The new floor: among funds whose firstDate ≤ (feedLastDate − 3y),
+      // at least 99% must have a usable 3Y return. Total-universe 3Y is
+      // still reported as an informational metric in the verdict + log.
+      minEligible3YCoveragePct: 99,
       maxFailedWindows: 2, // 15 windows → ≤2 fail
       expectedFileCount: 1036,
     },
@@ -865,6 +872,36 @@ async function main(): Promise<void> {
   const zeroRowWindows = windowResults.filter((w) => w.zeroRowFlag).length;
   const oneYCoveragePct = round2((periodCoverage["1Y"] / universe.length) * 100);
   const threeYCoveragePct = round2((periodCoverage["3Y"] / universe.length) * 100);
+
+  // Phase 3.5D eligibility-aware 3Y partition.
+  // Eligible = funds whose firstDate is on or before the 3Y target anchor;
+  // i.e. funds old enough to *physically* have a 3Y return given the feed's
+  // as-of date. Ineligible = funds launched after that anchor (genuinely
+  // young — no extraction fix could ever give them a 3Y number). The Stage-2
+  // guardrail now measures coverage among Eligible only; total-universe 3Y
+  // remains an informational metric.
+  const eligible3YPartition = (() => {
+    const eligible: typeof perFundCoverage = [];
+    const ineligible: typeof perFundCoverage = [];
+    if (!threeYTarget) {
+      return { eligible, ineligible, eligibleAvailable: 0, eligibleCoveragePct: 0 };
+    }
+    for (const f of perFundCoverage) {
+      if (f.firstDate && f.firstDate <= threeYTarget) eligible.push(f);
+      else ineligible.push(f);
+    }
+    const eligibleAvailable = eligible.filter((f) => f.dataAvailability["3Y"]).length;
+    const eligibleCoveragePct = eligible.length > 0
+      ? round2((eligibleAvailable / eligible.length) * 100)
+      : 0;
+    return { eligible, ineligible, eligibleAvailable, eligibleCoveragePct };
+  })();
+  const eligible3YCount = eligible3YPartition.eligible.length;
+  const eligible3YAvailable = eligible3YPartition.eligibleAvailable;
+  const eligible3YCoveragePct = eligible3YPartition.eligibleCoveragePct;
+  const ineligible3YCount = eligible3YPartition.ineligible.length;
+  const missingEligible3Y = eligible3YPartition.eligible.filter((f) => !f.dataAvailability["3Y"]);
+
   const guardFailures: string[] = [];
   for (const w of windowResults) {
     if (!w.error && w.validRowCount > 0 && w.validRowCount < GUARD.minValidRowsPerWindow) {
@@ -883,8 +920,17 @@ async function main(): Promise<void> {
   if (oneYCoveragePct < GUARD.min1YCoveragePct) {
     guardFailures.push(`1Y coverage ${oneYCoveragePct}% < floor ${GUARD.min1YCoveragePct}%`);
   }
-  if (GUARD.min3YCoveragePct > 0 && threeYCoveragePct < GUARD.min3YCoveragePct) {
-    guardFailures.push(`3Y coverage ${threeYCoveragePct}% < floor ${GUARD.min3YCoveragePct}% (some shortfall is legitimately younger funds; inspect "fundsMissing3Y" before promoting)`);
+  // Phase 3.5D: only the eligibility-aware 3Y coverage gates production.
+  // The full-universe 3Y figure is informational (reported in the verdict),
+  // not a guard, so genuinely-young funds don't punish a healthy extraction.
+  if (GUARD.minEligible3YCoveragePct > 0) {
+    if (eligible3YCount === 0) {
+      guardFailures.push(`eligible-3Y partition is empty (threeYTarget=${threeYTarget ?? "-"}) — anchor diagnostics broken; cannot evaluate Stage-2 3Y guardrail`);
+    } else if (eligible3YCoveragePct < GUARD.minEligible3YCoveragePct) {
+      guardFailures.push(
+        `eligible 3Y coverage ${eligible3YCoveragePct}% (${eligible3YAvailable}/${eligible3YCount}) < floor ${GUARD.minEligible3YCoveragePct}% — inspect missingEligible3Y in the report; these are older funds (firstDate ≤ ${threeYTarget}) that should have a 3Y return but don't`,
+      );
+    }
   }
   if (windowsFailed > GUARD.maxFailedWindows) {
     guardFailures.push(`failed windows ${windowsFailed} > ceiling ${GUARD.maxFailedWindows}`);
@@ -1000,7 +1046,12 @@ async function main(): Promise<void> {
   // a partial-files failure to guardFailures); the verdict + recommendation
   // must reflect the post-write state.
   const finalGuardPass = guardFailures.length === 0;
-  const recommendation = buildRecommendation(finalGuardPass, guardFailures, matchedCoveragePct, periodCoverage, universe.length, WRITE_MODE, production);
+  const recommendation = buildRecommendation(finalGuardPass, guardFailures, matchedCoveragePct, periodCoverage, universe.length, WRITE_MODE, production, {
+    eligible3YCount,
+    eligible3YAvailable,
+    eligible3YCoveragePct,
+    ineligible3YCount,
+  });
   const verdict = {
     writeMode: WRITE_MODE,
     stage: STAGE,
@@ -1015,7 +1066,14 @@ async function main(): Promise<void> {
     fundsMissingHistoryCount: fundsMissingHistory.length,
     matchedCoveragePct,
     oneYCoveragePct,
+    // Phase 3.5D: total-universe 3Y is informational only; the gating metric
+    // is eligible3YCoveragePct (funds with firstDate ≤ feedLastDate − 3y).
     threeYCoveragePct,
+    eligible3YFunds: eligible3YCount,
+    eligible3YAvailable,
+    eligible3YCoveragePct,
+    ineligible3YFunds: ineligible3YCount,
+    threeYTargetDate: threeYTarget,
     periodCoverage,
     guardPass: finalGuardPass,
     guardFailures,
@@ -1068,6 +1126,25 @@ async function main(): Promise<void> {
             .slice(0, 50)
             .map((f) => ({ schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, firstDate: f.firstDate, lastDate: f.lastDate, points: f.points }))
         : null,
+      // Phase 3.5D: eligibility-aware breakdown of the missing-3Y set.
+      // - missingEligible3Y*: older funds (firstDate ≤ feedLastDate − 3y)
+      //   that *should* have a 3Y return but don't. These are the funds the
+      //   guardrail cares about — if this list is non-empty, an extraction
+      //   issue is likely.
+      // - ineligible3YFundsTotal: funds launched after the 3Y target anchor;
+      //   physically can't have a 3Y return. Informational only.
+      missingEligible3YTotal: STAGE === 2 ? missingEligible3Y.length : null,
+      missingEligible3YSample: STAGE === 2
+        ? missingEligible3Y
+            .slice(0, 50)
+            .map((f) => ({ schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, firstDate: f.firstDate, lastDate: f.lastDate, points: f.points }))
+        : null,
+      ineligible3YFundsTotal: STAGE === 2 ? ineligible3YCount : null,
+      ineligible3YFundsSample: STAGE === 2
+        ? eligible3YPartition.ineligible
+            .slice(0, 25)
+            .map((f) => ({ schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, firstDate: f.firstDate, lastDate: f.lastDate, points: f.points }))
+        : null,
     },
     perFundCoverageSample: perFundCoverage.slice(0, 25),
     sampleFiles: sampleSummaries,
@@ -1101,7 +1178,13 @@ function buildRecommendation(
   periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y": number },
   universeCount: number,
   writeMode: "dryrun" | "production",
-  production: { attempted: boolean; wroteFiles: number; manifestPath: string | null; skippedReason?: string }
+  production: { attempted: boolean; wroteFiles: number; manifestPath: string | null; skippedReason?: string },
+  eligibility: {
+    eligible3YCount: number;
+    eligible3YAvailable: number;
+    eligible3YCoveragePct: number;
+    ineligible3YCount: number;
+  },
 ): string {
   if (!guardPass) return `BLOCK: production guardrails failed (${guardFailures.join(" · ")}). Inspect window-level failureReason and per-fund coverage; existing public/nav-history files were left untouched (keep-last-good).`;
   const oneY = periodCoverage["1Y"];
@@ -1114,11 +1197,15 @@ function buildRecommendation(
       : `BLOCK: production write was skipped or partial (${production.skippedReason ?? "unknown"}); existing public/nav-history files were left untouched.`;
   }
   if (STAGE === 2) {
-    if (oneYok && threeY >= Math.floor(universeCount * 0.95)) {
-      return `PROCEED (Stage-2 dry-run): clean across the matched universe; 1Y ${oneY}/${universeCount} and 3Y ${threeY}/${universeCount} both ≥95%. Recommend re-running with commit=true to land Stage-2 history.`;
+    // Phase 3.5D: Stage-2 dry-run verdict is driven by the eligibility-aware
+    // 3Y coverage, not the blunt total-universe percentage. Total-universe
+    // 3Y is reported as supplementary context.
+    const elig = eligibility;
+    if (oneYok && elig.eligible3YCount > 0 && elig.eligible3YCoveragePct >= 99) {
+      return `PROCEED (Stage-2 dry-run): 1Y ${oneY}/${universeCount}; eligible 3Y ${elig.eligible3YAvailable}/${elig.eligible3YCount} = ${elig.eligible3YCoveragePct}% (≥99%); ${elig.ineligible3YCount} funds genuinely young (launched after the 3Y anchor); total 3Y ${threeY}/${universeCount} (informational). Recommend re-running with commit=true to land Stage-2 history.`;
     }
     if (oneYok) {
-      return `REVIEW (Stage-2 dry-run): guardrails passed (1Y ${oneY}/${universeCount}, 3Y ${threeY}/${universeCount}). 3Y shortfall is most likely younger funds — inspect fundsMissing3Y before promoting.`;
+      return `REVIEW (Stage-2 dry-run): guardrails passed; 1Y ${oneY}/${universeCount} OK but eligible 3Y is ${elig.eligible3YAvailable}/${elig.eligible3YCount} = ${elig.eligible3YCoveragePct}% (below 99% threshold). Inspect missingEligible3YSample in the report — these are older funds that should have a 3Y return but don't, and likely indicate an extraction gap, not genuine youth. Do not promote until investigated.`;
     }
     return `REVIEW: dry-run cleared baseline guardrails but 1Y rate is below 95% (${oneY}/${universeCount}). Inspect fundsMissingHistorySample before promoting.`;
   }
@@ -1129,7 +1216,7 @@ function buildRecommendation(
 }
 
 function printSummary(
-  v: { writeMode: "dryrun" | "production"; stage: 1 | 2; universeCount: number; windowsAttempted: number; windowsOk: number; windowsFailed: number; zeroRowWindows: number; abortedEarly: boolean; totalValidRows: number; fundsWithAnyPoint: number; fundsMissingHistoryCount: number; matchedCoveragePct: number; oneYCoveragePct: number; threeYCoveragePct: number; periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y": number }; guardPass: boolean; guardFailures: string[] },
+  v: { writeMode: "dryrun" | "production"; stage: 1 | 2; universeCount: number; windowsAttempted: number; windowsOk: number; windowsFailed: number; zeroRowWindows: number; abortedEarly: boolean; totalValidRows: number; fundsWithAnyPoint: number; fundsMissingHistoryCount: number; matchedCoveragePct: number; oneYCoveragePct: number; threeYCoveragePct: number; eligible3YFunds: number; eligible3YAvailable: number; eligible3YCoveragePct: number; ineligible3YFunds: number; threeYTargetDate: string | null; periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y": number }; guardPass: boolean; guardFailures: string[] },
   windows: WindowResult[],
   samples: Array<{ schemecode: string; fundName: string; path: string; points: number; firstDate: string | null; lastDate: string | null }>,
   recommendation: string,
@@ -1164,7 +1251,10 @@ function printSummary(
     info(`   ${w.index + 1}[${w.role}]: ${w.windowFrom}→${w.windowTo} attempts=${w.attempts} HTTP=${w.httpStatus ?? "-"} ct=${w.contentType ?? "-"} bytes=${w.bytes ?? "-"} ${w.responseMs}ms · ${tag}`);
   }
   info(`Universe coverage: ${v.fundsWithAnyPoint}/${v.universeCount} = ${v.matchedCoveragePct}% have ≥1 point; missing=${v.fundsMissingHistoryCount}`);
-  info(`Period coverage (funds with availability): 1M=${v.periodCoverage["1M"]} 3M=${v.periodCoverage["3M"]} 6M=${v.periodCoverage["6M"]} 1Y=${v.periodCoverage["1Y"]} 3Y=${v.periodCoverage["3Y"]}  ·  1Y=${v.oneYCoveragePct}% 3Y=${v.threeYCoveragePct}%`);
+  info(`Period coverage (funds with availability): 1M=${v.periodCoverage["1M"]} 3M=${v.periodCoverage["3M"]} 6M=${v.periodCoverage["6M"]} 1Y=${v.periodCoverage["1Y"]} 3Y=${v.periodCoverage["3Y"]}  ·  1Y=${v.oneYCoveragePct}% 3Y=${v.threeYCoveragePct}% (total-universe; informational)`);
+  if (v.stage === 2) {
+    info(`Eligible 3Y (firstDate ≤ ${v.threeYTargetDate ?? "-"}): ${v.eligible3YAvailable}/${v.eligible3YFunds} = ${v.eligible3YCoveragePct}% (guard floor)  ·  ${v.ineligible3YFunds} genuinely-young funds excluded`);
+  }
   info(`Guardrails: ${v.guardPass ? "PASS" : "FAIL · " + v.guardFailures.join(" · ")}`);
   info(`Production: attempted=${production.attempted} wroteFiles=${production.wroteFiles}${production.manifestPath ? ` manifest=${production.manifestPath}` : ""}${production.skippedReason ? ` · skipped: ${production.skippedReason}` : ""}`);
   if (production.perFundWriteErrors.length > 0) {
