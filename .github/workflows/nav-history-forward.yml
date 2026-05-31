@@ -1,0 +1,97 @@
+name: NAV history forward refresh (manual)
+
+# MANUAL daily forward NAV refresh — Phase 3.9B (DRY RUN only).
+# workflow_dispatch only; NO schedule (scheduling lands in Phase 3.9D
+# after a clean manual production run has been verified).
+#
+# Reads the already-committed src/data/snapshots/mf-latest-nav.json
+# (refreshed daily by nav-latest.yml) and simulates appending the
+# latest NAV onto each fund's existing public/nav-history/{schemecode}
+# .json IN MEMORY. Produces a dry-run report + sample proposed merged
+# files + proposed periodCoverage summaries under data/debug/, uploaded
+# as artifacts.
+#
+# Strict dry-run: this workflow does NOT touch public/nav-history/ or
+# src/data/snapshots/. There is no commit step in Phase 3.9B. The
+# `commit` input is declared (default "false") so the trigger UI stays
+# stable across phases; in Phase 3.9C it will gate a production
+# write + commit step.
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are you running this dry-run? (optional)"
+        required: false
+        type: string
+      commit:
+        description: "PLACEHOLDER for Phase 3.9C. In 3.9B only `false` is honored — no production write or commit happens regardless of this value."
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  # Read-only in Phase 3.9B (dry-run, no commit). Bumped to contents:write
+  # in Phase 3.9C when the commit step lands.
+  contents: read
+
+concurrency:
+  group: nav-history-forward-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  forward-dryrun:
+    runs-on: ubuntu-22.04
+    # Forward append reads ~1,036 small history files + computes per-period
+    # availability — comfortably inside 10 min; 20 min ceiling for headroom.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run forward-refresh dry-run
+        # Exits non-zero on guardrail failure; continue-on-error keeps the
+        # artifact-upload steps reachable so a partial diagnostic is always
+        # preserved.
+        id: run
+        continue-on-error: true
+        run: npm run ingest:nav:forward
+      - name: Upload dry-run report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: nav-history-forward-dryrun-report
+          path: data/debug/nav-history-forward-dryrun-report.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Upload proposed snapshot summaries
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: nav-history-forward-snapshot-summaries
+          path: |
+            data/debug/mf-returns-forward-summary.json
+            data/debug/mf-category-returns-forward-summary.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Upload sample proposed merged files
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: nav-history-forward-sample-files
+          path: data/debug/sample-nav-history-forward/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Fail the job if the dry-run failed
+        # The dry-run report has been uploaded above; now propagate the
+        # script's exit status so the run is correctly red on guardrail
+        # failure (rather than silently green because of continue-on-error).
+        if: ${{ steps.run.outcome == 'failure' }}
+        run: exit 1

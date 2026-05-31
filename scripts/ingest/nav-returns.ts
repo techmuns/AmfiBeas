@@ -34,22 +34,18 @@ const OUTPUT_PATH = path.resolve(process.cwd(), "src/data/snapshots/mf-returns.j
 
 const RULE_VERSION = 1;
 
-// Guardrails — matched to the values from the manifest you verified. The
-// 3M/6M/1Y "close to" tolerance is ±0.5% of the manifest's value (small —
-// the manifest and the per-fund files were built from the same fetch, so the
-// counts should be identical; the tolerance is there only as a safety net
-// for any cross-day rounding around the asOfDate anchor). 3Y and 5Y are
-// checked exactly: introduced in Phases 3.6A / 3.8A respectively, and the
-// matching manifest values are the single source of truth.
+// Guardrails — Phase 3.9B: per-period expected coverage is now
+// manifest-derived rather than hard-coded. The manifest is the single
+// source of truth (regenerated alongside the per-fund files), so any
+// divergence is a logic bug — we fail loudly rather than tolerate
+// approximation. This unblocks the daily forward-refresh flow, where
+// 1Y/3Y/5Y eligibility ticks up naturally as funds age into a period.
+//
+// expectedFundCount stays here as universe-size sanity (catastrophic-
+// drop floor) — it doesn't track period eligibility, so it's not
+// manifest-derived.
 const GUARD = {
   expectedFundCount: 1036,
-  exact1M: 1036,                      // 1M must be exactly the full universe
-  approx3M: 1029,                     // see manifest
-  approx6M: 1022,
-  approx1Y: 995,
-  exact3Y: 826,                       // Stage-2 manifest: 826 funds carry a 3Y CAGR
-  exact5Y: 637,                       // Stage-3 manifest: 637 funds carry a 5Y CAGR
-  approxTolerancePct: 0.5,
 };
 
 // ---------------------------------------------------------------------------
@@ -399,37 +395,23 @@ async function main(): Promise<void> {
   if (rows.length !== GUARD.expectedFundCount) {
     validationFailures.push(`rows.length ${rows.length} != expected ${GUARD.expectedFundCount}`);
   }
-  if (availability1M !== GUARD.exact1M) {
-    validationFailures.push(`1M coverage ${availability1M} != exact ${GUARD.exact1M}`);
-  }
-  function approxOk(actual: number, expected: number): boolean {
-    if (expected === 0) return actual === 0;
-    return Math.abs((actual - expected) / expected) * 100 <= GUARD.approxTolerancePct;
-  }
-  if (!approxOk(availability3M, GUARD.approx3M)) {
-    validationFailures.push(`3M coverage ${availability3M} not within ${GUARD.approxTolerancePct}% of expected ${GUARD.approx3M}`);
-  }
-  if (!approxOk(availability6M, GUARD.approx6M)) {
-    validationFailures.push(`6M coverage ${availability6M} not within ${GUARD.approxTolerancePct}% of expected ${GUARD.approx6M}`);
-  }
-  if (!approxOk(availability1Y, GUARD.approx1Y)) {
-    validationFailures.push(`1Y coverage ${availability1Y} not within ${GUARD.approxTolerancePct}% of expected ${GUARD.approx1Y}`);
-  }
-  // Phase 3.6A: 3Y must equal the manifest exactly. The computation runs
-  // off the same per-fund history files the manifest was built from, so an
-  // off-by-one here would indicate a logic divergence, not noise.
-  if (availability3Y !== GUARD.exact3Y) {
-    validationFailures.push(`3Y coverage ${availability3Y} != exact ${GUARD.exact3Y}`);
-  }
-  if (manifest.periodCoverage["3Y"] !== undefined && manifest.periodCoverage["3Y"] !== availability3Y) {
-    validationFailures.push(`3Y coverage ${availability3Y} != manifest.periodCoverage["3Y"] ${manifest.periodCoverage["3Y"]}`);
-  }
-  // Phase 3.8A: same exact-equality check at 5Y (Stage-3 manifest).
-  if (availability5Y !== GUARD.exact5Y) {
-    validationFailures.push(`5Y coverage ${availability5Y} != exact ${GUARD.exact5Y}`);
-  }
-  if (manifest.periodCoverage["5Y"] !== undefined && manifest.periodCoverage["5Y"] !== availability5Y) {
-    validationFailures.push(`5Y coverage ${availability5Y} != manifest.periodCoverage["5Y"] ${manifest.periodCoverage["5Y"]}`);
+  // Phase 3.9B: manifest-derived per-period coverage. Required: this run's
+  // counts equal manifest.periodCoverage exactly for every period the
+  // manifest reports. Older manifests (Stage-1/2) may omit 3Y or 5Y; those
+  // keys are skipped rather than treated as zero. Daily forward-refresh
+  // regenerates the manifest in the same run that regenerates returns, so
+  // exact equality is the right bar — and it catches the bug-class where
+  // a partial fetch leaves the snapshot out of sync with the manifest.
+  const availabilityCounts: Record<PeriodKey, number> = {
+    "1M": availability1M, "3M": availability3M, "6M": availability6M,
+    "1Y": availability1Y, "3Y": availability3Y, "5Y": availability5Y,
+  };
+  for (const k of ["1M", "3M", "6M", "1Y", "3Y", "5Y"] as PeriodKey[]) {
+    const expected = manifest.periodCoverage[k];
+    if (expected === undefined) continue; // older manifest didn't carry this period
+    if (availabilityCounts[k] !== expected) {
+      validationFailures.push(`${k} coverage ${availabilityCounts[k]} != manifest.periodCoverage["${k}"] ${expected}`);
+    }
   }
   if (issues.length > 0) {
     validationFailures.push(`${issues.length} per-fund validation issues`);

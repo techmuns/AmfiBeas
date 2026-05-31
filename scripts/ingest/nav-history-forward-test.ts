@@ -1,0 +1,559 @@
+/**
+ * Phase 3.9B synthetic test for scripts/ingest/nav-history-forward.ts.
+ *
+ * Verifies the dry-run forward-append behaviour without hitting AMFI or
+ * the filesystem (other than reading this test file's own source via the
+ * "no production writes" string-search check). The forward-append logic
+ * is exported as `simulateForwardAppend` / `dataAvailability` and
+ * exercised here against synthetic series + manifest fragments.
+ *
+ * Run:    npx tsx scripts/ingest/nav-history-forward-test.ts
+ * Exits:  0 on all-pass, 1 on any failure.
+ */
+
+import path from "node:path";
+import { simulateForwardAppend, dataAvailability, ddMMMyyyyToIso } from "./nav-history-forward";
+
+type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y";
+const EMPTY_AVAIL: Record<PeriodKey, boolean> = { "1M": false, "3M": false, "6M": false, "1Y": false, "3Y": false, "5Y": false };
+
+let pass = 0, fail = 0;
+function check(name: string, ok: boolean, detail?: string): void {
+  if (ok) { pass += 1; console.log(`PASS  ${name}`); }
+  else    { fail += 1; console.error(`FAIL  ${name}${detail ? "\n        " + detail : ""}`); }
+}
+
+// Reusable synthetic series: 5 years of weekly NAVs ending 2026-05-29.
+// Used by the availability checks below.
+const FIVE_YEAR_SERIES: Array<[string, number]> = (() => {
+  const out: Array<[string, number]> = [];
+  // Start at 2021-05-28 to give 5Y headroom; step by 7 days.
+  let cursor = Date.UTC(2021, 4, 28);
+  const end = Date.UTC(2026, 4, 29);
+  let nav = 100;
+  while (cursor <= end) {
+    const d = new Date(cursor);
+    const iso = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+    out.push([iso, Math.round(nav * 100) / 100]);
+    nav *= 1.001;
+    cursor += 7 * 86_400_000;
+  }
+  return out;
+})();
+const FIVE_YEAR_LAST_DATE = FIVE_YEAR_SERIES[FIVE_YEAR_SERIES.length - 1][0];
+
+// ---------------------------------------------------------------------------
+// 1. ddMMMyyyyToIso parses AMFI's DD-MMM-YYYY into ISO.
+// ---------------------------------------------------------------------------
+check(
+  "ddMMMyyyyToIso parses 29-May-2026 → 2026-05-29",
+  ddMMMyyyyToIso("29-May-2026") === "2026-05-29",
+  `got ${ddMMMyyyyToIso("29-May-2026")}`,
+);
+check(
+  "ddMMMyyyyToIso accepts 1-Jan-2025 (single-digit day) → 2025-01-01",
+  ddMMMyyyyToIso("1-Jan-2025") === "2025-01-01",
+  `got ${ddMMMyyyyToIso("1-Jan-2025")}`,
+);
+check(
+  "ddMMMyyyyToIso rejects malformed input → null",
+  ddMMMyyyyToIso("not-a-date") === null,
+  `got ${ddMMMyyyyToIso("not-a-date")}`,
+);
+
+// ---------------------------------------------------------------------------
+// 2. Append a new NAV date (would-append).
+// ---------------------------------------------------------------------------
+{
+  const a = simulateForwardAppend({
+    schemecode: "1131",
+    fundName: "HDFC Flexi Cap",
+    existingSeries: FIVE_YEAR_SERIES,
+    existingFirstDate: FIVE_YEAR_SERIES[0][0],
+    existingLastDate: FIVE_YEAR_LAST_DATE,
+    latestNav: 2200,
+    latestNavIso: "2026-05-30",
+    latestNavAmfi: "30-May-2026",
+    manifestAvailability: EMPTY_AVAIL,
+  });
+  check(
+    "would-append: action is 'would-append'",
+    a.action === "would-append",
+    `action=${a.action}`,
+  );
+  check(
+    "would-append: proposedPoints == existing + 1",
+    a.proposedPoints === FIVE_YEAR_SERIES.length + 1,
+    `proposed=${a.proposedPoints} existing=${FIVE_YEAR_SERIES.length}`,
+  );
+  check(
+    "would-append: proposedLastDate is the new latest ISO",
+    a.proposedLastDate === "2026-05-30",
+    `proposedLastDate=${a.proposedLastDate}`,
+  );
+  check(
+    "would-append: gapCalendarDays = days(historyLastDate → latestNavDate)",
+    a.gapCalendarDays === 1,
+    `gap=${a.gapCalendarDays}`,
+  );
+  check(
+    "would-append: largeGap=false at 1-day gap",
+    !a.largeGap,
+    `largeGap=${a.largeGap}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 3. Idempotent same-date → no-op.
+// ---------------------------------------------------------------------------
+{
+  const a = simulateForwardAppend({
+    schemecode: "1131",
+    fundName: "HDFC Flexi Cap",
+    existingSeries: FIVE_YEAR_SERIES,
+    existingFirstDate: FIVE_YEAR_SERIES[0][0],
+    existingLastDate: FIVE_YEAR_LAST_DATE,
+    latestNav: 2200,
+    latestNavIso: FIVE_YEAR_LAST_DATE,
+    latestNavAmfi: "29-May-2026",
+    manifestAvailability: EMPTY_AVAIL,
+  });
+  check(
+    "idempotent: action is 'current' when latest == history.lastDate",
+    a.action === "current",
+    `action=${a.action}`,
+  );
+  check(
+    "idempotent: proposedPoints unchanged",
+    a.proposedPoints === FIVE_YEAR_SERIES.length,
+    `proposed=${a.proposedPoints} existing=${FIVE_YEAR_SERIES.length}`,
+  );
+  check(
+    "idempotent: proposedLastDate unchanged",
+    a.proposedLastDate === FIVE_YEAR_LAST_DATE,
+    `proposedLastDate=${a.proposedLastDate}`,
+  );
+  check(
+    "idempotent: gapCalendarDays = 0",
+    a.gapCalendarDays === 0,
+    `gap=${a.gapCalendarDays}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 4. Stale latest NAV → no rewind.
+// ---------------------------------------------------------------------------
+{
+  const a = simulateForwardAppend({
+    schemecode: "1131",
+    fundName: "HDFC Flexi Cap",
+    existingSeries: FIVE_YEAR_SERIES,
+    existingFirstDate: FIVE_YEAR_SERIES[0][0],
+    existingLastDate: FIVE_YEAR_LAST_DATE,
+    latestNav: 2200,
+    latestNavIso: "2026-05-22", // earlier than lastDate
+    latestNavAmfi: "22-May-2026",
+    manifestAvailability: EMPTY_AVAIL,
+  });
+  check(
+    "stale-latest: action is 'stale-latest' when latest < history.lastDate",
+    a.action === "stale-latest",
+    `action=${a.action}`,
+  );
+  check(
+    "stale-latest: proposedPoints unchanged (no rewind)",
+    a.proposedPoints === FIVE_YEAR_SERIES.length,
+    `proposed=${a.proposedPoints}`,
+  );
+  check(
+    "stale-latest: proposedLastDate stays at the existing lastDate",
+    a.proposedLastDate === FIVE_YEAR_LAST_DATE,
+    `proposedLastDate=${a.proposedLastDate}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 5. Invalid NAV → blocked.
+// ---------------------------------------------------------------------------
+{
+  for (const bad of [-1, 0, NaN, Infinity, null as unknown as number]) {
+    const a = simulateForwardAppend({
+      schemecode: "X", fundName: "X",
+      existingSeries: FIVE_YEAR_SERIES,
+      existingFirstDate: FIVE_YEAR_SERIES[0][0],
+      existingLastDate: FIVE_YEAR_LAST_DATE,
+      latestNav: bad,
+      latestNavIso: "2026-05-30",
+      latestNavAmfi: "30-May-2026",
+      manifestAvailability: EMPTY_AVAIL,
+    });
+    check(
+      `invalid-nav: action='invalid-nav' for nav=${bad}`,
+      a.action === "invalid-nav" || a.action === "no-latest-row",
+      `action=${a.action}`,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 6. Duplicate date prevention (would-append never re-adds an existing date).
+//    The simulate function only enters would-append when latest > lastDate,
+//    so the very next series point is the new date. Confirm the simulated
+//    merged series has no duplicates by reconstructing it the same way the
+//    production path will.
+// ---------------------------------------------------------------------------
+{
+  const a = simulateForwardAppend({
+    schemecode: "Y", fundName: "Y",
+    existingSeries: FIVE_YEAR_SERIES,
+    existingFirstDate: FIVE_YEAR_SERIES[0][0],
+    existingLastDate: FIVE_YEAR_LAST_DATE,
+    latestNav: 2200,
+    latestNavIso: "2026-05-30",
+    latestNavAmfi: "30-May-2026",
+    manifestAvailability: EMPTY_AVAIL,
+  });
+  // Reconstruct the merged series the same way main() does — and assert no
+  // duplicate dates.
+  const merged: Array<[string, number]> = a.action === "would-append" && a.latestNavDate !== null
+    ? [...FIVE_YEAR_SERIES, [a.latestNavDate, 2200]]
+    : FIVE_YEAR_SERIES;
+  const seenDates = new Set<string>();
+  let dup = false;
+  for (const [d] of merged) {
+    if (seenDates.has(d)) { dup = true; break; }
+    seenDates.add(d);
+  }
+  check(
+    "duplicate-date prevention: simulated merge has no duplicate dates",
+    !dup,
+    "checked all merged dates",
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 7. Ascending series preservation.
+// ---------------------------------------------------------------------------
+{
+  const a = simulateForwardAppend({
+    schemecode: "Z", fundName: "Z",
+    existingSeries: FIVE_YEAR_SERIES,
+    existingFirstDate: FIVE_YEAR_SERIES[0][0],
+    existingLastDate: FIVE_YEAR_LAST_DATE,
+    latestNav: 2200,
+    latestNavIso: "2026-06-05",
+    latestNavAmfi: "5-Jun-2026",
+    manifestAvailability: EMPTY_AVAIL,
+  });
+  const merged: Array<[string, number]> = a.action === "would-append" && a.latestNavDate !== null
+    ? [...FIVE_YEAR_SERIES, [a.latestNavDate, 2200]]
+    : FIVE_YEAR_SERIES;
+  let asc = true;
+  for (let i = 1; i < merged.length; i++) {
+    if (merged[i][0] <= merged[i - 1][0]) { asc = false; break; }
+  }
+  check(
+    "ascending preserved: merged series is strictly ascending after append",
+    asc,
+    "walked all consecutive pairs",
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 8. Gap detection.
+// ---------------------------------------------------------------------------
+{
+  // Small gap (~3 days, weekend hop) — should NOT flag largeGap.
+  const small = simulateForwardAppend({
+    schemecode: "G1", fundName: "G1",
+    existingSeries: FIVE_YEAR_SERIES,
+    existingFirstDate: FIVE_YEAR_SERIES[0][0],
+    existingLastDate: FIVE_YEAR_LAST_DATE,
+    latestNav: 200,
+    latestNavIso: "2026-06-01",
+    latestNavAmfi: "1-Jun-2026",
+    manifestAvailability: EMPTY_AVAIL,
+  });
+  check(
+    "gap-detect: 3-day weekend hop is not flagged as largeGap",
+    small.gapCalendarDays === 3 && !small.largeGap,
+    `gap=${small.gapCalendarDays} largeGap=${small.largeGap}`,
+  );
+  // Large gap (15 days) — SHOULD flag largeGap (> 7-day threshold).
+  const large = simulateForwardAppend({
+    schemecode: "G2", fundName: "G2",
+    existingSeries: FIVE_YEAR_SERIES,
+    existingFirstDate: FIVE_YEAR_SERIES[0][0],
+    existingLastDate: FIVE_YEAR_LAST_DATE,
+    latestNav: 200,
+    latestNavIso: "2026-06-13",
+    latestNavAmfi: "13-Jun-2026",
+    manifestAvailability: EMPTY_AVAIL,
+  });
+  check(
+    "gap-detect: 15-day gap IS flagged as largeGap",
+    large.gapCalendarDays === 15 && large.largeGap,
+    `gap=${large.gapCalendarDays} largeGap=${large.largeGap}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 9. dataAvailability matches the production rule (1M/3M/6M/1Y/3Y/5Y).
+//    Built on the 5-year weekly series with end-anchor 2026-05-29 — all six
+//    periods should be available because firstDate (2021-05-28) is one day
+//    before the 5Y anchor (2026-05-29 − 5y = 2021-05-29).
+// ---------------------------------------------------------------------------
+{
+  const pts = FIVE_YEAR_SERIES.map(([d, n]) => ({ date: d, nav: n }));
+  const avail = dataAvailability(pts);
+  check(
+    "dataAvailability: 5-year weekly series has all 6 periods",
+    avail["1M"] && avail["3M"] && avail["6M"] && avail["1Y"] && avail["3Y"] && avail["5Y"],
+    JSON.stringify(avail),
+  );
+}
+{
+  // A 4-year series — should have everything EXCEPT 5Y.
+  const fourYears = FIVE_YEAR_SERIES.filter(([d]) => d >= "2022-05-29");
+  const pts = fourYears.map(([d, n]) => ({ date: d, nav: n }));
+  const avail = dataAvailability(pts);
+  check(
+    "dataAvailability: 4-year series has 1M-3Y but not 5Y",
+    avail["1M"] && avail["3M"] && avail["6M"] && avail["1Y"] && avail["3Y"] && !avail["5Y"],
+    JSON.stringify(avail),
+  );
+}
+{
+  // A 2-year series — should have 1M/3M/6M/1Y but not 3Y or 5Y.
+  const twoYears = FIVE_YEAR_SERIES.filter(([d]) => d >= "2024-05-29");
+  const pts = twoYears.map(([d, n]) => ({ date: d, nav: n }));
+  const avail = dataAvailability(pts);
+  check(
+    "dataAvailability: 2-year series has 1M-1Y but not 3Y or 5Y",
+    avail["1M"] && avail["3M"] && avail["6M"] && avail["1Y"] && !avail["3Y"] && !avail["5Y"],
+    JSON.stringify(avail),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 10. Funds that age IN to a new period after the proposed append.
+//     A series whose firstDate is just-after the 1Y target before append
+//     should gain "1Y" after appending a new point one day later (because
+//     the asOf advances by one day and (asOf − 1y) advances with it).
+// ---------------------------------------------------------------------------
+{
+  // Series spanning ~ (just shy of 1 year) ending at 2026-05-29.
+  // firstDate = 2025-05-30. asOf = 2026-05-29 → 1Y target = 2025-05-29.
+  // firstDate > target → 1Y unavailable.
+  const just_under_1y: Array<[string, number]> = [];
+  let cursor = Date.UTC(2025, 4, 30); // 2025-05-30
+  const end = Date.UTC(2026, 4, 29);
+  let nav = 100;
+  while (cursor <= end) {
+    const d = new Date(cursor);
+    const iso = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+    just_under_1y.push([iso, Math.round(nav * 100) / 100]);
+    nav *= 1.001;
+    cursor += 7 * 86_400_000;
+  }
+  const priorPts = just_under_1y.map(([d, n]) => ({ date: d, nav: n }));
+  const priorAvail = dataAvailability(priorPts);
+  check(
+    "ageing-in (pre-append): just-under-1Y series has 6M but not 1Y",
+    priorAvail["6M"] && !priorAvail["1Y"],
+    `prior=${JSON.stringify(priorAvail)}`,
+  );
+  const a = simulateForwardAppend({
+    schemecode: "AGED", fundName: "AGED",
+    existingSeries: just_under_1y,
+    existingFirstDate: just_under_1y[0][0],
+    existingLastDate: just_under_1y[just_under_1y.length - 1][0],
+    latestNav: 200,
+    latestNavIso: "2026-05-31",
+    latestNavAmfi: "31-May-2026",
+    manifestAvailability: { ...EMPTY_AVAIL, "6M": true }, // manifest reflects pre-append state
+  });
+  check(
+    "ageing-in (post-append): fund gains 1Y after one more day's NAV pushes the anchor past firstDate",
+    a.action === "would-append" && a.proposedAvailability["1Y"] === true,
+    `action=${a.action} proposed=${JSON.stringify(a.proposedAvailability)}`,
+  );
+  check(
+    "ageing-in: 6M still available; firstDate unchanged across the append",
+    a.proposedAvailability["6M"] === true,
+    JSON.stringify(a.proposedAvailability),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 11. Dry-run never writes to public/nav-history/ or src/data/snapshots/.
+//     Verified by string-searching the production script's source.
+// ---------------------------------------------------------------------------
+{
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const fs = require("node:fs") as typeof import("node:fs");
+  const src = fs.readFileSync(
+    path.resolve(process.cwd(), "scripts/ingest/nav-history-forward.ts"),
+    "utf8",
+  );
+  // Confirm no string referencing public/nav-history/ as a write target
+  // appears outside the readExistingHistoryFile path. The path constant
+  // HISTORY_DIR is used ONLY inside readExistingHistoryFile.
+  const writesToPublic =
+    /(?:fs\.writeFile|fs\.mkdir|atomicWriteJson)\([^)]*HISTORY_DIR/.test(src) ||
+    /(?:fs\.writeFile|fs\.mkdir|atomicWriteJson)\([^)]*public\/nav-history/.test(src);
+  check(
+    "no production write: nav-history-forward.ts never writes to public/nav-history/",
+    !writesToPublic,
+    writesToPublic ? "found a write to HISTORY_DIR/public/nav-history" : "no production write ✓",
+  );
+  const writesToSnapshots =
+    /(?:fs\.writeFile|atomicWriteJson)\([^)]*src\/data\/snapshots/.test(src) ||
+    /(?:fs\.writeFile|atomicWriteJson)\([^)]*LATEST_PATH/.test(src) ||
+    /(?:fs\.writeFile|atomicWriteJson)\([^)]*MANIFEST_PATH/.test(src);
+  check(
+    "no production write: nav-history-forward.ts never writes to src/data/snapshots/",
+    !writesToSnapshots,
+    writesToSnapshots ? "found a write to src/data/snapshots" : "no production write ✓",
+  );
+  // All debug writes go to data/debug/
+  const writesDebug = /data\/debug/.test(src) && /fs\.writeFile/.test(src);
+  check(
+    "debug writes: nav-history-forward.ts does write to data/debug/ (gitignored)",
+    writesDebug,
+    "data/debug write path present ✓",
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 12. nav-returns.ts guards are now manifest-derived (no hardcoded
+//     exact1M / approx3M etc. coverage constants).
+// ---------------------------------------------------------------------------
+{
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const fs = require("node:fs") as typeof import("node:fs");
+  const src = fs.readFileSync(
+    path.resolve(process.cwd(), "scripts/ingest/nav-returns.ts"),
+    "utf8",
+  );
+  // The old guards: exact1M / approx3M / approx6M / approx1Y / exact3Y /
+  // exact5Y / approxTolerancePct. Manifest-derived replacements should not
+  // declare any of these constants any more.
+  const stillHasOldGuards =
+    /\bexact1M\s*:/.test(src) ||
+    /\bapprox3M\s*:/.test(src) ||
+    /\bapprox6M\s*:/.test(src) ||
+    /\bapprox1Y\s*:/.test(src) ||
+    /\bexact3Y\s*:/.test(src) ||
+    /\bexact5Y\s*:/.test(src) ||
+    /\bapproxTolerancePct\s*:/.test(src);
+  check(
+    "returns guard: hard-coded exact/approx period constants removed from nav-returns.ts",
+    !stillHasOldGuards,
+    stillHasOldGuards ? "found one of the old constants" : "manifest-derived ✓",
+  );
+  // The new check should reference manifest.periodCoverage at the
+  // validation site.
+  const usesManifestPeriodCoverage = /manifest\.periodCoverage/.test(src);
+  check(
+    "returns guard: validation references manifest.periodCoverage as the source of truth",
+    usesManifestPeriodCoverage,
+    usesManifestPeriodCoverage ? "manifest.periodCoverage referenced ✓" : "missing",
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 13. Manifest-derived returns guard tolerates growth (eligibility tick-ups).
+//     Synthetic mirror of the production rule: required exact match against
+//     the manifest. The manifest is regenerated alongside the per-fund files
+//     in Phase 3.9C, so post-regen they'll always agree exactly. Growth from
+//     one daily run to the next IS expected and the guard treats it as the
+//     new exact value.
+// ---------------------------------------------------------------------------
+{
+  function isCoverageOk(
+    availability: Record<PeriodKey, number>,
+    manifestPeriodCoverage: Record<PeriodKey, number>,
+  ): { ok: boolean; failures: string[] } {
+    const failures: string[] = [];
+    for (const k of ["1M", "3M", "6M", "1Y", "3Y", "5Y"] as PeriodKey[]) {
+      if (manifestPeriodCoverage[k] === undefined) continue;
+      if (availability[k] !== manifestPeriodCoverage[k]) {
+        failures.push(`${k}: ${availability[k]} != manifest ${manifestPeriodCoverage[k]}`);
+      }
+    }
+    return { ok: failures.length === 0, failures };
+  }
+  // Day 1: matches.
+  const day1 = isCoverageOk(
+    { "1M": 1036, "3M": 1029, "6M": 1022, "1Y": 995, "3Y": 826, "5Y": 637 },
+    { "1M": 1036, "3M": 1029, "6M": 1022, "1Y": 995, "3Y": 826, "5Y": 637 },
+  );
+  check(
+    "returns guard: exact match against the manifest → PASS",
+    day1.ok,
+    day1.failures.join(" · "),
+  );
+  // Day 2: a few funds aged into 1Y / 3Y / 5Y, AND the manifest grew
+  // alongside (regenerated in the same forward-refresh run). Exact match
+  // still holds.
+  const day2 = isCoverageOk(
+    { "1M": 1036, "3M": 1029, "6M": 1022, "1Y": 998, "3Y": 828, "5Y": 640 },
+    { "1M": 1036, "3M": 1029, "6M": 1022, "1Y": 998, "3Y": 828, "5Y": 640 },
+  );
+  check(
+    "returns guard: eligibility-tick-up with manifest regenerated alongside → PASS",
+    day2.ok,
+    day2.failures.join(" · "),
+  );
+  // Failure: drift between snapshot and manifest (this is the bug-class the
+  // new guard catches — and what would have masked the Phase-3.7A asOf bug).
+  const skew = isCoverageOk(
+    { "1M": 1036, "3M": 1029, "6M": 1022, "1Y": 998, "3Y": 828, "5Y": 640 },
+    { "1M": 1036, "3M": 1029, "6M": 1022, "1Y": 995, "3Y": 826, "5Y": 637 },
+  );
+  check(
+    "returns guard: snapshot vs manifest skew → FAIL (3 mismatches)",
+    !skew.ok && skew.failures.length === 3,
+    `failures=${JSON.stringify(skew.failures)}`,
+  );
+  // Manifest is older-shape (no 5Y key — pre-Stage-3): keys not present in
+  // the manifest are not checked.
+  const oldManifest = isCoverageOk(
+    { "1M": 1036, "3M": 1029, "6M": 1022, "1Y": 995, "3Y": 826, "5Y": 637 },
+    { "1M": 1036, "3M": 1029, "6M": 1022, "1Y": 995 } as Record<PeriodKey, number>,
+  );
+  check(
+    "returns guard: tolerates older Stage-1/2 manifests (missing 3Y/5Y keys)",
+    oldManifest.ok,
+    oldManifest.failures.join(" · "),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 14. Import-guard: the production script's main() must not run as a side
+//     effect of importing its exported helpers. We've already imported them
+//     above; if main() had auto-run, the script would have logged its
+//     "============ NAV HISTORY FORWARD REFRESH DRY-RUN ============" banner
+//     synchronously and written debug files. We verify the file source
+//     contains an entry-guard around main().
+// ---------------------------------------------------------------------------
+{
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const fs = require("node:fs") as typeof import("node:fs");
+  const src = fs.readFileSync(
+    path.resolve(process.cwd(), "scripts/ingest/nav-history-forward.ts"),
+    "utf8",
+  );
+  // The guard must be present AND must wrap the main() call.
+  const hasGuard = /process\.argv\[1\][\s\S]+nav-history-forward/.test(src);
+  const hasGuardedMain = /if \(_isEntry\)\s*\{\s*main\(\)/.test(src);
+  check(
+    "import-guard: production script wraps main() in a process.argv entry-check",
+    hasGuard && hasGuardedMain,
+    `hasGuard=${hasGuard} hasGuardedMain=${hasGuardedMain}`,
+  );
+}
+
+console.log(`\n${pass} passed, ${fail} failed.`);
+if (fail > 0) process.exit(1);
