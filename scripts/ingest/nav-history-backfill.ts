@@ -44,9 +44,14 @@ const WRITE_MODE: "dryrun" | "production" =
   process.env.NAV_HISTORY_WRITE_MODE === "production" ? "production" : "dryrun";
 
 // Stage selection. NAV_HISTORY_STAGE=2 enables the 3-year backfill (75-day
-// chunks → ~15 windows). Default is Stage 1 = 15 months (~7 windows) — the
-// validated production configuration.
-const STAGE: 1 | 2 = process.env.NAV_HISTORY_STAGE === "2" ? 2 : 1;
+// chunks → ~16 windows incl. pre-buffer). NAV_HISTORY_STAGE=3 enables the
+// 5-year backfill (75-day chunks → ~26 windows incl. pre-buffer). Default
+// is Stage 1 = 15 months (~7 windows) — the validated production
+// configuration.
+const STAGE: 1 | 2 | 3 =
+  process.env.NAV_HISTORY_STAGE === "3" ? 3
+  : process.env.NAV_HISTORY_STAGE === "2" ? 2
+  : 1;
 
 const USER_AGENT =
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
@@ -79,12 +84,15 @@ interface StageConfig {
     // 3Y window) cannot drag the metric below the floor. Set to 0 on Stage 1
     // where 3Y isn't attempted.
     minEligible3YCoveragePct: number;
+    // Phase 3.7A: same idea for 5Y. Eligible = firstDate ≤ feedLastDate − 5y.
+    // Set to 0 on Stages 1/2 where 5Y isn't attempted; 99 on Stage 3.
+    minEligible5YCoveragePct: number;
     maxFailedWindows: number;
     expectedFileCount: number;
   };
 }
 
-const STAGE_CONFIGS: Record<1 | 2, StageConfig> = {
+const STAGE_CONFIGS: Record<1 | 2 | 3, StageConfig> = {
   1: {
     totalMonthsBack: 15,
     // Stage 1's longest period is 1Y; 15 months already leaves ~90 days of
@@ -107,6 +115,7 @@ const STAGE_CONFIGS: Record<1 | 2, StageConfig> = {
       minMatchedCoveragePct: 95,
       min1YCoveragePct: 95,
       minEligible3YCoveragePct: 0, // Stage 1 cannot produce 3Y; guard disabled.
+      minEligible5YCoveragePct: 0, // Stage 1 cannot produce 5Y; guard disabled.
       maxFailedWindows: 1, // 7 windows → ≤1 fail
       expectedFileCount: 1036,
     },
@@ -145,7 +154,46 @@ const STAGE_CONFIGS: Record<1 | 2, StageConfig> = {
       // at least 99% must have a usable 3Y return. Total-universe 3Y is
       // still reported as an informational metric in the verdict + log.
       minEligible3YCoveragePct: 99,
+      minEligible5YCoveragePct: 0, // Stage 2 doesn't reach 5Y; guard disabled.
       maxFailedWindows: 2, // 15 windows → ≤2 fail
+      expectedFileCount: 1036,
+    },
+  },
+  3: {
+    // Phase 3.7A: 5-year backfill. Same proven 75-day main grid as Stage 2 —
+    // do NOT shift the schedule (Phase 3.5B demonstrated that any global
+    // shift breaks AMFI's response for downstream windows). Add ~1 extra
+    // pre-buffer window so the fetched series starts safely before the
+    // (asOf − 5y) anchor, exactly mirroring the Stage-2 pre-buffer pattern.
+    totalMonthsBack: 60, // 5 years
+    bufferDays: 45,
+    chunkDays: 75,
+    politeDelayMs: 1500,
+    fetchTimeoutMs: 120_000,
+    runDeadlineMs: 60 * 60_000, // ~26 windows → comfortably inside the workflow timeout
+    perWindowMaxRetries: 3,
+    backoffMs: [5_000, 15_000, 45_000],
+    reportPath: path.join(REPORT_DIR, "nav-history-backfill-stage3-dryrun-report.json"),
+    sampleDir: path.resolve(REPORT_DIR, "sample-nav-history-stage3"),
+    // Stage-3 production write would land in the SAME canonical paths as
+    // Stages 1/2 (one set of per-fund files / one manifest). Phase 3.7A is
+    // dry-run only, so these paths are never actually written here.
+    productionHistoryDir: path.resolve(process.cwd(), "public/nav-history"),
+    productionManifestPath: path.resolve(process.cwd(), "src/data/snapshots/mf-history-manifest.json"),
+    guard: {
+      minValidRowsPerWindow: 5_000,
+      minTotalValidRows: 150_000, // ~26 windows × ~6k rows minimum
+      minMatchedCoveragePct: 95,
+      min1YCoveragePct: 95,
+      // Stage 3 is a superset of Stage 2; the eligibility-aware 3Y guard
+      // continues to apply (we still expect ≥99% of 3Y-eligible funds to
+      // have a 3Y return after this run, by construction).
+      minEligible3YCoveragePct: 99,
+      // Phase 3.7A: same shape as the 3Y floor, applied at 5Y. Eligible =
+      // funds with firstDate ≤ feedLastDate − 5y. Coverage among Eligible
+      // must be ≥99%; total-universe 5Y is reported informationally.
+      minEligible5YCoveragePct: 99,
+      maxFailedWindows: 3, // ~26 windows → ≤3 fail
       expectedFileCount: 1036,
     },
   },
@@ -223,7 +271,7 @@ interface WindowResult {
   failureReason?: string;
 }
 
-type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y";
+type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y";
 
 interface ReturnCell {
   value: number;
@@ -497,14 +545,15 @@ interface PeriodSpec {
   months: number;
   years: number;
   annualize: boolean;
-  stages: ReadonlyArray<1 | 2>;
+  stages: ReadonlyArray<1 | 2 | 3>;
 }
 const ALL_PERIODS: ReadonlyArray<PeriodSpec> = [
-  { key: "1M", months: 1, years: 0, annualize: false, stages: [1, 2] },
-  { key: "3M", months: 3, years: 0, annualize: false, stages: [1, 2] },
-  { key: "6M", months: 6, years: 0, annualize: false, stages: [1, 2] },
-  { key: "1Y", months: 0, years: 1, annualize: false, stages: [1, 2] },
-  { key: "3Y", months: 0, years: 3, annualize: true,  stages: [2] },
+  { key: "1M", months: 1, years: 0, annualize: false, stages: [1, 2, 3] },
+  { key: "3M", months: 3, years: 0, annualize: false, stages: [1, 2, 3] },
+  { key: "6M", months: 6, years: 0, annualize: false, stages: [1, 2, 3] },
+  { key: "1Y", months: 0, years: 1, annualize: false, stages: [1, 2, 3] },
+  { key: "3Y", months: 0, years: 3, annualize: true,  stages: [2, 3] },
+  { key: "5Y", months: 0, years: 5, annualize: true,  stages: [3] },
 ];
 const PERIODS_FOR_STAGE: ReadonlyArray<PeriodSpec> = ALL_PERIODS.filter((p) => p.stages.includes(STAGE));
 
@@ -521,7 +570,7 @@ function dayDiffYears(isoA: string, isoB: string): number {
 }
 
 function emptyAvailability(): Record<PeriodKey, boolean> {
-  const out = { "1M": false, "3M": false, "6M": false, "1Y": false, "3Y": false };
+  const out = { "1M": false, "3M": false, "6M": false, "1Y": false, "3Y": false, "5Y": false };
   return out;
 }
 
@@ -694,7 +743,7 @@ interface ManifestFile {
   totalFunds: number;
   fundsAvailable: number;
   fundsMissing: number;
-  periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y": number };
+  periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y": number; "5Y": number };
   ruleVersion: number;
   parserVersion: number;
   funds: ManifestFund[];
@@ -818,6 +867,7 @@ async function main(): Promise<void> {
     "6M": perFundCoverage.filter((f) => f.dataAvailability["6M"]).length,
     "1Y": perFundCoverage.filter((f) => f.dataAvailability["1Y"]).length,
     "3Y": perFundCoverage.filter((f) => f.dataAvailability["3Y"]).length,
+    "5Y": perFundCoverage.filter((f) => f.dataAvailability["5Y"]).length,
   };
   const fundsMissingHistory = perFundCoverage.filter((f) => f.points === 0).map((f) => ({
     schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, amfiSchemeCode: f.amfiSchemeCode,
@@ -833,6 +883,7 @@ async function main(): Promise<void> {
     if (f.lastDate && (!feedLastDate || f.lastDate > feedLastDate)) feedLastDate = f.lastDate;
   }
   const threeYTarget = feedLastDate ? subPeriod(feedLastDate, 0, 3) : null;
+  const fiveYTarget = feedLastDate ? subPeriod(feedLastDate, 0, 5) : null;
   const preBufferWindow = windowResults.find((w) => w.role === "pre-buffer");
   const firstMainWindow = windowResults.find((w) => w.role === "main");
   const preFromIso = preBufferWindow ? ddMMMyyyyToIso(preBufferWindow.windowFrom) : null;
@@ -840,6 +891,7 @@ async function main(): Promise<void> {
   const anchorDiagnostics = {
     feedLastDate,
     threeYTargetDate: threeYTarget,
+    fiveYTargetDate: fiveYTarget,
     fetchStartDate: fetchStartIso, // = pre-buffer's `from` when present, else first main's `from`
     preBuffer: preBufferWindow
       ? {
@@ -856,10 +908,15 @@ async function main(): Promise<void> {
       ? { from: firstMainWindow.windowFrom, to: firstMainWindow.windowTo }
       : null,
     bufferDaysBefore3YTarget: threeYTarget ? dayDiffDays(fetchStartIso, threeYTarget) : null,
+    bufferDaysBefore5YTarget: fiveYTarget ? dayDiffDays(fetchStartIso, fiveYTarget) : null,
     bufferConfigDays: BUFFER_DAYS,
     threeYTargetInPreBuffer:
       preFromIso && preToIso && threeYTarget
         ? preFromIso <= threeYTarget && threeYTarget <= preToIso
+        : null,
+    fiveYTargetInPreBuffer:
+      preFromIso && preToIso && fiveYTarget
+        ? preFromIso <= fiveYTarget && fiveYTarget <= preToIso
         : null,
   };
 
@@ -872,6 +929,7 @@ async function main(): Promise<void> {
   const zeroRowWindows = windowResults.filter((w) => w.zeroRowFlag).length;
   const oneYCoveragePct = round2((periodCoverage["1Y"] / universe.length) * 100);
   const threeYCoveragePct = round2((periodCoverage["3Y"] / universe.length) * 100);
+  const fiveYCoveragePct = round2((periodCoverage["5Y"] / universe.length) * 100);
 
   // Phase 3.5D eligibility-aware 3Y partition.
   // Eligible = funds whose firstDate is on or before the 3Y target anchor;
@@ -902,6 +960,30 @@ async function main(): Promise<void> {
   const ineligible3YCount = eligible3YPartition.ineligible.length;
   const missingEligible3Y = eligible3YPartition.eligible.filter((f) => !f.dataAvailability["3Y"]);
 
+  // Phase 3.7A: same eligibility partition for 5Y. Funds launched after the
+  // (asOf − 5y) anchor are ineligible and never count against the 5Y guard.
+  const eligible5YPartition = (() => {
+    const eligible: typeof perFundCoverage = [];
+    const ineligible: typeof perFundCoverage = [];
+    if (!fiveYTarget) {
+      return { eligible, ineligible, eligibleAvailable: 0, eligibleCoveragePct: 0 };
+    }
+    for (const f of perFundCoverage) {
+      if (f.firstDate && f.firstDate <= fiveYTarget) eligible.push(f);
+      else ineligible.push(f);
+    }
+    const eligibleAvailable = eligible.filter((f) => f.dataAvailability["5Y"]).length;
+    const eligibleCoveragePct = eligible.length > 0
+      ? round2((eligibleAvailable / eligible.length) * 100)
+      : 0;
+    return { eligible, ineligible, eligibleAvailable, eligibleCoveragePct };
+  })();
+  const eligible5YCount = eligible5YPartition.eligible.length;
+  const eligible5YAvailable = eligible5YPartition.eligibleAvailable;
+  const eligible5YCoveragePct = eligible5YPartition.eligibleCoveragePct;
+  const ineligible5YCount = eligible5YPartition.ineligible.length;
+  const missingEligible5Y = eligible5YPartition.eligible.filter((f) => !f.dataAvailability["5Y"]);
+
   const guardFailures: string[] = [];
   for (const w of windowResults) {
     if (!w.error && w.validRowCount > 0 && w.validRowCount < GUARD.minValidRowsPerWindow) {
@@ -929,6 +1011,16 @@ async function main(): Promise<void> {
     } else if (eligible3YCoveragePct < GUARD.minEligible3YCoveragePct) {
       guardFailures.push(
         `eligible 3Y coverage ${eligible3YCoveragePct}% (${eligible3YAvailable}/${eligible3YCount}) < floor ${GUARD.minEligible3YCoveragePct}% — inspect missingEligible3Y in the report; these are older funds (firstDate ≤ ${threeYTarget}) that should have a 3Y return but don't`,
+      );
+    }
+  }
+  // Phase 3.7A: same shape, applied at 5Y. Active on Stage 3 only.
+  if (GUARD.minEligible5YCoveragePct > 0) {
+    if (eligible5YCount === 0) {
+      guardFailures.push(`eligible-5Y partition is empty (fiveYTarget=${fiveYTarget ?? "-"}) — anchor diagnostics broken; cannot evaluate Stage-3 5Y guardrail`);
+    } else if (eligible5YCoveragePct < GUARD.minEligible5YCoveragePct) {
+      guardFailures.push(
+        `eligible 5Y coverage ${eligible5YCoveragePct}% (${eligible5YAvailable}/${eligible5YCount}) < floor ${GUARD.minEligible5YCoveragePct}% — inspect missingEligible5Y in the report; these are older funds (firstDate ≤ ${fiveYTarget}) that should have a 5Y return but don't`,
       );
     }
   }
@@ -1051,6 +1143,10 @@ async function main(): Promise<void> {
     eligible3YAvailable,
     eligible3YCoveragePct,
     ineligible3YCount,
+    eligible5YCount,
+    eligible5YAvailable,
+    eligible5YCoveragePct,
+    ineligible5YCount,
   });
   const verdict = {
     writeMode: WRITE_MODE,
@@ -1074,6 +1170,15 @@ async function main(): Promise<void> {
     eligible3YCoveragePct,
     ineligible3YFunds: ineligible3YCount,
     threeYTargetDate: threeYTarget,
+    // Phase 3.7A: same shape at 5Y. Reported informationally on every stage
+    // (numbers may be all-zero on Stages 1/2 where 5Y isn't attempted) so the
+    // verdict schema is stable.
+    fiveYCoveragePct,
+    eligible5YFunds: eligible5YCount,
+    eligible5YAvailable,
+    eligible5YCoveragePct,
+    ineligible5YFunds: ineligible5YCount,
+    fiveYTargetDate: fiveYTarget,
     periodCoverage,
     guardPass: finalGuardPass,
     guardFailures,
@@ -1139,9 +1244,33 @@ async function main(): Promise<void> {
             .slice(0, 50)
             .map((f) => ({ schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, firstDate: f.firstDate, lastDate: f.lastDate, points: f.points }))
         : null,
-      ineligible3YFundsTotal: STAGE === 2 ? ineligible3YCount : null,
-      ineligible3YFundsSample: STAGE === 2
+      ineligible3YFundsTotal: STAGE === 2 || STAGE === 3 ? ineligible3YCount : null,
+      ineligible3YFundsSample: STAGE === 2 || STAGE === 3
         ? eligible3YPartition.ineligible
+            .slice(0, 25)
+            .map((f) => ({ schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, firstDate: f.firstDate, lastDate: f.lastDate, points: f.points }))
+        : null,
+      // Phase 3.7A: same shape applied at 5Y. Stage 1/2 won't have 5Y in
+      // their dataAvailability so these lists would be the whole holding-
+      // bearing universe — kept null on those stages to avoid noise.
+      fundsMissing5YTotal: STAGE === 3
+        ? perFundCoverage.filter((f) => f.points > 0 && !f.dataAvailability["5Y"]).length
+        : null,
+      fundsMissing5YSample: STAGE === 3
+        ? perFundCoverage
+            .filter((f) => f.points > 0 && !f.dataAvailability["5Y"])
+            .slice(0, 50)
+            .map((f) => ({ schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, firstDate: f.firstDate, lastDate: f.lastDate, points: f.points }))
+        : null,
+      missingEligible5YTotal: STAGE === 3 ? missingEligible5Y.length : null,
+      missingEligible5YSample: STAGE === 3
+        ? missingEligible5Y
+            .slice(0, 50)
+            .map((f) => ({ schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, firstDate: f.firstDate, lastDate: f.lastDate, points: f.points }))
+        : null,
+      ineligible5YFundsTotal: STAGE === 3 ? ineligible5YCount : null,
+      ineligible5YFundsSample: STAGE === 3
+        ? eligible5YPartition.ineligible
             .slice(0, 25)
             .map((f) => ({ schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, firstDate: f.firstDate, lastDate: f.lastDate, points: f.points }))
         : null,
@@ -1175,7 +1304,7 @@ function buildRecommendation(
   guardPass: boolean,
   guardFailures: string[],
   matchedCoveragePct: number,
-  periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y": number },
+  periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y": number; "5Y": number },
   universeCount: number,
   writeMode: "dryrun" | "production",
   production: { attempted: boolean; wroteFiles: number; manifestPath: string | null; skippedReason?: string },
@@ -1184,17 +1313,41 @@ function buildRecommendation(
     eligible3YAvailable: number;
     eligible3YCoveragePct: number;
     ineligible3YCount: number;
+    eligible5YCount: number;
+    eligible5YAvailable: number;
+    eligible5YCoveragePct: number;
+    ineligible5YCount: number;
   },
 ): string {
   if (!guardPass) return `BLOCK: production guardrails failed (${guardFailures.join(" · ")}). Inspect window-level failureReason and per-fund coverage; existing public/nav-history files were left untouched (keep-last-good).`;
   const oneY = periodCoverage["1Y"];
   const threeY = periodCoverage["3Y"];
+  const fiveY = periodCoverage["5Y"];
   const oneYok = matchedCoveragePct >= 99 && oneY >= Math.floor(universeCount * 0.95);
   const stageLabel = `Stage-${STAGE}`;
   if (writeMode === "production") {
     return production.attempted && production.wroteFiles === universeCount && production.manifestPath
       ? `PROCEED: wrote ${production.wroteFiles}/${universeCount} per-fund files + manifest at ${production.manifestPath}. ${stageLabel} historical NAV is now on disk; commit step (gated on commit=true in the workflow) will land it on the branch.`
       : `BLOCK: production write was skipped or partial (${production.skippedReason ?? "unknown"}); existing public/nav-history files were left untouched.`;
+  }
+  if (STAGE === 3) {
+    // Phase 3.7A: Stage-3 dry-run verdict checks BOTH 3Y and 5Y eligibility-
+    // aware coverage. Total-universe 3Y/5Y are reported as supplementary
+    // context (always lower than eligible coverage because the universe
+    // contains genuinely-young funds).
+    const e = eligibility;
+    const threeYok = e.eligible3YCount > 0 && e.eligible3YCoveragePct >= 99;
+    const fiveYok = e.eligible5YCount > 0 && e.eligible5YCoveragePct >= 99;
+    if (oneYok && threeYok && fiveYok) {
+      return `PROCEED (Stage-3 dry-run): 1Y ${oneY}/${universeCount}; eligible 3Y ${e.eligible3YAvailable}/${e.eligible3YCount} = ${e.eligible3YCoveragePct}% (≥99%); eligible 5Y ${e.eligible5YAvailable}/${e.eligible5YCount} = ${e.eligible5YCoveragePct}% (≥99%); ${e.ineligible5YCount} funds genuinely young (launched after the 5Y anchor); total 3Y ${threeY}/${universeCount} and total 5Y ${fiveY}/${universeCount} (informational). Recommend re-running with commit=true to land Stage-3 history.`;
+    }
+    if (oneYok && threeYok) {
+      return `REVIEW (Stage-3 dry-run): 1Y and eligible 3Y OK but eligible 5Y is ${e.eligible5YAvailable}/${e.eligible5YCount} = ${e.eligible5YCoveragePct}% (below 99% threshold). Inspect missingEligible5YSample in the report — these are older funds (firstDate ≤ 5Y target) that should have a 5Y return but don't; likely an extraction gap, not genuine youth. Do not promote until investigated.`;
+    }
+    if (oneYok) {
+      return `REVIEW (Stage-3 dry-run): 1Y OK but eligibility-aware 3Y or 5Y coverage is below 99% (3Y ${e.eligible3YAvailable}/${e.eligible3YCount} = ${e.eligible3YCoveragePct}%, 5Y ${e.eligible5YAvailable}/${e.eligible5YCount} = ${e.eligible5YCoveragePct}%). Inspect missingEligible3YSample / missingEligible5YSample before promoting.`;
+    }
+    return `REVIEW: dry-run cleared baseline guardrails but 1Y rate is below 95% (${oneY}/${universeCount}). Inspect fundsMissingHistorySample before promoting.`;
   }
   if (STAGE === 2) {
     // Phase 3.5D: Stage-2 dry-run verdict is driven by the eligibility-aware
@@ -1216,7 +1369,7 @@ function buildRecommendation(
 }
 
 function printSummary(
-  v: { writeMode: "dryrun" | "production"; stage: 1 | 2; universeCount: number; windowsAttempted: number; windowsOk: number; windowsFailed: number; zeroRowWindows: number; abortedEarly: boolean; totalValidRows: number; fundsWithAnyPoint: number; fundsMissingHistoryCount: number; matchedCoveragePct: number; oneYCoveragePct: number; threeYCoveragePct: number; eligible3YFunds: number; eligible3YAvailable: number; eligible3YCoveragePct: number; ineligible3YFunds: number; threeYTargetDate: string | null; periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y": number }; guardPass: boolean; guardFailures: string[] },
+  v: { writeMode: "dryrun" | "production"; stage: 1 | 2 | 3; universeCount: number; windowsAttempted: number; windowsOk: number; windowsFailed: number; zeroRowWindows: number; abortedEarly: boolean; totalValidRows: number; fundsWithAnyPoint: number; fundsMissingHistoryCount: number; matchedCoveragePct: number; oneYCoveragePct: number; threeYCoveragePct: number; fiveYCoveragePct: number; eligible3YFunds: number; eligible3YAvailable: number; eligible3YCoveragePct: number; ineligible3YFunds: number; threeYTargetDate: string | null; eligible5YFunds: number; eligible5YAvailable: number; eligible5YCoveragePct: number; ineligible5YFunds: number; fiveYTargetDate: string | null; periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y": number; "5Y": number }; guardPass: boolean; guardFailures: string[] },
   windows: WindowResult[],
   samples: Array<{ schemecode: string; fundName: string; path: string; points: number; firstDate: string | null; lastDate: string | null }>,
   recommendation: string,
@@ -1225,18 +1378,21 @@ function printSummary(
     feedLastDate: string | null;
     fetchStartDate: string;
     threeYTargetDate: string | null;
+    fiveYTargetDate: string | null;
     bufferDaysBefore3YTarget: number | null;
+    bufferDaysBefore5YTarget: number | null;
     bufferConfigDays: number;
     preBuffer: { from: string; to: string; bytes: number | null; validRows: number; targetRows: number } | null;
     firstMain: { from: string; to: string } | null;
     threeYTargetInPreBuffer: boolean | null;
+    fiveYTargetInPreBuffer: boolean | null;
   },
 ): void {
   info(`======== STAGE-${v.stage} NAV HISTORY BACKFILL SUMMARY (${v.writeMode.toUpperCase()}) =======`);
   info(`Universe matched funds: ${v.universeCount}`);
-  info(`Anchor: feedLastDate=${anchor.feedLastDate ?? "-"} 3Y-target=${anchor.threeYTargetDate ?? "-"} fetchStart=${anchor.fetchStartDate} bufferBefore3Y=${anchor.bufferDaysBefore3YTarget ?? "-"}d (config ${anchor.bufferConfigDays}d)`);
+  info(`Anchor: feedLastDate=${anchor.feedLastDate ?? "-"} 3Y-target=${anchor.threeYTargetDate ?? "-"} 5Y-target=${anchor.fiveYTargetDate ?? "-"} fetchStart=${anchor.fetchStartDate} bufferBefore3Y=${anchor.bufferDaysBefore3YTarget ?? "-"}d bufferBefore5Y=${anchor.bufferDaysBefore5YTarget ?? "-"}d (config ${anchor.bufferConfigDays}d)`);
   if (anchor.preBuffer) {
-    info(`Pre-buffer:  ${anchor.preBuffer.from}→${anchor.preBuffer.to} · bytes=${anchor.preBuffer.bytes ?? "-"} valid=${anchor.preBuffer.validRows} target=${anchor.preBuffer.targetRows} · 3Y-target-in-window=${anchor.threeYTargetInPreBuffer}`);
+    info(`Pre-buffer:  ${anchor.preBuffer.from}→${anchor.preBuffer.to} · bytes=${anchor.preBuffer.bytes ?? "-"} valid=${anchor.preBuffer.validRows} target=${anchor.preBuffer.targetRows} · 3Y-target-in-window=${anchor.threeYTargetInPreBuffer} · 5Y-target-in-window=${anchor.fiveYTargetInPreBuffer}`);
   } else {
     info(`Pre-buffer:  (not used)`);
   }
@@ -1251,9 +1407,12 @@ function printSummary(
     info(`   ${w.index + 1}[${w.role}]: ${w.windowFrom}→${w.windowTo} attempts=${w.attempts} HTTP=${w.httpStatus ?? "-"} ct=${w.contentType ?? "-"} bytes=${w.bytes ?? "-"} ${w.responseMs}ms · ${tag}`);
   }
   info(`Universe coverage: ${v.fundsWithAnyPoint}/${v.universeCount} = ${v.matchedCoveragePct}% have ≥1 point; missing=${v.fundsMissingHistoryCount}`);
-  info(`Period coverage (funds with availability): 1M=${v.periodCoverage["1M"]} 3M=${v.periodCoverage["3M"]} 6M=${v.periodCoverage["6M"]} 1Y=${v.periodCoverage["1Y"]} 3Y=${v.periodCoverage["3Y"]}  ·  1Y=${v.oneYCoveragePct}% 3Y=${v.threeYCoveragePct}% (total-universe; informational)`);
-  if (v.stage === 2) {
+  info(`Period coverage (funds with availability): 1M=${v.periodCoverage["1M"]} 3M=${v.periodCoverage["3M"]} 6M=${v.periodCoverage["6M"]} 1Y=${v.periodCoverage["1Y"]} 3Y=${v.periodCoverage["3Y"]} 5Y=${v.periodCoverage["5Y"]}  ·  1Y=${v.oneYCoveragePct}% 3Y=${v.threeYCoveragePct}% 5Y=${v.fiveYCoveragePct}% (total-universe; informational)`);
+  if (v.stage === 2 || v.stage === 3) {
     info(`Eligible 3Y (firstDate ≤ ${v.threeYTargetDate ?? "-"}): ${v.eligible3YAvailable}/${v.eligible3YFunds} = ${v.eligible3YCoveragePct}% (guard floor)  ·  ${v.ineligible3YFunds} genuinely-young funds excluded`);
+  }
+  if (v.stage === 3) {
+    info(`Eligible 5Y (firstDate ≤ ${v.fiveYTargetDate ?? "-"}): ${v.eligible5YAvailable}/${v.eligible5YFunds} = ${v.eligible5YCoveragePct}% (guard floor)  ·  ${v.ineligible5YFunds} genuinely-young funds excluded`);
   }
   info(`Guardrails: ${v.guardPass ? "PASS" : "FAIL · " + v.guardFailures.join(" · ")}`);
   info(`Production: attempted=${production.attempted} wroteFiles=${production.wroteFiles}${production.manifestPath ? ` manifest=${production.manifestPath}` : ""}${production.skippedReason ? ` · skipped: ${production.skippedReason}` : ""}`);
