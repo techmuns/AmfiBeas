@@ -1,17 +1,27 @@
 /**
- * Phase 3.2H — Stage-1 production historical NAV backfill DRY RUN.
+ * Production historical NAV backfill driver (Phase 3.2H / 3.2I / 3.5A).
  *
- * Production-shaped backfill driver for the full matched universe (1,036 funds
- * from src/data/snapshots/mf-latest-nav.json) across the Stage-1 15-month
- * range, fetched from AMFI historical in 75-day chunks (the configuration
- * proven by Phase 3.2F). DRY RUN ONLY in this phase: writes the diagnostic
- * report + 5 representative sample files to data/debug/ (gitignored); does
- * NOT write to public/nav-history/, does NOT commit anything.
+ * Drives a per-stage AMFI historical backfill of the full matched universe
+ * (1,036 funds from src/data/snapshots/mf-latest-nav.json):
+ *
+ *   - Stage 1 (default; NAV_HISTORY_STAGE=1): 15 months, 75-day chunks → 7
+ *     windows. Computes 1M/3M/6M/1Y simple returns. Production output landed
+ *     in commit 8543be9.
+ *   - Stage 2 (NAV_HISTORY_STAGE=2): 3 years, 75-day chunks → ~15 windows.
+ *     Adds 3Y CAGR. Stage-2 dry-run writes its diagnostic report + sample
+ *     files to distinct stage-2 paths under data/debug/ so it cannot
+ *     collide with the Stage-1 outputs.
+ *
+ * NAV_HISTORY_WRITE_MODE=production enables writing public/nav-history/ +
+ * the manifest. The script writes production files ONLY when every guardrail
+ * passes; otherwise it leaves existing files untouched (keep-last-good) and
+ * exits non-zero. The workflow's optional commit step is gated on the
+ * script's clean exit.
  *
  * Reuses the Phase 3.2E/3.2F header-driven parser (column map by NAME, not
- * position). Filter key: AMFI scheme code (already proven reliable).
+ * position). Filter key: AMFI scheme code.
  *
- * Run: npx tsx scripts/ingest/nav-history-backfill.ts
+ * Run: NAV_HISTORY_STAGE=2 npx tsx scripts/ingest/nav-history-backfill.ts
  */
 
 import fs from "node:fs/promises";
@@ -25,12 +35,6 @@ import { info, nowIso, warn } from "./utils";
 const AMFI_HISTORY_BASE = "https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx";
 const LATEST_SNAPSHOT_PATH = path.resolve(process.cwd(), "src/data/snapshots/mf-latest-nav.json");
 const REPORT_DIR = path.resolve(process.cwd(), "data/debug");
-const REPORT_PATH = path.join(REPORT_DIR, "nav-history-backfill-dryrun-report.json");
-const SAMPLE_DIR = path.resolve(REPORT_DIR, "sample-nav-history");
-
-// Production write targets (used only when WRITE_MODE === "production").
-const PRODUCTION_HISTORY_DIR = path.resolve(process.cwd(), "public/nav-history");
-const PRODUCTION_MANIFEST_PATH = path.resolve(process.cwd(), "src/data/snapshots/mf-history-manifest.json");
 
 // Default = "dryrun"; set NAV_HISTORY_WRITE_MODE=production to enable
 // write-to-public + manifest. The script writes production files ONLY when
@@ -39,29 +43,109 @@ const PRODUCTION_MANIFEST_PATH = path.resolve(process.cwd(), "src/data/snapshots
 const WRITE_MODE: "dryrun" | "production" =
   process.env.NAV_HISTORY_WRITE_MODE === "production" ? "production" : "dryrun";
 
+// Stage selection. NAV_HISTORY_STAGE=2 enables the 3-year backfill (75-day
+// chunks → ~15 windows). Default is Stage 1 = 15 months (~7 windows) — the
+// validated production configuration.
+const STAGE: 1 | 2 = process.env.NAV_HISTORY_STAGE === "2" ? 2 : 1;
+
 const USER_AGENT =
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
-// Stage-1 parameters (per Phase 3.2G design).
-const STAGE = 1;
-const TOTAL_MONTHS_BACK = 15;
-const CHUNK_DAYS = 75;
-const POLITE_DELAY_MS = 1500;
-const FETCH_TIMEOUT_MS = 120_000;
-const RUN_DEADLINE_MS = 30 * 60_000;
-const PER_WINDOW_MAX_RETRIES = 3;
-const BACKOFF_MS = [5_000, 15_000, 45_000];
+// Per-stage configuration. Stage 1 keeps the exact constants we shipped in
+// production; Stage 2 adds 3Y coverage, doubles the window count, lifts the
+// failed-window ceiling proportionally, and writes its dry-run output to a
+// distinct path so it can never collide with Stage 1.
+interface StageConfig {
+  totalMonthsBack: number;
+  chunkDays: number;
+  politeDelayMs: number;
+  fetchTimeoutMs: number;
+  runDeadlineMs: number;
+  perWindowMaxRetries: number;
+  backoffMs: number[];
+  reportPath: string;
+  sampleDir: string;
+  productionHistoryDir: string;
+  productionManifestPath: string;
+  guard: {
+    minValidRowsPerWindow: number;
+    minTotalValidRows: number;
+    minMatchedCoveragePct: number;
+    min1YCoveragePct: number;
+    min3YCoveragePct: number; // 0 on Stage 1 (3Y not attempted)
+    maxFailedWindows: number;
+    expectedFileCount: number;
+  };
+}
 
-// Production guardrails. The script exits non-zero on guardrail failure in
-// EITHER mode, so the workflow's commit step cannot fire on degraded data.
-const GUARD = {
-  minValidRowsPerWindow: 5_000,         // catches "AMFI returned a slice"
-  minTotalValidRows: 50_000,            // sanity floor across the whole run
-  minMatchedCoveragePct: 95,            // ≥95% of matched funds must have ≥1 valid point
-  min1YCoveragePct: 95,                 // ≥95% of universe with 1Y availability
-  maxFailedWindows: 1,                  // Stage-1 has 7 windows → at most 1 failed
-  expectedFileCount: 1036,              // production write: must produce exactly this many per-fund files
+const STAGE_CONFIGS: Record<1 | 2, StageConfig> = {
+  1: {
+    totalMonthsBack: 15,
+    chunkDays: 75,
+    politeDelayMs: 1500,
+    fetchTimeoutMs: 120_000,
+    runDeadlineMs: 30 * 60_000,
+    perWindowMaxRetries: 3,
+    backoffMs: [5_000, 15_000, 45_000],
+    reportPath: path.join(REPORT_DIR, "nav-history-backfill-dryrun-report.json"),
+    sampleDir: path.resolve(REPORT_DIR, "sample-nav-history"),
+    productionHistoryDir: path.resolve(process.cwd(), "public/nav-history"),
+    productionManifestPath: path.resolve(process.cwd(), "src/data/snapshots/mf-history-manifest.json"),
+    guard: {
+      minValidRowsPerWindow: 5_000,
+      minTotalValidRows: 50_000,
+      minMatchedCoveragePct: 95,
+      min1YCoveragePct: 95,
+      min3YCoveragePct: 0, // Stage 1 cannot produce 3Y; guard disabled.
+      maxFailedWindows: 1, // 7 windows → ≤1 fail
+      expectedFileCount: 1036,
+    },
+  },
+  2: {
+    totalMonthsBack: 36, // 3 years
+    chunkDays: 75,
+    politeDelayMs: 1500,
+    fetchTimeoutMs: 120_000,
+    runDeadlineMs: 45 * 60_000, // ~15 windows → more headroom
+    perWindowMaxRetries: 3,
+    backoffMs: [5_000, 15_000, 45_000],
+    reportPath: path.join(REPORT_DIR, "nav-history-backfill-stage2-dryrun-report.json"),
+    sampleDir: path.resolve(REPORT_DIR, "sample-nav-history-stage2"),
+    // Stage-2 production write would land in the SAME canonical paths as
+    // Stage 1 (one set of per-fund files / one manifest). For Phase 3.5A
+    // this is dry-run only, so these paths are never actually written.
+    productionHistoryDir: path.resolve(process.cwd(), "public/nav-history"),
+    productionManifestPath: path.resolve(process.cwd(), "src/data/snapshots/mf-history-manifest.json"),
+    guard: {
+      minValidRowsPerWindow: 5_000,
+      minTotalValidRows: 100_000, // larger total span → higher floor
+      minMatchedCoveragePct: 95,
+      min1YCoveragePct: 95,
+      // 3Y coverage may be below 95% legitimately — some funds genuinely
+      // launched within the last 3 years. The dry-run uses a soft 80% floor
+      // so guardrails fail loudly only on a real extraction problem; the
+      // report's verdict text distinguishes "below floor" from "extraction
+      // looks healthy but younger funds exist".
+      min3YCoveragePct: 80,
+      maxFailedWindows: 2, // 15 windows → ≤2 fail
+      expectedFileCount: 1036,
+    },
+  },
 };
+
+const CONFIG = STAGE_CONFIGS[STAGE];
+const TOTAL_MONTHS_BACK = CONFIG.totalMonthsBack;
+const CHUNK_DAYS = CONFIG.chunkDays;
+const POLITE_DELAY_MS = CONFIG.politeDelayMs;
+const FETCH_TIMEOUT_MS = CONFIG.fetchTimeoutMs;
+const RUN_DEADLINE_MS = CONFIG.runDeadlineMs;
+const PER_WINDOW_MAX_RETRIES = CONFIG.perWindowMaxRetries;
+const BACKOFF_MS = CONFIG.backoffMs;
+const REPORT_PATH = CONFIG.reportPath;
+const SAMPLE_DIR = CONFIG.sampleDir;
+const PRODUCTION_HISTORY_DIR = CONFIG.productionHistoryDir;
+const PRODUCTION_MANIFEST_PATH = CONFIG.productionManifestPath;
+const GUARD = CONFIG.guard;
 
 const RULE_VERSION = 1;
 const PARSER_VERSION = 1;
@@ -117,13 +201,16 @@ interface WindowResult {
   failureReason?: string;
 }
 
+type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y";
+
 interface ReturnCell {
   value: number;
-  kind: "simple";
+  kind: "simple" | "cagr";
   startDate: string;
   startNav: number;
   endDate: string;
   endNav: number;
+  years?: number; // present when kind === "cagr"
 }
 
 interface PerFundCoverage {
@@ -137,8 +224,8 @@ interface PerFundCoverage {
   firstDate: string | null;
   lastDate: string | null;
   latestNav: number | null;
-  returns: Record<string, ReturnCell>;
-  dataAvailability: { "1M": boolean; "3M": boolean; "6M": boolean; "1Y": boolean };
+  returns: Partial<Record<PeriodKey, ReturnCell>>;
+  dataAvailability: Record<PeriodKey, boolean>;
 }
 
 // ---------------------------------------------------------------------------
@@ -344,41 +431,76 @@ function parseHistoricalInto(
 }
 
 // ---------------------------------------------------------------------------
-// Return computation (Stage-1: simple 1M/3M/6M/1Y only)
+// Return computation
+//  Stage 1 → simple 1M/3M/6M/1Y.
+//  Stage 2 → adds 3Y CAGR (annualised, point-to-point).
 // ---------------------------------------------------------------------------
 
-const PERIODS: Array<{ key: "1M" | "3M" | "6M" | "1Y"; months: number; years: number }> = [
-  { key: "1M", months: 1, years: 0 },
-  { key: "3M", months: 3, years: 0 },
-  { key: "6M", months: 6, years: 0 },
-  { key: "1Y", months: 0, years: 1 },
+interface PeriodSpec {
+  key: PeriodKey;
+  months: number;
+  years: number;
+  annualize: boolean;
+  stages: ReadonlyArray<1 | 2>;
+}
+const ALL_PERIODS: ReadonlyArray<PeriodSpec> = [
+  { key: "1M", months: 1, years: 0, annualize: false, stages: [1, 2] },
+  { key: "3M", months: 3, years: 0, annualize: false, stages: [1, 2] },
+  { key: "6M", months: 6, years: 0, annualize: false, stages: [1, 2] },
+  { key: "1Y", months: 0, years: 1, annualize: false, stages: [1, 2] },
+  { key: "3Y", months: 0, years: 3, annualize: true,  stages: [2] },
 ];
+const PERIODS_FOR_STAGE: ReadonlyArray<PeriodSpec> = ALL_PERIODS.filter((p) => p.stages.includes(STAGE));
 
 function nearestPrior(series: SeriesPoint[], target: string): SeriesPoint | null {
   for (let i = series.length - 1; i >= 0; i--) if (series[i].date <= target) return series[i];
   return null;
 }
 
+function dayDiffYears(isoA: string, isoB: string): number {
+  const [ya, ma, da] = isoA.split("-").map(Number);
+  const [yb, mb, db] = isoB.split("-").map(Number);
+  const ms = Date.UTC(yb, mb - 1, db) - Date.UTC(ya, ma - 1, da);
+  return ms / (365.25 * 86_400_000);
+}
+
+function emptyAvailability(): Record<PeriodKey, boolean> {
+  const out = { "1M": false, "3M": false, "6M": false, "1Y": false, "3Y": false };
+  return out;
+}
+
 function computeReturns(series: SeriesPoint[]): {
-  returns: Record<string, ReturnCell>;
-  availability: { "1M": boolean; "3M": boolean; "6M": boolean; "1Y": boolean };
+  returns: Partial<Record<PeriodKey, ReturnCell>>;
+  availability: Record<PeriodKey, boolean>;
 } {
-  const returns: Record<string, ReturnCell> = {};
-  const availability = { "1M": false, "3M": false, "6M": false, "1Y": false };
+  const returns: Partial<Record<PeriodKey, ReturnCell>> = {};
+  const availability = emptyAvailability();
   if (series.length < 2) return { returns, availability };
   const end = series[series.length - 1];
   const firstDate = series[0].date;
-  for (const p of PERIODS) {
+  for (const p of PERIODS_FOR_STAGE) {
     const target = subPeriod(end.date, p.months, p.years);
     if (firstDate > target) continue;
     const start = nearestPrior(series, target);
     if (!start || start.nav <= 0) continue;
-    returns[p.key] = {
-      value: round2((end.nav / start.nav - 1) * 100),
-      kind: "simple",
-      startDate: start.date, startNav: start.nav,
-      endDate: end.date, endNav: end.nav,
-    };
+    if (p.annualize) {
+      const years = dayDiffYears(start.date, end.date);
+      if (!Number.isFinite(years) || years <= 0) continue;
+      returns[p.key] = {
+        value: round2((Math.pow(end.nav / start.nav, 1 / years) - 1) * 100),
+        kind: "cagr",
+        startDate: start.date, startNav: start.nav,
+        endDate: end.date, endNav: end.nav,
+        years: Math.round(years * 100) / 100,
+      };
+    } else {
+      returns[p.key] = {
+        value: round2((end.nav / start.nav - 1) * 100),
+        kind: "simple",
+        startDate: start.date, startNav: start.nav,
+        endDate: end.date, endNav: end.nav,
+      };
+    }
     availability[p.key] = true;
   }
   return { returns, availability };
@@ -516,7 +638,7 @@ interface ManifestFile {
   totalFunds: number;
   fundsAvailable: number;
   fundsMissing: number;
-  periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number };
+  periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y": number };
   ruleVersion: number;
   parserVersion: number;
   funds: ManifestFund[];
@@ -627,6 +749,7 @@ async function main(): Promise<void> {
     "3M": perFundCoverage.filter((f) => f.dataAvailability["3M"]).length,
     "6M": perFundCoverage.filter((f) => f.dataAvailability["6M"]).length,
     "1Y": perFundCoverage.filter((f) => f.dataAvailability["1Y"]).length,
+    "3Y": perFundCoverage.filter((f) => f.dataAvailability["3Y"]).length,
   };
   const fundsMissingHistory = perFundCoverage.filter((f) => f.points === 0).map((f) => ({
     schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, amfiSchemeCode: f.amfiSchemeCode,
@@ -636,6 +759,7 @@ async function main(): Promise<void> {
   const windowsOk = windowResults.filter((w) => !w.error && w.validRowCount > 0).length;
   const windowsFailed = windowResults.filter((w) => Boolean(w.error)).length;
   const oneYCoveragePct = round2((periodCoverage["1Y"] / universe.length) * 100);
+  const threeYCoveragePct = round2((periodCoverage["3Y"] / universe.length) * 100);
   const guardFailures: string[] = [];
   for (const w of windowResults) {
     if (!w.error && w.validRowCount > 0 && w.validRowCount < GUARD.minValidRowsPerWindow) {
@@ -650,6 +774,9 @@ async function main(): Promise<void> {
   }
   if (oneYCoveragePct < GUARD.min1YCoveragePct) {
     guardFailures.push(`1Y coverage ${oneYCoveragePct}% < floor ${GUARD.min1YCoveragePct}%`);
+  }
+  if (GUARD.min3YCoveragePct > 0 && threeYCoveragePct < GUARD.min3YCoveragePct) {
+    guardFailures.push(`3Y coverage ${threeYCoveragePct}% < floor ${GUARD.min3YCoveragePct}% (some shortfall is legitimately younger funds; inspect "fundsMissing3Y" before promoting)`);
   }
   if (windowsFailed > GUARD.maxFailedWindows) {
     guardFailures.push(`failed windows ${windowsFailed} > ceiling ${GUARD.maxFailedWindows}`);
@@ -768,6 +895,7 @@ async function main(): Promise<void> {
   const recommendation = buildRecommendation(finalGuardPass, guardFailures, matchedCoveragePct, periodCoverage, universe.length, WRITE_MODE, production);
   const verdict = {
     writeMode: WRITE_MODE,
+    stage: STAGE,
     universeCount: universe.length,
     windowsAttempted: windowResults.length,
     windowsOk,
@@ -778,6 +906,7 @@ async function main(): Promise<void> {
     fundsMissingHistoryCount: fundsMissingHistory.length,
     matchedCoveragePct,
     oneYCoveragePct,
+    threeYCoveragePct,
     periodCoverage,
     guardPass: finalGuardPass,
     guardFailures,
@@ -816,6 +945,19 @@ async function main(): Promise<void> {
       periodCoverage,
       fundsMissingHistorySample: fundsMissingHistory.slice(0, 50),
       fundsMissingHistoryTotal: fundsMissingHistory.length,
+      // Stage-2 helper: lists funds that have history but didn't reach the
+      // 3Y target start (mostly genuinely young funds). On Stage 1 this list
+      // is naturally the whole holding-bearing set because 3Y is never
+      // attempted — kept as `null` there to avoid noise.
+      fundsMissing3YTotal: STAGE === 2
+        ? perFundCoverage.filter((f) => f.points > 0 && !f.dataAvailability["3Y"]).length
+        : null,
+      fundsMissing3YSample: STAGE === 2
+        ? perFundCoverage
+            .filter((f) => f.points > 0 && !f.dataAvailability["3Y"])
+            .slice(0, 50)
+            .map((f) => ({ schemecode: f.schemecode, fundName: f.fundName, classification: f.classification, firstDate: f.firstDate, lastDate: f.lastDate, points: f.points }))
+        : null,
     },
     perFundCoverageSample: perFundCoverage.slice(0, 25),
     sampleFiles: sampleSummaries,
@@ -846,33 +988,44 @@ function buildRecommendation(
   guardPass: boolean,
   guardFailures: string[],
   matchedCoveragePct: number,
-  periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number },
+  periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y": number },
   universeCount: number,
   writeMode: "dryrun" | "production",
   production: { attempted: boolean; wroteFiles: number; manifestPath: string | null; skippedReason?: string }
 ): string {
   if (!guardPass) return `BLOCK: production guardrails failed (${guardFailures.join(" · ")}). Inspect window-level failureReason and per-fund coverage; existing public/nav-history files were left untouched (keep-last-good).`;
   const oneY = periodCoverage["1Y"];
+  const threeY = periodCoverage["3Y"];
   const oneYok = matchedCoveragePct >= 99 && oneY >= Math.floor(universeCount * 0.95);
+  const stageLabel = `Stage-${STAGE}`;
   if (writeMode === "production") {
     return production.attempted && production.wroteFiles === universeCount && production.manifestPath
-      ? `PROCEED: wrote ${production.wroteFiles}/${universeCount} per-fund files + manifest at ${production.manifestPath}. Stage-1 historical NAV is now on disk; commit step (gated on commit=true in the workflow) will land it on the branch.`
+      ? `PROCEED: wrote ${production.wroteFiles}/${universeCount} per-fund files + manifest at ${production.manifestPath}. ${stageLabel} historical NAV is now on disk; commit step (gated on commit=true in the workflow) will land it on the branch.`
       : `BLOCK: production write was skipped or partial (${production.skippedReason ?? "unknown"}); existing public/nav-history files were left untouched.`;
   }
+  if (STAGE === 2) {
+    if (oneYok && threeY >= Math.floor(universeCount * 0.95)) {
+      return `PROCEED (Stage-2 dry-run): clean across the matched universe; 1Y ${oneY}/${universeCount} and 3Y ${threeY}/${universeCount} both ≥95%. Recommend re-running with commit=true to land Stage-2 history.`;
+    }
+    if (oneYok) {
+      return `REVIEW (Stage-2 dry-run): guardrails passed (1Y ${oneY}/${universeCount}, 3Y ${threeY}/${universeCount}). 3Y shortfall is most likely younger funds — inspect fundsMissing3Y before promoting.`;
+    }
+    return `REVIEW: dry-run cleared baseline guardrails but 1Y rate is below 95% (${oneY}/${universeCount}). Inspect fundsMissingHistorySample before promoting.`;
+  }
   if (oneYok) {
-    return "PROCEED (dry-run): Stage-1 is clean across the matched universe and ≥95% have 1Y coverage. Recommend re-running with commit=true (NAV_HISTORY_WRITE_MODE=production) to land public/nav-history/{schemecode}.json for Stage 1.";
+    return `PROCEED (${stageLabel} dry-run): clean across the matched universe and ≥95% have 1Y coverage. Recommend re-running with commit=true (NAV_HISTORY_WRITE_MODE=production) to land public/nav-history/{schemecode}.json.`;
   }
   return `REVIEW: dry-run cleared guardrails (matchedCoveragePct=${matchedCoveragePct}%, 1Y coverage=${oneY}/${universeCount}), but the 1Y rate is below 95% of universe. Inspect fundsMissingHistorySample before promoting to a real backfill.`;
 }
 
 function printSummary(
-  v: { writeMode: "dryrun" | "production"; universeCount: number; windowsAttempted: number; windowsOk: number; windowsFailed: number; abortedEarly: boolean; totalValidRows: number; fundsWithAnyPoint: number; fundsMissingHistoryCount: number; matchedCoveragePct: number; oneYCoveragePct: number; periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number }; guardPass: boolean; guardFailures: string[] },
+  v: { writeMode: "dryrun" | "production"; stage: 1 | 2; universeCount: number; windowsAttempted: number; windowsOk: number; windowsFailed: number; abortedEarly: boolean; totalValidRows: number; fundsWithAnyPoint: number; fundsMissingHistoryCount: number; matchedCoveragePct: number; oneYCoveragePct: number; threeYCoveragePct: number; periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y": number }; guardPass: boolean; guardFailures: string[] },
   windows: WindowResult[],
   samples: Array<{ schemecode: string; fundName: string; path: string; points: number; firstDate: string | null; lastDate: string | null }>,
   recommendation: string,
   production: { attempted: boolean; wroteFiles: number; manifestPath: string | null; skippedReason?: string; perFundWriteErrors: Array<{ schemecode: string; error: string }> }
 ): void {
-  info(`======== STAGE-1 NAV HISTORY BACKFILL SUMMARY (${v.writeMode.toUpperCase()}) =======`);
+  info(`======== STAGE-${v.stage} NAV HISTORY BACKFILL SUMMARY (${v.writeMode.toUpperCase()}) =======`);
   info(`Universe matched funds: ${v.universeCount}`);
   info(`Windows: attempted=${v.windowsAttempted} ok=${v.windowsOk} failed=${v.windowsFailed} aborted=${v.abortedEarly} totalValidRows=${v.totalValidRows}`);
   for (const w of windows) {
@@ -880,7 +1033,7 @@ function printSummary(
     info(`   ${w.index + 1}: ${w.windowFrom}→${w.windowTo} attempts=${w.attempts} HTTP=${w.httpStatus ?? "-"} ct=${w.contentType ?? "-"} bytes=${w.bytes ?? "-"} ${w.responseMs}ms · ${tag}`);
   }
   info(`Universe coverage: ${v.fundsWithAnyPoint}/${v.universeCount} = ${v.matchedCoveragePct}% have ≥1 point; missing=${v.fundsMissingHistoryCount}`);
-  info(`Period coverage (funds with availability): 1M=${v.periodCoverage["1M"]} 3M=${v.periodCoverage["3M"]} 6M=${v.periodCoverage["6M"]} 1Y=${v.periodCoverage["1Y"]} (1Y=${v.oneYCoveragePct}%)`);
+  info(`Period coverage (funds with availability): 1M=${v.periodCoverage["1M"]} 3M=${v.periodCoverage["3M"]} 6M=${v.periodCoverage["6M"]} 1Y=${v.periodCoverage["1Y"]} 3Y=${v.periodCoverage["3Y"]}  ·  1Y=${v.oneYCoveragePct}% 3Y=${v.threeYCoveragePct}%`);
   info(`Guardrails: ${v.guardPass ? "PASS" : "FAIL · " + v.guardFailures.join(" · ")}`);
   info(`Production: attempted=${production.attempted} wroteFiles=${production.wroteFiles}${production.manifestPath ? ` manifest=${production.manifestPath}` : ""}${production.skippedReason ? ` · skipped: ${production.skippedReason}` : ""}`);
   if (production.perFundWriteErrors.length > 0) {
