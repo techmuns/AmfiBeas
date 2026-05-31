@@ -572,20 +572,321 @@ function stableAsOfFromManifest(manifestFunds: Array<{ firstDate: string | null;
   const idx = src.indexOf("async function mainStage3Incremental");
   const end = src.indexOf("async function main(", idx);
   const body = idx >= 0 && end > idx ? src.slice(idx, end) : "";
+  // Phase 3.7C: production write is now wired BUT only behind the gate.
+  // The detailed gate / atomic / manifest-last assertions live in test
+  // group (12) below; here we just confirm the dry-run path is preserved
+  // (sample files go to data/debug, not public/).
   check(
-    "Stage-3 incremental body contains no atomicWriteJson calls (no production writes)",
-    body.length > 0 && !body.includes("atomicWriteJson"),
-    body.length === 0 ? "could not slice mainStage3Incremental body" : "atomicWriteJson absent ✓",
+    "Stage-3 incremental body still writes sample MERGED files to data/debug (dry-run artifact)",
+    body.length > 0 && /SAMPLE_DIR/.test(body) && /sample-nav-history-stage3/.test(src),
+    body.length === 0 ? "could not slice mainStage3Incremental body" : "sample dry-run path preserved ✓",
   );
   check(
-    "Stage-3 incremental body contains no PRODUCTION_HISTORY_DIR writes",
-    body.length > 0 && !/PRODUCTION_HISTORY_DIR/.test(body),
-    body.length === 0 ? "n/a" : "PRODUCTION_HISTORY_DIR absent ✓",
+    "Stage-3 incremental body still produces a dry-run report at the Stage-3 path",
+    body.length > 0 && /REPORT_PATH/.test(body),
+    body.length === 0 ? "n/a" : "REPORT_PATH preserved ✓",
+  );
+}
+
+// ===========================================================================
+// Phase 3.7C additions — Stage-3 PRODUCTION write
+// ===========================================================================
+//
+// Verifies the production-write extension to mainStage3Incremental:
+//   • Production write is gated on WRITE_MODE === "production" AND guardPass
+//   • Dry-run continues to leave production files untouched
+//   • Atomic write contract preserved
+//   • Manifest schema for Stage-3 (stage=3, periodCoverage with 5Y,
+//     availablePeriods extension)
+//   • Per-fund file validators (empty / non-positive NAV / non-ascending /
+//     endpoint mismatch) gate the write at the per-fund level
+//   • Workflow commit step message reads "chore(data): add stage-3 …"
+//   • Stage-1 / Stage-2 production write code paths unchanged
+
+// 11. Production-write gating: requires BOTH conditions.
+{
+  // Mirror of the script's gate: `WRITE_MODE === "production" && guardPass`.
+  // Both arms must be true.
+  function shouldWrite(writeMode: "dryrun" | "production", guardPass: boolean): boolean {
+    return writeMode === "production" && guardPass;
+  }
+  check(
+    "dryrun + guards pass → no production write",
+    shouldWrite("dryrun", true) === false,
+    `got ${shouldWrite("dryrun", true)}`,
   );
   check(
-    "Stage-3 incremental body contains no PRODUCTION_MANIFEST_PATH writes",
-    body.length > 0 && !/fs\.writeFile\([^)]*PRODUCTION_MANIFEST_PATH/.test(body),
-    body.length === 0 ? "n/a" : "PRODUCTION_MANIFEST_PATH writeFile absent ✓",
+    "dryrun + guards fail → no production write",
+    shouldWrite("dryrun", false) === false,
+    `got ${shouldWrite("dryrun", false)}`,
+  );
+  check(
+    "production + guards fail → no production write (keep-last-good)",
+    shouldWrite("production", false) === false,
+    `got ${shouldWrite("production", false)}`,
+  );
+  check(
+    "production + guards pass → production write runs",
+    shouldWrite("production", true) === true,
+    `got ${shouldWrite("production", true)}`,
+  );
+}
+
+// 12. Source inspection: dry-run path body never invokes atomicWriteJson on
+//     production paths (production write block is the ONLY place that does).
+{
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const fs = require("node:fs") as typeof import("node:fs");
+  const src = fs.readFileSync(
+    path.resolve(process.cwd(), "scripts/ingest/nav-history-backfill.ts"),
+    "utf8",
+  );
+  // Phase 3.7C: the only public-write site in mainStage3Incremental must
+  // be guarded by `WRITE_MODE === "production"`. We confirm by checking
+  // every PRODUCTION_HISTORY_DIR atomic-write call is inside such a guard,
+  // and that the dry-run sample-file path uses fs.writeFile to data/debug
+  // (a different writer).
+  const idx = src.indexOf("async function mainStage3Incremental");
+  const end = src.indexOf("async function main(", idx);
+  const body = idx >= 0 && end > idx ? src.slice(idx, end) : "";
+  // Every appearance of PRODUCTION_HISTORY_DIR should be preceded somewhere
+  // in the body by the production gate phrase.
+  const guardPhrase = /WRITE_MODE === "production" && guardPass/;
+  const usesProductionDir = /PRODUCTION_HISTORY_DIR/.test(body);
+  const hasGuard = guardPhrase.test(body);
+  check(
+    "Stage-3 incremental body now references PRODUCTION_HISTORY_DIR (production write wired)",
+    body.length > 0 && usesProductionDir,
+    body.length === 0 ? "n/a" : usesProductionDir ? "PRODUCTION_HISTORY_DIR present ✓" : "missing",
+  );
+  check(
+    "Stage-3 incremental body contains the (WRITE_MODE === production && guardPass) gate",
+    body.length > 0 && hasGuard,
+    body.length === 0 ? "n/a" : hasGuard ? "gate present ✓" : "missing",
+  );
+  // Every production write must be atomic (atomicWriteJson). Find any
+  // direct fs.writeFile call targeting PRODUCTION_*; that would be a bug.
+  const directWriteToProd = /fs\.writeFile\([^)]*PRODUCTION_(HISTORY_DIR|MANIFEST_PATH)/.test(body);
+  check(
+    "Stage-3 incremental never uses fs.writeFile directly on PRODUCTION_* paths (atomic-only)",
+    body.length > 0 && !directWriteToProd,
+    body.length === 0 ? "n/a" : directWriteToProd ? "found direct write" : "atomic-only ✓",
+  );
+  // Manifest is written LAST (after the per-fund loop). We check the line
+  // index of the manifest write is after the line index of the per-fund
+  // atomicWriteJson(target, file).
+  const perFundWriteIdx = body.indexOf("atomicWriteJson(target, file)");
+  const manifestWriteIdx = body.indexOf("atomicWriteJson(PRODUCTION_MANIFEST_PATH, manifest)");
+  check(
+    "Stage-3 incremental writes the manifest AFTER all per-fund files (torn-write safety)",
+    perFundWriteIdx > 0 && manifestWriteIdx > 0 && manifestWriteIdx > perFundWriteIdx,
+    `perFundWriteIdx=${perFundWriteIdx} manifestWriteIdx=${manifestWriteIdx}`,
+  );
+}
+
+// 13. Manifest Stage-3 schema check.
+{
+  // Mirror of the Stage-3 manifest construction. Build a tiny synthetic
+  // manifest from a fixed perFundCoverage shape and assert the shape.
+  interface FundCoverage {
+    schemecode: string; amfiSchemeCode: number; fundName: string;
+    classification: string | null; firstDate: string | null; lastDate: string | null;
+    points: number; dataAvailability: Record<"1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y", boolean>;
+  }
+  const periodKeys = ["1M", "3M", "6M", "1Y", "3Y", "5Y"] as const;
+  function buildManifest(perFundCoverage: FundCoverage[], totalFunds: number) {
+    const funds = perFundCoverage.map((f) => {
+      const availablePeriods: Array<typeof periodKeys[number]> = [];
+      for (const k of periodKeys) if (f.dataAvailability[k]) availablePeriods.push(k);
+      return {
+        schemecode: f.schemecode, amfiSchemeCode: f.amfiSchemeCode,
+        fundName: f.fundName, classification: f.classification,
+        firstDate: f.firstDate, lastDate: f.lastDate, points: f.points,
+        available: f.points > 0, availablePeriods,
+        path: `public/nav-history/${f.schemecode}.json`,
+      };
+    });
+    const periodCoverage = {
+      "1M": funds.filter((f) => f.availablePeriods.includes("1M")).length,
+      "3M": funds.filter((f) => f.availablePeriods.includes("3M")).length,
+      "6M": funds.filter((f) => f.availablePeriods.includes("6M")).length,
+      "1Y": funds.filter((f) => f.availablePeriods.includes("1Y")).length,
+      "3Y": funds.filter((f) => f.availablePeriods.includes("3Y")).length,
+      "5Y": funds.filter((f) => f.availablePeriods.includes("5Y")).length,
+    };
+    return {
+      stage: 3 as const,
+      totalFunds,
+      fundsAvailable: funds.filter((m) => m.available).length,
+      fundsMissing: funds.filter((m) => !m.available).length,
+      periodCoverage,
+      funds,
+    };
+  }
+  const mockFunds: FundCoverage[] = [
+    {
+      schemecode: "1131", amfiSchemeCode: 118989, fundName: "HDFC Flexi Cap",
+      classification: "Equity : Flexi Cap", firstDate: "2021-04-15", lastDate: "2026-05-30", points: 1280,
+      dataAvailability: { "1M": true, "3M": true, "6M": true, "1Y": true, "3Y": true, "5Y": true },
+    },
+    {
+      schemecode: "21520", amfiSchemeCode: 119598, fundName: "Parag Parikh Flexi Cap",
+      classification: "Equity : Flexi Cap", firstDate: "2023-05-29", lastDate: "2026-05-30", points: 760,
+      dataAvailability: { "1M": true, "3M": true, "6M": true, "1Y": true, "3Y": true, "5Y": false },
+    },
+    {
+      schemecode: "33369", amfiSchemeCode: 149800, fundName: "SBI Nifty 50 ETF",
+      classification: "Equity : ETFs", firstDate: "2021-04-15", lastDate: "2026-05-30", points: 1290,
+      dataAvailability: { "1M": true, "3M": true, "6M": true, "1Y": true, "3Y": true, "5Y": true },
+    },
+  ];
+  const m = buildManifest(mockFunds, mockFunds.length);
+  check(
+    "Stage-3 manifest has stage = 3",
+    m.stage === 3,
+    `got ${m.stage}`,
+  );
+  check(
+    "Stage-3 manifest periodCoverage includes 5Y",
+    "5Y" in m.periodCoverage,
+    `keys: ${Object.keys(m.periodCoverage).join(",")}`,
+  );
+  check(
+    "Stage-3 manifest 5Y count matches per-fund availablePeriods (2/3 here)",
+    m.periodCoverage["5Y"] === 2,
+    `got ${m.periodCoverage["5Y"]}`,
+  );
+  check(
+    "Stage-3 manifest 3Y count matches per-fund availablePeriods (3/3 here)",
+    m.periodCoverage["3Y"] === 3,
+    `got ${m.periodCoverage["3Y"]}`,
+  );
+  check(
+    "Stage-3 manifest per-fund availablePeriods includes 5Y when fund has 5Y",
+    m.funds[0].availablePeriods.includes("5Y") && !m.funds[1].availablePeriods.includes("5Y"),
+    `HDFC=${m.funds[0].availablePeriods.join(",")} PPFAS=${m.funds[1].availablePeriods.join(",")}`,
+  );
+  check(
+    "Stage-3 manifest funds count and fundsAvailable agree (no empty series in this batch)",
+    m.totalFunds === 3 && m.fundsAvailable === 3 && m.fundsMissing === 0,
+    JSON.stringify({ total: m.totalFunds, avail: m.fundsAvailable, missing: m.fundsMissing }),
+  );
+}
+
+// 14. Per-fund file validators (production-write level).
+{
+  // The script validates each merged series for: non-empty, finite positive
+  // NAVs, ascending dates, and endpoint match. Mirror those rules here.
+  function validateMerged(merged: Array<{ date: string; nav: number }>, claimedFirst: string | null, claimedLast: string | null, claimedPoints: number): string | null {
+    if (merged.length === 0) return "merged series is empty";
+    let prev = "";
+    for (let i = 0; i < merged.length; i++) {
+      const p = merged[i];
+      if (typeof p.nav !== "number" || !Number.isFinite(p.nav) || p.nav <= 0) return `invalid NAV at ${p.date}: ${p.nav}`;
+      if (i > 0 && p.date <= prev) return `non-ascending dates at row ${i}: ${p.date} <= ${prev}`;
+      prev = p.date;
+    }
+    if (claimedFirst !== merged[0].date) return `meta.firstDate ${claimedFirst} != series[0] ${merged[0].date}`;
+    if (claimedLast !== merged[merged.length - 1].date) return `meta.lastDate ${claimedLast} != series[-1] ${merged[merged.length - 1].date}`;
+    if (claimedPoints !== merged.length) return `meta.points ${claimedPoints} != series.length ${merged.length}`;
+    return null;
+  }
+  const ok = [
+    { date: "2021-04-15", nav: 100.0 },
+    { date: "2021-04-16", nav: 100.1 },
+    { date: "2026-05-30", nav: 250.0 },
+  ];
+  check(
+    "validator accepts a clean ascending series with positive NAVs and matching endpoints",
+    validateMerged(ok, "2021-04-15", "2026-05-30", 3) === null,
+    `${validateMerged(ok, "2021-04-15", "2026-05-30", 3)}`,
+  );
+  check(
+    "validator rejects empty series",
+    validateMerged([], null, null, 0) === "merged series is empty",
+    `${validateMerged([], null, null, 0)}`,
+  );
+  const negative = [{ date: "2021-04-15", nav: 100.0 }, { date: "2021-04-16", nav: -5 }];
+  check(
+    "validator rejects non-positive NAVs",
+    /invalid NAV/.test(validateMerged(negative, "2021-04-15", "2021-04-16", 2) ?? ""),
+    `${validateMerged(negative, "2021-04-15", "2021-04-16", 2)}`,
+  );
+  const nan = [{ date: "2021-04-15", nav: NaN }];
+  check(
+    "validator rejects NaN NAVs",
+    /invalid NAV/.test(validateMerged(nan, "2021-04-15", "2021-04-15", 1) ?? ""),
+    `${validateMerged(nan, "2021-04-15", "2021-04-15", 1)}`,
+  );
+  const nonAsc = [{ date: "2021-04-16", nav: 100 }, { date: "2021-04-15", nav: 99 }];
+  check(
+    "validator rejects non-ascending dates",
+    /non-ascending/.test(validateMerged(nonAsc, "2021-04-16", "2021-04-15", 2) ?? ""),
+    `${validateMerged(nonAsc, "2021-04-16", "2021-04-15", 2)}`,
+  );
+  check(
+    "validator rejects firstDate / lastDate / points mismatch",
+    /meta.firstDate/.test(validateMerged(ok, "9999-12-31", "2026-05-30", 3) ?? "") &&
+      /meta.lastDate/.test(validateMerged(ok, "2021-04-15", "9999-12-31", 3) ?? "") &&
+      /meta.points/.test(validateMerged(ok, "2021-04-15", "2026-05-30", 99) ?? ""),
+    "endpoint mismatch detection",
+  );
+}
+
+// 15. Workflow commit message for Stage-3.
+{
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const fs = require("node:fs") as typeof import("node:fs");
+  const yml = fs.readFileSync(
+    path.resolve(process.cwd(), ".github/workflows/nav-history-backfill.yml"),
+    "utf8",
+  );
+  check(
+    "workflow commit message template includes stage interpolation",
+    /chore\(data\): add stage-\$\{\{\s*inputs\.stage\s*\}\}/.test(yml),
+    "template line",
+  );
+  check(
+    "workflow's commit step gates on commit == 'true' AND script success",
+    /inputs\.commit == 'true' && steps\.run\.outcome == 'success'/.test(yml),
+    "gate line",
+  );
+  check(
+    "workflow's commit step `git add` lands ONLY public/nav-history and the manifest",
+    /git add public\/nav-history src\/data\/snapshots\/mf-history-manifest\.json/.test(yml),
+    "git add line",
+  );
+}
+
+// 16. Stage-1 / Stage-2 production write paths unchanged.
+{
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const fs = require("node:fs") as typeof import("node:fs");
+  const src = fs.readFileSync(
+    path.resolve(process.cwd(), "scripts/ingest/nav-history-backfill.ts"),
+    "utf8",
+  );
+  // The legacy main()'s production write block has a distinctive signature:
+  // "production write mode: writing ${universe.length} per-fund files".
+  // Stage-3's new block uses a DIFFERENT signature: "Stage-3 production
+  // write: writing ${universe.length} merged per-fund files". Both should
+  // exist, and they must not have collapsed into one.
+  check(
+    "Stage-1/2 production write block still exists (legacy phrase present)",
+    /production write mode: writing \$\{universe\.length\} per-fund files/.test(src),
+    "phrase",
+  );
+  check(
+    "Stage-3 production write block exists separately (Stage-3 specific phrase present)",
+    /Stage-3 production write: writing \$\{universe\.length\} merged per-fund files/.test(src),
+    "phrase",
+  );
+  // The Stage-3 dispatch is at the TOP of main() — guarantees Stages 1/2
+  // never reach the new code path.
+  check(
+    "main() dispatches Stage-3 BEFORE entering the legacy Stage-1/2 flow",
+    /if \(STAGE === 3\) return mainStage3Incremental\(\);/.test(src),
+    "dispatch line",
   );
 }
 

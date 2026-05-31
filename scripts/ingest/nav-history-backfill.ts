@@ -688,7 +688,18 @@ interface SampleHistoryFile {
     lastForwardAppendAt: string | null;
     provenance: {
       backfillSource: string;
-      backfillWindows: Array<{ from: string; to: string; fetchedAt: string }>;
+      // role tagged on Stage-3 production files to distinguish Stage-2 base
+      // windows (preserved verbatim) from Stage-3-incremental older windows.
+      // Legacy Stage-1/2 writers omit `role` for backward compat.
+      backfillWindows: Array<{ from: string; to: string; fetchedAt: string; role?: string }>;
+      // Stage-3 incremental writes a `stage3` subobject documenting the merge.
+      stage3?: {
+        olderFetchFrom: string;
+        olderFetchTo: string;
+        stage3MergeAt: string;
+        baseStage: number | null;
+        baseFirstDate: string | null;
+      };
       forwardSource: string;
       parser: string;
       parserVersion: number;
@@ -781,7 +792,10 @@ interface ManifestFund {
   lastDate: string | null;
   points: number;
   available: boolean;
-  availablePeriods: Array<"1M" | "3M" | "6M" | "1Y">;
+  // Phase 3.7C: widen to all six periods. Stages 1/2 still emit only the
+  // 1M/3M/6M/1Y subset (backward compat); Stage 3 emits the full set
+  // (including 3Y and 5Y when the fund's merged series supports them).
+  availablePeriods: Array<"1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y">;
   path: string; // repo-relative
 }
 
@@ -832,6 +846,11 @@ interface ExistingHistoryFile {
     lastDate: string | null;
     points: number;
     stage: number;
+    // Optional provenance — Phase 3.7C reads provenance.backfillWindows to
+    // preserve the Stage-2 base record in the merged Stage-3 file.
+    provenance?: {
+      backfillWindows?: Array<{ from: string; to: string; fetchedAt: string; role?: string }>;
+    };
   };
   series: Array<[string, number]>;
 }
@@ -1192,11 +1211,168 @@ async function mainStage3Incremental(): Promise<void> {
   if (aborted) guardFailures.push("run deadline hit before all older windows completed");
   const guardPass = guardFailures.length === 0;
 
-  // --- 8. Stage-3 dry-run NEVER writes production. -----------------------
-  // Phase 3.7B is strictly diagnostic; the public-write branch is not even
-  // wired up here. WRITE_MODE === "production" is currently a noop for
-  // Stage 3 (the dispatch above lands here regardless), so production files
-  // stay exactly as they were (keep-last-good).
+  // --- 8. Production write (Phase 3.7C) ----------------------------------
+  // Runs ONLY when:
+  //   • NAV_HISTORY_WRITE_MODE === "production"
+  //   • All Stage-3 dry-run guardrails passed (guardPass === true)
+  // Re-merges each fund's existing series + newly fetched older rows, validates
+  // the merged series end-to-end (ascending, finite positive NAVs, firstDate /
+  // lastDate / points match endpoints), then atomic-writes the per-fund file.
+  // The manifest is written LAST so a torn run leaves it stale (loaders treat
+  // the manifest as truth). Keep-last-good: if anything fails, existing files
+  // are untouched; the run exits non-zero and the workflow's commit step does
+  // not execute (it's gated on the script's clean exit).
+  let production: {
+    attempted: boolean;
+    wroteFiles: number;
+    manifestPath: string | null;
+    skippedReason?: string;
+    perFundWriteErrors: Array<{ schemecode: string; error: string }>;
+  } = { attempted: false, wroteFiles: 0, manifestPath: null, perFundWriteErrors: [] };
+
+  if (WRITE_MODE === "production" && guardPass) {
+    info(`Stage-3 production write: writing ${universe.length} merged per-fund files under ${path.relative(process.cwd(), PRODUCTION_HISTORY_DIR)} (atomic temp+rename)`);
+    await fs.mkdir(PRODUCTION_HISTORY_DIR, { recursive: true });
+    let wrote = 0;
+    const errs: Array<{ schemecode: string; error: string }> = [];
+    // Track per-fund availablePeriods for the manifest below.
+    const fundAvailability = new Map<string, Record<PeriodKey, boolean>>();
+    for (const f of universe) {
+      try {
+        const existing = await readExistingHistoryFile(f.schemecode);
+        const byDate = new Map<string, number>();
+        const existingFirstDate = existing?.meta.firstDate ?? null;
+        if (existing) for (const [d, n] of existing.series) byDate.set(d, n);
+        const fetched = seriesByCode.get(f.amfiSchemeCode);
+        if (fetched) {
+          for (const [d, n] of fetched) {
+            // Only merge OLDER rows. Existing Stage-2 NAVs are authoritative;
+            // we never overwrite them with refetched values.
+            if (!byDate.has(d) && d < (existingFirstDate ?? "9999-12-31")) byDate.set(d, n);
+          }
+        }
+        const dates = Array.from(byDate.keys()).sort();
+        const merged: SeriesPoint[] = dates.map((d) => ({ date: d, nav: byDate.get(d)! }));
+
+        // Validate merged series before writing.
+        if (merged.length === 0) {
+          throw new Error("merged series is empty");
+        }
+        let prev = "";
+        for (let i = 0; i < merged.length; i++) {
+          const p = merged[i];
+          if (typeof p.nav !== "number" || !Number.isFinite(p.nav) || p.nav <= 0) {
+            throw new Error(`invalid NAV at ${p.date}: ${p.nav}`);
+          }
+          if (i > 0 && p.date <= prev) {
+            throw new Error(`non-ascending dates at row ${i}: ${p.date} <= ${prev}`);
+          }
+          prev = p.date;
+        }
+
+        // Build production file with merged provenance (Stage-2 base windows
+        // preserved + Stage-3 older windows appended + a Stage-3 subobject).
+        const file = buildSampleFile(f, merged, windowResults, generatedAt);
+        const existingBase = (existing?.meta?.provenance?.backfillWindows ?? []) as Array<{ from: string; to: string; fetchedAt: string; role?: string }>;
+        const stage3WindowsTagged = file.meta.provenance.backfillWindows.map((w) => ({ ...w, role: w.role ?? "stage3-older" }));
+        const existingTagged = existingBase.map((w) => ({ ...w, role: w.role ?? "stage2-base" }));
+        file.meta.provenance.backfillWindows = [...existingTagged, ...stage3WindowsTagged];
+        file.meta.provenance.stage3 = {
+          olderFetchFrom: olderFetchFromIso,
+          olderFetchTo: olderFetchToIso,
+          stage3MergeAt: generatedAt,
+          baseStage: existing?.meta.stage ?? null,
+          baseFirstDate: existing?.meta.firstDate ?? null,
+        };
+
+        // Endpoint cross-check (defensive — buildSampleFile sets these from the
+        // series; if any drift, refuse the write rather than land a torn file).
+        if (file.meta.firstDate !== merged[0].date) throw new Error(`meta.firstDate ${file.meta.firstDate} != series[0] ${merged[0].date}`);
+        if (file.meta.lastDate !== merged[merged.length - 1].date) throw new Error(`meta.lastDate ${file.meta.lastDate} != series[-1] ${merged[merged.length - 1].date}`);
+        if (file.meta.points !== merged.length) throw new Error(`meta.points ${file.meta.points} != series.length ${merged.length}`);
+        if (file.meta.stage !== 3) throw new Error(`meta.stage ${file.meta.stage} != 3`);
+
+        const target = path.join(PRODUCTION_HISTORY_DIR, `${f.schemecode}.json`);
+        await atomicWriteJson(target, file);
+
+        // Capture availability for the manifest. This re-derives from the
+        // merged series (the dry-run already did the same arithmetic via
+        // computeReturns, but we deliberately recompute against the exact
+        // bytes we just wrote — fewer assumed-equal handoffs).
+        const { availability } = computeReturns(merged);
+        fundAvailability.set(f.schemecode, availability);
+        wrote += 1;
+      } catch (e) {
+        errs.push({ schemecode: f.schemecode, error: (e as Error).message });
+      }
+    }
+    info(`wrote ${wrote} per-fund history files (${errs.length} errors)`);
+
+    if (wrote !== GUARD.expectedFileCount) {
+      const reason = `Stage-3 production write expected ${GUARD.expectedFileCount} files but wrote ${wrote}`;
+      warn(reason);
+      production = { attempted: true, wroteFiles: wrote, manifestPath: null, skippedReason: reason, perFundWriteErrors: errs };
+      guardFailures.push(reason);
+    } else {
+      // Manifest written LAST so a torn write leaves it stale (loaders treat
+      // the manifest as truth and re-derive from per-fund files if needed).
+      const manifestFunds: ManifestFund[] = perFundCoverage.map((f) => {
+        const avail = fundAvailability.get(f.schemecode);
+        const availablePeriods: Array<"1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y"> = [];
+        if (avail) {
+          for (const k of ["1M", "3M", "6M", "1Y", "3Y", "5Y"] as const) {
+            if (avail[k]) availablePeriods.push(k);
+          }
+        }
+        return {
+          schemecode: f.schemecode,
+          amfiSchemeCode: f.amfiSchemeCode,
+          fundName: f.fundName,
+          classification: f.classification,
+          firstDate: f.firstDate,
+          lastDate: f.lastDate,
+          points: f.points,
+          available: f.points > 0,
+          availablePeriods,
+          path: `public/nav-history/${f.schemecode}.json`,
+        };
+      });
+      const manifest: ManifestFile = {
+        generatedAt,
+        source: "AMFI historical (DownloadNAVHistoryReport_Po.aspx)",
+        stage: 3,
+        requestedRange: {
+          from: toDDMMMYYYY(isoToDate(olderFetchFromIso)),
+          to: toDDMMMYYYY(isoToDate(olderFetchToIso)),
+          windowCount: windowResults.filter((w) => w.role === "older-main").length,
+        },
+        totalFunds: universe.length,
+        fundsAvailable: manifestFunds.filter((m) => m.available).length,
+        fundsMissing: manifestFunds.filter((m) => !m.available).length,
+        periodCoverage,
+        ruleVersion: RULE_VERSION,
+        parserVersion: PARSER_VERSION,
+        funds: manifestFunds,
+      };
+      await atomicWriteJson(PRODUCTION_MANIFEST_PATH, manifest);
+      info(`wrote ${path.relative(process.cwd(), PRODUCTION_MANIFEST_PATH)}`);
+      production = {
+        attempted: true,
+        wroteFiles: wrote,
+        manifestPath: path.relative(process.cwd(), PRODUCTION_MANIFEST_PATH),
+        perFundWriteErrors: errs,
+      };
+    }
+  } else if (WRITE_MODE === "production" && !guardPass) {
+    production = { attempted: false, wroteFiles: 0, manifestPath: null, skippedReason: `guardrails failed: ${guardFailures.join(" · ")}`, perFundWriteErrors: [] };
+    warn(`Stage-3 production write SKIPPED — guardrails failed; existing public/nav-history files left untouched (keep-last-good)`);
+  } else {
+    production = { attempted: false, wroteFiles: 0, manifestPath: null, skippedReason: "dryrun mode (default) — set NAV_HISTORY_WRITE_MODE=production to write public/nav-history/", perFundWriteErrors: [] };
+  }
+
+  // Re-evaluate guardPass after the production-write block (it may have
+  // appended a partial-files failure).
+  const finalGuardPass = guardFailures.length === 0;
 
   // --- 9. Sample MERGED files (always written under data/debug for review)
   await fs.mkdir(SAMPLE_DIR, { recursive: true });
@@ -1234,7 +1410,7 @@ async function mainStage3Incremental(): Promise<void> {
 
   // --- 10. Report --------------------------------------------------------
   const verdict = {
-    writeMode: "dryrun" as const,
+    writeMode: WRITE_MODE,
     stage: 3 as const,
     mode: "stage3-incremental",
     universeCount: universe.length,
@@ -1268,9 +1444,9 @@ async function mainStage3Incremental(): Promise<void> {
     latestExistingFirstDate,
     existingStage: existingManifest.stage,
     periodCoverage,
-    guardPass,
+    guardPass: finalGuardPass,
     guardFailures,
-    productionAttempted: false,
+    production: { attempted: production.attempted, wroteFiles: production.wroteFiles, skippedReason: production.skippedReason ?? null, perFundWriteErrorsCount: production.perFundWriteErrors.length },
   };
 
   // Top-15 zero-row diagnostic rows for the report (full list is in windows[]).
@@ -1289,15 +1465,20 @@ async function mainStage3Incremental(): Promise<void> {
   }));
 
   const recommendation = (() => {
-    if (!guardPass) return `BLOCK: Stage-3 dry-run guardrails failed (${guardFailures.join(" · ")}). Existing public/nav-history files were left untouched (keep-last-good).`;
-    return `PROCEED (Stage-3 incremental dry-run): stableAsOf ${stableAsOfDate}; merged-series coverage 1Y=${periodCoverage["1Y"]} 3Y=${periodCoverage["3Y"]} 5Y=${periodCoverage["5Y"]}; eligible 5Y ${eligible5Y.eligibleAvailable}/${eligible5Y.eligible.length} = ${eligible5Y.eligibleCoveragePct}% (≥99%); ${eligible5Y.ineligible.length} funds genuinely young. Next step: design Phase 3.7C to land the merged series in public/nav-history/ (separate phase — Stage-3 production write is intentionally NOT wired here).`;
+    if (!finalGuardPass) return `BLOCK: Stage-3 ${WRITE_MODE} guardrails failed (${guardFailures.join(" · ")}). Existing public/nav-history files were left untouched (keep-last-good).`;
+    if (WRITE_MODE === "production") {
+      return production.attempted && production.wroteFiles === universe.length && production.manifestPath
+        ? `PROCEED: wrote ${production.wroteFiles}/${universe.length} merged Stage-3 per-fund files + manifest at ${production.manifestPath}. Stage-3 historical NAV (including 5Y) is now on disk; the workflow's commit step (gated on commit=true) will land it on the branch.`
+        : `BLOCK: Stage-3 production write was skipped or partial (${production.skippedReason ?? "unknown"}); existing public/nav-history files were left untouched.`;
+    }
+    return `PROCEED (Stage-3 incremental dry-run): stableAsOf ${stableAsOfDate}; merged-series coverage 1Y=${periodCoverage["1Y"]} 3Y=${periodCoverage["3Y"]} 5Y=${periodCoverage["5Y"]}; eligible 5Y ${eligible5Y.eligibleAvailable}/${eligible5Y.eligible.length} = ${eligible5Y.eligibleCoveragePct}% (≥99%); ${eligible5Y.ineligible.length} funds genuinely young. Re-run with NAV_HISTORY_WRITE_MODE=production (commit=true in the workflow) to land the merged series in public/nav-history/.`;
   })();
 
   const report = {
     meta: {
       generatedAt,
-      writeMode: "dryrun",
-      dryRun: true,
+      writeMode: WRITE_MODE,
+      dryRun: WRITE_MODE === "dryrun",
       stage: 3,
       mode: "stage3-incremental",
       monthsBack: TOTAL_MONTHS_BACK,
@@ -1309,7 +1490,9 @@ async function mainStage3Incremental(): Promise<void> {
       parserVersion: PARSER_VERSION,
       source: "AMFI historical (DownloadNAVHistoryReport_Po.aspx)",
       latestSnapshot: "src/data/snapshots/mf-latest-nav.json",
-      note: "Phase 3.7B Stage-3 INCREMENTAL dry-run — fetches only the older [5Y target − buffer, earliestExistingFirstDate − 1] range and merges with the committed Stage-2 series in memory. Adaptive split on zero-row HTTP 200. NEVER writes public/nav-history/.",
+      note: WRITE_MODE === "production"
+        ? "Phase 3.7C Stage-3 INCREMENTAL PRODUCTION write — fetches only the older [5Y target − buffer, earliestExistingFirstDate − 1] range, merges with the committed Stage-2 series in memory, and (when all guardrails pass) atomic-writes the merged per-fund files to public/nav-history/ + the Stage-3 manifest. Keep-last-good on any failure."
+        : "Phase 3.7B/C Stage-3 INCREMENTAL dry-run — fetches only the older [5Y target − buffer, earliestExistingFirstDate − 1] range and merges with the committed Stage-2 series in memory. Adaptive split on zero-row HTTP 200. Does NOT write public/nav-history/ in dry-run.",
     },
     anchorDiagnostics: {
       stableAsOfDate,
@@ -1324,6 +1507,14 @@ async function mainStage3Incremental(): Promise<void> {
       bufferDaysBefore5Y: dayDiffDays(olderFetchFromIso, fiveYTarget),
     },
     guardrails: GUARD,
+    production: {
+      attempted: production.attempted,
+      wroteFiles: production.wroteFiles,
+      manifestPath: production.manifestPath,
+      skippedReason: production.skippedReason ?? null,
+      perFundWriteErrorsCount: production.perFundWriteErrors.length,
+      perFundWriteErrorsSample: production.perFundWriteErrors.slice(0, 10),
+    },
     verdict,
     windows: windowResults,
     zeroRowSample,
@@ -1363,7 +1554,7 @@ async function mainStage3Incremental(): Promise<void> {
     warn(`could not write report: ${(e as Error).message}`);
   }
 
-  info(`======== STAGE-3 INCREMENTAL DRY-RUN SUMMARY ========`);
+  info(`======== STAGE-3 INCREMENTAL ${WRITE_MODE.toUpperCase()} SUMMARY ========`);
   info(`Stable asOf: ${stableAsOfDate}  ·  existing stage=${existingManifest.stage}  ·  manifest firstDate range ${earliestExistingFirstDate}..${latestExistingFirstDate}`);
   info(`5Y target: ${fiveYTarget}  ·  older fetch range: ${olderFetchFromIso} → ${olderFetchToIso} (needed=${needsOlderFetch})  ·  buffer before 5Y: ${dayDiffDays(olderFetchFromIso, fiveYTarget)}d`);
   info(`Windows attempted=${windowResults.length} ok=${windowsOk} failed=${windowsFailed} zeroRow=${windowResults.filter((w) => w.zeroRowFlag).length} unresolvedZeroRow=${unresolvedZeroRows} aborted=${aborted}  ·  totalValidRowsAdded=${totalValidRowsAdded}`);
@@ -1372,14 +1563,18 @@ async function mainStage3Incremental(): Promise<void> {
   info(`Merged period coverage: 1M=${periodCoverage["1M"]} 3M=${periodCoverage["3M"]} 6M=${periodCoverage["6M"]} 1Y=${periodCoverage["1Y"]} 3Y=${periodCoverage["3Y"]} 5Y=${periodCoverage["5Y"]} (1Y=${oneYCoveragePct}% 3Y=${threeYCoveragePct}% 5Y=${fiveYCoveragePct}% total-universe; informational)`);
   info(`Eligible 3Y (firstDate ≤ ${threeYTarget}): ${eligible3Y.eligibleAvailable}/${eligible3Y.eligible.length} = ${eligible3Y.eligibleCoveragePct}%`);
   info(`Eligible 5Y (firstDate ≤ ${fiveYTarget}): ${eligible5Y.eligibleAvailable}/${eligible5Y.eligible.length} = ${eligible5Y.eligibleCoveragePct}% (guard floor)  ·  ${eligible5Y.ineligible.length} genuinely-young funds excluded`);
-  info(`Guardrails: ${guardPass ? "PASS" : "FAIL · " + guardFailures.join(" · ")}`);
+  info(`Guardrails: ${finalGuardPass ? "PASS" : "FAIL · " + guardFailures.join(" · ")}`);
   for (const s of sampleSummaries) info(`   sample ${s.schemecode}: ${s.fundName}  pts=${s.points} (existing ${s.existingPoints}, +${s.olderRowsAdded} older) ${s.firstDate ?? "-"}..${s.lastDate ?? "-"} → ${s.path}`);
+  info(`Production: attempted=${production.attempted} wroteFiles=${production.wroteFiles}${production.manifestPath ? ` manifest=${production.manifestPath}` : ""}${production.skippedReason ? ` · skipped: ${production.skippedReason}` : ""}`);
+  if (production.perFundWriteErrors.length > 0) {
+    info(`   per-fund write errors: ${production.perFundWriteErrors.length} (first 3 below)`);
+    for (const e of production.perFundWriteErrors.slice(0, 3)) info(`     ${e.schemecode}: ${e.error}`);
+  }
   info(`Recommendation: ${recommendation}`);
-  info(`Production attempted: false  ·  Stage-3 production write is intentionally NOT wired in Phase 3.7B`);
   info(`=====================================================`);
 
   if (!wrote) process.exit(1);
-  if (!guardPass) { warn(`guardrails failed: ${guardFailures.join(" · ")}`); process.exit(1); }
+  if (!finalGuardPass) { warn(`guardrails failed: ${guardFailures.join(" · ")}`); process.exit(1); }
 }
 
 // ---------------------------------------------------------------------------

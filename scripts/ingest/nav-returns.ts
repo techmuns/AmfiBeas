@@ -63,10 +63,12 @@ interface ManifestFund {
   lastDate: string | null;
   points: number;
   available: boolean;
-  // Phase 3.6A: the manifest's availablePeriods only ever covers the
-  // periods baked into the manifest writer (Stage-1's nav-history-backfill
-  // emits 1M/3M/6M/1Y; 3Y is computed here, not stored in the manifest).
-  availablePeriods: Array<"1M" | "3M" | "6M" | "1Y">;
+  // Phase 3.6A/3.7C: legacy Stage-1/2 manifests store 1M/3M/6M/1Y only;
+  // Stage-3 manifests (Phase 3.7C) may include 3Y and 5Y when the merged
+  // series supports them. This script reads from the file in either shape
+  // and ignores the field (returns are computed locally), but the union
+  // here keeps the type honest.
+  availablePeriods: Array<"1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y">;
   path: string;
 }
 interface ManifestFile {
