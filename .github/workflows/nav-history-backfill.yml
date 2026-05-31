@@ -1,27 +1,30 @@
-name: NAV history backfill dry run (temporary, manual)
+name: NAV history backfill (manual)
 
-# TEMPORARY production-shaped backfill DRY-RUN (Phase 3.2H). Manual trigger
+# MANUAL Stage-1 historical NAV backfill (Phase 3.2H/I). workflow_dispatch
 # only — NO schedule. Fetches AMFI historical NAV in 75-day chunks across a
-# 15-month window for the full 1,036-fund matched universe, then writes only
-# data/debug/nav-history-backfill-dryrun-report.json plus 5 sample per-fund
-# files under data/debug/sample-nav-history/. Both directories are gitignored.
+# 15-month window for the full 1,036-fund matched universe.
 #
-# Today the `commit` input defaults to false and the workflow has NO commit
-# step. The input is parked here as a placeholder so a later phase can switch
-# to writing public/nav-history/ without renaming the workflow, but it has
-# zero effect until that phase ships.
-#
-# Production per-fund files (public/nav-history/) are NOT written here.
+# Modes (controlled by the `commit` input, default false):
+#   commit=false  → DRY RUN: writes only data/debug/nav-history-backfill-
+#                   dryrun-report.json + data/debug/sample-nav-history/*.json
+#                   (both gitignored). Uploads them as artifacts.
+#   commit=true   → PRODUCTION: same fetch, but the script sets
+#                   NAV_HISTORY_WRITE_MODE=production and writes
+#                   public/nav-history/{schemecode}.json (1,036 files) +
+#                   src/data/snapshots/mf-history-manifest.json. The commit
+#                   step then commits those files if (and only if) the
+#                   script exited successfully (i.e. all guardrails passed
+#                   AND every per-fund file was written atomically).
 
 on:
   workflow_dispatch:
     inputs:
       reason:
-        description: "Why are you running the Stage-1 backfill dry run? (optional)"
+        description: "Why are you running the Stage-1 backfill? (optional)"
         required: false
         type: string
       commit:
-        description: "Reserved for a later phase. Today this input has NO effect; the dry-run never commits."
+        description: "false = dry run (artifact only). true = write public/nav-history/ + manifest and commit."
         required: false
         default: "false"
         type: choice
@@ -29,21 +32,20 @@ on:
           - "false"
           - "true"
 
-# Read-only: the dry-run never pushes or commits. Artifact upload needs no
-# write scope on repo contents.
+# contents:write needed only when commit=true; harmless for dry runs.
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: nav-history-backfill-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  backfill-dryrun:
+  backfill:
     runs-on: ubuntu-22.04
     # Stage-1: 7 windows × ≤120s fetch + 1.5s polite delay + parse + 3× retry
-    # budget on the worst window ≈ comfortable inside 30 min; 45 absorbs slow
-    # AMFI portal days.
+    # budget on the worst window ≈ comfortable inside 30 min; production write
+    # adds a few seconds for 1,036 atomic file writes. 45-min ceiling.
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -53,13 +55,20 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Run Stage-1 backfill dry-run (1,036 funds, 15 months, 75-day chunks)
-        # The script exits non-zero when (no usable windows) OR (guardrails
-        # fail) OR (report can't be written). continue-on-error keeps the
+      - name: Run Stage-1 backfill (mode = ${{ inputs.commit == 'true' && 'production' || 'dryrun' }})
+        # The script exits non-zero when (no usable windows) OR (any guardrail
+        # fails) OR (report can't be written) OR (production write didn't
+        # produce the expected 1,036 files). continue-on-error keeps the
         # artifact step reachable so a partial diagnostic is always preserved.
+        # The commit step DOES NOT have continue-on-error and is gated on
+        # script success (see its `if:` condition), so a non-zero exit blocks
+        # the commit.
+        id: run
         continue-on-error: true
+        env:
+          NAV_HISTORY_WRITE_MODE: ${{ inputs.commit == 'true' && 'production' || 'dryrun' }}
         run: npx tsx scripts/ingest/nav-history-backfill.ts
-      - name: Upload dry-run report
+      - name: Upload dry-run / production report
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -75,3 +84,19 @@ jobs:
           path: data/debug/sample-nav-history/
           if-no-files-found: warn
           retention-days: 14
+      - name: Commit production files
+        # Runs ONLY when commit=true AND the backfill script exited 0
+        # (i.e. all guardrails passed AND production write produced 1,036
+        # per-fund files + the manifest). If git has no changes (e.g. a
+        # rerun produced byte-identical output), the step is a no-op.
+        if: ${{ inputs.commit == 'true' && steps.run.outcome == 'success' }}
+        run: |
+          if [ -z "$(git status --porcelain public/nav-history src/data/snapshots/mf-history-manifest.json)" ]; then
+            echo "No history changes to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/nav-history src/data/snapshots/mf-history-manifest.json
+          git commit -m "chore(data): add stage-1 historical NAV backfill"
+          git push

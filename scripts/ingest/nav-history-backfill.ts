@@ -28,6 +28,17 @@ const REPORT_DIR = path.resolve(process.cwd(), "data/debug");
 const REPORT_PATH = path.join(REPORT_DIR, "nav-history-backfill-dryrun-report.json");
 const SAMPLE_DIR = path.resolve(REPORT_DIR, "sample-nav-history");
 
+// Production write targets (used only when WRITE_MODE === "production").
+const PRODUCTION_HISTORY_DIR = path.resolve(process.cwd(), "public/nav-history");
+const PRODUCTION_MANIFEST_PATH = path.resolve(process.cwd(), "src/data/snapshots/mf-history-manifest.json");
+
+// Default = "dryrun"; set NAV_HISTORY_WRITE_MODE=production to enable
+// write-to-public + manifest. The script writes production files ONLY when
+// every guardrail passes; otherwise it leaves existing files untouched
+// (keep-last-good) and exits non-zero.
+const WRITE_MODE: "dryrun" | "production" =
+  process.env.NAV_HISTORY_WRITE_MODE === "production" ? "production" : "dryrun";
+
 const USER_AGENT =
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
@@ -41,14 +52,15 @@ const RUN_DEADLINE_MS = 30 * 60_000;
 const PER_WINDOW_MAX_RETRIES = 3;
 const BACKOFF_MS = [5_000, 15_000, 45_000];
 
-// Production guardrails. The dry-run STILL exits non-zero on guardrail failure,
-// so the workflow's optional commit step (today defaulted to false) cannot fire
-// on degraded data.
+// Production guardrails. The script exits non-zero on guardrail failure in
+// EITHER mode, so the workflow's commit step cannot fire on degraded data.
 const GUARD = {
   minValidRowsPerWindow: 5_000,         // catches "AMFI returned a slice"
   minTotalValidRows: 50_000,            // sanity floor across the whole run
   minMatchedCoveragePct: 95,            // ≥95% of matched funds must have ≥1 valid point
+  min1YCoveragePct: 95,                 // ≥95% of universe with 1Y availability
   maxFailedWindows: 1,                  // Stage-1 has 7 windows → at most 1 failed
+  expectedFileCount: 1036,              // production write: must produce exactly this many per-fund files
 };
 
 const RULE_VERSION = 1;
@@ -450,6 +462,67 @@ function buildSampleFile(
 }
 
 // ---------------------------------------------------------------------------
+// Production file builder + manifest (write-mode only)
+// ---------------------------------------------------------------------------
+
+// Same shape as SampleHistoryFile; written verbatim to public/nav-history/.
+type ProductionHistoryFile = SampleHistoryFile;
+
+function buildProductionFile(
+  fund: SnapshotFund,
+  series: SeriesPoint[],
+  windows: WindowResult[],
+  generatedAt: string
+): ProductionHistoryFile {
+  // Identical schema to the sample files (which we already exposed for
+  // review) — only the destination path differs.
+  return buildSampleFile(fund, series, windows, generatedAt);
+}
+
+/** Atomic per-file write: temp-write + rename. If the rename fails, leave
+ *  any existing prior file intact (keep-last-good). */
+async function atomicWriteJson(targetPath: string, payload: unknown): Promise<void> {
+  const dir = path.dirname(targetPath);
+  await fs.mkdir(dir, { recursive: true });
+  const tmp = `${targetPath}.tmp-${process.pid}-${Date.now()}`;
+  await fs.writeFile(tmp, JSON.stringify(payload, null, 2) + "\n", "utf8");
+  try {
+    await fs.rename(tmp, targetPath);
+  } catch (e) {
+    // Clean up the temp file so we don't leave half-state on disk.
+    try { await fs.unlink(tmp); } catch { /* ignore */ }
+    throw e;
+  }
+}
+
+interface ManifestFund {
+  schemecode: string;
+  amfiSchemeCode: number;
+  fundName: string;
+  classification: string | null;
+  firstDate: string | null;
+  lastDate: string | null;
+  points: number;
+  available: boolean;
+  availablePeriods: Array<"1M" | "3M" | "6M" | "1Y">;
+  path: string; // repo-relative
+}
+
+interface ManifestFile {
+  generatedAt: string;
+  source: string;
+  stage: number;
+  requestedRange: { from: string; to: string; windowCount: number };
+  totalFunds: number;
+  fundsAvailable: number;
+  fundsMissing: number;
+  periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number };
+  ruleVersion: number;
+  parserVersion: number;
+  funds: ManifestFund[];
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -461,8 +534,6 @@ async function main(): Promise<void> {
   const universe = snapshot.funds;
   info(`universe (matched funds in latest snapshot): ${universe.length}`);
 
-  const codeToFund = new Map<number, SnapshotFund>();
-  for (const f of universe) codeToFund.set(f.amfiSchemeCode, f);
   const targetCodes = new Set(universe.map((f) => f.amfiSchemeCode));
 
   const windows = buildWindows(TOTAL_MONTHS_BACK, CHUNK_DAYS);
@@ -564,6 +635,7 @@ async function main(): Promise<void> {
   // --- Guardrails -----------------------------------------------------------
   const windowsOk = windowResults.filter((w) => !w.error && w.validRowCount > 0).length;
   const windowsFailed = windowResults.filter((w) => Boolean(w.error)).length;
+  const oneYCoveragePct = round2((periodCoverage["1Y"] / universe.length) * 100);
   const guardFailures: string[] = [];
   for (const w of windowResults) {
     if (!w.error && w.validRowCount > 0 && w.validRowCount < GUARD.minValidRowsPerWindow) {
@@ -576,13 +648,99 @@ async function main(): Promise<void> {
   if (matchedCoveragePct < GUARD.minMatchedCoveragePct) {
     guardFailures.push(`matchedCoveragePct ${matchedCoveragePct} < floor ${GUARD.minMatchedCoveragePct}`);
   }
+  if (oneYCoveragePct < GUARD.min1YCoveragePct) {
+    guardFailures.push(`1Y coverage ${oneYCoveragePct}% < floor ${GUARD.min1YCoveragePct}%`);
+  }
   if (windowsFailed > GUARD.maxFailedWindows) {
     guardFailures.push(`failed windows ${windowsFailed} > ceiling ${GUARD.maxFailedWindows}`);
   }
   if (aborted) guardFailures.push("run hit deadline before completing all windows");
   const guardPass = guardFailures.length === 0;
 
-  // --- Sample files (Stage-1 dry run; written under data/debug only) --------
+  // --- Production write (gated on WRITE_MODE === "production" AND guards) ---
+  // Always builds the manifest in memory so the dry-run report can include
+  // counts of "would-be-available" funds. The actual write happens only in
+  // production mode + clean guardrails (keep-last-good: no partial writes).
+  const manifestFunds: ManifestFund[] = perFundCoverage.map((f) => {
+    const availablePeriods: Array<"1M" | "3M" | "6M" | "1Y"> = [];
+    for (const k of ["1M", "3M", "6M", "1Y"] as const) if (f.dataAvailability[k]) availablePeriods.push(k);
+    return {
+      schemecode: f.schemecode,
+      amfiSchemeCode: f.amfiSchemeCode,
+      fundName: f.fundName,
+      classification: f.classification,
+      firstDate: f.firstDate,
+      lastDate: f.lastDate,
+      points: f.points,
+      available: f.points > 0,
+      availablePeriods,
+      path: `public/nav-history/${f.schemecode}.json`,
+    };
+  });
+  const manifest: ManifestFile = {
+    generatedAt,
+    source: "AMFI historical (DownloadNAVHistoryReport_Po.aspx)",
+    stage: STAGE,
+    requestedRange: { from: requestedRangeFrom, to: requestedRangeTo, windowCount: windows.length },
+    totalFunds: universe.length,
+    fundsAvailable: manifestFunds.filter((m) => m.available).length,
+    fundsMissing: manifestFunds.filter((m) => !m.available).length,
+    periodCoverage,
+    ruleVersion: RULE_VERSION,
+    parserVersion: PARSER_VERSION,
+    funds: manifestFunds,
+  };
+
+  let production: {
+    attempted: boolean;
+    wroteFiles: number;
+    manifestPath: string | null;
+    skippedReason?: string;
+    perFundWriteErrors: Array<{ schemecode: string; error: string }>;
+  } = { attempted: false, wroteFiles: 0, manifestPath: null, perFundWriteErrors: [] };
+
+  if (WRITE_MODE === "production" && guardPass) {
+    info(`production write mode: writing ${universe.length} per-fund files under ${path.relative(process.cwd(), PRODUCTION_HISTORY_DIR)} (atomic temp+rename)`);
+    await fs.mkdir(PRODUCTION_HISTORY_DIR, { recursive: true });
+    let wrote = 0;
+    const errs: Array<{ schemecode: string; error: string }> = [];
+    for (const f of universe) {
+      const byDate = seriesByCode.get(f.amfiSchemeCode) ?? new Map<string, number>();
+      const dates = Array.from(byDate.keys()).sort();
+      const series: SeriesPoint[] = dates.map((d) => ({ date: d, nav: byDate.get(d)! }));
+      const target = path.join(PRODUCTION_HISTORY_DIR, `${f.schemecode}.json`);
+      try {
+        const file = buildProductionFile(f, series, windowResults, generatedAt);
+        await atomicWriteJson(target, file);
+        wrote += 1;
+      } catch (e) {
+        errs.push({ schemecode: f.schemecode, error: (e as Error).message });
+      }
+    }
+    info(`wrote ${wrote} per-fund history files (${errs.length} errors)`);
+    if (wrote !== GUARD.expectedFileCount) {
+      // Hard failure — do not commit a partial backfill. We've still left any
+      // prior production files intact (keep-last-good); only new/changed files
+      // were touched.
+      const reason = `production write expected ${GUARD.expectedFileCount} files but wrote ${wrote}`;
+      warn(reason);
+      production = { attempted: true, wroteFiles: wrote, manifestPath: null, skippedReason: reason, perFundWriteErrors: errs };
+      guardFailures.push(reason);
+    } else {
+      // Manifest written LAST so a torn write leaves it stale (loaders treat
+      // the manifest as truth and re-derive from per-fund files if needed).
+      await atomicWriteJson(PRODUCTION_MANIFEST_PATH, manifest);
+      info(`wrote ${path.relative(process.cwd(), PRODUCTION_MANIFEST_PATH)}`);
+      production = { attempted: true, wroteFiles: wrote, manifestPath: path.relative(process.cwd(), PRODUCTION_MANIFEST_PATH), perFundWriteErrors: errs };
+    }
+  } else if (WRITE_MODE === "production" && !guardPass) {
+    production = { attempted: false, wroteFiles: 0, manifestPath: null, skippedReason: `guardrails failed: ${guardFailures.join(" · ")}`, perFundWriteErrors: [] };
+    warn(`production write SKIPPED — guardrails failed; existing public/nav-history files (if any) untouched`);
+  } else {
+    production = { attempted: false, wroteFiles: 0, manifestPath: null, skippedReason: "dryrun mode (default) — set NAV_HISTORY_WRITE_MODE=production to write public/nav-history/", perFundWriteErrors: [] };
+  }
+
+  // --- Sample files (always written under data/debug for review) ------------
   await fs.mkdir(SAMPLE_DIR, { recursive: true });
   const sampleSummaries: Array<{ schemecode: string; fundName: string; path: string; points: number; firstDate: string | null; lastDate: string | null }> = [];
   for (const code of SAMPLE_PILOT_SCHEMECODES) {
@@ -603,8 +761,13 @@ async function main(): Promise<void> {
   }
 
   // --- Report ---------------------------------------------------------------
-  const recommendation = buildRecommendation(guardPass, guardFailures, matchedCoveragePct, periodCoverage, universe.length);
+  // Re-evaluate guardPass AFTER the production-write block (which can append
+  // a partial-files failure to guardFailures); the verdict + recommendation
+  // must reflect the post-write state.
+  const finalGuardPass = guardFailures.length === 0;
+  const recommendation = buildRecommendation(finalGuardPass, guardFailures, matchedCoveragePct, periodCoverage, universe.length, WRITE_MODE, production);
   const verdict = {
+    writeMode: WRITE_MODE,
     universeCount: universe.length,
     windowsAttempted: windowResults.length,
     windowsOk,
@@ -614,15 +777,18 @@ async function main(): Promise<void> {
     fundsWithAnyPoint: fundsWithPoints.length,
     fundsMissingHistoryCount: fundsMissingHistory.length,
     matchedCoveragePct,
+    oneYCoveragePct,
     periodCoverage,
-    guardPass,
+    guardPass: finalGuardPass,
     guardFailures,
+    production: { attempted: production.attempted, wroteFiles: production.wroteFiles, skippedReason: production.skippedReason ?? null },
   };
 
   const report = {
     meta: {
       generatedAt,
-      dryRun: true,
+      writeMode: WRITE_MODE,
+      dryRun: WRITE_MODE === "dryrun",
       stage: STAGE,
       monthsBack: TOTAL_MONTHS_BACK,
       chunkDays: CHUNK_DAYS,
@@ -634,10 +800,13 @@ async function main(): Promise<void> {
       parserVersion: PARSER_VERSION,
       source: "AMFI historical (DownloadNAVHistoryReport_Po.aspx)",
       latestSnapshot: "src/data/snapshots/mf-latest-nav.json",
-      note: "DRY RUN — writes only data/debug/. Production per-fund files (public/nav-history/) are NOT written. ISIN is diagnostic only; extraction is keyed on AMFI scheme code.",
+      note: WRITE_MODE === "production"
+        ? "PRODUCTION WRITE MODE — wrote public/nav-history/{schemecode}.json + src/data/snapshots/mf-history-manifest.json when all guardrails passed. ISIN is diagnostic only; extraction is keyed on AMFI scheme code."
+        : "DRY RUN — writes only data/debug/. Production per-fund files (public/nav-history/) are NOT written. ISIN is diagnostic only; extraction is keyed on AMFI scheme code.",
     },
     requestedRange: { from: requestedRangeFrom, to: requestedRangeTo, windowCount: windows.length },
     guardrails: GUARD,
+    production,
     verdict,
     windows: windowResults,
     universeCoverage: {
@@ -663,14 +832,14 @@ async function main(): Promise<void> {
     warn(`could not write report: ${(e as Error).message}`);
   }
 
-  printSummary(verdict, windowResults, sampleSummaries, recommendation);
+  printSummary(verdict, windowResults, sampleSummaries, recommendation, production);
 
   // Exit non-zero if NO usable windows OR the report couldn't be written OR
-  // guardrails failed. The workflow's optional commit step (today defaulted
-  // false) does not fire in any of these cases.
+  // any guardrail failed (incl. production-write partial failure). The
+  // workflow's commit step only runs on a zero exit from this script.
   if (!wrote) process.exit(1);
   if (!anyValidWindow) { warn("no AMFI historical windows yielded usable rows"); process.exit(1); }
-  if (!guardPass) { warn(`guardrails failed: ${guardFailures.join(" · ")}`); process.exit(1); }
+  if (!finalGuardPass) { warn(`guardrails failed: ${guardFailures.join(" · ")}`); process.exit(1); }
 }
 
 function buildRecommendation(
@@ -678,23 +847,32 @@ function buildRecommendation(
   guardFailures: string[],
   matchedCoveragePct: number,
   periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number },
-  universeCount: number
+  universeCount: number,
+  writeMode: "dryrun" | "production",
+  production: { attempted: boolean; wroteFiles: number; manifestPath: string | null; skippedReason?: string }
 ): string {
-  if (!guardPass) return `BLOCK: production guardrails failed (${guardFailures.join(" · ")}). Inspect window-level failureReason and per-fund coverage; do NOT promote this run to writing public/nav-history/.`;
+  if (!guardPass) return `BLOCK: production guardrails failed (${guardFailures.join(" · ")}). Inspect window-level failureReason and per-fund coverage; existing public/nav-history files were left untouched (keep-last-good).`;
   const oneY = periodCoverage["1Y"];
-  if (matchedCoveragePct >= 99 && oneY >= Math.floor(universeCount * 0.95)) {
-    return "PROCEED: Stage-1 dry-run is clean across the matched universe and ≥95% have 1Y coverage. Recommend the next phase (3.2I) — same script with commit=true to land public/nav-history/{schemecode}.json for Stage 1, with the existing keep-last-good rule.";
+  const oneYok = matchedCoveragePct >= 99 && oneY >= Math.floor(universeCount * 0.95);
+  if (writeMode === "production") {
+    return production.attempted && production.wroteFiles === universeCount && production.manifestPath
+      ? `PROCEED: wrote ${production.wroteFiles}/${universeCount} per-fund files + manifest at ${production.manifestPath}. Stage-1 historical NAV is now on disk; commit step (gated on commit=true in the workflow) will land it on the branch.`
+      : `BLOCK: production write was skipped or partial (${production.skippedReason ?? "unknown"}); existing public/nav-history files were left untouched.`;
+  }
+  if (oneYok) {
+    return "PROCEED (dry-run): Stage-1 is clean across the matched universe and ≥95% have 1Y coverage. Recommend re-running with commit=true (NAV_HISTORY_WRITE_MODE=production) to land public/nav-history/{schemecode}.json for Stage 1.";
   }
   return `REVIEW: dry-run cleared guardrails (matchedCoveragePct=${matchedCoveragePct}%, 1Y coverage=${oneY}/${universeCount}), but the 1Y rate is below 95% of universe. Inspect fundsMissingHistorySample before promoting to a real backfill.`;
 }
 
 function printSummary(
-  v: { universeCount: number; windowsAttempted: number; windowsOk: number; windowsFailed: number; abortedEarly: boolean; totalValidRows: number; fundsWithAnyPoint: number; fundsMissingHistoryCount: number; matchedCoveragePct: number; periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number }; guardPass: boolean; guardFailures: string[] },
+  v: { writeMode: "dryrun" | "production"; universeCount: number; windowsAttempted: number; windowsOk: number; windowsFailed: number; abortedEarly: boolean; totalValidRows: number; fundsWithAnyPoint: number; fundsMissingHistoryCount: number; matchedCoveragePct: number; oneYCoveragePct: number; periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number }; guardPass: boolean; guardFailures: string[] },
   windows: WindowResult[],
   samples: Array<{ schemecode: string; fundName: string; path: string; points: number; firstDate: string | null; lastDate: string | null }>,
-  recommendation: string
+  recommendation: string,
+  production: { attempted: boolean; wroteFiles: number; manifestPath: string | null; skippedReason?: string; perFundWriteErrors: Array<{ schemecode: string; error: string }> }
 ): void {
-  info("======== STAGE-1 NAV HISTORY BACKFILL DRY-RUN SUMMARY =======");
+  info(`======== STAGE-1 NAV HISTORY BACKFILL SUMMARY (${v.writeMode.toUpperCase()}) =======`);
   info(`Universe matched funds: ${v.universeCount}`);
   info(`Windows: attempted=${v.windowsAttempted} ok=${v.windowsOk} failed=${v.windowsFailed} aborted=${v.abortedEarly} totalValidRows=${v.totalValidRows}`);
   for (const w of windows) {
@@ -702,8 +880,13 @@ function printSummary(
     info(`   ${w.index + 1}: ${w.windowFrom}→${w.windowTo} attempts=${w.attempts} HTTP=${w.httpStatus ?? "-"} ct=${w.contentType ?? "-"} bytes=${w.bytes ?? "-"} ${w.responseMs}ms · ${tag}`);
   }
   info(`Universe coverage: ${v.fundsWithAnyPoint}/${v.universeCount} = ${v.matchedCoveragePct}% have ≥1 point; missing=${v.fundsMissingHistoryCount}`);
-  info(`Period coverage (funds with availability): 1M=${v.periodCoverage["1M"]} 3M=${v.periodCoverage["3M"]} 6M=${v.periodCoverage["6M"]} 1Y=${v.periodCoverage["1Y"]}`);
+  info(`Period coverage (funds with availability): 1M=${v.periodCoverage["1M"]} 3M=${v.periodCoverage["3M"]} 6M=${v.periodCoverage["6M"]} 1Y=${v.periodCoverage["1Y"]} (1Y=${v.oneYCoveragePct}%)`);
   info(`Guardrails: ${v.guardPass ? "PASS" : "FAIL · " + v.guardFailures.join(" · ")}`);
+  info(`Production: attempted=${production.attempted} wroteFiles=${production.wroteFiles}${production.manifestPath ? ` manifest=${production.manifestPath}` : ""}${production.skippedReason ? ` · skipped: ${production.skippedReason}` : ""}`);
+  if (production.perFundWriteErrors.length > 0) {
+    info(`   per-fund write errors: ${production.perFundWriteErrors.length} (first 3 below)`);
+    for (const e of production.perFundWriteErrors.slice(0, 3)) info(`     ${e.schemecode}: ${e.error}`);
+  }
   for (const s of samples) info(`   sample ${s.schemecode}: ${s.fundName}  pts=${s.points} ${s.firstDate ?? "-"}..${s.lastDate ?? "-"} → ${s.path}`);
   info(`Recommendation: ${recommendation}`);
   info("=============================================================");
@@ -711,6 +894,6 @@ function printSummary(
 }
 
 main().catch((e) => {
-  warn(`nav-history backfill dry-run failed: ${(e as Error).message}`);
+  warn(`nav-history backfill failed: ${(e as Error).message}`);
   process.exit(1);
 });
