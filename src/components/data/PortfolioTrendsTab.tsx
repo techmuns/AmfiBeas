@@ -15,6 +15,15 @@ import mfLatestNav from "@/data/snapshots/mf-latest-nav.json";
 import mfReturns from "@/data/snapshots/mf-returns.json";
 import mfCategoryReturns from "@/data/snapshots/mf-category-returns.json";
 import mfHistoryManifest from "@/data/snapshots/mf-history-manifest.json";
+// Phase 3.10A: tiny bundled index of available daily index histories.
+// The per-index series itself is fetched at runtime, mirroring how fund
+// history is fetched (not bundled).
+import indexHistoryManifest from "@/data/snapshots/index-history-manifest.json";
+
+// Phase 3.10A: default benchmark for every scheme. Only NIFTY_500 is wired
+// here; the manifest already accepts more indices, so a future second
+// benchmark drops in without UI plumbing changes.
+const DEFAULT_BENCHMARK_ID = "NIFTY_500";
 
 type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y";
 // All selectable periods, smallest → largest. Order is also the render
@@ -107,6 +116,34 @@ interface HistoryFile {
   series: Array<[string, number]>;
 }
 
+// Phase 3.10A: shape of the daily index history file at
+// public/index-history/{indexId}.json — same [date, close] tuple series
+// as fund history, with index-flavoured meta.
+interface IndexHistoryFile {
+  meta: {
+    indexId: string;
+    name: string;
+    firstDate: string | null;
+    lastDate: string | null;
+    points: number;
+  };
+  series: Array<[string, number]>;
+}
+
+interface IndexHistoryManifestEntry {
+  indexId: string;
+  name: string;
+  firstDate: string | null;
+  lastDate: string | null;
+  points: number;
+  path: string;
+}
+interface IndexHistoryManifestShape {
+  stage: string;
+  generatedAt: string;
+  indices: IndexHistoryManifestEntry[];
+}
+
 // ---------------------------------------------------------------------------
 // Resolved snapshot lookups (Maps built once at module scope — the JSONs are
 // build-time imports, so these are computed during the first render and
@@ -123,6 +160,13 @@ const manifestByCode = new Map(
   (mfHistoryManifest as unknown as ManifestSnapshot).funds.map((f) => [f.schemecode, f]),
 );
 const HISTORY_STAGE = (mfHistoryManifest as unknown as ManifestSnapshot).stage;
+
+// Phase 3.10A: pluck the default benchmark from the bundled index manifest.
+// Null when the manifest doesn't list it — the UI degrades silently to the
+// pre-benchmark single-line behavior in that case.
+const INDEX_MANIFEST = indexHistoryManifest as unknown as IndexHistoryManifestShape;
+const DEFAULT_BENCHMARK_ENTRY: IndexHistoryManifestEntry | null =
+  INDEX_MANIFEST?.indices?.find((i) => i.indexId === DEFAULT_BENCHMARK_ID) ?? null;
 const categoryByCode = new Map(
   (mfCategoryReturns as unknown as CategorySnapshot).fundRanks.map((f) => [f.schemecode, f]),
 );
@@ -195,6 +239,12 @@ export function PortfolioTrendsTab({ schemecode, fundName }: PortfolioTrendsTabP
   const [history, setHistory] = useState<Record<string, HistoryFile>>({});
   const [historyErr, setHistoryErr] = useState<Record<string, true>>({});
   const [reloadNonce, setReloadNonce] = useState(0);
+  // Phase 3.10A: same on-demand pattern for the benchmark — fetched once
+  // (or per fund change is wasted; we key purely on the bundled manifest's
+  // presence). null until loaded, "errored" sentinel when the fetch failed
+  // so we don't retry every render. The chart degrades silently if the
+  // benchmark is missing — fund line still renders.
+  const [benchmark, setBenchmark] = useState<IndexHistoryFile | null | "errored">(null);
 
   const historyAvailable = Boolean(manifestRow?.available);
   const historyLoaded = history[schemecode];
@@ -219,6 +269,28 @@ export function PortfolioTrendsTab({ schemecode, fundName }: PortfolioTrendsTabP
     return () => ctrl.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schemecode, historyAvailable, reloadNonce]);
+
+  // Benchmark fetcher — runs once on mount when the manifest lists a path.
+  // Idempotent (state guard prevents refetch).
+  useEffect(() => {
+    if (!DEFAULT_BENCHMARK_ENTRY) return;
+    if (benchmark !== null) return;
+    const ctrl = new AbortController();
+    fetch(DEFAULT_BENCHMARK_ENTRY.path, { signal: ctrl.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json() as Promise<IndexHistoryFile>;
+      })
+      .then((data) => setBenchmark(data))
+      .catch((e: unknown) => {
+        if ((e as Error).name === "AbortError") return;
+        setBenchmark("errored");
+      });
+    return () => ctrl.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const benchmarkLoaded: IndexHistoryFile | null =
+    benchmark && benchmark !== "errored" ? benchmark : null;
 
   function retryHistory() {
     setHistoryErr((prev) => {
@@ -247,13 +319,67 @@ export function PortfolioTrendsTab({ schemecode, fundName }: PortfolioTrendsTabP
     ) ?? [];
   }, [returnRow]);
 
-  // Chart points for the selected timeframe.
+  // Chart points for the selected timeframe — fund series rebased to 100,
+  // optionally merged with the benchmark rebased to 100 at the same start
+  // anchor (nearest-prior on the benchmark series; never extrapolated).
   const chartPoints = useMemo<NavPerformancePoint[]>(() => {
     if (!historyLoaded || !period) return [];
     const r = returnRow?.returns[period];
     if (!r) return [];
-    return rebaseSeries(historyLoaded.series, r.startDate);
-  }, [historyLoaded, period, returnRow]);
+    const fundPoints = rebaseSeries(historyLoaded.series, r.startDate);
+    if (!benchmarkLoaded || fundPoints.length === 0) return fundPoints;
+    const benchPoints = rebaseSeriesNearestPrior(benchmarkLoaded.series, r.startDate);
+    if (benchPoints.length === 0) return fundPoints;
+    // Merge by date: each fund point picks up its same-date benchmark value
+    // when one exists. Benchmark may end before the fund (CSV data lag);
+    // those tail dates get no `benchmarkRebased` and the dashed line ends.
+    const benchByDate = new Map<string, number>();
+    for (const b of benchPoints) benchByDate.set(b.date, b.rebased);
+    return fundPoints.map((p) =>
+      benchByDate.has(p.date) ? { ...p, benchmarkRebased: benchByDate.get(p.date) } : p,
+    );
+  }, [historyLoaded, period, returnRow, benchmarkLoaded]);
+
+  // Benchmark anchor (for the chart's tooltip header) — nearest-prior on
+  // the index series at the fund's start anchor. Null when unavailable.
+  const benchmarkAnchor = useMemo<{ date: string; level: number } | null>(() => {
+    if (!benchmarkLoaded || !period || !returnRow) return null;
+    const r = returnRow.returns[period];
+    if (!r) return null;
+    const a = nearestPriorIndex(benchmarkLoaded.series, r.startDate);
+    return a;
+  }, [benchmarkLoaded, period, returnRow]);
+
+  // Per-period benchmark returns for the KPI delta sub-line. Uses the same
+  // formula as the fund return: simple for 1M/3M/6M/1Y, CAGR for 3Y/5Y
+  // (same `years` value as the fund row, so deltas are like-with-like).
+  // Returns null per period when:
+  //   • benchmark not loaded, OR
+  //   • benchmark doesn't have a point on/before the fund's startDate, OR
+  //   • benchmark doesn't have a point on/before the fund's endDate (its
+  //     series ends before the fund's end — we never extrapolate).
+  const benchmarkReturnsByPeriod = useMemo<Partial<Record<PeriodKey, number>>>(() => {
+    const out: Partial<Record<PeriodKey, number>> = {};
+    if (!benchmarkLoaded || !returnRow) return out;
+    for (const p of PERIODS) {
+      const r = returnRow.returns[p];
+      if (!r) continue;
+      const start = nearestPriorIndex(benchmarkLoaded.series, r.startDate);
+      const end = nearestPriorIndex(benchmarkLoaded.series, r.endDate);
+      if (!start || !end) continue;
+      if (start.level <= 0 || end.level <= 0) continue;
+      if (r.kind === "cagr") {
+        const years = (r as { years: number }).years;
+        if (!Number.isFinite(years) || years <= 0) continue;
+        const ratio = end.level / start.level;
+        if (!(ratio > 0)) continue;
+        out[p] = (Math.pow(ratio, 1 / years) - 1) * 100;
+      } else {
+        out[p] = (end.level / start.level - 1) * 100;
+      }
+    }
+    return out;
+  }, [benchmarkLoaded, returnRow]);
 
   // ---- Render --------------------------------------------------------------
 
@@ -279,6 +405,7 @@ export function PortfolioTrendsTab({ schemecode, fundName }: PortfolioTrendsTabP
     (mfLatestNav as unknown as LatestSnapshot).feedDate,
     manifestRow,
     historyAvailable,
+    benchmarkLoaded,
   );
 
   return (
@@ -289,7 +416,13 @@ export function PortfolioTrendsTab({ schemecode, fundName }: PortfolioTrendsTabP
         freshness={freshnessLine}
       />
 
-      <KpiRow returnRow={returnRow} categoryRow={categoryRow} latestRow={latestRow} />
+      <KpiRow
+        returnRow={returnRow}
+        categoryRow={categoryRow}
+        latestRow={latestRow}
+        benchmarkReturnsByPeriod={benchmarkReturnsByPeriod}
+        benchmarkLabel={DEFAULT_BENCHMARK_ENTRY?.name ?? null}
+      />
 
       <TimeframeSelector
         period={period}
@@ -306,6 +439,15 @@ export function PortfolioTrendsTab({ schemecode, fundName }: PortfolioTrendsTabP
           historyErrored={!!historyErrored}
           points={chartPoints}
           onRetry={retryHistory}
+          benchmark={
+            benchmarkLoaded && benchmarkAnchor
+              ? {
+                  label: benchmarkLoaded.meta.name,
+                  anchorDate: benchmarkAnchor.date,
+                  anchorLevel: benchmarkAnchor.level,
+                }
+              : null
+          }
         />
       ) : (
         <div className="rounded-md border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">
@@ -387,6 +529,7 @@ function buildFreshnessLine(
   feedDate: string,
   manifestRow: ManifestFund | undefined,
   historyAvailable: boolean,
+  benchmarkLoaded: IndexHistoryFile | null,
 ): string {
   const parts: string[] = [`NAV as of ${formatDMY(feedDate)}`];
   if (historyAvailable && manifestRow?.firstDate && manifestRow.lastDate) {
@@ -396,7 +539,17 @@ function buildFreshnessLine(
   } else {
     parts.push(`History: pending Stage-${HISTORY_STAGE} backfill for this fund`);
   }
-  parts.push("Source: AMFI historical + AMFI latest NAV");
+  // Phase 3.10A: benchmark coverage. Only added when the benchmark loaded
+  // and reports a lastDate — silently dropped otherwise so the banner
+  // doesn't get noisy.
+  if (benchmarkLoaded?.meta.lastDate) {
+    parts.push(`${benchmarkLoaded.meta.name} through ${formatIsoDate(benchmarkLoaded.meta.lastDate)}`);
+  }
+  parts.push(
+    benchmarkLoaded
+      ? "Source: AMFI historical + AMFI latest NAV + NSE historical CSV"
+      : "Source: AMFI historical + AMFI latest NAV",
+  );
   return parts.join(" · ");
 }
 
@@ -408,10 +561,14 @@ function KpiRow({
   returnRow,
   categoryRow,
   latestRow,
+  benchmarkReturnsByPeriod,
+  benchmarkLabel,
 }: {
   returnRow: ReturnsFund;
   categoryRow: CategoryFundRank | undefined;
   latestRow: LatestFund | undefined;
+  benchmarkReturnsByPeriod: Partial<Record<PeriodKey, number>>;
+  benchmarkLabel: string | null;
 }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
@@ -422,6 +579,8 @@ function KpiRow({
           period={p}
           returnRow={returnRow}
           fundRank={categoryRow}
+          benchmarkReturn={benchmarkReturnsByPeriod[p]}
+          benchmarkLabel={benchmarkLabel}
         />
       ))}
     </div>
@@ -456,10 +615,14 @@ function ReturnKpiCard({
   period,
   returnRow,
   fundRank,
+  benchmarkReturn,
+  benchmarkLabel,
 }: {
   period: PeriodKey;
   returnRow: ReturnsFund;
   fundRank: CategoryFundRank | undefined;
+  benchmarkReturn: number | undefined;
+  benchmarkLabel: string | null;
 }) {
   const r = returnRow.returns[period];
   const e = fundRank?.periodRanks[period];
@@ -476,6 +639,36 @@ function ReturnKpiCard({
           ? "text-negative"
           : "";
   const isCagr = period === "3Y" || period === "5Y";
+  // Phase 3.10A: excess in percentage points = fund return − benchmark return.
+  // Computed on the same start/end anchors (with CAGR sharing the fund row's
+  // `years`), so subtraction is apples-to-apples. Null when the fund has no
+  // return OR the benchmark series didn't cover the period (we never
+  // extrapolate); the sub-line shows "—" in that case.
+  const excessPp =
+    value !== null && typeof benchmarkReturn === "number" && Number.isFinite(benchmarkReturn)
+      ? value - benchmarkReturn
+      : null;
+  const benchSubLine = benchmarkLabel ? (
+    <div className="mt-0.5 text-[10px] tabular text-muted-foreground/80">
+      vs {benchmarkLabel}:{" "}
+      {excessPp === null ? (
+        "—"
+      ) : (
+        <span
+          className={
+            excessPp > 0
+              ? "text-positive"
+              : excessPp < 0
+                ? "text-negative"
+                : ""
+          }
+        >
+          {excessPp > 0 ? "+" : ""}
+          {excessPp.toFixed(1)}pp
+        </span>
+      )}
+    </div>
+  ) : null;
   return (
     <div className="rounded-lg border bg-card px-4 py-3">
       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
@@ -510,6 +703,7 @@ function ReturnKpiCard({
           —
         </div>
       )}
+      {benchSubLine}
     </div>
   );
 }
@@ -584,6 +778,7 @@ function ChartSlot({
   historyErrored,
   points,
   onRetry,
+  benchmark,
 }: {
   period: PeriodKey;
   returnRow: ReturnsFund;
@@ -592,6 +787,7 @@ function ChartSlot({
   historyErrored: boolean;
   points: NavPerformancePoint[];
   onRetry: () => void;
+  benchmark: { label: string; anchorDate: string; anchorLevel: number } | null;
 }) {
   const r = returnRow.returns[period];
   if (!historyAvailable) {
@@ -659,7 +855,14 @@ function ChartSlot({
         data={points}
         anchorDate={r.startDate}
         anchorNav={r.startNav}
+        benchmark={benchmark ?? undefined}
       />
+      {benchmark && (
+        <div className="mt-1 px-1 text-[10px] tabular text-muted-foreground/80">
+          Dashed line: {benchmark.label} rebased to 100 from{" "}
+          {formatIsoDate(benchmark.anchorDate)} · {benchmark.anchorLevel.toFixed(2)}
+        </div>
+      )}
     </div>
   );
 }
@@ -802,6 +1005,41 @@ function rebaseSeries(
     const [date, nav] = series[i];
     if (typeof nav !== "number" || !Number.isFinite(nav) || nav <= 0) continue;
     out.push({ date, nav, rebased: (nav / anchor[1]) * 100 });
+  }
+  return out;
+}
+
+/** Phase 3.10A: nearest-prior lookup on an ascending [date, value] series.
+ *  Returns the LAST point with date <= target, or null when target predates
+ *  the whole series. Used to align the benchmark to the fund's start anchor
+ *  even when NSE didn't trade on the exact same calendar day as AMFI. */
+function nearestPriorIndex(
+  series: Array<[string, number]>,
+  target: string,
+): { date: string; level: number } | null {
+  for (let i = series.length - 1; i >= 0; i--) {
+    if (series[i][0] <= target) return { date: series[i][0], level: series[i][1] };
+  }
+  return null;
+}
+
+/** Rebase the benchmark to 100 at nearest-prior(target). Mirrors
+ *  rebaseSeries but uses the value at the nearest-prior anchor (not the
+ *  first on-or-after) so the benchmark line starts at exactly 100 next to
+ *  the fund line on the same chart. Points before the anchor are dropped.
+ *  Returns an empty array when no point on/before target exists. */
+function rebaseSeriesNearestPrior(
+  series: Array<[string, number]>,
+  startDate: string,
+): NavPerformancePoint[] {
+  const anchor = nearestPriorIndex(series, startDate);
+  if (!anchor || anchor.level <= 0) return [];
+  const out: NavPerformancePoint[] = [];
+  for (let i = 0; i < series.length; i++) {
+    const [date, level] = series[i];
+    if (date < anchor.date) continue;
+    if (typeof level !== "number" || !Number.isFinite(level) || level <= 0) continue;
+    out.push({ date, nav: level, rebased: (level / anchor.level) * 100 });
   }
   return out;
 }

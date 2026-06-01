@@ -20,6 +20,7 @@
     "ingest:amfi-pdf": "tsx scripts/ingest/amfi-monthly-pdf.ts",
     "ingest:amfi-quarterly-pdf": "tsx scripts/ingest/amfi-quarterly-pdf.ts",
     "ingest:market-indices": "tsx scripts/ingest/market-indices.ts",
+    "ingest:index:backfill": "tsx scripts/ingest/index-history-backfill.ts",
     "ingest:amc-narratives": "tsx scripts/ingest/amc-narratives.ts",
     "ingest:amfi-aaum-pdf-backfill": "tsx scripts/ingest/amfi-aaum-pdf-backfill.ts",
     "ingest:amfi-sip-backfill": "tsx scripts/ingest/amfi-sip-contribution-backfill.ts"

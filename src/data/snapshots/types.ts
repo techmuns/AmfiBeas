@@ -812,3 +812,55 @@ export interface MarketIndexMonthlySnapshot {
   meta: SnapshotMeta;
   rows: MarketIndexMonthlyRow[];
 }
+
+// ---------------------------------------------------------------------------
+// Daily index history (Phase 3.10A) — separate from the month-end snapshot
+// above. The Trends UI consumes the per-index history file shape; the
+// manifest is a tiny index of available indices (mirrors mf-history-manifest
+// for funds).
+// ---------------------------------------------------------------------------
+
+export interface MarketIndexHistoryFile {
+  meta: {
+    /** Stable identifier, e.g. "NIFTY_500". */
+    indexId: string;
+    /** Display name, e.g. "Nifty 500". */
+    name: string;
+    /** Free-form source attribution, e.g. "NSE historical CSV". */
+    source: string;
+    /** Stage tag for this file's origin. Phase 3.10A writes
+     *  "csv-backfill"; later phases (3.10B/C/D) will emit
+     *  "csv-backfill+forward" or similar. Kept as a string so the
+     *  index pipeline does not have to share the numeric stage taxonomy
+     *  of the fund pipeline. */
+    stage: string;
+    generatedAt: string;
+    firstDate: string | null;
+    lastDate: string | null;
+    points: number;
+    provenance?: {
+      csvDir?: string;
+      csvFiles?: Array<{ file: string; rows: number; firstDate: string | null; lastDate: string | null }>;
+      parser?: string;
+      notes?: string;
+    };
+  };
+  /** Ascending [isoDate, close] tuples. */
+  series: Array<[string, number]>;
+}
+
+export interface MarketIndexHistoryManifestEntry {
+  indexId: string;
+  name: string;
+  firstDate: string | null;
+  lastDate: string | null;
+  points: number;
+  /** Public path served as a static asset, e.g. "/index-history/NIFTY_500.json". */
+  path: string;
+}
+
+export interface MarketIndexHistoryManifest {
+  stage: string;
+  generatedAt: string;
+  indices: MarketIndexHistoryManifestEntry[];
+}
