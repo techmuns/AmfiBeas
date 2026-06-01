@@ -106,10 +106,10 @@ function amcOf(fund: string): string {
 // Our curated sector taxonomy -> the named buckets shown on the chart. Any
 // sector not listed (Services, Consumer Durables, Construction, Cement, Media,
 // Agri, Textiles, Diversified, Overseas, Mutual Fund, Unclassified) folds into
-// "Others". NOTE: our fincode map carries a combined "Financials" bucket, so —
-// unlike the IIFL figure — Banks and other Finance are not split apart.
+// "Others". The map's combined "Financials" bucket is split into Banks vs
+// Finance by company name (see `isBank` below) to mirror the IIFL figure's
+// separate Bank and Finance segments.
 const SECTOR_LABELS: Record<string, string> = {
-  Financials: "Financials",
   Technology: "IT",
   Energy: "Oil & Energy",
   "Automobile and Ancillaries": "Auto",
@@ -121,9 +121,16 @@ const SECTOR_LABELS: Record<string, string> = {
   Realty: "Realty",
 };
 const OTHERS = "Others";
+const BANKS = "Banks";
+const FINANCE = "Finance";
+/** Within the map's "Financials" bucket, holdings whose name carries the word
+ *  "bank" are licensed banks (incl. small-finance banks); everything else
+ *  (NBFCs, insurers, AMCs, exchanges, housing finance) is non-bank Finance. */
+const isBank = (name: string) => /\bbank\b/i.test(name);
 // Display order, largest-first across the industry, with Others pinned last.
 const SECTOR_ORDER = [
-  "Financials",
+  BANKS,
+  FINANCE,
   "IT",
   "Oil & Energy",
   "Auto",
@@ -195,7 +202,12 @@ function main() {
 
       const tier = classifyCap(r.company_name);
       const rawSector = classifySector(r.fincode, r.company_name);
-      const bucket = SECTOR_LABELS[rawSector] ?? OTHERS;
+      const bucket =
+        rawSector === "Financials"
+          ? isBank(r.company_name)
+            ? BANKS
+            : FINANCE
+          : SECTOR_LABELS[rawSector] ?? OTHERS;
       if (rawSector === "Unclassified") unclassifiedSector += val;
       totalEquity += val;
 
@@ -246,7 +258,7 @@ function main() {
       capTiers: CAP_TIERS,
       sectorOrder: SECTOR_ORDER,
       sectorTaxonomyNote:
-        "Sector buckets derive from a curated fincode map with a combined Financials bucket, so Banks are not split from other Finance.",
+        "Sector buckets derive from a curated fincode map; its combined Financials bucket is split into Banks (licensed banks, incl. small-finance) and Finance (NBFCs, insurers, AMCs, exchanges) by company name.",
       sectorCoveragePct: round1(100 * (1 - unclassifiedSector / (totalEquity || 1))),
     },
     cap,

@@ -23,8 +23,10 @@ const CAP_SEGMENTS: AllocationSegment[] = [
 
 // One distinct colour per sector bucket; Others is a mid-grey so its (large)
 // label still reads in white. Keys must match `sectorOrder` in the snapshot.
+// Banks + Finance share a blue family — the two halves of the old Financials.
 const SECTOR_SEGMENTS: AllocationSegment[] = [
-  { key: "Financials", label: "Financials", color: "hsl(222 64% 44%)" },
+  { key: "Banks", label: "Banks", color: "hsl(222 64% 44%)" },
+  { key: "Finance", label: "Finance", color: "hsl(210 60% 62%)" },
   { key: "IT", label: "IT", color: "hsl(265 48% 54%)" },
   { key: "Oil & Energy", label: "Oil & Energy", color: "hsl(28 80% 50%)" },
   { key: "Auto", label: "Auto", color: "hsl(152 52% 38%)" },
@@ -69,7 +71,7 @@ export function AmcAllocationCharts() {
         action={
           <InfoTooltip
             size="sm"
-            label="Each AMC's equity book split by sector, weighted by holding value and normalised to 100%. Sectors not in the named set fold into Others. Note: the underlying map uses a combined Financials bucket, so Banks are not split out separately as in the IIFL figure."
+            label="Each AMC's equity book split by sector, weighted by holding value and normalised to 100%. Sectors not in the named set fold into Others. Banks (incl. small-finance banks) are shown separately from non-bank Finance — NBFCs, insurers, AMCs and exchanges."
           />
         }
       >
@@ -80,8 +82,8 @@ export function AmcAllocationCharts() {
         />
         <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
           {sourceCaption} {amcAllocationsMeta.sectorCoveragePct}% of equity value
-          maps to a named sector; the rest sits in Others. Financials combines
-          Banks and other Finance.
+          maps to a named sector; the rest sits in Others. Banks are split from
+          non-bank Finance by company name.
         </p>
       </Card>
     </div>
