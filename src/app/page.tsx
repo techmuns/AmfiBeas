@@ -75,6 +75,15 @@ export default function HomePage() {
       <section className="space-y-3">
         <div>
           <h2 className="text-sm font-medium tracking-tight">
+            What mutual funds are buying &amp; selling
+          </h2>
+        </div>
+        <CapFlowsView flows={capFlows} />
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-sm font-medium tracking-tight">
             Sector Read · Buy-side AMC view
           </h2>
         </div>
@@ -204,15 +213,6 @@ export default function HomePage() {
           <IndustryNarrative facts={narrative} />
         </section>
       )}
-
-      <section className="space-y-3">
-        <div>
-          <h2 className="text-sm font-medium tracking-tight">
-            What mutual funds are buying &amp; selling
-          </h2>
-        </div>
-        <CapFlowsView flows={capFlows} />
-      </section>
     </div>
   );
 }

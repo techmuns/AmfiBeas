@@ -55,12 +55,12 @@ function FlowCard({
       </div>
       <table className="w-full border-collapse text-sm">
         <thead>
-          <tr className="text-xs text-muted-foreground">
-            <th className="px-4 py-2 text-left font-medium">Company</th>
-            <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
+          <tr className="text-sm font-semibold text-foreground">
+            <th className="px-4 py-2 text-left font-semibold">Company</th>
+            <th className="whitespace-nowrap px-3 py-2 text-right font-semibold">
               {valHead}
             </th>
-            <th className="px-4 py-2 text-left font-medium">{movers}</th>
+            <th className="px-4 py-2 text-left font-semibold">{movers}</th>
           </tr>
         </thead>
         <tbody>
@@ -127,10 +127,6 @@ export function CapFlowsView({ flows }: { flows: CapFlows }) {
           </div>
         </div>
       ))}
-
-      <p className="max-w-3xl text-xs text-muted-foreground">
-        {meta.universe}; {meta.activeEquityFunds} schemes. {meta.metric}
-      </p>
     </div>
   );
 }
