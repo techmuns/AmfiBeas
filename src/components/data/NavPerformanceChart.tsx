@@ -2,8 +2,8 @@
 
 import {
   Area,
-  AreaChart,
   CartesianGrid,
+  ComposedChart,
   Line,
   ResponsiveContainer,
   Tooltip,
@@ -94,7 +94,13 @@ export function NavPerformanceChart({
         </div>
       )}
       <ResponsiveContainer width="100%" height={height}>
-        <AreaChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+        {/* ComposedChart (not AreaChart) so the benchmark <Line> renders
+            reliably alongside the fund <Area>. Recharts' AreaChart
+            silently mis-renders Line children on some versions; the
+            canonical container for mixed Area+Line series is
+            ComposedChart. Drop-in compatible — every other prop /
+            child stays unchanged. */}
+        <ComposedChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="navPerformanceFill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={color} stopOpacity={0.32} />
@@ -163,7 +169,7 @@ export function NavPerformanceChart({
               connectNulls={true}
             />
           )}
-        </AreaChart>
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   );
