@@ -37,8 +37,6 @@ import {
   snapshotSectionRead,
   latestIndustryFolioAdditions,
   latestProvenanceFor,
-  activeEquityAumBridgeSnapshot,
-  monthlyActiveEquityAumBridge,
   monthlyActiveEquityShareTrend,
   monthlyActivePassiveTrend,
   monthlyEquityBreakdown,
@@ -57,12 +55,10 @@ import {
   historicalEpisodes,
   latestNifty500Row,
   marketIndexRows,
-  niftyFlowImpactTable,
   weatherBadge,
 } from "@/data/market-indices";
 import { BarsWithIndexLine } from "@/components/charts/BarsWithIndexLine";
 import { BarsWithLabels } from "@/components/charts/BarsWithLabels";
-import { NiftyFlowImpactTable } from "@/components/data/NiftyFlowImpactTable";
 import { SankeyFlow } from "@/components/charts/SankeyFlow";
 import { PassiveShareInEquity } from "@/components/amc/PassiveShareInEquity";
 import { CalendarHeatGrid } from "@/components/ui/CalendarHeatGrid";
@@ -90,7 +86,6 @@ import {
 import { topAumMarketShareSeries } from "@/data/amc-peer-universe";
 import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
 import { GroupedBars } from "@/components/charts/GroupedBars";
-import { BridgeStrip } from "@/components/charts/BridgeStrip";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { MonthPicker } from "@/components/filters/MonthPicker";
 import {
@@ -1317,12 +1312,6 @@ export default async function MonthlyPage({
   // AUM as a % of Total AUM. Gross-inflow share is intentionally
   // dropped: the monthly snapshot only carries net flow, gross
   // (Funds Mobilized) lives on the quarterly snapshot.
-  // Active Equity AUM Bridge — kept for the Flows tab. The standalone
-  // Active Equity Net Inflows chart was replaced with the IIFL Figure 4
-  // composite below.
-  const activeEquityBridge = monthlyActiveEquityAumBridge(24);
-  const activeEquityBridgeStrip = activeEquityAumBridgeSnapshot(12);
-
   // ---- IIFL-style "MF Flows — Risk of Slowdown" (Figures 4-7) ---------
   // Composite data feeding the new combined section. Single-pass setup so
   // the JSX below stays declarative.
@@ -1332,7 +1321,6 @@ export default async function MonthlyPage({
     value: p.activeEquityNetInflow,
     line: p.niftyLevel,
   }));
-  const niftyFlowImpactRows = niftyFlowImpactTable(-7);
   const sipGrossShareSeries = monthlySipGrossShareTrend(72);
   const sipGrossShareChartData = sipGrossShareSeries.map((p) => ({
     label: p.month,
@@ -1366,45 +1354,8 @@ export default async function MonthlyPage({
   })();
   const hasMfFlowsSlowdownSection =
     activeEquityWithNiftyChartData.length > 0 ||
-    niftyFlowImpactRows.length > 0 ||
     sipGrossShareSeries.length > 0 ||
     sipAccountsChartData.length > 0;
-
-  // Active Equity AUM Bridge — single-series chartInsights doesn't
-  // map cleanly to a 2-series bridge. We surface the analytical
-  // denominator as "market impact made up X% of the latest ΔAUM"
-  // and run insights on the synthetic ΔAUM series so the strip
-  // still reads as a coherent narrative about the bridge.
-  const activeEquityBridgeDenomCaption = (() => {
-    if (activeEquityBridge.length === 0) return undefined;
-    const latest = activeEquityBridge[activeEquityBridge.length - 1];
-    const net = latest.netInflow;
-    const mkt = latest.marketResidual;
-    if (typeof net !== "number" || typeof mkt !== "number") return undefined;
-    const total = Math.abs(net) + Math.abs(mkt);
-    if (total === 0) return undefined;
-    const mktPct = (Math.abs(mkt) / total) * 100;
-    return `Market impact = ${mktPct.toFixed(0)}% of latest ΔAUM magnitude · ${latest.month}`;
-  })();
-  const activeEquityBridgeDeltaSeries = activeEquityBridge
-    .filter(
-      (r) =>
-        typeof r.netInflow === "number" && typeof r.marketResidual === "number"
-    )
-    .map((r) => ({
-      label: r.month,
-      value: (r.netInflow as number) + (r.marketResidual as number),
-    }));
-  const activeEquityBridgeInsights = chartInsights(
-    activeEquityBridgeDeltaSeries,
-    {
-      metricName: "ΔAUM",
-      unitSuffix: "₹ Cr",
-      drawdownByLabel: ddByMonthForInsights,
-      cyclePhaseByLabel: cyclePhaseByMonth,
-      episodeAnchors: episodeAnchorsForInsights,
-    }
-  );
 
   // Proportion diagnostics: category rotation, NFO drag, passive flow share.
   // Each renders independently under its own tab now (rotation in categories,
@@ -2073,58 +2024,6 @@ export default async function MonthlyPage({
             </Card>
           )}
 
-          {niftyFlowImpactRows.length > 0 && (
-            <Card
-              title="In each correction, 4-month-or-longer Nifty declines have led to meaningful slowdowns in subsequent average monthly net inflows"
-            >
-              <NiftyFlowImpactTable rows={niftyFlowImpactRows} />
-              <p className="mt-3 text-[11px] text-muted-foreground">
-                Each row pairs a Nifty 500 peak-to-trough underperformance
-                window (≥ 7% decline) with the average monthly active-equity
-                net inflow over the period that followed, compared against a
-                same-length window before the correction. Negative values are
-                shown in parentheses.
-              </p>
-            </Card>
-          )}
-
-          {activeEquityBridgeStrip && (
-            <ChartWithContext
-              title="Active Equity AUM Bridge"
-              subtitle="How active-equity AAUM moved this window: opening → net flow → market → closing."
-              flowKind="gross"
-              denominatorCaption={(() => {
-                const span = `${activeEquityBridgeStrip.windowMonths}-month window`;
-                return activeEquityBridgeDenomCaption
-                  ? `${span} · ${activeEquityBridgeDenomCaption}`
-                  : span;
-              })()}
-              denominatorTooltip="Net flow vs market / residual share of the trailing-window ΔAUM — tells you whether AAUM growth was driven by money in or by mark-to-market."
-              insights={activeEquityBridgeInsights}
-              yoyBadge={(() => {
-                const v = latestYoyPct(activeEquityBridgeDeltaSeries, 12);
-                return v === null ? undefined : { label: "ΔAUM YoY", pct: v };
-              })()}
-            >
-                <BridgeStrip
-                  data={{
-                    startLabel: activeEquityBridgeStrip.startMonth,
-                    endLabel: activeEquityBridgeStrip.endMonth,
-                    openingValue: activeEquityBridgeStrip.openingAum,
-                    netFlowContribution: activeEquityBridgeStrip.netInflowTotal,
-                    marketResidualContribution:
-                      activeEquityBridgeStrip.marketResidualTotal,
-                    closingValue: activeEquityBridgeStrip.closingAum,
-                    sparkline: activeEquityBridgeStrip.deltaSparkline,
-                    subject: "Active Equity AAUM",
-                  }}
-                />
-                <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  Market / residual = ΔAUM − net inflow, summed across the window.
-                  <InfoTooltip label="Captures mark-to-market and minor reclassification effects on the active-equity envelope. AUM uses month-end values." />
-                </p>
-              </ChartWithContext>
-            )}
         </div>
       )}
 
