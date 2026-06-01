@@ -49,6 +49,11 @@ interface BarsWithIndexLineProps {
   /** When set, fixes the right-axis domain (useful for share lines that
    *  should always render 0-100% scale even when values are tight). */
   lineDomain?: [number, number];
+  /** Explicit tick positions for the right axis. Pair with a padded
+   *  `lineDomain` so a capped line (e.g. a share that tops out at 100%)
+   *  clears the top edge instead of riding it, while the tick labels stay
+   *  clean (0 / 25 / 50 / 75 / 100). */
+  lineTicks?: number[];
   showLegend?: boolean;
 }
 
@@ -74,6 +79,7 @@ export function BarsWithIndexLine({
   barName = "Value",
   lineName = "Line",
   lineDomain,
+  lineTicks,
   showLegend = true,
 }: BarsWithIndexLineProps) {
   const fmtBarValue = valueFormatter(valueFormat);
@@ -120,6 +126,7 @@ export function BarsWithIndexLine({
           yAxisId="right"
           orientation="right"
           domain={lineDomain}
+          ticks={lineTicks}
           tickFormatter={fmtLineAxis}
           stroke="hsl(var(--muted-foreground))"
           fontSize={11}

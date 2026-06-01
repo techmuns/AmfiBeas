@@ -54,7 +54,6 @@ import {
   historicalEpisodes,
   latestNifty500Row,
   marketIndexRows,
-  weatherBadge,
 } from "@/data/market-indices";
 import { BarsWithIndexLine } from "@/components/charts/BarsWithIndexLine";
 import { BarsWithLabels } from "@/components/charts/BarsWithLabels";
@@ -69,7 +68,6 @@ import { EpisodeReplayStrip } from "@/components/ui/EpisodeReplayStrip";
 import { KeyTakeaway, DeltaCr } from "@/components/ui/KeyTakeaway";
 import { StickyContextFooter } from "@/components/ui/StickyContextFooter";
 import { LensToggle } from "@/components/ui/LensToggle";
-import { WeatherBadge } from "@/components/ui/WeatherBadge";
 import {
   IIFL_ACTIVE_EQUITY_CATEGORIES,
   IIFL_TREND_EXPANDED_SLUGS,
@@ -91,7 +89,6 @@ import {
   formatCompactCrSafe,
   formatCroreCountSafe,
   formatLakhSafe,
-  formatMonthLabel,
   formatPercentile,
 } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -1197,26 +1194,6 @@ export default async function MonthlyPage({
     // Display in millions to match IIFL Fig 7 (e.g. 94.4mn).
     value: p.value / 1e6,
   }));
-  const latestSipShareOfGross = (() => {
-    for (let i = sipGrossShareSeries.length - 1; i >= 0; i--) {
-      const v = sipGrossShareSeries[i].sipShareOfGrossPct;
-      if (typeof v === "number") {
-        return { month: sipGrossShareSeries[i].month, pct: v };
-      }
-    }
-    return null;
-  })();
-  const latestSipAccountsMn = (() => {
-    if (sipAccountsChartData.length === 0) return null;
-    const last = sipAccountsChartData[sipAccountsChartData.length - 1];
-    const prev =
-      sipAccountsChartData.length > 1
-        ? sipAccountsChartData[sipAccountsChartData.length - 2]
-        : null;
-    const momPct =
-      prev && prev.value !== 0 ? ((last.value - prev.value) / prev.value) * 100 : null;
-    return { month: last.label, value: last.value, momPct };
-  })();
   const hasMfFlowsSlowdownSection =
     activeEquityWithNiftyChartData.length > 0 ||
     sipGrossShareSeries.length > 0 ||
@@ -1231,8 +1208,8 @@ export default async function MonthlyPage({
   // describe the same set of months that are actually plotted.
   const passiveFlowShare = passiveFlowShareTrend(120, { sanitize: true });
 
-  // The headline active-equity flow signal — feeds the weather badge
-  // and the market-tape / sticky context footer at the foot of the page.
+  // The headline active-equity flow signal — feeds the market-tape /
+  // sticky context footer at the foot of the page.
   const activeEquitySignal = activeEquityNetInflowSignal();
   const latestNifty = latestNifty500Row();
   const cyclePhasePoints = cyclePhaseHistory();
@@ -1376,11 +1353,6 @@ export default async function MonthlyPage({
     cyclePhasePoints.length > 0
       ? cyclePhasePoints[cyclePhasePoints.length - 1].phase
       : null;
-  const weather = weatherBadge({
-    drawdownPct: latestNifty?.drawdownPct ?? null,
-    flowZScore: activeEquitySignal?.zScore ?? null,
-    cyclePhase: latestCyclePhase,
-  });
   // Section reads — short data-driven 1-liners surfaced under
   // each section title.
   const snapshotRead = snapshotSectionRead();
@@ -1436,7 +1408,6 @@ export default async function MonthlyPage({
         tabs={MONTHLY_TABS}
         activeId={activeTab}
         searchParams={sp}
-        action={<WeatherBadge headline={weather.headline} tone={weather.tone} />}
       />
 
       {activeTab === "flows" && sankeyData && (() => {
@@ -1711,11 +1682,7 @@ export default async function MonthlyPage({
           <section className="space-y-4">
             {sipGrossShareSeries.length > 0 && (
               <Card
-                title={
-                  latestSipShareOfGross
-                    ? `SIP flows as % of Gross Inflows have risen to ${latestSipShareOfGross.pct.toFixed(0)}% as of ${formatMonthLabel(latestSipShareOfGross.month)}`
-                    : "SIP flows vs Industry Gross Inflows"
-                }
+                title="SIP flows vs Industry Gross Inflows"
               >
                 <BarsWithIndexLine
                   data={sipGrossShareChartData}
@@ -1728,7 +1695,8 @@ export default async function MonthlyPage({
                   labelFormat="month"
                   barName="SIP Flows (₹ Cr)"
                   lineName="SIP Flows as % of gross Inflows (RHS)"
-                  lineDomain={[0, 100]}
+                  lineDomain={[0, 110]}
+                  lineTicks={[0, 25, 50, 75, 100]}
                 />
                 <p className="mt-2 text-[11px] text-muted-foreground">
                   Bars: monthly SIP contribution (₹ Cr, left axis). Line:
@@ -1818,17 +1786,7 @@ export default async function MonthlyPage({
 
             {sipAccountsChartData.length > 0 && (
               <Card
-                title={
-                  latestSipAccountsMn
-                    ? `SIP contributing accounts ${
-                        latestSipAccountsMn.momPct === null
-                          ? "stood at"
-                          : latestSipAccountsMn.momPct >= 0
-                            ? `were up ${latestSipAccountsMn.momPct.toFixed(0)}% mom in`
-                            : `were down ${Math.abs(latestSipAccountsMn.momPct).toFixed(0)}% mom in`
-                      } ${formatMonthLabel(latestSipAccountsMn.month)} to ${latestSipAccountsMn.value.toFixed(1)}mn`
-                    : "SIP Active contributing accounts (mn)"
-                }
+                title="SIP Active contributing accounts (mn)"
               >
                 <BarsWithLabels
                   data={sipAccountsChartData}
