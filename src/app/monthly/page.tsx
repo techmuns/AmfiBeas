@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/Card";
 import { HowToRead } from "@/components/ui/HowToRead";
 import { ChartTypeToggle } from "@/components/ui/ChartTypeToggle";
 import { BarsWithGrowth } from "@/components/charts/BarsWithGrowth";
-import { StackedBarsWithGrowth } from "@/components/charts/StackedBarsWithGrowth";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import {
   adaptiveAverageOverlay,
@@ -242,11 +241,9 @@ export default async function MonthlyPage({
       : "share";
   const monthlyFlowsLens: "absolute" | "share" =
     sp.flowsLens === "share" ? "share" : "absolute";
-  // Chart-type toggles for the two approved Bars + Growth callsites on
-  // /monthly. Default is "trend" — only "bars" is echoed back into the
-  // URL so canonical links stay clean.
-  const monthlyFlowsView: "trend" | "bars" =
-    sp.monthlyFlowsView === "bars" ? "bars" : "trend";
+  // Chart-type toggle for the Active Equity Net Inflows Bars + Growth
+  // callsite on /monthly. Default is "trend" — only "bars" is echoed
+  // back into the URL so canonical links stay clean.
   const aeFlowView: "trend" | "bars" =
     sp.aeFlowView === "bars" ? "bars" : "trend";
   // Visible-window range for the Active Equity Net Inflows card. The
@@ -350,8 +347,6 @@ export default async function MonthlyPage({
     month: typeof sp.month === "string" ? sp.month : undefined,
     heatmap: typeof sp.heatmap === "string" ? sp.heatmap : undefined,
     flowsLens: typeof sp.flowsLens === "string" ? sp.flowsLens : undefined,
-    monthlyFlowsView:
-      typeof sp.monthlyFlowsView === "string" ? sp.monthlyFlowsView : undefined,
     aeFlowView:
       typeof sp.aeFlowView === "string" ? sp.aeFlowView : undefined,
     aeFlowRange:
@@ -956,30 +951,6 @@ export default async function MonthlyPage({
   const equityFlowFromRows = monthlyFlowsRows
     .filter((r) => typeof r.equity === "number")
     .map((r) => ({ label: r.month as string, value: r.equity as number }));
-  // Stacked-net-flow data for the Bars + Growth view: each segment's
-  // signed net-flow value (positive segments stack above zero, negative
-  // below), plus an equity YoY series for the growth line so it matches
-  // the "Equity YoY" pill in the card header. Full history is loaded
-  // so YoY has real values from the leftmost visible month onward.
-  const monthlyFlowsFullHistory = monthlyFlowsData(10_000);
-  const monthlyEquityFullSeriesSigned = monthlyFlowsFullHistory
-    .filter((r) => typeof r.equity === "number")
-    .map((r) => ({ label: r.month, value: r.equity as number }));
-  const monthlyEquityYoyByLabel = new Map(
-    yoyPctSeries(monthlyEquityFullSeriesSigned, 12).map((p) => [p.label, p.value])
-  );
-  const monthlyFlowsStack = monthlyFlowsRows.map((r) => {
-    const eq = typeof r.equity === "number" ? r.equity : null;
-    const db = typeof r.debt === "number" ? r.debt : null;
-    const lq = typeof r.liquid === "number" ? r.liquid : null;
-    return {
-      label: r.month as string,
-      equity: eq,
-      debt: db,
-      liquid: lq,
-      equityYoy: monthlyEquityYoyByLabel.get(r.month as string) ?? null,
-    };
-  });
   const monthlyFlowsInsights = chartInsights(equityFlowFromRows, {
     metricName: "equity net inflow",
     unitSuffix: "₹ Cr",
@@ -2027,12 +1998,8 @@ export default async function MonthlyPage({
         <ChartWithContext
           title="Equity / Debt / Liquid Monthly Net Flows"
           subtitle="Where industry money went each month, split by category."
-          flowKind="net"
           denominatorCaption={(() => {
             const span = `${monthlyFlowsRows.length} month${monthlyFlowsRows.length === 1 ? "" : "s"}`;
-            if (monthlyFlowsView === "bars") {
-              return `${span} · Gross flow magnitude by segment · YoY % overlaid`;
-            }
             if (monthlyFlowsLens === "share") {
               return `${span} · % of monthly flow magnitude (signs preserved)`;
             }
@@ -2040,139 +2007,30 @@ export default async function MonthlyPage({
               ? `${span} · ₹ Cr · ${monthlyFlowsDenomCaption}`
               : `${span} · ₹ Cr · positive = inflow, negative = outflow`;
           })()}
-          denominatorTooltip={
-            monthlyFlowsView === "bars"
-              ? undefined
-              : "Latest month's per-segment share of total flow magnitude — the headline read for 'where did the month's flow go?'."
-          }
+          denominatorTooltip="Latest month's per-segment share of total flow magnitude — the headline read for 'where did the month's flow go?'."
           insights={monthlyFlowsInsights}
-          yoyBadge={(() => {
-            const v = latestYoyPct(equityFlowFromRows, 12);
-            return v === null ? undefined : { label: "Equity YoY", pct: v };
-          })()}
           action={
-            <>
-              {monthlyFlowsView === "trend" && (
-                <LensToggle
-                  basePath="/monthly"
-                  paramName="flowsLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "% of flow magnitude" },
-                  ]}
-                  active={monthlyFlowsLens}
-                  preserveParams={preservedQueryParams}
-                />
-              )}
-              <ChartTypeToggle
-                basePath="/monthly"
-                paramName="monthlyFlowsView"
-                active={monthlyFlowsView}
-                preserveParams={preservedQueryParams}
-              />
-            </>
+            <LensToggle
+              basePath="/monthly"
+              paramName="flowsLens"
+              defaultValue="absolute"
+              lenses={[
+                { value: "absolute", label: "₹ Cr" },
+                { value: "share", label: "% of flow magnitude" },
+              ]}
+              active={monthlyFlowsLens}
+              preserveParams={preservedQueryParams}
+            />
           }
         >
-          {monthlyFlowsView === "bars" ? (
-            <StackedBarsWithGrowth
-              data={monthlyFlowsStack}
-              segments={[
-                {
-                  key: "equity",
-                  name: "Equity",
-                  color: "hsl(var(--chart-1))",
-                  yoyKey: "equityYoy",
-                },
-                {
-                  key: "debt",
-                  name: "Debt",
-                  color: "hsl(var(--chart-2))",
-                },
-                {
-                  key: "liquid",
-                  name: "Liquid",
-                  color: "hsl(var(--chart-4))",
-                },
-              ]}
-              growthKey="equityYoy"
-              growthLabel="Equity YoY %"
-              valueFormat="cr"
-              axisFormat="cr"
-              labelFormat="month"
-            />
-          ) : (
-            <GroupedBars
-              data={monthlyFlowsDisplay}
-              xKey="month"
-              labelFormat="month"
-              valueFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
-              axisFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
-              bars={monthlyFlowsSeries}
-            />
-          )}
-          <HowToRead>
-            {monthlyFlowsView === "bars" ? (
-              <p>
-                Bars stack each segment&apos;s signed net flow — positive segments
-                stack above zero, negative below. Equity (SIP-driven retail money)
-                typically stays positive, while Debt and Liquid swing sharply with
-                institutional moves around quarter and fiscal-year ends. Dashed line
-                is YoY % change in Equity net inflow, matching the &ldquo;Equity YoY&rdquo;
-                pill above.
-              </p>
-            ) : monthlyFlowsLens === "share" ? (
-              <p className="inline-flex items-start gap-1.5">
-                <span>
-                  Each line is the segment&apos;s share of that month&apos;s total
-                  flow magnitude — its net flow ÷ (|equity| + |debt| + |liquid|)
-                  for the month, with the sign kept. It answers &ldquo;of all the
-                  money that moved this month, what share ran through each
-                  category, and in which direction.&rdquo; Rescaling away the raw
-                  size lets equity&apos;s steady signal sit on the same axis as
-                  debt and liquid&apos;s large swings.
-                </span>
-                <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes; it is split out here for readability." />
-              </p>
-            ) : (
-              <p>
-                Each line is the category&apos;s net flow for the month — fresh
-                inflows minus redemptions — in ₹ Cr. A negative value means
-                redemptions outran inflows that month, so money left the category
-                on net.
-              </p>
-            )}
-            <ul className="list-disc space-y-1 pl-4">
-              <li>
-                <span className="font-medium text-foreground/80">
-                  Why Debt and Liquid swing so violently into negatives:
-                </span>{" "}
-                these are mostly corporate-treasury money, not retail. Companies
-                park surplus cash in liquid and short-duration debt funds, then
-                pull it out at quarter-ends — most sharply at the March
-                fiscal-year-end — for advance tax and balance-sheet needs, and
-                redeploy it the following month. That calendar cycle, not investor
-                sentiment, is what drives the deep dips below zero and the sharp
-                rebounds (see the March troughs and the April spikes).
-              </li>
-              <li>
-                <span className="font-medium text-foreground/80">
-                  Why Equity stays steady and positive:
-                </span>{" "}
-                equity net flow is anchored by automated monthly SIP money, which
-                is sticky and rarely reverses — so it holds up as a small positive
-                even in months when debt and liquid bleed out, barely moving
-                against their swings.
-              </li>
-              {monthlyFlowsView !== "bars" && (
-                <li>
-                  There is no dashed average line on this card — the italic line
-                  above the chart (&ldquo;+X% vs trailing 12-period average&rdquo;)
-                  is the spot-the-outlier read for the latest month instead.
-                </li>
-              )}
-            </ul>
-          </HowToRead>
+          <GroupedBars
+            data={monthlyFlowsDisplay}
+            xKey="month"
+            labelFormat="month"
+            valueFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
+            axisFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
+            bars={monthlyFlowsSeries}
+          />
         </ChartWithContext>
       )}
 
