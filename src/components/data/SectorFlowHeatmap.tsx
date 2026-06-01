@@ -1,15 +1,16 @@
 import {
+  sectorFlowMeta,
   sectorFlowMonths,
   sectorFlowRows,
   sectorFlowTotals,
 } from "@/data/sector-flows";
 
 /**
- * Monthly sector net-flows reproduced from a provided research snapshot, in
- * the same red→yellow→green heatmap format. The cell colour is an Excel-style
- * 3-colour scale computed at render time from the values themselves (clamped
- * to the 5th/95th percentile so the single large outlier doesn't wash the
- * scale out), so the colours stay correct if the underlying numbers change.
+ * Monthly sector net-flows by active-equity mutual funds, in a red→yellow→green
+ * heatmap. Data is computed from per-fund holdings (see build-sector-flows.ts);
+ * the cell colour is an Excel-style 3-colour scale computed at render time from
+ * the values themselves (clamped to the 5th/95th percentile so a single large
+ * outlier doesn't wash the scale out), so colours stay correct as data changes.
  */
 
 // 3-colour scale endpoints (the classic Excel red / yellow / green).
@@ -131,7 +132,9 @@ export function SectorFlowHeatmap() {
         </table>
       </div>
       <p className="mt-2 text-[11px] text-muted-foreground">
-        Net flows in ₹ bn · static snapshot.
+        Net active-equity MF flows by sector (₹ bn) · {sectorFlowMeta.activeEquityFunds}{" "}
+        schemes. Holdings history spans ~4 months, so the latest{" "}
+        {sectorFlowMonths.length} month-on-month transitions are shown.
       </p>
     </div>
   );
