@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { HowToRead } from "@/components/ui/HowToRead";
@@ -36,7 +35,6 @@ import {
   getKpiValue,
   activeEquityMixSectionRead,
   foliosNfoSectionRead,
-  investorRead,
   kpiContext,
   latestAmfiMonthlyRow,
   sipTrendsSectionRead,
@@ -54,40 +52,30 @@ import {
   monthlySipAumShareTrend,
   monthlyTrend,
   nfoDragTrend,
-  nfoHeatSignal,
-  passiveShiftSignal,
   resolveSelectedRow,
-  sipStickinessSignal,
   type AmfiMonthlyKpiField,
 } from "@/data/amfi-monthly";
 import type { AmfiMonthlyPdfRow } from "@/data/snapshots/types";
 import {
   cyclePhaseHistory,
   historicalEpisodes,
-  investorMood,
   latestNifty500Row,
   marketIndexRows,
-  marketStressFlowSignal,
   weatherBadge,
 } from "@/data/market-indices";
 import { SankeyFlow } from "@/components/charts/SankeyFlow";
 import { PassiveShareInEquity } from "@/components/amc/PassiveShareInEquity";
-import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CalendarHeatGrid } from "@/components/ui/CalendarHeatGrid";
-import { CalloutCard } from "@/components/ui/CalloutCard";
 import { CategoryResilienceCard } from "@/components/ui/CategoryResilienceCard";
 import { categoryDrawdownResilience } from "@/data/category-resilience";
 import { EpisodeRecoveryCard } from "@/components/ui/EpisodeRecoveryCard";
 import { episodeRecoveryRows } from "@/data/episode-recovery";
 import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
 import { marketWrap } from "@/data/market-wrap";
-import { CoachPill } from "@/components/ui/CoachPill";
 import { EpisodeReplayStrip } from "@/components/ui/EpisodeReplayStrip";
-import { HeadlineCard } from "@/components/ui/HeadlineCard";
 import { KeyTakeaway, DeltaCr } from "@/components/ui/KeyTakeaway";
 import { StickyContextFooter } from "@/components/ui/StickyContextFooter";
 import { LensToggle } from "@/components/ui/LensToggle";
-import { MoodGauge } from "@/components/ui/MoodGauge";
 import { VolatilityRibbon } from "@/components/ui/VolatilityRibbon";
 import { WeatherBadge } from "@/components/ui/WeatherBadge";
 import {
@@ -134,25 +122,6 @@ const MONTHLY_TABS = [
 ] as const satisfies readonly DashboardTabDef[];
 type MonthlyTabId = (typeof MONTHLY_TABS)[number]["id"];
 const MONTHLY_TAB_IDS = MONTHLY_TABS.map((t) => t.id) as readonly MonthlyTabId[];
-
-/** Highlight span used by the Snapshot intro card. Coloured via the
- *  `text-positive` / `text-negative` design tokens; pass `null` for
- *  neutral / no highlight. Declared at module scope so React's
- *  static-components lint rule stays happy. */
-type IntroTone = "positive" | "negative" | null;
-function Hi({ tone, children }: { tone: IntroTone; children: ReactNode }) {
-  return (
-    <span
-      className={cn(
-        "font-semibold",
-        tone === "positive" && "text-positive",
-        tone === "negative" && "text-negative"
-      )}
-    >
-      {children}
-    </span>
-  );
-}
 
 /** Month-end AUM mix shares (% of the month's own breakdown total) for a
  *  single row, keyed by category. Mirrors the Month-end AUM Mix card's
@@ -1618,15 +1587,9 @@ export default async function MonthlyPage({
   // describe the same set of months that are actually plotted.
   const passiveFlowShare = passiveFlowShareTrend(120, { sanitize: true });
 
-  // The headline active-equity signal drives the HeadlineCard at the
-  // top of the page; nfo/passive/sip/market-stress signals feed the
-  // top-callouts row and the InvestorRead composite used by the
-  // HeadlineCard takeaway line. The 5-tile Investor Signals card
-  // itself was deleted (PR #171) — its sparklines went with it.
+  // The headline active-equity flow signal — feeds the weather badge
+  // and the market-tape / sticky context footer at the foot of the page.
   const activeEquitySignal = activeEquityNetInflowSignal();
-  const nfoSignal = nfoHeatSignal();
-  const passiveSignal = passiveShiftSignal();
-  const sipStickiness = sipStickinessSignal();
   const latestNifty = latestNifty500Row();
   const cyclePhasePoints = cyclePhaseHistory();
   // Cycle-phase bands — group consecutive months of "Correction" or
@@ -1668,24 +1631,6 @@ export default async function MonthlyPage({
       });
     }
     return out;
-  })();
-  // Coach message: surfaces the single most striking signal on the page.
-  const coachMessage = (() => {
-    const stress = marketStressFlowSignal();
-    if (stress?.label === "Buy-the-dip flow") {
-      return `Nifty 500 is in a ${Math.abs(stress.drawdownPct).toFixed(1)}% drawdown but active-equity flow is in the ${formatPercentile(stress.flowPercentileRank).toLowerCase()} — investors are buying the dip.`;
-    }
-    if (stress?.label === "Flow stress") {
-      return `Nifty 500 is in drawdown AND flow is at the bottom decile — historically a stress signal.`;
-    }
-    if (
-      activeEquitySignal &&
-      activeEquitySignal.percentileRank !== null &&
-      activeEquitySignal.percentileRank >= 95
-    ) {
-      return `Active-equity flow is in the ${formatPercentile(activeEquitySignal.percentileRank).toLowerCase()} — a top-decile inflow month.`;
-    }
-    return null;
   })();
   const episodes = historicalEpisodes();
   // Recovery-tracker rows derived from the same episode list — for
@@ -1791,121 +1736,11 @@ export default async function MonthlyPage({
     cyclePhasePoints.length > 0
       ? cyclePhasePoints[cyclePhasePoints.length - 1].phase
       : null;
-  // Mood + weather + headline takeaway need active-equity / NFO / passive
-  // / SIP percentile inputs. The signals are computed below — but mood
-  // depends only on percentile fields which we can fetch directly here.
-  const mood = investorMood({
-    activeEquityPercentile: activeEquitySignal?.percentileRank ?? null,
-    nfoPercentile: nfoSignal?.percentileRank ?? null,
-    passivePercentile: passiveSignal?.percentileRank ?? null,
-    sipPercentile: sipStickiness?.percentileRank ?? null,
-    drawdownPct: latestNifty?.drawdownPct ?? null,
-  });
   const weather = weatherBadge({
     drawdownPct: latestNifty?.drawdownPct ?? null,
     flowZScore: activeEquitySignal?.zScore ?? null,
     cyclePhase: latestCyclePhase,
   });
-  // ---- Headline-style "callout" cards just below the hero ----
-  // Editorial statements (not KPI tiles). Each card presents one
-  // notable finding from the existing helpers in plain English.
-  // `accentLabel` clarifies what the big number means — without it
-  // "97th" / "9th" read as bare ordinals.
-  type Callout = {
-    id: string;
-    statement: string;
-    context?: string;
-    tone: "positive" | "negative" | "neutral";
-    accentNumber?: string;
-    accentLabel?: string;
-  };
-  const topCallouts: Callout[] = [];
-  if (
-    activeEquitySignal &&
-    activeEquitySignal.percentileRank !== null &&
-    activeEquitySignal.percentileRank >= 90
-  ) {
-    const top = Math.max(1, Math.round(100 - activeEquitySignal.percentileRank));
-    topCallouts.push({
-      id: "ae-flow-hot",
-      tone: "positive",
-      accentNumber: `Top ${top}%`,
-      accentLabel: "active-equity flow · months on record",
-      statement: `Active-equity inflow in the top ${top}% of months on record`,
-      context: `Latest ${activeEquitySignal.latestMonth} · ${formatCompactCrSafe(activeEquitySignal.latestValue)} vs historical mean ${formatCompactCrSafe(activeEquitySignal.mean)}`,
-    });
-  } else if (
-    activeEquitySignal &&
-    activeEquitySignal.percentileRank !== null &&
-    activeEquitySignal.percentileRank <= 10
-  ) {
-    const bottom = Math.max(1, Math.round(activeEquitySignal.percentileRank));
-    topCallouts.push({
-      id: "ae-flow-cold",
-      tone: "negative",
-      accentNumber: `Bottom ${bottom}%`,
-      accentLabel: "active-equity flow · months on record",
-      statement: `Active-equity inflow in the bottom ${bottom}% of months on record`,
-      context: `Latest ${activeEquitySignal.latestMonth} · ${formatCompactCrSafe(activeEquitySignal.latestValue)} vs historical mean ${formatCompactCrSafe(activeEquitySignal.mean)}`,
-    });
-  }
-  if (
-    nfoSignal &&
-    nfoSignal.percentileRank !== null &&
-    nfoSignal.percentileRank <= 15
-  ) {
-    const bottom = Math.max(1, Math.round(nfoSignal.percentileRank));
-    topCallouts.push({
-      id: "nfo-cold",
-      tone: "neutral",
-      accentNumber: `Bottom ${bottom}%`,
-      accentLabel: "NFO mobilisation · months on record",
-      statement: `NFO mobilisation at the low end of history — investors prefer existing schemes`,
-      context: `Latest ${nfoSignal.latestMonth} · ${formatCompactCrSafe(nfoSignal.latestValue)} vs ${formatCompactCrSafe(nfoSignal.mean)} historical mean`,
-    });
-  } else if (
-    nfoSignal &&
-    nfoSignal.percentileRank !== null &&
-    nfoSignal.percentileRank >= 80
-  ) {
-    const top = Math.max(1, Math.round(100 - nfoSignal.percentileRank));
-    topCallouts.push({
-      id: "nfo-hot",
-      tone: "neutral",
-      accentNumber: `Top ${top}%`,
-      accentLabel: "NFO mobilisation · months on record",
-      statement: "NFO mobilisation at the high end of history — bull-market cue",
-      context: `Latest ${nfoSignal.latestMonth} · ${formatCompactCrSafe(nfoSignal.latestValue)}`,
-    });
-  }
-  if (passiveSignal && passiveSignal.latestSharePct !== null) {
-    topCallouts.push({
-      id: "passive-share",
-      tone: "neutral",
-      accentNumber: `${passiveSignal.latestSharePct.toFixed(1)}%`,
-      accentLabel: "share of equity AUM",
-      statement: `Passive funds command ${passiveSignal.latestSharePct.toFixed(1)}% of equity AUM — ${
-        passiveSignal.percentileRank !== null && passiveSignal.percentileRank >= 80
-          ? "near recent highs"
-          : passiveSignal.percentileRank !== null && passiveSignal.percentileRank <= 20
-            ? "near recent lows"
-            : "in line with history"
-      }`,
-      context: `Latest ${passiveSignal.latestMonth} · historical avg ${passiveSignal.mean.toFixed(1)}%`,
-    });
-  }
-  if (latestNifty && latestNifty.drawdownPct !== null && latestNifty.drawdownPct <= -5) {
-    topCallouts.push({
-      id: "drawdown",
-      tone: latestNifty.drawdownPct <= -10 ? "negative" : "neutral",
-      accentNumber: `${latestNifty.drawdownPct.toFixed(1)}%`,
-      accentLabel: "Nifty 500 drawdown",
-      statement: `Nifty 500 ${Math.abs(latestNifty.drawdownPct).toFixed(1)}% off its all-time peak`,
-      context: `As of ${latestNifty.month} · level ${latestNifty.level.toLocaleString("en-IN")}`,
-    });
-  }
-  // Cap at 3 callouts to keep the hero zone tight.
-  if (topCallouts.length > 3) topCallouts.length = 3;
   // Section reads — short data-driven 1-liners surfaced under
   // each section title.
   const snapshotRead = snapshotSectionRead();
@@ -1942,282 +1777,6 @@ export default async function MonthlyPage({
   const fmtNi = (v: number) =>
     v >= 0 ? formatCompactCrSafe(v) : "−" + formatCompactCrSafe(-v);
 
-  // ---- Snapshot tab "What changed this month?" intro ----------------
-  // Composes a live summary using INDUSTRY-WIDE signals that the
-  // HeadlineCard below does not already surface (HeadlineCard owns
-  // active-equity flow, cycle phase, mood, drawdown, passive share
-  // and SIP stickiness). The summary stays % only — absolute ₹ Cr /
-  // lakh figures are dropped; the good / bad readings on each %
-  // are coloured via the design-token positive / negative classes
-  // through the module-level `Hi` highlight helper below.
-  const snapshotIntro = (() => {
-    const summaryParts: ReactNode[] = [];
-    const latestRow = folioLatestRow;
-
-    // Industry AAUM MoM% vs trailing-12M MoM% pace.
-    const aaumSeries = amfiMonthlyRows()
-      .filter((r) => typeof r.totalAaum === "number")
-      .map((r) => ({ month: r.month, value: r.totalAaum as number }));
-    if (aaumSeries.length >= 2) {
-      const latest = aaumSeries[aaumSeries.length - 1];
-      const prev = aaumSeries[aaumSeries.length - 2];
-      if (prev.value > 0) {
-        const momPct = ((latest.value - prev.value) / prev.value) * 100;
-
-        const window = aaumSeries.slice(-13);
-        const momChanges: number[] = [];
-        for (let i = 1; i < window.length; i++) {
-          const m = window[i];
-          const p = window[i - 1];
-          if (p.value > 0) momChanges.push(((m.value - p.value) / p.value) * 100);
-        }
-        const avgMom =
-          momChanges.length > 0
-            ? momChanges.reduce((s, v) => s + v, 0) / momChanges.length
-            : null;
-
-        const momStr = `${momPct >= 0 ? "+" : ""}${momPct.toFixed(1)}%`;
-        const momTone: IntroTone = momPct > 0 ? "positive" : momPct < 0 ? "negative" : null;
-
-        if (avgMom !== null && momChanges.length >= 6) {
-          const diff = momPct - avgMom;
-          const ppMag = Math.abs(diff);
-          const direction = diff >= 0 ? "above" : "below";
-          const deltaStr = `${ppMag.toFixed(1)}pp ${direction}`;
-          const deltaTone: IntroTone = diff > 0.4 ? "positive" : diff < -0.4 ? "negative" : null;
-          const avgStr = `${avgMom >= 0 ? "+" : ""}${avgMom.toFixed(1)}%`;
-          summaryParts.push(
-            <>
-              Industry AAUM grew <Hi tone={momTone}>{momStr}</Hi> MoM —{" "}
-              <Hi tone={deltaTone}>{deltaStr}</Hi> the trailing-12M pace
-              of {avgStr}/mo.
-            </>
-          );
-        } else {
-          summaryParts.push(
-            <>
-              Industry AAUM grew <Hi tone={momTone}>{momStr}</Hi> MoM.
-            </>
-          );
-        }
-      }
-    }
-
-    // Folio additions: % vs trailing-12M monthly average. Absolute
-    // count dropped — only the relative comparison is shown.
-    if (
-      industryFolioAdditionsLatest !== null &&
-      industryFolioAdditionsLatest > 0
-    ) {
-      const folioWindow = folioAdditionsTrend.slice(-12);
-      const folioMean =
-        folioWindow.length > 0
-          ? folioWindow.reduce((s, p) => s + p.value, 0) / folioWindow.length
-          : null;
-      if (folioMean !== null && folioWindow.length >= 6 && folioMean > 0) {
-        const diff = industryFolioAdditionsLatest - folioMean;
-        const magnitude = Math.abs(diff / folioMean) * 100;
-        if (magnitude >= 10) {
-          const above = diff > 0;
-          const pctStr = `${magnitude.toFixed(0)}% ${above ? "above" : "below"}`;
-          const tone: IntroTone = above ? "positive" : "negative";
-          summaryParts.push(
-            <>
-              Folio additions <Hi tone={tone}>{pctStr}</Hi> the
-              trailing-12M monthly average.
-            </>
-          );
-        } else {
-          summaryParts.push(
-            <>Folio additions broadly in line with the trailing-12M monthly average.</>
-          );
-        }
-      }
-    } else if (latestRow && typeof latestRow.netInflow === "number") {
-      const netInflowSeries = amfiMonthlyRows()
-        .filter((r) => typeof r.netInflow === "number")
-        .map((r) => ({ month: r.month, value: r.netInflow as number }));
-      if (netInflowSeries.length >= 2) {
-        const latest = netInflowSeries[netInflowSeries.length - 1];
-        const prev = netInflowSeries[netInflowSeries.length - 2];
-        if (prev.value !== 0) {
-          const changePct = ((latest.value - prev.value) / Math.abs(prev.value)) * 100;
-          const pctStr = `${changePct >= 0 ? "+" : ""}${changePct.toFixed(0)}%`;
-          const tone: IntroTone = changePct > 0 ? "positive" : changePct < 0 ? "negative" : null;
-          summaryParts.push(
-            <>
-              Industry net inflow <Hi tone={tone}>{pctStr}</Hi> MoM.
-            </>
-          );
-        }
-      }
-    }
-
-    let watchNext: ReactNode | undefined;
-    if (
-      latestRow &&
-      typeof latestRow.industryNfoFundsMobilized === "number" &&
-      typeof latestRow.netInflow === "number" &&
-      latestRow.netInflow > 0
-    ) {
-      const nfoSharePct =
-        (latestRow.industryNfoFundsMobilized / latestRow.netInflow) * 100;
-      const tone: IntroTone =
-        nfoSharePct <= 2 ? "positive" : nfoSharePct >= 5 ? "negative" : null;
-      const nfoStr = `${nfoSharePct.toFixed(1)}%`;
-      watchNext = (
-        <>
-          NFOs absorbed <Hi tone={tone}>{nfoStr}</Hi> of industry net inflow
-          — low share = investors sticking with existing schemes (healthy),
-          high share = historically a froth cue.
-        </>
-      );
-    } else if (nfoSignal && nfoSignal.percentileRank !== null) {
-      const pct = nfoSignal.percentileRank;
-      const tone: IntroTone = pct <= 25 ? "positive" : pct >= 75 ? "negative" : null;
-      const pctStr = formatPercentile(pct).toLowerCase();
-      watchNext = (
-        <>
-          NFO mobilisation in the <Hi tone={tone}>{pctStr}</Hi> of history —
-          see whether launch activity stays here or pivots.
-        </>
-      );
-    }
-
-    const summary: ReactNode =
-      summaryParts.length > 0 ? (
-        <>
-          {summaryParts.map((part, i) => (
-            <span key={i}>
-              {i > 0 ? " " : ""}
-              {part}
-            </span>
-          ))}
-        </>
-      ) : (
-        "Industry-wide context to read alongside the headline signal below."
-      );
-
-    return { summary, watchNext };
-  })();
-
-  // ---- Flows tab "Where is money going?" intro ----------------------
-  // Summarises the cards that live under the Flows tab: the latest-
-  // month destination mix (Equity / Debt / Liquid from the Sankey),
-  // the SIP vs lump-sum source split, and active-equity flow vs its
-  // trailing-12M average. Each % is coloured via the `Hi` helper so
-  // a risk-on / defensive / lump-sum-dominant tilt reads at a glance.
-  const flowsIntro = (() => {
-    const summaryParts: ReactNode[] = [];
-
-    if (sankeyData) {
-      const sourceTotals = new Map<string, number>();
-      const targetTotals = new Map<string, number>();
-      for (const link of sankeyData.links) {
-        sourceTotals.set(link.source, (sourceTotals.get(link.source) ?? 0) + Math.abs(link.value));
-        targetTotals.set(link.target, (targetTotals.get(link.target) ?? 0) + Math.abs(link.value));
-      }
-      const targetTotal = Array.from(targetTotals.values()).reduce((s, v) => s + v, 0);
-      const sourceTotal = Array.from(sourceTotals.values()).reduce((s, v) => s + v, 0);
-
-      // Destination mix — Equity (risk) vs Debt vs Liquid (parked cash).
-      if (targetTotal > 0) {
-        const equityPct = ((targetTotals.get("equity") ?? 0) / targetTotal) * 100;
-        const debtPct = ((targetTotals.get("debt") ?? 0) / targetTotal) * 100;
-        const liquidPct = ((targetTotals.get("liquid") ?? 0) / targetTotal) * 100;
-        const equityTone: IntroTone =
-          equityPct >= 30 ? "positive" : equityPct <= 10 ? "negative" : null;
-        const liquidTone: IntroTone =
-          liquidPct >= 50 ? "negative" : liquidPct <= 20 ? "positive" : null;
-        const tilt =
-          equityPct >= 30
-            ? "risk-on tilt"
-            : liquidPct >= 50
-              ? "defensive tilt — money parked in cash-like funds"
-              : "balanced mix across risk and defensive assets";
-        summaryParts.push(
-          <>
-            Equity captured <Hi tone={equityTone}>{equityPct.toFixed(1)}%</Hi> of latest-month
-            net flow vs {debtPct.toFixed(1)}% to Debt and <Hi tone={liquidTone}>{liquidPct.toFixed(1)}%</Hi> parked
-            in Liquid — {tilt}.
-          </>
-        );
-      }
-
-      // Source mix — SIP (systematic) vs lump-sum (opportunistic).
-      if (sourceTotal > 0) {
-        const sipPct = ((sourceTotals.get("sip") ?? 0) / sourceTotal) * 100;
-        const sipTone: IntroTone =
-          sipPct >= 30 ? "positive" : sipPct <= 15 ? "negative" : null;
-        const sipNarrative =
-          sipPct >= 30
-            ? "systematic retail flow carrying the month"
-            : sipPct <= 15
-              ? "lump-sum dominated, lower flow stability"
-              : "balanced source mix";
-        summaryParts.push(
-          <>
-            SIP contributed <Hi tone={sipTone}>{sipPct.toFixed(1)}%</Hi> of total inflow
-            — {sipNarrative}.
-          </>
-        );
-      }
-    }
-
-    // Watch next — active-equity net inflow vs trailing-12M average.
-    let watchNext: ReactNode | undefined;
-    if (activeEquityFlowTrend.length >= 2) {
-      const trailing = activeEquityFlowTrend.slice(-12);
-      const trailingAvg =
-        trailing.length > 0
-          ? trailing.reduce((s, p) => s + p.value, 0) / trailing.length
-          : null;
-      const latest = activeEquityFlowTrend[activeEquityFlowTrend.length - 1];
-      if (trailingAvg !== null && trailingAvg !== 0) {
-        const vsAvgPct = ((latest.value - trailingAvg) / Math.abs(trailingAvg)) * 100;
-        const tone: IntroTone =
-          vsAvgPct > 10 ? "positive" : vsAvgPct < -10 ? "negative" : null;
-        const direction = vsAvgPct >= 0 ? "above" : "below";
-        const magnitude = `${Math.abs(vsAvgPct).toFixed(0)}% ${direction}`;
-        watchNext = (
-          <>
-            Active-equity net inflow <Hi tone={tone}>{magnitude}</Hi> the trailing-12M
-            average — see whether the {vsAvgPct >= 0 ? "strength" : "weakness"} persists
-            into next month.
-          </>
-        );
-      }
-    }
-
-    const summary: ReactNode =
-      summaryParts.length > 0 ? (
-        <>
-          {summaryParts.map((part, i) => (
-            <span key={i}>
-              {i > 0 ? " " : ""}
-              {part}
-            </span>
-          ))}
-        </>
-      ) : (
-        "Flows breakdown across categories and source types for the latest month."
-      );
-
-    return { summary, watchNext };
-  })();
-
-  // Build the Investor Read composite from the five signals + Nifty 500.
-  const read = investorRead({
-    activeEquityZ: activeEquitySignal?.zScore ?? null,
-    activeEquityPercentile: activeEquitySignal?.percentileRank ?? null,
-    nfoZ: nfoSignal?.zScore ?? null,
-    passivePercentile: passiveSignal?.percentileRank ?? null,
-    passiveLatestSharePct: passiveSignal?.latestSharePct ?? null,
-    sipPercentile: sipStickiness?.percentileRank ?? null,
-    drawdownPct: latestNifty?.drawdownPct ?? null,
-    marketMonth: latestNifty?.month ?? null,
-  });
-
   // ---- Active vs Passive series ------------------------------------
   // 96-month window so the Share-of-Passive card can pick every
   // available March year-end + the most-recent Sep marker. The chart
@@ -2240,103 +1799,8 @@ export default async function MonthlyPage({
         action={<WeatherBadge headline={weather.headline} tone={weather.tone} />}
       />
 
-      <MarketWrapCard wrap={marketWrapData} />
-
-      {activeTab === "snapshot" && (
-        <TabIntroCard
-          headline="What changed this month?"
-          summary={snapshotIntro.summary}
-          watchNext={snapshotIntro.watchNext}
-        />
-      )}
-
-      {activeTab === "snapshot" && activeEquitySignal && (
-        <HeadlineCard
-          eyebrow={(() => {
-            const FULL_MONTHS = [
-              "January", "February", "March", "April", "May", "June",
-              "July", "August", "September", "October", "November", "December",
-            ];
-            const [y, m] = activeEquitySignal.latestMonth.split("-");
-            const idx = Number(m) - 1;
-            return Number.isFinite(idx) && idx >= 0 && idx < 12
-              ? `${FULL_MONTHS[idx]} ${y}`
-              : activeEquitySignal.latestMonth;
-          })()}
-          headline={(() => {
-            const v = Math.abs(activeEquitySignal.latestValue);
-            // Pick a compact scale + suffix on the server so we can
-            // pass a SERIALISABLE numeric value to the AnimatedNumber
-            // client component. Functions can't cross the server →
-            // client boundary in RSC.
-            let scaled = v;
-            let suffix = "Cr";
-            let decimals = 0;
-            if (v >= 1e5) {
-              scaled = v / 1e5;
-              suffix = "L Cr";
-              decimals = 2;
-            } else if (v >= 1e3) {
-              scaled = v / 1e3;
-              suffix = "K Cr";
-              decimals = 1;
-            }
-            return (
-              <span>
-                <span className="text-lg font-medium text-foreground/80 sm:text-xl">
-                  {activeEquitySignal.latestValue < 0 ? "−₹" : "₹"}
-                </span>
-                <AnimatedNumber value={scaled} decimals={decimals} />
-                <span className="ml-1 text-lg font-medium text-foreground/80 sm:text-xl">
-                  {suffix}
-                </span>
-              </span>
-            );
-          })()}
-          context={
-            activeEquitySignal.percentileRank !== null
-              ? `Active-equity inflow · ${
-                  activeEquitySignal.percentileRank >= 50
-                    ? `top ${(100 - activeEquitySignal.percentileRank).toFixed(0)}%`
-                    : `bottom ${activeEquitySignal.percentileRank.toFixed(0)}%`
-                } of months on record · Cycle: ${read.phase}`
-              : `Active-equity inflow · Cycle: ${read.phase}`
-          }
-          takeaway={read.narrative}
-          accent={
-            <MoodGauge
-              index={mood.index}
-              label={mood.label}
-            />
-          }
-        />
-      )}
-
-      {activeTab === "snapshot" && coachMessage && (
-        <CoachPill message={coachMessage} />
-      )}
-
-      {activeTab === "snapshot" && topCallouts.length > 0 && (
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {topCallouts.map((c) => (
-            <CalloutCard
-              key={c.id}
-              statement={c.statement}
-              context={c.context}
-              tone={c.tone}
-              accentNumber={c.accentNumber}
-              accentLabel={c.accentLabel}
-            />
-          ))}
-        </section>
-      )}
-
-      {activeTab === "flows" && (
-        <TabIntroCard
-          headline="Where is money going?"
-          summary={flowsIntro.summary}
-          watchNext={flowsIntro.watchNext}
-        />
+      {activeTab !== "snapshot" && activeTab !== "flows" && (
+        <MarketWrapCard wrap={marketWrapData} />
       )}
 
       {activeTab === "flows" && sankeyData && (() => {
