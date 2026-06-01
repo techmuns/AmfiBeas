@@ -1,19 +1,29 @@
-name: NIFTY 500 latest snapshot (manual)
+name: NIFTY 500 latest snapshot (daily)
 
-# MANUAL daily latest-index fetcher — Phase 3.10B.
-# workflow_dispatch only; NO schedule (scheduling lands in Phase 3.10D
-# after a clean manual production run has been verified).
+# Daily latest-index fetcher — Phase 3.10D.
+#
+# Trigger model:
+#   • schedule (cron) — daily 17:00 UTC (22:30 IST). Indian markets close
+#     at 15:30 IST (10:00 UTC); NSE publishes the daily ind_close_all CSV
+#     within 1–2 hours of close, so 17:00 UTC leaves a ~7-hour buffer.
+#     Offset by 3 hours BEFORE nav-latest's 20:00 UTC cron so the two
+#     pipelines never collide on the same minute. If today's CSV isn't
+#     published yet (delays do happen on volatile days), the script's
+#     INDEX_LATEST_LOOKBACK_DAYS=7 walk-back transparently lands on the
+#     most recent published date.
+#   • workflow_dispatch — manual run preserved, with the same inputs the
+#     pre-3.10D version had (target_date / lookback_days / commit).
 #
 # Runs scripts/ingest/index-latest.ts (NSE archives ind_close_all_*.csv),
-# uploads the snapshot as an artifact, and — matching the existing
-# nav-latest.yml convention — commits src/data/snapshots/index-latest.json
-# to the branch when commit=true AND it has changed.
-#
+# uploads the snapshot as an artifact, and — matching nav-latest.yml's
+# convention — commits src/data/snapshots/index-latest.json when changed.
 # Keep-last-good: the script exits non-zero WITHOUT writing if every
-# candidate date in the lookback window fails to yield a valid
-# NIFTY 500 row, so a degraded snapshot can never be committed.
+# candidate date in the lookback window fails, so a degraded snapshot can
+# never be committed.
 
 on:
+  schedule:
+    - cron: "0 17 * * *"
   workflow_dispatch:
     inputs:
       reason:
@@ -30,7 +40,7 @@ on:
         default: "7"
         type: string
       commit:
-        description: "true = commit + push the snapshot when it changed (default). false = artifact only."
+        description: "true = commit + push the snapshot when it changed (default). false = artifact only. Ignored for the scheduled run, which always commits when changed."
         required: false
         default: "true"
         type: choice
@@ -71,9 +81,10 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
       - name: Commit snapshot
-        # Runs only on a SUCCESSFUL fetch (npm run above is a hard gate;
-        # a non-zero exit fails the job before this step runs).
-        if: ${{ inputs.commit == 'true' }}
+        # Always commit on the scheduled run; honour the toggle on manual
+        # dispatch (default true). Runs only after a successful fetch (npm
+        # above is a hard gate; non-zero exit fails the job before this).
+        if: ${{ github.event_name == 'schedule' || inputs.commit == 'true' }}
         run: |
           if [ -z "$(git status --porcelain src/data/snapshots/index-latest.json)" ]; then
             echo "No snapshot changes to commit."

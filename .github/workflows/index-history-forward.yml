@@ -1,22 +1,34 @@
-name: NIFTY 500 history forward refresh (manual)
+name: NIFTY 500 history forward refresh (daily)
 
-# MANUAL daily forward-append — Phase 3.10C.
-# workflow_dispatch only; NO schedule (scheduling lands in Phase 3.10D).
+# Daily forward-append for NIFTY 500 — Phase 3.10D.
 #
-# Consumes the already-committed src/data/snapshots/index-latest.json
-# (refreshed by index-latest.yml) and appends today's NIFTY 500 close
-# onto public/index-history/NIFTY_500.json + updates the manifest.
+# Trigger model:
+#   • workflow_run — fires automatically when "NIFTY 500 latest snapshot
+#     (daily)" COMPLETES SUCCESSFULLY. True data dependency: the forward
+#     append consumes the just-committed src/data/snapshots/index-latest
+#     .json, so it must run AFTER index-latest has produced + committed
+#     it. Chaining on workflow_run (vs a guessed cron offset) removes
+#     the timing race entirely.
+#   • workflow_dispatch — manual run preserved, with the commit toggle.
+#
+# Mode resolution:
+#   • workflow_run path  → always commits when changed (scheduled
+#     automation).
+#   • workflow_dispatch  → commits iff inputs.commit == 'true'
+#     (default true; pass false to run-only).
 #
 # Append rule (per index):
 #   • latest.asOf > history.lastDate → append
-#   • latest.asOf == history.lastDate → no-op clean exit (commit step
-#     no-ops too because git status has no changes)
+#   • latest.asOf == history.lastDate → no-op clean exit
 #   • latest.asOf  < history.lastDate → no-op clean exit (no rewind)
 #
 # Keep-last-good: any guardrail failure → non-zero exit → commit
 # skipped → existing files left untouched.
 
 on:
+  workflow_run:
+    workflows: ["NIFTY 500 latest snapshot (daily)"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       reason:
@@ -24,7 +36,7 @@ on:
         required: false
         type: string
       commit:
-        description: "true = commit + push the updated history + manifest when changed (default). false = run only, do not commit."
+        description: "true = commit + push the updated history + manifest when changed (default). false = run only, do not commit. (Ignored for the scheduled workflow_run path, which always commits when changed.)"
         required: false
         default: "true"
         type: choice
@@ -44,10 +56,23 @@ concurrency:
 
 jobs:
   forward:
+    # Manual dispatch always runs (honouring its commit toggle). The
+    # workflow_run path runs ONLY when the upstream index-latest
+    # succeeded — never forward-append off a failed/keep-last-good
+    # latest-index run.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Explicit ref: on a workflow_run event github.event.workflow_run
+          # .head_sha points at the commit index-latest STARTED from
+          # (before its own snapshot commit). Checking out the branch
+          # tip guarantees we read the freshly-committed
+          # index-latest.json. For manual dispatch this resolves to the
+          # same branch tip.
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -58,9 +83,13 @@ jobs:
         # Non-zero exit on any guardrail failure blocks the commit step
         # below (gated on `success()`); a clean no-op exit (latest ==
         # history.lastDate) leaves git untouched.
+        id: run
         run: npm run ingest:index:history-forward
       - name: Commit updated history + manifest
-        if: ${{ inputs.commit == 'true' && success() }}
+        # Commits on the scheduled (workflow_run) path and on manual
+        # dispatch with commit=true. Both require the run step to have
+        # succeeded.
+        if: ${{ (github.event_name == 'workflow_run' || inputs.commit == 'true') && success() }}
         run: |
           if [ -z "$(git status --porcelain public/index-history src/data/snapshots/index-history-manifest.json)" ]; then
             echo "No forward-refresh changes to commit."
