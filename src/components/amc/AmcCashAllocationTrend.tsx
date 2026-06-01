@@ -100,6 +100,7 @@ export function AmcCashAllocationTrend() {
         labelFormat="none"
         showDots
         dynamicYDomain
+        sortTooltipDesc
       />
 
       <HowToRead>

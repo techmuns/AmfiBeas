@@ -43,6 +43,10 @@ interface MultiLineProps {
    *  small padding band so narrow-range percent series don't render
    *  as a near-flat line. Pure presentation — data is unchanged. */
   dynamicYDomain?: boolean;
+  /** When true, the hover tooltip ranks the series by value at the
+   *  hovered point — highest at the top, lowest at the bottom — instead
+   *  of following the line declaration order. */
+  sortTooltipDesc?: boolean;
 }
 
 export function MultiLine({
@@ -56,6 +60,7 @@ export function MultiLine({
   showLegend = true,
   showDots = false,
   dynamicYDomain = false,
+  sortTooltipDesc = false,
 }: MultiLineProps) {
   const fmtValue = valueFormatter(valueFormat);
   const fmtAxis = axisFormatter(axisFormat);
@@ -108,7 +113,11 @@ export function MultiLine({
         <Tooltip
           cursor={{ stroke: "hsl(var(--border))" }}
           content={
-            <ChartTooltip formatValue={(n) => fmtValue(n)} labelFormatter={fmtLabel} />
+            <ChartTooltip
+              formatValue={(n) => fmtValue(n)}
+              labelFormatter={fmtLabel}
+              sortByValueDesc={sortTooltipDesc}
+            />
           }
         />
         {showLegend && (

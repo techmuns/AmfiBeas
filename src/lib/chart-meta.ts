@@ -1,5 +1,8 @@
 import { AMCS } from "@/data/amcs";
 
+// 12 distinct hues so peer cohorts of up to a dozen AMCs each get their own
+// colour instead of recycling after six (which made pairs like SBI/Axis and
+// HDFC/Mirae render identically). Theme-aware via the --chart-* vars.
 const PALETTE = [
   "hsl(var(--chart-1))",
   "hsl(var(--chart-2))",
@@ -7,6 +10,12 @@ const PALETTE = [
   "hsl(var(--chart-4))",
   "hsl(var(--chart-5))",
   "hsl(var(--chart-6))",
+  "hsl(var(--chart-7))",
+  "hsl(var(--chart-8))",
+  "hsl(var(--chart-9))",
+  "hsl(var(--chart-10))",
+  "hsl(var(--chart-11))",
+  "hsl(var(--chart-12))",
 ];
 
 export const AMC_COLORS: Record<string, string> = (() => {

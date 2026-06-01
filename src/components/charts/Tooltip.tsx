@@ -16,6 +16,13 @@ interface ChartTooltipProps extends TooltipProps<ValueType, NameType> {
    * the top-to-bottom visual stack reading order.
    */
   reverseOrder?: boolean;
+  /**
+   * When true, order the tooltip rows by their numeric value descending —
+   * largest at the top, smallest at the bottom (non-numeric values sink to
+   * the end). Use on multi-series line charts where readers want to rank the
+   * series at the hovered point. Takes precedence over `reverseOrder`.
+   */
+  sortByValueDesc?: boolean;
 }
 
 export function ChartTooltip({
@@ -25,10 +32,25 @@ export function ChartTooltip({
   formatValue,
   labelFormatter,
   reverseOrder = false,
+  sortByValueDesc = false,
 }: ChartTooltipProps) {
   if (!active || !payload?.length) return null;
 
-  const rows = reverseOrder ? [...payload].reverse() : payload;
+  let rows = payload;
+  if (sortByValueDesc) {
+    rows = [...payload].sort((a, b) => {
+      const av = Number(a.value);
+      const bv = Number(b.value);
+      const aOk = Number.isFinite(av);
+      const bOk = Number.isFinite(bv);
+      if (!aOk && !bOk) return 0;
+      if (!aOk) return 1;
+      if (!bOk) return -1;
+      return bv - av;
+    });
+  } else if (reverseOrder) {
+    rows = [...payload].reverse();
+  }
 
   return (
     <div className="rounded-md border bg-card px-3 py-2 text-xs shadow-sm">
