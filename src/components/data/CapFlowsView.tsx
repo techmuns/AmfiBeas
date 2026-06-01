@@ -1,40 +1,8 @@
 import { cn } from "@/lib/cn";
-import { KeyTakeaway, DeltaCr } from "@/components/ui/KeyTakeaway";
-import type { CapFlowCard, CapFlowRow, CapFlows } from "@/data/cap-flows";
+import type { CapFlowRow, CapFlows } from "@/data/cap-flows";
 
 function displayName(name: string): string {
   return name.replace(/\s+(Ltd\.?|Limited)$/i, "").trim();
-}
-
-/** Ambit-style one-liner for a cap tier: most-bought and most-sold name. */
-function tierHeadline(month: string, card: CapFlowCard) {
-  const b = card.bought[0];
-  const s = card.sold[0];
-  if (!b && !s) return null;
-  return (
-    <KeyTakeaway
-      headline={
-        <>
-          In {month}, active MFs{" "}
-          {b && (
-            <>
-              net bought <strong>{displayName(b.company)}</strong> the most (
-              <DeltaCr cr={b.netCr} />
-              {b.amcs.length ? `; ${b.amcs.join(", ")} leading` : ""})
-            </>
-          )}
-          {b && s && " and "}
-          {s && (
-            <>
-              {!b && "net "}reduced <strong>{displayName(s.company)}</strong> (
-              <DeltaCr cr={-s.netCr} />)
-            </>
-          )}
-          .
-        </>
-      }
-    />
-  );
 }
 
 function FlowCard({
@@ -112,7 +80,6 @@ export function CapFlowsView({ flows }: { flows: CapFlows }) {
       {tiers.map((t) => (
         <div key={t.key} className="space-y-3">
           <h2 className="text-base font-semibold tracking-tight">{t.label}</h2>
-          {tierHeadline(meta.monthCur, flows[t.key])}
           <div className="grid gap-4 lg:grid-cols-2">
             <FlowCard
               title={`Top ${t.label} names bought by MFs (${meta.monthCur})`}
