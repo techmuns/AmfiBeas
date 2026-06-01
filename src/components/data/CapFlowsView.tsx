@@ -50,7 +50,7 @@ function FlowCard({
   const valHead = kind === "bought" ? "Net bought (₹ Cr)" : "Net sold (₹ Cr)";
   return (
     <div className="overflow-hidden rounded-lg border bg-card">
-      <div className="border-b bg-muted/60 px-4 py-2.5 text-sm font-semibold">
+      <div className="border-b bg-muted/60 px-4 py-3 text-base font-bold tracking-tight text-foreground">
         {title}
       </div>
       <table className="w-full border-collapse text-sm">
