@@ -1410,6 +1410,13 @@ export default async function MonthlyPage({
         searchParams={sp}
       />
 
+      {amfiSelected && amfiAvailableMonths.length > 0 && (
+        <MonthPicker
+          availableMonths={amfiAvailableMonths}
+          selectedMonth={amfiSelected.month}
+        />
+      )}
+
       {activeTab === "flows" && sankeyData && (() => {
         const sankeyGrandTotal = sankeyData.links.reduce(
           (s, l) => s + Math.abs(l.value),
@@ -1464,24 +1471,16 @@ export default async function MonthlyPage({
             : amfiSectionSubtitle
         }
         action={
-          <div className="flex flex-col items-end gap-2">
-            <span
-              className={cn(
-                "shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
-                amfiSelected
-                  ? "border-positive/40 bg-positive/10 text-positive"
-                  : "border-border text-muted-foreground"
-              )}
-            >
-              {amfiSelected ? "Live" : "Not connected"}
-            </span>
-            {amfiSelected && amfiAvailableMonths.length > 0 && (
-              <MonthPicker
-                availableMonths={amfiAvailableMonths}
-                selectedMonth={amfiSelected.month}
-              />
+          <span
+            className={cn(
+              "shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
+              amfiSelected
+                ? "border-positive/40 bg-positive/10 text-positive"
+                : "border-border text-muted-foreground"
             )}
-          </div>
+          >
+            {amfiSelected ? "Live" : "Not connected"}
+          </span>
         }
       >
         {netInflowHeadline && (
