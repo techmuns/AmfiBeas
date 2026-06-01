@@ -69,8 +69,6 @@ import { CategoryResilienceCard } from "@/components/ui/CategoryResilienceCard";
 import { categoryDrawdownResilience } from "@/data/category-resilience";
 import { EpisodeRecoveryCard } from "@/components/ui/EpisodeRecoveryCard";
 import { episodeRecoveryRows } from "@/data/episode-recovery";
-import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
-import { marketWrap } from "@/data/market-wrap";
 import { EpisodeReplayStrip } from "@/components/ui/EpisodeReplayStrip";
 import { KeyTakeaway, DeltaCr } from "@/components/ui/KeyTakeaway";
 import { StickyContextFooter } from "@/components/ui/StickyContextFooter";
@@ -107,7 +105,6 @@ import {
   DashboardTabs,
   type DashboardTabDef,
 } from "@/components/layout/DashboardTabs";
-import { TabIntroCard } from "@/components/ui/TabIntroCard";
 import { resolveTab } from "@/lib/tabs";
 
 const MONTHLY_TABS = [
@@ -1609,10 +1606,6 @@ export default async function MonthlyPage({
   // metrics so we can render "how long did it take investors to
   // come back?".
   const episodeRecoveryData = episodeRecoveryRows();
-  // Market Wrap — the three-sentence "today's read" surfaced at
-  // the top of the page. Composed off cycle phase, SIP, and an
-  // anomaly scan across headline series.
-  const marketWrapData = marketWrap();
   // Sankey data — composes SIP vs Lump-sum on the source side, and
   // Equity / Debt / Liquid / Other on the target side, all from the
   // latest month with usable totals. Links are proportional shares
@@ -1769,10 +1762,6 @@ export default async function MonthlyPage({
         searchParams={sp}
         action={<WeatherBadge headline={weather.headline} tone={weather.tone} />}
       />
-
-      {activeTab !== "snapshot" && activeTab !== "flows" && (
-        <MarketWrapCard wrap={marketWrapData} />
-      )}
 
       {activeTab === "flows" && sankeyData && (() => {
         const sankeyGrandTotal = sankeyData.links.reduce(
@@ -2032,14 +2021,6 @@ export default async function MonthlyPage({
             bars={monthlyFlowsSeries}
           />
         </ChartWithContext>
-      )}
-
-      {activeTab === "sip-retail" && (
-        <TabIntroCard
-          headline="Is systematic retail flow holding up?"
-          summary="SIP contribution, SIP AUM and folio additions show whether investor participation is broad, growing, and sticky — or starting to thin."
-          watchNext="Whether SIP contribution growth stays above the folio-base growth rate."
-        />
       )}
 
       {activeTab === "sip-retail" && hasAnySipTrend && (
@@ -2500,22 +2481,6 @@ export default async function MonthlyPage({
         </>
       )}
 
-      {activeTab === "nfo" && (
-        <TabIntroCard
-          headline="How active is the NFO pipeline?"
-          summary="NFO launches and gross funds mobilised — new money raised by new schemes vs absorbed by existing ones. The leading indicator of fund-launch sentiment and AMC product appetite."
-          watchNext="Whether NFO drag falls back below its 5-year norm as winning categories absorb most of the flow."
-        />
-      )}
-
-      {activeTab === "categories" && (
-        <TabIntroCard
-          headline="Where is flow rotating across categories?"
-          summary="Category-level QAAUM share and net-inflow share inside the active-equity envelope, plus the rotation magnitude and category heatmap. Read for which categories are winning new money — and which ones investors trust through drawdowns."
-          watchNext="Which categories show a sustained rise in net-inflow share before AUM share follows."
-        />
-      )}
-
       {activeTab === "categories" &&
         rotation &&
         rotation.gainers.length > 0 &&
@@ -2841,14 +2806,6 @@ export default async function MonthlyPage({
                 </section>
             )}
         </div>
-      )}
-
-      {activeTab === "active-passive" && (
-        <TabIntroCard
-          headline="Where is new equity money going?"
-          summary="Active-equity AAUM, ETF & Index share, and the equity breakdown show how fast passive is closing the gap on actively managed equity."
-          watchNext="Whether ETF & Index share keeps gaining ground in net inflows even when active equity AAUM is rising."
-        />
       )}
 
       {activeTab === "active-passive" && hasAnyEquityMix && (
@@ -3291,14 +3248,6 @@ export default async function MonthlyPage({
             )}
           </p>
         </div>
-      )}
-
-      {activeTab === "market-cycle" && (
-        <TabIntroCard
-          headline="When did this happen before?"
-          summary="Cycle replay, the 7-year calendar of flow z-scores, episode recovery latencies, and AMC concentration place the current month in historical context."
-          watchNext="Whether flow z-scores stay positive when Nifty draws down — that's the buy-the-dip signal."
-        />
       )}
 
       {activeTab === "market-cycle" && flowHeatCells.length > 0 && (
