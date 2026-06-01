@@ -1,0 +1,73 @@
+name: NIFTY 500 history forward refresh (manual)
+
+# MANUAL daily forward-append — Phase 3.10C.
+# workflow_dispatch only; NO schedule (scheduling lands in Phase 3.10D).
+#
+# Consumes the already-committed src/data/snapshots/index-latest.json
+# (refreshed by index-latest.yml) and appends today's NIFTY 500 close
+# onto public/index-history/NIFTY_500.json + updates the manifest.
+#
+# Append rule (per index):
+#   • latest.asOf > history.lastDate → append
+#   • latest.asOf == history.lastDate → no-op clean exit (commit step
+#     no-ops too because git status has no changes)
+#   • latest.asOf  < history.lastDate → no-op clean exit (no rewind)
+#
+# Keep-last-good: any guardrail failure → non-zero exit → commit
+# skipped → existing files left untouched.
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are you running this? (optional)"
+        required: false
+        type: string
+      commit:
+        description: "true = commit + push the updated history + manifest when changed (default). false = run only, do not commit."
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  # cancel-in-progress: false — never cancel an in-flight production
+  # write; let a new trigger queue and run from a fresh checkout (and
+  # no-op if the in-flight run already appended today's close).
+  group: index-history-forward-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  forward:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Forward-append latest NIFTY 500 close
+        # Non-zero exit on any guardrail failure blocks the commit step
+        # below (gated on `success()`); a clean no-op exit (latest ==
+        # history.lastDate) leaves git untouched.
+        run: npm run ingest:index:history-forward
+      - name: Commit updated history + manifest
+        if: ${{ inputs.commit == 'true' && success() }}
+        run: |
+          if [ -z "$(git status --porcelain public/index-history src/data/snapshots/index-history-manifest.json)" ]; then
+            echo "No forward-refresh changes to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/index-history src/data/snapshots/index-history-manifest.json
+          git commit -m "chore(data): forward NIFTY 500 history append"
+          git push

@@ -1,0 +1,86 @@
+name: NIFTY 500 latest snapshot (manual)
+
+# MANUAL daily latest-index fetcher — Phase 3.10B.
+# workflow_dispatch only; NO schedule (scheduling lands in Phase 3.10D
+# after a clean manual production run has been verified).
+#
+# Runs scripts/ingest/index-latest.ts (NSE archives ind_close_all_*.csv),
+# uploads the snapshot as an artifact, and — matching the existing
+# nav-latest.yml convention — commits src/data/snapshots/index-latest.json
+# to the branch when commit=true AND it has changed.
+#
+# Keep-last-good: the script exits non-zero WITHOUT writing if every
+# candidate date in the lookback window fails to yield a valid
+# NIFTY 500 row, so a degraded snapshot can never be committed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are you running this? (optional)"
+        required: false
+        type: string
+      target_date:
+        description: "Override target date as YYYY-MM-DD (optional). Default: today's IST date."
+        required: false
+        type: string
+      lookback_days:
+        description: "How many calendar days to walk back if today's CSV isn't published yet (default 7)."
+        required: false
+        default: "7"
+        type: string
+      commit:
+        description: "true = commit + push the snapshot when it changed (default). false = artifact only."
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: index-latest-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  index-latest:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Fetch latest NIFTY 500 snapshot
+        env:
+          INDEX_LATEST_DATE: ${{ inputs.target_date }}
+          INDEX_LATEST_LOOKBACK_DAYS: ${{ inputs.lookback_days }}
+        run: npm run ingest:index:latest
+      - name: Upload snapshot artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: index-latest
+          path: src/data/snapshots/index-latest.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Commit snapshot
+        # Runs only on a SUCCESSFUL fetch (npm run above is a hard gate;
+        # a non-zero exit fails the job before this step runs).
+        if: ${{ inputs.commit == 'true' }}
+        run: |
+          if [ -z "$(git status --porcelain src/data/snapshots/index-latest.json)" ]; then
+            echo "No snapshot changes to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/snapshots/index-latest.json
+          git commit -m "chore(data): refresh NIFTY 500 latest snapshot ($(date -u +%Y-%m-%d))"
+          git push
