@@ -392,15 +392,37 @@ async function main(): Promise<void> {
     return;
   }
 
-  // --- Build the merged series + validate end-to-end -----------------------
-  // Sort the queued rows ascending by asOf (they should already be in order
-  // because we walked the range forward, but the asOf from the CSV could
-  // theoretically diverge from the cursor — defensive sort).
-  queued.sort((a, b) => a.asOf.localeCompare(b.asOf));
-  const merged: Array<[string, number]> = [
-    ...existing.series,
-    ...queued.map((q) => [q.asOf, q.level] as [string, number]),
-  ];
+  // --- Build the merged series + validate end-to-end ---------------------
+  // Phase 3.10C.1 bug fix: a naïve [...existing.series, ...queued] only
+  // produces an ascending array when every queued asOf is strictly greater
+  // than existing.lastDate. That holds for a routine forward catch-up but
+  // FAILS when filling an INTERIOR gap — e.g. existing series ended at
+  // 2026-03-30 then Phase 3.10C forward-appended only 2026-05-29, so the
+  // existing series ends at 2026-05-29 even though 2026-03-31..2026-05-28
+  // are missing. Catching those up appends rows whose asOf is LESS than
+  // existing.lastDate, and the simple concatenation produces a
+  // non-ascending series that the validator (correctly) rejects.
+  //
+  // The right model is a date-keyed map: seed with the existing series,
+  // insert queued rows where they don't already exist (preserving existing
+  // values on collision — the fetch loop also pre-filters duplicates), then
+  // emit a sorted ascending series. The downstream validation walk stays
+  // unchanged and acts as a safety net.
+  const byDate = new Map<string, number>(existing.series);
+  let mergeCollisions = 0;
+  for (const q of queued) {
+    if (byDate.has(q.asOf)) {
+      // Pre-existing date — preserve the existing value (NO overwrite).
+      // The fetch loop's existingDates check makes this branch defensive;
+      // hitting it would indicate a queued row that bypassed that filter.
+      mergeCollisions += 1;
+      continue;
+    }
+    byDate.set(q.asOf, q.level);
+  }
+  const sortedDates = Array.from(byDate.keys()).sort();
+  const merged: Array<[string, number]> = sortedDates.map((d) => [d, byDate.get(d)!]);
+
   const seen = new Set<string>();
   let prev = "";
   for (let i = 0; i < merged.length; i++) {
@@ -482,15 +504,18 @@ async function main(): Promise<void> {
   await atomicWriteJson(MANIFEST_PATH, manifest);
   info(`wrote ${path.relative(process.cwd(), MANIFEST_PATH)}`);
 
+  const newDates = merged.length - existing.series.length;
   info(`================ CATCH-UP SUMMARY ================`);
-  info(`range:           ${start} → ${end}  (${totalDays} calendar day(s))`);
-  info(`appended:        ${queued.length}`);
-  info(`skipped 404:     ${skipped404}  (non-trading days / unavailable files)`);
-  info(`skipped invalid: ${skippedInvalid}`);
-  info(`skipped duplicate: ${skippedDuplicate}`);
-  info(`new range:       ${newFirstDate} → ${newLastDate}`);
-  info(`new points:      ${merged.length}`);
-  info(`stage:           ${newFile.meta.stage}`);
+  info(`range:             ${start} → ${end}  (${totalDays} calendar day(s))`);
+  info(`fetched ok:        ${queued.length}`);
+  info(`merge collisions:  ${mergeCollisions}  (queued dates already in existing — preserved existing values)`);
+  info(`new dates landed:  ${newDates}  (= merged.length − existing.series.length)`);
+  info(`skipped 404:       ${skipped404}  (non-trading days / unavailable files)`);
+  info(`skipped invalid:   ${skippedInvalid}`);
+  info(`skipped duplicate: ${skippedDuplicate}  (caught at fetch time before queue)`);
+  info(`new range:         ${newFirstDate} → ${newLastDate}`);
+  info(`new points:        ${merged.length}  (was ${existing.series.length})`);
+  info(`stage:             ${newFile.meta.stage}`);
   info(`==================================================`);
 }
 
