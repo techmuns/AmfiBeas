@@ -1,0 +1,87 @@
+name: NIFTY 500 history catch-up (manual)
+
+# MANUAL gap-fill — Phase 3.10C.1.
+# workflow_dispatch only; NO schedule, NO workflow_run (Phase 3.10D
+# will add automation after a clean manual run validates this end to
+# end).
+#
+# Walks NSE daily-index-close CSVs from (history.lastDate + 1) up to
+# index-latest.asOf (or today's IST date) and appends every available
+# trading-day NIFTY 500 close onto public/index-history/NIFTY_500.json
+# + updates the manifest. Atomic all-or-nothing: a fatal NSE error
+# mid-walk discards the run with NO writes (keep-last-good).
+#
+# Use this after a long-ish manual pause in the daily forward append,
+# to backfill the gap before re-enabling routine refresh.
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are you running this? (optional)"
+        required: false
+        type: string
+      start_date:
+        description: "Optional start YYYY-MM-DD (default: history.lastDate + 1 day)."
+        required: false
+        type: string
+      end_date:
+        description: "Optional end YYYY-MM-DD (default: index-latest.asOf, else today IST)."
+        required: false
+        type: string
+      commit:
+        description: "true = commit + push the updated history + manifest when changed (default). false = run only, do not commit."
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  # cancel-in-progress: false — never cancel an in-flight catch-up; a
+  # new trigger queues from a fresh checkout (and will no-op cleanly
+  # if the in-flight run already filled the range).
+  group: index-history-catchup-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  catchup:
+    runs-on: ubuntu-22.04
+    # Catch-up of one or two months hits ~40-60 NSE archive URLs with a
+    # 750ms polite delay between each — well under 5 min. 30 min ceiling.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Catch up NIFTY 500 daily history
+        env:
+          INDEX_CATCHUP_START: ${{ inputs.start_date }}
+          INDEX_CATCHUP_END: ${{ inputs.end_date }}
+        run: npm run ingest:index:history-catchup
+      - name: Commit updated history + manifest
+        # Only when commit=true AND the previous step succeeded. The
+        # previous step exits non-zero on any fatal NSE error (403, 5xx,
+        # network), so a failure cleanly skips the commit and leaves the
+        # existing committed files untouched. A clean no-op run (no
+        # trading days in the range) leaves git unchanged and the
+        # porcelain check below exits cleanly.
+        if: ${{ inputs.commit == 'true' && success() }}
+        run: |
+          if [ -z "$(git status --porcelain public/index-history src/data/snapshots/index-history-manifest.json)" ]; then
+            echo "No catch-up changes to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/index-history src/data/snapshots/index-history-manifest.json
+          git commit -m "chore(data): NIFTY 500 history catch-up"
+          git push
