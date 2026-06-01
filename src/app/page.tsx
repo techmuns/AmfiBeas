@@ -22,6 +22,7 @@ import {
 import { amcTrajectoryQuadrant } from "@/data/amc-peer-universe";
 import { industryNarrative } from "@/data/narrative";
 import { CapFlowsView } from "@/components/data/CapFlowsView";
+import { SectorFlowHeatmap } from "@/components/data/SectorFlowHeatmap";
 import { capFlows } from "@/data/cap-flows";
 import {
   formatPercentile,
@@ -79,6 +80,15 @@ export default function HomePage() {
           </h2>
         </div>
         <CapFlowsView flows={capFlows} />
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-sm font-medium tracking-tight">
+            Monthly sector flows
+          </h2>
+        </div>
+        <SectorFlowHeatmap />
       </section>
 
       <section className="space-y-3">
