@@ -12,6 +12,8 @@ import { AmcSearchTable } from "@/components/data/AmcSearchTable";
 import { StrategicMovesCohortLane } from "@/components/amc/StrategicMovesCohortLane";
 import { CohortUniqueInvestorShare } from "@/components/amc/CohortUniqueInvestorShare";
 import { IndustryConcentrationStack } from "@/components/amc/IndustryConcentrationStack";
+import { AmcCashAllocationTrend } from "@/components/amc/AmcCashAllocationTrend";
+import { AmcStockConcentration } from "@/components/amc/AmcStockConcentration";
 import { amcAaumSeries, amcIndexRows } from "@/data/amc-detail";
 import {
   amcHealthGrowthMatrix,
@@ -374,6 +376,10 @@ export default async function AmcListPage({
           </HowToRead>
         </Card>
       )}
+
+      {activeTab === "share-positioning" && <AmcStockConcentration />}
+
+      {activeTab === "share-positioning" && <AmcCashAllocationTrend />}
 
       {activeTab === "share-positioning" && <IndustryConcentrationStack />}
 
