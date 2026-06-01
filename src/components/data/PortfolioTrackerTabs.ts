@@ -11,6 +11,7 @@ export const TRACKER_TABS = [
   { id: "peers", label: "Peers" },
   { id: "head-to-head", label: "Head-to-head" },
   { id: "trends", label: "Trends" },
+  { id: "amc-mix", label: "AMC Mix" },
 ] as const satisfies readonly DashboardTabDef[];
 
 export type TrackerTabId = (typeof TRACKER_TABS)[number]["id"];

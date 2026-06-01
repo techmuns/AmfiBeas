@@ -10,6 +10,7 @@ import {
   isLikelySameScheme,
 } from "@/components/data/PortfolioHeadToHead";
 import { PortfolioTrendsTab } from "@/components/data/PortfolioTrendsTab";
+import { AmcAllocationCharts } from "@/components/data/AmcAllocationCharts";
 import {
   SectorAllocationChart,
   type SectorAllocationRow,
@@ -489,7 +490,11 @@ export function PortfolioTrackerView({
         searchParams={searchParams}
       />
 
-      {!selectedEntry ? (
+      {activeTab === "amc-mix" ? (
+        // Industry-wide fund-house allocation charts — independent of the
+        // fund picker, so they render whether or not a scheme is selected.
+        <AmcAllocationCharts />
+      ) : !selectedEntry ? (
         <div className="flex h-32 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
           No fund selected.
         </div>
