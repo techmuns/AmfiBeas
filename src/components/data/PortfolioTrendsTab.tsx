@@ -859,8 +859,7 @@ function ChartSlot({
       />
       {benchmark && (
         <div className="mt-1 px-1 text-[10px] tabular text-muted-foreground/80">
-          Dashed line: {benchmark.label} rebased to 100 from{" "}
-          {formatIsoDate(benchmark.anchorDate)} · {benchmark.anchorLevel.toFixed(2)}
+          {benchmark.label} anchor {formatIsoDate(benchmark.anchorDate)} · {benchmark.anchorLevel.toFixed(2)} = 100
         </div>
       )}
     </div>

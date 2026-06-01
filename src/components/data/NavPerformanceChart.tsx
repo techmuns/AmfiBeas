@@ -42,8 +42,8 @@ interface Props {
  *  selected fund's series over the chosen timeframe with raw NAV + rebased
  *  value in the tooltip. Inherits the dashboard's existing chart style
  *  (CartesianGrid + muted axes + gradient fill — same look as AreaTrend).
- *  Phase 3.10A optionally overlays a Nifty 500 benchmark as a muted dashed
- *  line; the fund series stays the visual primary. */
+ *  Phase 3.10A optionally overlays a Nifty 500 benchmark as a dashed line
+ *  on top of the fund area; the fund series stays the visual primary. */
 export function NavPerformanceChart({
   data,
   anchorDate,
@@ -55,75 +55,141 @@ export function NavPerformanceChart({
   const change = last ? last.rebased - 100 : 0;
   const color =
     change >= 0 ? "hsl(var(--positive))" : "hsl(var(--negative))";
+  // Phase 3.10A bug fix: a slate-grey benchmark stroke was washing out
+  // on top of the green/red gradient fill. Switched to a clear indigo
+  // that holds contrast on both light and dark themes; thicker stroke
+  // + a more deliberate dash pattern; activeDot on hover. Theme-agnostic
+  // color literal (not a CSS variable) because there's no existing
+  // benchmark token; safe to introduce as a single styling constant.
+  const benchmarkStroke = "hsl(220, 70%, 55%)";
+
+  // Phase 3.10A bug fix: Y-axis domain must include the benchmark line.
+  // `["auto", "auto"]` previously fit only the visible series; with the
+  // benchmark Line going beyond the fund's rebased range (e.g. 5Y where
+  // the index has moved more than the fund), the dashed line could
+  // clip off-canvas. Compute min/max across BOTH series with a 2%
+  // padding so both lines stay comfortably inside the plot area.
+  const yDomain = computeYDomain(data);
 
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <AreaChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-        <defs>
-          <linearGradient id="navPerformanceFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity={0.32} />
-            <stop offset="100%" stopColor={color} stopOpacity={0.02} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid
-          stroke="hsl(var(--border))"
-          vertical={false}
-          strokeDasharray="3 3"
-        />
-        <XAxis
-          dataKey="date"
-          stroke="hsl(var(--muted-foreground))"
-          fontSize={11}
-          tickLine={false}
-          axisLine={false}
-          interval="preserveStartEnd"
-          minTickGap={48}
-          tickFormatter={(iso: string) => formatTickDate(iso)}
-        />
-        <YAxis
-          stroke="hsl(var(--muted-foreground))"
-          fontSize={11}
-          tickLine={false}
-          axisLine={false}
-          width={44}
-          tickFormatter={(v: number) => v.toFixed(0)}
-          domain={["auto", "auto"]}
-        />
-        <Tooltip
-          cursor={{ stroke: "hsl(var(--border))" }}
-          content={(p) => (
-            <PerfTooltip
-              {...p}
-              anchorDate={anchorDate}
-              anchorNav={anchorNav}
-              benchmark={benchmark}
+    <div className="space-y-1.5">
+      {benchmark && (
+        <div className="flex items-center gap-4 px-1 text-[10px] tabular text-muted-foreground/80">
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              aria-hidden
+              className="inline-block h-[2px] w-5 rounded-sm"
+              style={{ backgroundColor: color }}
             />
-          )}
-        />
-        <Area
-          type="monotone"
-          dataKey="rebased"
-          stroke={color}
-          strokeWidth={1.75}
-          fill="url(#navPerformanceFill)"
-          dot={false}
-          isAnimationActive={false}
-        />
-        {benchmark && (
-          <Line
-            type="monotone"
-            dataKey="benchmarkRebased"
+            Fund NAV
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              aria-hidden
+              className="inline-block h-0 w-5 border-t-2 border-dashed"
+              style={{ borderColor: benchmarkStroke }}
+            />
+            {benchmark.label}
+          </span>
+        </div>
+      )}
+      <ResponsiveContainer width="100%" height={height}>
+        <AreaChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id="navPerformanceFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.32} />
+              <stop offset="100%" stopColor={color} stopOpacity={0.02} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid
+            stroke="hsl(var(--border))"
+            vertical={false}
+            strokeDasharray="3 3"
+          />
+          <XAxis
+            dataKey="date"
             stroke="hsl(var(--muted-foreground))"
-            strokeWidth={1.25}
-            strokeDasharray="4 4"
+            fontSize={11}
+            tickLine={false}
+            axisLine={false}
+            interval="preserveStartEnd"
+            minTickGap={48}
+            tickFormatter={(iso: string) => formatTickDate(iso)}
+          />
+          <YAxis
+            stroke="hsl(var(--muted-foreground))"
+            fontSize={11}
+            tickLine={false}
+            axisLine={false}
+            width={44}
+            tickFormatter={(v: number) => v.toFixed(0)}
+            domain={yDomain}
+          />
+          <Tooltip
+            cursor={{ stroke: "hsl(var(--border))" }}
+            content={(p) => (
+              <PerfTooltip
+                {...p}
+                anchorDate={anchorDate}
+                anchorNav={anchorNav}
+                benchmark={benchmark}
+              />
+            )}
+          />
+          <Area
+            type="monotone"
+            dataKey="rebased"
+            stroke={color}
+            strokeWidth={1.75}
+            fill="url(#navPerformanceFill)"
             dot={false}
             isAnimationActive={false}
-            connectNulls={false}
           />
-        )}
-      </AreaChart>
-    </ResponsiveContainer>
+          {benchmark && (
+            <Line
+              type="monotone"
+              dataKey="benchmarkRebased"
+              stroke={benchmarkStroke}
+              strokeWidth={2}
+              strokeDasharray="6 4"
+              dot={false}
+              activeDot={{ r: 3, fill: benchmarkStroke, stroke: benchmarkStroke }}
+              isAnimationActive={false}
+              // connectNulls=true so the ~3 fund-only dates (e.g. Indian
+              // FY-end 31-Mar when AMFI publishes but NSE doesn't trade)
+              // don't fragment the dashed line. We're connecting two real
+              // adjacent points across a one-day data hole, not fabricating
+              // a missing value.
+              connectNulls={true}
+            />
+          )}
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
   );
+}
+
+/** Compute a y-domain that includes BOTH fund `rebased` and the optional
+ *  `benchmarkRebased` values, with a 2% padding so neither line clips at
+ *  the plot edges. Returns ["auto", "auto"] when the array is empty so
+ *  recharts falls back to its default. */
+function computeYDomain(data: NavPerformancePoint[]): [number | "auto", number | "auto"] {
+  if (data.length === 0) return ["auto", "auto"];
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (const p of data) {
+    if (Number.isFinite(p.rebased)) {
+      if (p.rebased < lo) lo = p.rebased;
+      if (p.rebased > hi) hi = p.rebased;
+    }
+    if (typeof p.benchmarkRebased === "number" && Number.isFinite(p.benchmarkRebased)) {
+      if (p.benchmarkRebased < lo) lo = p.benchmarkRebased;
+      if (p.benchmarkRebased > hi) hi = p.benchmarkRebased;
+    }
+  }
+  if (!Number.isFinite(lo) || !Number.isFinite(hi) || lo === hi) return ["auto", "auto"];
+  const pad = (hi - lo) * 0.02;
+  return [lo - pad, hi + pad];
 }
 
 interface RechartsTooltipPayload {
