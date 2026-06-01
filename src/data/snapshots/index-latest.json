@@ -1,0 +1,49 @@
+{
+  "generatedAt": "2026-06-01T10:15:27.738Z",
+  "source": "NSE daily index close CSV",
+  "feedDate": "2026-05-29",
+  "indices": [
+    {
+      "indexId": "NIFTY_500",
+      "name": "Nifty 500",
+      "level": 22657,
+      "asOf": "2026-05-29",
+      "sourceUrl": "https://archives.nseindia.com/content/indices/ind_close_all_29052026.csv"
+    }
+  ],
+  "provenance": {
+    "attempts": [
+      {
+        "date": "2026-06-01",
+        "url": "https://archives.nseindia.com/content/indices/ind_close_all_01062026.csv",
+        "status": 404,
+        "bytes": 3541,
+        "outcome": "HTTP 404 (bytes=3541)"
+      },
+      {
+        "date": "2026-05-31",
+        "url": "https://archives.nseindia.com/content/indices/ind_close_all_31052026.csv",
+        "status": 404,
+        "bytes": 3541,
+        "outcome": "HTTP 404 (bytes=3541)"
+      },
+      {
+        "date": "2026-05-30",
+        "url": "https://archives.nseindia.com/content/indices/ind_close_all_30052026.csv",
+        "status": 404,
+        "bytes": 3541,
+        "outcome": "HTTP 404 (bytes=3541)"
+      },
+      {
+        "date": "2026-05-29",
+        "url": "https://archives.nseindia.com/content/indices/ind_close_all_29052026.csv",
+        "status": 200,
+        "bytes": 16184,
+        "outcome": "ok level=22657 asOf=(header missing)"
+      }
+    ],
+    "lookbackDaysTried": 7,
+    "parser": "scripts/ingest/index-latest.ts:extractNifty500",
+    "notes": "Phase 3.10B daily latest fetcher. Keep-last-good: never overwrites a good snapshot with empty/bad data."
+  }
+}
