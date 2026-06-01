@@ -2,8 +2,6 @@ import Link from "next/link";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { HowToRead } from "@/components/ui/HowToRead";
-import { ChartTypeToggle } from "@/components/ui/ChartTypeToggle";
-import { BarsWithGrowth } from "@/components/charts/BarsWithGrowth";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import {
   adaptiveAverageOverlay,
@@ -11,7 +9,6 @@ import {
   exponentialMovingAverage,
   latestYoyPct,
   slicedMovingAverage,
-  yoyPctSeries,
 } from "@/lib/chart-context";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BarSeries } from "@/components/charts/BarSeries";
@@ -42,13 +39,12 @@ import {
   latestProvenanceFor,
   activeEquityAumBridgeSnapshot,
   monthlyActiveEquityAumBridge,
-  monthlyActiveEquityNetInflowTrend,
   monthlyActiveEquityShareTrend,
   monthlyActivePassiveTrend,
   monthlyEquityBreakdown,
   monthlyFlowsData,
   monthlyIndustryFolioAdditionsTrend,
-  monthlySipAumShareTrend,
+  monthlySipGrossShareTrend,
   monthlyTrend,
   nfoDragTrend,
   resolveSelectedRow,
@@ -56,12 +52,17 @@ import {
 } from "@/data/amfi-monthly";
 import type { AmfiMonthlyPdfRow } from "@/data/snapshots/types";
 import {
+  activeEquityFlowWithNiftyTrend,
   cyclePhaseHistory,
   historicalEpisodes,
   latestNifty500Row,
   marketIndexRows,
+  niftyFlowImpactTable,
   weatherBadge,
 } from "@/data/market-indices";
+import { BarsWithIndexLine } from "@/components/charts/BarsWithIndexLine";
+import { BarsWithLabels } from "@/components/charts/BarsWithLabels";
+import { NiftyFlowImpactTable } from "@/components/data/NiftyFlowImpactTable";
 import { SankeyFlow } from "@/components/charts/SankeyFlow";
 import { PassiveShareInEquity } from "@/components/amc/PassiveShareInEquity";
 import { CalendarHeatGrid } from "@/components/ui/CalendarHeatGrid";
@@ -73,7 +74,6 @@ import { EpisodeReplayStrip } from "@/components/ui/EpisodeReplayStrip";
 import { KeyTakeaway, DeltaCr } from "@/components/ui/KeyTakeaway";
 import { StickyContextFooter } from "@/components/ui/StickyContextFooter";
 import { LensToggle } from "@/components/ui/LensToggle";
-import { VolatilityRibbon } from "@/components/ui/VolatilityRibbon";
 import { WeatherBadge } from "@/components/ui/WeatherBadge";
 import {
   IIFL_ACTIVE_EQUITY_CATEGORIES,
@@ -98,6 +98,7 @@ import {
   formatCroreCountSafe,
   formatIntSafe,
   formatLakhSafe,
+  formatMonthLabel,
   formatPercentile,
 } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -238,31 +239,6 @@ export default async function MonthlyPage({
       : "share";
   const monthlyFlowsLens: "absolute" | "share" =
     sp.flowsLens === "share" ? "share" : "absolute";
-  // Chart-type toggle for the Active Equity Net Inflows Bars + Growth
-  // callsite on /monthly. Default is "trend" — only "bars" is echoed
-  // back into the URL so canonical links stay clean.
-  const aeFlowView: "trend" | "bars" =
-    sp.aeFlowView === "bars" ? "bars" : "trend";
-  // Visible-window range for the Active Equity Net Inflows card. The
-  // full stored history runs back to 2019-04 (78 months); this toggle
-  // lets the reader pick how much of it to show. Default 3Y. "all" maps
-  // to a value larger than the stored history so the cap is a no-op.
-  const aeFlowRange: "1y" | "3y" | "5y" | "all" =
-    sp.aeFlowRange === "1y"
-      ? "1y"
-      : sp.aeFlowRange === "5y"
-        ? "5y"
-        : sp.aeFlowRange === "all"
-          ? "all"
-          : "3y";
-  const aeFlowMonths =
-    aeFlowRange === "1y"
-      ? 12
-      : aeFlowRange === "5y"
-        ? 60
-        : aeFlowRange === "all"
-          ? 10_000
-          : 36;
   // SIP Contribution period toggle. History now runs to ~10 years, so
   // the card offers 1Y / 3Y / 5Y / All — where "All" is capped at 84
   // months (the range that aligns with the cycle-phase / market-data
@@ -302,14 +278,8 @@ export default async function MonthlyPage({
   // clean unless the user actively picked "share".
   const aaumLens: "absolute" | "share" =
     sp.aaumLens === "share" ? "share" : "absolute";
-  const sipContribLens: "absolute" | "share" =
-    sp.sipContribLens === "share" ? "share" : "absolute";
   const sipAumLens: "absolute" | "share" =
     sp.sipAumLens === "share" ? "share" : "absolute";
-  const sipAccountsLens: "absolute" | "share" =
-    sp.sipAccountsLens === "share" ? "share" : "absolute";
-  const aeFlowLens: "absolute" | "share" =
-    sp.aeFlowLens === "share" ? "share" : "absolute";
   const aeAaumLens: "absolute" | "share" =
     sp.aeAaumLens === "share" ? "share" : "absolute";
   // Visible-window range for the Active Equity AAUM Trend card. Mirrors
@@ -741,43 +711,9 @@ export default async function MonthlyPage({
   // 2024-12 / 2025-01 because those Notes don't carry the row), but no
   // synthetic data is introduced.
   const sipContribTrend = monthlyTrend("sipContribution", sipContribMonths);
-  // Full history (un-sliced) so the 12M EMA has real prior data to draw
-  // on for the leftmost visible months.
-  const sipContribFullHistory = monthlyTrend("sipContribution", 10_000);
-  // SIP-contribution-specific context for the ChartWithContext wrapper.
-  // Denominator: industry net inflow that month — answers "what share
-  // of the month's net flow came from systematic SIPs?".
-  const sipContribLatestDenomCaption = (() => {
-    const rows = amfiMonthlyRows();
-    for (let i = rows.length - 1; i >= 0; i--) {
-      const r = rows[i];
-      if (
-        typeof r.sipContribution === "number" &&
-        typeof r.netInflow === "number" &&
-        r.netInflow > 0
-      ) {
-        const pct = (r.sipContribution / r.netInflow) * 100;
-        return `${pct.toFixed(0)}% of industry net inflow · latest ${r.month}`;
-      }
-    }
-    return undefined;
-  })();
-  const sipContribInsights = chartInsights(sipContribTrend, {
-    metricName: "SIP contribution",
-    unitSuffix: "₹ Cr",
-    drawdownByLabel: ddByMonthForInsights,
-    cyclePhaseByLabel: cyclePhaseByMonth,
-    episodeAnchors: episodeAnchorsForInsights,
-    yoyLag: 12,
-    peer: {
-      name: "industry net inflow",
-      data: industryNetInflowPeerSeries,
-    },
-  });
   const sipAumTrend = monthlyTrend("sipAum", 24);
   const sipAumFullHistory = monthlyTrend("sipAum", 10_000);
   const sipAccountsTrend = monthlyTrend("sipAccounts", 24);
-  const sipAccountsFullHistory = monthlyTrend("sipAccounts", 10_000);
 
   // SIP AUM denominator caption: latest SIP AUM as % of total AUM.
   const sipAumDenomCaption = (() => {
@@ -803,55 +739,15 @@ export default async function MonthlyPage({
     yoyLag: 12,
   });
 
-  // SIP accounts denominator caption: accounts per ₹ Cr AUM (density).
-  const sipAccountsDenomCaption = (() => {
-    const rows = amfiMonthlyRows();
-    for (let i = rows.length - 1; i >= 0; i--) {
-      const r = rows[i];
-      if (
-        typeof r.sipAccounts === "number" &&
-        typeof r.totalAum === "number" &&
-        r.totalAum > 0
-      ) {
-        const density = r.sipAccounts / r.totalAum;
-        return `${density.toFixed(0)} SIP accounts per ₹ Cr AUM · latest ${r.month}`;
-      }
-    }
-    return undefined;
-  })();
-  const sipAccountsInsights = chartInsights(sipAccountsTrend, {
-    metricName: "SIP accounts",
-    drawdownByLabel: ddByMonthForInsights,
-    cyclePhaseByLabel: cyclePhaseByMonth,
-    episodeAnchors: episodeAnchorsForInsights,
-    yoyLag: 12,
-  });
-
   const hasAnySipTrend =
     sipContribTrend.length > 0 ||
     sipAumTrend.length > 0 ||
     sipAccountsTrend.length > 0;
 
-  // ---- "Share" series for each SIP card -----------------------------
-  // Built once so the toggle below just picks between absolute and
-  // share. Each share series uses the SAME row's denominator so the
-  // ratio is computable without cross-row lookups; rows where the
-  // denominator is missing or zero are filtered out.
-  const sipContribShare = amfiMonthlyRows()
-    .filter(
-      (r) =>
-        typeof r.sipContribution === "number" &&
-        typeof r.netInflow === "number" &&
-        r.netInflow > 0
-    )
-    .map((r) => ({
-      label: r.month,
-      value: ((r.sipContribution as number) / (r.netInflow as number)) * 100,
-    }))
-    .slice(-sipContribMonths);
-  const sipContribDisplay =
-    sipContribLens === "share" ? sipContribShare : sipContribTrend;
-
+  // ---- "Share" series for SIP AUM (kept for the SIP AUM card) -------
+  // SIP Contribution and SIP Contributing Accounts cards were replaced
+  // with the IIFL Figure 6 / 7 charts above — their share series and
+  // display lookups are no longer needed.
   const sipAumShare = amfiMonthlyRows()
     .filter(
       (r) =>
@@ -865,23 +761,6 @@ export default async function MonthlyPage({
     }))
     .slice(-24);
   const sipAumDisplay = sipAumLens === "share" ? sipAumShare : sipAumTrend;
-
-  // SIP accounts density: accounts per ₹ Cr AUM. Accounts come in raw
-  // count; totalAum is in ₹ Cr. The ratio is a pure scalar.
-  const sipAccountsShare = amfiMonthlyRows()
-    .filter(
-      (r) =>
-        typeof r.sipAccounts === "number" &&
-        typeof r.totalAum === "number" &&
-        r.totalAum > 0
-    )
-    .map((r) => ({
-      label: r.month,
-      value: (r.sipAccounts as number) / (r.totalAum as number),
-    }))
-    .slice(-24);
-  const sipAccountsDisplay =
-    sipAccountsLens === "share" ? sipAccountsShare : sipAccountsTrend;
 
   // ---- Monthly Flows (Figure 22-style) section -----------------------
   //
@@ -1438,75 +1317,58 @@ export default async function MonthlyPage({
   // AUM as a % of Total AUM. Gross-inflow share is intentionally
   // dropped: the monthly snapshot only carries net flow, gross
   // (Funds Mobilized) lives on the quarterly snapshot.
-  const activeEquityFlowTrend = monthlyActiveEquityNetInflowTrend(aeFlowMonths);
-  const activeEquityFlowFullHistory = monthlyActiveEquityNetInflowTrend(10_000);
-  // YoY (lag=12) for the Bars + Growth view on the Active Equity Net
-  // Inflow card. Same full-history computation pattern as the equity
-  // flow card above.
-  const aeFlowYoyByLabel = new Map(
-    yoyPctSeries(activeEquityFlowFullHistory, 12).map((p) => [p.label, p.value])
-  );
-  const aeFlowBarsData = activeEquityFlowTrend.map((p) => ({
-    label: p.label,
-    value: p.value,
-    growthPct: aeFlowYoyByLabel.get(p.label) ?? null,
-  }));
+  // Active Equity AUM Bridge — kept for the Flows tab. The standalone
+  // Active Equity Net Inflows chart was replaced with the IIFL Figure 4
+  // composite below.
   const activeEquityBridge = monthlyActiveEquityAumBridge(24);
   const activeEquityBridgeStrip = activeEquityAumBridgeSnapshot(12);
-  const sipAumShareTrend = monthlySipAumShareTrend(24);
-  const hasActiveEquityFlowDiagnostics =
-    activeEquityFlowTrend.length > 0 ||
-    activeEquityBridge.length > 0 ||
-    sipAumShareTrend.length > 0;
 
-  // Active Equity Net Inflow denominator: latest month's active-equity
-  // net inflow as a % of industry net inflow that month — answers
-  // "what share of the month's total flow ended up in active equity?".
-  const activeEquityFlowDenomCaption = (() => {
-    if (activeEquityFlowTrend.length === 0) return undefined;
-    const latest = activeEquityFlowTrend[activeEquityFlowTrend.length - 1];
-    const rows = amfiMonthlyRows();
-    const peerRow = rows.find((r) => r.month === latest.label);
-    if (
-      !peerRow ||
-      typeof peerRow.netInflow !== "number" ||
-      peerRow.netInflow === 0
-    )
-      return undefined;
-    const pct = (latest.value / peerRow.netInflow) * 100;
-    return `${pct >= 0 ? "+" : ""}${pct.toFixed(0)}% of industry net inflow · latest ${latest.label}`;
+  // ---- IIFL-style "MF Flows — Risk of Slowdown" (Figures 4-7) ---------
+  // Composite data feeding the new combined section. Single-pass setup so
+  // the JSX below stays declarative.
+  const activeEquityWithNifty = activeEquityFlowWithNiftyTrend(72);
+  const activeEquityWithNiftyChartData = activeEquityWithNifty.map((p) => ({
+    label: p.month,
+    value: p.activeEquityNetInflow,
+    line: p.niftyLevel,
+  }));
+  const niftyFlowImpactRows = niftyFlowImpactTable(-7);
+  const sipGrossShareSeries = monthlySipGrossShareTrend(72);
+  const sipGrossShareChartData = sipGrossShareSeries.map((p) => ({
+    label: p.month,
+    value: p.sipContribution,
+    line: p.sipShareOfGrossPct,
+  }));
+  const sipAccountsChartData = monthlyTrend("sipAccounts", 12).map((p) => ({
+    label: p.label,
+    // Display in millions to match IIFL Fig 7 (e.g. 94.4mn).
+    value: p.value / 1e6,
+  }));
+  const latestSipShareOfGross = (() => {
+    for (let i = sipGrossShareSeries.length - 1; i >= 0; i--) {
+      const v = sipGrossShareSeries[i].sipShareOfGrossPct;
+      if (typeof v === "number") {
+        return { month: sipGrossShareSeries[i].month, pct: v };
+      }
+    }
+    return null;
   })();
-  const activeEquityFlowInsights = chartInsights(activeEquityFlowTrend, {
-    metricName: "active-equity net inflow",
-    unitSuffix: "₹ Cr",
-    drawdownByLabel: ddByMonthForInsights,
-    cyclePhaseByLabel: cyclePhaseByMonth,
-    episodeAnchors: episodeAnchorsForInsights,
-    yoyLag: 12,
-    peer: {
-      name: "industry net inflow",
-      data: industryNetInflowPeerSeries,
-    },
-  });
-
-  // Active Equity Flow share view: % of industry net inflow that
-  // month. Same pattern as SIP contribution share — clearer "who's
-  // pulling the flow" read than the absolute ₹ Cr.
-  const activeEquityFlowShare = amfiMonthlyRows()
-    .filter(
-      (r) =>
-        typeof r.activeEquityNetInflow === "number" &&
-        typeof r.netInflow === "number" &&
-        r.netInflow !== 0
-    )
-    .map((r) => ({
-      label: r.month,
-      value:
-        ((r.activeEquityNetInflow as number) / (r.netInflow as number)) * 100,
-    }))
-    .slice(-24);
-  const activeEquityFlowDisplay =
-    aeFlowLens === "share" ? activeEquityFlowShare : activeEquityFlowTrend;
+  const latestSipAccountsMn = (() => {
+    if (sipAccountsChartData.length === 0) return null;
+    const last = sipAccountsChartData[sipAccountsChartData.length - 1];
+    const prev =
+      sipAccountsChartData.length > 1
+        ? sipAccountsChartData[sipAccountsChartData.length - 2]
+        : null;
+    const momPct =
+      prev && prev.value !== 0 ? ((last.value - prev.value) / prev.value) * 100 : null;
+    return { month: last.label, value: last.value, momPct };
+  })();
+  const hasMfFlowsSlowdownSection =
+    activeEquityWithNiftyChartData.length > 0 ||
+    niftyFlowImpactRows.length > 0 ||
+    sipGrossShareSeries.length > 0 ||
+    sipAccountsChartData.length > 0;
 
   // Active Equity AUM Bridge — single-series chartInsights doesn't
   // map cleanly to a 2-series bridge. We surface the analytical
@@ -2032,95 +1894,41 @@ export default async function MonthlyPage({
               {sipTrendsRead ? ` · ${sipTrendsRead}` : ""}
             </p>
           </div>
-          {/* SIP Contribution leads full-width — it carries the deepest
-              history (period toggle, cycle bands). SIP AUM + SIP
-              Contributing Accounts sit 2-up below it. */}
           <section className="space-y-4">
-            <ChartWithContext
-              title="SIP Contribution Trend"
-              subtitle="Gross monthly SIP inflows. Shows how much retail money entered through SIPs."
-              flowKind="gross"
-              denominatorCaption={(() => {
-                if (sipContribLens === "share") {
-                  return `${sipContribShare.length} month${sipContribShare.length === 1 ? "" : "s"} · % of industry net inflow`;
+            {sipGrossShareSeries.length > 0 && (
+              <Card
+                title={
+                  latestSipShareOfGross
+                    ? `SIP flows as % of Gross Inflows have risen to ${latestSipShareOfGross.pct.toFixed(0)}% as of ${formatMonthLabel(latestSipShareOfGross.month)}`
+                    : "SIP flows vs Industry Gross Inflows"
                 }
-                const span = `${sipContribTrend.length} month${sipContribTrend.length === 1 ? "" : "s"}`;
-                return sipContribLatestDenomCaption
-                  ? `${span} · ₹ Cr · ${sipContribLatestDenomCaption}`
-                  : `${span} · ₹ Cr`;
-              })()}
-              denominatorTooltip="SIP gross contribution as a share of industry net inflow. Rising share = retail systematic flow is doing more of the heavy lifting; falling share = lump-sum / institutional money dominates."
-              insights={sipContribInsights}
-              yoyBadge={(() => {
-                const v = latestYoyPct(sipContribTrend, 12);
-                return v === null ? undefined : { label: "YoY", pct: v };
-              })()}
-              action={
-                <>
-                  <LensToggle
-                    basePath="/monthly"
-                    paramName="sipContribPeriod"
-                    defaultValue="all"
-                    lenses={[
-                      { value: "1y", label: "1Y" },
-                      { value: "3y", label: "3Y" },
-                      { value: "5y", label: "5Y" },
-                      { value: "all", label: "All" },
-                    ]}
-                    active={sipContribRange}
-                    preserveParams={preservedQueryParams}
-                  />
-                  <LensToggle
-                    basePath="/monthly"
-                    paramName="sipContribLens"
-                    defaultValue="absolute"
-                    lenses={[
-                      { value: "absolute", label: "₹ Cr" },
-                      { value: "share", label: "% of net inflow" },
-                    ]}
-                    active={sipContribLens}
-                    preserveParams={preservedQueryParams}
-                  />
-                </>
-              }
-            >
-              {sipContribTrend.length > 0 ? (() => {
-                // Absolute (₹ Cr) view overlays a 12-month EMA dotted line
-                // seeded over the full SIP history, then sliced to the
-                // visible window. Share view shows no overlay.
-                const useOverlay = sipContribLens !== "share";
-                const ema = useOverlay
-                  ? exponentialMovingAverage(sipContribFullHistory, 12).slice(
-                      -sipContribDisplay.length
-                    )
-                  : undefined;
-                const bands = renderedCycleBands(
-                  cyclePhaseBands,
-                  sipContribDisplay.map((p) => p.label)
-                );
-                return (
-                  <>
-                    <BarSeries
-                      data={sipContribDisplay}
-                      name="SIP Contribution"
-                      color="hsl(var(--chart-1))"
-                      valueFormat={sipContribLens === "share" ? "pct" : "cr"}
-                      axisFormat={sipContribLens === "share" ? "pct" : "cr"}
-                      labelFormat="month"
-                      trendline={ema}
-                      trendlineName={ema ? "12-month EMA" : undefined}
-                      cyclePhaseBands={bands}
-                      dynamicYDomain={sipContribLens === "share"}
-                    />
-                    <CyclePhaseLegend bands={bands} />
-                  </>
-                );
-              })() : (
-                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  SIP contribution not yet ingested — appears once the next AMFI Monthly Notes (press release) lands.
-                </div>
-              )}
-            </ChartWithContext>
+              >
+                <BarsWithIndexLine
+                  data={sipGrossShareChartData}
+                  barColor="hsl(var(--chart-1))"
+                  lineColor="hsl(var(--chart-3))"
+                  valueFormat="cr"
+                  axisFormat="cr"
+                  lineValueFormat="pct"
+                  lineAxisFormat="pct"
+                  labelFormat="month"
+                  barName="SIP Flows (₹ Cr)"
+                  lineName="SIP Flows as % of gross Inflows (RHS)"
+                  lineDomain={[0, 100]}
+                />
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Bars: monthly SIP contribution (₹ Cr, left axis). Line:
+                  SIP share of the equity-channel inflow proxy (right axis,
+                  capped at 100%). Proxy denominator = SIP + max(0,
+                  active-equity net inflow). Used because monthly gross
+                  subscribe / repurchase columns aren&apos;t in the AMFI
+                  Monthly Report extract — so this reads as a conservative
+                  approximation of IIFL&apos;s &quot;SIP / Gross Inflows&quot;
+                  metric. The structural rise of SIP&apos;s share is the
+                  read.
+                </p>
+              </Card>
+            )}
 
             <div className="grid gap-4 lg:grid-cols-2">
             <ChartWithContext
@@ -2194,251 +2002,90 @@ export default async function MonthlyPage({
               )}
             </ChartWithContext>
 
-            <ChartWithContext
-              title="SIP Contributing Accounts Trend"
-              subtitle="Number of live SIP accounts. Captures retail breadth."
-              flowKind="stock"
-              denominatorCaption={(() => {
-                if (sipAccountsLens === "share") {
-                  return `${sipAccountsShare.length} month${sipAccountsShare.length === 1 ? "" : "s"} · accounts per ₹ Cr AUM`;
+            {sipAccountsChartData.length > 0 && (
+              <Card
+                title={
+                  latestSipAccountsMn
+                    ? `SIP contributing accounts ${
+                        latestSipAccountsMn.momPct === null
+                          ? "stood at"
+                          : latestSipAccountsMn.momPct >= 0
+                            ? `were up ${latestSipAccountsMn.momPct.toFixed(0)}% mom in`
+                            : `were down ${Math.abs(latestSipAccountsMn.momPct).toFixed(0)}% mom in`
+                      } ${formatMonthLabel(latestSipAccountsMn.month)} to ${latestSipAccountsMn.value.toFixed(1)}mn`
+                    : "SIP Active contributing accounts (mn)"
                 }
-                const span = `${sipAccountsTrend.length} month${sipAccountsTrend.length === 1 ? "" : "s"}`;
-                return sipAccountsDenomCaption
-                  ? `${span} · ${sipAccountsDenomCaption}`
-                  : span;
-              })()}
-              denominatorTooltip="SIP accounts per ₹ Cr of industry AUM — a density measure of investor participation per unit of capital. Rising = more retail-density per Cr; falling = AUM growing faster than account base."
-              insights={sipAccountsInsights}
-              yoyBadge={(() => {
-                const v = latestYoyPct(sipAccountsTrend, 12);
-                return v === null ? undefined : { label: "YoY", pct: v };
-              })()}
-              action={
-                <LensToggle
-                  basePath="/monthly"
-                  paramName="sipAccountsLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "Count" },
-                    { value: "share", label: "Per ₹ Cr AUM" },
-                  ]}
-                  active={sipAccountsLens}
-                  preserveParams={preservedQueryParams}
+              >
+                <BarsWithLabels
+                  data={sipAccountsChartData}
+                  barColor="hsl(var(--chart-3))"
+                  valueFormat="count"
+                  axisFormat="count"
+                  labelFormat="month"
+                  name="SIP Active contributing accounts (mn)"
+                  labelValueFormat="count"
                 />
-              }
-            >
-              {sipAccountsTrend.length > 0 ? (() => {
-                // Absolute (count) view overlays a 12-month EMA dotted line
-                // seeded over the full SIP history, then sliced to the
-                // visible window. Share view shows no overlay.
-                const useOverlay = sipAccountsLens !== "share";
-                const ema = useOverlay
-                  ? exponentialMovingAverage(sipAccountsFullHistory, 12).slice(
-                      -sipAccountsDisplay.length
-                    )
-                  : undefined;
-                const bands = renderedCycleBands(
-                  cyclePhaseBands,
-                  sipAccountsDisplay.map((p) => p.label)
-                );
-                return (
-                  <>
-                    <BarSeries
-                      data={sipAccountsDisplay}
-                      name="SIP Accounts"
-                      color="hsl(var(--chart-3))"
-                      valueFormat={sipAccountsLens === "share" ? "count" : "crore-count"}
-                      axisFormat={sipAccountsLens === "share" ? "count" : "crore-count"}
-                      labelFormat="month"
-                      trendline={ema}
-                      trendlineName={ema ? "12-month EMA" : undefined}
-                      cyclePhaseBands={bands}
-                      dynamicYDomain={sipAccountsLens === "share"}
-                    />
-                    <CyclePhaseLegend bands={bands} />
-                  </>
-                );
-              })() : (
-                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  SIP accounts not yet ingested — appears once the next AMFI Monthly Notes (press release) lands.
-                </div>
-              )}
-            </ChartWithContext>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Live SIP-account count, expressed in millions. Sourced from
+                  the AMFI Monthly Note&apos;s SIP trend table.
+                </p>
+              </Card>
+            )}
             </div>
           </section>
         </div>
       )}
 
-      {activeTab === "flows" && hasActiveEquityFlowDiagnostics && (
-        <>
-          {/* Active Equity Net Inflows: full-width on its own row. The
-              card packs Basis + YoY + LensToggle + ChartTypeToggle —
-              too many controls for a 2-up grid. Bridge card sits below
-              on its own row for the same reason. */}
-          {activeEquityFlowTrend.length > 0 && (
-            <ChartWithContext
-              title="Active Equity Net Inflows"
-              subtitle="Monthly active-equity net inflow. Positive values mean money entered active equity funds."
-              flowKind="net"
-              denominatorCaption={(() => {
-                if (aeFlowView === "bars") {
-                  return `${activeEquityFlowTrend.length} month${activeEquityFlowTrend.length === 1 ? "" : "s"} · ₹ Cr · YoY growth overlaid`;
-                }
-                if (aeFlowLens === "share") {
-                  return `${activeEquityFlowShare.length} month${activeEquityFlowShare.length === 1 ? "" : "s"} · % of industry net inflow`;
-                }
-                const span = `${activeEquityFlowTrend.length} month${activeEquityFlowTrend.length === 1 ? "" : "s"}`;
-                return activeEquityFlowDenomCaption
-                  ? `${span} · ₹ Cr · ${activeEquityFlowDenomCaption}`
-                  : `${span} · ₹ Cr`;
-              })()}
-              denominatorTooltip={
-                aeFlowView === "bars"
-                  ? undefined
-                  : "Latest active-equity net inflow as a % of industry net inflow for the same month — captures how much of the month's flow ended up in the active-equity envelope."
-              }
-              insights={activeEquityFlowInsights}
-              yoyBadge={(() => {
-                const v = latestYoyPct(activeEquityFlowTrend, 12);
-                return v === null ? undefined : { label: "YoY", pct: v };
-              })()}
-              action={
-                <>
-                  <LensToggle
-                    basePath="/monthly"
-                    paramName="aeFlowRange"
-                    defaultValue="3y"
-                    lenses={[
-                      { value: "1y", label: "1Y" },
-                      { value: "3y", label: "3Y" },
-                      { value: "5y", label: "5Y" },
-                      { value: "all", label: "All" },
-                    ]}
-                    active={aeFlowRange}
-                    preserveParams={preservedQueryParams}
-                  />
-                  <ChartTypeToggle
-                    basePath="/monthly"
-                    paramName="aeFlowView"
-                    active={aeFlowView}
-                    preserveParams={preservedQueryParams}
-                  />
-                </>
-              }
+      {activeTab === "flows" && hasMfFlowsSlowdownSection && (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight">
+              MF Flows — Risk of Slowdown
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Net inflows in subsequent periods are meaningfully impacted by
+              Nifty returns. Source: AMFI Monthly Report, NSE.
+            </p>
+          </div>
+
+          {activeEquityWithNiftyChartData.length > 0 && (
+            <Card
+              title="Net inflows of subsequent period are meaningfully impacted by Nifty returns"
             >
-              {aeFlowView === "bars" ? (
-                <BarsWithGrowth
-                  data={aeFlowBarsData}
-                  barColor="hsl(var(--chart-1))"
-                  growthColor="hsl(var(--foreground))"
-                  valueFormat="cr"
-                  axisFormat="cr"
-                  labelFormat="month"
-                  name="Active Equity net inflow"
-                  growthLabel="YoY %"
-                />
-              ) : (() => {
-                const useOverlay = aeFlowLens !== "share";
-                const trailingAvg = slicedMovingAverage(
-                  activeEquityFlowFullHistory,
-                  12,
-                  activeEquityFlowDisplay.length
-                );
-                const flowCycleBands = renderedCycleBands(
-                  cyclePhaseBands,
-                  activeEquityFlowDisplay.map((p) => p.label as string)
-                );
-                return (
-                  <>
-                    <BarSeries
-                      data={activeEquityFlowDisplay}
-                      name="Active Equity Net Inflow"
-                      color="hsl(var(--chart-1))"
-                      valueFormat={aeFlowLens === "share" ? "pct" : "cr"}
-                      axisFormat={aeFlowLens === "share" ? "pct" : "cr"}
-                      labelFormat="month"
-                      signedFill="single"
-                      trendline={useOverlay ? trailingAvg : undefined}
-                      trendlineName={useOverlay ? "Trailing 12-month avg" : undefined}
-                      cyclePhaseBands={flowCycleBands}
-                    />
-                    {aeFlowLens === "absolute" && (
-                      <div className="mt-2">
-                        <VolatilityRibbon series={activeEquityFlowTrend} />
-                      </div>
-                    )}
-                    <CyclePhaseLegend bands={flowCycleBands} />
-                  </>
-                );
-              })()}
-              <HowToRead>
-                {aeFlowView === "bars" ? (
-                  <p>
-                    Bars are the monthly net inflow in ₹ Cr; the dashed line
-                    (right axis) is its YoY % change, which strips seasonality so
-                    you can see whether a month beat the same month a year ago.
-                    YoY is suppressed (shown as &ldquo;—&rdquo;, with a gap in the
-                    line) for months whose year-ago base was near-zero or
-                    sign-flipped, because the % there is a base-effect artefact,
-                    not real momentum. The clearest example:{" "}
-                    <span className="font-medium text-foreground/80">
-                      November 2022 was a rare active-equity net <em>outflow</em>{" "}
-                      (−₹51.5 Cr)
-                    </span>
-                    , so November 2023&apos;s inflow of ₹19.9K Cr would otherwise
-                    read a meaningless <span className="text-negative font-medium">+38,654%</span>{" "}
-                    YoY — a year-on-year &ldquo;growth&rdquo; across an
-                    outflow→inflow swing is undefined, so we hide it rather than
-                    print the exploded figure.
-                  </p>
-                ) : (
-                  <p className="inline-flex items-start gap-1.5">
-                    <span>
-                      The solid line is monthly active-equity net inflow — fresh
-                      money minus redemptions across equity, hybrid (ex-arbitrage)
-                      and solution-oriented schemes. The dashed line is its
-                      trailing 12-month average. The thin strip beneath shades any
-                      month whose move was ≥ ±2σ versus the series&apos; own
-                      history — sharp jumps green, sharp drops red.
-                    </span>
-                    <InfoTooltip label="Active-equity envelope = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
-                  </p>
-                )}
-                <ul className="list-disc space-y-1 pl-4">
-                  <li>
-                    <span className="font-medium text-foreground/80">
-                      Why it rarely turns negative:
-                    </span>{" "}
-                    active-equity flow is anchored by automated monthly SIPs,
-                    which keep buying through corrections. A dip usually means
-                    lump-sum or HNI profit-booking after a rally — not retail
-                    stopping — so an actual negative print is a genuine demand
-                    event worth flagging.
-                  </li>
-                  <li>
-                    <span className="font-medium text-foreground/80">
-                      Why it&apos;s the number to watch for AMCs:
-                    </span>{" "}
-                    active equity is the industry&apos;s highest-margin book (top
-                    expense-ratio yield), so a sustained rise lifts high-margin
-                    AUM and tends to show up in listed-AMC revenue and profit a
-                    quarter or two later — this line leads earnings.
-                  </li>
-                  {aeFlowView !== "bars" && (
-                    <li>
-                      <span className="font-medium text-foreground/80">
-                        The trailing-average gap is the signal:
-                      </span>{" "}
-                      when the line runs above its 12-month average, demand is
-                      hotter than its own recent norm (risk-on, often late-cycle);
-                      sustained months below have historically front-run AUM-growth
-                      slowdowns, and a clean break back above flags re-acceleration.
-                      The crossing matters more than the absolute ₹ figure.
-                    </li>
-                  )}
-                </ul>
-              </HowToRead>
-            </ChartWithContext>
+              <BarsWithIndexLine
+                data={activeEquityWithNiftyChartData}
+                barColor="hsl(var(--chart-1))"
+                lineColor="hsl(var(--foreground))"
+                valueFormat="cr"
+                axisFormat="cr"
+                lineValueFormat="count"
+                lineAxisFormat="count"
+                labelFormat="month"
+                barName="Active Equity Net Inflows (LHS)"
+                lineName="Nifty 500 Index (RHS)"
+              />
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                Bars: monthly active-equity net inflow (₹ Cr, left axis).
+                Line: NIFTY 500 month-end level (right axis). Active equity
+                envelope = equity-oriented schemes + hybrid schemes excluding
+                arbitrage + solution-oriented schemes.
+              </p>
+            </Card>
+          )}
+
+          {niftyFlowImpactRows.length > 0 && (
+            <Card
+              title="In each correction, 4-month-or-longer Nifty declines have led to meaningful slowdowns in subsequent average monthly net inflows"
+            >
+              <NiftyFlowImpactTable rows={niftyFlowImpactRows} />
+              <p className="mt-3 text-[11px] text-muted-foreground">
+                Each row pairs a Nifty 500 peak-to-trough underperformance
+                window (≥ 7% decline) with the average monthly active-equity
+                net inflow over the period that followed, compared against a
+                same-length window before the correction. Negative values are
+                shown in parentheses.
+              </p>
+            </Card>
           )}
 
           {activeEquityBridgeStrip && (
@@ -2478,7 +2125,7 @@ export default async function MonthlyPage({
                 </p>
               </ChartWithContext>
             )}
-        </>
+        </div>
       )}
 
       {activeTab === "categories" &&

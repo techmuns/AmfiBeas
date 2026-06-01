@@ -42,6 +42,283 @@ export function latestNifty500Row() {
   return rows.length > 0 ? rows[rows.length - 1] : null;
 }
 
+// ---- Nifty Underperformance + Flow Impact (IIFL Fig 4 + 5) -----------
+//
+// Helpers for the "MF flows – risk of slowdown" IIFL Research-style
+// section. Built from the same NIFTY 500 monthly snapshot used elsewhere
+// + the AMFI active-equity net inflow series.
+
+export interface NiftyUnderperformancePeriod {
+  /** First month of the decline window (YYYY-MM). */
+  startMonth: string;
+  /** Trough month — lowest level reached before recovery (YYYY-MM). */
+  endMonth: string;
+  /** Number of months from startMonth through endMonth (inclusive). */
+  monthsCount: number;
+  /** Cumulative price decline over the window, % (signed, negative). */
+  declinePct: number;
+}
+
+/**
+ * Detect peak-to-trough Nifty 500 underperformance periods.
+ *
+ * Walks the month-end level series tracking a running peak and trough.
+ * A drawdown closes (and emits a period) when the index makes a NEW
+ * high — i.e. the level meets or exceeds the running peak — and the
+ * cumulative drop from peak to trough met or exceeded `thresholdPct`
+ * (default −7%). An open drawdown at end-of-series is also emitted so
+ * the table includes the current ongoing correction.
+ *
+ * Tracking against a running peak (rather than restarting after every
+ * tiny dip) is what lets a multi-leg correction like Q4-2019 → Q1-2020
+ * register as a single Jan→Mar '20 window instead of being split into
+ * two unrelated low-amplitude pulses.
+ *
+ * Returned chronologically, oldest first.
+ */
+export function niftyUnderperformancePeriods(
+  thresholdPct = -7
+): NiftyUnderperformancePeriod[] {
+  const rows = marketIndexRows(NIFTY_500).filter(
+    (r) => typeof r.level === "number"
+  );
+  if (rows.length < 2) return [];
+
+  const periods: NiftyUnderperformancePeriod[] = [];
+  let peakIdx = 0;
+  let troughIdx = 0;
+
+  const tryEmit = () => {
+    if (troughIdx <= peakIdx) return;
+    const peakLevel = rows[peakIdx].level;
+    const troughLevel = rows[troughIdx].level;
+    const declinePct = ((troughLevel - peakLevel) / peakLevel) * 100;
+    if (declinePct <= thresholdPct) {
+      periods.push({
+        startMonth: rows[peakIdx + 1].month,
+        endMonth: rows[troughIdx].month,
+        monthsCount: troughIdx - peakIdx,
+        declinePct,
+      });
+    }
+  };
+
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i].level >= rows[peakIdx].level) {
+      // New all-time-high since the last peak — close any qualifying
+      // open drawdown then rebase peak/trough to here.
+      tryEmit();
+      peakIdx = i;
+      troughIdx = i;
+    } else if (rows[i].level < rows[troughIdx].level) {
+      troughIdx = i;
+    }
+  }
+  // Trailing open drawdown (current correction without recovery yet).
+  tryEmit();
+
+  return periods;
+}
+
+export interface NiftyFlowImpactRow {
+  underperformance: NiftyUnderperformancePeriod;
+  /** Subsequent active-equity net inflow window. Runs from the month
+   *  after the trough until the month before the next underperformance
+   *  period starts (or end of data). */
+  postPeriod: {
+    startMonth: string;
+    endMonth: string;
+    monthsCount: number;
+    /** Average monthly active-equity net inflow over the post window,
+     *  ₹ Cr. `null` when fewer than `monthsCount` months carry the
+     *  field. */
+    avgMonthlyFlow: number | null;
+  };
+  /** Prior active-equity flow window matched in length to the post
+   *  period — ends the month before the underperformance window starts. */
+  priorPeriod: {
+    startMonth: string;
+    endMonth: string;
+    monthsCount: number;
+    avgMonthlyFlow: number | null;
+  };
+  /** (post avg − prior avg) / |prior avg| × 100. Null when either side
+   *  is null. */
+  declineInFlowPct: number | null;
+}
+
+/** Add `delta` months to a YYYY-MM string. Negative `delta` goes back in
+ *  time. Pure date arithmetic — no DST / zone considerations needed for
+ *  month-only keys. */
+function addMonths(month: string, delta: number): string {
+  const [y, m] = month.split("-").map(Number);
+  const total = y * 12 + (m - 1) + delta;
+  const ny = Math.floor(total / 12);
+  const nm = total - ny * 12 + 1;
+  return `${ny}-${String(nm).padStart(2, "0")}`;
+}
+
+/**
+ * IIFL Fig 5-style table: for each Nifty 500 underperformance period,
+ * compute the average monthly active-equity net inflow in the months
+ * following (until the next correction or `maxPostMonths`, whichever is
+ * earlier), and the same average over a same-length window preceding
+ * the correction. The percentage decline between the two gives the
+ * post-correction flow slowdown the chart highlights.
+ *
+ * `maxPostMonths` (default 12) keeps the post-window comparable to the
+ * IIFL table's hand-picked windows — without it, the COVID post-period
+ * stretches deep into 2021's recovery boom and the average misreads as
+ * a flow surge rather than the impact-window IIFL is highlighting.
+ */
+export function niftyFlowImpactTable(
+  thresholdPct = -7,
+  maxPostMonths = 12
+): NiftyFlowImpactRow[] {
+  const periods = niftyUnderperformancePeriods(thresholdPct);
+  if (periods.length === 0) return [];
+
+  const flowByMonth = new Map<string, number>();
+  for (const r of amfiMonthlyRows()) {
+    if (typeof r.activeEquityNetInflow === "number") {
+      flowByMonth.set(r.month, r.activeEquityNetInflow);
+    }
+  }
+
+  const lastFlowMonth = (() => {
+    const rows = amfiMonthlyRows();
+    for (let k = rows.length - 1; k >= 0; k--) {
+      if (typeof rows[k].activeEquityNetInflow === "number") {
+        return rows[k].month;
+      }
+    }
+    return null;
+  })();
+
+  const out: NiftyFlowImpactRow[] = [];
+  for (let i = 0; i < periods.length; i++) {
+    const p = periods[i];
+    const postStart = addMonths(p.endMonth, 1);
+    const nextCorrectionEnd =
+      i + 1 < periods.length
+        ? addMonths(periods[i + 1].startMonth, -1)
+        : (lastFlowMonth ?? postStart);
+    const cappedEnd = addMonths(postStart, maxPostMonths - 1);
+    const postEnd =
+      cappedEnd < nextCorrectionEnd ? cappedEnd : nextCorrectionEnd;
+
+    if (postEnd < postStart) {
+      // Skip degenerate cases (back-to-back corrections with no gap).
+      continue;
+    }
+
+    const postFlows = collectFlowsBetween(flowByMonth, postStart, postEnd);
+    const avgPost =
+      postFlows.length > 0
+        ? postFlows.reduce((s, v) => s + v, 0) / postFlows.length
+        : null;
+    const postMonthsCount = monthsBetween(postStart, postEnd);
+
+    const priorEnd = addMonths(p.startMonth, -1);
+    const priorStart = addMonths(priorEnd, -(postMonthsCount - 1));
+    const priorFlows = collectFlowsBetween(flowByMonth, priorStart, priorEnd);
+    const avgPrior =
+      priorFlows.length > 0
+        ? priorFlows.reduce((s, v) => s + v, 0) / priorFlows.length
+        : null;
+
+    const declineInFlowPct =
+      avgPost === null || avgPrior === null || avgPrior === 0
+        ? null
+        : ((avgPost - avgPrior) / Math.abs(avgPrior)) * 100;
+
+    out.push({
+      underperformance: p,
+      postPeriod: {
+        startMonth: postStart,
+        endMonth: postEnd,
+        monthsCount: postMonthsCount,
+        avgMonthlyFlow: avgPost,
+      },
+      priorPeriod: {
+        startMonth: priorStart,
+        endMonth: priorEnd,
+        monthsCount: monthsBetween(priorStart, priorEnd),
+        avgMonthlyFlow: avgPrior,
+      },
+      declineInFlowPct,
+    });
+  }
+
+  return out;
+}
+
+function monthsBetween(start: string, end: string): number {
+  if (end < start) return 0;
+  const [sy, sm] = start.split("-").map(Number);
+  const [ey, em] = end.split("-").map(Number);
+  return (ey - sy) * 12 + (em - sm) + 1;
+}
+
+function collectFlowsBetween(
+  flowByMonth: Map<string, number>,
+  start: string,
+  end: string
+): number[] {
+  const out: number[] = [];
+  let cur = start;
+  while (cur <= end) {
+    const v = flowByMonth.get(cur);
+    if (typeof v === "number") out.push(v);
+    cur = addMonths(cur, 1);
+  }
+  return out;
+}
+
+export interface ActiveEquityFlowWithIndexPoint {
+  month: string;
+  /** Active equity net inflow, ₹ Cr (signed). null when not available. */
+  activeEquityNetInflow: number | null;
+  /** NIFTY 500 month-end level. null when not available. */
+  niftyLevel: number | null;
+}
+
+/**
+ * Joined active-equity net inflow + NIFTY 500 level series for the
+ * Fig 4-style "bars + index line" chart. Rows for which neither side
+ * is available are dropped; rows where only one side has data are
+ * kept so the chart can render the available half (recharts handles
+ * null gracefully).
+ */
+export function activeEquityFlowWithNiftyTrend(
+  lastN = 60
+): ActiveEquityFlowWithIndexPoint[] {
+  const flowByMonth = new Map<string, number>();
+  for (const r of amfiMonthlyRows()) {
+    if (typeof r.activeEquityNetInflow === "number") {
+      flowByMonth.set(r.month, r.activeEquityNetInflow);
+    }
+  }
+  const niftyByMonth = new Map<string, number>();
+  for (const r of marketIndexRows(NIFTY_500)) {
+    if (typeof r.level === "number") {
+      niftyByMonth.set(r.month, r.level);
+    }
+  }
+  const allMonths = new Set<string>([
+    ...flowByMonth.keys(),
+    ...niftyByMonth.keys(),
+  ]);
+  const sorted = [...allMonths].sort();
+  return sorted
+    .map((m) => ({
+      month: m,
+      activeEquityNetInflow: flowByMonth.get(m) ?? null,
+      niftyLevel: niftyByMonth.get(m) ?? null,
+    }))
+    .slice(-lastN);
+}
+
 /**
  * Market Stress Flow signal.
  *

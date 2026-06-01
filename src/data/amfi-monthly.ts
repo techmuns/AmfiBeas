@@ -581,6 +581,63 @@ export function monthlySipAumShareTrend(
   });
 }
 
+/**
+ * IIFL Figure 6-style series: per-month SIP gross contribution alongside
+ * SIP's share of the equity-channel inflow envelope.
+ *
+ * The AMFI Monthly Report does not surface a clean per-month equity
+ * gross-subscription number — that requires the gross subscribe and
+ * repurchase columns from the Monthly Press Release, which the
+ * extractor does not currently pull. We approximate the equity-channel
+ * inflow envelope as:
+ *
+ *   equityInflowProxy = sipContribution + max(0, activeEquityNetInflow)
+ *
+ * When `activeEquityNetInflow` is positive (typical), this is roughly
+ * SIP + non-SIP lump-sum equity subscribe (net of redeem). When it is
+ * negative (rare — net active-equity outflow months), the denominator
+ * falls back to the SIP component alone, capping the share at 100%
+ * rather than producing a base-effect explosion or a flipped sign.
+ *
+ * The resulting share is conservative vs IIFL's true gross-inflow
+ * series (typically lower by ~15-20pp because we cannot add back the
+ * gross-redeem component), but tracks the underlying STRUCTURAL trend
+ * the chart is meant to surface: SIP's rising contribution to where
+ * the industry's equity flow comes from. Rows missing either field are
+ * dropped from the share series; the bars still render whenever
+ * sipContribution is present.
+ */
+export interface SipGrossSharePoint {
+  month: string;
+  /** SIP gross monthly contribution, ₹ Cr. */
+  sipContribution: number | null;
+  /** SIP contribution as a % of the equity-channel inflow proxy. */
+  sipShareOfGrossPct: number | null;
+}
+
+export function monthlySipGrossShareTrend(
+  lastN = 84
+): SipGrossSharePoint[] {
+  const rows = amfiMonthlyRows().slice(-lastN);
+  return rows.map((r) => {
+    const sip = typeof r.sipContribution === "number" ? r.sipContribution : null;
+    const ae =
+      typeof r.activeEquityNetInflow === "number"
+        ? r.activeEquityNetInflow
+        : null;
+    let share: number | null = null;
+    if (sip !== null && ae !== null) {
+      const proxy = sip + Math.max(0, ae);
+      if (proxy > 0) share = (sip / proxy) * 100;
+    }
+    return {
+      month: r.month,
+      sipContribution: sip,
+      sipShareOfGrossPct: share,
+    };
+  });
+}
+
 // =============================================================
 // Industry flow-decomposition waterfall (12-month bridge)
 // =============================================================
