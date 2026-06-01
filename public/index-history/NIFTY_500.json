@@ -4,10 +4,10 @@
     "name": "Nifty 500",
     "source": "NSE historical CSV",
     "stage": "csv-backfill+forward",
-    "generatedAt": "2026-06-01T10:59:13.310Z",
+    "generatedAt": "2026-06-01T20:55:13.477Z",
     "firstDate": "2019-04-01",
-    "lastDate": "2026-05-29",
-    "points": 1773,
+    "lastDate": "2026-06-01",
+    "points": 1774,
     "provenance": {
       "csvDir": "manual-data/market",
       "csvFiles": [
@@ -56,7 +56,7 @@
       ],
       "parser": "scripts/ingest/index-history-backfill.ts:parseCsv",
       "notes": "Daily Nifty 500 close levels parsed from local NSE CSV exports. Phase 3.10A backfill — live daily refresh lands in Phase 3.10B/C/D.",
-      "forwardSource": "NSE daily index close CSV (via scripts/ingest/index-history-catchup.ts)",
+      "forwardSource": "NSE daily index close CSV (via scripts/ingest/index-latest.ts → index-latest.json)",
       "forwardAppends": [
         {
           "asOf": "2026-05-29",
@@ -292,6 +292,13 @@
           "level": 22967.4,
           "appendedAt": "2026-06-01T10:59:13.310Z",
           "via": "catchup"
+        },
+        {
+          "asOf": "2026-06-01",
+          "level": 22437.95,
+          "feedDate": "2026-06-01",
+          "appendedAt": "2026-06-01T20:55:13.477Z",
+          "latestSnapshotGeneratedAt": "2026-06-01T20:54:04.333Z"
         }
       ]
     }
@@ -7388,6 +7395,10 @@
     [
       "2026-05-29",
       22657
+    ],
+    [
+      "2026-06-01",
+      22437.95
     ]
   ]
 }
