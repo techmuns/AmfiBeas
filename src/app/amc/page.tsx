@@ -216,13 +216,7 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {activeTab === "insights" && (
-        <TabIntroCard
-          headline="What is the cohort signalling — share gains and strategic moves?"
-          summary="Two cohort-wide views distilled from listed-AMC earnings concalls — share of unique investors at the latest disclosed period, and every disclosed strategic move grouped by fiscal quarter."
-          watchNext="Whose Unique Investor Share is climbing fastest while peers stay flat, and which themes are emerging across multiple concalls at the same time."
-        />
-      )}
+      {activeTab === "insights" && <AmcStockConcentration />}
 
       {activeTab === "insights" && <CohortUniqueInvestorShare />}
 
@@ -376,8 +370,6 @@ export default async function AmcListPage({
           </HowToRead>
         </Card>
       )}
-
-      {activeTab === "share-positioning" && <AmcStockConcentration />}
 
       {activeTab === "share-positioning" && <AmcCashAllocationTrend />}
 
