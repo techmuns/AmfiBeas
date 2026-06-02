@@ -74,7 +74,6 @@ import {
   iiflActiveEquityHeatmapZScoreData,
   iiflActiveEquityTrendCard,
   latestCategoryProvenance,
-  passiveFlowShareTrend,
 } from "@/data/amfi-monthly-category";
 import { topAumMarketShareSeries } from "@/data/amc-peer-universe";
 import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
@@ -85,7 +84,6 @@ import { MonthPicker } from "@/components/filters/MonthPicker";
 import {
   formatCompactCrSafe,
   formatCroreCountSafe,
-  formatPercentile,
 } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import {
@@ -1158,10 +1156,6 @@ export default async function MonthlyPage({
   // renders independently under its own tab (rotation in categories,
   // passiveFlowShare in active-passive).
   const rotation = categoryRotation(3, 5);
-  // Wide window + sanitize so the card shows the full clean history
-  // (outflow-distorted months dropped) and the footer mean / percentile
-  // describe the same set of months that are actually plotted.
-  const passiveFlowShare = passiveFlowShareTrend(120, { sanitize: true });
 
   // The headline active-equity flow signal — feeds the market-tape /
   // sticky context footer at the foot of the page.
@@ -1364,12 +1358,15 @@ export default async function MonthlyPage({
         searchParams={sp}
       />
 
-      {amfiSelected && amfiAvailableMonths.length > 0 && (
-        <MonthPicker
-          availableMonths={amfiAvailableMonths}
-          selectedMonth={amfiSelected.month}
-        />
-      )}
+      {amfiSelected &&
+        amfiAvailableMonths.length > 0 &&
+        activeTab !== "sip-retail" &&
+        activeTab !== "active-passive" && (
+          <MonthPicker
+            availableMonths={amfiAvailableMonths}
+            selectedMonth={amfiSelected.month}
+          />
+        )}
 
       {activeTab === "flows" &&
         (sankeyData ? (() => {
@@ -1852,11 +1849,6 @@ export default async function MonthlyPage({
       {activeTab === "categories" && rotation && (
         <CategoryRotationCard rotation={rotation} />
       )}
-
-      {activeTab === "active-passive" && passiveFlowShare && (
-        <PassiveFlowShareCard trend={passiveFlowShare} />
-      )}
-
 
       {activeTab === "active-passive" && hasAnyEquityMix && (
         <div className="space-y-3">
@@ -2537,72 +2529,4 @@ function CategoryHeatPill({ z }: { z: number | null }) {
   );
 }
 
-function PassiveFlowShareCard({
-  trend,
-}: {
-  trend: NonNullable<ReturnType<typeof passiveFlowShareTrend>>;
-}) {
-  const data = trend.history.map((p) => ({
-    label: p.month,
-    value: p.passiveSharePct,
-  }));
-  return (
-    <Card
-      title="Passive Share of New Equity Flow"
-      subtitleNode={
-        <div className="space-y-0.5">
-          <p className="text-xs text-muted-foreground">
-            What share of each month&rsquo;s new equity money went into ETFs and index funds.
-          </p>
-          <p className="text-[11px] text-muted-foreground/80">
-            {trend.history.length} months
-          </p>
-        </div>
-      }
-    >
-      <BarSeries
-        data={data}
-        name="Passive flow share"
-        color="hsl(var(--chart-5))"
-        valueFormat="pct"
-        axisFormat="pct"
-        labelFormat="month"
-      />
-      <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-        Latest {trend.latestSharePct.toFixed(1)}%
-        {formatPercentile(trend.percentile) !== "—"
-          ? ` · ${formatPercentile(trend.percentile)}`
-          : ""}
-        . Mean {trend.mean.toFixed(1)}%.
-        <InfoTooltip label="Passive flow share = (Index Funds + Other ETFs net inflow) ÷ (Index Funds + Other ETFs + active-equity net inflow) × 100. Leading indicator of where the active-vs-passive AUM mix is heading — passive share of NEW money tends to move months before passive share of AUM. Gold ETFs are excluded. Months with non-positive denominator are skipped." />
-      </p>
-      <HowToRead>
-        <p>
-          Of every ₹100 of <strong>new</strong> equity money each month, this is
-          the share that chose index funds and ETFs over active funds —
-          (Index&nbsp;+&nbsp;ETF net inflow) ÷ (Index&nbsp;+&nbsp;ETF&nbsp;+&nbsp;active-equity net inflow).
-          It&rsquo;s a leading indicator: passive&rsquo;s share of <em>new</em> flow
-          tends to move months before passive&rsquo;s share of total AUM does.
-        </p>
-        <ul className="list-disc space-y-0.5 pl-4">
-          <li>
-            A rising line means investors are increasingly picking passive for
-            fresh money — a structural revenue-yield headwind for active-heavy AMCs.
-          </li>
-          <li>
-            The footer reads the <strong>latest</strong> month against this
-            history: &ldquo;Bottom 44%&rdquo; means 44% of months on record had a
-            passive share at or below today&rsquo;s — i.e. the current month ranks
-            in the lower-middle. It is <em>not</em> the chart&rsquo;s minimum.
-          </li>
-          <li>
-            Months where active equity saw a net <em>outflow</em> are excluded —
-            the &ldquo;share of new money&rdquo; ratio is undefined when there&rsquo;s no
-            net new active money to share. Gold ETFs are excluded throughout.
-          </li>
-        </ul>
-      </HowToRead>
-    </Card>
-  );
-}
 
