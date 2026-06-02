@@ -14,7 +14,7 @@ import { CohortUniqueInvestorShare } from "@/components/amc/CohortUniqueInvestor
 import { IndustryConcentrationStack } from "@/components/amc/IndustryConcentrationStack";
 import { AmcCashAllocationTrend } from "@/components/amc/AmcCashAllocationTrend";
 import { AmcStockConcentration } from "@/components/amc/AmcStockConcentration";
-import { amcAaumSeries, amcIndexRows } from "@/data/amc-detail";
+import { amcAaumSeries, amcIndexRows, type AmcIndexRow } from "@/data/amc-detail";
 import {
   amcHealthGrowthMatrix,
   amcHealthGrowthZScoreMatrix,
@@ -24,6 +24,17 @@ import {
   type AmcQuadrant,
   type AmcQuadrantPoint,
 } from "@/data/amc-peer-universe";
+import {
+  SOURCED_FINANCIALS_SLUGS,
+  quarterlyForAmc,
+  yieldsForAmc,
+  type QuarterlyYields,
+} from "@/data/aggregate";
+import type { QuarterlyFinancial } from "@/data/types";
+import { AMCS } from "@/data/amcs";
+import { AMC_COLORS, amcShortLabel } from "@/lib/chart-meta";
+import { HorizontalBars } from "@/components/charts/HorizontalBars";
+import type { ValueFormat, AxisFormat } from "@/components/charts/format";
 import { LensToggle } from "@/components/ui/LensToggle";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
 import { cn } from "@/lib/cn";
@@ -38,9 +49,70 @@ const AMC_TABS = [
   { id: "overview", label: "AMC Overview" },
   { id: "insights", label: "Insights" },
   { id: "share-positioning", label: "Share & Positioning" },
+  { id: "compare", label: "Compare" },
 ] as const satisfies readonly DashboardTabDef[];
 type AmcTabId = (typeof AMC_TABS)[number]["id"];
 const AMC_TAB_IDS = AMC_TABS.map((t) => t.id) as readonly AmcTabId[];
+
+// ---- Compare tab: switchable KPIs for the two horizontal-bar charts ----
+// Every metric here is REAL (company filings + AMFI Fundwise AAUM); the
+// synthetic per-AMC monthly series in generator.ts is deliberately excluded.
+type KpiSpec = {
+  label: string;
+  short: string;
+  valueFormat: ValueFormat;
+  axisFormat: AxisFormat;
+};
+
+const FIN_KPIS = {
+  pat: { label: "Net Profit (PAT)", short: "PAT", valueFormat: "cr", axisFormat: "cr" },
+  revenue: { label: "Operating Revenue", short: "Revenue", valueFormat: "cr", axisFormat: "cr" },
+  operatingProfit: { label: "Operating Profit", short: "Op. Profit", valueFormat: "cr", axisFormat: "cr" },
+  patMargin: { label: "PAT Margin", short: "PAT Margin", valueFormat: "pct", axisFormat: "pct" },
+  opMargin: { label: "Operating Margin", short: "Op. Margin", valueFormat: "pct", axisFormat: "pct" },
+  revenueYield: { label: "Revenue Yield", short: "Rev. Yield", valueFormat: "bps", axisFormat: "bps" },
+  profitYield: { label: "Profit Yield", short: "Profit Yield", valueFormat: "bps", axisFormat: "bps" },
+} satisfies Record<string, KpiSpec>;
+type FinKpiId = keyof typeof FIN_KPIS;
+const FIN_KPI_DEFAULT: FinKpiId = "pat";
+const finLenses = (Object.keys(FIN_KPIS) as FinKpiId[]).map((k) => ({
+  value: k,
+  label: FIN_KPIS[k].short,
+}));
+
+const AUM_KPIS = {
+  avgAum: { label: "Average AUM", short: "AAUM", valueFormat: "cr", axisFormat: "cr" },
+  marketShare: { label: "Market Share", short: "Mkt Share", valueFormat: "pct", axisFormat: "pct" },
+  qoqGrowth: { label: "QoQ AAUM Growth", short: "QoQ", valueFormat: "pct", axisFormat: "pct" },
+  yoyGrowth: { label: "YoY AAUM Growth", short: "YoY", valueFormat: "pct", axisFormat: "pct" },
+} satisfies Record<string, KpiSpec>;
+type AumKpiId = keyof typeof AUM_KPIS;
+const AUM_KPI_DEFAULT: AumKpiId = "avgAum";
+const aumLenses = (Object.keys(AUM_KPIS) as AumKpiId[]).map((k) => ({
+  value: k,
+  label: AUM_KPIS[k].short,
+}));
+
+function finValue(kpi: FinKpiId, f: QuarterlyFinancial, y: QuarterlyYields): number {
+  switch (kpi) {
+    case "pat": return f.pat;
+    case "revenue": return f.revenue;
+    case "operatingProfit": return f.operatingProfit;
+    case "patMargin": return y.patMargin;
+    case "opMargin": return y.opMargin;
+    case "revenueYield": return y.revenueYieldBps;
+    case "profitYield": return y.profitYieldBps;
+  }
+}
+
+function aumValue(kpi: AumKpiId, r: AmcIndexRow): number | null {
+  switch (kpi) {
+    case "avgAum": return r.avgAum;
+    case "marketShare": return r.marketSharePct;
+    case "qoqGrowth": return r.qoqGrowthPct;
+    case "yoyGrowth": return r.yoyGrowthPct;
+  }
+}
 
 export default async function AmcListPage({
   searchParams,
@@ -51,6 +123,14 @@ export default async function AmcListPage({
   const healthLens: "growth" | "zscore" =
     sp.healthLens === "zscore" ? "zscore" : "growth";
   const activeTab = resolveTab<AmcTabId>(sp.tab, AMC_TAB_IDS, "overview");
+  const finKpi: FinKpiId =
+    typeof sp.finKpi === "string" && sp.finKpi in FIN_KPIS
+      ? (sp.finKpi as FinKpiId)
+      : FIN_KPI_DEFAULT;
+  const aumKpi: AumKpiId =
+    typeof sp.aumKpi === "string" && sp.aumKpi in AUM_KPIS
+      ? (sp.aumKpi as AumKpiId)
+      : AUM_KPI_DEFAULT;
   const data = amcIndexRows();
 
   if (!data) {
@@ -124,6 +204,55 @@ export default async function AmcListPage({
         })
     : [];
 
+  // ---- Compare tab data: listed AMCs only -----------------------------
+  const listedAmcs = AMCS.filter((a) => a.listed);
+  const listedSlugSet = new Set(listedAmcs.map((a) => a.slug));
+
+  // Chart 2 — AUM & market position: every listed AMC from the AAUM ranking.
+  const aumCompareBars = data.rows
+    .filter((r) => listedSlugSet.has(r.amcSlug))
+    .map((r) => ({
+      label: amcShortLabel(r.amcSlug),
+      value: aumValue(aumKpi, r),
+      color: AMC_COLORS[r.amcSlug],
+    }))
+    .filter((d): d is { label: string; value: number; color: string } =>
+      typeof d.value === "number" && Number.isFinite(d.value)
+    )
+    .sort((a, b) => b.value - a.value);
+
+  // Chart 1 — financial performance: listed AMCs with a sourced P&L,
+  // aligned to the latest reported quarter present across them.
+  const sourcedListed = listedAmcs.filter((a) =>
+    SOURCED_FINANCIALS_SLUGS.has(a.slug)
+  );
+  const finQuarters = sourcedListed.flatMap((a) =>
+    quarterlyForAmc(a.slug).map((q) => q.quarter)
+  );
+  const finQuarter =
+    finQuarters.length > 0 ? [...finQuarters].sort().pop()! : null;
+  const finCompareBars = sourcedListed
+    .map((a) => {
+      const series = quarterlyForAmc(a.slug);
+      const yields = yieldsForAmc(a.slug);
+      const f =
+        series.find((q) => q.quarter === finQuarter) ??
+        series[series.length - 1];
+      const y =
+        yields.find((q) => q.quarter === finQuarter) ??
+        yields[yields.length - 1];
+      if (!f || !y) return null;
+      return {
+        label: amcShortLabel(a.slug),
+        value: finValue(finKpi, f, y),
+        color: AMC_COLORS[a.slug],
+      };
+    })
+    .filter((d): d is { label: string; value: number; color: string } =>
+      d !== null && Number.isFinite(d.value)
+    )
+    .sort((a, b) => b.value - a.value);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -131,11 +260,11 @@ export default async function AmcListPage({
         subtitle={subtitle}
         action={
           <Link
-            href="/compare"
+            href="/amc?tab=compare"
             className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
           >
             <ArrowLeftRight className="h-3 w-3" />
-            Compare two AMCs
+            Compare AMCs
           </Link>
         }
       />
@@ -433,6 +562,100 @@ export default async function AmcListPage({
       )}
 
       {activeTab === "overview" && <AmcSearchTable rows={data.rows} />}
+
+      {activeTab === "compare" && (
+        <TabIntroCard
+          headline="How do the listed AMCs stack up on financials and AUM?"
+          summary="Side-by-side bars across the publicly-listed AMCs. Switch the KPI on each chart to re-rank the cohort — financial performance (company filings) on top, AUM & market position (AMFI Fundwise AAUM) below."
+          watchNext="Whether the AMC that leads on AUM scale also leads on profitability — size and margin don't always travel together."
+        />
+      )}
+
+      {activeTab === "compare" && (
+        <Card
+          title="Financial performance"
+          subtitleNode={
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">
+                Listed AMCs ranked on the selected financial KPI.
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">
+                {`${finCompareBars.length} listed AMC${finCompareBars.length === 1 ? "" : "s"} with reported financials${finQuarter ? ` · ${finQuarter}` : ""} · Source: Company filings · AMFI Fundwise AAUM (yield base)`}
+              </p>
+            </div>
+          }
+        >
+          <div className="mb-3">
+            <LensToggle
+              basePath="/amc"
+              paramName="finKpi"
+              defaultValue={FIN_KPI_DEFAULT}
+              lenses={finLenses}
+              active={finKpi}
+              wrap
+              preserveParams={{
+                tab: "compare",
+                aumKpi: aumKpi === AUM_KPI_DEFAULT ? undefined : aumKpi,
+              }}
+            />
+          </div>
+          {finCompareBars.length > 0 ? (
+            <HorizontalBars
+              data={finCompareBars}
+              seriesName={FIN_KPIS[finKpi].label}
+              valueFormat={FIN_KPIS[finKpi].valueFormat}
+              axisFormat={FIN_KPIS[finKpi].axisFormat}
+            />
+          ) : (
+            <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+              No sourced financials available yet.
+            </div>
+          )}
+        </Card>
+      )}
+
+      {activeTab === "compare" && (
+        <Card
+          title="AUM & market position"
+          subtitleNode={
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">
+                Listed AMCs ranked on the selected AUM / market KPI.
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">
+                {`${aumCompareBars.length} listed AMC${aumCompareBars.length === 1 ? "" : "s"} · ${data.fiscalLabel} · Source: AMFI Fundwise AAUM`}
+              </p>
+            </div>
+          }
+        >
+          <div className="mb-3">
+            <LensToggle
+              basePath="/amc"
+              paramName="aumKpi"
+              defaultValue={AUM_KPI_DEFAULT}
+              lenses={aumLenses}
+              active={aumKpi}
+              wrap
+              preserveParams={{
+                tab: "compare",
+                finKpi: finKpi === FIN_KPI_DEFAULT ? undefined : finKpi,
+              }}
+            />
+          </div>
+          {aumCompareBars.length > 0 ? (
+            <HorizontalBars
+              data={aumCompareBars}
+              seriesName={AUM_KPIS[aumKpi].label}
+              valueFormat={AUM_KPIS[aumKpi].valueFormat}
+              axisFormat={AUM_KPIS[aumKpi].axisFormat}
+            />
+          ) : (
+            <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+              No AAUM data available.
+            </div>
+          )}
+        </Card>
+      )}
 
       <Card>
         <div className="space-y-1 text-xs text-muted-foreground">

@@ -8,7 +8,6 @@ import {
   // CalendarRange, // hidden along with the /quarterly nav item
   FileBarChart,
   Building2,
-  ArrowLeftRight,
   Briefcase,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -25,7 +24,6 @@ const nav = [
   // To unhide: restore this line and the CalendarRange import above.
   // { href: "/quarterly", label: "Quarterly", icon: CalendarRange },
   { href: "/amc", label: "AMCs", icon: Building2 },
-  { href: "/compare", label: "Compare", icon: ArrowLeftRight },
   { href: "/financials", label: "Financials", icon: FileBarChart },
   { href: "/mfs-portfolio-tracker", label: "MFs Portfolio Tracker", icon: Briefcase },
 ];

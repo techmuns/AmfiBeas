@@ -20,6 +20,8 @@ interface LensToggleProps {
   defaultValue?: string;
   /** Extra query params to preserve on the link (e.g. `{ month: "2026-04" }`). */
   preserveParams?: Record<string, string | undefined>;
+  /** Allow the pills to wrap onto multiple lines (for long option lists). */
+  wrap?: boolean;
   className?: string;
 }
 
@@ -37,6 +39,7 @@ export function LensToggle({
   active,
   defaultValue,
   preserveParams,
+  wrap = false,
   className,
 }: LensToggleProps) {
   const baseClass =
@@ -67,7 +70,8 @@ export function LensToggle({
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-1 rounded-md border bg-card p-0.5 shadow-sm",
+        "items-center gap-1 rounded-md border bg-card p-0.5 shadow-sm",
+        wrap ? "flex flex-wrap" : "inline-flex",
         className
       )}
     >
