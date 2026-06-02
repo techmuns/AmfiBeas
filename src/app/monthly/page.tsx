@@ -82,6 +82,7 @@ import {
 import { topAumMarketShareSeries } from "@/data/amc-peer-universe";
 import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
 import { GroupedBars } from "@/components/charts/GroupedBars";
+import { VerticalBars } from "@/components/charts/VerticalBars";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { MonthPicker } from "@/components/filters/MonthPicker";
 import {
@@ -1684,14 +1685,25 @@ export default async function MonthlyPage({
             />
           }
         >
-          <GroupedBars
-            data={monthlyFlowsDisplay}
-            xKey="month"
-            labelFormat="month"
-            valueFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
-            axisFormat={monthlyFlowsLens === "share" ? "pct" : "cr"}
-            bars={monthlyFlowsSeries}
-          />
+          {monthlyFlowsLens === "share" ? (
+            <GroupedBars
+              data={monthlyFlowsDisplay}
+              xKey="month"
+              labelFormat="month"
+              valueFormat="pct"
+              axisFormat="pct"
+              bars={monthlyFlowsSeries}
+            />
+          ) : (
+            <VerticalBars
+              data={monthlyFlowsDisplay}
+              xKey="month"
+              labelFormat="month"
+              valueFormat="cr"
+              axisFormat="cr"
+              bars={monthlyFlowsSeries}
+            />
+          )}
         </ChartWithContext>
       )}
 
