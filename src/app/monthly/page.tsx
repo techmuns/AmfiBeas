@@ -263,12 +263,6 @@ export default async function MonthlyPage({
   // Chart-style toggles (Bars vs Trend) were removed across the
   // dashboard — every chart now renders the trend visual directly.
   // Stale `?...View=bars|trend` URLs are ignored silently.
-  const equityBreakdownLens: "absolute" | "share" | "indexed" =
-    sp.equityMixLens === "share"
-      ? "share"
-      : sp.equityMixLens === "indexed"
-        ? "indexed"
-        : "absolute";
   // Per-card lens toggles. Each one switches a trend chart between
   // an absolute number (₹ Cr / count / etc) and a meaningful share
   // / ratio specific to that card. Default is "absolute" — URL stays
@@ -311,8 +305,6 @@ export default async function MonthlyPage({
       typeof sp.aeFlowView === "string" ? sp.aeFlowView : undefined,
     aeFlowRange:
       typeof sp.aeFlowRange === "string" ? sp.aeFlowRange : undefined,
-    equityMixLens:
-      typeof sp.equityMixLens === "string" ? sp.equityMixLens : undefined,
     activePassiveLens:
       typeof sp.activePassiveLens === "string"
         ? sp.activePassiveLens
@@ -810,11 +802,6 @@ export default async function MonthlyPage({
     { key: "debt", name: "Debt", color: "hsl(var(--chart-2))" },
     { key: "liquid", name: "Liquid", color: "hsl(var(--chart-4))" },
   ];
-  const equityBreakdownSeries = [
-    { key: "activeEquity", name: "Active Equity", color: "hsl(var(--chart-1))" },
-    { key: "etfIndex", name: "ETF & Index", color: "hsl(var(--chart-5))" },
-    { key: "arbitrage", name: "Arbitrage", color: "hsl(var(--chart-2))" },
-  ];
 
   // Provenance: all three fields come from the AMFI Monthly Report.
   // Use the most-recent debt-net-inflow provenance for the tooltip
@@ -852,91 +839,6 @@ export default async function MonthlyPage({
     activeEquityShareTrend.length > 0 ||
     equityBreakdownHasData;
 
-  // Latest active/passive/arbitrage share of equity AAUM — surfaces the
-  // proportion-first read at a glance in the breakdown subtitle.
-  const latestEquityMix = (() => {
-    for (let i = equityBreakdown.length - 1; i >= 0; i--) {
-      const r = equityBreakdown[i];
-      const a = r.activeEquity;
-      const e = r.etfIndex;
-      const x = r.arbitrage;
-      if (typeof a === "number" && typeof e === "number" && typeof x === "number") {
-        const total = a + e + x;
-        if (total > 0) {
-          return {
-            month: r.month,
-            activePct: (a / total) * 100,
-            etfPct: (e / total) * 100,
-            arbPct: (x / total) * 100,
-          };
-        }
-      }
-    }
-    return null;
-  })();
-  // Indexed-to-start view: each series' SHARE of equity AAUM rebased
-  // to 100 at its first available month. On a shared % axis the ETF &
-  // Index share (~18%) is flattened by the much larger Active Equity
-  // share (~85%), so a slow passive creep reads as a flat line. Here
-  // each line shows its share's relative trajectory — ETF & Index
-  // climbs above 100 while Active drifts below — decoupled from
-  // absolute scale, and GroupedBars' dynamic y-domain tightens around
-  // the resulting ~90-140 band so the movement is legible.
-  const equityBreakdownIndexed = (() => {
-    const keys = ["activeEquity", "etfIndex", "arbitrage"] as const;
-    // Per-month 3-way shares — only when all three are present, so the
-    // denominator is whole (no inflation from a missing segment).
-    const shareRows = equityBreakdown.map((r) => {
-      const allPresent = keys.every((k) => typeof r[k] === "number");
-      const total = allPresent
-        ? keys.reduce((s, k) => s + (r[k] as number), 0)
-        : 0;
-      const out: Record<string, number | null | string> = { month: r.month };
-      for (const k of keys) {
-        out[k] = allPresent && total > 0 ? ((r[k] as number) / total) * 100 : null;
-      }
-      return out;
-    });
-    const base: Record<string, number | null> = {};
-    for (const k of keys) {
-      const firstPoint = shareRows.find(
-        (r) => typeof r[k] === "number" && (r[k] as number) > 0
-      );
-      base[k] = firstPoint ? (firstPoint[k] as number) : null;
-    }
-    return shareRows.map((r) => {
-      const out: Record<string, number | null | string> = {
-        month: r.month as string,
-      };
-      for (const k of keys) {
-        const v = r[k];
-        const b = base[k];
-        out[k] =
-          typeof v === "number" && typeof b === "number" && b > 0
-            ? Math.round((v / b) * 100)
-            : null;
-      }
-      return out;
-    });
-  })();
-  // Share-mode equity breakdown: each segment as % of the month's
-  // sum of Active + ETF & Index + Arbitrage. Months missing any
-  // segment render that segment as null.
-  const equityBreakdownDisplay =
-    equityBreakdownLens === "share"
-      ? equityBreakdown.map((r) =>
-          toShareRow(r as Record<string, number | null | string>, [
-            "activeEquity",
-            "etfIndex",
-            "arbitrage",
-          ])
-        )
-      : equityBreakdownLens === "indexed"
-        ? equityBreakdownIndexed
-        : equityBreakdown;
-  const equityBreakdownSubtitle = latestEquityMix
-    ? `${equityBreakdown.length} month${equityBreakdown.length === 1 ? "" : "s"} · ₹ Cr · latest mix ${latestEquityMix.activePct.toFixed(1)}% Active / ${latestEquityMix.etfPct.toFixed(1)}% ETF & Index / ${latestEquityMix.arbPct.toFixed(1)}% Arbitrage`
-    : `${equityBreakdown.length} month${equityBreakdown.length === 1 ? "" : "s"} · ₹ Cr · period-average · grouped bars`;
 
   // Active Equity AAUM denominator: latest as % of total industry
   // AAUM that month — separates absolute scale growth from share
@@ -978,24 +880,6 @@ export default async function MonthlyPage({
   const activeEquityAaumDisplay =
     aeAaumLens === "share" ? activeEquityAaumShare : activeEquityTrend;
 
-  // Equity AAUM Breakdown denominator: ETF & Index share of equity AUM
-  // = passive penetration. Most analytically interesting cross-data
-  // point for this chart since the subtitle already shows the full
-  // mix.
-  const equityBreakdownDenomCaption = latestEquityMix
-    ? `ETF & Index = ${latestEquityMix.etfPct.toFixed(1)}% of equity AUM · ${latestEquityMix.month}`
-    : undefined;
-  // Insight strip on the active-equity AAUM series — the dominant
-  // segment and the one investors care about most.
-  const activeEquityFromBreakdown = equityBreakdown
-    .filter((r) => typeof r.activeEquity === "number")
-    .map((r) => ({ label: r.month, value: r.activeEquity as number }));
-  const equityBreakdownInsights = chartInsights(activeEquityFromBreakdown, {
-    metricName: "active-equity AAUM",
-    unitSuffix: "₹ Cr",
-    cyclePhaseByLabel: cyclePhaseByMonth,
-    yoyLag: 12,
-  });
 
   // ---- Industry Folios & NFO section ---------------------------------
   //
@@ -1999,79 +1883,6 @@ export default async function MonthlyPage({
               </HowToRead>
             </ChartWithContext>
           </section>
-
-          <ChartWithContext
-            title="Equity AAUM Breakdown"
-            subtitle="How active equity AAUM splits across sub-categories (large-cap, mid, small, etc.)."
-            flowKind="stock"
-            denominatorCaption={(() => {
-              const base = equityBreakdownLens === "share"
-                ? `${equityBreakdown.length} month${equityBreakdown.length === 1 ? "" : "s"} · stacked share of equity AAUM`
-                : equityBreakdownLens === "indexed"
-                  ? `${equityBreakdown.length} month${equityBreakdown.length === 1 ? "" : "s"} · each segment's share indexed to 100 at ${equityBreakdown[0]?.month ?? "start"} (relative trajectory)`
-                  : equityBreakdownSubtitle;
-              return equityBreakdownDenomCaption
-                ? `${base} · ${equityBreakdownDenomCaption}`
-                : base;
-            })()}
-            denominatorTooltip="ETF & Index share of equity AAUM — the headline passive-penetration number tracked across this section."
-            insights={equityBreakdownInsights}
-            yoyBadge={(() => {
-              const v = latestYoyPct(activeEquityFromBreakdown, 12);
-              return v === null
-                ? undefined
-                : { label: "Active YoY", pct: v };
-            })()}
-            action={
-              <div className="flex flex-wrap items-center gap-2">
-                <LensToggle
-                  basePath="/monthly"
-                  paramName="equityMixLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "% of equity AAUM" },
-                    { value: "indexed", label: "Indexed" },
-                  ]}
-                  active={equityBreakdownLens}
-                  preserveParams={preservedQueryParams}
-                />
-              </div>
-            }
-          >
-            {equityBreakdownHasData ? (
-              <GroupedBars
-                data={equityBreakdownDisplay}
-                xKey="month"
-                labelFormat="month"
-                valueFormat={
-                  equityBreakdownLens === "share"
-                    ? "pct"
-                    : equityBreakdownLens === "indexed"
-                      ? "count"
-                      : "cr"
-                }
-                axisFormat={
-                  equityBreakdownLens === "share"
-                    ? "pct"
-                    : equityBreakdownLens === "indexed"
-                      ? "count"
-                      : "cr"
-                }
-                bars={equityBreakdownSeries}
-              />
-            ) : (
-              <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                Equity breakdown (Active / ETF & Index / Arbitrage) not yet ingested for any month.
-              </div>
-            )}
-            <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              {equityBreakdownLens === "indexed"
-                ? `Each segment's share of equity AAUM, indexed to 100 at ${equityBreakdown[0]?.month ?? "the start"} — a line above 100 means that segment is gaining share, below 100 means losing it (relative move, not absolute ₹ or share %).`
-                : "Active Equity, ETF & Index, and Arbitrage shown separately."}
-              <InfoTooltip label="Active Equity = Growth/Equity schemes + Hybrid ex-Arbitrage + Solution-oriented schemes. ETF & Index = Index Funds + Other ETFs. Share view divides each segment by the sum of all three for that month. Indexed view rebases each segment's share to 100 at the first month so the relative trajectory is visible regardless of absolute level." />
-            </p>
-          </ChartWithContext>
         </div>
       )}
 
