@@ -1028,8 +1028,9 @@ export default async function MonthlyPage({
   }));
   const sipAccountsChartData = monthlyTrend("sipAccounts", 12).map((p) => ({
     label: p.label,
-    // Display in millions to match IIFL Fig 7 (e.g. 94.4mn).
-    value: p.value / 1e6,
+    // Raw SIP-account count; rendered in crore via the "crore-count" format
+    // (e.g. 9.65 Cr) to keep the dashboard on Indian numbering.
+    value: p.value,
   }));
   const hasMfFlowsSlowdownSection =
     activeEquityWithNiftyChartData.length > 0 ||
@@ -1638,19 +1639,19 @@ export default async function MonthlyPage({
 
             {sipAccountsChartData.length > 0 && (
               <Card
-                title="SIP Active contributing accounts (mn)"
+                title="SIP Active contributing accounts (Cr)"
               >
                 <BarsWithLabels
                   data={sipAccountsChartData}
                   barColor="hsl(var(--chart-3))"
-                  valueFormat="count"
-                  axisFormat="count"
+                  valueFormat="crore-count"
+                  axisFormat="crore-count"
                   labelFormat="month"
-                  name="SIP Active contributing accounts (mn)"
-                  labelValueFormat="count"
+                  name="SIP Active contributing accounts (Cr)"
+                  labelValueFormat="crore-count"
                 />
                 <p className="mt-2 text-[11px] text-muted-foreground">
-                  Live SIP-account count, expressed in millions. Sourced from
+                  Live SIP-account count, expressed in crore. Sourced from
                   the AMFI Monthly Note&apos;s SIP trend table.
                 </p>
               </Card>

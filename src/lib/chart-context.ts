@@ -650,8 +650,9 @@ function formatValue(v: number, unit: string): string {
   }
   if (unit === "%") return `${sign}${abs.toFixed(1)}%`;
   if (unit === "bps") return `${sign}${abs.toFixed(0)} bps`;
-  // Default: humanised integer.
-  if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(2)}M`;
-  if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(1)}K`;
+  // Default: humanised integer in Indian numbering (Cr / L / k).
+  if (abs >= 1e7) return `${sign}${(abs / 1e7).toFixed(2)} Cr`;
+  if (abs >= 1e5) return `${sign}${(abs / 1e5).toFixed(1)} L`;
+  if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(1)}k`;
   return `${sign}${abs.toFixed(0)}`;
 }

@@ -1,5 +1,4 @@
 import {
-  sectorFlowMeta,
   sectorFlowMonths,
   sectorFlowRows,
   sectorFlowTotals,
@@ -35,7 +34,16 @@ function percentile(sorted: number[], p: number): number {
   return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
 }
 
-const fmt = (v: number): string => v.toLocaleString("en-IN");
+// Source values are in Rs bn; 1 Rs bn = 100 ₹ crore. Render compact ₹ Cr
+// (k = thousand crore, L = lakh crore) — the column header carries the unit.
+const fmt = (vBn: number): string => {
+  const cr = vBn * 100;
+  const abs = Math.abs(cr);
+  const sign = cr < 0 ? "−" : "";
+  if (abs >= 1e5) return `${sign}${(abs / 1e5).toFixed(2)}L`;
+  if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(1)}k`;
+  return `${sign}${Math.round(abs)}`;
+};
 
 export function SectorFlowHeatmap() {
   const all = sectorFlowRows.flatMap((r) => r.monthly).sort((a, b) => a - b);
@@ -65,7 +73,7 @@ export function SectorFlowHeatmap() {
                 colSpan={sectorFlowMonths.length}
                 className="border px-2 py-1.5 text-center font-semibold"
               >
-                Monthly flows (Rs bn)
+                Monthly flows (₹ Cr)
               </th>
               <th
                 rowSpan={2}
@@ -75,7 +83,7 @@ export function SectorFlowHeatmap() {
                 <br />
                 flows
                 <br />
-                (Rs bn)
+                (₹ Cr)
               </th>
             </tr>
             <tr>
@@ -131,11 +139,6 @@ export function SectorFlowHeatmap() {
           </tbody>
         </table>
       </div>
-      <p className="mt-2 text-[11px] text-muted-foreground">
-        Net flows by sector (₹ bn) · {sectorFlowMonths[0]} →{" "}
-        {sectorFlowMonths[sectorFlowMonths.length - 1]} · {sectorFlowMeta.source}{" "}
-        (static).
-      </p>
     </div>
   );
 }
