@@ -589,29 +589,28 @@ export function monthlySipAumShareTrend(
  * gross-subscription number — that requires the gross subscribe and
  * repurchase columns from the Monthly Press Release, which the
  * extractor does not currently pull. We approximate the equity-channel
- * inflow envelope as:
+ * flow envelope by FLOW MAGNITUDE:
  *
- *   equityInflowProxy = sipContribution + max(0, activeEquityNetInflow)
+ *   equityFlowProxy = sipContribution + |activeEquityNetInflow|
  *
- * When `activeEquityNetInflow` is positive (typical), this is roughly
- * SIP + non-SIP lump-sum equity subscribe (net of redeem). When it is
- * negative (rare — net active-equity outflow months), the denominator
- * falls back to the SIP component alone, capping the share at 100%
- * rather than producing a base-effect explosion or a flipped sign.
+ * Taking the absolute value keeps the share well-behaved in net-outflow
+ * months: SIP is measured against total active-equity flow throughput,
+ * so heavy-redemption months read as a LOWER SIP share instead of
+ * collapsing the denominator to SIP alone and pegging the line at a
+ * misleading 100%. The share therefore stays within [0,100] and
+ * normalises smoothly across the whole window rather than spiking to
+ * the ceiling.
  *
- * The resulting share is conservative vs IIFL's true gross-inflow
- * series (typically lower by ~15-20pp because we cannot add back the
- * gross-redeem component), but tracks the underlying STRUCTURAL trend
- * the chart is meant to surface: SIP's rising contribution to where
- * the industry's equity flow comes from. Rows missing either field are
- * dropped from the share series; the bars still render whenever
- * sipContribution is present.
+ * The resulting share tracks the underlying STRUCTURAL trend the chart
+ * is meant to surface: SIP's rising contribution to the industry's
+ * equity flow. Rows missing either field are dropped from the share
+ * series; the bars still render whenever sipContribution is present.
  */
 export interface SipGrossSharePoint {
   month: string;
   /** SIP gross monthly contribution, ₹ Cr. */
   sipContribution: number | null;
-  /** SIP contribution as a % of the equity-channel inflow proxy. */
+  /** SIP contribution as a % of the equity-channel flow proxy (by magnitude). */
   sipShareOfGrossPct: number | null;
 }
 
@@ -627,7 +626,7 @@ export function monthlySipGrossShareTrend(
         : null;
     let share: number | null = null;
     if (sip !== null && ae !== null) {
-      const proxy = sip + Math.max(0, ae);
+      const proxy = sip + Math.abs(ae);
       if (proxy > 0) share = (sip / proxy) * 100;
     }
     return {

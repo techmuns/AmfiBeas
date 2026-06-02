@@ -33,7 +33,6 @@ import {
   foliosNfoSectionRead,
   kpiContext,
   latestAmfiMonthlyRow,
-  sipTrendsSectionRead,
   snapshotSectionRead,
   latestIndustryFolioAdditions,
   latestProvenanceFor,
@@ -1356,7 +1355,6 @@ export default async function MonthlyPage({
   // Section reads — short data-driven 1-liners surfaced under
   // each section title.
   const snapshotRead = snapshotSectionRead();
-  const sipTrendsRead = sipTrendsSectionRead();
   const activeEquityMixRead = activeEquityMixSectionRead();
   const foliosNfoRead = foliosNfoSectionRead();
 
@@ -1671,13 +1669,6 @@ export default async function MonthlyPage({
 
       {activeTab === "sip-retail" && hasAnySipTrend && (
         <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-medium tracking-tight">SIP Trends</h2>
-            <p className="text-xs text-muted-foreground">
-              Source: AMFI Monthly Report
-              {sipTrendsRead ? ` · ${sipTrendsRead}` : ""}
-            </p>
-          </div>
           <section className="space-y-4">
             {sipGrossShareSeries.length > 0 && (
               <Card
@@ -1697,17 +1688,6 @@ export default async function MonthlyPage({
                   lineDomain={[0, 110]}
                   lineTicks={[0, 25, 50, 75, 100]}
                 />
-                <p className="mt-2 text-[11px] text-muted-foreground">
-                  Bars: monthly SIP contribution (₹ Cr, left axis). Line:
-                  SIP share of the equity-channel inflow proxy (right axis,
-                  capped at 100%). Proxy denominator = SIP + max(0,
-                  active-equity net inflow). Used because monthly gross
-                  subscribe / repurchase columns aren&apos;t in the AMFI
-                  Monthly Report extract — so this reads as a conservative
-                  approximation of IIFL&apos;s &quot;SIP / Gross Inflows&quot;
-                  metric. The structural rise of SIP&apos;s share is the
-                  read.
-                </p>
               </Card>
             )}
 
