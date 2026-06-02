@@ -6,7 +6,7 @@ import {
 } from "@/lib/format";
 
 export type ValueFormat = "cr" | "pct" | "bps" | "lakh" | "count" | "crore-count";
-export type AxisFormat = "cr" | "pct" | "bps" | "lakh" | "count" | "crore-count";
+export type AxisFormat = "cr" | "pct" | "pct1" | "bps" | "lakh" | "count" | "crore-count";
 export type LabelFormat = "month" | "quarter" | "none";
 
 export function valueFormatter(fmt: ValueFormat): (n: number) => string {
@@ -34,6 +34,8 @@ export function axisFormatter(fmt: AxisFormat): (n: number) => string {
       return (n) => formatAxisCr(n);
     case "pct":
       return (n) => `${n.toFixed(0)}%`;
+    case "pct1":
+      return (n) => `${n.toFixed(1)}%`;
     case "bps":
       return (n) => `${n.toFixed(0)}`;
     case "lakh":
