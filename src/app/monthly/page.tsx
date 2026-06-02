@@ -1446,7 +1446,7 @@ export default async function MonthlyPage({
             className="mb-4"
             headline={
               <>
-                Industry net inflow in {netInflowHeadline.month} was ₹
+                Industry net inflow in {netInflowHeadline.month} was{" "}
                 {fmtNi(netInflowHeadline.ni)}
                 {netInflowHeadline.prevNi !== null && (
                   <>

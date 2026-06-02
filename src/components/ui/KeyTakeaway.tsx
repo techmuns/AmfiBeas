@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { formatCompactCrSafe } from "@/lib/format";
 
 /**
  * One-line "Ambit-style" takeaway rendered above a chart/table: a bold
@@ -23,12 +24,14 @@ export function KeyTakeaway({
   );
 }
 
-/** Signed ₹ Cr delta as a coloured span (green up / red down). */
+/** Signed compact ₹ delta (e.g. +₹5.62L Cr / −₹8.4k Cr) as a coloured
+ *  span (green up / red down). */
 export function DeltaCr({ cr }: { cr: number }) {
   const sign = cr >= 0 ? "+" : "−";
   return (
     <span className={cr >= 0 ? "text-positive" : "text-negative"}>
-      {sign}₹{Math.abs(Math.round(cr)).toLocaleString("en-IN")} Cr
+      {sign}
+      {formatCompactCrSafe(Math.abs(cr))}
     </span>
   );
 }
