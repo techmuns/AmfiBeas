@@ -1,4 +1,4 @@
-import { KpiCard } from "@/components/ui/KpiCard";
+import { CompactStatCard } from "@/components/ui/CompactStatCard";
 import { Card } from "@/components/ui/Card";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
@@ -32,7 +32,6 @@ import { AMCS, getAMC } from "@/data/amcs";
 const LISTED_AMC_SLUGS = AMCS.filter((a) => a.listed).map((a) => a.slug);
 import {
   formatCompactCrSafe,
-  formatDelta,
   formatQuarterLabelLong,
 } from "@/lib/format";
 import { parseFilters } from "@/lib/filter";
@@ -121,9 +120,6 @@ export default async function FinancialsPage({
   const yieldsSubtitle =
     "bps of MF QAAUM · annualised P&L (quarterly × 4) ÷ same-quarter MF QAAUM";
 
-  const trend = (n: number) =>
-    n > 0.05 ? "up" : n < -0.05 ? "down" : ("flat" as const);
-
   // No data → render empty state. Reaches this branch only if the default
   // slug somehow has no rows (defensive — hdfc is always sourced today).
   if (!latest || !profile) {
@@ -159,6 +155,11 @@ export default async function FinancialsPage({
   const revenueYoy = yoyChangeQuarterly(seriesUpToSelected.map((q) => q.revenue));
   const opYoy = yoyChangeQuarterly(seriesUpToSelected.map((q) => q.operatingProfit));
   const patYoy = yoyChangeQuarterly(seriesUpToSelected.map((q) => q.pat));
+  // QoQ deltas (vs the immediately-prior available quarter) for the same
+  // three P&L lines, also anchored to the selected period.
+  const revenueQoq = qoqChange(seriesUpToSelected.map((q) => q.revenue));
+  const opQoq = qoqChange(seriesUpToSelected.map((q) => q.operatingProfit));
+  const patQoq = qoqChange(seriesUpToSelected.map((q) => q.pat));
   const patMargin = (latest.pat / latest.revenue) * 100;
   const opMargin = (latest.operatingProfit / latest.revenue) * 100;
   // Management-comparable "bps of AAUM": quarterly P&L × 4 / AAUM × 10,000.
@@ -166,23 +167,20 @@ export default async function FinancialsPage({
   const revenueYieldBps = latest.avgAum
     ? (latest.revenue * 4 * 10_000) / latest.avgAum
     : 0;
-  const opYieldBps = latest.avgAum
-    ? (latest.operatingProfit * 4 * 10_000) / latest.avgAum
-    : 0;
-  const profitYieldBps = latest.avgAum
-    ? (latest.pat * 4 * 10_000) / latest.avgAum
-    : 0;
 
-  // PAT-margin QoQ also tracks the selected period (compares to the
-  // immediately-prior available quarter, which may not be calendar-
-  // contiguous for ICICI given its post-listing gaps).
-  const prevQuarterRow =
-    selectedIdx > 0 ? fullSeries[selectedIdx - 1] : null;
-  const prevPatMargin =
-    prevQuarterRow && prevQuarterRow.revenue > 0
-      ? (prevQuarterRow.pat / prevQuarterRow.revenue) * 100
-      : patMargin;
-  const patMarginQoq = qoqChange([prevPatMargin, patMargin]);
+  // Margin YoY / QoQ — built from the margin series up to the selected
+  // quarter so both deltas track the selected period (ICICI's post-
+  // listing gaps mean the "prior quarter" may not be calendar-contiguous).
+  const patMarginSeriesToSelected = seriesUpToSelected.map((q) =>
+    q.revenue > 0 ? (q.pat / q.revenue) * 100 : 0
+  );
+  const opMarginSeriesToSelected = seriesUpToSelected.map((q) =>
+    q.revenue > 0 ? (q.operatingProfit / q.revenue) * 100 : 0
+  );
+  const patMarginYoy = yoyChangeQuarterly(patMarginSeriesToSelected);
+  const patMarginQoq = qoqChange(patMarginSeriesToSelected);
+  const opMarginYoy = yoyChangeQuarterly(opMarginSeriesToSelected);
+  const opMarginQoq = qoqChange(opMarginSeriesToSelected);
 
   // FIXED 2-year x-axis: every chart on /financials uses the same 8 most
   // recent calendar quarters in the overall snapshot, regardless of the
@@ -482,53 +480,10 @@ export default async function FinancialsPage({
 
   const subtitle = `${profile.name}${profile.ticker ? ` (${profile.ticker})` : ""} · ${formatQuarterLabelLong(latest.quarter)}`;
 
-  // KPI cards on /financials carry a short source caption + an optional
-  // "Derived · ..." prefix for rows reconstructed from multi-quarter
-  // disclosures (e.g. ICICI Pru 2025-Q2 from 9M FY26 minus reported quarters).
-  const derivedHeadline = latest.derivedFrom
-    ? latest.derivedFrom.split(".")[0].trim() + "."
-    : null;
-  const pnlSource = "Source: Company filings";
-  const yieldSource = "Source: Company filings · AMFI Fundwise AAUM";
-  const pnlNote = derivedHeadline
-    ? `Derived · ${derivedHeadline} · ${pnlSource}`
-    : pnlSource;
-  const yieldNote = derivedHeadline
-    ? `Derived · ${derivedHeadline} · ${yieldSource}`
-    : yieldSource;
-
-  // ---- KPI-card sparklines + peer-median deltas ----
-  // 8Q sparkline values for the focused AMC. Each strips nulls so the
-  // sparkline stays bounded; if there are < 2 points we don't render.
-  const revenueSparkline = pnlData
-    .filter((p): p is typeof p & { revenue: number } => typeof p.revenue === "number")
-    .map((p) => ({ label: p.quarter, value: p.revenue }));
-  const opSparkline = pnlData
-    .filter((p): p is typeof p & { op: number } => typeof p.op === "number")
-    .map((p) => ({ label: p.quarter, value: p.op }));
-  const patSparkline = pnlData
-    .filter((p): p is typeof p & { pat: number } => typeof p.pat === "number")
-    .map((p) => ({ label: p.quarter, value: p.pat }));
-  const patMarginSparkline = marginData
-    .filter((p): p is typeof p & { patMargin: number } => typeof p.patMargin === "number")
-    .map((p) => ({ label: p.quarter, value: p.patMargin }));
-  const opMarginSparkline = marginData
-    .filter((p): p is typeof p & { opMargin: number } => typeof p.opMargin === "number")
-    .map((p) => ({ label: p.quarter, value: p.opMargin }));
-  const revenueYieldSparkline = yieldData
-    .filter((p): p is typeof p & { revenue: number } => typeof p.revenue === "number")
-    .map((p) => ({ label: p.quarter, value: p.revenue }));
-  const opYieldSparkline = yieldData
-    .filter((p): p is typeof p & { op: number } => typeof p.op === "number")
-    .map((p) => ({ label: p.quarter, value: p.op }));
-  const profitYieldSparkline = yieldData
-    .filter((p): p is typeof p & { profit: number } => typeof p.profit === "number")
-    .map((p) => ({ label: p.quarter, value: p.profit }));
-
-  // Peer-median context: drives the "vs peer median" ratio pills on
-  // margin / yield KPIs so the reader sees competitive position at a
+  // Peer-median context: drives the "vs peer median" Δ pills in the
+  // peer-comparison table so the reader sees competitive position at a
   // glance. Computed off `peerRows` (the same data the table below
-  // uses) so peer numbers can't drift between cards and table.
+  // uses) so peer numbers can't drift between sources.
   const peerMedianHelper = (values: (number | null)[]): number | null => {
     const xs = values.filter((v): v is number => typeof v === "number");
     if (xs.length === 0) return null;
@@ -612,105 +567,40 @@ export default async function FinancialsPage({
         </ul>
       </Card>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          label="Operating Revenue"
+      {/* Five compact P&L stat cards — each shows the headline value with
+          both YoY and QoQ growth. Yield cards moved to the Yields chart +
+          peer table below; per-card sparklines/source notes dropped to keep
+          this row small and scannable. */}
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <CompactStatCard
+          label="Revenue"
           value={formatCompactCrSafe(latest.revenue)}
-          delta={`${formatDelta(revenueYoy)} YoY`}
-          trend={trend(revenueYoy)}
-          note={pnlNote}
-          sparkline={revenueSparkline}
-          sparklineColor="hsl(var(--chart-1))"
           yoyPct={revenueYoy}
+          qoqPct={revenueQoq}
         />
-        <KpiCard
+        <CompactStatCard
           label="Operating Profit"
           value={formatCompactCrSafe(latest.operatingProfit)}
-          delta={`${formatDelta(opYoy)} YoY`}
-          trend={trend(opYoy)}
-          note={pnlNote}
-          sparkline={opSparkline}
-          sparklineColor="hsl(var(--chart-2))"
           yoyPct={opYoy}
+          qoqPct={opQoq}
         />
-        <KpiCard
+        <CompactStatCard
           label="PAT"
           value={formatCompactCrSafe(latest.pat)}
-          delta={`${formatDelta(patYoy)} YoY`}
-          trend={trend(patYoy)}
-          note={pnlNote}
-          sparkline={patSparkline}
-          sparklineColor="hsl(var(--chart-3))"
           yoyPct={patYoy}
+          qoqPct={patQoq}
         />
-        <KpiCard
+        <CompactStatCard
+          label="Operating Margin"
+          value={opMargin.toFixed(1) + "%"}
+          yoyPct={opMarginYoy}
+          qoqPct={opMarginQoq}
+        />
+        <CompactStatCard
           label="PAT Margin"
           value={patMargin.toFixed(1) + "%"}
-          delta={`${formatDelta(patMarginQoq)} QoQ`}
-          trend={trend(patMarginQoq)}
-          note={pnlNote}
-          sparkline={patMarginSparkline}
-          sparklineColor="hsl(var(--chart-3))"
-          ratio={
-            peerMedianPatMargin !== null
-              ? `${(patMargin - peerMedianPatMargin) >= 0 ? "+" : ""}${(patMargin - peerMedianPatMargin).toFixed(1)}pp vs peer median`
-              : undefined
-          }
-        />
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          label="Operating Margin (% of revenue)"
-          value={opMargin.toFixed(1) + "%"}
-          note={pnlNote}
-          sparkline={opMarginSparkline}
-          sparklineColor="hsl(var(--chart-2))"
-          ratio={
-            peerMedianOpMargin !== null
-              ? `${(opMargin - peerMedianOpMargin) >= 0 ? "+" : ""}${(opMargin - peerMedianOpMargin).toFixed(1)}pp vs peer median`
-              : undefined
-          }
-        />
-        <KpiCard
-          label="Revenue Yield (bps of MF QAAUM)"
-          value={
-            latest.avgAum > 0 ? revenueYieldBps.toFixed(1) + " bps" : "—"
-          }
-          note={yieldNote}
-          sparkline={revenueYieldSparkline}
-          sparklineColor="hsl(var(--chart-1))"
-          ratio={
-            peerMedianRevenueYield !== null && latest.avgAum > 0
-              ? `${(revenueYieldBps - peerMedianRevenueYield) >= 0 ? "+" : ""}${(revenueYieldBps - peerMedianRevenueYield).toFixed(1)} bps vs peer median`
-              : undefined
-          }
-        />
-        <KpiCard
-          label="Operating Yield (bps of MF QAAUM)"
-          value={latest.avgAum > 0 ? opYieldBps.toFixed(1) + " bps" : "—"}
-          note={yieldNote}
-          sparkline={opYieldSparkline}
-          sparklineColor="hsl(var(--chart-2))"
-          ratio={
-            peerMedianOpYield !== null && latest.avgAum > 0
-              ? `${(opYieldBps - peerMedianOpYield) >= 0 ? "+" : ""}${(opYieldBps - peerMedianOpYield).toFixed(1)} bps vs peer median`
-              : undefined
-          }
-        />
-        <KpiCard
-          label="Profit Yield (bps of MF QAAUM)"
-          value={
-            latest.avgAum > 0 ? profitYieldBps.toFixed(1) + " bps" : "—"
-          }
-          note={yieldNote}
-          sparkline={profitYieldSparkline}
-          sparklineColor="hsl(var(--chart-3))"
-          ratio={
-            peerMedianProfitYield !== null && latest.avgAum > 0
-              ? `${(profitYieldBps - peerMedianProfitYield) >= 0 ? "+" : ""}${(profitYieldBps - peerMedianProfitYield).toFixed(1)} bps vs peer median`
-              : undefined
-          }
+          yoyPct={patMarginYoy}
+          qoqPct={patMarginQoq}
         />
       </section>
 
