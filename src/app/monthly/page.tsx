@@ -211,13 +211,27 @@ function CyclePhaseLegend({ bands }: { bands: RenderedCycleBand[] }) {
   );
 }
 
+/** "2026-04" → "April 2026". Falls back to the raw YYYY-MM key for
+ *  malformed input. Shared by the Flows "Where the Money Went" card and
+ *  its net-outflow fallback so both label the period identically. */
+function fullMonthLabel(month: string): string {
+  const FULL_MONTHS = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+  ];
+  const [y, m] = month.split("-");
+  const idx = Number(m) - 1;
+  return Number.isFinite(idx) && idx >= 0 && idx < 12
+    ? `${FULL_MONTHS[idx]} ${y}`
+    : month;
+}
+
 export default async function MonthlyPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const subtitle = `Industry-wide · ${latestMonth()}`;
 
   // ---- Lens toggles (parsed up-front so any chart below can read them).
   // Each chart owns its own URL param so the toggles don't collide.
@@ -363,6 +377,12 @@ export default async function MonthlyPage({
     typeof requestedMonthRaw === "string" ? requestedMonthRaw : undefined;
   const amfiSelected = resolveSelectedRow(requestedMonth);
   const amfiAvailableMonths = availableMonthsDesc();
+  // Header subtitle tracks the global period filter so the page title
+  // agrees with the picker. Falls back to the dataset's latest month
+  // when nothing is explicitly selected (keeps the default unchanged).
+  const subtitle = `Industry-wide · ${
+    requestedMonth ? amfiSelected?.month ?? latestMonth() : latestMonth()
+  }`;
 
   /** All cards we'd surface if the row had every field. The render below
    *  hides any whose value is null on the latest row, so a press-release-
@@ -1259,32 +1279,32 @@ export default async function MonthlyPage({
   // come back?".
   const episodeRecoveryData = episodeRecoveryRows();
   // Sankey data — composes SIP vs Lump-sum on the source side, and
-  // Equity / Debt / Liquid / Other on the target side, all from the
-  // latest month with usable totals. Links are proportional shares
-  // (source-pct × target-pct × total).
+  // Equity / Debt / Liquid / Other on the target side, for the month
+  // the global period filter has selected (falls back to the latest).
+  // Links are proportional shares (source-pct × target-pct × total).
   const sankeyData: {
     month: string;
     sources: { id: string; label: string; tone?: "positive" | "negative" | "neutral" }[];
     targets: { id: string; label: string; tone?: "positive" | "negative" | "neutral" }[];
     links: { source: string; target: string; value: number }[];
   } | null = (() => {
-    const latestRow = latestAmfiMonthlyRow();
+    const selectedRow = amfiSelected;
     if (
-      !latestRow ||
-      typeof latestRow.netInflow !== "number" ||
-      typeof latestRow.equityNetInflow !== "number" ||
-      typeof latestRow.debtNetInflow !== "number" ||
-      typeof latestRow.liquidNetInflow !== "number" ||
-      typeof latestRow.sipContribution !== "number"
+      !selectedRow ||
+      typeof selectedRow.netInflow !== "number" ||
+      typeof selectedRow.equityNetInflow !== "number" ||
+      typeof selectedRow.debtNetInflow !== "number" ||
+      typeof selectedRow.liquidNetInflow !== "number" ||
+      typeof selectedRow.sipContribution !== "number"
     )
       return null;
-    const total = latestRow.netInflow;
+    const total = selectedRow.netInflow;
     if (total <= 0) return null;
-    const sip = Math.max(0, latestRow.sipContribution);
+    const sip = Math.max(0, selectedRow.sipContribution);
     const lumpSum = Math.max(0, total - sip);
-    const equity = Math.max(0, latestRow.equityNetInflow);
-    const debtPure = Math.max(0, latestRow.debtNetInflow - latestRow.liquidNetInflow);
-    const liquid = Math.max(0, latestRow.liquidNetInflow);
+    const equity = Math.max(0, selectedRow.equityNetInflow);
+    const debtPure = Math.max(0, selectedRow.debtNetInflow - selectedRow.liquidNetInflow);
+    const liquid = Math.max(0, selectedRow.liquidNetInflow);
     const other = Math.max(0, total - equity - debtPure - liquid);
     const targetTotals: Record<string, number> = {
       equity,
@@ -1310,7 +1330,7 @@ export default async function MonthlyPage({
       }
     }
     return {
-      month: latestRow.month,
+      month: selectedRow.month,
       sources: [
         { id: "sip", label: "SIP", tone: "positive" },
         { id: "lumpSum", label: "Lump sum", tone: "neutral" },
@@ -1373,7 +1393,8 @@ export default async function MonthlyPage({
       typeof amfiSelected.sipContribution === "number" && ni > 0
         ? (amfiSelected.sipContribution / ni) * 100
         : null;
-    const lf = monthlyFlowsRows[monthlyFlowsRows.length - 1];
+    const lf =
+      monthlyFlowsRows.find((r) => r.month === amfiSelected.month) ?? null;
     let equityShare: number | null = null;
     if (lf && typeof lf.equity === "number") {
       const e = Math.abs(lf.equity);
@@ -1415,50 +1436,57 @@ export default async function MonthlyPage({
         />
       )}
 
-      {activeTab === "flows" && sankeyData && (() => {
-        const sankeyGrandTotal = sankeyData.links.reduce(
-          (s, l) => s + Math.abs(l.value),
-          0
-        );
-        const formatSankeyPct = (v: number) =>
-          sankeyGrandTotal > 0
-            ? `${((v / sankeyGrandTotal) * 100).toFixed(1)}%`
-            : "";
-        const sankeyMonthLabel = (() => {
-          const FULL_MONTHS = [
-            "January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December",
-          ];
-          const [y, m] = sankeyData.month.split("-");
-          const idx = Number(m) - 1;
-          return Number.isFinite(idx) && idx >= 0 && idx < 12
-            ? `${FULL_MONTHS[idx]} ${y}`
-            : sankeyData.month;
-        })();
-        return (
+      {activeTab === "flows" &&
+        (sankeyData ? (() => {
+          const sankeyGrandTotal = sankeyData.links.reduce(
+            (s, l) => s + Math.abs(l.value),
+            0
+          );
+          const formatSankeyPct = (v: number) =>
+            sankeyGrandTotal > 0
+              ? `${((v / sankeyGrandTotal) * 100).toFixed(1)}%`
+              : "";
+          return (
+            <Card
+              title={`Where the Money Went · ${fullMonthLabel(sankeyData.month)}`}
+              subtitleNode={
+                <div className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground">
+                    Industry net flow split by where the money came from and where it ended up.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/80">
+                    Showing {sankeyData.month} · change the period filter above to see another month.
+                  </p>
+                </div>
+              }
+            >
+              <SankeyFlow
+                sources={sankeyData.sources}
+                targets={sankeyData.targets}
+                links={sankeyData.links}
+                formatValue={formatSankeyPct}
+                height={320}
+              />
+            </Card>
+          );
+        })() : amfiSelected ? (
           <Card
-            title={`Where the Money Went · ${sankeyMonthLabel}`}
-            subtitleNode={
-              <div className="space-y-0.5">
-                <p className="text-xs text-muted-foreground">
-                  Industry net flow split by where the money came from and where it ended up.
-                </p>
-                <p className="text-[11px] text-muted-foreground/80">
-                  Latest month: {sankeyData.month}
-                </p>
-              </div>
-            }
+            title={`Where the Money Went · ${fullMonthLabel(amfiSelected.month)}`}
+            subtitle="Industry net flow split by where the money came from and where it ended up."
           >
-            <SankeyFlow
-              sources={sankeyData.sources}
-              targets={sankeyData.targets}
-              links={sankeyData.links}
-              formatValue={formatSankeyPct}
-              height={320}
-            />
+            <div className="flex h-[320px] flex-col items-center justify-center gap-1 px-6 text-center text-sm text-muted-foreground">
+              <p>
+                {typeof amfiSelected.netInflow === "number" &&
+                amfiSelected.netInflow <= 0
+                  ? `The industry saw a net outflow in ${fullMonthLabel(amfiSelected.month)}, so the inflow split isn't shown for this month.`
+                  : `The flow breakdown isn't available for ${fullMonthLabel(amfiSelected.month)}.`}
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">
+                Pick a different month from the period filter above.
+              </p>
+            </div>
           </Card>
-        );
-      })()}
+        ) : null)}
 
       {activeTab === "snapshot" && (
       <Card
