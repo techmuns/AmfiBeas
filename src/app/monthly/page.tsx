@@ -6,16 +6,11 @@ import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import {
   adaptiveAverageOverlay,
   chartInsights,
-  exponentialMovingAverage,
   latestYoyPct,
   slicedMovingAverage,
 } from "@/lib/chart-context";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BarSeries } from "@/components/charts/BarSeries";
-import {
-  StackedShareBar,
-  type StackedShareBarSegment,
-} from "@/components/charts/StackedShareBar";
 import { IiflHeatmap } from "@/components/charts/IiflHeatmap";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { indexSeriesToBase } from "@/lib/index-series";
@@ -75,6 +70,7 @@ import {
   MonthlyFlowsTable,
   type MonthlyFlowsTableRow,
 } from "@/components/data/MonthlyFlowsTable";
+import { MaaumTable, type MaaumColumn } from "@/components/data/MaaumTable";
 import { HowToRead } from "@/components/ui/HowToRead";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { MonthPicker } from "@/components/filters/MonthPicker";
@@ -284,8 +280,6 @@ export default async function MonthlyPage({
   // an absolute number (₹ Cr / count / etc) and a meaningful share
   // / ratio specific to that card. Default is "absolute" — URL stays
   // clean unless the user actively picked "share".
-  const aaumLens: "absolute" | "share" =
-    sp.aaumLens === "share" ? "share" : "absolute";
   // Primary view toggle for the first SIP card: SIP flows-vs-gross-inflows
   // (default) or the SIP AUM trend (folded in from the old standalone card).
   const sipPrimaryView: "flows" | "aum" =
@@ -312,7 +306,6 @@ export default async function MonthlyPage({
       typeof sp.activePassiveLens === "string"
         ? sp.activePassiveLens
         : undefined,
-    aaumLens: typeof sp.aaumLens === "string" ? sp.aaumLens : undefined,
     sipContribLens:
       typeof sp.sipContribLens === "string" ? sp.sipContribLens : undefined,
     sipContribPeriod:
@@ -522,110 +515,109 @@ export default async function MonthlyPage({
     ? "Industry-wide · Source: AMFI Monthly Report"
     : "Upload AMFI monthly PDFs to manual-data/amfi-monthly/pdfs/, then run npm run ingest:amfi-pdf";
 
-  // ---- AMFI AUM Mix & Trend section -----------------------------------
-  //
-  // Month-end AUM Mix. Denominator is `totalAum` (closing balance) so the
-  // category fields stay on the same month-end basis as the source rows.
-  // We do NOT divide month-end equityAum/debtAum/liquidAum by totalAaum
-  // (period-average) — the units would not match.
-  //
-  // "Other" = totalAum − (equity + debt + liquid). Computed only when
-  // ALL three sub-categories are present and totalAum is present, since
-  // a missing sub-category would inflate the residual into a misleading
-  // bucket. If the residual is ≤ 0, Other is dropped (would either be
-  // a wash or imply mis-extraction).
-  const mixTotalAum = getKpiValue(amfiSelected, "totalAum");
-  const mixEquity = getKpiValue(amfiSelected, "equityAum");
-  const mixDebt = getKpiValue(amfiSelected, "debtAum");
-  const mixLiquid = getKpiValue(amfiSelected, "liquidAum");
-
-  const mixSlices: StackedShareBarSegment[] = [];
-  if (typeof mixEquity === "number") {
-    mixSlices.push({
-      key: "equity",
-      label: "Equity",
-      value: mixEquity,
-      color: "hsl(var(--chart-1))",
-    });
-  }
-  if (typeof mixDebt === "number") {
-    mixSlices.push({
-      key: "debt",
-      label: "Debt",
-      value: mixDebt,
-      color: "hsl(var(--chart-2))",
-    });
-  }
-  if (typeof mixLiquid === "number") {
-    mixSlices.push({
-      key: "liquid",
-      label: "Liquid",
-      value: mixLiquid,
-      color: "hsl(var(--chart-4))",
-    });
-  }
-
-  const allSubCategoriesPresent =
-    typeof mixEquity === "number" &&
-    typeof mixDebt === "number" &&
-    typeof mixLiquid === "number";
-  let mixOther: number | null = null;
-  if (typeof mixTotalAum === "number" && allSubCategoriesPresent) {
-    const sumKnown = mixEquity + mixDebt + mixLiquid;
-    const residual = mixTotalAum - sumKnown;
-    if (residual > 0) {
-      mixOther = residual;
-      mixSlices.push({
-        key: "other",
-        label: "Other",
-        value: residual,
-        color: "hsl(var(--muted-foreground))",
-      });
+  // ---- Industry Performance (IIFL Research Figures 19-21) -----------
+  // Figure 20: Total EOP AUM (₹ Cr bars) + YoY % line.
+  // Figure 21: Active-Equity MAAUM (₹ Cr bars) + active-equity share of
+  //            total MAAUM (%) line — "share has hovered ~54%".
+  // Both span the latest 24 months (matching the report's window) and
+  // share the BarsWithIndexLine dual-axis visual.
+  const amfiRowsAsc = amfiMonthlyRows();
+  const amfiRowByMonth = new Map(amfiRowsAsc.map((r) => [r.month, r]));
+  const monthMinus12 = (ym: string): string => {
+    const [y, m] = ym.split("-").map(Number);
+    return `${y - 1}-${String(m).padStart(2, "0")}`;
+  };
+  const yoyPctOf = (
+    month: string,
+    field: "totalAum" | "totalAaum"
+  ): number | null => {
+    const cur = amfiRowByMonth.get(month)?.[field];
+    const prev = amfiRowByMonth.get(monthMinus12(month))?.[field];
+    return typeof cur === "number" && typeof prev === "number" && prev > 0
+      ? ((cur - prev) / prev) * 100
+      : null;
+  };
+  const totalAumChart = amfiRowsAsc
+    .filter((r) => typeof r.totalAum === "number")
+    .slice(-24)
+    .map((r) => ({
+      label: r.month,
+      value: r.totalAum as number,
+      line: yoyPctOf(r.month, "totalAum"),
+    }));
+  const totalAumChartHasData = totalAumChart.length > 0;
+  const totalAumYoyLatest = (() => {
+    for (let i = totalAumChart.length - 1; i >= 0; i--) {
+      if (totalAumChart[i].line !== null) return totalAumChart[i].line;
     }
-  }
-  const mixHasData = mixSlices.length > 0;
-
-  // Month-over-month change in each category's SHARE of the month-end
-  // breakdown, in percentage points — surfaces where investor allocation
-  // is shifting relative to last month. Compared against the immediately
-  // preceding available month, using the same residual-"Other" basis as
-  // the slices above so the delta lines up with the rendered shares.
-  // Left null per-segment when there's no prior month or no comparable
-  // share to subtract.
-  const mixSelectedShares = monthEndMixShares(amfiSelected);
-  const mixPrevRow: AmfiMonthlyPdfRow | null = (() => {
-    if (!amfiSelected) return null;
-    const rows = amfiMonthlyRows(); // ascending by month
-    const idx = rows.findIndex((r) => r.month === amfiSelected.month);
-    return idx > 0 ? rows[idx - 1] : null;
+    return null;
   })();
-  const mixPrevShares = monthEndMixShares(mixPrevRow);
-  for (const seg of mixSlices) {
-    const now = mixSelectedShares.get(seg.key);
-    const prev = mixPrevShares.get(seg.key);
-    seg.deltaPp =
-      typeof now === "number" && typeof prev === "number" ? now - prev : null;
-  }
+  const activeEqShareChart = amfiRowsAsc
+    .filter(
+      (r) =>
+        typeof r.activeEquityAaum === "number" &&
+        typeof r.totalAaum === "number" &&
+        (r.totalAaum as number) > 0
+    )
+    .slice(-24)
+    .map((r) => ({
+      label: r.month,
+      value: r.activeEquityAaum as number,
+      line: ((r.activeEquityAaum as number) / (r.totalAaum as number)) * 100,
+    }));
+  const activeEqShareChartHasData = activeEqShareChart.length > 0;
+  const activeEqShareLatest =
+    activeEqShareChart.length > 0
+      ? activeEqShareChart[activeEqShareChart.length - 1].line
+      : null;
 
-  // Subtitle clarifies the basis. When `Other` is included it's by
-  // residual against totalAum; when it's dropped (e.g. if totalAum was
-  // missing or sub-categories were incomplete), say so plainly.
-  const mixSubtitle =
-    mixHasData && mixOther !== null
-      ? "Month-end AUM · share of Total AUM (residual = Other)"
-      : mixHasData
-        ? "Month-end AUM · partial breakdown · Other not computed"
-        : "Month-end AUM not available for this month";
-
-  // AAUM Trend across all available months. We use totalAaum (period
-  // average) because that's the disclosure-comparable headline; falling
-  // back to nothing when no row carries it. The chart renders 1 bar
-  // when a single month is ingested, and naturally extends as more
-  // PDFs land.
-  const aaumTrendData = amfiMonthlyRows()
-    .filter((r) => typeof r.totalAaum === "number")
-    .map((r) => ({ label: r.month, value: r.totalAaum as number }));
-  const aaumTrendHasData = aaumTrendData.length > 0;
+  // Figure 19: MAAUM breakdown table (3 periods + YoY / MoM). Equity is
+  // the broad bucket = Active + ETF & Index + Arbitrage; Debt is Sub
+  // Total I (still includes Liquid); Others = Sub Total V ex. ETF & Index.
+  const maaumColumns: { yearAgo: MaaumColumn; prevMonth: MaaumColumn; latest: MaaumColumn } | null =
+    (() => {
+      const num = (v: number | undefined): number | null =>
+        typeof v === "number" && Number.isFinite(v) ? v : null;
+      const toColumn = (
+        r: (typeof amfiRowsAsc)[number] | undefined
+      ): MaaumColumn | null => {
+        if (!r) return null;
+        const active = num(r.activeEquityAaum);
+        const etf = num(r.etfIndexAaum);
+        const arb = num(r.arbitrageAaum);
+        const debt = num(r.debtAaum);
+        const total = num(r.totalAaum);
+        const otherSub5 = num(r.otherSchemesAaum);
+        if (active === null || etf === null || arb === null || total === null) {
+          return null;
+        }
+        return {
+          monthLabel: formatMonthLabel(r.month),
+          equity: active + etf + arb,
+          active,
+          etf,
+          arb,
+          debt,
+          others: otherSub5 !== null ? otherSub5 - etf : null,
+          total,
+        };
+      };
+      // Latest row that carries the full IIFL-style equity breakdown.
+      let latestIdx = -1;
+      for (let i = amfiRowsAsc.length - 1; i >= 0; i--) {
+        if (toColumn(amfiRowsAsc[i])) {
+          latestIdx = i;
+          break;
+        }
+      }
+      if (latestIdx < 1) return null;
+      const latestRow = amfiRowsAsc[latestIdx];
+      const latest = toColumn(latestRow);
+      const prevMonth = toColumn(amfiRowsAsc[latestIdx - 1]);
+      const yearAgo = toColumn(amfiRowByMonth.get(monthMinus12(latestRow.month)));
+      if (!latest || !prevMonth || !yearAgo) return null;
+      return { yearAgo, prevMonth, latest };
+    })();
 
   // ---- Shared chart-context helpers (used by every insight call) ----
   // Computed once so we don't recompute the same maps per chart.
@@ -646,38 +638,6 @@ export default async function MonthlyPage({
       label: e.startMonth,
       title: e.title,
     }));
-
-  // Total AAUM denominator: latest as % of trailing 12M average.
-  const totalAaumDenomCaption = (() => {
-    if (aaumTrendData.length < 12) return undefined;
-    const trailing12 = aaumTrendData.slice(-12);
-    const avg = trailing12.reduce((s, p) => s + p.value, 0) / trailing12.length;
-    const latest = aaumTrendData[aaumTrendData.length - 1];
-    if (avg <= 0) return undefined;
-    const pct = (latest.value / avg) * 100;
-    return `${pct.toFixed(1)}% of trailing 12M avg · latest ${latest.label}`;
-  })();
-  // "Share" view for the AAUM card: each month indexed as a % of
-  // its own trailing-12M moving average. Months with fewer than 12
-  // prior data points are dropped (no trailing average available
-  // yet). The toggle swaps the absolute ₹ Cr series for this one
-  // when the user picks "vs 12M avg".
-  const aaumTrendDataShare = aaumTrendData
-    .map((p, i, arr) => {
-      if (i + 1 < 12) return null;
-      const slice = arr.slice(i + 1 - 12, i + 1);
-      const avg = slice.reduce((s, q) => s + q.value, 0) / 12;
-      if (avg <= 0) return null;
-      return { label: p.label, value: (p.value / avg) * 100 };
-    })
-    .filter((p): p is { label: string; value: number } => p !== null);
-  const aaumDisplayData = aaumLens === "share" ? aaumTrendDataShare : aaumTrendData;
-  const totalAaumInsights = chartInsights(aaumTrendData, {
-    metricName: "total AAUM",
-    unitSuffix: "₹ Cr",
-    yoyLag: 12,
-    cyclePhaseByLabel: cyclePhaseByMonth,
-  });
 
   // Provenance captions for the section. All four contributing fields
   // (totalAum / equityAum / debtAum / liquidAum / totalAaum) come from
@@ -1397,86 +1357,60 @@ export default async function MonthlyPage({
 
       {activeTab === "flows" && amfiSelected && (
         <div className="space-y-3">
-          <section className="grid gap-4 lg:grid-cols-2">
-            <Card title="Month-end AUM Mix" subtitle={mixSubtitle}>
-              {mixHasData ? (
-                <StackedShareBar
-                  data={mixSlices}
-                  formatValue={(v) => formatCompactCrSafe(v)}
-                />
-              ) : (
-                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  Mix unavailable · sub-category AUM not in uploaded AMFI PDFs
+          {maaumColumns && (
+            <Card
+              title="Industry MAAUM Breakdown"
+              subtitleNode={
+                <div className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground">
+                    Monthly average AUM by category, with the active-equity
+                    split. Equity = Active + ETF &amp; Index + Arbitrage.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/80">
+                    {`${maaumColumns.yearAgo.monthLabel} · ${maaumColumns.prevMonth.monthLabel} · ${maaumColumns.latest.monthLabel} · Source: AMFI Monthly Report`}
+                  </p>
                 </div>
-              )}
-            </Card>
-            <ChartWithContext
-              title="Total AAUM Trend"
-              subtitle="Average industry AUM by month. Shows how the industry's headline asset base has grown."
-              flowKind="stock"
-              denominatorCaption={(() => {
-                const span = `${aaumTrendData.length} month${aaumTrendData.length === 1 ? "" : "s"}`;
-                if (aaumLens === "share") return `${span} · indexed to 12M avg (100 = on-trend)`;
-                return totalAaumDenomCaption
-                  ? `${span} · ₹ Cr · ${totalAaumDenomCaption}`
-                  : `${span} · ₹ Cr`;
-              })()}
-              denominatorTooltip="In share view, each month's AAUM is expressed as a % of the trailing 12-month average — helps separate cyclical mean-reversion from structural growth."
-              insights={totalAaumInsights}
-              yoyBadge={(() => {
-                const v = latestYoyPct(aaumTrendData, 12);
-                return v === null ? undefined : { label: "YoY", pct: v };
-              })()}
-              action={
-                <LensToggle
-                  basePath="/monthly"
-                  paramName="aaumLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "vs 12M avg" },
-                  ]}
-                  active={aaumLens}
-                  preserveParams={preservedQueryParams}
-                />
               }
             >
-              {aaumTrendHasData ? (() => {
-                const showShareRef = aaumLens === "share";
-                // Absolute (₹ Cr) view overlays a 12-month EMA dotted line
-                // seeded over the full AAUM history. Share view keeps its
-                // indexed-to-100 reference line instead.
-                const aaumEma = showShareRef
-                  ? undefined
-                  : exponentialMovingAverage(aaumTrendData, 12);
-                const aaumCycleBands = renderedCycleBands(
-                  cyclePhaseBands,
-                  aaumDisplayData.map((p) => p.label)
-                );
-                return (
-                  <>
-                    <BarSeries
-                      data={aaumDisplayData}
-                      name="AAUM"
-                      color="hsl(var(--chart-1))"
-                      valueFormat={aaumLens === "share" ? "pct" : "cr"}
-                      axisFormat={aaumLens === "share" ? "pct" : "cr"}
-                      trendline={aaumEma}
-                      trendlineName={aaumEma ? "12-month EMA" : undefined}
-                      referenceValue={showShareRef ? 100 : undefined}
-                      referenceLabel={showShareRef ? "12-month avg" : undefined}
-                      cyclePhaseBands={aaumCycleBands}
-                    />
-                    <CyclePhaseLegend bands={aaumCycleBands} />
-                  </>
-                );
-              })() : (
-                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  AAUM unavailable · totalAaum not in uploaded AMFI PDFs
+              <MaaumTable
+                yearAgo={maaumColumns.yearAgo}
+                prevMonth={maaumColumns.prevMonth}
+                latest={maaumColumns.latest}
+              />
+            </Card>
+          )}
+          {totalAumChartHasData && (
+            <Card
+              title="Total AUM Trend"
+              subtitleNode={
+                <div className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground">
+                    Industry month-end (EOP) AUM with year-on-year growth.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/80">
+                    {`${totalAumChart.length} months${totalAumYoyLatest !== null ? ` · latest YoY +${totalAumYoyLatest.toFixed(0)}%` : ""} · Source: AMFI Monthly Report`}
+                  </p>
                 </div>
-              )}
-            </ChartWithContext>
-          </section>
+              }
+            >
+              <BarsWithIndexLine
+                data={totalAumChart}
+                barColor="hsl(var(--chart-1))"
+                lineColor="hsl(var(--foreground))"
+                valueFormat="cr"
+                axisFormat="cr"
+                lineValueFormat="pct"
+                lineAxisFormat="pct"
+                labelFormat="month"
+                barName="Total AUM (EOP)"
+                lineName="YoY growth"
+              />
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                Bars: month-end industry AUM (₹ Cr, left axis). Line:
+                year-on-year growth (%, right axis).
+              </p>
+            </Card>
+          )}
         </div>
       )}
 
@@ -1856,6 +1790,42 @@ export default async function MonthlyPage({
             <PassiveShareInEquity trend={activePassiveTrend} />
           </section>
         </div>
+      )}
+
+      {activeTab === "active-passive" && activeEqShareChartHasData && (
+        <Card
+          title="Active Equity AUM & Share of Total"
+          subtitleNode={
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">
+                Active-equity MAAUM (excludes ETF / Index / arbitrage) and its
+                share of total industry MAAUM.
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">
+                {`${activeEqShareChart.length} months${activeEqShareLatest !== null ? ` · latest share ${activeEqShareLatest.toFixed(0)}%` : ""} · Source: AMFI Monthly Report`}
+              </p>
+            </div>
+          }
+        >
+          <BarsWithIndexLine
+            data={activeEqShareChart}
+            barColor="hsl(var(--chart-1))"
+            lineColor="hsl(var(--chart-2))"
+            valueFormat="cr"
+            axisFormat="cr"
+            lineValueFormat="pct"
+            lineAxisFormat="pct"
+            labelFormat="month"
+            barName="Active Equity MAAUM"
+            lineName="Active equity share of total"
+            lineDomain={[50, 60]}
+            lineTicks={[50, 52, 54, 56, 58, 60]}
+          />
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Bars: active-equity MAAUM (₹ Cr, left axis). Line: active-equity
+            share of total MAAUM (%, right axis).
+          </p>
+        </Card>
       )}
 
       {activeTab === "categories" && iiflTrendHasAny && (
