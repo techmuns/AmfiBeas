@@ -62,7 +62,6 @@ import {
   iiflActiveEquityTrendCard,
   latestCategoryProvenance,
 } from "@/data/amfi-monthly-category";
-import { GroupedBars } from "@/components/charts/GroupedBars";
 import { VerticalBars } from "@/components/charts/VerticalBars";
 import {
   MonthlyFlowsTable,
@@ -245,8 +244,6 @@ export default async function MonthlyPage({
     typeof sp.heatmap === "string" && sp.heatmap === "zscore"
       ? "zscore"
       : "share";
-  const monthlyFlowsLens: "absolute" | "share" =
-    sp.flowsLens === "share" ? "share" : "absolute";
   // SIP Contribution period toggle. History now runs to ~10 years, so
   // the card offers 1Y / 3Y / 5Y / All — where "All" is capped at 84
   // months (the range that aligns with the cycle-phase / market-data
@@ -288,7 +285,6 @@ export default async function MonthlyPage({
     tab: typeof sp.tab === "string" ? sp.tab : undefined,
     month: typeof sp.month === "string" ? sp.month : undefined,
     heatmap: typeof sp.heatmap === "string" ? sp.heatmap : undefined,
-    flowsLens: typeof sp.flowsLens === "string" ? sp.flowsLens : undefined,
     aeFlowView:
       typeof sp.aeFlowView === "string" ? sp.aeFlowView : undefined,
     aeFlowRange:
@@ -649,11 +645,6 @@ export default async function MonthlyPage({
     for (const p of cyclePhaseHistory()) m.set(p.month, p.phase);
     return m;
   })();
-  const episodeAnchorsForInsights: { label: string; title: string }[] =
-    historicalEpisodes().map((e) => ({
-      label: e.startMonth,
-      title: e.title,
-    }));
 
   // Provenance captions for the section. All four contributing fields
   // (totalAum / equityAum / debtAum / liquidAum / totalAaum) come from
@@ -704,83 +695,9 @@ export default async function MonthlyPage({
   // when a month's row didn't carry the field — Recharts' GroupedBars
   // skips null cells, which honours the "no fake zero" rule while
   // still rendering the other categories on the same x-axis.
+  // Category net-flow rows (equity / debt / liquid, ₹ Cr) — still used by
+  // the "Where the Money Went" Sankey to split the latest month's flow.
   const monthlyFlowsRows = monthlyFlowsData(24);
-  // Transform flows to share view when the lens is set. Denominator is
-  // the sum of ABSOLUTE per-series values so signs (inflow vs outflow)
-  // stay readable; the bar heights now represent each segment's share
-  // of the month's total flow magnitude.
-  const toShareRow = (
-    row: Record<string, number | null | string>,
-    keys: string[]
-  ): Record<string, number | null | string> => {
-    const total = keys.reduce((s, k) => {
-      const v = row[k];
-      return s + (typeof v === "number" ? Math.abs(v) : 0);
-    }, 0);
-    if (total === 0) {
-      const out = { ...row };
-      for (const k of keys) out[k] = null;
-      return out;
-    }
-    const out = { ...row };
-    for (const k of keys) {
-      const v = row[k];
-      out[k] = typeof v === "number" ? (v / total) * 100 : null;
-    }
-    return out;
-  };
-  const monthlyFlowsDisplay =
-    monthlyFlowsLens === "share"
-      ? monthlyFlowsRows.map((r) =>
-          toShareRow(r as Record<string, number | null | string>, [
-            "equity",
-            "debt",
-            "liquid",
-          ])
-        )
-      : monthlyFlowsRows;
-  const monthlyFlowsHasData = monthlyFlowsRows.some(
-    (r) => r.equity !== null || r.debt !== null || r.liquid !== null
-  );
-
-  // Monthly Flows denominator: latest month's Equity share of total
-  // flow magnitude — the headline read for "where did the month's
-  // flow go?".
-  const monthlyFlowsDenomCaption = (() => {
-    if (monthlyFlowsRows.length === 0) return undefined;
-    const latest = monthlyFlowsRows[monthlyFlowsRows.length - 1];
-    const e = typeof latest.equity === "number" ? latest.equity : 0;
-    const d = typeof latest.debt === "number" ? latest.debt : 0;
-    const l = typeof latest.liquid === "number" ? latest.liquid : 0;
-    const total = Math.abs(e) + Math.abs(d) + Math.abs(l);
-    if (total === 0) return undefined;
-    return `Equity = ${((Math.abs(e) / total) * 100).toFixed(0)}% / Debt = ${((Math.abs(d) / total) * 100).toFixed(0)}% / Liquid = ${((Math.abs(l) / total) * 100).toFixed(0)}% of latest flow magnitude · ${latest.month}`;
-  })();
-  // Insight strip on the equity series — equity is the headline
-  // segment investors care about most.
-  const equityFlowFromRows = monthlyFlowsRows
-    .filter((r) => typeof r.equity === "number")
-    .map((r) => ({ label: r.month as string, value: r.equity as number }));
-  const monthlyFlowsInsights = chartInsights(equityFlowFromRows, {
-    metricName: "equity net inflow",
-    unitSuffix: "₹ Cr",
-    drawdownByLabel: ddByMonthForInsights,
-    cyclePhaseByLabel: cyclePhaseByMonth,
-    episodeAnchors: episodeAnchorsForInsights,
-  });
-  // Series specs shared by the bars and trend views of multi-series
-  // chart cards. `BarSpec` and `LineSpec` both have shape
-  // `{ key, name, color }` so the same array works as `bars=` on
-  // GroupedBars and `lines=` on MultiLine.
-  const monthlyFlowsSeries = [
-    { key: "equity", name: "Equity", color: "hsl(var(--chart-1))" },
-    { key: "debt", name: "Debt", color: "hsl(var(--chart-2))" },
-    { key: "liquid", name: "Liquid", color: "hsl(var(--chart-4))" },
-  ];
-
-  // Provenance: all three fields come from the AMFI Monthly Report.
-  // Use the most-recent debt-net-inflow provenance for the tooltip
-  // since the debt row is the most reliable across older Reports.
 
   // ---- Flow Table tab -----------------------------------------------
   // Tabular re-creation of the whole Flows tab: each row is a month,
@@ -1417,57 +1334,6 @@ export default async function MonthlyPage({
             </Card>
           )}
         </div>
-      )}
-
-      {activeTab === "flows" && monthlyFlowsHasData && (
-        <ChartWithContext
-          title="Equity / Debt / Liquid Monthly Net Flows"
-          subtitle="Where industry money went each month, split by category."
-          denominatorCaption={(() => {
-            const span = `${monthlyFlowsRows.length} month${monthlyFlowsRows.length === 1 ? "" : "s"}`;
-            if (monthlyFlowsLens === "share") {
-              return `${span} · % of monthly flow magnitude (signs preserved)`;
-            }
-            return monthlyFlowsDenomCaption
-              ? `${span} · ₹ Cr · ${monthlyFlowsDenomCaption}`
-              : `${span} · ₹ Cr · positive = inflow, negative = outflow`;
-          })()}
-          denominatorTooltip="Latest month's per-segment share of total flow magnitude — the headline read for 'where did the month's flow go?'."
-          insights={monthlyFlowsInsights}
-          action={
-            <LensToggle
-              basePath="/monthly"
-              paramName="flowsLens"
-              defaultValue="absolute"
-              lenses={[
-                { value: "absolute", label: "₹ Cr" },
-                { value: "share", label: "% of flow magnitude" },
-              ]}
-              active={monthlyFlowsLens}
-              preserveParams={preservedQueryParams}
-            />
-          }
-        >
-          {monthlyFlowsLens === "share" ? (
-            <GroupedBars
-              data={monthlyFlowsDisplay}
-              xKey="month"
-              labelFormat="month"
-              valueFormat="pct"
-              axisFormat="pct"
-              bars={monthlyFlowsSeries}
-            />
-          ) : (
-            <VerticalBars
-              data={monthlyFlowsDisplay}
-              xKey="month"
-              labelFormat="month"
-              valueFormat="cr"
-              axisFormat="cr"
-              bars={monthlyFlowsSeries}
-            />
-          )}
-        </ChartWithContext>
       )}
 
       {activeTab === "sip-retail" && hasAnySipTrend && (
