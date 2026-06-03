@@ -3,23 +3,25 @@ import { cn } from "@/lib/cn";
 /**
  * Monthly Flows & AUM heatmap table — a tabular re-creation of the
  * /monthly Flows tab. Each row is a month (newest first; the latest
- * month is starred), columns are grouped into Net Flows (signed ₹ Cr),
- * Month-end AUM Mix (% share + MoM pp move), and Industry AAUM (level +
- * MoM / YoY). Signed cells are tinted green (inflow / up) or red
- * (outflow / down) with intensity scaled to each column's own range, so
- * the table reads as a heatmap the way a returns grid does.
+ * month is starred), columns are grouped into Net Flows (each category
+ * as a signed % of the month's gross flow magnitude), Month-end AUM Mix
+ * (% share + MoM pp move), and Industry AAUM (level + MoM / YoY). Signed
+ * cells are tinted green (inflow / up) or red (outflow / down) with
+ * intensity scaled to each column's own range, so the table reads as a
+ * heatmap the way a returns grid does.
  *
  * Server component — no interactivity, colours are derived at render.
  */
 export interface MonthlyFlowsTableRow {
   month: string; // YYYY-MM
-  // Net flows (₹ Cr, signed; null when the AMFI row didn't carry it).
-  totalFlow: number | null;
-  equityFlow: number | null;
-  debtFlow: number | null;
-  hybridFlow: number | null;
-  liquidFlow: number | null;
-  activeEquityFlow: number | null;
+  // Net flows as a signed % of the month's gross flow magnitude
+  // (null when the AMFI row didn't carry the field).
+  totalFlowPct: number | null;
+  equityFlowPct: number | null;
+  debtFlowPct: number | null;
+  hybridFlowPct: number | null;
+  liquidFlowPct: number | null;
+  activeEquityFlowPct: number | null;
   // Month-end AUM mix shares (% of month-end breakdown) + MoM pp move.
   equityShare: number | null;
   debtShare: number | null;
@@ -36,20 +38,20 @@ export interface MonthlyFlowsTableRow {
 }
 
 type FlowKey =
-  | "totalFlow"
-  | "equityFlow"
-  | "debtFlow"
-  | "hybridFlow"
-  | "liquidFlow"
-  | "activeEquityFlow";
+  | "totalFlowPct"
+  | "equityFlowPct"
+  | "debtFlowPct"
+  | "hybridFlowPct"
+  | "liquidFlowPct"
+  | "activeEquityFlowPct";
 
 const FLOW_COLS: { key: FlowKey; label: string }[] = [
-  { key: "totalFlow", label: "Total" },
-  { key: "equityFlow", label: "Equity" },
-  { key: "debtFlow", label: "Debt" },
-  { key: "hybridFlow", label: "Hybrid" },
-  { key: "liquidFlow", label: "Liquid" },
-  { key: "activeEquityFlow", label: "Active Eq" },
+  { key: "totalFlowPct", label: "Total" },
+  { key: "equityFlowPct", label: "Equity" },
+  { key: "debtFlowPct", label: "Debt" },
+  { key: "hybridFlowPct", label: "Hybrid" },
+  { key: "liquidFlowPct", label: "Liquid" },
+  { key: "activeEquityFlowPct", label: "Active Eq" },
 ];
 
 const MIX_COLS: {
@@ -73,18 +75,6 @@ function monthLabel(ym: string): string {
   const idx = Number(m) - 1;
   if (!(idx >= 0 && idx < 12) || !y) return ym;
   return `${MONTHS[idx]} '${y.slice(2)}`;
-}
-
-// Signed compact ₹ Cr (header carries the unit). "+1.24L" = +1.24 lakh
-// crore; "−45.0k" = −45 thousand crore.
-function fmtFlow(v: number | null): string {
-  if (v === null || !Number.isFinite(v)) return "—";
-  const abs = Math.abs(v);
-  if (abs < 0.5) return "0";
-  const sign = v < 0 ? "−" : "+";
-  if (abs >= 1e5) return `${sign}${(abs / 1e5).toFixed(2)}L`;
-  if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(1)}k`;
-  return `${sign}${Math.round(abs)}`;
 }
 
 // Unsigned compact ₹ Cr for the AAUM level column.
@@ -170,7 +160,7 @@ export function MonthlyFlowsTable({ rows }: { rows: MonthlyFlowsTableRow[] }) {
               Period
             </th>
             <th colSpan={FLOW_COLS.length} className={groupTh}>
-              Net Flows (₹ Cr)
+              Net Flows (% of monthly flow)
             </th>
             <th colSpan={MIX_COLS.length} className={groupTh}>
               Month-end AUM Mix (%)
@@ -214,7 +204,7 @@ export function MonthlyFlowsTable({ rows }: { rows: MonthlyFlowsTableRow[] }) {
                   {monthLabel(r.month)}
                 </th>
 
-                {/* Net Flows — signed heatmap */}
+                {/* Net Flows — signed % of gross flow magnitude, heatmap */}
                 {FLOW_COLS.map((c) => {
                   const v = r[c.key] as number | null;
                   return (
@@ -226,7 +216,7 @@ export function MonthlyFlowsTable({ rows }: { rows: MonthlyFlowsTableRow[] }) {
                       )}
                       style={toneBg(v, flowMax.get(c.key) ?? 0)}
                     >
-                      {fmtFlow(v)}
+                      {fmtPct(v)}
                     </td>
                   );
                 })}
