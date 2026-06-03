@@ -68,6 +68,12 @@ interface BarSeriesProps {
   dynamicYDomain?: boolean;
   /** When true, draw a circle + value label at the last data point. */
   endpointDot?: boolean;
+  /** Horizontal alignment of the legend. Default "left". */
+  legendAlign?: "left" | "center";
+  /** Legend icon shape. "line" keeps line markers (so the dashed-trendline
+   *  distinction stays visible); "circle" shows filled dots to match the
+   *  BarsWithIndexLine legend. Default "line". */
+  legendIconType?: "line" | "circle";
 }
 
 /**
@@ -99,6 +105,8 @@ export function BarSeries({
   zeroReference,
   dynamicYDomain,
   endpointDot,
+  legendAlign = "left",
+  legendIconType = "line",
 }: BarSeriesProps) {
   const fmtValue = valueFormatter(valueFormat);
   const fmtAxis = axisFormatter(axisFormat);
@@ -147,7 +155,7 @@ export function BarSeries({
   type LegendItem = {
     id: string;
     value: string;
-    type: "line";
+    type: "line" | "circle";
     color: string;
     payload: { strokeDasharray: string };
   };
@@ -156,7 +164,7 @@ export function BarSeries({
     legendPayload.push({
       id: "value",
       value: name,
-      type: "line",
+      type: legendIconType,
       color,
       payload: { strokeDasharray: "0" },
     });
@@ -165,7 +173,7 @@ export function BarSeries({
     legendPayload.push({
       id: "trend",
       value: trendlineName,
-      type: "line",
+      type: legendIconType,
       color: "hsl(var(--foreground))",
       payload: { strokeDasharray: "4 3" },
     });
@@ -174,7 +182,7 @@ export function BarSeries({
     legendPayload.push({
       id: "ref",
       value: referenceLabel,
-      type: "line",
+      type: legendIconType,
       color: "hsl(var(--muted-foreground))",
       payload: { strokeDasharray: "4 4" },
     });
@@ -370,14 +378,18 @@ export function BarSeries({
         {showLegend && (
           <Legend
             verticalAlign="bottom"
-            align="left"
-            iconSize={14}
-            iconType="line"
-            wrapperStyle={{
-              fontSize: 11,
-              paddingTop: 8,
-              color: "hsl(var(--muted-foreground))",
-            }}
+            align={legendAlign}
+            iconSize={legendIconType === "circle" ? 8 : 14}
+            iconType={legendIconType}
+            wrapperStyle={
+              legendIconType === "circle"
+                ? { fontSize: 11, paddingTop: 4 }
+                : {
+                    fontSize: 11,
+                    paddingTop: 8,
+                    color: "hsl(var(--muted-foreground))",
+                  }
+            }
             payload={legendPayload}
           />
         )}

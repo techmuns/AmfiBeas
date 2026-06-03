@@ -168,18 +168,36 @@ function renderedCycleBands(
 /** Legend for the shaded cycle-phase bands. Lists only the phases that
  *  actually appear in `bands`, so a window with no correction (e.g. the
  *  SIP cards) shows just the Peak row. */
-function CyclePhaseLegend({ bands }: { bands: RenderedCycleBand[] }) {
+function CyclePhaseLegend({
+  bands,
+  align = "left",
+}: {
+  bands: RenderedCycleBand[];
+  align?: "left" | "center";
+}) {
   const hasCorrection = bands.some((b) => b.phase === "Correction");
   const hasPeak = bands.some((b) => b.phase === "Peak");
   if (!hasCorrection && !hasPeak) return null;
+  // Centered variant matches the BarsWithIndexLine legend (centred row of
+  // round dots); left variant keeps the square chips that read as shaded
+  // area bands.
+  const dotClass = cn(
+    "inline-block h-2.5 w-2.5",
+    align === "center" ? "rounded-full" : "rounded-sm"
+  );
   return (
-    <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+    <p
+      className={cn(
+        "mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground",
+        align === "center" && "justify-center"
+      )}
+    >
       <span>Shaded bands mark market cycle phases (Nifty 500):</span>
       {hasCorrection && (
         <span className="inline-flex items-center gap-1.5">
           <span
             aria-hidden
-            className="inline-block h-2.5 w-2.5 rounded-sm"
+            className={dotClass}
             style={{ backgroundColor: "hsl(var(--negative) / 0.4)" }}
           />
           Correction — index in drawdown
@@ -189,7 +207,7 @@ function CyclePhaseLegend({ bands }: { bands: RenderedCycleBand[] }) {
         <span className="inline-flex items-center gap-1.5">
           <span
             aria-hidden
-            className="inline-block h-2.5 w-2.5 rounded-sm"
+            className={dotClass}
             style={{ backgroundColor: "hsl(var(--positive) / 0.4)" }}
           />
           Peak — stretched / euphoric inflows
@@ -1598,8 +1616,10 @@ export default async function MonthlyPage({
                           signedFill="single"
                           trendline={trailingAvg}
                           trendlineName="Trailing 12-month avg"
+                          legendAlign="center"
+                          legendIconType="circle"
                         />
-                        <CyclePhaseLegend bands={aeAaumCycleBands} />
+                        <CyclePhaseLegend bands={aeAaumCycleBands} align="center" />
                       </>
                     );
                   })() : (
