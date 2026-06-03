@@ -25,11 +25,11 @@ type KpiSpec = {
 };
 
 const FIN_KPIS = {
-  pat: { label: "Net Profit (PAT)", short: "PAT", valueFormat: "cr", axisFormat: "cr" },
   revenue: { label: "Operating Revenue", short: "Revenue", valueFormat: "cr", axisFormat: "cr" },
   operatingProfit: { label: "Operating Profit", short: "Op. Profit", valueFormat: "cr", axisFormat: "cr" },
-  patMargin: { label: "PAT Margin", short: "PAT Margin", valueFormat: "pct", axisFormat: "pct" },
+  pat: { label: "Net Profit (PAT)", short: "PAT", valueFormat: "cr", axisFormat: "cr" },
   opMargin: { label: "Operating Margin", short: "Op. Margin", valueFormat: "pct", axisFormat: "pct" },
+  patMargin: { label: "PAT Margin", short: "PAT Margin", valueFormat: "pct", axisFormat: "pct" },
   revenueYield: { label: "Revenue Yield", short: "Rev. Yield", valueFormat: "bps", axisFormat: "bps" },
   profitYield: { label: "Profit Yield", short: "Profit Yield", valueFormat: "bps", axisFormat: "bps" },
 } satisfies Record<string, KpiSpec>;
