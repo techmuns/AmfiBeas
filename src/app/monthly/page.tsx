@@ -814,15 +814,16 @@ export default async function MonthlyPage({
   // null (rendered "—"), never zero-filled. Newest month first, capped
   // to the most recent 36 months so the grid stays scannable.
   //
-  // Net flows are shown as a SIGNED % of the month's gross flow
-  // magnitude (mirrors the AUM-mix "share of the whole" treatment),
-  // never absolute ₹ Cr. Gross magnitude = Σ|Sub-total flows| over the
-  // non-overlapping majors (Equity II + Debt I + Hybrid III + Other V);
-  // Debt already contains Liquid, so Liquid is NOT added again to the
-  // denominator. Each category divided by that gross gives a value bounded
-  // in [−100%, +100%] that stays meaningful even in churny / outflow
-  // months, where dividing by the (small, possibly negative) net total
-  // would flip signs and blow up.
+  // Total net flow is shown as an absolute ₹ Cr figure; Equity / Hybrid /
+  // Active Eq are shown as a SIGNED % of the month's gross flow magnitude
+  // (mirrors the AUM-mix "share of the whole" treatment). Gross magnitude
+  // = Σ|Sub-total flows| over the non-overlapping majors (Equity II +
+  // Debt I + Hybrid III + Other V) — Debt is kept in the denominator even
+  // though it's no longer a displayed column, and Debt already contains
+  // Liquid so Liquid is NOT added again. Dividing by gross gives values
+  // bounded in [−100%, +100%] that stay meaningful even in churny /
+  // outflow months, where dividing by the (small, possibly negative) net
+  // total would flip signs and blow up.
   const flowTableRows: MonthlyFlowsTableRow[] = (() => {
     const rows = amfiMonthlyRows(); // ascending
     const num = (v: number | null | undefined): number | null =>
@@ -843,7 +844,6 @@ export default async function MonthlyPage({
       const debt = num(r.debtNetInflow);
       const hybrid = num(r.hybridNetInflow);
       const other = num(r.otherSchemesNetInflow);
-      const liquid = num(r.liquidNetInflow);
       const total = num(r.netInflow);
       const activeEquity = num(r.activeEquityNetInflow);
       // Gross = Σ|non-overlapping majors|. Debt ⊇ Liquid, so Liquid is
@@ -861,11 +861,9 @@ export default async function MonthlyPage({
       const prev12Aaum = prev12 ? num(prev12.totalAaum) : null;
       return {
         month: r.month,
-        totalFlowPct: pctOfGross(total),
+        totalFlow: total,
         equityFlowPct: pctOfGross(equity),
-        debtFlowPct: pctOfGross(debt),
         hybridFlowPct: pctOfGross(hybrid),
-        liquidFlowPct: pctOfGross(liquid),
         activeEquityFlowPct: pctOfGross(activeEquity),
         equityShare: shareOf("equity"),
         debtShare: shareOf("debt"),
@@ -889,7 +887,7 @@ export default async function MonthlyPage({
     return built
       .filter(
         (r) =>
-          r.totalFlowPct !== null ||
+          r.totalFlow !== null ||
           r.equityFlowPct !== null ||
           r.aaum !== null
       )
@@ -1782,14 +1780,13 @@ export default async function MonthlyPage({
               <HowToRead>
                 <ul className="list-disc space-y-0.5 pl-4">
                   <li>
-                    <span className="text-foreground">Net Flows</span> show each
-                    category as a signed % of the month&rsquo;s gross flow
-                    magnitude —{" "}
-                    <span className="text-positive">green = inflow</span>,{" "}
+                    <span className="text-foreground">Net Flows</span>: Total is
+                    the industry net flow in ₹ Cr; Equity / Hybrid / Active Eq are
+                    each a signed % of the month&rsquo;s gross flow magnitude
+                    (which still counts debt &amp; liquid). {" "}
+                    <span className="text-positive">Green = inflow</span>,{" "}
                     <span className="text-negative">red = outflow</span>; shade
                     intensity scales with the size of the move within each column.
-                    (Debt includes Liquid, and Active Eq overlaps Equity + Hybrid,
-                    so the columns are not a clean 100% partition.)
                   </li>
                   <li>
                     <span className="text-foreground">AUM Mix</span> shows each
