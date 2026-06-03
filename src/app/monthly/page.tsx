@@ -18,7 +18,6 @@ import {
 } from "@/components/charts/StackedShareBar";
 import { IiflHeatmap } from "@/components/charts/IiflHeatmap";
 import { MultiLine } from "@/components/charts/MultiLine";
-import { StackedArea } from "@/components/charts/StackedArea";
 import { indexSeriesToBase } from "@/lib/index-series";
 import { latestMonth } from "@/data/aggregate";
 import {
@@ -70,8 +69,6 @@ import {
   iiflActiveEquityTrendCard,
   latestCategoryProvenance,
 } from "@/data/amfi-monthly-category";
-import { topAumMarketShareSeries } from "@/data/amc-peer-universe";
-import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { VerticalBars } from "@/components/charts/VerticalBars";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
@@ -907,13 +904,6 @@ export default async function MonthlyPage({
   // Hover provenance for the source line — pull a representative
   // category's `categoryNetInflow` provenance (Flexi Cap is dense
   // across all months).
-
-  // AUM Market Share — live Top 7 + Others from AMFI Fundwise AAUM.
-  // Quarterly data on a monthly page: the source is intrinsically
-  // quarterly (AMFI Fundwise AAUM disclosure) so the card label says
-  // so. Same helper is reused on /quarterly.
-  const aumMarketShare = topAumMarketShareSeries(7, 8);
-  const aumMarketShareCoverage = aumMarketShare.coverage;
 
   // ---- Active Equity Flow Diagnostics ------------------------------
   // Three derived views sitting on top of the existing AMFI Monthly
@@ -1899,48 +1889,6 @@ export default async function MonthlyPage({
             caption="Active-equity net inflow z-score per month"
           />
         </Card>
-      )}
-
-      {activeTab === "market-cycle" && (
-      <Card
-        tone={aumMarketShare.isFullUniverse ? undefined : "pending"}
-        title="AUM Market Share"
-        subtitle={
-          aumMarketShareCoverage
-            ? `Top ${aumMarketShare.topAmcs.length} AMCs + Others · ${aumMarketShareCoverage.quarterLabel} · Source: AMFI Fundwise AAUM`
-            : `Top ${aumMarketShare.topAmcs.length} AMCs + Others · Source: AMFI Fundwise AAUM`
-        }
-      >
-        {aumMarketShare.rows.length > 0 ? (
-          <StackedArea
-            data={aumMarketShare.rows}
-            xKey="quarterLabel"
-            labelFormat="none"
-            reverseTooltipOrder
-            series={[
-              ...aumMarketShare.topAmcs.map((a) => ({
-                key: a.slug,
-                name: amcLabel(a.slug),
-                color: AMC_COLORS[a.slug] ?? "hsl(var(--muted-foreground))",
-              })),
-              {
-                key: "others",
-                name: "Others",
-                color: "hsl(var(--muted-foreground))",
-              },
-            ]}
-          />
-        ) : (
-          <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-            AMFI Fundwise AAUM disclosure not yet ingested for the selected quarter.
-          </div>
-        )}
-        <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          Top {aumMarketShare.topAmcs.length} AMCs by latest AAUM;
-          Others includes all remaining AMCs.
-          <InfoTooltip label="Denominator is total AAUM of all AMCs in the snapshot." />
-        </p>
-      </Card>
       )}
 
       {activeTab === "market-cycle" && episodeRecoveryData.length > 0 && (
