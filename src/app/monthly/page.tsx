@@ -84,10 +84,9 @@ import { resolveTab } from "@/lib/tabs";
 
 const MONTHLY_TABS = [
   { id: "snapshot", label: "Snapshot" },
-  { id: "flows", label: "Flows" },
+  { id: "flows", label: "AUM" },
   { id: "flow-table", label: "Flow Table" },
   { id: "sip-retail", label: "SIP & Retail" },
-  { id: "active-passive", label: "Active vs Passive" },
   { id: "categories", label: "Categories" },
   { id: "market-cycle", label: "Market Cycle" },
 ] as const satisfies readonly DashboardTabDef[];
@@ -1063,7 +1062,6 @@ export default async function MonthlyPage({
         amfiAvailableMonths.length > 0 &&
         activeTab !== "flows" &&
         activeTab !== "sip-retail" &&
-        activeTab !== "active-passive" &&
         activeTab !== "flow-table" && (
           <MonthPicker
             availableMonths={amfiAvailableMonths}
@@ -1147,28 +1145,6 @@ export default async function MonthlyPage({
 
       {activeTab === "flows" && amfiSelected && (
         <div className="space-y-3">
-          {maaumColumns && (
-            <Card
-              title="Industry MAAUM Breakdown"
-              subtitleNode={
-                <div className="space-y-0.5">
-                  <p className="text-xs text-muted-foreground">
-                    Monthly average AUM by category, with the active-equity
-                    split. Equity = Active + ETF &amp; Index + Arbitrage.
-                  </p>
-                  <p className="text-[11px] text-muted-foreground/80">
-                    {`${maaumColumns.yearAgo.monthLabel} · ${maaumColumns.prevMonth.monthLabel} · ${maaumColumns.latest.monthLabel} · Source: AMFI Monthly Report`}
-                  </p>
-                </div>
-              }
-            >
-              <MaaumTable
-                yearAgo={maaumColumns.yearAgo}
-                prevMonth={maaumColumns.prevMonth}
-                latest={maaumColumns.latest}
-              />
-            </Card>
-          )}
           {totalAumChartHasData && (
             <Card
               title="Total AUM Trend"
@@ -1199,6 +1175,28 @@ export default async function MonthlyPage({
                 Bars: month-end industry AUM (₹ Cr, left axis). Line:
                 year-on-year growth (%, right axis).
               </p>
+            </Card>
+          )}
+          {maaumColumns && (
+            <Card
+              title="Industry MAAUM Breakdown"
+              subtitleNode={
+                <div className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground">
+                    Monthly average AUM by category, with the active-equity
+                    split. Equity = Active + ETF &amp; Index + Arbitrage.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/80">
+                    {`${maaumColumns.yearAgo.monthLabel} · ${maaumColumns.prevMonth.monthLabel} · ${maaumColumns.latest.monthLabel} · Source: AMFI Monthly Report`}
+                  </p>
+                </div>
+              }
+            >
+              <MaaumTable
+                yearAgo={maaumColumns.yearAgo}
+                prevMonth={maaumColumns.prevMonth}
+                latest={maaumColumns.latest}
+              />
             </Card>
           )}
         </div>
@@ -1342,6 +1340,44 @@ export default async function MonthlyPage({
         </div>
       )}
 
+      {activeTab === "sip-retail" && nfoFundsHasData && (
+        <Card
+          title="NFO Funds Mobilised"
+          subtitleNode={
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">
+                New Fund Offer money raised each month — a read on how much
+                fresh supply is launching.
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">
+                {`${nfoFundsChart.length} months · industry total (active-equity split not separately disclosed) · Source: AMFI Monthly Report`}
+              </p>
+            </div>
+          }
+        >
+          <VerticalBars
+            data={nfoFundsChart}
+            xKey="month"
+            bars={[
+              {
+                key: "value",
+                name: "NFO funds mobilised",
+                color: "hsl(var(--chart-1))",
+              },
+            ]}
+            valueFormat="cr"
+            axisFormat="cr"
+            labelFormat="month"
+            labelMode="all"
+          />
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Bars: monthly NFO funds mobilised across all schemes (₹ Cr). The
+            AMFI Monthly Report doesn&rsquo;t break out an active-equity-only
+            figure, so this is the industry total.
+          </p>
+        </Card>
+      )}
+
       {activeTab === "flows" && activeEqNetInflowHasData && (
         <Card
           title="Active Equity Net Inflows"
@@ -1382,40 +1418,47 @@ export default async function MonthlyPage({
         </Card>
       )}
 
-      {activeTab === "flows" && nfoFundsHasData && (
+      {activeTab === "flows" &&
+        activePassiveTrend && activePassiveTrend.history.length > 0 && (
+        <div className="space-y-3">
+          <section className="grid gap-4 lg:grid-cols-1">
+            <PassiveShareInEquity trend={activePassiveTrend} />
+          </section>
+        </div>
+      )}
+
+      {activeTab === "flows" && activeEqShareChartHasData && (
         <Card
-          title="NFO Funds Mobilised"
+          title="Active Equity AUM & Share of Total"
           subtitleNode={
             <div className="space-y-0.5">
               <p className="text-xs text-muted-foreground">
-                New Fund Offer money raised each month — a read on how much
-                fresh supply is launching.
+                Active-equity MAAUM (excludes ETF / Index / arbitrage) and its
+                share of total industry MAAUM.
               </p>
               <p className="text-[11px] text-muted-foreground/80">
-                {`${nfoFundsChart.length} months · industry total (active-equity split not separately disclosed) · Source: AMFI Monthly Report`}
+                {`${activeEqShareChart.length} months${activeEqShareLatest !== null ? ` · latest share ${activeEqShareLatest.toFixed(0)}%` : ""} · Source: AMFI Monthly Report`}
               </p>
             </div>
           }
         >
-          <VerticalBars
-            data={nfoFundsChart}
-            xKey="month"
-            bars={[
-              {
-                key: "value",
-                name: "NFO funds mobilised",
-                color: "hsl(var(--chart-1))",
-              },
-            ]}
+          <BarsWithIndexLine
+            data={activeEqShareChart}
+            barColor="hsl(var(--chart-1))"
+            lineColor="hsl(var(--chart-2))"
             valueFormat="cr"
             axisFormat="cr"
+            lineValueFormat="pct"
+            lineAxisFormat="pct"
             labelFormat="month"
-            labelMode="all"
+            barName="Active Equity MAAUM"
+            lineName="Active equity share of total"
+            lineDomain={[50, 60]}
+            lineTicks={[50, 52, 54, 56, 58, 60]}
           />
           <p className="mt-2 text-[11px] text-muted-foreground">
-            Bars: monthly NFO funds mobilised across all schemes (₹ Cr). The
-            AMFI Monthly Report doesn&rsquo;t break out an active-equity-only
-            figure, so this is the industry total.
+            Bars: active-equity MAAUM (₹ Cr, left axis). Line: active-equity
+            share of total MAAUM (%, right axis).
           </p>
         </Card>
       )}
@@ -1508,51 +1551,6 @@ export default async function MonthlyPage({
         <CategoryRotationCard rotation={rotation} />
       )}
 
-
-      {activeTab === "active-passive" &&
-        activePassiveTrend && activePassiveTrend.history.length > 0 && (
-        <div className="space-y-3">
-          <section className="grid gap-4 lg:grid-cols-1">
-            <PassiveShareInEquity trend={activePassiveTrend} />
-          </section>
-        </div>
-      )}
-
-      {activeTab === "active-passive" && activeEqShareChartHasData && (
-        <Card
-          title="Active Equity AUM & Share of Total"
-          subtitleNode={
-            <div className="space-y-0.5">
-              <p className="text-xs text-muted-foreground">
-                Active-equity MAAUM (excludes ETF / Index / arbitrage) and its
-                share of total industry MAAUM.
-              </p>
-              <p className="text-[11px] text-muted-foreground/80">
-                {`${activeEqShareChart.length} months${activeEqShareLatest !== null ? ` · latest share ${activeEqShareLatest.toFixed(0)}%` : ""} · Source: AMFI Monthly Report`}
-              </p>
-            </div>
-          }
-        >
-          <BarsWithIndexLine
-            data={activeEqShareChart}
-            barColor="hsl(var(--chart-1))"
-            lineColor="hsl(var(--chart-2))"
-            valueFormat="cr"
-            axisFormat="cr"
-            lineValueFormat="pct"
-            lineAxisFormat="pct"
-            labelFormat="month"
-            barName="Active Equity MAAUM"
-            lineName="Active equity share of total"
-            lineDomain={[50, 60]}
-            lineTicks={[50, 52, 54, 56, 58, 60]}
-          />
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Bars: active-equity MAAUM (₹ Cr, left axis). Line: active-equity
-            share of total MAAUM (%, right axis).
-          </p>
-        </Card>
-      )}
 
       {activeTab === "categories" && iiflTrendHasAny && (
         <div className="space-y-3">
