@@ -270,8 +270,6 @@ export default async function MonthlyPage({
   // (default) or the SIP AUM trend (folded in from the old standalone card).
   const sipPrimaryView: "flows" | "aum" =
     sp.sipView === "aum" ? "aum" : "flows";
-  const aeAaumLens: "absolute" | "share" =
-    sp.aeAaumLens === "share" ? "share" : "absolute";
   // Primary view toggle for the Flows "Net inflows vs Nifty" card: the
   // bars-vs-Nifty chart (default) or the Active Equity AAUM trend (folded
   // in from the old Active vs Passive tab).
@@ -323,8 +321,6 @@ export default async function MonthlyPage({
       typeof sp.sipAccountsLens === "string" ? sp.sipAccountsLens : undefined,
     aeFlowLens:
       typeof sp.aeFlowLens === "string" ? sp.aeFlowLens : undefined,
-    aeAaumLens:
-      typeof sp.aeAaumLens === "string" ? sp.aeAaumLens : undefined,
     aeAaumRange:
       typeof sp.aeAaumRange === "string" ? sp.aeAaumRange : undefined,
     nfoCountLens:
@@ -847,21 +843,6 @@ export default async function MonthlyPage({
     yoyLag: 12,
   });
 
-  // Active Equity AAUM share view: % of total industry AAUM.
-  const activeEquityAaumShare = amfiMonthlyRows()
-    .filter(
-      (r) =>
-        typeof r.activeEquityAaum === "number" &&
-        typeof r.totalAaum === "number" &&
-        r.totalAaum > 0
-    )
-    .map((r) => ({
-      label: r.month,
-      value: ((r.activeEquityAaum as number) / (r.totalAaum as number)) * 100,
-    }))
-    .slice(-aeAaumMonths);
-  const activeEquityAaumDisplay =
-    aeAaumLens === "share" ? activeEquityAaumShare : activeEquityTrend;
 
 
   // ---- Industry Folios & NFO section ---------------------------------
@@ -1662,9 +1643,6 @@ export default async function MonthlyPage({
                 subtitle="Period-average AUM in active equity funds. Shows the actively-managed equity asset base."
                 flowKind="stock"
                 denominatorCaption={(() => {
-                  if (aeAaumLens === "share") {
-                    return `${activeEquityAaumShare.length} month${activeEquityAaumShare.length === 1 ? "" : "s"} · % of total industry AAUM`;
-                  }
                   const span = `${activeEquityTrend.length} month${activeEquityTrend.length === 1 ? "" : "s"}`;
                   return activeEquityAaumDenomCaption
                     ? `${span} · ₹ Cr · ${activeEquityAaumDenomCaption}`
@@ -1691,17 +1669,6 @@ export default async function MonthlyPage({
                     />
                     <LensToggle
                       basePath="/monthly"
-                      paramName="aeAaumLens"
-                      defaultValue="absolute"
-                      lenses={[
-                        { value: "absolute", label: "₹ Cr" },
-                        { value: "share", label: "% of total AAUM" },
-                      ]}
-                      active={aeAaumLens}
-                      preserveParams={preservedQueryParams}
-                    />
-                    <LensToggle
-                      basePath="/monthly"
                       paramName="aeAaumRange"
                       defaultValue="3y"
                       lenses={[
@@ -1717,30 +1684,28 @@ export default async function MonthlyPage({
                 }
               >
                 {activeEquityTrend.length > 0 ? (() => {
-                  const useOverlay = aeAaumLens !== "share";
                   const trailingAvg = slicedMovingAverage(
                     activeEquityFullHistory,
                     12,
-                    activeEquityAaumDisplay.length
+                    activeEquityTrend.length
                   );
                   const aeAaumCycleBands = renderedCycleBands(
                     cyclePhaseBands,
-                    activeEquityAaumDisplay.map((p) => p.label as string)
+                    activeEquityTrend.map((p) => p.label as string)
                   );
                   return (
                     <>
                       <BarSeries
-                        data={activeEquityAaumDisplay}
+                        data={activeEquityTrend}
                         name="Active Equity AAUM"
                         color="hsl(var(--chart-1))"
-                        valueFormat={aeAaumLens === "share" ? "pct" : "cr"}
-                        axisFormat={aeAaumLens === "share" ? "pct" : "cr"}
+                        valueFormat="cr"
+                        axisFormat="cr"
                         labelFormat="month"
                         cyclePhaseBands={aeAaumCycleBands}
                         signedFill="single"
-                        trendline={useOverlay ? trailingAvg : undefined}
-                        trendlineName={useOverlay ? "Trailing 12-month avg" : undefined}
-                        dynamicYDomain={aeAaumLens === "share"}
+                        trendline={trailingAvg}
+                        trendlineName="Trailing 12-month avg"
                       />
                       <CyclePhaseLegend bands={aeAaumCycleBands} />
                     </>
@@ -1751,34 +1716,20 @@ export default async function MonthlyPage({
                   </div>
                 )}
                 <HowToRead>
-                  {aeAaumLens === "share" ? (
-                    <p className="inline-flex items-start gap-1.5">
-                      <span>
-                        This is active-equity AAUM as a share of the whole
-                        industry&apos;s assets. It strips out market-driven scale so
-                        you can see the structural question: is actively-managed
-                        equity gaining or ceding ground to passive (ETF &amp; Index)
-                        and debt? A flat share while the ₹ line climbs means active
-                        equity is only riding the market up, not winning share.
-                      </span>
-                      <InfoTooltip label="Active-equity envelope = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
-                    </p>
-                  ) : (
-                    <p className="inline-flex items-start gap-1.5">
-                      <span>
-                        The solid line is active-equity AAUM — the period-average
-                        asset base in actively-managed equity funds. Unlike a flow,
-                        this is a stock that grows two ways at once: fresh net
-                        inflows, and market gains marking up money already invested.
-                        So a rising line in a weak-flow month means the market did the
-                        lifting; a flat line despite strong inflows means prices fell.
-                        The dashed line is its trailing 12-month average — on a
-                        steadily-rising asset base the YoY badge above is usually the
-                        sharper read.
-                      </span>
-                      <InfoTooltip label="Active-equity envelope = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
-                    </p>
-                  )}
+                  <p className="inline-flex items-start gap-1.5">
+                    <span>
+                      The solid line is active-equity AAUM — the period-average
+                      asset base in actively-managed equity funds. Unlike a flow,
+                      this is a stock that grows two ways at once: fresh net
+                      inflows, and market gains marking up money already invested.
+                      So a rising line in a weak-flow month means the market did the
+                      lifting; a flat line despite strong inflows means prices fell.
+                      The dashed line is its trailing 12-month average — on a
+                      steadily-rising asset base the YoY badge above is usually the
+                      sharper read.
+                    </span>
+                    <InfoTooltip label="Active-equity envelope = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
+                  </p>
                   <ul className="list-disc space-y-1 pl-4">
                     <li>
                       <span className="font-medium text-foreground/80">
@@ -1880,27 +1831,6 @@ export default async function MonthlyPage({
       {activeTab === "active-passive" &&
         activePassiveTrend && activePassiveTrend.history.length > 0 && (
         <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-medium tracking-tight">
-              Active vs Passive
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Active equity AUM vs ETF &amp; Index AUM · passive share trend
-              {activePassiveTrend.forecastMonths > 0
-                ? " + simple trend projection"
-                : ""}{" "}
-              · Source: AMFI Monthly Report
-            </p>
-          </div>
-
-          <HowToRead>
-            <ul className="list-disc space-y-0.5 pl-4">
-              <li><span className="text-foreground">Active funds</span> are managed by a fund manager — they pick stocks and aim to beat an index.</li>
-              <li><span className="text-foreground">Passive funds</span> simply track an index (e.g. Nifty 50) at a lower fee.</li>
-              <li>A rising passive share pressures fee yields for active-heavy AMCs over time, even when active AUM is still growing in absolute terms.</li>
-            </ul>
-          </HowToRead>
-
           <section className="grid gap-4 lg:grid-cols-1">
             <PassiveShareInEquity trend={activePassiveTrend} />
           </section>
