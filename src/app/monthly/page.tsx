@@ -7,7 +7,6 @@ import {
   adaptiveAverageOverlay,
   chartInsights,
   latestYoyPct,
-  slicedMovingAverage,
 } from "@/lib/chart-context";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BarSeries } from "@/components/charts/BarSeries";
@@ -36,7 +35,6 @@ import {
 } from "@/data/amfi-monthly";
 import type { AmfiMonthlyPdfRow } from "@/data/snapshots/types";
 import {
-  activeEquityFlowWithNiftyTrend,
   cyclePhaseHistory,
   historicalEpisodes,
   latestNifty500Row,
@@ -284,11 +282,6 @@ export default async function MonthlyPage({
   // (default) or the SIP AUM trend (folded in from the old standalone card).
   const sipPrimaryView: "flows" | "aum" =
     sp.sipView === "aum" ? "aum" : "flows";
-  // Primary view toggle for the Flows "Net inflows vs Nifty" card: the
-  // bars-vs-Nifty chart (default) or the Active Equity AAUM trend (folded
-  // in from the old Active vs Passive tab).
-  const mfFlowsView: "flows" | "aaum" =
-    sp.mfFlowsView === "aaum" ? "aaum" : "flows";
   // Pass-through params for every LensToggle so toggling A doesn't
   // lose B (or the selected month / active tab).
   const preservedQueryParams: Record<string, string | undefined> = {
@@ -296,8 +289,6 @@ export default async function MonthlyPage({
     month: typeof sp.month === "string" ? sp.month : undefined,
     heatmap: typeof sp.heatmap === "string" ? sp.heatmap : undefined,
     flowsLens: typeof sp.flowsLens === "string" ? sp.flowsLens : undefined,
-    mfFlowsView:
-      typeof sp.mfFlowsView === "string" ? sp.mfFlowsView : undefined,
     aeFlowView:
       typeof sp.aeFlowView === "string" ? sp.aeFlowView : undefined,
     aeFlowRange:
@@ -619,6 +610,31 @@ export default async function MonthlyPage({
       return { yearAgo, prevMonth, latest };
     })();
 
+  // Figure 23: Active-equity net inflows (₹ Cr bars) with a trailing-12-
+  // month (TTM) average reference line. Figure 25: Active-equity NFO
+  // contribution — proxied by the industry's monthly NFO funds mobilised
+  // (the AMFI Monthly Report carries only the all-scheme Grand Total, not
+  // an active-equity split). Both span the latest 24 months.
+  const activeEqNetInflowTrend = monthlyTrend("activeEquityNetInflow", 24);
+  const activeEqNetInflowChart = activeEqNetInflowTrend.map((p) => ({
+    month: p.label,
+    value: p.value,
+  }));
+  const activeEqNetInflowHasData = activeEqNetInflowChart.length > 0;
+  const activeEqTtmAvg = (() => {
+    const last12 = activeEqNetInflowTrend
+      .slice(-12)
+      .map((p) => p.value)
+      .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+    return last12.length > 0
+      ? last12.reduce((s, v) => s + v, 0) / last12.length
+      : null;
+  })();
+  const nfoFundsChart = monthlyTrend("industryNfoFundsMobilized", 24).map(
+    (p) => ({ month: p.label, value: p.value })
+  );
+  const nfoFundsHasData = nfoFundsChart.length > 0;
+
   // ---- Shared chart-context helpers (used by every insight call) ----
   // Computed once so we don't recompute the same maps per chart.
   const ddByMonthForInsights: Map<string, number> = (() => {
@@ -864,7 +880,6 @@ export default async function MonthlyPage({
   // (period-average) basis so the trend line and share denominator
   // are consistent with IIFL's Figure 19 / 21 framing. Missing months
   // are omitted from each per-field series — never zero-filled.
-  const activeEquityTrend = monthlyTrend("activeEquityAaum", 10_000);
 
 
 
@@ -990,12 +1005,6 @@ export default async function MonthlyPage({
   // ---- IIFL-style "MF Flows — Risk of Slowdown" (Figures 4-7) ---------
   // Composite data feeding the new combined section. Single-pass setup so
   // the JSX below stays declarative.
-  const activeEquityWithNifty = activeEquityFlowWithNiftyTrend(72);
-  const activeEquityWithNiftyChartData = activeEquityWithNifty.map((p) => ({
-    label: p.month,
-    value: p.activeEquityNetInflow,
-    line: p.niftyLevel,
-  }));
   const sipGrossShareSeries = monthlySipGrossShareTrend(72);
   const sipGrossShareChartData = sipGrossShareSeries.map((p) => ({
     label: p.month,
@@ -1008,10 +1017,6 @@ export default async function MonthlyPage({
     // (e.g. 9.65 Cr) to keep the dashboard on Indian numbering.
     value: p.value,
   }));
-  const hasMfFlowsSlowdownSection =
-    activeEquityWithNiftyChartData.length > 0 ||
-    sipGrossShareSeries.length > 0 ||
-    sipAccountsChartData.length > 0;
 
   // Proportion diagnostics: category rotation + passive flow share. Each
   // renders independently under its own tab (rotation in categories,
@@ -1603,95 +1608,82 @@ export default async function MonthlyPage({
         </div>
       )}
 
-      {activeTab === "flows" && hasMfFlowsSlowdownSection && (
-        <div className="space-y-3">
-          {activeEquityWithNiftyChartData.length > 0 && (
-            <Card
-              title="Active Equity Flows & AAUM"
-              action={
-                <LensToggle
-                  basePath="/monthly"
-                  paramName="mfFlowsView"
-                  defaultValue="flows"
-                  lenses={[
-                    { value: "flows", label: "Flows vs Nifty" },
-                    { value: "aaum", label: "Active Equity AAUM" },
-                  ]}
-                  active={mfFlowsView}
-                  preserveParams={preservedQueryParams}
-                />
-              }
-            >
-              {mfFlowsView === "aaum" ? (
-                <>
-                  {activeEquityTrend.length > 0 ? (() => {
-                    const trailingAvg = slicedMovingAverage(
-                      activeEquityTrend,
-                      12,
-                      activeEquityTrend.length
-                    );
-                    const aeAaumCycleBands = renderedCycleBands(
-                      cyclePhaseBands,
-                      activeEquityTrend.map((p) => p.label as string)
-                    );
-                    return (
-                      <>
-                        <BarSeries
-                          data={activeEquityTrend}
-                          name="Active Equity AAUM"
-                          color="hsl(var(--chart-1))"
-                          valueFormat="cr"
-                          axisFormat="cr"
-                          labelFormat="month"
-                          cyclePhaseBands={aeAaumCycleBands}
-                          signedFill="single"
-                          trendline={trailingAvg}
-                          trendlineName="Trailing 12-month avg"
-                          legendAlign="center"
-                          legendIconType="circle"
-                        />
-                        <CyclePhaseLegend bands={aeAaumCycleBands} align="center" />
-                      </>
-                    );
-                  })() : (
-                    <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                      Active-equity AAUM not yet ingested — appears once IIFL category fields land in the AMFI Monthly snapshot.
-                    </div>
-                  )}
-                  <p className="mt-2 text-[11px] text-muted-foreground">
-                    Period-average active-equity AAUM (₹ Cr). Dashed line =
-                    trailing 12-month average; shaded bands mark Nifty 500
-                    market-cycle phases. Active equity envelope = equity-oriented
-                    schemes + hybrid schemes excluding arbitrage +
-                    solution-oriented schemes.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <BarsWithIndexLine
-                    data={activeEquityWithNiftyChartData}
-                    barColor="hsl(var(--chart-1))"
-                    lineColor="hsl(var(--foreground))"
-                    valueFormat="cr"
-                    axisFormat="cr"
-                    lineValueFormat="count"
-                    lineAxisFormat="count"
-                    labelFormat="month"
-                    barName="Active Equity Net Inflows (LHS)"
-                    lineName="Nifty 500 Index (RHS)"
-                  />
-                  <p className="mt-2 text-[11px] text-muted-foreground">
-                    Bars: monthly active-equity net inflow (₹ Cr, left axis).
-                    Line: NIFTY 500 month-end level (right axis). Active equity
-                    envelope = equity-oriented schemes + hybrid schemes excluding
-                    arbitrage + solution-oriented schemes.
-                  </p>
-                </>
-              )}
-            </Card>
-          )}
+      {activeTab === "flows" && activeEqNetInflowHasData && (
+        <Card
+          title="Active Equity Net Inflows"
+          subtitleNode={
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">
+                Monthly net inflows into the active-equity envelope, against
+                the trailing 12-month (TTM) average.
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">
+                {`${activeEqNetInflowChart.length} months${activeEqTtmAvg !== null ? ` · TTM avg ${formatCompactCrSafe(activeEqTtmAvg)}` : ""} · Source: AMFI Monthly Report`}
+              </p>
+            </div>
+          }
+        >
+          <VerticalBars
+            data={activeEqNetInflowChart}
+            xKey="month"
+            bars={[
+              {
+                key: "value",
+                name: "Active equity net inflows",
+                color: "hsl(var(--chart-1))",
+              },
+            ]}
+            valueFormat="cr"
+            axisFormat="cr"
+            labelFormat="month"
+            referenceValue={activeEqTtmAvg}
+            referenceLabel="TTM avg"
+            labelMode="last"
+          />
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Bars: monthly active-equity net inflow (₹ Cr). Dashed line =
+            trailing 12-month average. Active equity = equity-oriented + hybrid
+            (ex-arbitrage) + solution-oriented schemes.
+          </p>
+        </Card>
+      )}
 
-        </div>
+      {activeTab === "flows" && nfoFundsHasData && (
+        <Card
+          title="NFO Funds Mobilised"
+          subtitleNode={
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">
+                New Fund Offer money raised each month — a read on how much
+                fresh supply is launching.
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">
+                {`${nfoFundsChart.length} months · industry total (active-equity split not separately disclosed) · Source: AMFI Monthly Report`}
+              </p>
+            </div>
+          }
+        >
+          <VerticalBars
+            data={nfoFundsChart}
+            xKey="month"
+            bars={[
+              {
+                key: "value",
+                name: "NFO funds mobilised",
+                color: "hsl(var(--chart-1))",
+              },
+            ]}
+            valueFormat="cr"
+            axisFormat="cr"
+            labelFormat="month"
+            labelMode="all"
+          />
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Bars: monthly NFO funds mobilised across all schemes (₹ Cr). The
+            AMFI Monthly Report doesn&rsquo;t break out an active-equity-only
+            figure, so this is the industry total.
+          </p>
+        </Card>
       )}
 
       {activeTab === "flow-table" && (
