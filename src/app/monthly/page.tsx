@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronDown } from "lucide-react";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
@@ -849,8 +850,8 @@ export default async function MonthlyPage({
   // Both denominators come from the IIFL active-equity envelope
   // (NOT major-category, NOT industry totals). Window is the same
   // trailing 12 months as the heatmap — anchored on latest, never
-  // on `?month=`. Featured 4 cards render inline; the remaining 8
-  // sit behind a "Show more" details element.
+  // on `?month=`. The four core cap buckets render inline; the rest
+  // sit behind a "Show all categories" details element.
   const flowZScoreBySlug = categoryFlowZScoreMap();
   const iiflTrendCards = IIFL_ACTIVE_EQUITY_CATEGORIES.map((c) => {
     const { series, hasData } = iiflActiveEquityTrendCard(c.slug);
@@ -1773,7 +1774,13 @@ export default async function MonthlyPage({
           </section>
 
           {iiflTrendHasExpanded && (
-            <section className="grid gap-4 lg:grid-cols-2">
+            <details className="group">
+              <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-md border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-foreground [&::-webkit-details-marker]:hidden">
+                <span className="group-open:hidden">Show all categories</span>
+                <span className="hidden group-open:inline">Show fewer</span>
+                <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+              </summary>
+              <section className="mt-3 grid gap-4 lg:grid-cols-2">
               {expandedTrendCards.map((c) => (
                 <Card
                   key={c.slug}
@@ -1821,6 +1828,7 @@ export default async function MonthlyPage({
                 </Card>
               ))}
             </section>
+            </details>
           )}
 
           <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">

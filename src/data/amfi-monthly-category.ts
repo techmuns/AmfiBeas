@@ -377,19 +377,18 @@ export const IIFL_ACTIVE_EQUITY_CATEGORIES: {
 export const IIFL_HEATMAP_CATEGORIES = IIFL_ACTIVE_EQUITY_CATEGORIES;
 
 /** Featured 4 cards visible by default in the IIFL Active-Equity
- *  Category Trends section, in display order. */
+ *  Category Trends section — the core market-cap buckets. */
 export const IIFL_TREND_FEATURED_SLUGS: AmfiMonthlyCategorySlug[] = [
-  "flexi-cap",
-  "multi-asset",
-  "sectoral-thematic",
   "large-cap",
-];
-
-/** The remaining 8 cards revealed by the "Show more" expand control,
- *  in display order. */
-export const IIFL_TREND_EXPANDED_SLUGS: AmfiMonthlyCategorySlug[] = [
   "mid-cap",
   "small-cap",
+  "flexi-cap",
+];
+
+/** The remaining 8 cards revealed by the "Show all categories" control. */
+export const IIFL_TREND_EXPANDED_SLUGS: AmfiMonthlyCategorySlug[] = [
+  "multi-asset",
+  "sectoral-thematic",
   "large-mid-cap",
   "multi-cap",
   "baf-daa",
