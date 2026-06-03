@@ -275,25 +275,6 @@ export default async function MonthlyPage({
   // in from the old Active vs Passive tab).
   const mfFlowsView: "flows" | "aaum" =
     sp.mfFlowsView === "aaum" ? "aaum" : "flows";
-  // Visible-window range for the Active Equity AAUM Trend card. Mirrors
-  // the Active Equity Net Inflows card: full stored history runs back to
-  // 2019-04 (78 months); this toggle picks how much to show. Default 3Y.
-  const aeAaumRange: "1y" | "3y" | "5y" | "all" =
-    sp.aeAaumRange === "1y"
-      ? "1y"
-      : sp.aeAaumRange === "5y"
-        ? "5y"
-        : sp.aeAaumRange === "all"
-          ? "all"
-          : "3y";
-  const aeAaumMonths =
-    aeAaumRange === "1y"
-      ? 12
-      : aeAaumRange === "5y"
-        ? 60
-        : aeAaumRange === "all"
-          ? 10_000
-          : 36;
   // Pass-through params for every LensToggle so toggling A doesn't
   // lose B (or the selected month / active tab).
   const preservedQueryParams: Record<string, string | undefined> = {
@@ -321,8 +302,6 @@ export default async function MonthlyPage({
       typeof sp.sipAccountsLens === "string" ? sp.sipAccountsLens : undefined,
     aeFlowLens:
       typeof sp.aeFlowLens === "string" ? sp.aeFlowLens : undefined,
-    aeAaumRange:
-      typeof sp.aeAaumRange === "string" ? sp.aeAaumRange : undefined,
     nfoCountLens:
       typeof sp.nfoCountLens === "string" ? sp.nfoCountLens : undefined,
     nfoFundsLens:
@@ -815,8 +794,7 @@ export default async function MonthlyPage({
   // (period-average) basis so the trend line and share denominator
   // are consistent with IIFL's Figure 19 / 21 framing. Missing months
   // are omitted from each per-field series — never zero-filled.
-  const activeEquityTrend = monthlyTrend("activeEquityAaum", aeAaumMonths);
-  const activeEquityFullHistory = monthlyTrend("activeEquityAaum", 10_000);
+  const activeEquityTrend = monthlyTrend("activeEquityAaum", 10_000);
 
 
   // Active Equity AAUM denominator: latest as % of total industry
@@ -1667,25 +1645,12 @@ export default async function MonthlyPage({
                       active={mfFlowsView}
                       preserveParams={preservedQueryParams}
                     />
-                    <LensToggle
-                      basePath="/monthly"
-                      paramName="aeAaumRange"
-                      defaultValue="3y"
-                      lenses={[
-                        { value: "1y", label: "1Y" },
-                        { value: "3y", label: "3Y" },
-                        { value: "5y", label: "5Y" },
-                        { value: "all", label: "All" },
-                      ]}
-                      active={aeAaumRange}
-                      preserveParams={preservedQueryParams}
-                    />
                   </div>
                 }
               >
                 {activeEquityTrend.length > 0 ? (() => {
                   const trailingAvg = slicedMovingAverage(
-                    activeEquityFullHistory,
+                    activeEquityTrend,
                     12,
                     activeEquityTrend.length
                   );
