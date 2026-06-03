@@ -31,7 +31,6 @@ import {
   DashboardTabs,
   type DashboardTabDef,
 } from "@/components/layout/DashboardTabs";
-import { TabIntroCard } from "@/components/ui/TabIntroCard";
 import { resolveTab } from "@/lib/tabs";
 
 const AMC_TABS = [
@@ -250,14 +249,6 @@ export default async function AmcListPage({
             </div>
           </div>
         </Card>
-      )}
-
-      {activeTab === "share-positioning" && (
-        <TabIntroCard
-          headline="Who is gaining or losing share, and how are AMCs positioned?"
-          summary="Market-share movement arrows over the full available window, paired with the share-vs-growth quadrant and Leaders / Gainers / Defenders / Laggards bucket lists. Read for cohort-relative positioning, not absolute scale."
-          watchNext="Whether names that show up as share gainers also sit in the Leaders or Gainers buckets — that's the durable franchise signal."
-        />
       )}
 
       {activeTab === "share-positioning" && journeyPoints.length >= 4 && (
