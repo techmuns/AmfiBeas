@@ -42,7 +42,6 @@ import {
 } from "@/data/market-indices";
 import { BarsWithIndexLine } from "@/components/charts/BarsWithIndexLine";
 import { BarsWithLabels } from "@/components/charts/BarsWithLabels";
-import { SankeyFlow } from "@/components/charts/SankeyFlow";
 import { PassiveShareInEquity } from "@/components/amc/PassiveShareInEquity";
 import { CalendarHeatGrid } from "@/components/ui/CalendarHeatGrid";
 import { EpisodeRecoveryCard } from "@/components/ui/EpisodeRecoveryCard";
@@ -214,21 +213,6 @@ function CyclePhaseLegend({
       )}
     </p>
   );
-}
-
-/** "2026-04" → "April 2026". Falls back to the raw YYYY-MM key for
- *  malformed input. Shared by the Flows "Where the Money Went" card and
- *  its net-outflow fallback so both label the period identically. */
-function fullMonthLabel(month: string): string {
-  const FULL_MONTHS = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-  ];
-  const [y, m] = month.split("-");
-  const idx = Number(m) - 1;
-  return Number.isFinite(idx) && idx >= 0 && idx < 12
-    ? `${FULL_MONTHS[idx]} ${y}`
-    : month;
 }
 
 export default async function MonthlyPage({
@@ -992,71 +976,6 @@ export default async function MonthlyPage({
   // come back?".
   const episodeRecoveryData = episodeRecoveryRows();
   // Sankey data — composes SIP vs Lump-sum on the source side, and
-  // Equity / Debt / Liquid / Other on the target side, for the month
-  // the global period filter has selected (falls back to the latest).
-  // Links are proportional shares (source-pct × target-pct × total).
-  const sankeyData: {
-    month: string;
-    sources: { id: string; label: string; tone?: "positive" | "negative" | "neutral" }[];
-    targets: { id: string; label: string; tone?: "positive" | "negative" | "neutral" }[];
-    links: { source: string; target: string; value: number }[];
-  } | null = (() => {
-    const selectedRow = amfiSelected;
-    if (
-      !selectedRow ||
-      typeof selectedRow.netInflow !== "number" ||
-      typeof selectedRow.equityNetInflow !== "number" ||
-      typeof selectedRow.debtNetInflow !== "number" ||
-      typeof selectedRow.liquidNetInflow !== "number" ||
-      typeof selectedRow.sipContribution !== "number"
-    )
-      return null;
-    const total = selectedRow.netInflow;
-    if (total <= 0) return null;
-    const sip = Math.max(0, selectedRow.sipContribution);
-    const lumpSum = Math.max(0, total - sip);
-    const equity = Math.max(0, selectedRow.equityNetInflow);
-    const debtPure = Math.max(0, selectedRow.debtNetInflow - selectedRow.liquidNetInflow);
-    const liquid = Math.max(0, selectedRow.liquidNetInflow);
-    const other = Math.max(0, total - equity - debtPure - liquid);
-    const targetTotals: Record<string, number> = {
-      equity,
-      debt: debtPure,
-      liquid,
-      other,
-    };
-    const sourceTotals: Record<string, number> = { sip, lumpSum };
-    const sourceSum = sip + lumpSum;
-    const targetSum = equity + debtPure + liquid + other;
-    if (sourceSum === 0 || targetSum === 0) return null;
-    const links: { source: string; target: string; value: number }[] = [];
-    for (const [sId, sVal] of Object.entries(sourceTotals)) {
-      if (sVal <= 0) continue;
-      for (const [tId, tVal] of Object.entries(targetTotals)) {
-        if (tVal <= 0) continue;
-        links.push({
-          source: sId,
-          target: tId,
-          // Proportional split — share of source × share of target × total.
-          value: (sVal / sourceSum) * tVal,
-        });
-      }
-    }
-    return {
-      month: selectedRow.month,
-      sources: [
-        { id: "sip", label: "SIP", tone: "positive" },
-        { id: "lumpSum", label: "Lump sum", tone: "neutral" },
-      ],
-      targets: [
-        { id: "equity", label: "Equity", tone: "positive" },
-        { id: "debt", label: "Debt", tone: "neutral" },
-        { id: "liquid", label: "Liquid", tone: "neutral" },
-        { id: "other", label: "Other", tone: "neutral" },
-      ],
-      links,
-    };
-  })();
   // Calendar heat grid cells: every month in the active-equity
   // history, value = z-score of that month's flow vs the full
   // distribution. Drives the "7-year calendar" surface below.
@@ -1142,6 +1061,7 @@ export default async function MonthlyPage({
 
       {amfiSelected &&
         amfiAvailableMonths.length > 0 &&
+        activeTab !== "flows" &&
         activeTab !== "sip-retail" &&
         activeTab !== "active-passive" &&
         activeTab !== "flow-table" && (
@@ -1150,58 +1070,6 @@ export default async function MonthlyPage({
             selectedMonth={amfiSelected.month}
           />
         )}
-
-      {activeTab === "flows" &&
-        (sankeyData ? (() => {
-          const sankeyGrandTotal = sankeyData.links.reduce(
-            (s, l) => s + Math.abs(l.value),
-            0
-          );
-          const formatSankeyPct = (v: number) =>
-            sankeyGrandTotal > 0
-              ? `${((v / sankeyGrandTotal) * 100).toFixed(1)}%`
-              : "";
-          return (
-            <Card
-              title={`Where the Money Went · ${fullMonthLabel(sankeyData.month)}`}
-              subtitleNode={
-                <div className="space-y-0.5">
-                  <p className="text-xs text-muted-foreground">
-                    Industry net flow split by where the money came from and where it ended up.
-                  </p>
-                  <p className="text-[11px] text-muted-foreground/80">
-                    Showing {sankeyData.month} · change the period filter above to see another month.
-                  </p>
-                </div>
-              }
-            >
-              <SankeyFlow
-                sources={sankeyData.sources}
-                targets={sankeyData.targets}
-                links={sankeyData.links}
-                formatValue={formatSankeyPct}
-                height={320}
-              />
-            </Card>
-          );
-        })() : amfiSelected ? (
-          <Card
-            title={`Where the Money Went · ${fullMonthLabel(amfiSelected.month)}`}
-            subtitle="Industry net flow split by where the money came from and where it ended up."
-          >
-            <div className="flex h-[320px] flex-col items-center justify-center gap-1 px-6 text-center text-sm text-muted-foreground">
-              <p>
-                {typeof amfiSelected.netInflow === "number" &&
-                amfiSelected.netInflow <= 0
-                  ? `The industry saw a net outflow in ${fullMonthLabel(amfiSelected.month)}, so the inflow split isn't shown for this month.`
-                  : `The flow breakdown isn't available for ${fullMonthLabel(amfiSelected.month)}.`}
-              </p>
-              <p className="text-[11px] text-muted-foreground/80">
-                Pick a different month from the period filter above.
-              </p>
-            </div>
-          </Card>
-        ) : null)}
 
       {activeTab === "snapshot" && (
       <Card
