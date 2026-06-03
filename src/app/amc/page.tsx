@@ -276,14 +276,6 @@ export default async function AmcListPage({
         searchParams={sp}
       />
 
-      {activeTab === "overview" && (
-        <TabIntroCard
-          headline="Who are the AMCs, what changed this quarter, and which names need attention?"
-          summary="Outliers vs the cohort median, the full AMC roster with rank and trailing AAUM, the quarterly health heatmap, and a searchable table — the primary cohort drilldown."
-          watchNext="Whether outlier names also show up as rank-7 to rank-15 quiet compounders in the roster — challengers worth tracking."
-        />
-      )}
-
       {activeTab === "overview" && anomalies && anomalies.outliers.length > 0 && (
         <Card
           title="Outliers this quarter"
