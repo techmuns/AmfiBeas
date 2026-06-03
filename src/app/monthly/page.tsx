@@ -52,8 +52,6 @@ import { BarsWithLabels } from "@/components/charts/BarsWithLabels";
 import { SankeyFlow } from "@/components/charts/SankeyFlow";
 import { PassiveShareInEquity } from "@/components/amc/PassiveShareInEquity";
 import { CalendarHeatGrid } from "@/components/ui/CalendarHeatGrid";
-import { CategoryResilienceCard } from "@/components/ui/CategoryResilienceCard";
-import { categoryDrawdownResilience } from "@/data/category-resilience";
 import { EpisodeRecoveryCard } from "@/components/ui/EpisodeRecoveryCard";
 import { episodeRecoveryRows } from "@/data/episode-recovery";
 import { EpisodeReplayStrip } from "@/components/ui/EpisodeReplayStrip";
@@ -886,12 +884,6 @@ export default async function MonthlyPage({
   const expandedTrendCards = sortByZ(IIFL_TREND_EXPANDED_SLUGS);
   const iiflTrendHasAny = iiflTrendCards.some((c) => c.hasData);
   const iiflTrendHasExpanded = expandedTrendCards.some((c) => c.hasData);
-
-  // Category Resilience Through Drawdowns — derived view that
-  // crosses each IIFL active-equity category against the cycle-phase
-  // classifier to surface "did investors keep buying X during the
-  // last drawdown, or did they bail?".
-  const categoryResilienceRows = categoryDrawdownResilience();
 
   // ---- Category Flow Share (IIFL Figure 31-34) section ---------------
   //
@@ -1842,10 +1834,6 @@ export default async function MonthlyPage({
             />
           </p>
         </div>
-      )}
-
-      {activeTab === "categories" && categoryResilienceRows.length > 0 && (
-        <CategoryResilienceCard rows={categoryResilienceRows} />
       )}
 
       {activeTab === "categories" && iiflHeatmapHasData && (
