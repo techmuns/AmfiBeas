@@ -71,6 +71,11 @@ import {
 } from "@/data/amfi-monthly-category";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { VerticalBars } from "@/components/charts/VerticalBars";
+import {
+  MonthlyFlowsTable,
+  type MonthlyFlowsTableRow,
+} from "@/components/data/MonthlyFlowsTable";
+import { HowToRead } from "@/components/ui/HowToRead";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { MonthPicker } from "@/components/filters/MonthPicker";
 import {
@@ -88,6 +93,7 @@ import { resolveTab } from "@/lib/tabs";
 const MONTHLY_TABS = [
   { id: "snapshot", label: "Snapshot" },
   { id: "flows", label: "Flows" },
+  { id: "flow-table", label: "Flow Table" },
   { id: "sip-retail", label: "SIP & Retail" },
   { id: "active-passive", label: "Active vs Passive" },
   { id: "categories", label: "Categories" },
@@ -800,6 +806,70 @@ export default async function MonthlyPage({
   // Use the most-recent debt-net-inflow provenance for the tooltip
   // since the debt row is the most reliable across older Reports.
 
+  // ---- Flow Table tab -----------------------------------------------
+  // Tabular re-creation of the whole Flows tab: each row is a month,
+  // columns consolidate net flows by category, month-end AUM-mix shares
+  // (+ MoM pp move) and Industry AAUM (level + MoM / YoY). Built from
+  // the same AMFI Monthly rows the Flows charts use; missing fields stay
+  // null (rendered "—"), never zero-filled. Newest month first, capped
+  // to the most recent 36 months so the grid stays scannable.
+  const flowTableRows: MonthlyFlowsTableRow[] = (() => {
+    const rows = amfiMonthlyRows(); // ascending
+    const num = (v: number | null | undefined): number | null =>
+      typeof v === "number" && Number.isFinite(v) ? v : null;
+    const built = rows.map((r, i) => {
+      const prev = i > 0 ? rows[i - 1] : null;
+      const prev12 = i >= 12 ? rows[i - 12] : null;
+      const shares = monthEndMixShares(r);
+      const prevShares = monthEndMixShares(prev);
+      const shareOf = (k: string): number | null =>
+        shares.has(k) ? (shares.get(k) as number) : null;
+      const ppMoM = (k: string): number | null =>
+        shares.has(k) && prevShares.has(k)
+          ? (shares.get(k) as number) - (prevShares.get(k) as number)
+          : null;
+      const aaum = num(r.totalAaum);
+      const prevAaum = prev ? num(prev.totalAaum) : null;
+      const prev12Aaum = prev12 ? num(prev12.totalAaum) : null;
+      return {
+        month: r.month,
+        totalFlow: num(r.netInflow),
+        equityFlow: num(r.equityNetInflow),
+        debtFlow: num(r.debtNetInflow),
+        hybridFlow: num(r.hybridNetInflow),
+        liquidFlow: num(r.liquidNetInflow),
+        activeEquityFlow: num(r.activeEquityNetInflow),
+        equityShare: shareOf("equity"),
+        debtShare: shareOf("debt"),
+        liquidShare: shareOf("liquid"),
+        otherShare: shareOf("other"),
+        equitySharePpMoM: ppMoM("equity"),
+        debtSharePpMoM: ppMoM("debt"),
+        liquidSharePpMoM: ppMoM("liquid"),
+        otherSharePpMoM: ppMoM("other"),
+        aaum,
+        aaumMoMPct:
+          aaum !== null && prevAaum !== null && prevAaum > 0
+            ? ((aaum - prevAaum) / prevAaum) * 100
+            : null,
+        aaumYoYPct:
+          aaum !== null && prev12Aaum !== null && prev12Aaum > 0
+            ? ((aaum - prev12Aaum) / prev12Aaum) * 100
+            : null,
+      };
+    });
+    return built
+      .filter(
+        (r) =>
+          r.totalFlow !== null ||
+          r.equityFlow !== null ||
+          r.aaum !== null
+      )
+      .reverse()
+      .slice(0, 36);
+  })();
+  const flowTableHasData = flowTableRows.length > 0;
+
   // ---- Active Equity & Equity Mix (IIFL Figure 19 / 21) section -----
   //
   // Three charts driven by the IIFL-derived equity breakdown fields
@@ -1165,7 +1235,8 @@ export default async function MonthlyPage({
       {amfiSelected &&
         amfiAvailableMonths.length > 0 &&
         activeTab !== "sip-retail" &&
-        activeTab !== "active-passive" && (
+        activeTab !== "active-passive" &&
+        activeTab !== "flow-table" && (
           <MonthPicker
             availableMonths={amfiAvailableMonths}
             selectedMonth={amfiSelected.month}
@@ -1661,6 +1732,57 @@ export default async function MonthlyPage({
           )}
 
         </div>
+      )}
+
+      {activeTab === "flow-table" && (
+        <Card
+          title="Monthly Flows & AUM · Table"
+          subtitleNode={
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">
+                The whole Flows tab as one grid — net flows by category,
+                month-end AUM mix, and Industry AAUM, one row per month.
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">
+                {`Latest ${flowTableRows.length} month${flowTableRows.length === 1 ? "" : "s"} · newest first (★) · Source: AMFI Monthly Report`}
+              </p>
+            </div>
+          }
+        >
+          {flowTableHasData ? (
+            <>
+              <HowToRead>
+                <ul className="list-disc space-y-0.5 pl-4">
+                  <li>
+                    <span className="text-foreground">Net Flows</span> are signed
+                    ₹ Cr —{" "}
+                    <span className="text-positive">green = inflow</span>,{" "}
+                    <span className="text-negative">red = outflow</span>; shade
+                    intensity scales with the size of the move within each column.
+                  </li>
+                  <li>
+                    <span className="text-foreground">AUM Mix</span> shows each
+                    segment&rsquo;s share of month-end AUM, with the small MoM
+                    change (pp) beneath.
+                  </li>
+                  <li>
+                    <span className="text-foreground">Industry AAUM</span> is the
+                    period-average asset base (₹ Cr) with its MoM / YoY growth.
+                  </li>
+                  <li>
+                    &ldquo;—&rdquo; means that month&rsquo;s AMFI report
+                    didn&rsquo;t carry the field — not zero.
+                  </li>
+                </ul>
+              </HowToRead>
+              <MonthlyFlowsTable rows={flowTableRows} />
+            </>
+          ) : (
+            <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+              No monthly flow data ingested yet.
+            </div>
+          )}
+        </Card>
       )}
 
       {activeTab === "categories" &&
