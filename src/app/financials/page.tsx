@@ -1,6 +1,12 @@
+import Link from "next/link";
+import { ArrowLeft, ArrowLeftRight } from "lucide-react";
 import { CompactStatCard } from "@/components/ui/CompactStatCard";
 import { Card } from "@/components/ui/Card";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
+import {
+  AmcCompareSection,
+  parseCompareKpis,
+} from "@/components/amc/AmcCompareSection";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { chartInsights, latestYoyPct } from "@/lib/chart-context";
 import { indexSeriesToBase } from "@/lib/index-series";
@@ -53,6 +59,49 @@ export default async function FinancialsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
+
+  // Compare view: a top-of-page "Compare AMCs" button swaps the single-AMC
+  // financials page for the listed-AMC comparison (two switchable
+  // horizontal-bar charts). No tab strip — the button toggles `?view=compare`
+  // and a back link returns to the single-AMC view.
+  if (sp.view === "compare") {
+    const { finKpi, aumKpi } = parseCompareKpis(sp);
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Financials"
+          subtitle="Compare listed AMCs · financials & AUM"
+          action={
+            <Link
+              href="/financials"
+              className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              <ArrowLeft className="h-3 w-3" />
+              Back to Financials
+            </Link>
+          }
+        />
+        <AmcCompareSection
+          basePath="/financials"
+          finKpi={finKpi}
+          aumKpi={aumKpi}
+          preserveParams={{ view: "compare" }}
+        />
+      </div>
+    );
+  }
+
+  // "Compare AMCs" button reused across both single-AMC PageHeaders below.
+  const compareButton = (
+    <Link
+      href="/financials?view=compare"
+      className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+    >
+      <ArrowLeftRight className="h-3 w-3" />
+      Compare AMCs
+    </Link>
+  );
+
   const filters = parseFilters(sp);
   const status = buildAmcStatus();
 
@@ -128,6 +177,7 @@ export default async function FinancialsPage({
         <PageHeader
           title="Financials"
           subtitle="Single-AMC view · sourced quarterly P&L"
+          action={compareButton}
         />
         <FilterBar
           showRange={false}
@@ -505,7 +555,7 @@ export default async function FinancialsPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Financials" subtitle={subtitle} />
+      <PageHeader title="Financials" subtitle={subtitle} action={compareButton} />
       <FilterBar
         showRange={false}
         amcMode="single"
