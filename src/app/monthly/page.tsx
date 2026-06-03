@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
-import { HowToRead } from "@/components/ui/HowToRead";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import {
   adaptiveAverageOverlay,
@@ -797,29 +796,6 @@ export default async function MonthlyPage({
   const activeEquityTrend = monthlyTrend("activeEquityAaum", 10_000);
 
 
-  // Active Equity AAUM denominator: latest as % of total industry
-  // AAUM that month — separates absolute scale growth from share
-  // capture vs other segments.
-  const activeEquityAaumDenomCaption = (() => {
-    if (activeEquityTrend.length === 0) return undefined;
-    const latest = activeEquityTrend[activeEquityTrend.length - 1];
-    const peerRow = amfiMonthlyRows().find((r) => r.month === latest.label);
-    if (
-      !peerRow ||
-      typeof peerRow.totalAaum !== "number" ||
-      peerRow.totalAaum <= 0
-    )
-      return undefined;
-    const pct = (latest.value / peerRow.totalAaum) * 100;
-    return `${pct.toFixed(1)}% of total industry AAUM · latest ${latest.label}`;
-  })();
-  const activeEquityAaumInsights = chartInsights(activeEquityTrend, {
-    metricName: "active-equity AAUM",
-    unitSuffix: "₹ Cr",
-    drawdownByLabel: ddByMonthForInsights,
-    cyclePhaseByLabel: cyclePhaseByMonth,
-    yoyLag: 12,
-  });
 
 
 
@@ -1322,14 +1298,6 @@ export default async function MonthlyPage({
 
       {activeTab === "flows" && amfiSelected && (
         <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-medium tracking-tight">
-              AMFI AUM Mix &amp; Trend
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Source: AMFI Monthly Report
-            </p>
-          </div>
           <section className="grid gap-4 lg:grid-cols-2">
             <Card title="Month-end AUM Mix" subtitle={mixSubtitle}>
               {mixHasData ? (
@@ -1604,156 +1572,89 @@ export default async function MonthlyPage({
 
       {activeTab === "flows" && hasMfFlowsSlowdownSection && (
         <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-medium tracking-tight">
-              MF Flows — Risk of Slowdown
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Net inflows in subsequent periods are meaningfully impacted by
-              Nifty returns. Source: AMFI Monthly Report, NSE.
-            </p>
-          </div>
-
-          {activeEquityWithNiftyChartData.length > 0 &&
-            (mfFlowsView === "aaum" ? (
-              <ChartWithContext
-                title="Active Equity AAUM Trend"
-                subtitle="Period-average AUM in active equity funds. Shows the actively-managed equity asset base."
-                flowKind="stock"
-                denominatorCaption={(() => {
-                  const span = `${activeEquityTrend.length} month${activeEquityTrend.length === 1 ? "" : "s"}`;
-                  return activeEquityAaumDenomCaption
-                    ? `${span} · ₹ Cr · ${activeEquityAaumDenomCaption}`
-                    : `${span} · ₹ Cr · period-average`;
-                })()}
-                denominatorTooltip="Latest active-equity AAUM as a % of total industry AAUM — separates absolute scale growth from share capture vs other segments."
-                insights={activeEquityAaumInsights}
-                yoyBadge={(() => {
-                  const v = latestYoyPct(activeEquityTrend, 12);
-                  return v === null ? undefined : { label: "YoY", pct: v };
-                })()}
-                action={
-                  <div className="flex flex-wrap items-center justify-end gap-2">
-                    <LensToggle
-                      basePath="/monthly"
-                      paramName="mfFlowsView"
-                      defaultValue="flows"
-                      lenses={[
-                        { value: "flows", label: "Flows vs Nifty" },
-                        { value: "aaum", label: "Active Equity AAUM" },
-                      ]}
-                      active={mfFlowsView}
-                      preserveParams={preservedQueryParams}
-                    />
-                  </div>
-                }
-              >
-                {activeEquityTrend.length > 0 ? (() => {
-                  const trailingAvg = slicedMovingAverage(
-                    activeEquityTrend,
-                    12,
-                    activeEquityTrend.length
-                  );
-                  const aeAaumCycleBands = renderedCycleBands(
-                    cyclePhaseBands,
-                    activeEquityTrend.map((p) => p.label as string)
-                  );
-                  return (
-                    <>
-                      <BarSeries
-                        data={activeEquityTrend}
-                        name="Active Equity AAUM"
-                        color="hsl(var(--chart-1))"
-                        valueFormat="cr"
-                        axisFormat="cr"
-                        labelFormat="month"
-                        cyclePhaseBands={aeAaumCycleBands}
-                        signedFill="single"
-                        trendline={trailingAvg}
-                        trendlineName="Trailing 12-month avg"
-                      />
-                      <CyclePhaseLegend bands={aeAaumCycleBands} />
-                    </>
-                  );
-                })() : (
-                  <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                    Active-equity AAUM not yet ingested — appears once IIFL category fields land in the AMFI Monthly snapshot.
-                  </div>
-                )}
-                <HowToRead>
-                  <p className="inline-flex items-start gap-1.5">
-                    <span>
-                      The solid line is active-equity AAUM — the period-average
-                      asset base in actively-managed equity funds. Unlike a flow,
-                      this is a stock that grows two ways at once: fresh net
-                      inflows, and market gains marking up money already invested.
-                      So a rising line in a weak-flow month means the market did the
-                      lifting; a flat line despite strong inflows means prices fell.
-                      The dashed line is its trailing 12-month average — on a
-                      steadily-rising asset base the YoY badge above is usually the
-                      sharper read.
-                    </span>
-                    <InfoTooltip label="Active-equity envelope = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
-                  </p>
-                  <ul className="list-disc space-y-1 pl-4">
-                    <li>
-                      <span className="font-medium text-foreground/80">
-                        Why it&apos;s the AMC revenue base:
-                      </span>{" "}
-                      management fees scale off AUM, not flows, and active equity
-                      carries the highest expense-ratio yield of any category — so
-                      this asset base is the single biggest driver of an
-                      AMC&apos;s topline. The YoY growth rate, not the absolute
-                      level, is what flows through to earnings.
-                    </li>
-                    <li>
-                      <span className="font-medium text-foreground/80">
-                        Read it next to flows:
-                      </span>{" "}
-                      toggle back to Flows vs Nifty above — AAUM rising while flows
-                      are soft is a market-driven rally (fragile if prices reverse);
-                      AAUM rising on strong flows is durable, investor-funded growth.
-                    </li>
-                  </ul>
-                </HowToRead>
-              </ChartWithContext>
-            ) : (
-              <Card
-                title="Net inflows of subsequent period are meaningfully impacted by Nifty returns"
-                action={
-                  <LensToggle
-                    basePath="/monthly"
-                    paramName="mfFlowsView"
-                    defaultValue="flows"
-                    lenses={[
-                      { value: "flows", label: "Flows vs Nifty" },
-                      { value: "aaum", label: "Active Equity AAUM" },
-                    ]}
-                    active={mfFlowsView}
-                    preserveParams={preservedQueryParams}
-                  />
-                }
-              >
-                <BarsWithIndexLine
-                  data={activeEquityWithNiftyChartData}
-                  barColor="hsl(var(--chart-1))"
-                  lineColor="hsl(var(--foreground))"
-                  valueFormat="cr"
-                  axisFormat="cr"
-                  lineValueFormat="count"
-                  lineAxisFormat="count"
-                  labelFormat="month"
-                  barName="Active Equity Net Inflows (LHS)"
-                  lineName="Nifty 500 Index (RHS)"
+          {activeEquityWithNiftyChartData.length > 0 && (
+            <Card
+              title="Active Equity Flows & AAUM"
+              action={
+                <LensToggle
+                  basePath="/monthly"
+                  paramName="mfFlowsView"
+                  defaultValue="flows"
+                  lenses={[
+                    { value: "flows", label: "Flows vs Nifty" },
+                    { value: "aaum", label: "Active Equity AAUM" },
+                  ]}
+                  active={mfFlowsView}
+                  preserveParams={preservedQueryParams}
                 />
-                <p className="mt-2 text-[11px] text-muted-foreground">
-                  Bars: monthly active-equity net inflow (₹ Cr, left axis).
-                  Line: NIFTY 500 month-end level (right axis). Active equity
-                  envelope = equity-oriented schemes + hybrid schemes excluding
-                  arbitrage + solution-oriented schemes.
-                </p>
-              </Card>
-            ))}
+              }
+            >
+              {mfFlowsView === "aaum" ? (
+                <>
+                  {activeEquityTrend.length > 0 ? (() => {
+                    const trailingAvg = slicedMovingAverage(
+                      activeEquityTrend,
+                      12,
+                      activeEquityTrend.length
+                    );
+                    const aeAaumCycleBands = renderedCycleBands(
+                      cyclePhaseBands,
+                      activeEquityTrend.map((p) => p.label as string)
+                    );
+                    return (
+                      <>
+                        <BarSeries
+                          data={activeEquityTrend}
+                          name="Active Equity AAUM"
+                          color="hsl(var(--chart-1))"
+                          valueFormat="cr"
+                          axisFormat="cr"
+                          labelFormat="month"
+                          cyclePhaseBands={aeAaumCycleBands}
+                          signedFill="single"
+                          trendline={trailingAvg}
+                          trendlineName="Trailing 12-month avg"
+                        />
+                        <CyclePhaseLegend bands={aeAaumCycleBands} />
+                      </>
+                    );
+                  })() : (
+                    <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                      Active-equity AAUM not yet ingested — appears once IIFL category fields land in the AMFI Monthly snapshot.
+                    </div>
+                  )}
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    Period-average active-equity AAUM (₹ Cr). Dashed line =
+                    trailing 12-month average; shaded bands mark Nifty 500
+                    market-cycle phases. Active equity envelope = equity-oriented
+                    schemes + hybrid schemes excluding arbitrage +
+                    solution-oriented schemes.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <BarsWithIndexLine
+                    data={activeEquityWithNiftyChartData}
+                    barColor="hsl(var(--chart-1))"
+                    lineColor="hsl(var(--foreground))"
+                    valueFormat="cr"
+                    axisFormat="cr"
+                    lineValueFormat="count"
+                    lineAxisFormat="count"
+                    labelFormat="month"
+                    barName="Active Equity Net Inflows (LHS)"
+                    lineName="Nifty 500 Index (RHS)"
+                  />
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    Bars: monthly active-equity net inflow (₹ Cr, left axis).
+                    Line: NIFTY 500 month-end level (right axis). Active equity
+                    envelope = equity-oriented schemes + hybrid schemes excluding
+                    arbitrage + solution-oriented schemes.
+                  </p>
+                </>
+              )}
+            </Card>
+          )}
 
         </div>
       )}
