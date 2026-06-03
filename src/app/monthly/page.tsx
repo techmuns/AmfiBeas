@@ -78,6 +78,7 @@ import { MonthPicker } from "@/components/filters/MonthPicker";
 import {
   formatCompactCrSafe,
   formatCroreCountSafe,
+  formatMonthLabel,
 } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import {
@@ -950,7 +951,7 @@ export default async function MonthlyPage({
   // Proportion diagnostics: category rotation + passive flow share. Each
   // renders independently under its own tab (rotation in categories,
   // passiveFlowShare in active-passive).
-  const rotation = categoryRotation(3, 5);
+  const rotation = categoryRotation(3, 5, amfiSelected?.month);
 
   // The headline active-equity flow signal — feeds the market-tape /
   // sticky context footer at the foot of the page.
@@ -1664,7 +1665,8 @@ export default async function MonthlyPage({
             <KeyTakeaway
               headline={
                 <>
-                  Over the last {rotation.windowMonths}M,{" "}
+                  Over the {rotation.windowMonths}M ending{" "}
+                  {formatMonthLabel(rotation.currentRange.end)},{" "}
                   <strong>{topGainer.label}</strong> gained the most
                   active-equity flow share (
                   <span className="text-positive">

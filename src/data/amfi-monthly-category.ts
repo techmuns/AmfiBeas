@@ -782,7 +782,8 @@ export interface CategoryRotation {
 
 export function categoryRotation(
   window = 3,
-  top = 5
+  top = 5,
+  endMonth?: string
 ): CategoryRotation | null {
   // Build per-month denominator (active-equity envelope flow).
   const denomByMonth = new Map<string, number>();
@@ -792,9 +793,25 @@ export function categoryRotation(
     }
   }
   const monthsWithDenom = Array.from(denomByMonth.keys()).sort();
-  if (monthsWithDenom.length < 2 * window) return null;
-  const currentMonths = monthsWithDenom.slice(-window);
-  const priorMonths = monthsWithDenom.slice(-2 * window, -window);
+  // Window-end index: the latest month at or before `endMonth` (so the card
+  // follows the period selector); defaults to the most recent month.
+  let endIdx = monthsWithDenom.length - 1;
+  if (endMonth) {
+    endIdx = -1;
+    for (let k = monthsWithDenom.length - 1; k >= 0; k--) {
+      if (monthsWithDenom[k] <= endMonth) {
+        endIdx = k;
+        break;
+      }
+    }
+  }
+  // Need a current window + an equal-length prior window ending at endIdx.
+  if (endIdx + 1 < 2 * window) return null;
+  const currentMonths = monthsWithDenom.slice(endIdx - window + 1, endIdx + 1);
+  const priorMonths = monthsWithDenom.slice(
+    endIdx - 2 * window + 1,
+    endIdx - window + 1
+  );
 
   // Build per-category share series indexed by month.
   const sharesBySlug = new Map<string, Map<string, number>>();
