@@ -251,11 +251,16 @@ export default async function MonthlyPage({
   // (default) or the SIP AUM trend (folded in from the old standalone card).
   const sipPrimaryView: "flows" | "aum" =
     sp.sipView === "aum" ? "aum" : "flows";
+  // View toggle for the merged AUM trend card: industry Total AUM
+  // (default) or the Active-Equity AUM & share.
+  const aumView: "total" | "active" =
+    sp.aumView === "active" ? "active" : "total";
   // Pass-through params for every LensToggle so toggling A doesn't
   // lose B (or the selected month / active tab).
   const preservedQueryParams: Record<string, string | undefined> = {
     tab: typeof sp.tab === "string" ? sp.tab : undefined,
     month: typeof sp.month === "string" ? sp.month : undefined,
+    aumView: typeof sp.aumView === "string" ? sp.aumView : undefined,
     heatmap: typeof sp.heatmap === "string" ? sp.heatmap : undefined,
     aeFlowView:
       typeof sp.aeFlowView === "string" ? sp.aeFlowView : undefined,
@@ -1097,36 +1102,82 @@ export default async function MonthlyPage({
               />
             </Card>
           )}
-          {totalAumChartHasData && (
+          {(totalAumChartHasData || activeEqShareChartHasData) && (
             <Card
-              title="Total AUM Trend"
+              title={
+                aumView === "active"
+                  ? "Active Equity AUM & Share of Total"
+                  : "Total AUM Trend"
+              }
               subtitleNode={
                 <div className="space-y-0.5">
                   <p className="text-xs text-muted-foreground">
-                    Industry month-end (EOP) AUM with year-on-year growth.
+                    {aumView === "active"
+                      ? "Active-equity MAAUM (excludes ETF / Index / arbitrage) and its share of total industry MAAUM."
+                      : "Industry month-end (EOP) AUM with year-on-year growth."}
                   </p>
                   <p className="text-[11px] text-muted-foreground/80">
-                    {`${totalAumChart.length} months${totalAumYoyLatest !== null ? ` · latest YoY +${totalAumYoyLatest.toFixed(0)}%` : ""} · Source: AMFI Monthly Report`}
+                    {aumView === "active"
+                      ? `${activeEqShareChart.length} months${activeEqShareLatest !== null ? ` · latest share ${activeEqShareLatest.toFixed(0)}%` : ""} · Source: AMFI Monthly Report`
+                      : `${totalAumChart.length} months${totalAumYoyLatest !== null ? ` · latest YoY +${totalAumYoyLatest.toFixed(0)}%` : ""} · Source: AMFI Monthly Report`}
                   </p>
                 </div>
               }
+              action={
+                <LensToggle
+                  basePath="/monthly"
+                  paramName="aumView"
+                  defaultValue="total"
+                  lenses={[
+                    { value: "total", label: "Total AUM" },
+                    { value: "active", label: "Active Equity AUM" },
+                  ]}
+                  active={aumView}
+                  preserveParams={preservedQueryParams}
+                />
+              }
             >
-              <BarsWithIndexLine
-                data={totalAumChart}
-                barColor="hsl(var(--chart-1))"
-                lineColor="hsl(var(--foreground))"
-                valueFormat="cr"
-                axisFormat="cr"
-                lineValueFormat="pct"
-                lineAxisFormat="pct"
-                labelFormat="month"
-                barName="Total AUM (EOP)"
-                lineName="YoY growth"
-              />
-              <p className="mt-2 text-[11px] text-muted-foreground">
-                Bars: month-end industry AUM (₹ Cr, left axis). Line:
-                year-on-year growth (%, right axis).
-              </p>
+              {aumView === "active" ? (
+                <>
+                  <BarsWithIndexLine
+                    data={activeEqShareChart}
+                    barColor="hsl(var(--chart-1))"
+                    lineColor="hsl(var(--chart-2))"
+                    valueFormat="cr"
+                    axisFormat="cr"
+                    lineValueFormat="pct"
+                    lineAxisFormat="pct"
+                    labelFormat="month"
+                    barName="Active Equity MAAUM"
+                    lineName="Active equity share of total"
+                    lineDomain={[50, 60]}
+                    lineTicks={[50, 52, 54, 56, 58, 60]}
+                  />
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    Bars: active-equity MAAUM (₹ Cr, left axis). Line:
+                    active-equity share of total MAAUM (%, right axis).
+                  </p>
+                </>
+              ) : (
+                <>
+                  <BarsWithIndexLine
+                    data={totalAumChart}
+                    barColor="hsl(var(--chart-1))"
+                    lineColor="hsl(var(--foreground))"
+                    valueFormat="cr"
+                    axisFormat="cr"
+                    lineValueFormat="pct"
+                    lineAxisFormat="pct"
+                    labelFormat="month"
+                    barName="Total AUM (EOP)"
+                    lineName="YoY growth"
+                  />
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    Bars: month-end industry AUM (₹ Cr, left axis). Line:
+                    year-on-year growth (%, right axis).
+                  </p>
+                </>
+              )}
             </Card>
           )}
         </div>
@@ -1344,42 +1395,6 @@ export default async function MonthlyPage({
             Bars: monthly active-equity net inflow (₹ Cr). Dashed line =
             trailing 12-month average. Active equity = equity-oriented + hybrid
             (ex-arbitrage) + solution-oriented schemes.
-          </p>
-        </Card>
-      )}
-
-      {activeTab === "flows" && activeEqShareChartHasData && (
-        <Card
-          title="Active Equity AUM & Share of Total"
-          subtitleNode={
-            <div className="space-y-0.5">
-              <p className="text-xs text-muted-foreground">
-                Active-equity MAAUM (excludes ETF / Index / arbitrage) and its
-                share of total industry MAAUM.
-              </p>
-              <p className="text-[11px] text-muted-foreground/80">
-                {`${activeEqShareChart.length} months${activeEqShareLatest !== null ? ` · latest share ${activeEqShareLatest.toFixed(0)}%` : ""} · Source: AMFI Monthly Report`}
-              </p>
-            </div>
-          }
-        >
-          <BarsWithIndexLine
-            data={activeEqShareChart}
-            barColor="hsl(var(--chart-1))"
-            lineColor="hsl(var(--chart-2))"
-            valueFormat="cr"
-            axisFormat="cr"
-            lineValueFormat="pct"
-            lineAxisFormat="pct"
-            labelFormat="month"
-            barName="Active Equity MAAUM"
-            lineName="Active equity share of total"
-            lineDomain={[50, 60]}
-            lineTicks={[50, 52, 54, 56, 58, 60]}
-          />
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Bars: active-equity MAAUM (₹ Cr, left axis). Line: active-equity
-            share of total MAAUM (%, right axis).
           </p>
         </Card>
       )}
