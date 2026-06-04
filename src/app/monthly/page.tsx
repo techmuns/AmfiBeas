@@ -1378,7 +1378,7 @@ export default async function MonthlyPage({
         </Card>
       )}
 
-      {activeTab === "flows" && activeEqNetInflowHasData && (
+      {activeTab === "snapshot" && activeEqNetInflowHasData && (
         <Card
           title="Active Equity Net Inflows"
           subtitleNode={

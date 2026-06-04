@@ -85,19 +85,22 @@ export function MaaumTable({
   prevMonth: MaaumColumn;
   latest: MaaumColumn;
 }) {
-  const cols = [yearAgo, prevMonth, latest];
+  // Newest month first (latest → previous → year-ago), so the most
+  // recent column reads left-most. YoY / MoM still compare latest vs
+  // year-ago / previous regardless of display order.
+  const cols = [latest, prevMonth, yearAgo];
   const cellTh =
-    "border px-2 py-1.5 text-right font-semibold whitespace-nowrap";
-  const rowTh = "whitespace-nowrap border bg-card px-2 py-1 text-left";
+    "border px-2.5 py-2 text-right font-semibold whitespace-nowrap";
+  const rowTh = "whitespace-nowrap border bg-card px-2.5 py-1.5 text-left";
 
   return (
     <div className="space-y-4">
       {/* MAAUM levels */}
       <div className="overflow-x-auto rounded-lg border bg-card">
-        <table className="w-full border-collapse text-[11px] tabular-nums">
+        <table className="w-full border-collapse text-[13px] tabular-nums">
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 border bg-card px-2 py-1.5 text-left font-semibold">
+              <th className="sticky left-0 z-10 border bg-card px-2.5 py-2 text-left font-semibold">
                 MAAUM (₹ Lakh Cr)
               </th>
               {cols.map((c) => (
@@ -128,15 +131,15 @@ export function MaaumTable({
                   {cols.map((c) => (
                     <td
                       key={c.monthLabel}
-                      className="border px-2 py-1 text-right text-foreground"
+                      className="border px-2.5 py-1.5 text-right text-foreground"
                     >
                       {fmtLCr(c[row.key])}
                     </td>
                   ))}
-                  <td className={cn("border px-2 py-1 text-right", toneText(yoy))}>
+                  <td className={cn("border px-2.5 py-1.5 text-right", toneText(yoy))}>
                     {fmtPct(yoy)}
                   </td>
-                  <td className={cn("border px-2 py-1 text-right", toneText(mom))}>
+                  <td className={cn("border px-2.5 py-1.5 text-right", toneText(mom))}>
                     {fmtPct(mom)}
                   </td>
                 </tr>
@@ -148,10 +151,10 @@ export function MaaumTable({
 
       {/* MAAUM mix */}
       <div className="overflow-x-auto rounded-lg border bg-card">
-        <table className="w-full border-collapse text-[11px] tabular-nums">
+        <table className="w-full border-collapse text-[13px] tabular-nums">
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 border bg-card px-2 py-1.5 text-left font-semibold">
+              <th className="sticky left-0 z-10 border bg-card px-2.5 py-2 text-left font-semibold">
                 MAAUM Mix
               </th>
               {cols.map((c) => (
@@ -181,7 +184,7 @@ export function MaaumTable({
                     className={cn(
                       rowTh,
                       row.indent
-                        ? "pl-4 font-normal text-muted-foreground"
+                        ? "pl-5 font-normal text-foreground/75"
                         : "font-medium"
                     )}
                   >
@@ -190,15 +193,15 @@ export function MaaumTable({
                   {cols.map((c) => (
                     <td
                       key={c.monthLabel}
-                      className="border px-2 py-1 text-right text-foreground"
+                      className="border px-2.5 py-1.5 text-right text-foreground"
                     >
                       {fmtSharePct(shareOf(c, row.key))}
                     </td>
                   ))}
-                  <td className={cn("border px-2 py-1 text-right", toneText(yoyPp))}>
+                  <td className={cn("border px-2.5 py-1.5 text-right", toneText(yoyPp))}>
                     {fmtPp(yoyPp)}
                   </td>
-                  <td className={cn("border px-2 py-1 text-right", toneText(momPp))}>
+                  <td className={cn("border px-2.5 py-1.5 text-right", toneText(momPp))}>
                     {fmtPp(momPp)}
                   </td>
                 </tr>
