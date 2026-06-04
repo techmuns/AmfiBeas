@@ -32,7 +32,7 @@ export function MarketShareMovement({
         <div className="w-36 shrink-0">AMC</div>
         <div className="flex-1 text-center">← lost share · gained share →</div>
         <div className="w-16 shrink-0 text-right">Δ pp</div>
-        <div className="w-14 shrink-0 text-right">Now</div>
+        <div className="w-14 shrink-0 text-right">Share</div>
       </div>
       {sorted.map((p) => {
         const gain = p.shareDeltaPp >= 0;

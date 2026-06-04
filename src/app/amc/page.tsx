@@ -14,10 +14,12 @@ import { AmcStockConcentration } from "@/components/amc/AmcStockConcentration";
 import { amcIndexRows } from "@/data/amc-detail";
 import {
   amcHealthGrowthMatrix,
+  cohortJourneyEndQuarters,
   cohortJourneyMap,
   latestQoqAnomalies,
 } from "@/data/amc-peer-universe";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
+import { LensToggle } from "@/components/ui/LensToggle";
 import { cn } from "@/lib/cn";
 import {
   DashboardTabs,
@@ -58,8 +60,22 @@ export default async function AmcListPage({
   }));
   const anomalies = latestQoqAnomalies(2);
 
-  // Market-share movement arrows over the full available window.
-  const journeyPoints = cohortJourneyMap(20) ?? [];
+  // Market-share movement — QoQ (3-month) share change ending at the
+  // selected quarter. The selector lists the recent quarter-ends that
+  // have a clean preceding quarter; defaults to the latest.
+  const shareQuarters = cohortJourneyEndQuarters();
+  const latestShareQuarter =
+    shareQuarters.length > 0
+      ? shareQuarters[shareQuarters.length - 1].quarter
+      : undefined;
+  const selectedShareQuarter =
+    typeof sp.sharePeriod === "string" &&
+    shareQuarters.some((q) => q.quarter === sp.sharePeriod)
+      ? sp.sharePeriod
+      : latestShareQuarter;
+  const journeyPoints = selectedShareQuarter
+    ? cohortJourneyMap(20, selectedShareQuarter) ?? []
+    : [];
 
   // Leaderboard read for the share-movement card: biggest share gainer /
   // loser over the window and the top-5 concentration.
@@ -166,12 +182,29 @@ export default async function AmcListPage({
           subtitleNode={
             <div className="space-y-0.5">
               <p className="text-xs text-muted-foreground">
-                Who gained or lost market share over the full available window.
+                Who gained or lost market share quarter-over-quarter.
               </p>
               <p className="text-[11px] text-muted-foreground/80">
                 {`One row per AMC, sorted by change · ${journeyPoints[0].startQuarterLabel} → ${journeyPoints[0].endQuarterLabel}`}
               </p>
             </div>
+          }
+          action={
+            shareQuarters.length > 1 && selectedShareQuarter ? (
+              <LensToggle
+                basePath="/amc"
+                paramName="sharePeriod"
+                defaultValue={latestShareQuarter ?? ""}
+                lenses={[...shareQuarters]
+                  .reverse()
+                  .map((q) => ({ value: q.quarter, label: q.label }))}
+                active={selectedShareQuarter}
+                preserveParams={{
+                  tab: typeof sp.tab === "string" ? sp.tab : undefined,
+                }}
+                wrap
+              />
+            ) : undefined
           }
         >
           {shareLeaders && (
@@ -204,9 +237,9 @@ export default async function AmcListPage({
           )}
           <MarketShareMovement points={journeyPoints} />
           <p className="mt-3 text-[11px] text-muted-foreground">
-            Bar length = size of the move over the window · green = share
-            gainers · red = share losers. &ldquo;Now&rdquo; is the latest-quarter
-            market share.
+            Bar length = size of the quarter-over-quarter move · green = share
+            gainers · red = share losers. &ldquo;Share&rdquo; is each AMC&rsquo;s
+            market share at the end of the selected quarter.
           </p>
         </Card>
       )}

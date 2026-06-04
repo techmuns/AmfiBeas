@@ -921,7 +921,41 @@ export interface CohortJourneyPoint {
   shareDeltaPp: number;
 }
 
-export function cohortJourneyMap(topN = 20): CohortJourneyPoint[] | null {
+/** Calendar quarter exactly 3 months earlier. "2026-Q1" → "2025-Q4". */
+function priorCalendarQuarter(quarter: string): string {
+  const [y, qn] = quarter.split("-Q");
+  const n = Number(qn);
+  if (n > 1) return `${y}-Q${n - 1}`;
+  return `${Number(y) - 1}-Q4`;
+}
+
+/** Quarter-ends that support a clean QoQ (3-month) market-share delta —
+ *  i.e. the immediately-preceding calendar quarter is also in the
+ *  snapshot. Ascending; the page reverses for newest-first. Used by the
+ *  Market-share movement period selector. */
+export function cohortJourneyEndQuarters(): { quarter: string; label: string }[] {
+  const present = new Set(
+    amcAaumQuarterlySnapshot.rows
+      .filter((r) => r.status === "ok")
+      .map((r) => r.quarter)
+  );
+  return [...present]
+    .sort()
+    .filter((q) => present.has(priorCalendarQuarter(q)))
+    .map((q) => ({ quarter: q, label: fiscalLabelFromCalendarQuarter(q) }));
+}
+
+/**
+ * Market-share movement points. With no `endQuarter`, compares the
+ * earliest available quarter to the latest (the full window). When
+ * `endQuarter` is given, compares it to the immediately-preceding
+ * calendar quarter (a QoQ / 3-month change) so the chart can show recent
+ * share moves via a period selector.
+ */
+export function cohortJourneyMap(
+  topN = 20,
+  endQuarter?: string
+): CohortJourneyPoint[] | null {
   const allQuarters = Array.from(
     new Set(
       amcAaumQuarterlySnapshot.rows
@@ -930,8 +964,9 @@ export function cohortJourneyMap(topN = 20): CohortJourneyPoint[] | null {
     )
   ).sort();
   if (allQuarters.length < 2) return null;
-  const startQ = allQuarters[0];
-  const endQ = allQuarters[allQuarters.length - 1];
+  const startQ = endQuarter ? priorCalendarQuarter(endQuarter) : allQuarters[0];
+  const endQ = endQuarter ?? allQuarters[allQuarters.length - 1];
+  if (!allQuarters.includes(startQ) || !allQuarters.includes(endQ)) return null;
 
   // Per-quarter total AAUM (denominator for share).
   const totalByQuarter = new Map<string, number>();
