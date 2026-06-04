@@ -1471,12 +1471,8 @@ export default async function MonthlyPage({
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-sm font-medium tracking-tight">
-                Active-Equity Category Heatmap
+                Active Equity Net Inflow Rotation
               </h2>
-              <p className="text-xs text-muted-foreground">
-                Net inflow share of active equity categories · past 12 months ·
-                Source: AMFI Monthly Report
-              </p>
             </div>
           </div>
 
@@ -1487,8 +1483,7 @@ export default async function MonthlyPage({
           />
 
           <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            Share = category net inflow ÷ active-equity net inflow.
-            <InfoTooltip label="Active equity = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
+            <InfoTooltip label="Share = category net inflow ÷ active-equity net inflow. Active equity = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
           </p>
         </div>
       )}
