@@ -480,7 +480,7 @@ export default async function MonthlyPage({
   };
   const yoyPctOf = (
     month: string,
-    field: "totalAum" | "totalAaum"
+    field: "totalAum" | "totalAaum" | "activeEquityAaum"
   ): number | null => {
     const cur = amfiRowByMonth.get(month)?.[field];
     const prev = amfiRowByMonth.get(monthMinus12(month))?.[field];
@@ -515,6 +515,7 @@ export default async function MonthlyPage({
       label: r.month,
       value: r.activeEquityAaum as number,
       line: ((r.activeEquityAaum as number) / (r.totalAaum as number)) * 100,
+      line2: yoyPctOf(r.month, "activeEquityAaum"),
     }));
   const activeEqShareChartHasData = activeEqShareChart.length > 0;
   const activeEqShareLatest =
@@ -1150,12 +1151,13 @@ export default async function MonthlyPage({
                     labelFormat="month"
                     barName="Active Equity MAAUM"
                     lineName="Active equity share of total"
-                    lineDomain={[50, 60]}
-                    lineTicks={[50, 52, 54, 56, 58, 60]}
+                    line2Name="YoY growth"
+                    line2Color="hsl(var(--foreground))"
                   />
                   <p className="mt-2 text-[11px] text-muted-foreground">
-                    Bars: active-equity MAAUM (₹ Cr, left axis). Line:
-                    active-equity share of total MAAUM (%, right axis).
+                    Bars: active-equity MAAUM (₹ Cr, left axis). Lines (right
+                    axis, %): active-equity share of total MAAUM, and
+                    year-on-year growth.
                   </p>
                 </>
               ) : (

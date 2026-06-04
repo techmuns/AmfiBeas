@@ -30,6 +30,9 @@ interface BarsWithIndexLineProps {
     label: string;
     value: number | null;
     line: number | null;
+    /** Optional second right-axis series (e.g. a YoY-growth line drawn
+     *  alongside the primary line). Null leaves a gap. */
+    line2?: number | null;
   }[];
   height?: number;
   /** Fill for the bars. Defaults to chart-1. */
@@ -46,6 +49,9 @@ interface BarsWithIndexLineProps {
   /** Display names (tooltip + legend). */
   barName?: string;
   lineName?: string;
+  /** Display name + stroke for the optional second line. */
+  line2Name?: string;
+  line2Color?: string;
   /** When set, fixes the right-axis domain (useful for share lines that
    *  should always render 0-100% scale even when values are tight). */
   lineDomain?: [number, number];
@@ -78,6 +84,8 @@ export function BarsWithIndexLine({
   labelFormat = "month",
   barName = "Value",
   lineName = "Line",
+  line2Name = "Line 2",
+  line2Color = "hsl(var(--foreground))",
   lineDomain,
   lineTicks,
   showLegend = true,
@@ -91,6 +99,7 @@ export function BarsWithIndexLine({
   const hasNegativeBar = data.some(
     (r) => typeof r.value === "number" && r.value < 0
   );
+  const hasLine2 = data.some((r) => typeof r.line2 === "number");
 
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -142,7 +151,8 @@ export function BarsWithIndexLine({
                 if (n === null || n === undefined || !Number.isFinite(n)) {
                   return "—";
                 }
-                if (seriesName === lineName) return fmtLineValue(n);
+                if (seriesName === lineName || seriesName === line2Name)
+                  return fmtLineValue(n);
                 return fmtBarValue(n);
               }}
               labelFormatter={fmtLabel}
@@ -188,6 +198,20 @@ export function BarsWithIndexLine({
           isAnimationActive={false}
           connectNulls={false}
         />
+        {hasLine2 && (
+          <Line
+            yAxisId="right"
+            type="monotone"
+            dataKey="line2"
+            name={line2Name}
+            stroke={line2Color}
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 4 }}
+            isAnimationActive={false}
+            connectNulls={false}
+          />
+        )}
       </ComposedChart>
     </ResponsiveContainer>
   );
