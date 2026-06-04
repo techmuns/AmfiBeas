@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
@@ -11,8 +10,6 @@ import {
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BarSeries } from "@/components/charts/BarSeries";
 import { IiflHeatmap } from "@/components/charts/IiflHeatmap";
-import { MultiLine } from "@/components/charts/MultiLine";
-import { indexSeriesToBase } from "@/lib/index-series";
 import { latestMonth } from "@/data/aggregate";
 import {
   activeEquityNetInflowSignal,
@@ -49,15 +46,9 @@ import { KeyTakeaway, DeltaCr } from "@/components/ui/KeyTakeaway";
 import { StickyContextFooter } from "@/components/ui/StickyContextFooter";
 import { LensToggle } from "@/components/ui/LensToggle";
 import {
-  IIFL_ACTIVE_EQUITY_CATEGORIES,
-  IIFL_TREND_EXPANDED_SLUGS,
-  IIFL_TREND_FEATURED_SLUGS,
-  categoryFlowZScoreMap,
   categoryRotation,
   iiflActiveEquityHeatmapData,
   iiflActiveEquityHeatmapZScoreData,
-  iiflActiveEquityTrendCard,
-  latestCategoryProvenance,
 } from "@/data/amfi-monthly-category";
 import { VerticalBars } from "@/components/charts/VerticalBars";
 import {
@@ -287,20 +278,7 @@ export default async function MonthlyPage({
       typeof sp.nfoCountLens === "string" ? sp.nfoCountLens : undefined,
     nfoFundsLens:
       typeof sp.nfoFundsLens === "string" ? sp.nfoFundsLens : undefined,
-    categoryTrendsScale:
-      typeof sp.categoryTrendsScale === "string"
-        ? sp.categoryTrendsScale
-        : undefined,
   };
-  // Scale toggle for the Active-Equity Category Trends section. The two
-  // series on each card (QAAUM share, Net inflow share) live on the
-  // same y-axis but their typical ranges differ ~5× — QAAUM share drifts
-  // a few pp; Net inflow share swings 10–30pp — so on a shared scale
-  // QAAUM share's real volatility reads as a flat line. "indexed"
-  // rebases each series independently to 100 at its first visible
-  // point, so both lines move on the same comparable scale.
-  const categoryTrendsScale: "levels" | "indexed" =
-    sp.categoryTrendsScale === "indexed" ? "indexed" : "levels";
 
   // Resolve the active tab from the URL. Unknown / missing values
   // silently fall back to "snapshot" so stale bookmarks don't break.
@@ -825,51 +803,6 @@ export default async function MonthlyPage({
 
   const hasAnyFolioOrNfoTrend = folioAdditionsTrend.length > 0;
 
-  // ---- IIFL Active-Equity Category Trends (cards) -------------------
-  //
-  // Per-category 12-month line cards above the heatmap. Two series
-  // per card:
-  //   QAAUM share %    = categoryAaum      / activeEquityAaum      × 100
-  //   Net inflow share = categoryNetInflow / activeEquityNetInflow × 100
-  // Both denominators come from the IIFL active-equity envelope
-  // (NOT major-category, NOT industry totals). Window is the same
-  // trailing 12 months as the heatmap — anchored on latest, never
-  // on `?month=`. The four core cap buckets render inline; the rest
-  // sit behind a "Show all categories" details element.
-  const flowZScoreBySlug = categoryFlowZScoreMap();
-  const iiflTrendCards = IIFL_ACTIVE_EQUITY_CATEGORIES.map((c) => {
-    const { series, hasData } = iiflActiveEquityTrendCard(c.slug);
-    const aumHover = formatKpiProvenanceTooltip(
-      latestCategoryProvenance(c.slug, "categoryAaum")
-    );
-    const z = flowZScoreBySlug.get(c.slug);
-    return {
-      ...c,
-      series,
-      hasData,
-      aumHover,
-      latestZ: z?.zScore ?? null,
-      latestPercentile: z?.percentile ?? null,
-    };
-  });
-  const iiflTrendBySlug = new Map(iiflTrendCards.map((c) => [c.slug, c]));
-  // Sort featured + expanded card lists by latest z-score (hottest
-  // categories first). Cards with null z-score sink to the bottom.
-  const sortByZ = (slugs: typeof IIFL_TREND_FEATURED_SLUGS) =>
-    [...slugs]
-      .map((s) => iiflTrendBySlug.get(s)!)
-      .sort((a, b) => {
-        const az = a.latestZ;
-        const bz = b.latestZ;
-        if (az === null && bz === null) return 0;
-        if (az === null) return 1;
-        if (bz === null) return -1;
-        return bz - az;
-      });
-  const featuredTrendCards = sortByZ(IIFL_TREND_FEATURED_SLUGS);
-  const expandedTrendCards = sortByZ(IIFL_TREND_EXPANDED_SLUGS);
-  const iiflTrendHasAny = iiflTrendCards.some((c) => c.hasData);
-  const iiflTrendHasExpanded = expandedTrendCards.some((c) => c.hasData);
 
   // ---- Category Flow Share (IIFL Figure 31-34) section ---------------
   //
@@ -1540,154 +1473,6 @@ export default async function MonthlyPage({
       )}
 
 
-      {activeTab === "categories" && iiflTrendHasAny && (
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 className="text-sm font-medium tracking-tight">
-                Active-Equity Category Trends
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                {categoryTrendsScale === "indexed"
-                  ? "QAAUM share vs net inflow share · each series rebased to 100 at the first visible month · Source: AMFI Monthly Report"
-                  : "QAAUM share vs net inflow share · active-equity envelope · Source: AMFI Monthly Report"}
-              </p>
-            </div>
-            <LensToggle
-              basePath="/monthly"
-              paramName="categoryTrendsScale"
-              defaultValue="levels"
-              lenses={[
-                { value: "levels", label: "Levels" },
-                { value: "indexed", label: "Indexed (100)" },
-              ]}
-              active={categoryTrendsScale}
-              preserveParams={preservedQueryParams}
-            />
-          </div>
-
-          <section className="grid gap-4 lg:grid-cols-2">
-            {featuredTrendCards.map((c) => (
-              <Card
-                key={c.slug}
-                title={c.label}
-                subtitle={`${c.series.length} month${c.series.length === 1 ? "" : "s"} · % of active-equity envelope`}
-                action={<CategoryHeatPill z={c.latestZ} />}
-              >
-                {c.hasData ? (
-                  <MultiLine
-                    data={
-                      categoryTrendsScale === "indexed"
-                        ? indexSeriesToBase(c.series, [
-                            "aumSharePct",
-                            "flowSharePct",
-                          ])
-                        : c.series
-                    }
-                    xKey="month"
-                    labelFormat="month"
-                    valueFormat={
-                      categoryTrendsScale === "indexed" ? "count" : "pct"
-                    }
-                    axisFormat={
-                      categoryTrendsScale === "indexed" ? "count" : "pct"
-                    }
-                    dynamicYDomain
-                    lines={[
-                      {
-                        key: "aumSharePct",
-                        name: "QAAUM share",
-                        color: "hsl(var(--chart-1))",
-                      },
-                      {
-                        key: "flowSharePct",
-                        name: "Net inflow share",
-                        color: "hsl(var(--chart-3))",
-                      },
-                    ]}
-                  />
-                ) : (
-                  <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                    Category snapshot not yet ingested for this slug.
-                  </div>
-                )}
-              </Card>
-            ))}
-          </section>
-
-          {iiflTrendHasExpanded && (
-            <details className="group">
-              <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-md border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-foreground [&::-webkit-details-marker]:hidden">
-                <span className="group-open:hidden">Show all categories</span>
-                <span className="hidden group-open:inline">Show fewer</span>
-                <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
-              </summary>
-              <section className="mt-3 grid gap-4 lg:grid-cols-2">
-              {expandedTrendCards.map((c) => (
-                <Card
-                  key={c.slug}
-                  title={c.label}
-                  subtitle={`${c.series.length} month${c.series.length === 1 ? "" : "s"} · % of active-equity envelope`}
-                  action={<CategoryHeatPill z={c.latestZ} />}
-                >
-                  {c.hasData ? (
-                    <MultiLine
-                      data={
-                        categoryTrendsScale === "indexed"
-                          ? indexSeriesToBase(c.series, [
-                              "aumSharePct",
-                              "flowSharePct",
-                            ])
-                          : c.series
-                      }
-                      xKey="month"
-                      labelFormat="month"
-                      valueFormat={
-                        categoryTrendsScale === "indexed" ? "count" : "pct"
-                      }
-                      axisFormat={
-                        categoryTrendsScale === "indexed" ? "count" : "pct"
-                      }
-                      dynamicYDomain
-                      lines={[
-                        {
-                          key: "aumSharePct",
-                          name: "QAAUM share",
-                          color: "hsl(var(--chart-1))",
-                        },
-                        {
-                          key: "flowSharePct",
-                          name: "Net inflow share",
-                          color: "hsl(var(--chart-3))",
-                        },
-                      ]}
-                    />
-                  ) : (
-                    <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                      Category snapshot not yet ingested for this slug.
-                    </div>
-                  )}
-                </Card>
-              ))}
-            </section>
-            </details>
-          )}
-
-          <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            {categoryTrendsScale === "indexed"
-              ? "Each line shows growth relative to its own first visible month (=100). Use Levels to read absolute % shares."
-              : "QAAUM share and net inflow share, both within the active-equity envelope."}
-            <InfoTooltip
-              label={
-                categoryTrendsScale === "indexed"
-                  ? "Each series is rebased independently to 100 at the first visible month, so both lines move on the same comparable scale. A value of 130 means the share is 30% higher than the start of the visible window."
-                  : "Active equity = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes."
-              }
-            />
-          </p>
-        </div>
-      )}
-
       {activeTab === "categories" && iiflHeatmapHasData && (
         <div className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-3">
@@ -1899,30 +1684,5 @@ function RotationList({
   );
 }
 
-/** Compact pill rendered in the action slot of each category-trend
- *  card: shows the category's latest-flow z-score with a tone
- *  indicator. Hot categories surface a positive green pill; cold
- *  categories a negative red pill; near-norm cards get a neutral
- *  pill. Null z-score → no pill. */
-function CategoryHeatPill({ z }: { z: number | null }) {
-  if (z === null || !Number.isFinite(z)) return null;
-  const tone =
-    z >= 1
-      ? "border-positive/40 bg-positive/10 text-positive"
-      : z <= -1
-        ? "border-negative/40 bg-negative/10 text-negative"
-        : "border-border bg-muted text-muted-foreground";
-  return (
-    <span
-      className={cn(
-        "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium tabular tracking-tight whitespace-nowrap",
-        tone
-      )}
-    >
-      {z >= 0 ? "+" : ""}
-      {z.toFixed(2)}σ
-    </span>
-  );
-}
 
 
