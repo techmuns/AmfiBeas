@@ -2,9 +2,7 @@ import Link from "next/link";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
-import { HowToRead } from "@/components/ui/HowToRead";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
-import { AmcQuadrantChart } from "@/components/charts/AmcQuadrantChart";
 import { MarketShareMovement } from "@/components/charts/MarketShareMovement";
 import { Heatmap } from "@/components/charts/Heatmap";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
@@ -16,11 +14,8 @@ import { AmcStockConcentration } from "@/components/amc/AmcStockConcentration";
 import { amcIndexRows } from "@/data/amc-detail";
 import {
   amcHealthGrowthMatrix,
-  amcTrajectoryQuadrant,
   cohortJourneyMap,
   latestQoqAnomalies,
-  type AmcQuadrant,
-  type AmcQuadrantPoint,
 } from "@/data/amc-peer-universe";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
 import { cn } from "@/lib/cn";
@@ -62,7 +57,6 @@ export default async function AmcListPage({
     values: r.values,
   }));
   const anomalies = latestQoqAnomalies(2);
-  const quadrant = amcTrajectoryQuadrant(30);
 
   // Market-share movement arrows over the full available window.
   const journeyPoints = cohortJourneyMap(20) ?? [];
@@ -217,47 +211,6 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {activeTab === "share-positioning" && quadrant && quadrant.points.length >= 4 && (
-        <Card
-          title="AMC Share vs Growth Quadrant"
-          subtitleNode={
-            <div className="space-y-0.5">
-              <p className="text-xs text-muted-foreground">
-                Each AMC plotted by market share (Y-axis) and QoQ growth (X-axis). The two dashed lines split the cohort at its medians, not at zero.
-              </p>
-              <p className="text-[11px] text-muted-foreground/80">
-                {`Top ${quadrant.points.length} AMCs by AAUM · ${quadrant.latestQuarterLabel} · cohort medians shown as dashed lines`}
-              </p>
-            </div>
-          }
-        >
-          <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-            <AmcQuadrantChart
-              data={quadrant.points}
-              medianSharePct={quadrant.medianSharePct}
-              medianGrowthPct={quadrant.medianGrowthPct}
-            />
-            <QuadrantBucketsList buckets={quadrant.buckets} />
-          </div>
-          <HowToRead>
-            <p className="inline-flex items-center gap-1.5">
-              Leaders: high share + above-median growth. Gainers: low share but
-              growing faster than peers. Defenders: high share but slowing.
-              Laggards: low share + below-median growth.
-              <InfoTooltip
-                label={`Y-axis: AMC's share of total cohort AAUM (top ${quadrant.points.length} AMCs). X-axis: QoQ AAUM growth (this quarter vs last). Both quadrant splits use the cohort median, not zero — so the buckets stay meaningful when the whole industry is growing or contracting. Dot size scales with market share.`}
-              />
-            </p>
-            <ul className="list-disc space-y-0.5 pl-4">
-              <li><span className="text-foreground">Leader</span> = high share + high growth (compounding from a strong base).</li>
-              <li><span className="text-foreground">Challenger / Gainer</span> = low share + high growth (catching up).</li>
-              <li><span className="text-foreground">Defender</span> = high share + slowing growth (mature franchise, risk of share loss).</li>
-              <li><span className="text-foreground">Laggard</span> = low share + weak growth (no momentum signal yet).</li>
-            </ul>
-          </HowToRead>
-        </Card>
-      )}
-
       {activeTab === "share-positioning" && <AmcCashAllocationTrend />}
 
       {activeTab === "share-positioning" && <IndustryConcentrationStack />}
@@ -318,57 +271,3 @@ export default async function AmcListPage({
   );
 }
 
-/** Compact 2×2 list view next to the quadrant chart. Each bucket
- *  shows up to 5 AMCs ordered by market share so the read scans
- *  largest-first. */
-function QuadrantBucketsList({
-  buckets,
-}: {
-  buckets: Record<AmcQuadrant, AmcQuadrantPoint[]>;
-}) {
-  const order: AmcQuadrant[] = ["Leaders", "Gainers", "Defenders", "Laggards"];
-  const accent: Record<AmcQuadrant, string> = {
-    Leaders: "border-positive/40 bg-positive/10 text-positive",
-    Gainers: "border-[hsl(var(--chart-1))]/40 bg-[hsl(var(--chart-1))]/10 text-[hsl(var(--chart-1))]",
-    Defenders: "border-[hsl(var(--chart-3))]/40 bg-[hsl(var(--chart-3))]/10 text-[hsl(var(--chart-3))]",
-    Laggards: "border-negative/40 bg-negative/10 text-negative",
-  };
-  return (
-    <div className="grid grid-cols-2 gap-3">
-      {order.map((q) => {
-        const items = buckets[q].slice(0, 5);
-        return (
-          <div key={q} className="rounded-md border bg-card p-3 shadow-sm">
-            <div className={cn(
-              "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
-              accent[q]
-            )}>
-              {q} · {buckets[q].length}
-            </div>
-            {items.length === 0 ? (
-              <div className="mt-2 text-xs text-muted-foreground">No AMCs in this bucket this quarter.</div>
-            ) : (
-              <ul className="mt-2 space-y-1">
-                {items.map((p) => (
-                  <li key={p.slug} className="flex items-center justify-between gap-2 text-[11px]">
-                    <Link
-                      href={`/amc/${p.slug}`}
-                      className="truncate hover:underline"
-                      title={p.displayName}
-                    >
-                      {p.displayName}
-                    </Link>
-                    <span className="shrink-0 tabular text-muted-foreground">
-                      {p.marketSharePct.toFixed(1)}% · {p.qoqGrowthPct >= 0 ? "+" : ""}
-                      {p.qoqGrowthPct.toFixed(1)}%
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
