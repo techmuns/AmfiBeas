@@ -4,7 +4,6 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { HowToRead } from "@/components/ui/HowToRead";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
-import { AmcBattleCard } from "@/components/ui/AmcBattleCard";
 import { AmcQuadrantChart } from "@/components/charts/AmcQuadrantChart";
 import { CohortJourneyMap } from "@/components/charts/CohortJourneyMap";
 import { Heatmap } from "@/components/charts/Heatmap";
@@ -14,17 +13,15 @@ import { CohortUniqueInvestorShare } from "@/components/amc/CohortUniqueInvestor
 import { IndustryConcentrationStack } from "@/components/amc/IndustryConcentrationStack";
 import { AmcCashAllocationTrend } from "@/components/amc/AmcCashAllocationTrend";
 import { AmcStockConcentration } from "@/components/amc/AmcStockConcentration";
-import { amcAaumSeries, amcIndexRows } from "@/data/amc-detail";
+import { amcIndexRows } from "@/data/amc-detail";
 import {
   amcHealthGrowthMatrix,
-  amcHealthGrowthZScoreMatrix,
   amcTrajectoryQuadrant,
   cohortJourneyMap,
   latestQoqAnomalies,
   type AmcQuadrant,
   type AmcQuadrantPoint,
 } from "@/data/amc-peer-universe";
-import { LensToggle } from "@/components/ui/LensToggle";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
 import { cn } from "@/lib/cn";
 import {
@@ -47,8 +44,6 @@ export default async function AmcListPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const healthLens: "growth" | "zscore" =
-    sp.healthLens === "zscore" ? "zscore" : "growth";
   const activeTab = resolveTab<AmcTabId>(sp.tab, AMC_TAB_IDS, "overview");
   const data = amcIndexRows();
 
@@ -61,10 +56,7 @@ export default async function AmcListPage({
   }
 
   const subtitle = `${data.rows.length} AMCs · ${data.fiscalLabel}`;
-  const health =
-    healthLens === "zscore"
-      ? amcHealthGrowthZScoreMatrix(8)
-      : amcHealthGrowthMatrix(8);
+  const health = amcHealthGrowthMatrix(8);
   const healthDisplayRows = health.rows.map((r) => ({
     label: r.displayName,
     values: r.values,
@@ -96,32 +88,6 @@ export default async function AmcListPage({
           };
         })()
       : null;
-
-  // AMC Roster cards — top 12 AMCs by AAUM, with their AAUM
-  // sparkline pulled from amc-detail. The card grid replaces the
-  // tabular row scan with a visual scan.
-  const rosterCards = quadrant
-    ? [...quadrant.points]
-        .slice(0, 12)
-        .map((p) => {
-          const indexRow = data.rows.find((r) => r.amcSlug === p.slug);
-          const series = amcAaumSeries(p.slug);
-          return {
-            slug: p.slug,
-            displayName: p.displayName,
-            rank: indexRow?.rank ?? 0,
-            outOf: data.rows.length,
-            marketSharePct: p.marketSharePct,
-            qoqGrowthPct: p.qoqGrowthPct,
-            yoyGrowthPct: indexRow?.yoyGrowthPct ?? null,
-            isTop7: indexRow?.isTop7 ?? false,
-            sparkline: series.map((s) => ({
-              label: s.fiscalLabel,
-              value: s.avgAum,
-            })),
-          };
-        })
-    : [];
 
   return (
     <div className="space-y-6">
@@ -206,49 +172,6 @@ export default async function AmcListPage({
             typeof sp.movePeriod === "string" ? sp.movePeriod : undefined
           }
         />
-      )}
-
-      {activeTab === "overview" && rosterCards.length > 0 && (
-        <Card
-          title="AMC Roster"
-          subtitleNode={
-            <div className="space-y-0.5">
-              <p className="text-xs text-muted-foreground">
-                Every AMC at a glance, sorted by rank. Each card shows market share, growth, and the trailing AAUM sparkline.
-              </p>
-              <p className="text-[11px] text-muted-foreground/80">
-                Scroll horizontally to see all AMCs.
-              </p>
-            </div>
-          }
-        >
-          <HowToRead>
-            <ul className="list-disc space-y-0.5 pl-4">
-              <li><span className="text-foreground">Rank</span> is by AAUM (lower number = larger AMC).</li>
-              <li><span className="text-foreground">Top 7</span> AMCs typically hold ~70% of total industry AUM — the rest is a long tail.</li>
-              <li>Sparkline shows the trailing AAUM path; the QoQ / YoY growth numbers next to it tell you the recent direction.</li>
-            </ul>
-          </HowToRead>
-          <div className="overflow-x-auto">
-            <div className="flex gap-3" style={{ minWidth: "max-content" }}>
-              {rosterCards.map((c) => (
-                <div key={c.slug} className="w-[200px] shrink-0">
-                  <AmcBattleCard
-                    slug={c.slug}
-                    displayName={c.displayName}
-                    rank={c.rank}
-                    outOf={c.outOf}
-                    marketSharePct={c.marketSharePct}
-                    qoqGrowthPct={c.qoqGrowthPct}
-                    yoyGrowthPct={c.yoyGrowthPct}
-                    isTop7={c.isTop7}
-                    sparkline={c.sparkline}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
       )}
 
       {activeTab === "share-positioning" && journeyPoints.length >= 4 && (
@@ -355,50 +278,25 @@ export default async function AmcListPage({
                 Each row is one AMC. Each cell colours the quarter green or red depending on whether that AMC outperformed or underperformed the cohort.
               </p>
               <p className="text-[11px] text-muted-foreground/80">
-                {`${healthLens === "zscore" ? "QoQ growth z-score vs cohort" : "QoQ AAUM growth"} · ${health.quarterLabels[0]} → ${health.quarterLabels[health.quarterLabels.length - 1]} · Source: AMFI Fundwise AAUM`}
+                {`QoQ AAUM growth · ${health.quarterLabels[0]} → ${health.quarterLabels[health.quarterLabels.length - 1]} · Source: AMFI Fundwise AAUM`}
               </p>
             </div>
-          }
-          action={
-            <LensToggle
-              basePath="/amc"
-              paramName="healthLens"
-              defaultValue="growth"
-              lenses={[
-                { value: "growth", label: "Growth %" },
-                { value: "zscore", label: "Z-score" },
-              ]}
-              active={healthLens}
-              preserveParams={{
-                tab: typeof sp.tab === "string" ? sp.tab : undefined,
-              }}
-            />
           }
         >
           <Heatmap
             rows={healthDisplayRows}
             columns={health.quarterLabels}
-            min={healthLens === "zscore" ? -2 : -6}
-            max={healthLens === "zscore" ? 2 : 12}
+            min={-6}
+            max={12}
             cellMinWidth={44}
             showAllColumnLabels
-            valueSuffix={healthLens === "zscore" ? "σ" : "%"}
+            valueSuffix="%"
           />
           <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            {healthLens === "zscore" ? (
-              <>
-                Each cell = AMC&rsquo;s QoQ growth z-score vs the cohort&rsquo;s
-                mean that quarter. Saturates at ±2σ.
-                <InfoTooltip label="z = (AMC's QoQ growth − cohort mean) ÷ cohort stdDev (population). Quarters where the cohort has fewer than 2 AMCs with a growth value, or where stdDev is zero, render as muted." />
-              </>
-            ) : (
-              <>
-                Each cell = QoQ AAUM growth (%).
-                <span className="text-positive">Green</span> = growth,{" "}
-                <span className="text-negative">red</span> = contraction.
-                <InfoTooltip label="Muted cells indicate the AMC didn't have a prior-quarter AAUM row. AMCs sorted by latest-quarter AAUM (largest at top)." />
-              </>
-            )}
+            Each cell = QoQ AAUM growth (%).
+            <span className="text-positive">Green</span> = growth,{" "}
+            <span className="text-negative">red</span> = contraction.
+            <InfoTooltip label="Muted cells indicate the AMC didn't have a prior-quarter AAUM row. AMCs sorted by latest-quarter AAUM (largest at top)." />
           </p>
         </Card>
       )}
