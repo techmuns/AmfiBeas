@@ -1075,6 +1075,28 @@ export default async function MonthlyPage({
 
       {activeTab === "flows" && amfiSelected && (
         <div className="space-y-3">
+          {maaumColumns && (
+            <Card
+              title="Industry MAAUM Breakdown"
+              subtitleNode={
+                <div className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground">
+                    Monthly average AUM by category, with the active-equity
+                    split. Equity = Active + ETF &amp; Index + Arbitrage.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/80">
+                    {`${maaumColumns.yearAgo.monthLabel} · ${maaumColumns.prevMonth.monthLabel} · ${maaumColumns.latest.monthLabel} · Source: AMFI Monthly Report`}
+                  </p>
+                </div>
+              }
+            >
+              <MaaumTable
+                yearAgo={maaumColumns.yearAgo}
+                prevMonth={maaumColumns.prevMonth}
+                latest={maaumColumns.latest}
+              />
+            </Card>
+          )}
           {totalAumChartHasData && (
             <Card
               title="Total AUM Trend"
@@ -1105,28 +1127,6 @@ export default async function MonthlyPage({
                 Bars: month-end industry AUM (₹ Cr, left axis). Line:
                 year-on-year growth (%, right axis).
               </p>
-            </Card>
-          )}
-          {maaumColumns && (
-            <Card
-              title="Industry MAAUM Breakdown"
-              subtitleNode={
-                <div className="space-y-0.5">
-                  <p className="text-xs text-muted-foreground">
-                    Monthly average AUM by category, with the active-equity
-                    split. Equity = Active + ETF &amp; Index + Arbitrage.
-                  </p>
-                  <p className="text-[11px] text-muted-foreground/80">
-                    {`${maaumColumns.yearAgo.monthLabel} · ${maaumColumns.prevMonth.monthLabel} · ${maaumColumns.latest.monthLabel} · Source: AMFI Monthly Report`}
-                  </p>
-                </div>
-              }
-            >
-              <MaaumTable
-                yearAgo={maaumColumns.yearAgo}
-                prevMonth={maaumColumns.prevMonth}
-                latest={maaumColumns.latest}
-              />
             </Card>
           )}
         </div>
