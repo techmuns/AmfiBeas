@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { HowToRead } from "@/components/ui/HowToRead";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { AmcQuadrantChart } from "@/components/charts/AmcQuadrantChart";
-import { CohortJourneyMap } from "@/components/charts/CohortJourneyMap";
+import { MarketShareMovement } from "@/components/charts/MarketShareMovement";
 import { Heatmap } from "@/components/charts/Heatmap";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
 import { StrategicMovesCohortLane } from "@/components/amc/StrategicMovesCohortLane";
@@ -175,7 +175,7 @@ export default async function AmcListPage({
                 Who gained or lost market share over the full available window.
               </p>
               <p className="text-[11px] text-muted-foreground/80">
-                {`Each arrow = one AMC · ${journeyPoints[0].startQuarterLabel} → ${journeyPoints[0].endQuarterLabel}`}
+                {`One row per AMC, sorted by change · ${journeyPoints[0].startQuarterLabel} → ${journeyPoints[0].endQuarterLabel}`}
               </p>
             </div>
           }
@@ -208,10 +208,11 @@ export default async function AmcListPage({
               }
             />
           )}
-          <CohortJourneyMap points={journeyPoints} />
+          <MarketShareMovement points={journeyPoints} />
           <p className="mt-3 text-[11px] text-muted-foreground">
-            Green arrows = share gainers · red = share losers · grey = roughly flat.
-            Hover an arrow for the precise pp move.
+            Bar length = size of the move over the window · green = share
+            gainers · red = share losers. &ldquo;Now&rdquo; is the latest-quarter
+            market share.
           </p>
         </Card>
       )}
