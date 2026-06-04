@@ -480,7 +480,7 @@ export default async function MonthlyPage({
   };
   const yoyPctOf = (
     month: string,
-    field: "totalAum" | "totalAaum" | "activeEquityAaum"
+    field: "totalAum" | "totalAaum"
   ): number | null => {
     const cur = amfiRowByMonth.get(month)?.[field];
     const prev = amfiRowByMonth.get(monthMinus12(month))?.[field];
@@ -515,7 +515,6 @@ export default async function MonthlyPage({
       label: r.month,
       value: r.activeEquityAaum as number,
       line: ((r.activeEquityAaum as number) / (r.totalAaum as number)) * 100,
-      line2: yoyPctOf(r.month, "activeEquityAaum"),
     }));
   const activeEqShareChartHasData = activeEqShareChart.length > 0;
   const activeEqShareLatest =
@@ -1139,46 +1138,33 @@ export default async function MonthlyPage({
               }
             >
               {aumView === "active" ? (
-                <>
-                  <BarsWithIndexLine
-                    data={activeEqShareChart}
-                    barColor="hsl(var(--chart-1))"
-                    lineColor="hsl(var(--chart-2))"
-                    valueFormat="cr"
-                    axisFormat="cr"
-                    lineValueFormat="pct"
-                    lineAxisFormat="pct"
-                    labelFormat="month"
-                    barName="Active Equity MAAUM"
-                    lineName="Active equity share of total"
-                    line2Name="YoY growth"
-                    line2Color="hsl(var(--foreground))"
-                  />
-                  <p className="mt-2 text-[11px] text-muted-foreground">
-                    Bars: active-equity MAAUM (₹ Cr, left axis). Lines (right
-                    axis, %): active-equity share of total MAAUM, and
-                    year-on-year growth.
-                  </p>
-                </>
+                <BarsWithIndexLine
+                  data={activeEqShareChart}
+                  barColor="hsl(var(--chart-1))"
+                  lineColor="hsl(var(--chart-2))"
+                  valueFormat="cr"
+                  axisFormat="cr"
+                  lineValueFormat="pct"
+                  lineAxisFormat="pct"
+                  labelFormat="month"
+                  barName="Active Equity MAAUM"
+                  lineName="Active equity share of total"
+                  lineDomain={[50, 60]}
+                  lineTicks={[50, 52, 54, 56, 58, 60]}
+                />
               ) : (
-                <>
-                  <BarsWithIndexLine
-                    data={totalAumChart}
-                    barColor="hsl(var(--chart-1))"
-                    lineColor="hsl(var(--foreground))"
-                    valueFormat="cr"
-                    axisFormat="cr"
-                    lineValueFormat="pct"
-                    lineAxisFormat="pct"
-                    labelFormat="month"
-                    barName="Total AUM (EOP)"
-                    lineName="YoY growth"
-                  />
-                  <p className="mt-2 text-[11px] text-muted-foreground">
-                    Bars: month-end industry AUM (₹ Cr, left axis). Line:
-                    year-on-year growth (%, right axis).
-                  </p>
-                </>
+                <BarsWithIndexLine
+                  data={totalAumChart}
+                  barColor="hsl(var(--chart-1))"
+                  lineColor="hsl(var(--foreground))"
+                  valueFormat="cr"
+                  axisFormat="cr"
+                  lineValueFormat="pct"
+                  lineAxisFormat="pct"
+                  labelFormat="month"
+                  barName="Total AUM (EOP)"
+                  lineName="YoY growth"
+                />
               )}
             </Card>
           )}
