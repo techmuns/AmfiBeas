@@ -74,7 +74,7 @@ const MONTHLY_TABS = [
   { id: "flows", label: "AUM" },
   { id: "flow-table", label: "Flow Table" },
   { id: "sip-retail", label: "SIP & Retail" },
-  { id: "categories", label: "Categories" },
+  { id: "categories", label: "Funds Rotation" },
   { id: "market-cycle", label: "Market Cycle" },
 ] as const satisfies readonly DashboardTabDef[];
 type MonthlyTabId = (typeof MONTHLY_TABS)[number]["id"];
@@ -983,11 +983,9 @@ export default async function MonthlyPage({
         searchParams={sp}
       />
 
-      {amfiSelected &&
-        amfiAvailableMonths.length > 0 &&
-        activeTab !== "flows" &&
-        activeTab !== "sip-retail" &&
-        activeTab !== "flow-table" && (
+      {activeTab === "snapshot" &&
+        amfiSelected &&
+        amfiAvailableMonths.length > 0 && (
           <MonthPicker
             availableMonths={amfiAvailableMonths}
             selectedMonth={amfiSelected.month}
@@ -1329,11 +1327,6 @@ export default async function MonthlyPage({
             labelFormat="month"
             labelMode="all"
           />
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Bars: monthly NFO funds mobilised across all schemes (₹ Cr). The
-            AMFI Monthly Report doesn&rsquo;t break out an active-equity-only
-            figure, so this is the industry total.
-          </p>
         </Card>
       )}
 

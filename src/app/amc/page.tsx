@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { HowToRead } from "@/components/ui/HowToRead";
@@ -150,14 +150,6 @@ export default async function AmcListPage({
               );
             })}
           </ul>
-          <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <AlertTriangle className="mr-1 inline h-3 w-3 align-[-2px]" />
-            Cohort median QoQ growth: {anomalies.medianQoqPct.toFixed(2)}% ·
-            stdDev {anomalies.stdDevPct.toFixed(2)} pp. Tiny-base names sit
-            below 0.25% of the cohort AUM — their % growth is amplified by
-            a small denominator, not by a franchise shift.
-            <InfoTooltip label="Outliers are AMCs whose latest QoQ growth sits ≥2 standard deviations from the cohort median — investigate before drawing conclusions; could be a new AMC ramping up, a one-off reclassification, or a structural shift. Ordering: non-tiny-base names first, ranked by absolute ₹ Cr ΔAUM." />
-          </p>
         </Card>
       )}
 
