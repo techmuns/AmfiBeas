@@ -2,9 +2,7 @@ import Link from "next/link";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
-import { InfoTooltip } from "@/components/ui/InfoTooltip";
-import { MarketShareMovement } from "@/components/charts/MarketShareMovement";
-import { Heatmap } from "@/components/charts/Heatmap";
+import { GrowthVsMarket } from "@/components/charts/GrowthVsMarket";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
 import { StrategicMovesCohortLane } from "@/components/amc/StrategicMovesCohortLane";
 import { CohortUniqueInvestorShare } from "@/components/amc/CohortUniqueInvestorShare";
@@ -13,9 +11,8 @@ import { AmcCashAllocationTrend } from "@/components/amc/AmcCashAllocationTrend"
 import { AmcStockConcentration } from "@/components/amc/AmcStockConcentration";
 import { amcIndexRows } from "@/data/amc-detail";
 import {
-  amcHealthGrowthMatrix,
+  cohortGrowthVsMarket,
   cohortJourneyEndQuarters,
-  cohortJourneyMap,
   latestQoqAnomalies,
 } from "@/data/amc-peer-universe";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
@@ -53,15 +50,10 @@ export default async function AmcListPage({
   }
 
   const subtitle = `${data.rows.length} AMCs · ${data.fiscalLabel}`;
-  const health = amcHealthGrowthMatrix(8);
-  const healthDisplayRows = health.rows.map((r) => ({
-    label: r.displayName,
-    values: r.values,
-  }));
   const anomalies = latestQoqAnomalies(2);
 
-  // Market-share movement — QoQ (3-month) share change ending at the
-  // selected quarter. The selector lists the recent quarter-ends that
+  // Growth vs the Market — QoQ (3-month) growth + share change ending at
+  // the selected quarter. The selector lists the recent quarter-ends that
   // have a clean preceding quarter; defaults to the latest.
   const shareQuarters = cohortJourneyEndQuarters();
   const latestShareQuarter =
@@ -73,28 +65,29 @@ export default async function AmcListPage({
     shareQuarters.some((q) => q.quarter === sp.sharePeriod)
       ? sp.sharePeriod
       : latestShareQuarter;
-  const journeyPoints = selectedShareQuarter
-    ? cohortJourneyMap(20, selectedShareQuarter) ?? []
-    : [];
+  const growth = selectedShareQuarter
+    ? cohortGrowthVsMarket(20, selectedShareQuarter)
+    : null;
 
-  // Leaderboard read for the share-movement card: biggest share gainer /
-  // loser over the window and the top-5 concentration.
-  const shareLeaders =
-    journeyPoints.length >= 4
+  // Headline read: biggest share gainer / loser this quarter, framed
+  // against the industry's growth benchmark.
+  const growthLeaders =
+    growth && growth.points.length >= 4
       ? (() => {
-          const byDelta = [...journeyPoints].sort(
+          const byDelta = [...growth.points].sort(
             (a, b) => b.shareDeltaPp - a.shareDeltaPp
           );
-          const top5 = [...journeyPoints]
-            .sort((a, b) => b.endMarketSharePct - a.endMarketSharePct)
+          const top5 = [...growth.points]
+            .sort((a, b) => b.sharePct - a.sharePct)
             .slice(0, 5)
-            .reduce((s, p) => s + p.endMarketSharePct, 0);
+            .reduce((s, p) => s + p.sharePct, 0);
           return {
             gainer: byDelta[0],
             loser: byDelta[byDelta.length - 1],
             top5,
-            start: journeyPoints[0].startQuarterLabel,
-            end: journeyPoints[0].endQuarterLabel,
+            industryGrowthPct: growth.industryGrowthPct,
+            start: growth.startQuarterLabel,
+            end: growth.endQuarterLabel,
           };
         })()
       : null;
@@ -176,16 +169,17 @@ export default async function AmcListPage({
         />
       )}
 
-      {activeTab === "share-positioning" && journeyPoints.length >= 4 && (
+      {activeTab === "share-positioning" && growth && growth.points.length >= 4 && (
         <Card
-          title="Market-share movement"
+          title="Growth vs the Market"
           subtitleNode={
             <div className="space-y-0.5">
               <p className="text-xs text-muted-foreground">
-                Who gained or lost market share quarter-over-quarter.
+                How fast each AMC grew versus the industry — and what that did
+                to its market share.
               </p>
               <p className="text-[11px] text-muted-foreground/80">
-                {`One row per AMC, sorted by change · ${journeyPoints[0].startQuarterLabel} → ${journeyPoints[0].endQuarterLabel}`}
+                {`One row per AMC · ${growth.startQuarterLabel} → ${growth.endQuarterLabel}`}
               </p>
             </div>
           }
@@ -207,39 +201,53 @@ export default async function AmcListPage({
             ) : undefined
           }
         >
-          {shareLeaders && (
+          {growthLeaders && (
             <KeyTakeaway
               className="mb-3"
               headline={
                 <>
-                  Over {shareLeaders.start} → {shareLeaders.end},{" "}
-                  <strong>{shareLeaders.gainer.displayName}</strong> gained the
-                  most market share (
+                  Industry AAUM grew{" "}
+                  <strong>
+                    {growthLeaders.industryGrowthPct >= 0 ? "+" : "−"}
+                    {Math.abs(growthLeaders.industryGrowthPct).toFixed(1)}%
+                  </strong>{" "}
+                  over {growthLeaders.start} → {growthLeaders.end}.{" "}
+                  <strong>{growthLeaders.gainer.displayName}</strong> gained the
+                  most share (
                   <span className="text-positive">
-                    +{shareLeaders.gainer.shareDeltaPp.toFixed(2)}pp
+                    +{growthLeaders.gainer.shareDeltaPp.toFixed(2)}pp
                   </span>{" "}
-                  to {shareLeaders.gainer.endMarketSharePct.toFixed(2)}%), while{" "}
-                  <strong>{shareLeaders.loser.displayName}</strong> lost the most
+                  to {growthLeaders.gainer.sharePct.toFixed(2)}%) on{" "}
+                  {growthLeaders.gainer.aumGrowthPct >= 0 ? "+" : "−"}
+                  {Math.abs(growthLeaders.gainer.aumGrowthPct).toFixed(1)}%
+                  growth, while{" "}
+                  <strong>{growthLeaders.loser.displayName}</strong> lost the most
                   (
                   <span className="text-negative">
-                    {shareLeaders.loser.shareDeltaPp.toFixed(2)}pp
+                    {growthLeaders.loser.shareDeltaPp.toFixed(2)}pp
                   </span>{" "}
-                  to {shareLeaders.loser.endMarketSharePct.toFixed(2)}%).
+                  to {growthLeaders.loser.sharePct.toFixed(2)}%) on{" "}
+                  {growthLeaders.loser.aumGrowthPct >= 0 ? "+" : "−"}
+                  {Math.abs(growthLeaders.loser.aumGrowthPct).toFixed(1)}% growth.
                 </>
               }
               detail={
                 <>
-                  Top-5 AMCs now hold {shareLeaders.top5.toFixed(1)}% of cohort
-                  AAUM.
+                  Top-5 AMCs hold {growthLeaders.top5.toFixed(1)}% of cohort
+                  AAUM. An AMC gains share only when it grows faster than the
+                  industry.
                 </>
               }
             />
           )}
-          <MarketShareMovement points={journeyPoints} />
+          <GrowthVsMarket points={growth.points} />
           <p className="mt-3 text-[11px] text-muted-foreground">
-            Bar length = size of the quarter-over-quarter move · green = share
-            gainers · red = share losers. &ldquo;Share&rdquo; is each AMC&rsquo;s
-            market share at the end of the selected quarter.
+            Bar = each AMC&rsquo;s AUM growth versus the industry&rsquo;s{" "}
+            {growth.industryGrowthPct >= 0 ? "+" : "−"}
+            {Math.abs(growth.industryGrowthPct).toFixed(1)}% pace (centre line):
+            right = grew faster → gaining share, left = slower → losing.{" "}
+            &ldquo;AUM gr.&rdquo; is the AMC&rsquo;s own growth; &ldquo;Share&rdquo;
+            its end-quarter market share; &ldquo;Δ share&rdquo; the change (pp).
           </p>
         </Card>
       )}
@@ -247,38 +255,6 @@ export default async function AmcListPage({
       {activeTab === "share-positioning" && <AmcCashAllocationTrend />}
 
       {activeTab === "share-positioning" && <IndustryConcentrationStack />}
-
-      {activeTab === "overview" && health.rows.length > 0 && (
-        <Card
-          title="AMC Health Heatmap"
-          subtitleNode={
-            <div className="space-y-0.5">
-              <p className="text-xs text-muted-foreground">
-                Each row is one AMC. Each cell colours the quarter green or red depending on whether that AMC outperformed or underperformed the cohort.
-              </p>
-              <p className="text-[11px] text-muted-foreground/80">
-                {`QoQ AAUM growth · ${health.quarterLabels[0]} → ${health.quarterLabels[health.quarterLabels.length - 1]} · Source: AMFI Fundwise AAUM`}
-              </p>
-            </div>
-          }
-        >
-          <Heatmap
-            rows={healthDisplayRows}
-            columns={health.quarterLabels}
-            min={-6}
-            max={12}
-            cellMinWidth={44}
-            showAllColumnLabels
-            valueSuffix="%"
-          />
-          <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            Each cell = QoQ AAUM growth (%).
-            <span className="text-positive">Green</span> = growth,{" "}
-            <span className="text-negative">red</span> = contraction.
-            <InfoTooltip label="Muted cells indicate the AMC didn't have a prior-quarter AAUM row. AMCs sorted by latest-quarter AAUM (largest at top)." />
-          </p>
-        </Card>
-      )}
 
       {activeTab === "overview" && <AmcSearchTable rows={data.rows} />}
 

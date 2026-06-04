@@ -895,30 +895,35 @@ export function amcLevelHhiPercentileRead(
 }
 
 /**
- * Cohort Journey — for each AMC, compute its (market share, AAUM)
- * position both at the EARLIEST quarter on record AND at the
- * latest. The chart can then draw an arrow from the start point
- * to the end point per AMC, visualising the structural shift
- * across the available history.
- *
- * Returns top-N AMCs by latest AAUM that have BOTH a start and an
- * end position. AMCs without a start point (because they didn't
- * exist 5Y ago) are dropped — the journey map only shows AMCs with
- * a complete trail.
+ * Growth vs the Market — per AMC, its QoQ AAUM growth measured against
+ * the industry's growth, plus the resulting market-share change. Unifies
+ * "how fast each AMC grew" with "who won / lost share": an AMC gains
+ * share iff it grows faster than the cohort.
  */
-export interface CohortJourneyPoint {
+export interface GrowthVsMarketPoint {
   amcSlug: string;
   displayName: string;
-  startMarketSharePct: number;
-  endMarketSharePct: number;
+  /** AMC's own QoQ AAUM growth (%). */
+  aumGrowthPct: number;
+  /** Growth minus the industry's growth (pp) — drives the bar. >0 means
+   *  the AMC grew faster than the market and therefore gained share. */
+  excessGrowthPct: number;
+  /** End-quarter market share (%). */
+  sharePct: number;
+  /** QoQ change in market share (pp). */
+  shareDeltaPp: number;
+  /** End-quarter AAUM (₹ Cr) — used to pick the top-N by size. */
+  latestAum: number;
+}
+
+export interface GrowthVsMarketResult {
   startQuarter: string;
   endQuarter: string;
   startQuarterLabel: string;
   endQuarterLabel: string;
-  /** Latest AAUM (₹ Cr) — used to size the dot on the chart. */
-  latestAum: number;
-  /** Δ market share over the journey (pp). */
-  shareDeltaPp: number;
+  /** Industry-wide QoQ AAUM growth (%) — the benchmark / centre line. */
+  industryGrowthPct: number;
+  points: GrowthVsMarketPoint[];
 }
 
 /** Calendar quarter exactly 3 months earlier. "2026-Q1" → "2025-Q4". */
@@ -946,16 +951,16 @@ export function cohortJourneyEndQuarters(): { quarter: string; label: string }[]
 }
 
 /**
- * Market-share movement points. With no `endQuarter`, compares the
- * earliest available quarter to the latest (the full window). When
- * `endQuarter` is given, compares it to the immediately-preceding
- * calendar quarter (a QoQ / 3-month change) so the chart can show recent
- * share moves via a period selector.
+ * Growth vs the Market. With no `endQuarter`, compares the earliest
+ * available quarter to the latest (the full window); otherwise a QoQ
+ * (3-month) change ending at `endQuarter`. Returns the industry growth
+ * benchmark plus the top-N AMCs by end-quarter AAUM, each with its own
+ * growth, growth-vs-market, market share and share change.
  */
-export function cohortJourneyMap(
+export function cohortGrowthVsMarket(
   topN = 20,
   endQuarter?: string
-): CohortJourneyPoint[] | null {
+): GrowthVsMarketResult | null {
   const allQuarters = Array.from(
     new Set(
       amcAaumQuarterlySnapshot.rows
@@ -968,7 +973,7 @@ export function cohortJourneyMap(
   const endQ = endQuarter ?? allQuarters[allQuarters.length - 1];
   if (!allQuarters.includes(startQ) || !allQuarters.includes(endQ)) return null;
 
-  // Per-quarter total AAUM (denominator for share).
+  // Per-quarter total AAUM (the share denominator + growth benchmark).
   const totalByQuarter = new Map<string, number>();
   for (const r of amcAaumQuarterlySnapshot.rows) {
     if (r.status !== "ok") continue;
@@ -980,6 +985,7 @@ export function cohortJourneyMap(
   const startTotal = totalByQuarter.get(startQ) ?? 0;
   const endTotal = totalByQuarter.get(endQ) ?? 0;
   if (startTotal <= 0 || endTotal <= 0) return null;
+  const industryGrowthPct = ((endTotal - startTotal) / startTotal) * 100;
 
   // Per-AMC start + end AAUM.
   const aaumByAmcQuarter = new Map<string, Map<string, number>>();
@@ -990,35 +996,37 @@ export function cohortJourneyMap(
     inner.set(r.quarter, r.avgAum);
     aaumByAmcQuarter.set(r.amcSlug, inner);
     if (!displayBySlug.has(r.amcSlug)) {
-      displayBySlug.set(
-        r.amcSlug,
-        r.displayName ?? r.amcNameAsReported
-      );
+      displayBySlug.set(r.amcSlug, r.displayName ?? r.amcNameAsReported);
     }
   }
 
-  const points: CohortJourneyPoint[] = [];
+  const points: GrowthVsMarketPoint[] = [];
   for (const [slug, inner] of aaumByAmcQuarter) {
     const startAum = inner.get(startQ);
     const endAum = inner.get(endQ);
     if (typeof startAum !== "number" || typeof endAum !== "number") continue;
     if (startAum <= 0 || endAum <= 0) continue;
+    const aumGrowthPct = ((endAum - startAum) / startAum) * 100;
+    const sharePct = (endAum / endTotal) * 100;
     const startSharePct = (startAum / startTotal) * 100;
-    const endSharePct = (endAum / endTotal) * 100;
     points.push({
       amcSlug: slug,
       displayName: displayBySlug.get(slug) ?? slug,
-      startMarketSharePct: startSharePct,
-      endMarketSharePct: endSharePct,
-      startQuarter: startQ,
-      endQuarter: endQ,
-      startQuarterLabel: fiscalLabelFromCalendarQuarter(startQ),
-      endQuarterLabel: fiscalLabelFromCalendarQuarter(endQ),
+      aumGrowthPct,
+      excessGrowthPct: aumGrowthPct - industryGrowthPct,
+      sharePct,
+      shareDeltaPp: sharePct - startSharePct,
       latestAum: endAum,
-      shareDeltaPp: endSharePct - startSharePct,
     });
   }
-  return points
-    .sort((a, b) => b.latestAum - a.latestAum)
-    .slice(0, topN);
+  return {
+    startQuarter: startQ,
+    endQuarter: endQ,
+    startQuarterLabel: fiscalLabelFromCalendarQuarter(startQ),
+    endQuarterLabel: fiscalLabelFromCalendarQuarter(endQ),
+    industryGrowthPct,
+    points: points
+      .sort((a, b) => b.latestAum - a.latestAum)
+      .slice(0, topN),
+  };
 }
