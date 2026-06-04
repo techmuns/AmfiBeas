@@ -72,8 +72,8 @@ const LEVEL_ROWS: { label: string; key: RowKey; indent?: boolean; bold?: boolean
 const MIX_ROWS: { label: string; key: RowKey; indent?: boolean }[] = [
   { label: "Equity Share", key: "equity" },
   { label: "– Active", key: "active", indent: true },
+  { label: "– ETF & Index", key: "etf", indent: true },
   { label: "Debt (incl. Liquid)", key: "debt" },
-  { label: "Others", key: "others" },
 ];
 
 export function MaaumTable({
