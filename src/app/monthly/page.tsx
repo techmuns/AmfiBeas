@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
@@ -48,7 +47,6 @@ import { LensToggle } from "@/components/ui/LensToggle";
 import {
   categoryRotation,
   iiflActiveEquityHeatmapData,
-  iiflActiveEquityHeatmapZScoreData,
 } from "@/data/amfi-monthly-category";
 import { VerticalBars } from "@/components/charts/VerticalBars";
 import {
@@ -212,10 +210,6 @@ export default async function MonthlyPage({
 
   // ---- Lens toggles (parsed up-front so any chart below can read them).
   // Each chart owns its own URL param so the toggles don't collide.
-  const heatmapLens: "share" | "zscore" =
-    typeof sp.heatmap === "string" && sp.heatmap === "zscore"
-      ? "zscore"
-      : "share";
   // SIP Contribution period toggle. History now runs to ~10 years, so
   // the card offers 1Y / 3Y / 5Y / All — where "All" is capped at 84
   // months (the range that aligns with the cycle-phase / market-data
@@ -261,7 +255,6 @@ export default async function MonthlyPage({
     tab: typeof sp.tab === "string" ? sp.tab : undefined,
     month: typeof sp.month === "string" ? sp.month : undefined,
     aumView: typeof sp.aumView === "string" ? sp.aumView : undefined,
-    heatmap: typeof sp.heatmap === "string" ? sp.heatmap : undefined,
     aeFlowView:
       typeof sp.aeFlowView === "string" ? sp.aeFlowView : undefined,
     aeFlowRange:
@@ -820,9 +813,6 @@ export default async function MonthlyPage({
   // are null when either side is missing; the heatmap renders a
   // muted "—", never a fake zero.
   const iiflHeatmap = iiflActiveEquityHeatmapData();
-  const iiflHeatmapZScore = iiflActiveEquityHeatmapZScoreData();
-  const heatmapActive =
-    heatmapLens === "zscore" ? iiflHeatmapZScore : iiflHeatmap;
   const iiflHeatmapHasData = iiflHeatmap.rows.some((r) =>
     r.values.some((v) => v !== null)
   );
@@ -1484,36 +1474,21 @@ export default async function MonthlyPage({
                 Active-Equity Category Heatmap
               </h2>
               <p className="text-xs text-muted-foreground">
-                {heatmapLens === "zscore"
-                  ? "Net inflow z-score vs each category's own history · past 12 months · Source: AMFI Monthly Report"
-                  : "Net inflow share of active equity categories · past 12 months · Source: AMFI Monthly Report"}
+                Net inflow share of active equity categories · past 12 months ·
+                Source: AMFI Monthly Report
               </p>
             </div>
-            <HeatmapLensToggle
-              lens={heatmapLens}
-              activeTab={typeof sp.tab === "string" ? sp.tab : undefined}
-            />
           </div>
 
           <IiflHeatmap
-            months={heatmapActive.months}
-            rows={heatmapActive.rows}
-            lens={heatmapLens}
+            months={iiflHeatmap.months}
+            rows={iiflHeatmap.rows}
+            lens="share"
           />
 
           <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            {heatmapLens === "zscore" ? (
-              <>
-                Cell = (month value − category mean) ÷ category stdDev.
-                Saturates at ±2σ.
-                <InfoTooltip label="z-score is computed per category over its full available monthly history. Active equity = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
-              </>
-            ) : (
-              <>
-                Share = category net inflow ÷ active-equity net inflow.
-                <InfoTooltip label="Active equity = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
-              </>
-            )}
+            Share = category net inflow ÷ active-equity net inflow.
+            <InfoTooltip label="Active equity = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
           </p>
         </div>
       )}
@@ -1559,47 +1534,6 @@ export default async function MonthlyPage({
 
 /** Sign-aware compact ₹ Cr — local helper so a negative active-equity
  *  net inflow renders as "−₹32.4K Cr" rather than the unsigned value. */
-/** Heatmap lens toggle — pure-server segmented control rendered as
- *  two `<Link>`s so the App Router handles state. Each link preserves
- *  the current `?tab=` so toggling the heatmap lens doesn't bounce the
- *  reader back to the default tab. */
-function HeatmapLensToggle({
-  lens,
-  activeTab,
-}: {
-  lens: "share" | "zscore";
-  activeTab: string | undefined;
-}) {
-  const baseClass =
-    "rounded-md border px-2.5 py-1 text-[11px] font-medium tracking-tight transition-colors";
-  const activeClass = "border-foreground/40 bg-foreground/5 text-foreground";
-  const inactiveClass =
-    "border-border text-muted-foreground hover:bg-accent hover:text-foreground";
-  const shareQuery: Record<string, string> = {};
-  const zscoreQuery: Record<string, string> = { heatmap: "zscore" };
-  if (activeTab) {
-    shareQuery.tab = activeTab;
-    zscoreQuery.tab = activeTab;
-  }
-  return (
-    <div className="inline-flex items-center gap-1 rounded-md border bg-card p-0.5 shadow-sm">
-      <Link
-        href={{ pathname: "/monthly", query: shareQuery }}
-        scroll={false}
-        className={cn(baseClass, lens === "share" ? activeClass : inactiveClass)}
-      >
-        Share
-      </Link>
-      <Link
-        href={{ pathname: "/monthly", query: zscoreQuery }}
-        scroll={false}
-        className={cn(baseClass, lens === "zscore" ? activeClass : inactiveClass)}
-      >
-        Z-score
-      </Link>
-    </div>
-  );
-}
 
 /** Two-column compact rotation card: top gainers (green) on the left,
  *  top losers (red) on the right. Δ shown in percentage points. */
