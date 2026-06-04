@@ -25,7 +25,6 @@ import {
   kpiContext,
   latestAmfiMonthlyRow,
   snapshotSectionRead,
-  monthlyActivePassiveTrend,
   monthlyFlowsData,
   monthlyIndustryFolioAdditionsTrend,
   monthlySipGrossShareTrend,
@@ -42,7 +41,6 @@ import {
 } from "@/data/market-indices";
 import { BarsWithIndexLine } from "@/components/charts/BarsWithIndexLine";
 import { BarsWithLabels } from "@/components/charts/BarsWithLabels";
-import { PassiveShareInEquity } from "@/components/amc/PassiveShareInEquity";
 import { CalendarHeatGrid } from "@/components/ui/CalendarHeatGrid";
 import { EpisodeRecoveryCard } from "@/components/ui/EpisodeRecoveryCard";
 import { episodeRecoveryRows } from "@/data/episode-recovery";
@@ -1042,7 +1040,6 @@ export default async function MonthlyPage({
   // available March year-end + the most-recent Sep marker. The chart
   // self-filters; other consumers of this trend only look at the tail
   // so the wider window costs nothing.
-  const activePassiveTrend = monthlyActivePassiveTrend(96);
 
   return (
     <div className="space-y-8">
@@ -1416,15 +1413,6 @@ export default async function MonthlyPage({
             (ex-arbitrage) + solution-oriented schemes.
           </p>
         </Card>
-      )}
-
-      {activeTab === "flows" &&
-        activePassiveTrend && activePassiveTrend.history.length > 0 && (
-        <div className="space-y-3">
-          <section className="grid gap-4 lg:grid-cols-1">
-            <PassiveShareInEquity trend={activePassiveTrend} />
-          </section>
-        </div>
       )}
 
       {activeTab === "flows" && activeEqShareChartHasData && (
