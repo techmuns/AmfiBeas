@@ -12,7 +12,6 @@ import { AmcHeadToHead } from "@/components/data/AmcHeadToHead";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
 import { StrategicMovesCohortLane } from "@/components/amc/StrategicMovesCohortLane";
 import { CohortUniqueInvestorShare } from "@/components/amc/CohortUniqueInvestorShare";
-import { IndustryConcentrationStack } from "@/components/amc/IndustryConcentrationStack";
 import { AmcCashAllocationTrend } from "@/components/amc/AmcCashAllocationTrend";
 import { AmcStockConcentration } from "@/components/amc/AmcStockConcentration";
 import { amcIndexRows } from "@/data/amc-detail";
@@ -37,12 +36,11 @@ import {
   DashboardTabs,
   type DashboardTabDef,
 } from "@/components/layout/DashboardTabs";
-import { resolveTab } from "@/lib/tabs";
+import { resolveTabWithAliases } from "@/lib/tabs";
 
 const AMC_TABS = [
   { id: "overview", label: "AMC Overview" },
-  { id: "insights", label: "Fund Concentration" },
-  { id: "share-positioning", label: "Market Share Insights" },
+  { id: "share", label: "Market Share & Concentration" },
   { id: "compare", label: "Compare" },
 ] as const satisfies readonly DashboardTabDef[];
 type AmcTabId = (typeof AMC_TABS)[number]["id"];
@@ -54,7 +52,12 @@ export default async function AmcListPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const activeTab = resolveTab<AmcTabId>(sp.tab, AMC_TAB_IDS, "overview");
+  const activeTab = resolveTabWithAliases<AmcTabId>(
+    sp.tab,
+    AMC_TAB_IDS,
+    { insights: "share", "share-positioning": "share" },
+    "overview",
+  );
   const data = amcIndexRows();
 
   if (!data) {
@@ -211,11 +214,11 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {activeTab === "insights" && <AmcStockConcentration />}
+      {activeTab === "share" && <AmcStockConcentration />}
 
-      {activeTab === "insights" && <CohortUniqueInvestorShare />}
+      {activeTab === "share" && <CohortUniqueInvestorShare />}
 
-      {activeTab === "insights" && (
+      {activeTab === "share" && (
         <StrategicMovesCohortLane
           selectedAmc={typeof sp.moveAmc === "string" ? sp.moveAmc : undefined}
           selectedPeriod={
@@ -224,7 +227,7 @@ export default async function AmcListPage({
         />
       )}
 
-      {activeTab === "share-positioning" && fundwise.rows.length > 0 && (
+      {activeTab === "share" && fundwise.rows.length > 0 && (
         <Card
           title="Fund-by-Fund Market Share"
           subtitleNode={
@@ -322,15 +325,13 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {activeTab === "share-positioning" && equityBook.length > 0 && (
+      {activeTab === "share" && equityBook.length > 0 && (
         <Card title="Per-AMC Equity Holdings Mix — Active vs Passive (derived)">
           <AmcEquityBookHeatmap rows={equityBook} diagnostics={equityBookDiag} />
         </Card>
       )}
 
-      {activeTab === "share-positioning" && <AmcCashAllocationTrend />}
-
-      {activeTab === "share-positioning" && <IndustryConcentrationStack />}
+      {activeTab === "share" && <AmcCashAllocationTrend />}
 
       {activeTab === "compare" && aCompare && bCompare && (
         <Card title="AMC Head-to-Head">
