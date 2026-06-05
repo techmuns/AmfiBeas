@@ -6,10 +6,8 @@ import { Card } from "@/components/ui/Card";
 import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import { DistributionStrip } from "@/components/ui/DistributionStrip";
 import { KpiCard } from "@/components/ui/KpiCard";
-import { LensToggle } from "@/components/ui/LensToggle";
 import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
 import { SectionDivider } from "@/components/ui/SectionDivider";
-import { BarSeries } from "@/components/charts/BarSeries";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { chartInsights, latestYoyPct } from "@/lib/chart-context";
 import { amcMarketWrap } from "@/data/market-wrap-amc";
@@ -20,7 +18,6 @@ import {
   amcGrowthMetrics,
   amcMarketShareSeries,
   amcRankSeries,
-  cohortMedianMarketShareSeries,
   industryAaumSeries,
   peerComparisonForAmc,
   resolveAmcSlug,
@@ -43,18 +40,10 @@ export function generateStaticParams() {
 
 export default async function AmcPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { slug: rawSlug } = await params;
-  const sp = await searchParams;
-  const aaumLens: "absolute" | "share" =
-    sp.aaumLens === "share" ? "share" : "absolute";
-  const preservedQueryParams: Record<string, string | undefined> = {
-    aaumLens: typeof sp.aaumLens === "string" ? sp.aaumLens : undefined,
-  };
   const slug = resolveAmcSlug(rawSlug);
   if (!slug) notFound();
 
@@ -110,16 +99,6 @@ export default async function AmcPage({
         })
       : [];
 
-  // Market share trend with cohort-median overlay.
-  const cohortMedianShare = cohortMedianMarketShareSeries();
-  const cohortMedianByQuarter = new Map(
-    cohortMedianShare.map((p) => [p.quarter, p.marketSharePct])
-  );
-  const shareWithMedian = shareSeries.map((p) => ({
-    label: p.fiscalLabel,
-    amc: p.marketSharePct,
-    median: cohortMedianByQuarter.get(p.quarter) ?? null,
-  }));
 
   // ---- ChartWithContext insight inputs for the three trend charts.
   // Built so each card carries an analytically-distinct denominator
@@ -147,25 +126,6 @@ export default async function AmcPage({
     return `${pct.toFixed(2)}% of industry AAUM · latest ${latest.fiscalLabel}`;
   })();
 
-  // Market Share insights: run on the AMC's share series.
-  const shareInsightSeries = shareSeries.map((p) => ({
-    label: p.fiscalLabel,
-    value: p.marketSharePct,
-  }));
-  const shareInsights = chartInsights(shareInsightSeries, {
-    metricName: `${detail.displayName} market share`,
-    unitSuffix: "%",
-    yoyLag: 4,
-  });
-  // Share denominator: pp shift YoY — slow-moving metric so the
-  // delta is more useful than the absolute share %.
-  const shareDenomCaption = (() => {
-    if (shareSeries.length < 5) return undefined;
-    const latest = shareSeries[shareSeries.length - 1];
-    const prior = shareSeries[shareSeries.length - 5];
-    const pp = latest.marketSharePct - prior.marketSharePct;
-    return `${pp >= 0 ? "+" : "−"}${Math.abs(pp).toFixed(2)} pp YoY · latest ${latest.fiscalLabel}`;
-  })();
 
   // KPI-card contexts: percentile-vs-own-history readings + 4Q / 5Y deltas.
   const aaumValues = aaumSeries.map((p) => p.avgAum);
@@ -434,119 +394,46 @@ export default async function AmcPage({
         context="AAUM, market share and rank movement vs the cohort."
       />
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        <ChartWithContext
-          title="Average Assets Trend"
-          subtitle="This AMC&rsquo;s AAUM by quarter. Tracks how the asset base has grown."
-          flowKind="stock"
-          denominatorCaption={(() => {
-            const base = aaumLens === "share"
-              ? `${aaumSeries.length} quarter${aaumSeries.length === 1 ? "" : "s"} · MF AAUM · ₹ Cr · Source: AMFI Fundwise AAUM`
-              : `Rebased to 100 at start · ${aaumSeries.length} quarter${aaumSeries.length === 1 ? "" : "s"} · this AMC vs industry total · Source: AMFI Fundwise AAUM`;
-            return aaumDenomCaption
-              ? `${base} · ${aaumDenomCaption}`
-              : base;
-          })()}
-          denominatorTooltip="Latest AMC AAUM as a percentage of industry total — the cleanest peer benchmark for 'is this AMC pulling ahead of the industry?'."
-          insights={aaumInsights}
-          yoyBadge={(() => {
-            const v = latestYoyPct(aaumInsightSeries, 4);
-            return v === null ? undefined : { label: "YoY", pct: v };
-          })()}
-          action={
-            <LensToggle
-              basePath={`/amc/${slug}`}
-              paramName="aaumLens"
-              defaultValue="absolute"
-              lenses={[
-                { value: "absolute", label: "Indexed" },
-                { value: "share", label: "₹ Cr" },
-              ]}
-              active={aaumLens}
-              preserveParams={preservedQueryParams}
-            />
-          }
-        >
-          {aaumLens === "share" ? (
-            aaumInsightSeries.length > 0 ? (
-              <BarSeries
-                data={aaumInsightSeries}
-                name={detail.displayName}
-                color="hsl(var(--chart-1))"
-                valueFormat="cr"
-                axisFormat="cr"
-                labelFormat="none"
-              />
-            ) : (
-              <EmptyChart>No AAUM history</EmptyChart>
-            )
-          ) : aaumRebased.length > 0 ? (
-            <MultiLine
-              data={aaumRebased}
-              xKey="label"
-              labelFormat="none"
-              valueFormat="count"
-              axisFormat="count"
-              lines={[
-                {
-                  key: "amc",
-                  name: detail.displayName,
-                  color: "hsl(var(--chart-1))",
-                },
-                {
-                  key: "industry",
-                  name: "Industry total",
-                  color: "hsl(var(--muted-foreground))",
-                },
-              ]}
-            />
-          ) : (
-            <EmptyChart>No AAUM history</EmptyChart>
-          )}
-        </ChartWithContext>
-        <ChartWithContext
-          title="Market Share Trend"
-          subtitle="This AMC&rsquo;s share of industry MF AAUM, against the cohort median."
-          flowKind="stock"
-          denominatorCaption={(() => {
-            const base = "% of industry MF AAUM · cohort median overlay · Source: AMFI Fundwise AAUM";
-            return shareDenomCaption
-              ? `${base} · ${shareDenomCaption}`
-              : base;
-          })()}
-          denominatorTooltip="Latest market share minus the share four quarters back, in percentage points — share moves slowly, so the YoY pp delta is the more informative read."
-          insights={shareInsights}
-          yoyBadge={(() => {
-            const v = latestYoyPct(shareInsightSeries, 4);
-            return v === null ? undefined : { label: "YoY", pct: v };
-          })()}
-        >
-          {shareChart.length > 0 ? (
-            <MultiLine
-              data={shareWithMedian}
-              xKey="label"
-              labelFormat="none"
-              valueFormat="pct"
-              axisFormat="pct"
-              dynamicYDomain
-              lines={[
-                {
-                  key: "amc",
-                  name: detail.displayName,
-                  color: "hsl(var(--chart-3))",
-                },
-                {
-                  key: "median",
-                  name: "Cohort median",
-                  color: "hsl(var(--muted-foreground))",
-                },
-              ]}
-            />
-          ) : (
-            <EmptyChart>No market-share history</EmptyChart>
-          )}
-        </ChartWithContext>
-      </section>
+      <ChartWithContext
+        title="Average Assets Trend"
+        subtitle="This AMC&rsquo;s AAUM by quarter, rebased to 100 vs the industry total — does it pull ahead of the market?"
+        flowKind="stock"
+        denominatorCaption={
+          aaumDenomCaption
+            ? `Rebased to 100 at start · ${aaumSeries.length} quarter${aaumSeries.length === 1 ? "" : "s"} · this AMC vs industry total · Source: AMFI Fundwise AAUM · ${aaumDenomCaption}`
+            : `Rebased to 100 at start · ${aaumSeries.length} quarter${aaumSeries.length === 1 ? "" : "s"} · this AMC vs industry total · Source: AMFI Fundwise AAUM`
+        }
+        denominatorTooltip="Latest AMC AAUM as a percentage of industry total — the cleanest peer benchmark for 'is this AMC pulling ahead of the industry?'."
+        insights={aaumInsights}
+        yoyBadge={(() => {
+          const v = latestYoyPct(aaumInsightSeries, 4);
+          return v === null ? undefined : { label: "YoY", pct: v };
+        })()}
+      >
+        {aaumRebased.length > 0 ? (
+          <MultiLine
+            data={aaumRebased}
+            xKey="label"
+            labelFormat="none"
+            valueFormat="count"
+            axisFormat="count"
+            lines={[
+              {
+                key: "amc",
+                name: detail.displayName,
+                color: "hsl(var(--chart-1))",
+              },
+              {
+                key: "industry",
+                name: "Industry total",
+                color: "hsl(var(--muted-foreground))",
+              },
+            ]}
+          />
+        ) : (
+          <EmptyChart>No AAUM history</EmptyChart>
+        )}
+      </ChartWithContext>
 
       {(() => {
         const narrative = amcNarrativeLatest(slug);
