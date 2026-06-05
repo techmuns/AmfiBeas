@@ -1,27 +1,18 @@
-import { BarSeries } from "@/components/charts/BarSeries";
 import type { DonutSlice } from "@/components/charts/Donut";
 import { QuarterEndMixTable } from "@/components/data/QuarterEndMixTable";
 import { AaumBridgeTable } from "@/components/data/AaumBridgeTable";
-import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { StackedArea } from "@/components/charts/StackedArea";
 import { Card } from "@/components/ui/Card";
-import { HowToRead } from "@/components/ui/HowToRead";
-import { ChartTypeToggle } from "@/components/ui/ChartTypeToggle";
-import { BarsWithGrowth } from "@/components/charts/BarsWithGrowth";
-import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
 import { quarterlyMarketWrap } from "@/data/market-wrap-quarterly";
 import { FiscalQuarterPicker } from "@/components/filters/FiscalQuarterPicker";
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
-  adaptiveAverageOverlay,
   chartInsights,
-  latestYoyPct,
   yoyPctSeries,
 } from "@/lib/chart-context";
-import { indexSeriesToBase } from "@/lib/index-series";
 import {
   IIFL_ACTIVE_EQUITY_CATEGORIES,
   IIFL_TREND_EXPANDED_SLUGS,
@@ -33,7 +24,6 @@ import { formatKpiProvenanceTooltip } from "@/data/amfi-monthly";
 import { cyclePhaseHistory, historicalEpisodes } from "@/data/market-indices";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
-import { LensToggle } from "@/components/ui/LensToggle";
 import {
   availableQuartersDesc,
   formatQuarterlyProvenanceLine,
@@ -63,8 +53,6 @@ import {
 } from "@/data/amfi-quarterly";
 import {
   formatCompactCrSafe,
-  formatCroreCountSafe,
-  formatIntSafe,
   formatLakhSafe,
   formatPercentilePill,
 } from "@/lib/format";
@@ -111,10 +99,6 @@ export default async function QuarterlyPage({
   // ---- Lens toggles (parsed up-front) ----
   const quarterlyFlowsLens: "absolute" | "share" =
     sp.qFlowsLens === "share" ? "share" : "absolute";
-  // Chart-type toggle for the one approved Bars + Growth callsite on
-  // /quarterly. Default is "trend" — only "bars" is echoed into the URL.
-  const quarterlyFlowsView: "trend" | "bars" =
-    sp.quarterlyFlowsView === "bars" ? "bars" : "trend";
   const equityMixLens: "absolute" | "share" =
     sp.qEquityMixLens === "share" ? "share" : "absolute";
   // Per-card lens toggles for /quarterly. Each one switches a trend
@@ -129,48 +113,6 @@ export default async function QuarterlyPage({
     sp.qFolioAddLens === "share" ? "share" : "absolute";
   const qSchemesLens: "absolute" | "share" =
     sp.qSchemesLens === "share" ? "share" : "absolute";
-  // Chart-type toggles. Each eligible bar-style time-series card on
-  // the page owns its own `q<thing>View` URL param. Bars is the
-  // default and is never echoed into the URL — only the "trend"
-  // value rides along so the default page stays URL-clean.
-  // Chart-style toggles (Bars vs Trend) were removed across the
-  // dashboard — every chart now renders the trend visual directly.
-  // Stale `?q...View=bars|trend` URLs are ignored silently.
-  // Pass-through params for every LensToggle on this page. `tab` is
-  // included so toggling a lens doesn't bounce the reader back to the
-  // default tab.
-  const preservedQueryParams: Record<string, string | undefined> = {
-    tab: typeof sp.tab === "string" ? sp.tab : undefined,
-    quarter: typeof sp.quarter === "string" ? sp.quarter : undefined,
-    qFlowsLens:
-      typeof sp.qFlowsLens === "string" ? sp.qFlowsLens : undefined,
-    quarterlyFlowsView:
-      typeof sp.quarterlyFlowsView === "string"
-        ? sp.quarterlyFlowsView
-        : undefined,
-    qEquityMixLens:
-      typeof sp.qEquityMixLens === "string" ? sp.qEquityMixLens : undefined,
-    qAaumLens: typeof sp.qAaumLens === "string" ? sp.qAaumLens : undefined,
-    qAeAaumLens:
-      typeof sp.qAeAaumLens === "string" ? sp.qAeAaumLens : undefined,
-    qFoliosLens:
-      typeof sp.qFoliosLens === "string" ? sp.qFoliosLens : undefined,
-    qFolioAddLens:
-      typeof sp.qFolioAddLens === "string" ? sp.qFolioAddLens : undefined,
-    qSchemesLens:
-      typeof sp.qSchemesLens === "string" ? sp.qSchemesLens : undefined,
-    qCategoryTrendsScale:
-      typeof sp.qCategoryTrendsScale === "string"
-        ? sp.qCategoryTrendsScale
-        : undefined,
-    // Chart-type `q<thing>View` toggles — only the non-default
-    // "trend" value is preserved so other toggles never re-attach
-    // `q<thing>View=bars` to the URL.
-  };
-  // Scale toggle for the Active-Equity Category Trends section. Mirrors
-  // /monthly's categoryTrendsScale — see that file for rationale.
-  const qCategoryTrendsScale: "levels" | "indexed" =
-    sp.qCategoryTrendsScale === "indexed" ? "indexed" : "levels";
 
   const activeTab = resolveTabWithAliases<QuarterlyTabId>(
     sp.tab,
