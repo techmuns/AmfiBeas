@@ -43,8 +43,8 @@ const finLenses = (Object.keys(FIN_KPIS) as FinKpiId[]).map((k) => ({
 const AUM_KPIS = {
   avgAum: { label: "Average AUM", short: "AAUM", valueFormat: "cr", axisFormat: "cr" },
   marketShare: { label: "Market Share", short: "Mkt Share", valueFormat: "pct", axisFormat: "pct" },
-  qoqGrowth: { label: "QoQ AAUM Growth", short: "QoQ", valueFormat: "pct", axisFormat: "pct" },
-  yoyGrowth: { label: "YoY AAUM Growth", short: "YoY", valueFormat: "pct", axisFormat: "pct" },
+  qoqGrowth: { label: "QoQ Asset Growth", short: "QoQ", valueFormat: "pct", axisFormat: "pct" },
+  yoyGrowth: { label: "YoY Asset Growth", short: "YoY", valueFormat: "pct", axisFormat: "pct" },
 } satisfies Record<string, KpiSpec>;
 export type AumKpiId = keyof typeof AUM_KPIS;
 export const AUM_KPI_DEFAULT: AumKpiId = "avgAum";

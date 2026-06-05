@@ -84,8 +84,8 @@ const MONTHLY_TABS = [
   { id: "flow-table", label: "Flow Table" },
   { id: "fee-mix", label: "Fee Mix" },
   { id: "sip-retail", label: "SIP & Retail" },
-  { id: "categories", label: "Funds Rotation" },
-  { id: "market-cycle", label: "Market Cycle" },
+  { id: "categories", label: "Category Shifts" },
+  { id: "market-cycle", label: "Market Phases" },
 ] as const satisfies readonly DashboardTabDef[];
 type MonthlyTabId = (typeof MONTHLY_TABS)[number]["id"];
 const MONTHLY_TAB_IDS = MONTHLY_TABS.map((t) => t.id) as readonly MonthlyTabId[];
@@ -1081,7 +1081,7 @@ export default async function MonthlyPage({
         <div className="space-y-3">
           {maaumColumns && (
             <Card
-              title="Industry MAAUM Breakdown"
+              title="Monthly Avg Assets by Category"
               subtitleNode={
                 <div className="space-y-0.5">
                   <p className="text-xs text-muted-foreground">
@@ -1322,7 +1322,7 @@ export default async function MonthlyPage({
 
       {activeTab === "sip-retail" && nfoFundsHasData && (
         <Card
-          title="NFO Funds Mobilised"
+          title="New Fund Offers Mobilised"
           subtitleNode={
             <div className="space-y-0.5">
               <p className="text-xs text-muted-foreground">
@@ -1594,7 +1594,7 @@ function CategoryRotationCard({
 }) {
   return (
     <Card
-      title="Category Rotation"
+      title="Category Flow Shifts"
       subtitle={`${rotation.windowMonths}M avg vs prior ${rotation.windowMonths}M · share of active-equity net inflow`}
       action={
         <InfoTooltip

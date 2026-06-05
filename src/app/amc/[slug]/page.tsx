@@ -295,7 +295,7 @@ export default async function AmcPage({
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="Latest MF AAUM"
+          label="Latest Avg Assets"
           value={formatCompactCrSafe(latest?.avgAum ?? null)}
           note={latest ? latest.fiscalLabel : ""}
           sparkline={aaumChart.map((p) => ({ label: p.month, value: p.value }))}
@@ -325,7 +325,7 @@ export default async function AmcPage({
           }
         />
         <KpiCard
-          label="Rank by AAUM"
+          label="Rank by Assets"
           value={
             latest
               ? `#${latest.rank}`
@@ -343,7 +343,7 @@ export default async function AmcPage({
           }
         />
         <KpiCard
-          label="QoQ AAUM Growth"
+          label="QoQ Asset Growth"
           value={
             growth?.qoqGrowthPct !== null && growth?.qoqGrowthPct !== undefined
               ? formatDelta(growth.qoqGrowthPct)
@@ -365,7 +365,7 @@ export default async function AmcPage({
 
       <section className="grid gap-4 md:grid-cols-3">
         <KpiCard
-          label="YoY AAUM Growth"
+          label="YoY Asset Growth"
           value={
             growth?.yoyGrowthPct !== null && growth?.yoyGrowthPct !== undefined
               ? formatDelta(growth.yoyGrowthPct)
@@ -436,7 +436,7 @@ export default async function AmcPage({
 
       <section className="grid gap-4 lg:grid-cols-2">
         <ChartWithContext
-          title="AAUM Trend"
+          title="Average Assets Trend"
           subtitle="This AMC&rsquo;s AAUM by quarter. Tracks how the asset base has grown."
           flowKind="stock"
           denominatorCaption={(() => {

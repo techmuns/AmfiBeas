@@ -26,12 +26,12 @@ interface Spec {
 }
 
 const SPECS: Spec[] = [
-  { group: "AUM & Market Share", label: "Total AAUM", pick: (m) => m.aaumCr, fmt: fmtCr },
+  { group: "AUM & Market Share", label: "Total Average Assets", pick: (m) => m.aaumCr, fmt: fmtCr },
   { group: "AUM & Market Share", label: "Market share", pick: (m) => m.marketSharePct, fmt: (v) => fmtPct(v, 2) },
   { group: "AUM & Market Share", label: "Share Δ QoQ", pick: (m) => m.shareDeltaBps, fmt: fmtBps },
-  { group: "AUM & Market Share", label: "Rank by AAUM", pick: (m) => m.rank, fmt: fmtRank, invert: true },
-  { group: "Growth", label: "QoQ AAUM growth", pick: (m) => m.qoqGrowthPct, fmt: fmtSigned },
-  { group: "Growth", label: "YoY AAUM growth", pick: (m) => m.yoyGrowthPct, fmt: fmtSigned },
+  { group: "AUM & Market Share", label: "Rank by Assets", pick: (m) => m.rank, fmt: fmtRank, invert: true },
+  { group: "Growth", label: "QoQ Asset Growth", pick: (m) => m.qoqGrowthPct, fmt: fmtSigned },
+  { group: "Growth", label: "YoY Asset Growth", pick: (m) => m.yoyGrowthPct, fmt: fmtSigned },
   { group: "Listed financials", label: "Operating revenue", pick: (m) => m.revenueCr, fmt: fmtCr },
   { group: "Listed financials", label: "Revenue yield", pick: (m) => m.revenueYieldBps, fmt: fmtBpsAbs },
   { group: "Listed financials", label: "Operating margin", pick: (m) => m.opMarginPct, fmt: (v) => fmtPct(v, 1) },

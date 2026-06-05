@@ -88,7 +88,7 @@ const QUARTERLY_TABS = [
   { id: "categories", label: "Categories" },
   { id: "retail-schemes", label: "Retail & Schemes" },
   { id: "active-passive", label: "Active vs Passive" },
-  { id: "concentration", label: "Concentration" },
+  { id: "concentration", label: "Market Competition" },
 ] as const satisfies readonly DashboardTabDef[];
 type QuarterlyTabId = (typeof QUARTERLY_TABS)[number]["id"];
 const QUARTERLY_TAB_IDS = QUARTERLY_TABS.map(
@@ -1079,7 +1079,7 @@ export default async function QuarterlyPage({
             })()}
           />
           <QSignalTile
-            label="Concentration · HHI"
+            label="Market Concentration"
             pill={
               amcHhiPercentile
                 ? formatPercentilePill(amcHhiPercentile.percentile)
@@ -1280,7 +1280,7 @@ export default async function QuarterlyPage({
       )}
 
       {activeTab === "aaum-flows" && aaumBridge.length > 0 && (
-        <Card title="AAUM Bridge — net flow vs residual">
+        <Card title="AUM Change: Flows vs Residual">
           <AaumBridgeTable rows={aaumBridge} />
         </Card>
       )}
@@ -1970,7 +1970,7 @@ export default async function QuarterlyPage({
 
       {activeTab === "concentration" && hhiHasData && (
         <Card
-          title="Industry Concentration · HHI"
+          title="Industry Concentration Index"
           subtitleNode={
             <div className="space-y-0.5">
               <p className="text-xs text-muted-foreground">
@@ -1995,12 +1995,12 @@ export default async function QuarterlyPage({
             lines={[
               {
                 key: "amcHhi",
-                name: "AMC HHI",
+                name: "AMC Concentration",
                 color: "hsl(var(--chart-1))",
               },
               {
                 key: "categoryHhi",
-                name: "Category HHI",
+                name: "Category Concentration",
                 color: "hsl(var(--chart-3))",
               },
             ]}

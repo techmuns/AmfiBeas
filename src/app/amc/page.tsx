@@ -226,7 +226,7 @@ export default async function AmcListPage({
 
       {activeTab === "share-positioning" && fundwise.rows.length > 0 && (
         <Card
-          title="Fundwise AUM & Market Share"
+          title="Fund-by-Fund Market Share"
           subtitleNode={
             <div className="space-y-0.5">
               <p className="text-xs text-muted-foreground">
@@ -323,7 +323,7 @@ export default async function AmcListPage({
       )}
 
       {activeTab === "share-positioning" && equityBook.length > 0 && (
-        <Card title="Per-AMC Equity Book — Active vs Passive (derived)">
+        <Card title="Per-AMC Equity Holdings Mix — Active vs Passive (derived)">
           <AmcEquityBookHeatmap rows={equityBook} diagnostics={equityBookDiag} />
         </Card>
       )}
