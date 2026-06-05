@@ -60,6 +60,8 @@ import {
   type MaaumColumn,
 } from "@/components/data/MaaumTable";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
+import { FeeMixInflows } from "@/components/data/FeeMixInflows";
+import { feeMixByMonth } from "@/data/fee-mix";
 import { HowToRead } from "@/components/ui/HowToRead";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { MonthPicker } from "@/components/filters/MonthPicker";
@@ -79,6 +81,7 @@ const MONTHLY_TABS = [
   { id: "snapshot", label: "Snapshot" },
   { id: "flows", label: "AUM" },
   { id: "flow-table", label: "Flow Table" },
+  { id: "fee-mix", label: "Fee Mix" },
   { id: "sip-retail", label: "SIP & Retail" },
   { id: "categories", label: "Funds Rotation" },
   { id: "market-cycle", label: "Market Cycle" },
@@ -680,6 +683,7 @@ export default async function MonthlyPage({
   // bounded in [−100%, +100%] that stay meaningful even in churny /
   // outflow months, where dividing by the (small, possibly negative) net
   // total would flip signs and blow up.
+  const feeMix = feeMixByMonth(18);
   const flowTableRows: MonthlyFlowsTableRow[] = (() => {
     const rows = amfiMonthlyRows(); // ascending
     const num = (v: number | null | undefined): number | null =>
@@ -1446,6 +1450,12 @@ export default async function MonthlyPage({
               No monthly flow data ingested yet.
             </div>
           )}
+        </Card>
+      )}
+
+      {activeTab === "fee-mix" && feeMix.length > 0 && (
+        <Card title="Fee Mix of Net Inflows">
+          <FeeMixInflows months={feeMix} />
         </Card>
       )}
 
