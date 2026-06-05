@@ -79,10 +79,6 @@ const MONTHLY_TABS = [
 ] as const satisfies readonly DashboardTabDef[];
 type MonthlyTabId = (typeof MONTHLY_TABS)[number]["id"];
 const MONTHLY_TAB_IDS = MONTHLY_TABS.map((t) => t.id) as readonly MonthlyTabId[];
-// Tabs shown in the nav bar. "flow-table" is hidden from the UI but its
-// route/content stays live (reachable via ?tab=flow-table) so it can be
-// re-surfaced by adding it back here.
-const VISIBLE_MONTHLY_TABS = MONTHLY_TABS.filter((t) => t.id !== "flow-table");
 
 /** Month-end AUM mix shares (% of the month's own breakdown total) for a
  *  single row, keyed by category. Mirrors the Month-end AUM Mix card's
@@ -982,7 +978,7 @@ export default async function MonthlyPage({
 
       <DashboardTabs
         basePath="/monthly"
-        tabs={VISIBLE_MONTHLY_TABS}
+        tabs={MONTHLY_TABS}
         activeId={activeTab}
         searchParams={sp}
       />
