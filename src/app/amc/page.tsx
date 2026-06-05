@@ -10,6 +10,8 @@ import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import { AmcEquityBookHeatmap } from "@/components/data/AmcEquityBookHeatmap";
 import { AmcHeadToHead } from "@/components/data/AmcHeadToHead";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
+import { MarketShareByProduct } from "@/components/data/MarketShareByProduct";
+import { marketShareByProduct } from "@/data/aggregate";
 import { StrategicMovesCohortLane } from "@/components/amc/StrategicMovesCohortLane";
 import { CohortUniqueInvestorShare } from "@/components/amc/CohortUniqueInvestorShare";
 import { AmcCashAllocationTrend } from "@/components/amc/AmcCashAllocationTrend";
@@ -71,6 +73,17 @@ export default async function AmcListPage({
 
   const subtitle = `${data.rows.length} AMCs · ${data.fiscalLabel}`;
   const anomalies = latestQoqAnomalies(2);
+
+  // Per-AMC market share within each product category (latest month); top AMCs
+  // by total AUM, display names joined from the AAUM index.
+  const productShare = marketShareByProduct();
+  const amcNameBySlug = new Map(
+    data.rows.map((r) => [r.amcSlug, r.displayName])
+  );
+  const productShareRows = productShare.rows
+    .filter((r) => amcNameBySlug.has(r.amcSlug))
+    .slice(0, 20)
+    .map((r) => ({ ...r, displayName: amcNameBySlug.get(r.amcSlug) as string }));
 
   // Fundwise (per-AMC) AUM & market-share heatmap. Metric toggle picks
   // what the cells show; default is market share + QoQ Δ bps.
@@ -324,6 +337,18 @@ export default async function AmcListPage({
             change; both are tinted by momentum. Export sends the active view to
             Excel.
           </p>
+        </Card>
+      )}
+
+      {activeTab === "share" && productShareRows.length > 0 && (
+        <Card
+          title="Market Share by Product"
+          subtitle="Where each AMC is strong by category — its share within Equity, Debt, Liquid and more."
+        >
+          <MarketShareByProduct
+            month={productShare.month}
+            rows={productShareRows}
+          />
         </Card>
       )}
 

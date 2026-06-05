@@ -234,6 +234,53 @@ export function marketShareByMonth(
   });
 }
 
+export interface ProductShareRow {
+  amcSlug: string;
+  totalAum: number;
+  totalSharePct: number;
+  activeEquitySharePct: number;
+  debtSharePct: number;
+  liquidSharePct: number;
+  hybridSharePct: number;
+  passiveSharePct: number;
+}
+
+/**
+ * Per-AMC market share WITHIN each product category for a month (default:
+ * latest). Each share = the AMC's category AUM ÷ the industry's category AUM
+ * (summed across all AMCs in the monthly snapshot), so the shares are
+ * internally consistent and sum to ~100% per column. Rows are largest-first
+ * by total AUM. Lets an analyst see where an AMC punches above its overall
+ * weight by product (e.g. strong in equity, thin in debt).
+ */
+export function marketShareByProduct(
+  month?: string
+): { month: string; rows: ProductShareRow[] } {
+  const m = month ?? latestMonth();
+  const monthRows = MONTHLY.filter((r) => r.month === m);
+  const ind = {
+    totalAum: monthRows.reduce((s, r) => s + r.totalAum, 0),
+    activeEquityAum: monthRows.reduce((s, r) => s + r.activeEquityAum, 0),
+    debtAum: monthRows.reduce((s, r) => s + r.debtAum, 0),
+    liquidAum: monthRows.reduce((s, r) => s + r.liquidAum, 0),
+    hybridAum: monthRows.reduce((s, r) => s + r.hybridAum, 0),
+    passiveAum: monthRows.reduce((s, r) => s + r.passiveAum, 0),
+  };
+  const rows: ProductShareRow[] = monthRows
+    .map((r) => ({
+      amcSlug: r.amcSlug,
+      totalAum: r.totalAum,
+      totalSharePct: marketShare(r.totalAum, ind.totalAum),
+      activeEquitySharePct: marketShare(r.activeEquityAum, ind.activeEquityAum),
+      debtSharePct: marketShare(r.debtAum, ind.debtAum),
+      liquidSharePct: marketShare(r.liquidAum, ind.liquidAum),
+      hybridSharePct: marketShare(r.hybridAum, ind.hybridAum),
+      passiveSharePct: marketShare(r.passiveAum, ind.passiveAum),
+    }))
+    .sort((a, b) => b.totalAum - a.totalAum);
+  return { month: m, rows };
+}
+
 export function latestMonth(): string {
   return MONTHS_LIST[MONTHS_LIST.length - 1];
 }
