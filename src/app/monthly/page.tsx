@@ -61,6 +61,7 @@ import {
 } from "@/components/data/MaaumTable";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import { FeeMixInflows } from "@/components/data/FeeMixInflows";
+import { ProductFlowHeatmap } from "@/components/data/ProductFlowHeatmap";
 import { feeMixByMonth } from "@/data/fee-mix";
 import { HowToRead } from "@/components/ui/HowToRead";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
@@ -1454,9 +1455,14 @@ export default async function MonthlyPage({
       )}
 
       {activeTab === "fee-mix" && feeMix.length > 0 && (
-        <Card title="Fee Mix of Net Inflows">
-          <FeeMixInflows months={feeMix} />
-        </Card>
+        <div className="space-y-3">
+          <Card title="Fee Mix of Net Inflows">
+            <FeeMixInflows months={feeMix} />
+          </Card>
+          <Card title="Net Flows by Product Category">
+            <ProductFlowHeatmap months={feeMix} />
+          </Card>
+        </div>
       )}
 
       {activeTab === "categories" &&
