@@ -1,6 +1,7 @@
 import { BarSeries } from "@/components/charts/BarSeries";
 import type { DonutSlice } from "@/components/charts/Donut";
 import { QuarterEndMixTable } from "@/components/data/QuarterEndMixTable";
+import { AaumBridgeTable } from "@/components/data/AaumBridgeTable";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { StackedArea } from "@/components/charts/StackedArea";
@@ -57,6 +58,7 @@ import {
   categoryHhiPercentileRead,
   categoryHhiSeries,
   resolveSelectedQuarter,
+  quarterlyAaumBridge,
   type AmfiQuarterlyKpiField,
 } from "@/data/amfi-quarterly";
 import {
@@ -357,6 +359,8 @@ export default async function QuarterlyPage({
   const snapshotSubtitle = selectedRow
     ? `Industry-wide · ${selectedRow.quarterLabel} · Source: AMFI Quarterly Report`
     : "Upload AMFI Quarterly PDFs to manual-data/amfi-quarterly/pdfs/, then run npm run ingest:amfi-quarterly-pdf";
+
+  const aaumBridge = quarterlyAaumBridge(10);
 
   // ---- AMFI Quarterly AUM Mix & Trend -------------------------------
   // Mirrors /monthly's AMFI AUM Mix & Trend exactly:
@@ -1273,6 +1277,12 @@ export default async function QuarterlyPage({
             </ChartWithContext>
           </section>
         </div>
+      )}
+
+      {activeTab === "aaum-flows" && aaumBridge.length > 0 && (
+        <Card title="AAUM Bridge — net flow vs residual">
+          <AaumBridgeTable rows={aaumBridge} />
+        </Card>
       )}
 
       {activeTab === "aaum-flows" && flowsHasData && (
