@@ -17,7 +17,7 @@ import type { AmcStatus } from "@/components/filters/FilterBar";
 import { QuarterPicker } from "@/components/filters/QuarterPicker";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
-import { FinancialsPeerCsvButton } from "@/components/data/FinancialsPeerCsvButton";
+import { FinancialsPeerExport } from "@/components/data/FinancialsPeerExport";
 import { HowToRead } from "@/components/ui/HowToRead";
 import { cn } from "@/lib/cn";
 import {
@@ -808,7 +808,7 @@ export default async function FinancialsPage({
           </div>
         }
         action={
-          <FinancialsPeerCsvButton
+          <FinancialsPeerExport
             rows={peerRows}
             filename={`financials-peer-${selectedPeriod}.csv`}
           />

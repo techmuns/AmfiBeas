@@ -18,6 +18,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { classifyCapFromNames, type CapTier } from "../src/data/cap-classification";
+import { amcOf } from "../src/data/amc-name-map";
 
 const DIR = path.join(process.cwd(), "public", "holdings");
 const OUT = path.join(process.cwd(), "src", "data", "portfolio-tracker", "cap-flows.json");
@@ -25,67 +26,8 @@ const TOP_N = 5;
 
 const isActiveEquity = (c: string) => /^Equity/.test(c) && !/ETF|Index|International/.test(c);
 
-// AMC brand -> display label, matched as a case-insensitive prefix of the
-// scheme name (longest first so e.g. "Quantum" beats "Quant").
-const AMC_PREFIXES: [string, string][] = [
-  ["Aditya Birla SL", "Aditya Birla"],
-  ["Baroda BNP Paribas", "Baroda BNP Paribas"],
-  ["Bank of India", "Bank of India"],
-  ["Mahindra Manulife", "Mahindra Manulife"],
-  ["Motilal Oswal", "Motilal Oswal"],
-  ["Parag Parikh", "PPFAS"],
-  ["Franklin Build India", "Franklin Templeton"],
-  ["Franklin India", "Franklin Templeton"],
-  ["Templeton India", "Franklin Templeton"],
-  ["ICICI Pru", "ICICI Pru"],
-  ["Nippon India", "Nippon"],
-  ["PGIM India", "PGIM"],
-  ["Canara Rob", "Canara Robeco"],
-  ["Invesco India", "Invesco"],
-  ["Mirae Asset", "Mirae"],
-  ["Bajaj Finserv", "Bajaj Finserv"],
-  ["Old Bridge", "Old Bridge"],
-  ["360 ONE", "360 ONE"],
-  ["LIC MF", "LIC MF"],
-  ["Quantum", "Quantum"],
-  ["Quant", "Quant"],
-  ["TRUSTMF", "Trust"],
-  ["WhiteOak", "WhiteOak"],
-  ["WOC", "WhiteOak"],
-  ["Edelweiss", "Edelweiss"],
-  ["Helios", "Helios"],
-  ["Abakkus", "Abakkus"],
-  ["Sundaram", "Sundaram"],
-  ["Bandhan", "Bandhan"],
-  ["Samco", "Samco"],
-  ["HSBC", "HSBC"],
-  ["HDFC", "HDFC"],
-  ["Kotak", "Kotak"],
-  ["Axis", "Axis"],
-  ["Tata", "Tata"],
-  ["SBI", "SBI"],
-  ["UTI", "UTI"],
-  ["DSP", "DSP"],
-  ["ITI", "ITI"],
-  ["Union", "Union"],
-  ["JM ", "JM"],
-  ["NJ ", "NJ"],
-  ["Navi", "Navi"],
-  ["Groww", "Groww"],
-  ["Zerodha", "Zerodha"],
-  ["Shriram", "Shriram"],
-  ["Taurus", "Taurus"],
-  ["Unifi", "Unifi"],
-  ["Capitalmind", "Capitalmind"],
-  ["Angel One", "Angel One"],
-];
-function amcOf(fund: string): string {
-  const f = fund.trim();
-  for (const [pre, label] of AMC_PREFIXES) {
-    if (f.toLowerCase().startsWith(pre.toLowerCase())) return label;
-  }
-  return f.split(/[\s(]/)[0]; // fallback: first token
-}
+// AMC brand -> display label: amcOf + AMC_PREFIXES now live in the shared,
+// runtime-safe src/data/amc-name-map.ts (imported above).
 
 const num = (v: unknown): number => {
   if (v == null) return 0;

@@ -47,6 +47,61 @@ export function amfiQuarterlyIndustryRows(): AmfiQuarterlyIndustryRow[] {
   );
 }
 
+export interface AaumBridgeRow {
+  quarter: string;
+  quarterLabel: string;
+  aaum: number; // grand-total last-month AAUM (₹ Cr)
+  deltaAaum: number; // QoQ change in AAUM (₹ Cr)
+  netInflow: number; // reported net inflow this quarter (₹ Cr)
+  residual: number; // deltaAaum − netInflow (₹ Cr)
+  residualPctOfDelta: number | null; // residual ÷ |deltaAaum| × 100
+}
+
+/**
+ * Quarterly "AAUM bridge residual": how much of the QoQ change in industry
+ * AAUM is NOT explained by reported net inflows. residual = ΔAAUM − net inflow.
+ *
+ * IMPORTANT — this residual is NOT a clean mark-to-market figure. It blends
+ * (a) market movement, (b) within-quarter timing, (c) AVERAGING: AMFI's
+ * quarterly "Average AUM" is the last-month average, not a true quarterly
+ * average, while net inflow is the quarter's flow sum — so a level-vs-flow
+ * mismatch is baked in, and (d) any classification / reporting differences.
+ * Treat it as a flow-adjusted AAUM change, not a precise M2M decomposition.
+ */
+export function quarterlyAaumBridge(lastN = 10): AaumBridgeRow[] {
+  const rows = amfiQuarterlyIndustryRows();
+  const out: AaumBridgeRow[] = [];
+  for (let i = 1; i < rows.length; i++) {
+    const cur = rows[i];
+    const prev = rows[i - 1];
+    const aaum = cur.grandTotalLastMonthAaum;
+    const prevAaum = prev.grandTotalLastMonthAaum;
+    const netInflow = cur.grandTotalNetInflow;
+    if (
+      typeof aaum !== "number" ||
+      typeof prevAaum !== "number" ||
+      typeof netInflow !== "number"
+    ) {
+      continue;
+    }
+    const deltaAaum = aaum - prevAaum;
+    const residual = deltaAaum - netInflow;
+    out.push({
+      quarter: cur.quarter,
+      quarterLabel: cur.quarterLabel,
+      aaum,
+      deltaAaum,
+      netInflow,
+      residual,
+      residualPctOfDelta:
+        Math.abs(deltaAaum) > 1e-9
+          ? (residual / Math.abs(deltaAaum)) * 100
+          : null,
+    });
+  }
+  return out.slice(-lastN);
+}
+
 /** Category rows for `slug`, sorted by quarter ascending. */
 export function amfiQuarterlyCategoryRows(
   slug: AmfiMonthlyCategorySlug

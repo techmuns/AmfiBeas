@@ -27,6 +27,8 @@ import {
 } from "@/data/amc-detail";
 import { latestQoqAnomalies } from "@/data/amc-peer-universe";
 import { amcNarrativeLatest } from "@/data/amc-narratives";
+import { schemesForDisplayName } from "@/data/amc-schemes";
+import { AmcSchemesTable } from "@/components/data/AmcSchemesTable";
 import { ConcallDigest } from "@/components/amc/ConcallDigest";
 import {
   formatCompactCrSafe,
@@ -67,6 +69,7 @@ export default async function AmcPage({
   const rankSeries = amcRankSeries(slug);
   const growth = amcGrowthMetrics(slug);
   const peer = peerComparisonForAmc(slug);
+  const amcSchemes = schemesForDisplayName(detail.displayName);
 
   const aaumChart = aaumSeries.map((p) => ({
     month: p.fiscalLabel,
@@ -690,6 +693,22 @@ export default async function AmcPage({
             isn’t in the snapshot.
           </p>
         </Card>
+      )}
+
+      {amcSchemes.length > 0 && (
+        <>
+          <SectionDivider
+            eyebrow="Section 5"
+            label="Scheme drill-down"
+            context="Every scheme this AMC runs that the tracker carries, with its Active/Passive style and tracked holdings."
+          />
+          <Card title={`${detail.displayName} — Schemes (derived)`}>
+            <AmcSchemesTable
+              displayName={detail.displayName}
+              schemes={amcSchemes}
+            />
+          </Card>
+        </>
       )}
     </div>
   );

@@ -19,6 +19,24 @@ import {
 } from "@/components/layout/DashboardTabs";
 import { TabIntroCard } from "@/components/ui/TabIntroCard";
 import { resolveTab } from "@/lib/tabs";
+import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
+import type { CsvColumn } from "@/lib/csv";
+
+type OtherSchemesXlsxRow = {
+  category: string;
+  aum: number;
+  sharePct: number;
+  netFlow: number;
+  folios: number;
+};
+
+const OTHER_SCHEMES_XLSX_COLUMNS: CsvColumn<OtherSchemesXlsxRow>[] = [
+  { key: "category", header: "Category" },
+  { key: "aum", header: "AUM (₹ Cr)" },
+  { key: "sharePct", header: "Share (%)" },
+  { key: "netFlow", header: "Net Flow (₹ Cr)" },
+  { key: "folios", header: "Folios" },
+];
 
 const OTHER_SCHEMES_TABS = [
   { id: "snapshot", label: "Snapshot" },
@@ -208,6 +226,20 @@ export default async function OtherSchemesPage({
         <Card
           title={`Category Breakdown · ${formatMonthLabel(breakdown.month)}`}
           subtitle="Sub-categories of SEBI Group V, sorted by AUM"
+          action={
+            <DownloadXlsxButton
+              rows={breakdown.rows.map((r) => ({
+                category: r.category,
+                aum: r.aum,
+                sharePct: totalAum ? (r.aum / totalAum) * 100 : 0,
+                netFlow: r.netFlow,
+                folios: r.folios,
+              }))}
+              columns={OTHER_SCHEMES_XLSX_COLUMNS}
+              filename={`other-schemes-${breakdown.month}.xlsx`}
+              sheetName="Category Breakdown"
+            />
+          }
         >
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

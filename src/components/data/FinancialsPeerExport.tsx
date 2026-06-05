@@ -1,6 +1,7 @@
 "use client";
 
 import { DownloadCsvButton } from "@/components/data/DownloadCsvButton";
+import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
 
 interface PeerRow {
@@ -73,18 +74,32 @@ const COLUMNS: CsvColumn<PeerRow>[] = [
 
 interface Props {
   rows: readonly PeerRow[];
+  /** Base filename; the extension is swapped per export format. */
   filename: string;
 }
 
 /**
- * Client-component wrapper that holds the financials peer CSV
- * column definitions internally. Server-rendered /financials
- * passes only the (serialisable) rows + filename across the
- * boundary — keeping the `format` callbacks safely on the
- * client side.
+ * Client wrapper holding the financials peer-table column definitions. Offers
+ * both a CSV and a true .xlsx export of the listed-AMC fee-yield peer table
+ * (revenue / operating / profit yield in bps of MF QAAUM, plus margins).
+ * Server-rendered /financials passes only the serialisable rows across the
+ * boundary, keeping the `format` callbacks on the client.
  */
-export function FinancialsPeerCsvButton({ rows, filename }: Props) {
+export function FinancialsPeerExport({ rows, filename }: Props) {
+  const base = filename.replace(/\.(csv|xlsx)$/i, "");
   return (
-    <DownloadCsvButton rows={rows} columns={COLUMNS} filename={filename} />
+    <div className="flex items-center gap-1.5">
+      <DownloadCsvButton
+        rows={rows}
+        columns={COLUMNS}
+        filename={`${base}.csv`}
+      />
+      <DownloadXlsxButton
+        rows={rows}
+        columns={COLUMNS}
+        filename={`${base}.xlsx`}
+        sheetName="Peer Yields"
+      />
+    </div>
   );
 }

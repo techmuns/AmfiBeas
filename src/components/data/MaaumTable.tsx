@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import type { CsvColumn } from "@/lib/csv";
 
 /**
  * Industry MAAUM breakdown table — recreation of IIFL Research's
@@ -22,6 +23,21 @@ export interface MaaumColumn {
   others: number | null; // Sub Total V ex. ETF & Index
   total: number | null;
 }
+
+/**
+ * Column definitions for the Excel export of the MAAUM breakdown — one row per
+ * month (latest → previous → year-ago), raw ₹ Cr with units in the headers.
+ */
+export const MAAUM_XLSX_COLUMNS: CsvColumn<MaaumColumn>[] = [
+  { key: "monthLabel", header: "Month" },
+  { key: "equity", header: "Equity MAAUM (₹ Cr)" },
+  { key: "active", header: "Active Equity (₹ Cr)" },
+  { key: "etf", header: "ETF & Index (₹ Cr)" },
+  { key: "arb", header: "Arbitrage (₹ Cr)" },
+  { key: "debt", header: "Debt incl. Liquid (₹ Cr)" },
+  { key: "others", header: "Others (₹ Cr)" },
+  { key: "total", header: "Total MAAUM (₹ Cr)" },
+];
 
 type RowKey = keyof Omit<MaaumColumn, "monthLabel">;
 

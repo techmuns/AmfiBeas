@@ -75,8 +75,16 @@ export function PortfolioTrackerView({
   activeTab: TrackerTabId;
   searchParams: Record<string, string | string[] | undefined>;
 }) {
-  const [selectedCode, setSelectedCode] = useState(funds[0]?.schemecode ?? "");
-  const [query, setQuery] = useState(funds[0]?.fund ?? "");
+  // Optional deep-link: /mfs-portfolio-tracker?fund=<schemecode> pre-selects a
+  // scheme (used by the AMC scheme drill-down). Falls back to the first fund.
+  const initialFund =
+    (typeof searchParams.fund === "string"
+      ? funds.find((f) => f.schemecode === searchParams.fund)
+      : undefined) ?? funds[0];
+  const [selectedCode, setSelectedCode] = useState(
+    initialFund?.schemecode ?? ""
+  );
+  const [query, setQuery] = useState(initialFund?.fund ?? "");
   const [focused, setFocused] = useState(false);
   const [holdingQuery, setHoldingQuery] = useState("");
   // Head-to-head fund B — null means "use the variant-skipped default

@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { toneBg, toneText } from "@/lib/tone";
 import type { FundwiseMatrix, FundwiseCell } from "@/data/amc-peer-universe";
 
 /**
@@ -31,23 +32,6 @@ function fmtAaum(v: number): string {
 /** The signed value a cell is tinted by (share Δ bps, or growth %). */
 function tintValue(cell: FundwiseCell, metric: FundwiseMetric): number | null {
   return metric === "share" ? cell.shareDeltaBps : cell.growthPct;
-}
-
-function toneBg(value: number | null, maxAbs: number): React.CSSProperties {
-  if (value === null || !Number.isFinite(value) || Math.abs(value) < 1e-9) {
-    return {};
-  }
-  const t = maxAbs > 0 ? Math.min(1, Math.abs(value) / maxAbs) : 0;
-  const alpha = (0.08 + 0.42 * t).toFixed(3);
-  return {
-    backgroundColor: `hsl(var(${value > 0 ? "--positive" : "--negative"}) / ${alpha})`,
-  };
-}
-function toneText(value: number | null): string {
-  if (value === null || !Number.isFinite(value) || Math.abs(value) < 1e-9) {
-    return "text-muted-foreground";
-  }
-  return value > 0 ? "text-positive" : "text-negative";
 }
 
 const METRIC_LABEL: Record<FundwiseMetric, string> = {

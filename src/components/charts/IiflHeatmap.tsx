@@ -15,7 +15,7 @@ const MONTH_ABBREV = [
   "Dec",
 ];
 
-function formatHeatmapMonth(month: string): string {
+export function formatHeatmapMonth(month: string): string {
   const [y, m] = month.split("-");
   const idx = Number(m) - 1;
   if (Number.isNaN(idx) || idx < 0 || idx > 11) return month;

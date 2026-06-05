@@ -8,7 +8,7 @@ import {
 } from "@/lib/chart-context";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BarSeries } from "@/components/charts/BarSeries";
-import { IiflHeatmap } from "@/components/charts/IiflHeatmap";
+import { IiflHeatmap, formatHeatmapMonth } from "@/components/charts/IiflHeatmap";
 import { latestMonth } from "@/data/aggregate";
 import {
   activeEquityNetInflowSignal,
@@ -51,9 +51,18 @@ import {
 import { VerticalBars } from "@/components/charts/VerticalBars";
 import {
   MonthlyFlowsTable,
+  MONTHLY_FLOWS_XLSX_COLUMNS,
   type MonthlyFlowsTableRow,
 } from "@/components/data/MonthlyFlowsTable";
-import { MaaumTable, type MaaumColumn } from "@/components/data/MaaumTable";
+import {
+  MaaumTable,
+  MAAUM_XLSX_COLUMNS,
+  type MaaumColumn,
+} from "@/components/data/MaaumTable";
+import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
+import { FeeMixInflows } from "@/components/data/FeeMixInflows";
+import { ProductFlowHeatmap } from "@/components/data/ProductFlowHeatmap";
+import { feeMixByMonth } from "@/data/fee-mix";
 import { HowToRead } from "@/components/ui/HowToRead";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { MonthPicker } from "@/components/filters/MonthPicker";
@@ -73,6 +82,7 @@ const MONTHLY_TABS = [
   { id: "snapshot", label: "Snapshot" },
   { id: "flows", label: "AUM" },
   { id: "flow-table", label: "Flow Table" },
+  { id: "fee-mix", label: "Fee Mix" },
   { id: "sip-retail", label: "SIP & Retail" },
   { id: "categories", label: "Funds Rotation" },
   { id: "market-cycle", label: "Market Cycle" },
@@ -674,6 +684,7 @@ export default async function MonthlyPage({
   // bounded in [−100%, +100%] that stay meaningful even in churny /
   // outflow months, where dividing by the (small, possibly negative) net
   // total would flip signs and blow up.
+  const feeMix = feeMixByMonth(18);
   const flowTableRows: MonthlyFlowsTableRow[] = (() => {
     const rows = amfiMonthlyRows(); // ascending
     const num = (v: number | null | undefined): number | null =>
@@ -1082,6 +1093,18 @@ export default async function MonthlyPage({
                   </p>
                 </div>
               }
+              action={
+                <DownloadXlsxButton
+                  rows={[
+                    maaumColumns.latest,
+                    maaumColumns.prevMonth,
+                    maaumColumns.yearAgo,
+                  ]}
+                  columns={MAAUM_XLSX_COLUMNS}
+                  filename="industry-maaum-breakdown.xlsx"
+                  sheetName="MAAUM Breakdown"
+                />
+              }
             >
               <MaaumTable
                 yearAgo={maaumColumns.yearAgo}
@@ -1384,6 +1407,14 @@ export default async function MonthlyPage({
               </p>
             </div>
           }
+          action={
+            <DownloadXlsxButton
+              rows={flowTableRows}
+              columns={MONTHLY_FLOWS_XLSX_COLUMNS}
+              filename="monthly-flows.xlsx"
+              sheetName="Monthly Flows"
+            />
+          }
         >
           {flowTableHasData ? (
             <>
@@ -1421,6 +1452,17 @@ export default async function MonthlyPage({
             </div>
           )}
         </Card>
+      )}
+
+      {activeTab === "fee-mix" && feeMix.length > 0 && (
+        <div className="space-y-3">
+          <Card title="Fee Mix of Net Inflows">
+            <FeeMixInflows months={feeMix} />
+          </Card>
+          <Card title="Net Flows by Product Category">
+            <ProductFlowHeatmap months={feeMix} />
+          </Card>
+        </div>
       )}
 
       {activeTab === "categories" &&
@@ -1467,6 +1509,26 @@ export default async function MonthlyPage({
                 Active Equity Net Inflow Rotation
               </h2>
             </div>
+            <DownloadXlsxButton
+              rows={iiflHeatmap.rows.map((r) => {
+                const row: Record<string, string | number | null> = {
+                  category: r.label,
+                };
+                iiflHeatmap.months.forEach((m, i) => {
+                  row[m] = r.values[i];
+                });
+                return row;
+              })}
+              columns={[
+                { key: "category", header: "Category" },
+                ...iiflHeatmap.months.map((m) => ({
+                  key: m,
+                  header: formatHeatmapMonth(m),
+                })),
+              ]}
+              filename="active-equity-net-inflow-rotation.xlsx"
+              sheetName="Flow Rotation"
+            />
           </div>
 
           <IiflHeatmap
