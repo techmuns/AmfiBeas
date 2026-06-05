@@ -7,6 +7,7 @@ import {
   type FundwiseMetric,
 } from "@/components/data/FundwiseTable";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
+import { AmcEquityBookHeatmap } from "@/components/data/AmcEquityBookHeatmap";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
 import { StrategicMovesCohortLane } from "@/components/amc/StrategicMovesCohortLane";
 import { CohortUniqueInvestorShare } from "@/components/amc/CohortUniqueInvestorShare";
@@ -14,6 +15,10 @@ import { IndustryConcentrationStack } from "@/components/amc/IndustryConcentrati
 import { AmcCashAllocationTrend } from "@/components/amc/AmcCashAllocationTrend";
 import { AmcStockConcentration } from "@/components/amc/AmcStockConcentration";
 import { amcIndexRows } from "@/data/amc-detail";
+import {
+  amcEquityBook,
+  amcEquityBookDiagnostics,
+} from "@/data/amc-equity-book";
 import {
   fundwiseAumMatrix,
   latestQoqAnomalies,
@@ -117,6 +122,9 @@ export default async function AmcListPage({
     { key: "AMC", header: "AMC" },
     ...fundwise.quarterLabels.map((label) => ({ key: label, header: label })),
   ];
+
+  const equityBook = amcEquityBook();
+  const equityBookDiag = amcEquityBookDiagnostics();
 
   return (
     <div className="space-y-6">
@@ -290,6 +298,12 @@ export default async function AmcListPage({
             change; both are tinted by momentum. Export sends the active view to
             Excel.
           </p>
+        </Card>
+      )}
+
+      {activeTab === "share-positioning" && equityBook.length > 0 && (
+        <Card title="Per-AMC Equity Book — Active vs Passive (derived)">
+          <AmcEquityBookHeatmap rows={equityBook} diagnostics={equityBookDiag} />
         </Card>
       )}
 
