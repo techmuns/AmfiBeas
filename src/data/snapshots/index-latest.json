@@ -1,31 +1,31 @@
 {
-  "generatedAt": "2026-06-04T19:22:24.523Z",
+  "generatedAt": "2026-06-05T18:57:11.055Z",
   "source": "NSE daily index close CSV",
-  "feedDate": "2026-06-04",
+  "feedDate": "2026-06-05",
   "indices": [
     {
       "indexId": "NIFTY_500",
       "name": "Nifty 500",
-      "level": 22497.7,
-      "asOf": "2026-06-04",
-      "sourceUrl": "https://archives.nseindia.com/content/indices/ind_close_all_04062026.csv"
+      "level": 22465.35,
+      "asOf": "2026-06-05",
+      "sourceUrl": "https://archives.nseindia.com/content/indices/ind_close_all_05062026.csv"
     }
   ],
   "provenance": {
     "attempts": [
       {
-        "date": "2026-06-05",
-        "url": "https://archives.nseindia.com/content/indices/ind_close_all_05062026.csv",
+        "date": "2026-06-06",
+        "url": "https://archives.nseindia.com/content/indices/ind_close_all_06062026.csv",
         "status": 404,
-        "bytes": 3536,
-        "outcome": "HTTP 404 (bytes=3536)"
+        "bytes": 3546,
+        "outcome": "HTTP 404 (bytes=3546)"
       },
       {
-        "date": "2026-06-04",
-        "url": "https://archives.nseindia.com/content/indices/ind_close_all_04062026.csv",
+        "date": "2026-06-05",
+        "url": "https://archives.nseindia.com/content/indices/ind_close_all_05062026.csv",
         "status": 200,
-        "bytes": 15665,
-        "outcome": "ok level=22497.7 asOf=(header missing)"
+        "bytes": 15796,
+        "outcome": "ok level=22465.35 asOf=(header missing)"
       }
     ],
     "lookbackDaysTried": 7,
