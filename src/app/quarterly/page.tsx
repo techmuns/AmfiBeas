@@ -693,7 +693,7 @@ export default async function QuarterlyPage({
       )}
 
       {activeTab === "aaum-flows" && aaumBridge.length > 0 && (
-        <Card title="AUM Change: Flows vs Residual">
+        <Card title="AUM Change: New Money vs Market & Other">
           <AaumBridgeTable rows={aaumBridge} />
         </Card>
       )}
