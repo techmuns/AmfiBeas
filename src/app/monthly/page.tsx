@@ -51,9 +51,15 @@ import {
 import { VerticalBars } from "@/components/charts/VerticalBars";
 import {
   MonthlyFlowsTable,
+  MONTHLY_FLOWS_XLSX_COLUMNS,
   type MonthlyFlowsTableRow,
 } from "@/components/data/MonthlyFlowsTable";
-import { MaaumTable, type MaaumColumn } from "@/components/data/MaaumTable";
+import {
+  MaaumTable,
+  MAAUM_XLSX_COLUMNS,
+  type MaaumColumn,
+} from "@/components/data/MaaumTable";
+import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import { HowToRead } from "@/components/ui/HowToRead";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { MonthPicker } from "@/components/filters/MonthPicker";
@@ -1082,6 +1088,18 @@ export default async function MonthlyPage({
                   </p>
                 </div>
               }
+              action={
+                <DownloadXlsxButton
+                  rows={[
+                    maaumColumns.latest,
+                    maaumColumns.prevMonth,
+                    maaumColumns.yearAgo,
+                  ]}
+                  columns={MAAUM_XLSX_COLUMNS}
+                  filename="industry-maaum-breakdown.xlsx"
+                  sheetName="MAAUM Breakdown"
+                />
+              }
             >
               <MaaumTable
                 yearAgo={maaumColumns.yearAgo}
@@ -1383,6 +1401,14 @@ export default async function MonthlyPage({
                 {`Latest ${flowTableRows.length} month${flowTableRows.length === 1 ? "" : "s"} · newest first (★) · Source: AMFI Monthly Report`}
               </p>
             </div>
+          }
+          action={
+            <DownloadXlsxButton
+              rows={flowTableRows}
+              columns={MONTHLY_FLOWS_XLSX_COLUMNS}
+              filename="monthly-flows.xlsx"
+              sheetName="Monthly Flows"
+            />
           }
         >
           {flowTableHasData ? (

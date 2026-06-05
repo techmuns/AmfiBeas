@@ -6,7 +6,7 @@ import {
   FundwiseTable,
   type FundwiseMetric,
 } from "@/components/data/FundwiseTable";
-import { DownloadCsvButton } from "@/components/data/DownloadCsvButton";
+import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
 import { StrategicMovesCohortLane } from "@/components/amc/StrategicMovesCohortLane";
 import { CohortUniqueInvestorShare } from "@/components/amc/CohortUniqueInvestorShare";
@@ -227,10 +227,11 @@ export default async function AmcListPage({
                 }}
                 wrap
               />
-              <DownloadCsvButton
+              <DownloadXlsxButton
                 rows={fundwiseCsvRows}
                 columns={fundwiseCsvColumns}
-                filename={`fundwise-${fundwiseMetric}.csv`}
+                filename={`fundwise-${fundwiseMetric}.xlsx`}
+                sheetName={`Fundwise ${fundwiseMetric}`}
                 label="Excel"
               />
             </div>

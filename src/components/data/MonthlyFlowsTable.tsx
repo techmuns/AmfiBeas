@@ -1,5 +1,6 @@
 import { cn } from "@/lib/cn";
 import { toneBg, toneText } from "@/lib/tone";
+import type { CsvColumn } from "@/lib/csv";
 
 /**
  * Monthly Flows & AUM heatmap table — a tabular re-creation of the
@@ -36,6 +37,30 @@ export interface MonthlyFlowsTableRow {
   aaumMoMPct: number | null;
   aaumYoYPct: number | null;
 }
+
+/**
+ * Column definitions for the Excel export — raw numbers with units in the
+ * headers, so the workbook stays sortable/computable rather than pre-formatted
+ * text. Mirrors the on-screen grid; consumed by the page's DownloadXlsxButton.
+ */
+export const MONTHLY_FLOWS_XLSX_COLUMNS: CsvColumn<MonthlyFlowsTableRow>[] = [
+  { key: "month", header: "Month" },
+  { key: "totalFlow", header: "Net Flow · Total (₹ Cr)" },
+  { key: "equityFlowPct", header: "Net Flow · Equity (% of gross)" },
+  { key: "hybridFlowPct", header: "Net Flow · Hybrid (% of gross)" },
+  { key: "activeEquityFlowPct", header: "Net Flow · Active Equity (% of gross)" },
+  { key: "equityShare", header: "AUM Mix · Equity (%)" },
+  { key: "debtShare", header: "AUM Mix · Debt (%)" },
+  { key: "liquidShare", header: "AUM Mix · Liquid (%)" },
+  { key: "otherShare", header: "AUM Mix · Other (%)" },
+  { key: "equitySharePpMoM", header: "AUM Mix · Equity MoM (pp)" },
+  { key: "debtSharePpMoM", header: "AUM Mix · Debt MoM (pp)" },
+  { key: "liquidSharePpMoM", header: "AUM Mix · Liquid MoM (pp)" },
+  { key: "otherSharePpMoM", header: "AUM Mix · Other MoM (pp)" },
+  { key: "aaum", header: "Industry AAUM (₹ Cr)" },
+  { key: "aaumMoMPct", header: "Industry AAUM · MoM (%)" },
+  { key: "aaumYoYPct", header: "Industry AAUM · YoY (%)" },
+];
 
 type FlowKey =
   | "totalFlow"
