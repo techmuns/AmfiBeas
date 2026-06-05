@@ -2,7 +2,11 @@ import Link from "next/link";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
-import { GrowthVsMarket } from "@/components/charts/GrowthVsMarket";
+import {
+  FundwiseTable,
+  type FundwiseMetric,
+} from "@/components/data/FundwiseTable";
+import { DownloadCsvButton } from "@/components/data/DownloadCsvButton";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
 import { StrategicMovesCohortLane } from "@/components/amc/StrategicMovesCohortLane";
 import { CohortUniqueInvestorShare } from "@/components/amc/CohortUniqueInvestorShare";
@@ -11,12 +15,12 @@ import { AmcCashAllocationTrend } from "@/components/amc/AmcCashAllocationTrend"
 import { AmcStockConcentration } from "@/components/amc/AmcStockConcentration";
 import { amcIndexRows } from "@/data/amc-detail";
 import {
-  cohortGrowthVsMarket,
-  cohortJourneyEndQuarters,
+  fundwiseAumMatrix,
   latestQoqAnomalies,
 } from "@/data/amc-peer-universe";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
 import { LensToggle } from "@/components/ui/LensToggle";
+import type { CsvColumn } from "@/lib/csv";
 import { cn } from "@/lib/cn";
 import {
   DashboardTabs,
@@ -52,45 +56,67 @@ export default async function AmcListPage({
   const subtitle = `${data.rows.length} AMCs · ${data.fiscalLabel}`;
   const anomalies = latestQoqAnomalies(2);
 
-  // Growth vs the Market — QoQ (3-month) growth + share change ending at
-  // the selected quarter. The selector lists the recent quarter-ends that
-  // have a clean preceding quarter; defaults to the latest.
-  const shareQuarters = cohortJourneyEndQuarters();
-  const latestShareQuarter =
-    shareQuarters.length > 0
-      ? shareQuarters[shareQuarters.length - 1].quarter
-      : undefined;
-  const selectedShareQuarter =
-    typeof sp.sharePeriod === "string" &&
-    shareQuarters.some((q) => q.quarter === sp.sharePeriod)
-      ? sp.sharePeriod
-      : latestShareQuarter;
-  const growth = selectedShareQuarter
-    ? cohortGrowthVsMarket(20, selectedShareQuarter)
-    : null;
+  // Fundwise (per-AMC) AUM & market-share heatmap. Metric toggle picks
+  // what the cells show; default is market share + QoQ Δ bps.
+  const fundwiseMetric: FundwiseMetric =
+    sp.fundwiseMetric === "aaum"
+      ? "aaum"
+      : sp.fundwiseMetric === "growth"
+        ? "growth"
+        : "share";
+  const fundwise = fundwiseAumMatrix(25, 8);
+  const fundwiseLatestIdx = fundwise.quarterLabels.length - 1;
 
-  // Headline read: biggest share gainer / loser this quarter, framed
-  // against the industry's growth benchmark.
-  const growthLeaders =
-    growth && growth.points.length >= 4
+  // Headline read: biggest share gainer / loser in the latest quarter (bps).
+  const fundwiseLeaders =
+    fundwise.rows.length >= 4 && fundwiseLatestIdx >= 1
       ? (() => {
-          const byDelta = [...growth.points].sort(
-            (a, b) => b.shareDeltaPp - a.shareDeltaPp
-          );
-          const top5 = [...growth.points]
-            .sort((a, b) => b.sharePct - a.sharePct)
+          const withDelta = fundwise.rows
+            .map((r) => ({ row: r, cell: r.cells[fundwiseLatestIdx] }))
+            .filter(
+              (x): x is { row: (typeof fundwise.rows)[number]; cell: NonNullable<typeof x.cell> } =>
+                x.cell !== null && x.cell.shareDeltaBps !== null
+            )
+            .sort((a, b) => (b.cell.shareDeltaBps ?? 0) - (a.cell.shareDeltaBps ?? 0));
+          if (withDelta.length === 0) return null;
+          const top5 = [...fundwise.rows]
+            .map((r) => r.cells[fundwiseLatestIdx]?.sharePct ?? 0)
+            .sort((a, b) => b - a)
             .slice(0, 5)
-            .reduce((s, p) => s + p.sharePct, 0);
+            .reduce((s, v) => s + v, 0);
           return {
-            gainer: byDelta[0],
-            loser: byDelta[byDelta.length - 1],
+            gainer: withDelta[0],
+            loser: withDelta[withDelta.length - 1],
             top5,
-            industryGrowthPct: growth.industryGrowthPct,
-            start: growth.startQuarterLabel,
-            end: growth.endQuarterLabel,
+            prevLabel: fundwise.quarterLabels[fundwiseLatestIdx - 1],
+            latestLabel: fundwise.quarterLabels[fundwiseLatestIdx],
           };
         })()
       : null;
+
+  // Flatten the current metric's grid for the Excel (CSV) export.
+  type FundwiseCsvRow = Record<string, string | number>;
+  const fundwiseCsvRows: FundwiseCsvRow[] = fundwise.rows.map((r) => {
+    const obj: FundwiseCsvRow = { AMC: r.displayName };
+    fundwise.quarterLabels.forEach((label, i) => {
+      const c = r.cells[i];
+      obj[label] =
+        c === null
+          ? ""
+          : fundwiseMetric === "aaum"
+            ? Math.round(c.aaum)
+            : fundwiseMetric === "growth"
+              ? c.growthPct === null
+                ? ""
+                : Number(c.growthPct.toFixed(2))
+              : Number(c.sharePct.toFixed(2));
+    });
+    return obj;
+  });
+  const fundwiseCsvColumns: CsvColumn<FundwiseCsvRow>[] = [
+    { key: "AMC", header: "AMC" },
+    ...fundwise.quarterLabels.map((label) => ({ key: label, header: label })),
+  ];
 
   return (
     <div className="space-y-6">
@@ -169,85 +195,99 @@ export default async function AmcListPage({
         />
       )}
 
-      {activeTab === "share-positioning" && growth && growth.points.length >= 4 && (
+      {activeTab === "share-positioning" && fundwise.rows.length > 0 && (
         <Card
-          title="Growth vs the Market"
+          title="Fundwise AUM & Market Share"
           subtitleNode={
             <div className="space-y-0.5">
               <p className="text-xs text-muted-foreground">
-                How fast each AMC grew versus the industry — and what that did
-                to its market share.
+                Each AMC&rsquo;s share of cohort AAUM by quarter, with the QoQ
+                move in basis points — read down a column for the pecking order,
+                across a row for momentum.
               </p>
               <p className="text-[11px] text-muted-foreground/80">
-                {`One row per AMC · ${growth.startQuarterLabel} → ${growth.endQuarterLabel}`}
+                {`Top ${fundwise.rows.length} AMCs by AAUM · ${fundwise.quarterLabels[0]} → ${fundwise.quarterLabels[fundwiseLatestIdx]}`}
               </p>
             </div>
           }
           action={
-            shareQuarters.length > 1 && selectedShareQuarter ? (
+            <div className="flex flex-wrap items-center gap-2">
               <LensToggle
                 basePath="/amc"
-                paramName="sharePeriod"
-                defaultValue={latestShareQuarter ?? ""}
-                lenses={[...shareQuarters]
-                  .reverse()
-                  .map((q) => ({ value: q.quarter, label: q.label }))}
-                active={selectedShareQuarter}
+                paramName="fundwiseMetric"
+                defaultValue="share"
+                lenses={[
+                  { value: "share", label: "Market share" },
+                  { value: "aaum", label: "AAUM" },
+                  { value: "growth", label: "QoQ growth" },
+                ]}
+                active={fundwiseMetric}
                 preserveParams={{
                   tab: typeof sp.tab === "string" ? sp.tab : undefined,
                 }}
                 wrap
               />
-            ) : undefined
+              <DownloadCsvButton
+                rows={fundwiseCsvRows}
+                columns={fundwiseCsvColumns}
+                filename={`fundwise-${fundwiseMetric}.csv`}
+                label="Excel"
+              />
+            </div>
           }
         >
-          {growthLeaders && (
+          {fundwiseLeaders && (
             <KeyTakeaway
               className="mb-3"
               headline={
                 <>
-                  Industry AAUM grew{" "}
-                  <strong>
-                    {growthLeaders.industryGrowthPct >= 0 ? "+" : "−"}
-                    {Math.abs(growthLeaders.industryGrowthPct).toFixed(1)}%
-                  </strong>{" "}
-                  over {growthLeaders.start} → {growthLeaders.end}.{" "}
-                  <strong>{growthLeaders.gainer.displayName}</strong> gained the
-                  most share (
+                  Over {fundwiseLeaders.prevLabel} →{" "}
+                  {fundwiseLeaders.latestLabel},{" "}
+                  <strong>{fundwiseLeaders.gainer.row.displayName}</strong>{" "}
+                  gained the most share (
                   <span className="text-positive">
-                    +{growthLeaders.gainer.shareDeltaPp.toFixed(2)}pp
+                    {(fundwiseLeaders.gainer.cell.shareDeltaBps ?? 0) >= 0
+                      ? "+"
+                      : "−"}
+                    {Math.abs(
+                      Math.round(fundwiseLeaders.gainer.cell.shareDeltaBps ?? 0)
+                    )}{" "}
+                    bps
                   </span>{" "}
-                  to {growthLeaders.gainer.sharePct.toFixed(2)}%) on{" "}
-                  {growthLeaders.gainer.aumGrowthPct >= 0 ? "+" : "−"}
-                  {Math.abs(growthLeaders.gainer.aumGrowthPct).toFixed(1)}%
-                  growth, while{" "}
-                  <strong>{growthLeaders.loser.displayName}</strong> lost the most
-                  (
+                  to {fundwiseLeaders.gainer.cell.sharePct.toFixed(2)}%), while{" "}
+                  <strong>{fundwiseLeaders.loser.row.displayName}</strong> gave
+                  up the most (
                   <span className="text-negative">
-                    {growthLeaders.loser.shareDeltaPp.toFixed(2)}pp
+                    {(fundwiseLeaders.loser.cell.shareDeltaBps ?? 0) >= 0
+                      ? "+"
+                      : "−"}
+                    {Math.abs(
+                      Math.round(fundwiseLeaders.loser.cell.shareDeltaBps ?? 0)
+                    )}{" "}
+                    bps
                   </span>{" "}
-                  to {growthLeaders.loser.sharePct.toFixed(2)}%) on{" "}
-                  {growthLeaders.loser.aumGrowthPct >= 0 ? "+" : "−"}
-                  {Math.abs(growthLeaders.loser.aumGrowthPct).toFixed(1)}% growth.
+                  to {fundwiseLeaders.loser.cell.sharePct.toFixed(2)}%).
                 </>
               }
               detail={
                 <>
-                  Top-5 AMCs hold {growthLeaders.top5.toFixed(1)}% of cohort
-                  AAUM. An AMC gains share only when it grows faster than the
-                  industry.
+                  Top-5 AMCs hold {fundwiseLeaders.top5.toFixed(1)}% of cohort
+                  AAUM.{" "}
+                  {fundwiseMetric === "share"
+                    ? "Cells are tinted green where share was gained over the prior quarter, red where it was given up."
+                    : "Cells are tinted green where AAUM grew over the prior quarter, red where it shrank."}
                 </>
               }
             />
           )}
-          <GrowthVsMarket points={growth.points} />
+          <FundwiseTable matrix={fundwise} metric={fundwiseMetric} />
           <p className="mt-3 text-[11px] text-muted-foreground">
-            Bar = each AMC&rsquo;s AUM growth versus the industry&rsquo;s{" "}
-            {growth.industryGrowthPct >= 0 ? "+" : "−"}
-            {Math.abs(growth.industryGrowthPct).toFixed(1)}% pace (centre line):
-            right = grew faster → gaining share, left = slower → losing.{" "}
-            &ldquo;AUM gr.&rdquo; is the AMC&rsquo;s own growth; &ldquo;Share&rdquo;
-            its end-quarter market share; &ldquo;Δ share&rdquo; the change (pp).
+            Share % = each AMC&rsquo;s AAUM as a fraction of the cohort total
+            that quarter; the small figure beneath is the QoQ change in basis
+            points (100 bps = 1pp). Toggle to <strong>AAUM</strong> for the rupee
+            base (₹ Cr) or <strong>QoQ growth</strong> for the period-on-period
+            change; both are tinted by momentum. Export sends the active view to
+            Excel.
           </p>
         </Card>
       )}

@@ -893,74 +893,32 @@ export function amcLevelHhiPercentileRead(
     anchorQuarterLabel: anchor ? anchor.quarterLabel : null,
   };
 }
-
 /**
- * Growth vs the Market — per AMC, its QoQ AAUM growth measured against
- * the industry's growth, plus the resulting market-share change. Unifies
- * "how fast each AMC grew" with "who won / lost share": an AMC gains
- * share iff it grows faster than the cohort.
+ * Fundwise AUM matrix — per AMC × quarter: total AAUM, market share of
+ * the cohort, QoQ growth and QoQ share change (bps). Powers the per-AMC
+ * heatmap table (the "fundwise" counterpart to the industry flow table).
+ * Rows are the top-N AMCs by latest AAUM; columns are the most recent
+ * `lastN` quarters (contiguous, so QoQ deltas are clean — the first
+ * column has no prior quarter so its deltas are null).
  */
-export interface GrowthVsMarketPoint {
+export interface FundwiseCell {
+  aaum: number;
+  sharePct: number;
+  growthPct: number | null;
+  shareDeltaBps: number | null;
+}
+export interface FundwiseRow {
   amcSlug: string;
   displayName: string;
-  /** AMC's own QoQ AAUM growth (%). */
-  aumGrowthPct: number;
-  /** Growth minus the industry's growth (pp) — drives the bar. >0 means
-   *  the AMC grew faster than the market and therefore gained share. */
-  excessGrowthPct: number;
-  /** End-quarter market share (%). */
-  sharePct: number;
-  /** QoQ change in market share (pp). */
-  shareDeltaPp: number;
-  /** End-quarter AAUM (₹ Cr) — used to pick the top-N by size. */
-  latestAum: number;
+  cells: (FundwiseCell | null)[];
+}
+export interface FundwiseMatrix {
+  quarters: string[];
+  quarterLabels: string[];
+  rows: FundwiseRow[];
 }
 
-export interface GrowthVsMarketResult {
-  startQuarter: string;
-  endQuarter: string;
-  startQuarterLabel: string;
-  endQuarterLabel: string;
-  /** Industry-wide QoQ AAUM growth (%) — the benchmark / centre line. */
-  industryGrowthPct: number;
-  points: GrowthVsMarketPoint[];
-}
-
-/** Calendar quarter exactly 3 months earlier. "2026-Q1" → "2025-Q4". */
-function priorCalendarQuarter(quarter: string): string {
-  const [y, qn] = quarter.split("-Q");
-  const n = Number(qn);
-  if (n > 1) return `${y}-Q${n - 1}`;
-  return `${Number(y) - 1}-Q4`;
-}
-
-/** Quarter-ends that support a clean QoQ (3-month) market-share delta —
- *  i.e. the immediately-preceding calendar quarter is also in the
- *  snapshot. Ascending; the page reverses for newest-first. Used by the
- *  Market-share movement period selector. */
-export function cohortJourneyEndQuarters(): { quarter: string; label: string }[] {
-  const present = new Set(
-    amcAaumQuarterlySnapshot.rows
-      .filter((r) => r.status === "ok")
-      .map((r) => r.quarter)
-  );
-  return [...present]
-    .sort()
-    .filter((q) => present.has(priorCalendarQuarter(q)))
-    .map((q) => ({ quarter: q, label: fiscalLabelFromCalendarQuarter(q) }));
-}
-
-/**
- * Growth vs the Market. With no `endQuarter`, compares the earliest
- * available quarter to the latest (the full window); otherwise a QoQ
- * (3-month) change ending at `endQuarter`. Returns the industry growth
- * benchmark plus the top-N AMCs by end-quarter AAUM, each with its own
- * growth, growth-vs-market, market share and share change.
- */
-export function cohortGrowthVsMarket(
-  topN = 20,
-  endQuarter?: string
-): GrowthVsMarketResult | null {
+export function fundwiseAumMatrix(topN = 25, lastN = 8): FundwiseMatrix {
   const allQuarters = Array.from(
     new Set(
       amcAaumQuarterlySnapshot.rows
@@ -968,65 +926,71 @@ export function cohortGrowthVsMarket(
         .map((r) => r.quarter)
     )
   ).sort();
-  if (allQuarters.length < 2) return null;
-  const startQ = endQuarter ? priorCalendarQuarter(endQuarter) : allQuarters[0];
-  const endQ = endQuarter ?? allQuarters[allQuarters.length - 1];
-  if (!allQuarters.includes(startQ) || !allQuarters.includes(endQ)) return null;
+  const quarters = allQuarters.slice(-lastN);
+  if (quarters.length === 0) {
+    return { quarters: [], quarterLabels: [], rows: [] };
+  }
+  const inWindow = new Set(quarters);
 
-  // Per-quarter total AAUM (the share denominator + growth benchmark).
+  // Per-quarter total AAUM (share denominator).
   const totalByQuarter = new Map<string, number>();
   for (const r of amcAaumQuarterlySnapshot.rows) {
-    if (r.status !== "ok") continue;
-    totalByQuarter.set(
-      r.quarter,
-      (totalByQuarter.get(r.quarter) ?? 0) + r.avgAum
-    );
+    if (r.status !== "ok" || !inWindow.has(r.quarter)) continue;
+    totalByQuarter.set(r.quarter, (totalByQuarter.get(r.quarter) ?? 0) + r.avgAum);
   }
-  const startTotal = totalByQuarter.get(startQ) ?? 0;
-  const endTotal = totalByQuarter.get(endQ) ?? 0;
-  if (startTotal <= 0 || endTotal <= 0) return null;
-  const industryGrowthPct = ((endTotal - startTotal) / startTotal) * 100;
 
-  // Per-AMC start + end AAUM.
-  const aaumByAmcQuarter = new Map<string, Map<string, number>>();
+  // Per-AMC quarter → AAUM.
+  const aaumBySlug = new Map<string, Map<string, number>>();
   const displayBySlug = new Map<string, string>();
   for (const r of amcAaumQuarterlySnapshot.rows) {
-    if (r.status !== "ok") continue;
-    const inner = aaumByAmcQuarter.get(r.amcSlug) ?? new Map<string, number>();
+    if (r.status !== "ok" || !inWindow.has(r.quarter)) continue;
+    const inner = aaumBySlug.get(r.amcSlug) ?? new Map<string, number>();
     inner.set(r.quarter, r.avgAum);
-    aaumByAmcQuarter.set(r.amcSlug, inner);
+    aaumBySlug.set(r.amcSlug, inner);
     if (!displayBySlug.has(r.amcSlug)) {
       displayBySlug.set(r.amcSlug, r.displayName ?? r.amcNameAsReported);
     }
   }
 
-  const points: GrowthVsMarketPoint[] = [];
-  for (const [slug, inner] of aaumByAmcQuarter) {
-    const startAum = inner.get(startQ);
-    const endAum = inner.get(endQ);
-    if (typeof startAum !== "number" || typeof endAum !== "number") continue;
-    if (startAum <= 0 || endAum <= 0) continue;
-    const aumGrowthPct = ((endAum - startAum) / startAum) * 100;
-    const sharePct = (endAum / endTotal) * 100;
-    const startSharePct = (startAum / startTotal) * 100;
-    points.push({
+  const latestQ = quarters[quarters.length - 1];
+  const rows: FundwiseRow[] = [];
+  for (const [slug, inner] of aaumBySlug) {
+    const cells: (FundwiseCell | null)[] = quarters.map((q, i) => {
+      const aaum = inner.get(q);
+      const total = totalByQuarter.get(q);
+      if (aaum === undefined || total === undefined || total <= 0) return null;
+      const sharePct = (aaum / total) * 100;
+      let growthPct: number | null = null;
+      let shareDeltaBps: number | null = null;
+      if (i > 0) {
+        const prevAaum = inner.get(quarters[i - 1]);
+        const prevTotal = totalByQuarter.get(quarters[i - 1]);
+        if (prevAaum !== undefined && prevAaum > 0) {
+          growthPct = ((aaum - prevAaum) / prevAaum) * 100;
+        }
+        if (prevAaum !== undefined && prevTotal !== undefined && prevTotal > 0) {
+          shareDeltaBps = (sharePct - (prevAaum / prevTotal) * 100) * 100;
+        }
+      }
+      return { aaum, sharePct, growthPct, shareDeltaBps };
+    });
+    rows.push({
       amcSlug: slug,
       displayName: displayBySlug.get(slug) ?? slug,
-      aumGrowthPct,
-      excessGrowthPct: aumGrowthPct - industryGrowthPct,
-      sharePct,
-      shareDeltaPp: sharePct - startSharePct,
-      latestAum: endAum,
+      cells,
     });
   }
+
+  rows.sort(
+    (a, b) =>
+      (aaumBySlug.get(b.amcSlug)?.get(latestQ) ?? 0) -
+      (aaumBySlug.get(a.amcSlug)?.get(latestQ) ?? 0)
+  );
+
   return {
-    startQuarter: startQ,
-    endQuarter: endQ,
-    startQuarterLabel: fiscalLabelFromCalendarQuarter(startQ),
-    endQuarterLabel: fiscalLabelFromCalendarQuarter(endQ),
-    industryGrowthPct,
-    points: points
-      .sort((a, b) => b.latestAum - a.latestAum)
-      .slice(0, topN),
+    quarters,
+    quarterLabels: quarters.map(fiscalLabelFromCalendarQuarter),
+    rows: rows.slice(0, topN),
   };
 }
+
