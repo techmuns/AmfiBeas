@@ -185,6 +185,48 @@ export function industryComparison(): AmcCompareMetrics {
   };
 }
 
+/** Industry-AVERAGE benchmark column — the MEAN of each metric across all
+ *  comparable AMCs (distinct from industryComparison()'s total/aggregate).
+ *  Answers "is this AMC above or below the typical AMC?" rather than "vs the
+ *  whole market". Nulls are skipped per field; rank isn't meaningful as a mean. */
+export function industryAverageComparison(): AmcCompareMetrics {
+  const idx = amcIndexRows();
+  const book = amcEquityBook();
+  const rows = idx ? idx.rows.map((r) => rowToMetrics(r, book)) : [];
+  const mean = (
+    pick: (m: AmcCompareMetrics) => number | null
+  ): number | null => {
+    const vals = rows
+      .map(pick)
+      .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+    if (vals.length === 0) return null;
+    return vals.reduce((s, v) => s + v, 0) / vals.length;
+  };
+  return {
+    slug: "industry-average",
+    displayName: "Industry avg",
+    isIndustry: true,
+    aaumCr: mean((m) => m.aaumCr),
+    marketSharePct: mean((m) => m.marketSharePct),
+    shareDeltaBps: mean((m) => m.shareDeltaBps),
+    qoqGrowthPct: mean((m) => m.qoqGrowthPct),
+    yoyGrowthPct: mean((m) => m.yoyGrowthPct),
+    rank: null,
+    isListed: false,
+    revenueCr: mean((m) => m.revenueCr),
+    revenueYieldBps: mean((m) => m.revenueYieldBps),
+    opMarginPct: mean((m) => m.opMarginPct),
+    patMarginPct: mean((m) => m.patMarginPct),
+    finQuarter: null,
+    equityMatched: rows.some((m) => m.equityMatched),
+    activeEquityCr: mean((m) => m.activeEquityCr),
+    passiveEquityCr: mean((m) => m.passiveEquityCr),
+    activePct: mean((m) => m.activePct),
+    passivePct: mean((m) => m.passivePct),
+    equitySharePct: mean((m) => m.equitySharePct),
+  };
+}
+
 /** The fiscal label of the latest AAUM quarter (for subtitles). */
 export function amcCompareQuarterLabel(): string | null {
   return amcIndexRows()?.fiscalLabel ?? null;

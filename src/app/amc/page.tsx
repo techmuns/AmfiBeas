@@ -23,6 +23,7 @@ import {
   amcCompareUniverse,
   amcComparison,
   industryComparison,
+  industryAverageComparison,
 } from "@/data/amc-compare";
 import {
   fundwiseAumMatrix,
@@ -149,6 +150,7 @@ export default async function AmcListPage({
   const aCompare = amcComparison(aSlug);
   const bCompare = amcComparison(bSlug);
   const industryCompare = industryComparison();
+  const industryAvgCompare = industryAverageComparison();
 
   return (
     <div className="space-y-6">
@@ -339,6 +341,7 @@ export default async function AmcListPage({
             a={aCompare}
             b={bCompare}
             industry={industryCompare}
+            industryAvg={industryAvgCompare}
             universe={compareUniverse}
             quarterLabel={data.fiscalLabel}
           />

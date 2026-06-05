@@ -47,6 +47,7 @@ interface ExportRow {
   a: string;
   b: string;
   industry: string;
+  industryAvg: string;
 }
 
 /**
@@ -60,12 +61,14 @@ export function AmcHeadToHead({
   a,
   b,
   industry,
+  industryAvg,
   universe,
   quarterLabel,
 }: {
   a: AmcCompareMetrics;
   b: AmcCompareMetrics;
   industry: AmcCompareMetrics;
+  industryAvg: AmcCompareMetrics;
   universe: { slug: string; displayName: string }[];
   quarterLabel: string | null;
 }) {
@@ -74,12 +77,14 @@ export function AmcHeadToHead({
     a: s.fmt(s.pick(a)),
     b: s.fmt(s.pick(b)),
     industry: s.fmt(s.pick(industry)),
+    industryAvg: s.fmt(s.pick(industryAvg)),
   }));
   const exportColumns: CsvColumn<ExportRow>[] = [
     { key: "metric", header: "Metric" },
     { key: "a", header: a.displayName },
     { key: "b", header: b.displayName },
-    { key: "industry", header: "Industry" },
+    { key: "industry", header: "Industry (total)" },
+    { key: "industryAvg", header: "Industry avg" },
   ];
 
   const finQuarter = a.finQuarter ?? b.finQuarter;
@@ -110,7 +115,10 @@ export function AmcHeadToHead({
                 {b.displayName}
               </th>
               <th className="border px-2.5 py-2 text-right font-semibold text-muted-foreground">
-                Industry
+                Industry · total
+              </th>
+              <th className="border px-2.5 py-2 text-right font-semibold text-muted-foreground">
+                Industry · avg
               </th>
             </tr>
           </thead>
@@ -136,6 +144,7 @@ export function AmcHeadToHead({
                   aText={s.fmt(aNum)}
                   bText={s.fmt(bNum)}
                   indText={s.fmt(s.pick(industry))}
+                  indAvgText={s.fmt(s.pick(industryAvg))}
                   aLeads={aLeads}
                   bLeads={bLeads}
                 />
@@ -157,7 +166,12 @@ export function AmcHeadToHead({
         (active / passive) is equity-only, from the RupeeVest snapshot on Market
         Share Insights, matched to the AMC by name (&ldquo;—&rdquo; where
         unmatched), so its active/passive shares describe the equity sleeve, not
-        total AAUM. The larger of A vs B is bolded per row.
+        total AAUM.{" "}
+        <span className="font-medium text-foreground">Industry · total</span>{" "}
+        sums all AMCs; <span className="font-medium text-foreground">Industry ·
+        avg</span> is the mean across AMCs (the typical AMC) — the benchmark for
+        &ldquo;is this AMC above or below average?&rdquo;. The larger of A vs B
+        is bolded per row.
       </p>
     </div>
   );
@@ -169,6 +183,7 @@ function ConfigRow({
   aText,
   bText,
   indText,
+  indAvgText,
   aLeads,
   bLeads,
 }: {
@@ -177,6 +192,7 @@ function ConfigRow({
   aText: string;
   bText: string;
   indText: string;
+  indAvgText: string;
   aLeads: boolean;
   bLeads: boolean;
 }) {
@@ -185,7 +201,7 @@ function ConfigRow({
       {groupHeader && (
         <tr>
           <th
-            colSpan={4}
+            colSpan={5}
             className="border bg-muted/40 px-2.5 py-1 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
           >
             {groupHeader}
@@ -217,6 +233,9 @@ function ConfigRow({
         </td>
         <td className="border px-2.5 py-1.5 text-right text-muted-foreground">
           {indText}
+        </td>
+        <td className="border px-2.5 py-1.5 text-right text-muted-foreground">
+          {indAvgText}
         </td>
       </tr>
     </>
