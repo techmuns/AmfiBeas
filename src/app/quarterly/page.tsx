@@ -607,9 +607,9 @@ export default async function QuarterlyPage({
 
       {activeTab === "aaum-flows" && (
         <TabIntroCard
-          headline="Where did the industry's quarterly AAUM and flow go?"
-          summary="Headline AAUM, AUM mix donut, last-month AAUM trend, quarterly net flows by category, and category-level QAAUM/flow share. The full quarterly flow picture in one tab."
-          watchNext="Whether equity continues to dominate flow magnitude as AAUM expands."
+          headline="Where did the quarter's AUM change come from?"
+          summary="The quarter-end AUM mix by category, plus the AUM-change bridge — how much of each quarter's move was net flows versus residual (market movement, within-quarter timing and an averaging mismatch)."
+          watchNext="Whether the residual keeps outweighing net flows — the sign that market moves, not investor flows, are driving the AUM line."
         />
       )}
 
@@ -671,7 +671,7 @@ export default async function QuarterlyPage({
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
-              AMFI Quarterly AUM Mix &amp; Trend
+              AMFI Quarterly AUM Mix
             </h2>
             <p className="text-xs text-muted-foreground">
               Source: AMFI Quarterly Report
