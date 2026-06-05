@@ -82,6 +82,19 @@ export function AmcSearchTable({ rows }: Props) {
     });
   }, [rows, query]);
 
+  // Aggregate the long tail (everyone outside the Top 7) into one
+  // "Remaining …" summary row so the table reads as "the big players,
+  // then the rest as a single block" without scrolling 40+ rows.
+  const remaining = useMemo(() => {
+    const tail = rows.filter((r) => !r.isTop7);
+    if (tail.length === 0) return null;
+    return {
+      count: tail.length,
+      avgAum: tail.reduce((s, r) => s + (r.avgAum || 0), 0),
+      sharePct: tail.reduce((s, r) => s + (r.marketSharePct || 0), 0),
+    };
+  }, [rows]);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -201,6 +214,31 @@ export function AmcSearchTable({ rows }: Props) {
                 </tr>
               ))}
             </tbody>
+            {!query.trim() && remaining && (
+              <tfoot>
+                <tr className="border-t-2 bg-muted/30 font-medium">
+                  <td className="py-3 pl-3 pr-3 text-muted-foreground tabular">
+                    —
+                  </td>
+                  <td className="py-3 pr-4 text-muted-foreground">
+                    Remaining {remaining.count} AMCs (outside Top 7)
+                  </td>
+                  <td className="py-3 pr-4 text-right tabular">
+                    {formatCompactCrSafe(remaining.avgAum)}
+                  </td>
+                  <td className="py-3 pr-4 text-right tabular">
+                    {formatPctSafe(remaining.sharePct, 2)}
+                  </td>
+                  <td className="py-3 pr-4 text-right tabular text-muted-foreground">
+                    —
+                  </td>
+                  <td className="py-3 pr-4 text-right tabular text-muted-foreground">
+                    —
+                  </td>
+                  <td className="py-3 pr-3" />
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
       )}
