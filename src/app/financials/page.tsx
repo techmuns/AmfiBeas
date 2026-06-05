@@ -9,13 +9,10 @@ import {
 } from "@/components/amc/AmcCompareSection";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { chartInsights, latestYoyPct } from "@/lib/chart-context";
-import { indexSeriesToBase } from "@/lib/index-series";
-import { LensToggle } from "@/components/ui/LensToggle";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FilterBar } from "@/components/filters/FilterBar";
 import type { AmcStatus } from "@/components/filters/FilterBar";
 import { QuarterPicker } from "@/components/filters/QuarterPicker";
-import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { FinancialsPeerExport } from "@/components/data/FinancialsPeerExport";
 import { HowToRead } from "@/components/ui/HowToRead";
@@ -137,17 +134,8 @@ export default async function FinancialsPage({
   // squashed and its growth volatility is hard to read. "indexed"
   // rebases each series to 100 at the first visible quarter so all
   // three move on a comparable growth scale.
-  const pnlScale: "levels" | "indexed" =
-    sp.pnlScale === "indexed" ? "indexed" : "levels";
 
   // Series spec shared by the bars and trend views of the P&L card.
-  // `BarSpec` and `LineSpec` are both `{ key, name, color }`, so the
-  // same array works as `bars=` on GroupedBars and `lines=` on MultiLine.
-  const pnlSeries = [
-    { key: "revenue", name: "Operating Revenue", color: "hsl(var(--chart-1))" },
-    { key: "op", name: "Operating Profit", color: "hsl(var(--chart-2))" },
-    { key: "pat", name: "PAT", color: "hsl(var(--chart-3))" },
-  ];
 
   // Fixed-window chart axis. All three chart groups (Revenue/Op/PAT bars,
   // Margin Trend, Yields) share the same x-axis: the latest 8 calendar
@@ -254,17 +242,9 @@ export default async function FinancialsPage({
       pat: r ? r.pat : null,
     };
   });
-  const marginData = fixedWindow.map((quarter) => {
-    const r = seriesByQuarter.get(quarter);
-    if (!r || r.revenue === 0) {
-      return { quarter, patMargin: null, opMargin: null };
-    }
-    return {
-      quarter,
-      patMargin: Number(((r.pat / r.revenue) * 100).toFixed(2)),
-      opMargin: Number(((r.operatingProfit / r.revenue) * 100).toFixed(2)),
-    };
-  });
+  const revenueSeries = pnlData
+    .filter((p): p is typeof p & { revenue: number } => typeof p.revenue === "number")
+    .map((p) => ({ label: p.quarter, value: p.revenue }));
   // null (not 0) for quarters where the AMC has no row OR where AAUM is
   // missing — Recharts renders a gap rather than a misleading line drop.
   const yieldData = fixedWindow.map((quarter) => {
@@ -352,20 +332,6 @@ export default async function FinancialsPage({
       profit: medianHelper(profitYields),
     });
   }
-  const marginDataWithPeer = marginData.map((p) => {
-    const peer = peerMarginByQuarter.get(p.quarter);
-    return {
-      ...p,
-      patMedian:
-        peer?.patMargin !== undefined && peer.patMargin !== null
-          ? Number(peer.patMargin.toFixed(2))
-          : null,
-      opMedian:
-        peer?.opMargin !== undefined && peer.opMargin !== null
-          ? Number(peer.opMargin.toFixed(2))
-          : null,
-    };
-  });
   const yieldDataWithPeer = yieldData.map((p) => {
     const peer = peerYieldByQuarter.get(p.quarter);
     return {
@@ -389,51 +355,7 @@ export default async function FinancialsPage({
   //      cards. Each helper produces a typed SeriesPoint[] from the
   //      already-built display data so the engine can compute YoY,
   //      σ-spike, run, ATH/ATL rules across quarterly P&L history.
-  const revenueSeries = pnlData
-    .filter((p): p is typeof p & { revenue: number } => typeof p.revenue === "number")
-    .map((p) => ({ label: p.quarter, value: p.revenue }));
-  const pnlInsights = chartInsights(revenueSeries, {
-    metricName: "operating revenue",
-    unitSuffix: "₹ Cr",
-    yoyLag: 4,
-  });
-  // P&L denominator: latest PAT margin (PAT ÷ Revenue) — the single
-  // headline operating-quality number.
-  const pnlDenomCaption = (() => {
-    for (let i = pnlData.length - 1; i >= 0; i--) {
-      const p = pnlData[i];
-      if (
-        typeof p.revenue === "number" &&
-        typeof p.pat === "number" &&
-        p.revenue > 0
-      ) {
-        const m = (p.pat / p.revenue) * 100;
-        return `PAT margin ${m.toFixed(1)}% · ${p.quarter}`;
-      }
-    }
-    return undefined;
-  })();
 
-  const patMarginSeries = marginData
-    .filter((p): p is typeof p & { patMargin: number } => typeof p.patMargin === "number")
-    .map((p) => ({ label: p.quarter, value: p.patMargin }));
-  const marginInsights = chartInsights(patMarginSeries, {
-    metricName: "PAT margin",
-    unitSuffix: "%",
-    yoyLag: 4,
-  });
-  // Margin denominator: latest gap vs peer median PAT margin — answers
-  // "is this AMC running above or below the listed-peer cohort?".
-  const marginDenomCaption = (() => {
-    for (let i = marginDataWithPeer.length - 1; i >= 0; i--) {
-      const p = marginDataWithPeer[i];
-      if (typeof p.patMargin === "number" && typeof p.patMedian === "number") {
-        const gap = p.patMargin - p.patMedian;
-        return `${gap >= 0 ? "+" : "−"}${Math.abs(gap).toFixed(1)} pp vs peer median PAT margin · ${p.quarter}`;
-      }
-    }
-    return undefined;
-  })();
 
   const revenueYieldSeries = yieldData
     .filter((p): p is typeof p & { revenue: number } => typeof p.revenue === "number")
@@ -654,99 +576,6 @@ export default async function FinancialsPage({
         />
       </section>
 
-      <ChartWithContext
-        title="Operating Revenue / Operating Profit / PAT"
-        subtitle="Quarterly P&L for this AMC. Tracks top line, operating profit, and bottom line together."
-        flowKind="gross"
-        denominatorCaption={(() => {
-          const base =
-            pnlScale === "indexed"
-              ? "Quarterly · each series rebased to 100 at the first visible quarter · Source: standalone P&L (all operating segments, excludes Other Income)"
-              : "Quarterly · ₹ Cr · Operating Revenue from standalone P&L (all operating segments, excludes Other Income)";
-          return pnlDenomCaption
-            ? `${base} · ${pnlDenomCaption}`
-            : base;
-        })()}
-        denominatorTooltip={
-          pnlScale === "indexed"
-            ? "Each series is rebased independently to 100 at the first visible quarter, so all three lines move on a comparable growth scale. A value of 140 means that line is 40% above the start of the visible window. Use Levels to read absolute ₹ Cr."
-            : "Latest quarter's PAT margin (PAT ÷ Operating Revenue) — the single headline operating-quality number for the AMC."
-        }
-        insights={pnlInsights}
-        yoyBadge={(() => {
-          const v = latestYoyPct(revenueSeries, 4);
-          return v === null ? undefined : { label: "Revenue YoY", pct: v };
-        })()}
-        action={
-          <LensToggle
-            basePath="/financials"
-            paramName="pnlScale"
-            defaultValue="levels"
-            lenses={[
-              { value: "levels", label: "₹ Cr" },
-              { value: "indexed", label: "Indexed (100)" },
-            ]}
-            active={pnlScale}
-            preserveParams={{
-              amcs: typeof sp.amcs === "string" ? sp.amcs : undefined,
-              period: typeof sp.period === "string" ? sp.period : undefined,
-            }}
-          />
-        }
-      >
-        <GroupedBars
-          data={
-            pnlScale === "indexed"
-              ? indexSeriesToBase(pnlData, ["revenue", "op", "pat"])
-              : pnlData
-          }
-          xKey="quarter"
-          valueFormat={pnlScale === "indexed" ? "count" : "cr"}
-          axisFormat={pnlScale === "indexed" ? "count" : "cr"}
-          bars={pnlSeries}
-        />
-      </ChartWithContext>
-
-      <ChartWithContext
-        title="Margin Trend"
-        subtitle="PAT margin and Operating margin over time, against the listed-peer median."
-        flowKind="stock"
-        denominatorCaption={(() => {
-          const base = "% of Operating Revenue · peer-median overlay";
-          return marginDenomCaption
-            ? `${base} · ${marginDenomCaption}`
-            : base;
-        })()}
-        denominatorTooltip="Latest PAT margin minus the listed-peer median PAT margin for the same quarter, in percentage points. Positive = AMC running above the cohort."
-        insights={marginInsights}
-        yoyBadge={(() => {
-          const v = latestYoyPct(patMarginSeries, 4);
-          return v === null ? undefined : { label: "PAT margin YoY", pct: v };
-        })()}
-      >
-        <MultiLine
-          data={marginDataWithPeer}
-          xKey="quarter"
-          valueFormat="pct"
-          axisFormat="pct"
-          showDots
-          dynamicYDomain
-          lines={[
-            { key: "patMargin", name: "PAT margin", color: "hsl(var(--chart-3))" },
-            { key: "opMargin", name: "Operating margin", color: "hsl(var(--chart-2))" },
-            {
-              key: "patMedian",
-              name: "Peer median PAT",
-              color: "hsl(var(--muted-foreground))",
-            },
-            {
-              key: "opMedian",
-              name: "Peer median Op",
-              color: "hsl(var(--muted-foreground))",
-            },
-          ]}
-        />
-      </ChartWithContext>
 
       <ChartWithContext
         title="Yields (bps of MF QAAUM)"

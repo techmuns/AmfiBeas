@@ -1,58 +1,29 @@
-import { BarSeries } from "@/components/charts/BarSeries";
 import type { DonutSlice } from "@/components/charts/Donut";
 import { QuarterEndMixTable } from "@/components/data/QuarterEndMixTable";
 import { AaumBridgeTable } from "@/components/data/AaumBridgeTable";
-import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { StackedArea } from "@/components/charts/StackedArea";
 import { Card } from "@/components/ui/Card";
-import { HowToRead } from "@/components/ui/HowToRead";
-import { ChartTypeToggle } from "@/components/ui/ChartTypeToggle";
-import { BarsWithGrowth } from "@/components/charts/BarsWithGrowth";
-import { ChartWithContext } from "@/components/ui/ChartWithContext";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
 import { quarterlyMarketWrap } from "@/data/market-wrap-quarterly";
 import { FiscalQuarterPicker } from "@/components/filters/FiscalQuarterPicker";
 import { PageHeader } from "@/components/layout/PageHeader";
-import {
-  adaptiveAverageOverlay,
-  chartInsights,
-  latestYoyPct,
-  yoyPctSeries,
-} from "@/lib/chart-context";
-import { indexSeriesToBase } from "@/lib/index-series";
-import {
-  IIFL_ACTIVE_EQUITY_CATEGORIES,
-  IIFL_TREND_EXPANDED_SLUGS,
-  IIFL_TREND_FEATURED_SLUGS,
-  iiflActiveEquityQuarterlyTrendCard,
-  latestCategoryProvenance,
-} from "@/data/amfi-monthly-category";
-import { formatKpiProvenanceTooltip } from "@/data/amfi-monthly";
-import { cyclePhaseHistory, historicalEpisodes } from "@/data/market-indices";
+import { cyclePhaseHistory } from "@/data/market-indices";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
-import { LensToggle } from "@/components/ui/LensToggle";
 import {
   availableQuartersDesc,
   formatQuarterlyProvenanceLine,
   formatQuarterlyProvenanceTooltip,
   getQuarterlyKpiProvenance,
   getQuarterlyKpiValue,
-  latestOpenEndedSchemeCount,
-  latestQuarterlyFolioAdditions,
   liquidAumForQuarter,
   quarterlyCategoryAumProvenance,
-  quarterlyActiveEquityLastMonthAaumTrend,
-  quarterlyActiveEquityLastMonthShareTrend,
   quarterlyEquityLastMonthAaumBreakdown,
   quarterlyFlowsData,
   quarterlyFolioAdditionsTrend,
-  quarterlyFlowsSectionRead,
-  quarterlyFoliosSectionRead,
   quarterlyKpiContext,
-  quarterlyOpenEndedSchemeCountTrend,
   quarterlySnapshotSectionRead,
   quarterlyTrend,
   categoryHhiPercentileRead,
@@ -63,8 +34,6 @@ import {
 } from "@/data/amfi-quarterly";
 import {
   formatCompactCrSafe,
-  formatCroreCountSafe,
-  formatIntSafe,
   formatLakhSafe,
   formatPercentilePill,
 } from "@/lib/format";
@@ -80,15 +49,12 @@ import {
   type DashboardTabDef,
 } from "@/components/layout/DashboardTabs";
 import { TabIntroCard } from "@/components/ui/TabIntroCard";
-import { resolveTab } from "@/lib/tabs";
+import { resolveTabWithAliases } from "@/lib/tabs";
 
 const QUARTERLY_TABS = [
   { id: "snapshot", label: "Snapshot" },
-  { id: "aaum-flows", label: "AAUM & Flows" },
-  { id: "categories", label: "Categories" },
-  { id: "retail-schemes", label: "Retail & Schemes" },
-  { id: "active-passive", label: "Active vs Passive" },
-  { id: "concentration", label: "Concentration" },
+  { id: "aaum-flows", label: "AUM & Flows" },
+  { id: "concentration", label: "Market Competition" },
 ] as const satisfies readonly DashboardTabDef[];
 type QuarterlyTabId = (typeof QUARTERLY_TABS)[number]["id"];
 const QUARTERLY_TAB_IDS = QUARTERLY_TABS.map(
@@ -111,97 +77,17 @@ export default async function QuarterlyPage({
 }) {
   const sp = await searchParams;
 
-  // ---- Lens toggles (parsed up-front) ----
-  const quarterlyFlowsLens: "absolute" | "share" =
-    sp.qFlowsLens === "share" ? "share" : "absolute";
-  // Chart-type toggle for the one approved Bars + Growth callsite on
-  // /quarterly. Default is "trend" — only "bars" is echoed into the URL.
-  const quarterlyFlowsView: "trend" | "bars" =
-    sp.quarterlyFlowsView === "bars" ? "bars" : "trend";
-  const equityMixLens: "absolute" | "share" =
-    sp.qEquityMixLens === "share" ? "share" : "absolute";
-  // Per-card lens toggles for /quarterly. Each one switches a trend
-  // chart between absolute and a card-specific share/ratio view.
-  const qAaumLens: "absolute" | "share" =
-    sp.qAaumLens === "share" ? "share" : "absolute";
-  const qAeAaumLens: "absolute" | "share" =
-    sp.qAeAaumLens === "share" ? "share" : "absolute";
-  const qFoliosLens: "absolute" | "share" =
-    sp.qFoliosLens === "share" ? "share" : "absolute";
-  const qFolioAddLens: "absolute" | "share" =
-    sp.qFolioAddLens === "share" ? "share" : "absolute";
-  const qSchemesLens: "absolute" | "share" =
-    sp.qSchemesLens === "share" ? "share" : "absolute";
-  // Chart-type toggles. Each eligible bar-style time-series card on
-  // the page owns its own `q<thing>View` URL param. Bars is the
-  // default and is never echoed into the URL — only the "trend"
-  // value rides along so the default page stays URL-clean.
-  // Chart-style toggles (Bars vs Trend) were removed across the
-  // dashboard — every chart now renders the trend visual directly.
-  // Stale `?q...View=bars|trend` URLs are ignored silently.
-  // Pass-through params for every LensToggle on this page. `tab` is
-  // included so toggling a lens doesn't bounce the reader back to the
-  // default tab.
-  const preservedQueryParams: Record<string, string | undefined> = {
-    tab: typeof sp.tab === "string" ? sp.tab : undefined,
-    quarter: typeof sp.quarter === "string" ? sp.quarter : undefined,
-    qFlowsLens:
-      typeof sp.qFlowsLens === "string" ? sp.qFlowsLens : undefined,
-    quarterlyFlowsView:
-      typeof sp.quarterlyFlowsView === "string"
-        ? sp.quarterlyFlowsView
-        : undefined,
-    qEquityMixLens:
-      typeof sp.qEquityMixLens === "string" ? sp.qEquityMixLens : undefined,
-    qAaumLens: typeof sp.qAaumLens === "string" ? sp.qAaumLens : undefined,
-    qAeAaumLens:
-      typeof sp.qAeAaumLens === "string" ? sp.qAeAaumLens : undefined,
-    qFoliosLens:
-      typeof sp.qFoliosLens === "string" ? sp.qFoliosLens : undefined,
-    qFolioAddLens:
-      typeof sp.qFolioAddLens === "string" ? sp.qFolioAddLens : undefined,
-    qSchemesLens:
-      typeof sp.qSchemesLens === "string" ? sp.qSchemesLens : undefined,
-    qCategoryTrendsScale:
-      typeof sp.qCategoryTrendsScale === "string"
-        ? sp.qCategoryTrendsScale
-        : undefined,
-    // Chart-type `q<thing>View` toggles — only the non-default
-    // "trend" value is preserved so other toggles never re-attach
-    // `q<thing>View=bars` to the URL.
-  };
-  // Scale toggle for the Active-Equity Category Trends section. Mirrors
-  // /monthly's categoryTrendsScale — see that file for rationale.
-  const qCategoryTrendsScale: "levels" | "indexed" =
-    sp.qCategoryTrendsScale === "indexed" ? "indexed" : "levels";
-
-  const activeTab = resolveTab<QuarterlyTabId>(
+  const activeTab = resolveTabWithAliases<QuarterlyTabId>(
     sp.tab,
     QUARTERLY_TAB_IDS,
+    {
+      categories: "aaum-flows",
+      "retail-schemes": "concentration",
+      "active-passive": "concentration",
+    },
     "snapshot",
   );
 
-  // Share-mode transform helper for grouped-bar series.
-  const toShareRow = (
-    row: Record<string, number | null | string>,
-    keys: string[]
-  ): Record<string, number | null | string> => {
-    const total = keys.reduce((s, k) => {
-      const v = row[k];
-      return s + (typeof v === "number" ? Math.abs(v) : 0);
-    }, 0);
-    if (total === 0) {
-      const out = { ...row };
-      for (const k of keys) out[k] = null;
-      return out;
-    }
-    const out = { ...row };
-    for (const k of keys) {
-      const v = row[k];
-      out[k] = typeof v === "number" ? (v / total) * 100 : null;
-    }
-    return out;
-  };
 
   // Quarter selector — `?quarter=FY26-Q4` resolves to the matching
   // row when valid; otherwise we fall back to the latest available
@@ -212,27 +98,6 @@ export default async function QuarterlyPage({
   const selectedRow = resolveSelectedQuarter(requestedQuarter);
   const availableQuarters = availableQuartersDesc();
 
-  // ---- IIFL Active-Equity Category Trends ---------------------------
-  // The single section on /quarterly allowed to source from AMFI
-  // Monthly Reports — true QAAUM share requires period-average AAUM
-  // across all months in the quarter, which the quarterly Report's
-  // Average Net AUM column (last-month only) cannot provide.
-  const iiflTrendCards = IIFL_ACTIVE_EQUITY_CATEGORIES.map((c) => {
-    const { series, hasData } = iiflActiveEquityQuarterlyTrendCard(c.slug);
-    const aumHover = formatKpiProvenanceTooltip(
-      latestCategoryProvenance(c.slug, "categoryAaum")
-    );
-    return { ...c, series, hasData, aumHover };
-  });
-  const iiflTrendBySlug = new Map(iiflTrendCards.map((c) => [c.slug, c]));
-  const iiflFeaturedCards = IIFL_TREND_FEATURED_SLUGS.map(
-    (s) => iiflTrendBySlug.get(s)!
-  );
-  const iiflExpandedCards = IIFL_TREND_EXPANDED_SLUGS.map(
-    (s) => iiflTrendBySlug.get(s)!
-  );
-  const hasAnyIiflTrend = iiflTrendCards.some((c) => c.hasData);
-  const hasExpandedIiflTrend = iiflExpandedCards.some((c) => c.hasData);
 
   // ---- AMFI Quarterly Snapshot — KPI cards (selected quarter) -------
   // Mirrors /monthly's AMFI Monthly Snapshot card list:
@@ -431,397 +296,11 @@ export default async function QuarterlyPage({
         : "Quarter-end AUM not available for the selected quarter";
 
   // Last-month AAUM trend across the full AMFI quarterly history.
-  const aaumTrendData = quarterlyTrend("grandTotalLastMonthAaum", 16);
-  // Full quarterly history so the 4Q trailing average has real prior
-  // data to draw on for the leftmost visible quarters.
-  const aaumTrendFullHistory = quarterlyTrend("grandTotalLastMonthAaum", 10_000);
-  const aaumTrendHasData = aaumTrendData.length > 0;
-  const aaumTrendSubtitle = aaumTrendHasData
-    ? `Last-month AAUM · ${aaumTrendData.length} quarter${aaumTrendData.length === 1 ? "" : "s"} · ₹ Cr`
-    : "Last-month AAUM not available";
 
-  // ---- Shared chart-context helpers (used by every insight call) ----
-  // Convert YYYY-MM → fiscal-quarter display label ("4QFY26") used by
-  // every quarterly chart series. Indian FY ends in March: Apr-Jun =
-  // Q1, Jul-Sep = Q2, Oct-Dec = Q3, Jan-Mar = Q4. FY{YY} is the year
-  // ending in March of that YY.
-  const monthToFiscalQuarterLabel = (month: string): string | null => {
-    const [yStr, mStr] = month.split("-");
-    const y = Number(yStr);
-    const m = Number(mStr);
-    if (!Number.isFinite(y) || !Number.isFinite(m)) return null;
-    let fyYear: number;
-    let fyQ: number;
-    if (m >= 1 && m <= 3) {
-      fyYear = y;
-      fyQ = 4;
-    } else if (m >= 4 && m <= 6) {
-      fyYear = y + 1;
-      fyQ = 1;
-    } else if (m >= 7 && m <= 9) {
-      fyYear = y + 1;
-      fyQ = 2;
-    } else if (m >= 10 && m <= 12) {
-      fyYear = y + 1;
-      fyQ = 3;
-    } else {
-      return null;
-    }
-    return `${fyQ}QFY${String(fyYear).slice(-2)}`;
-  };
-  // Cycle phase by quarter — walking the monthly phase history in
-  // order and overwriting per-quarter means the LAST month of each
-  // quarter wins. That's the most representative read for a
-  // quarter-end snapshot.
-  const cyclePhaseByQuarterLabel: Map<string, string> = (() => {
-    const m = new Map<string, string>();
-    for (const p of cyclePhaseHistory()) {
-      const q = monthToFiscalQuarterLabel(p.month);
-      if (q) m.set(q, p.phase);
-    }
-    return m;
-  })();
-  // Episode anchors translated to fiscal-quarter labels. Multiple
-  // episode months can map to the same quarter (e.g. COVID 2020 spans
-  // Feb-Mar 2020 → both in FY20-Q4) — dedupe so each quarter has one
-  // anchor.
-  const episodeAnchorsForQuarter: { label: string; title: string }[] =
-    (() => {
-      const seen = new Set<string>();
-      const out: { label: string; title: string }[] = [];
-      for (const e of historicalEpisodes()) {
-        const q = monthToFiscalQuarterLabel(e.startMonth);
-        if (!q || seen.has(q)) continue;
-        seen.add(q);
-        out.push({ label: q, title: e.title });
-      }
-      return out;
-    })();
 
-  // Last-month AAUM denominator: latest as % of trailing 4Q (1Y) average
-  // — separates structural growth from quarter-to-quarter mean reversion.
-  const lastMonthAaumDenomCaption = (() => {
-    if (aaumTrendData.length < 4) return undefined;
-    const trailing4 = aaumTrendData.slice(-4);
-    const avg = trailing4.reduce((s, p) => s + p.value, 0) / trailing4.length;
-    const latest = aaumTrendData[aaumTrendData.length - 1];
-    if (avg <= 0) return undefined;
-    const pct = (latest.value / avg) * 100;
-    return `${pct.toFixed(1)}% of trailing 4Q avg · latest ${latest.label}`;
-  })();
-  const lastMonthAaumInsights = chartInsights(aaumTrendData, {
-    metricName: "last-month AAUM",
-    unitSuffix: "₹ Cr",
-    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
-    yoyLag: 4,
-  });
-  // "Share" view: each quarter indexed as a % of its own trailing
-  // 4Q (1Y) moving average. Drops the first 3 points where no
-  // trailing average is available.
-  const aaumTrendShare = aaumTrendData
-    .map((p, i, arr) => {
-      if (i + 1 < 4) return null;
-      const slice = arr.slice(i + 1 - 4, i + 1);
-      const avg = slice.reduce((s, q) => s + q.value, 0) / 4;
-      if (avg <= 0) return null;
-      return { label: p.label, value: (p.value / avg) * 100 };
-    })
-    .filter((p): p is { label: string; value: number } => p !== null);
-  const aaumDisplayData = qAaumLens === "share" ? aaumTrendShare : aaumTrendData;
 
-  // ---- Quarterly Flows ----------------------------------------------
-  // Mirrors /monthly's "Equity / Debt / Liquid Monthly Net Flows"
-  // grouped bar chart exactly. One full-width Card; same colors as
-  // /monthly (Equity = chart-1 blue / Debt = chart-2 green /
-  // Liquid = chart-4 purple). Liquid is shown separately for chart
-  // parity with /monthly even though debtNetInflow already includes
-  // it on the AMFI classification.
-  const flowsData = quarterlyFlowsData(16);
-  const flowsDataDisplay =
-    quarterlyFlowsLens === "share"
-      ? flowsData.map((r) =>
-          toShareRow(r as Record<string, number | null | string>, [
-            "equity",
-            "debt",
-            "liquid",
-          ])
-        )
-      : flowsData;
-  const flowsHasData = flowsData.some(
-    (r) => r.equity !== null || r.debt !== null || r.liquid !== null
-  );
 
-  // ---- Quarterly Active Equity & Equity Mix -------------------------
-  // Mirrors /monthly's Active Equity & Equity Mix section. All three
-  // cards use LAST-MONTH AAUM (not true QAAUM) — labelled explicitly
-  // so the methodology is unambiguous.
-  const aeAaumTrend = quarterlyActiveEquityLastMonthAaumTrend(16);
-  const aeAaumFullHistory = quarterlyActiveEquityLastMonthAaumTrend(10_000);
-  const aeShareTrend = quarterlyActiveEquityLastMonthShareTrend(16);
-  const aeBreakdown = quarterlyEquityLastMonthAaumBreakdown(16);
-  const aeBreakdownDisplay =
-    equityMixLens === "share"
-      ? aeBreakdown.map((r) =>
-          toShareRow(r as Record<string, number | null | string>, [
-            "activeEquity",
-            "etfIndex",
-            "arbitrage",
-          ])
-        )
-      : aeBreakdown;
-  const aeBreakdownHasData = aeBreakdown.some(
-    (r) =>
-      r.activeEquity !== null || r.etfIndex !== null || r.arbitrage !== null
-  );
-  const hasAnyEquityMix =
-    aeAaumTrend.length > 0 ||
-    aeShareTrend.length > 0 ||
-    aeBreakdownHasData;
-  // Latest active/etf/arbitrage mix — proportion-first read for the
-  // breakdown subtitle.
-  const latestQuarterlyEquityMix = (() => {
-    for (let i = aeBreakdown.length - 1; i >= 0; i--) {
-      const r = aeBreakdown[i];
-      const a = r.activeEquity;
-      const e = r.etfIndex;
-      const x = r.arbitrage;
-      if (typeof a === "number" && typeof e === "number" && typeof x === "number") {
-        const total = a + e + x;
-        if (total > 0) {
-          return {
-            activePct: (a / total) * 100,
-            etfPct: (e / total) * 100,
-            arbPct: (x / total) * 100,
-          };
-        }
-      }
-    }
-    return null;
-  })();
-  const aeBreakdownSubtitle = latestQuarterlyEquityMix
-    ? `${aeBreakdown.length} quarter${aeBreakdown.length === 1 ? "" : "s"} · ₹ Cr · latest mix ${latestQuarterlyEquityMix.activePct.toFixed(1)}% Active / ${latestQuarterlyEquityMix.etfPct.toFixed(1)}% ETF & Index / ${latestQuarterlyEquityMix.arbPct.toFixed(1)}% Arbitrage`
-    : `${aeBreakdown.length} quarter${aeBreakdown.length === 1 ? "" : "s"} · ₹ Cr · grouped bars · last-month AAUM`;
-
-  // Quarterly Flows denominator: latest quarter's per-segment share
-  // of total flow magnitude — mirrors /monthly's headline read.
-  const quarterlyFlowsDenomCaption = (() => {
-    if (flowsData.length === 0) return undefined;
-    const latest = flowsData[flowsData.length - 1];
-    const e = typeof latest.equity === "number" ? latest.equity : 0;
-    const d = typeof latest.debt === "number" ? latest.debt : 0;
-    const l = typeof latest.liquid === "number" ? latest.liquid : 0;
-    const total = Math.abs(e) + Math.abs(d) + Math.abs(l);
-    if (total === 0) return undefined;
-    return `Equity = ${((Math.abs(e) / total) * 100).toFixed(0)}% / Debt = ${((Math.abs(d) / total) * 100).toFixed(0)}% / Liquid = ${((Math.abs(l) / total) * 100).toFixed(0)}% of latest flow magnitude · ${latest.quarterLabel}`;
-  })();
-  const equityFlowFromQuarterly = flowsData
-    .filter((r) => typeof r.equity === "number")
-    .map((r) => ({ label: r.quarterLabel, value: r.equity as number }));
-  // Full quarterly equity-flow history + YoY (lag=4) for the optional
-  // Bars + Growth view on this card.
-  const quarterlyFlowsFullHistory = quarterlyFlowsData(10_000);
-  const quarterlyEquityFullSeries = quarterlyFlowsFullHistory
-    .filter((r) => typeof r.equity === "number")
-    .map((r) => ({ label: r.quarterLabel, value: r.equity as number }));
-  const quarterlyEquityYoyByLabel = new Map(
-    yoyPctSeries(quarterlyEquityFullSeries, 4).map((p) => [p.label, p.value])
-  );
-  const quarterlyFlowsBarsData = equityFlowFromQuarterly.map((p) => ({
-    label: p.label,
-    value: p.value,
-    growthPct: quarterlyEquityYoyByLabel.get(p.label) ?? null,
-  }));
-  const quarterlyFlowsInsights = chartInsights(equityFlowFromQuarterly, {
-    metricName: "equity net inflow",
-    unitSuffix: "₹ Cr",
-    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
-    episodeAnchors: episodeAnchorsForQuarter,
-    yoyLag: 4,
-  });
-  // Series specs shared by the bars and trend views of multi-series
-  // chart cards on /quarterly. `BarSpec` and `LineSpec` are both
-  // `{ key, name, color }` so the same array works as `bars=` on
-  // GroupedBars and `lines=` on MultiLine.
-  const qFlowsSeries = [
-    { key: "equity", name: "Equity", color: "hsl(var(--chart-1))" },
-    { key: "debt", name: "Debt", color: "hsl(var(--chart-2))" },
-    { key: "liquid", name: "Liquid", color: "hsl(var(--chart-4))" },
-  ];
-  const qEquityMixSeries = [
-    { key: "activeEquity", name: "Active Equity", color: "hsl(var(--chart-1))" },
-    { key: "etfIndex", name: "ETF & Index", color: "hsl(var(--chart-5))" },
-    { key: "arbitrage", name: "Arbitrage", color: "hsl(var(--chart-2))" },
-  ];
-
-  // Active Equity Last-month AAUM denominator: latest as % of total
-  // industry last-month AAUM — same framing as /monthly but on the
-  // quarterly basis.
-  const aeAaumDenomCaption = (() => {
-    if (aeAaumTrend.length === 0) return undefined;
-    const latest = aeAaumTrend[aeAaumTrend.length - 1];
-    // Pull the matching quarter's grandTotalLastMonthAaum from
-    // aaumTrendData computed earlier in the page.
-    const totalRow = aaumTrendData.find((p) => p.label === latest.label);
-    if (!totalRow || totalRow.value <= 0) return undefined;
-    const pct = (latest.value / totalRow.value) * 100;
-    return `${pct.toFixed(1)}% of total industry last-month AAUM · latest ${latest.label}`;
-  })();
-  const aeAaumInsights = chartInsights(aeAaumTrend, {
-    metricName: "active-equity AAUM",
-    unitSuffix: "₹ Cr",
-    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
-    yoyLag: 4,
-  });
-  // Active Equity AAUM share: % of total industry last-month AAUM.
-  const aeAaumShare = aeAaumTrend
-    .map((p) => {
-      const totalRow = aaumTrendData.find((q) => q.label === p.label);
-      if (!totalRow || totalRow.value <= 0) return null;
-      return { label: p.label, value: (p.value / totalRow.value) * 100 };
-    })
-    .filter((p): p is { label: string; value: number } => p !== null);
-  const aeAaumDisplay = qAeAaumLens === "share" ? aeAaumShare : aeAaumTrend;
-
-  // Equity Breakdown denominator: ETF & Index share = passive
-  // penetration — same framing as /monthly so the quarterly read
-  // is comparable.
-  const aeBreakdownDenomCaption = latestQuarterlyEquityMix
-    ? `ETF & Index = ${latestQuarterlyEquityMix.etfPct.toFixed(1)}% of equity AUM · latest available quarter`
-    : undefined;
-  const activeEquityFromQBreakdown = aeBreakdown
-    .filter((r) => typeof r.activeEquity === "number")
-    .map((r) => ({
-      label: r.quarterLabel,
-      value: r.activeEquity as number,
-    }));
-  const aeBreakdownInsights = chartInsights(activeEquityFromQBreakdown, {
-    metricName: "active-equity AAUM",
-    unitSuffix: "₹ Cr",
-    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
-    yoyLag: 4,
-  });
-
-  // ---- Folios & Scheme Count ----------------------------------------
-  const totalFolios = selectedRow?.grandTotalFolios ?? null;
-  const folioAdditions = latestQuarterlyFolioAdditions();
-  const foliosCtx = quarterlyKpiContext("grandTotalFolios", 16);
-  const openEndedSchemes = latestOpenEndedSchemeCount();
-  const foliosTrend = quarterlyTrend("grandTotalFolios", 16);
-  const foliosFullHistory = quarterlyTrend("grandTotalFolios", 10_000);
   const folioAdditionsTrend = quarterlyFolioAdditionsTrend(16);
-  const folioAdditionsFullHistory = quarterlyFolioAdditionsTrend(10_000);
-  const schemesTrend = quarterlyOpenEndedSchemeCountTrend(16);
-  const schemesFullHistory = quarterlyOpenEndedSchemeCountTrend(10_000);
-  const foliosHover = formatQuarterlyProvenanceTooltip(
-    getQuarterlyKpiProvenance(selectedRow, "grandTotalFolios")
-  );
-  const hasAnyFolioKpi =
-    totalFolios !== null || folioAdditions !== null || openEndedSchemes !== null;
-  const hasAnyFolioTrend =
-    foliosTrend.length > 0 ||
-    folioAdditionsTrend.length > 0 ||
-    schemesTrend.length > 0;
-
-  // Folios denominator: latest as % of trailing 4Q (1Y) average — the
-  // folio base grows monotonically, so the read separates fresh
-  // investor onboarding from a flat shelf.
-  const foliosTrendDenomCaption = (() => {
-    if (foliosTrend.length < 4) return undefined;
-    const trailing4 = foliosTrend.slice(-4);
-    const avg = trailing4.reduce((s, p) => s + p.value, 0) / trailing4.length;
-    const latest = foliosTrend[foliosTrend.length - 1];
-    if (avg <= 0) return undefined;
-    const pct = (latest.value / avg) * 100;
-    return `${pct.toFixed(1)}% of trailing 4Q avg · latest ${latest.label}`;
-  })();
-  const foliosTrendInsights = chartInsights(foliosTrend, {
-    metricName: "folios",
-    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
-    yoyLag: 4,
-  });
-
-  // Folio additions denominator: latest quarterly net adds as bps of
-  // the existing folio base — normalises growth against the (large)
-  // base so the trend is comparable across years. Both values are raw
-  // counts; ratio is additions ÷ base, expressed as a percentage.
-  const folioAdditionsDenomCaption = (() => {
-    if (folioAdditionsTrend.length === 0) return undefined;
-    const latest = folioAdditionsTrend[folioAdditionsTrend.length - 1];
-    const base = totalFolios;
-    if (typeof base !== "number" || base <= 0) return undefined;
-    const pct = (latest.value / base) * 100;
-    return `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}% of folio base · latest ${latest.label}`;
-  })();
-  const folioAdditionsInsights = chartInsights(folioAdditionsTrend, {
-    metricName: "folio additions",
-    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
-    episodeAnchors: episodeAnchorsForQuarter,
-    yoyLag: 4,
-  });
-
-  // Scheme count denominator: latest as % of trailing 4Q avg — keeps
-  // an eye on shelf expansion (NFOs net of mergers/closures) without
-  // the chart looking flat at this slow-moving scale.
-  const schemesTrendDenomCaption = (() => {
-    if (schemesTrend.length < 4) return undefined;
-    const trailing4 = schemesTrend.slice(-4);
-    const avg = trailing4.reduce((s, p) => s + p.value, 0) / trailing4.length;
-    const latest = schemesTrend[schemesTrend.length - 1];
-    if (avg <= 0) return undefined;
-    const pct = (latest.value / avg) * 100;
-    return `${pct.toFixed(1)}% of trailing 4Q avg · latest ${latest.label}`;
-  })();
-  const schemesTrendInsights = chartInsights(schemesTrend, {
-    metricName: "open-ended scheme count",
-    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
-    yoyLag: 4,
-  });
-
-  // ---- "Share" series for each folio + scheme card ----------------
-  // Folios indexed to trailing 4Q (1Y) average — turns the slow
-  // mostly-monotonic line into a meaningful "above/below trend"
-  // read.
-  const foliosTrendShare = foliosTrend
-    .map((p, i, arr) => {
-      if (i + 1 < 4) return null;
-      const slice = arr.slice(i + 1 - 4, i + 1);
-      const avg = slice.reduce((s, q) => s + q.value, 0) / 4;
-      if (avg <= 0) return null;
-      return { label: p.label, value: (p.value / avg) * 100 };
-    })
-    .filter((p): p is { label: string; value: number } => p !== null);
-  const foliosDisplay =
-    qFoliosLens === "share" ? foliosTrendShare : foliosTrend;
-
-  // Folio additions as % of the folio base. The base value comes
-  // from the matching `quarterlyTrend("grandTotalFolios", 16)` row.
-  // Both `value` (additions) and the folio base are stored as raw
-  // counts in the snapshot, so the ratio is additions ÷ base × 100.
-  const folioAdditionsShare = (() => {
-    const baseByQuarter = new Map<string, number>();
-    for (const p of foliosTrend) baseByQuarter.set(p.label, p.value);
-    return folioAdditionsTrend.flatMap((p) => {
-      const base = baseByQuarter.get(p.label);
-      if (typeof base !== "number" || base <= 0) return [];
-      const pct = (p.value / base) * 100;
-      return [{ label: p.label, value: pct }];
-    });
-  })();
-  const folioAdditionsDisplay =
-    qFolioAddLens === "share" ? folioAdditionsShare : folioAdditionsTrend;
-
-  // Open-ended scheme count: % of trailing 4Q average.
-  const schemesTrendShare = schemesTrend
-    .map((p, i, arr) => {
-      if (i + 1 < 4) return null;
-      const slice = arr.slice(i + 1 - 4, i + 1);
-      const avg = slice.reduce((s, q) => s + q.value, 0) / 4;
-      if (avg <= 0) return null;
-      return { label: p.label, value: (p.value / avg) * 100 };
-    })
-    .filter((p): p is { label: string; value: number } => p !== null);
-  const schemesDisplay =
-    qSchemesLens === "share" ? schemesTrendShare : schemesTrend;
 
   // AUM Market Share — live Top 7 + Others from AMFI Fundwise AAUM.
   // Same helper as /monthly so the two pages render an identical view.
@@ -833,8 +312,6 @@ export default async function QuarterlyPage({
   // Three-sentence "today's read" surfaced at the top of the page.
   const marketWrapData = quarterlyMarketWrap();
   const quarterlySnapshotRead = quarterlySnapshotSectionRead();
-  const quarterlyFlowsRead = quarterlyFlowsSectionRead();
-  const quarterlyFoliosRead = quarterlyFoliosSectionRead();
 
   // Concentration tracker — HHI of AMC-level + category-level AUM.
   const amcHhi = amcLevelHhiSeries(8);
@@ -859,6 +336,12 @@ export default async function QuarterlyPage({
   }));
   const latestAmcHhi = amcHhi[amcHhi.length - 1] ?? null;
   const latestCatHhi = catHhi[catHhi.length - 1] ?? null;
+
+  // Shared inputs for the snapshot signal tiles below (these series also
+  // fed the now-removed AUM / flows / equity-mix trend charts).
+  const aaumTrendData = quarterlyTrend("grandTotalLastMonthAaum", 16);
+  const flowsData = quarterlyFlowsData(16);
+  const aeBreakdown = quarterlyEquityLastMonthAaumBreakdown(16);
 
   // ---- Quarterly Signal Summary --------------------------------------
   // Five buy-side tiles synthesised from data already loaded above.
@@ -1079,7 +562,7 @@ export default async function QuarterlyPage({
             })()}
           />
           <QSignalTile
-            label="Concentration · HHI"
+            label="Market Concentration"
             pill={
               amcHhiPercentile
                 ? formatPercentilePill(amcHhiPercentile.percentile)
@@ -1124,9 +607,9 @@ export default async function QuarterlyPage({
 
       {activeTab === "aaum-flows" && (
         <TabIntroCard
-          headline="Where did the industry's quarterly AAUM and flow go?"
-          summary="Headline AAUM, AUM mix donut, last-month AAUM trend, quarterly net flows by category, and category-level QAAUM/flow share. The full quarterly flow picture in one tab."
-          watchNext="Whether equity continues to dominate flow magnitude as AAUM expands."
+          headline="Where did the quarter's AUM change come from?"
+          summary="The quarter-end AUM mix by category, plus the AUM-change bridge — how much of each quarter's move was net flows versus residual (market movement, within-quarter timing and an averaging mismatch)."
+          watchNext="Whether the residual keeps outweighing net flows — the sign that market moves, not investor flows, are driving the AUM line."
         />
       )}
 
@@ -1188,777 +671,33 @@ export default async function QuarterlyPage({
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
-              AMFI Quarterly AUM Mix &amp; Trend
+              AMFI Quarterly AUM Mix
             </h2>
             <p className="text-xs text-muted-foreground">
               Source: AMFI Quarterly Report
             </p>
           </div>
-          <section className="grid gap-4 lg:grid-cols-2">
-            <Card title="Quarter-end AUM Mix" subtitle={mixSubtitle}>
-              {mixHasData ? (
-                <QuarterEndMixTable
-                  slices={mixSlices}
-                  quarterLabel={selectedRow.quarterLabel}
-                />
-              ) : (
-                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  AUM mix not published for the selected quarter — pick a more recent quarter or upload the AMFI Quarterly PDF.
-                </div>
-              )}
-            </Card>
-            <ChartWithContext
-              title="Last-month AAUM Trend"
-              subtitle="Industry AUM at each quarter's last month. Tracks the headline asset base."
-              flowKind="stock"
-              denominatorCaption={(() => {
-                if (qAaumLens === "share") {
-                  return `${aaumTrendShare.length} quarter${aaumTrendShare.length === 1 ? "" : "s"} · indexed to 4Q avg (100 = on-trend)`;
-                }
-                return lastMonthAaumDenomCaption
-                  ? `${aaumTrendSubtitle} · ${lastMonthAaumDenomCaption}`
-                  : `${aaumTrendSubtitle} · last-month value (not a true quarterly average)`;
-              })()}
-              denominatorTooltip="Latest last-month AAUM as a % of the trailing 4-quarter average — separates structural growth from quarter-to-quarter mean-reversion."
-              insights={lastMonthAaumInsights}
-              yoyBadge={(() => {
-                const v = latestYoyPct(aaumTrendData, 4);
-                return v === null ? undefined : { label: "YoY", pct: v };
-              })()}
-              action={
-                <LensToggle
-                  basePath="/quarterly"
-                  paramName="qAaumLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "vs 4Q avg" },
-                  ]}
-                  active={qAaumLens}
-                  preserveParams={preservedQueryParams}
-                />
-              }
-            >
-              {aaumTrendHasData ? (() => {
-                const ov = adaptiveAverageOverlay(aaumTrendFullHistory, aaumDisplayData, 4);
-                const useOverlay = qAaumLens !== "share";
-                const showShareRef = qAaumLens === "share";
-                return (
-                  <BarSeries
-                    data={aaumDisplayData}
-                    name="Last-month AAUM"
-                    color="hsl(var(--chart-1))"
-                    valueFormat={qAaumLens === "share" ? "pct" : "cr"}
-                    axisFormat={qAaumLens === "share" ? "pct" : "cr"}
-                    labelFormat="none"
-                    trendline={useOverlay && ov.kind === "trailing" ? ov.trendline : undefined}
-                    trendlineName={useOverlay && ov.kind === "trailing" ? ov.label : undefined}
-                    referenceValue={
-                      showShareRef
-                        ? 100
-                        : useOverlay && ov.kind === "visible-mean"
-                          ? ov.referenceValue
-                          : undefined
-                    }
-                    referenceLabel={
-                      showShareRef
-                        ? "4-quarter avg"
-                        : useOverlay && ov.kind === "visible-mean"
-                          ? ov.label
-                          : undefined
-                    }
-                  />
-                );
-              })() : (
-                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  Last-month AAUM not yet published — appears after the next AMFI Quarterly Report is ingested.
-                </div>
-              )}
-            </ChartWithContext>
-          </section>
+          <Card title="Quarter-end AUM Mix" subtitle={mixSubtitle}>
+            {mixHasData ? (
+              <QuarterEndMixTable
+                slices={mixSlices}
+                quarterLabel={selectedRow.quarterLabel}
+              />
+            ) : (
+              <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                AUM mix not published for the selected quarter — pick a more recent quarter or upload the AMFI Quarterly PDF.
+              </div>
+            )}
+          </Card>
         </div>
       )}
 
       {activeTab === "aaum-flows" && aaumBridge.length > 0 && (
-        <Card title="AAUM Bridge — net flow vs residual">
+        <Card title="AUM Change: Flows vs Residual">
           <AaumBridgeTable rows={aaumBridge} />
         </Card>
       )}
 
-      {activeTab === "aaum-flows" && flowsHasData && (
-        <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-medium tracking-tight">
-              Quarterly Flows
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Source: AMFI Quarterly Report
-              {quarterlyFlowsRead ? ` · ${quarterlyFlowsRead}` : ""}
-            </p>
-          </div>
-          <ChartWithContext
-            title="Equity / Debt / Liquid Quarterly Net Flows"
-            subtitle="Where industry money went each quarter, split by category."
-            flowKind="net"
-            denominatorCaption={(() => {
-              const span = `${flowsData.length} quarter${flowsData.length === 1 ? "" : "s"}`;
-              if (quarterlyFlowsView === "bars") {
-                return `${span} · Equity flow only · ₹ Cr · YoY growth overlaid`;
-              }
-              if (quarterlyFlowsLens === "share") {
-                return `${span} · % of quarterly flow magnitude (signs preserved)`;
-              }
-              return quarterlyFlowsDenomCaption
-                ? `${span} · ₹ Cr · ${quarterlyFlowsDenomCaption}`
-                : `${span} · ₹ Cr · positive = inflow, negative = outflow`;
-            })()}
-            denominatorTooltip={
-              quarterlyFlowsView === "bars"
-                ? undefined
-                : "Latest quarter's per-segment share of total flow magnitude — the headline read for 'where did the quarter's flow go?'."
-            }
-            insights={quarterlyFlowsInsights}
-            yoyBadge={(() => {
-              const v = latestYoyPct(equityFlowFromQuarterly, 4);
-              return v === null
-                ? undefined
-                : { label: "Equity YoY", pct: v };
-            })()}
-            action={
-              <>
-                {quarterlyFlowsView === "trend" && (
-                  <LensToggle
-                    basePath="/quarterly"
-                    paramName="qFlowsLens"
-                    defaultValue="absolute"
-                    lenses={[
-                      { value: "absolute", label: "₹ Cr" },
-                      { value: "share", label: "% of flow magnitude" },
-                    ]}
-                    active={quarterlyFlowsLens}
-                    preserveParams={preservedQueryParams}
-                  />
-                )}
-                <ChartTypeToggle
-                  basePath="/quarterly"
-                  paramName="quarterlyFlowsView"
-                  active={quarterlyFlowsView}
-                  preserveParams={preservedQueryParams}
-                />
-              </>
-            }
-          >
-            {quarterlyFlowsView === "bars" ? (
-              <BarsWithGrowth
-                data={quarterlyFlowsBarsData}
-                barColor="hsl(var(--chart-1))"
-                growthColor="hsl(var(--foreground))"
-                valueFormat="cr"
-                axisFormat="cr"
-                labelFormat="none"
-                name="Equity quarterly net flow"
-                growthLabel="Equity YoY %"
-              />
-            ) : (
-              <GroupedBars
-                data={flowsDataDisplay}
-                xKey="quarterLabel"
-                labelFormat="none"
-                valueFormat={quarterlyFlowsLens === "share" ? "pct" : "cr"}
-                axisFormat={quarterlyFlowsLens === "share" ? "pct" : "cr"}
-                bars={qFlowsSeries}
-              />
-            )}
-            <HowToRead>
-              {quarterlyFlowsView === "bars" ? (
-                <p>
-                  Bars show actual quarterly Equity flow. The line shows
-                  YoY growth. Debt and Liquid remain visible in Trend view.
-                </p>
-              ) : (
-                <p className="inline-flex items-center gap-1.5">
-                  Liquid is shown separately for readability.
-                  <InfoTooltip label="In AMFI classification, Liquid is part of debt-oriented schemes. Share view divides each value by the quarter's sum of absolute flow magnitudes so signs (inflow vs outflow) stay intact." />
-                </p>
-              )}
-              <ul className="list-disc space-y-0.5 pl-4">
-                <li>Positive bars mean money entered the category; negative bars mean it left.</li>
-                <li>Rising equity usually signals risk-on; rising debt or liquid often signals defensive allocation.</li>
-                <li>Compare the latest quarter to the trailing-4-quarter average (the dotted line in Trend view) to spot unusually large moves.</li>
-              </ul>
-            </HowToRead>
-          </ChartWithContext>
-        </div>
-      )}
-
-      {activeTab === "active-passive" && (
-        <TabIntroCard
-          headline="How fast is passive closing the gap?"
-          summary="Active-equity last-month AAUM and the equity AAUM breakdown show whether ETF & Index is gaining share against actively managed equity."
-          watchNext="Whether the ETF & Index share keeps climbing even as active-equity AAUM rises."
-        />
-      )}
-
-      {activeTab === "active-passive" && hasAnyEquityMix && (
-        <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-medium tracking-tight">
-              Active Equity &amp; Equity Mix
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Source: AMFI Quarterly Report
-            </p>
-          </div>
-
-          <HowToRead>
-            <ul className="list-disc space-y-0.5 pl-4">
-              <li><span className="text-foreground">Active funds</span> are managed by a fund manager who picks stocks and aims to beat an index.</li>
-              <li><span className="text-foreground">Passive funds</span> (ETFs and index funds) simply track an index at a lower fee.</li>
-              <li>A rising passive share pressures fee yields for active-heavy AMCs over time, even when active AUM is still growing.</li>
-            </ul>
-          </HowToRead>
-
-          <section className="grid gap-4 lg:grid-cols-2">
-            <ChartWithContext
-              title="Active Equity Last-month AAUM Trend"
-              subtitle="AUM in active equity funds at each quarter's last month. The actively-managed equity asset base."
-              flowKind="stock"
-              denominatorCaption={(() => {
-                if (qAeAaumLens === "share") {
-                  return `${aeAaumShare.length} quarter${aeAaumShare.length === 1 ? "" : "s"} · % of total industry last-month AAUM`;
-                }
-                const span = `${aeAaumTrend.length} quarter${aeAaumTrend.length === 1 ? "" : "s"}`;
-                return aeAaumDenomCaption
-                  ? `${span} · ₹ Cr · ${aeAaumDenomCaption}`
-                  : `${span} · ₹ Cr · last-month AAUM (not QAAUM)`;
-              })()}
-              denominatorTooltip="Latest active-equity AAUM as a % of total industry last-month AAUM — separates absolute scale growth from share capture against other segments."
-              insights={aeAaumInsights}
-              yoyBadge={(() => {
-                const v = latestYoyPct(aeAaumTrend, 4);
-                return v === null ? undefined : { label: "YoY", pct: v };
-              })()}
-              action={
-                <LensToggle
-                  basePath="/quarterly"
-                  paramName="qAeAaumLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "% of total AAUM" },
-                  ]}
-                  active={qAeAaumLens}
-                  preserveParams={preservedQueryParams}
-                />
-              }
-            >
-              {aeAaumTrend.length > 0 ? (() => {
-                const ov = adaptiveAverageOverlay(aeAaumFullHistory, aeAaumDisplay, 4);
-                const useOverlay = qAeAaumLens !== "share";
-                return (
-                  <BarSeries
-                    data={aeAaumDisplay}
-                    name="Active Equity Last-month AAUM"
-                    color="hsl(var(--chart-1))"
-                    valueFormat={qAeAaumLens === "share" ? "pct" : "cr"}
-                    axisFormat={qAeAaumLens === "share" ? "pct" : "cr"}
-                    labelFormat="none"
-                    trendline={useOverlay && ov.kind === "trailing" ? ov.trendline : undefined}
-                    trendlineName={useOverlay && ov.kind === "trailing" ? ov.label : undefined}
-                    referenceValue={useOverlay && ov.kind === "visible-mean" ? ov.referenceValue : undefined}
-                    referenceLabel={useOverlay && ov.kind === "visible-mean" ? ov.label : undefined}
-                  />
-                );
-              })() : (
-                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                  Active-equity AAUM not yet published — appears after the next AMFI Quarterly Report is ingested.
-                </div>
-              )}
-            </ChartWithContext>
-          </section>
-
-          <ChartWithContext
-            title="Equity Last-month AAUM Breakdown"
-            subtitle="Active equity AUM split into Active, ETF & Index, and Arbitrage (last-month basis)."
-            flowKind="stock"
-            denominatorCaption={(() => {
-              const base = equityMixLens === "share"
-                ? `${aeBreakdown.length} quarter${aeBreakdown.length === 1 ? "" : "s"} · stacked share of equity AAUM (last-month basis)`
-                : aeBreakdownSubtitle;
-              return aeBreakdownDenomCaption
-                ? `${base} · ${aeBreakdownDenomCaption}`
-                : base;
-            })()}
-            denominatorTooltip="ETF & Index share of equity AUM — the headline passive-penetration number, computed on the last-month-AAUM basis from the quarterly disclosure."
-            insights={aeBreakdownInsights}
-            yoyBadge={(() => {
-              const v = latestYoyPct(activeEquityFromQBreakdown, 4);
-              return v === null
-                ? undefined
-                : { label: "Active YoY", pct: v };
-            })()}
-            action={
-              <div className="flex flex-wrap items-center gap-2">
-                <LensToggle
-                  basePath="/quarterly"
-                  paramName="qEquityMixLens"
-                  defaultValue="absolute"
-                  lenses={[
-                    { value: "absolute", label: "₹ Cr" },
-                    { value: "share", label: "% of equity AAUM" },
-                  ]}
-                  active={equityMixLens}
-                  preserveParams={preservedQueryParams}
-                />
-              </div>
-            }
-          >
-            {aeBreakdownHasData ? (
-              <GroupedBars
-                data={aeBreakdownDisplay}
-                xKey="quarterLabel"
-                labelFormat="none"
-                valueFormat={equityMixLens === "share" ? "pct" : "cr"}
-                axisFormat={equityMixLens === "share" ? "pct" : "cr"}
-                bars={qEquityMixSeries}
-              />
-            ) : (
-              <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                Equity breakdown (Active / ETF & Index / Arbitrage) not yet published for this quarter.
-              </div>
-            )}
-            <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              Active Equity, ETF &amp; Index, and Arbitrage shown separately.
-              All values use last-month AAUM, not a true 3-month average.
-              <InfoTooltip label="Active Equity = Growth/Equity schemes + Hybrid ex-Arbitrage + Solution-oriented schemes. ETF & Index = Index Funds + Other ETFs. Source: AMFI Quarterly Report's last-month AAUM column. Share view divides each by the quarter's sum of all three segments." />
-            </p>
-          </ChartWithContext>
-        </div>
-      )}
-
-      {activeTab === "retail-schemes" && (
-        <TabIntroCard
-          headline="How broad is retail participation?"
-          summary="Total folios, quarterly folio additions, and open-ended scheme count. Together they show whether participation is widening and whether the AMC shelf is expanding to absorb it."
-          watchNext="Whether folio additions accelerate while the scheme count stabilises — a sign of consolidation in winning categories."
-        />
-      )}
-
-      {activeTab === "retail-schemes" && (hasAnyFolioKpi || hasAnyFolioTrend) && (
-        <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-medium tracking-tight">
-              Quarterly Folios &amp; Scheme Count
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Source: AMFI Quarterly Report
-              {quarterlyFoliosRead ? ` · ${quarterlyFoliosRead}` : ""}
-            </p>
-          </div>
-
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <KpiCard
-              label="Total Folios"
-              value={formatCroreCountSafe(totalFolios)}
-              note=""
-              noteHover={foliosHover ?? undefined}
-              sparkline={foliosCtx.sparkline}
-              sparklineColor="hsl(var(--chart-1))"
-              yoyPct={foliosCtx.yoyPct ?? undefined}
-              percentile={foliosCtx.percentile ?? undefined}
-              ratio={
-                typeof totalFolios === "number" &&
-                typeof selectedRow?.grandTotalAum === "number" &&
-                selectedRow.grandTotalAum > 0
-                  ? `${(totalFolios / selectedRow.grandTotalAum).toFixed(1)} folios per ₹ Cr AUM`
-                  : undefined
-              }
-            />
-            <KpiCard
-              label="Folio Additions QoQ"
-              value={formatLakhSafe(folioAdditions)}
-              note=""
-              noteHover={
-                foliosHover
-                  ? `${foliosHover} · derived QoQ Δ from grandTotalFolios`
-                  : undefined
-              }
-              sparkline={folioAdditionsTrend}
-              sparklineColor="hsl(var(--chart-4))"
-            />
-            <KpiCard
-              label="Open-Ended Scheme Count"
-              value={formatIntSafe(openEndedSchemes)}
-              note=""
-              noteHover="AMFI Quarterly Report · Sum of categorySchemes across 39 open-ended categories (close-ended + interval excluded)"
-              sparkline={schemesTrend}
-              sparklineColor="hsl(var(--chart-5))"
-            />
-          </section>
-
-          {hasAnyFolioTrend && (
-            /* Downgraded to 2-up: chart cards with LensToggles squeezed
-               at xl:grid-cols-3 and wrapped titles awkwardly. */
-            <section className="grid gap-4 lg:grid-cols-2">
-              <ChartWithContext
-                title="Folios Trend"
-                subtitle="Total industry folio count by quarter. A breadth-of-investor measure."
-                flowKind="stock"
-                denominatorCaption={(() => {
-                  if (qFoliosLens === "share") {
-                    return `${foliosTrendShare.length} quarter${foliosTrendShare.length === 1 ? "" : "s"} · indexed to 4Q avg (100 = on-trend)`;
-                  }
-                  const span = `${foliosTrend.length} quarter${foliosTrend.length === 1 ? "" : "s"}`;
-                  return foliosTrendDenomCaption
-                    ? `${span} · crore folios · ${foliosTrendDenomCaption}`
-                    : `${span} · crore folios · industry-wide`;
-                })()}
-                denominatorTooltip="Latest folio base as a % of the trailing 4-quarter average — separates a fresh wave of investor onboarding from a flat shelf."
-                insights={foliosTrendInsights}
-                yoyBadge={(() => {
-                  const v = latestYoyPct(foliosTrend, 4);
-                  return v === null ? undefined : { label: "YoY", pct: v };
-                })()}
-                action={
-                  <LensToggle
-                    basePath="/quarterly"
-                    paramName="qFoliosLens"
-                    defaultValue="absolute"
-                    lenses={[
-                      { value: "absolute", label: "Cr" },
-                      { value: "share", label: "vs 4Q avg" },
-                    ]}
-                    active={qFoliosLens}
-                    preserveParams={preservedQueryParams}
-                  />
-                }
-              >
-                {foliosTrend.length > 0 ? (() => {
-                  const ov = adaptiveAverageOverlay(foliosFullHistory, foliosDisplay, 4);
-                  const useOverlay = qFoliosLens !== "share";
-                  const showShareRef = qFoliosLens === "share";
-                  return (
-                    <BarSeries
-                      data={foliosDisplay}
-                      name="Folios"
-                      color="hsl(var(--chart-1))"
-                      valueFormat={qFoliosLens === "share" ? "pct" : "crore-count"}
-                      axisFormat={qFoliosLens === "share" ? "pct" : "crore-count"}
-                      labelFormat="none"
-                      trendline={useOverlay && ov.kind === "trailing" ? ov.trendline : undefined}
-                      trendlineName={useOverlay && ov.kind === "trailing" ? ov.label : undefined}
-                      referenceValue={
-                        showShareRef
-                          ? 100
-                          : useOverlay && ov.kind === "visible-mean"
-                            ? ov.referenceValue
-                            : undefined
-                      }
-                      referenceLabel={
-                        showShareRef
-                          ? "4-quarter avg"
-                          : useOverlay && ov.kind === "visible-mean"
-                            ? ov.label
-                            : undefined
-                      }
-                    />
-                  );
-                })() : (
-                  <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                    Folio count not yet ingested for any quarter.
-                  </div>
-                )}
-              </ChartWithContext>
-
-              <ChartWithContext
-                title="Folio Additions Trend"
-                subtitle="Net new folios opened each quarter. Shows retail-onboarding momentum."
-                flowKind="net"
-                denominatorCaption={(() => {
-                  if (qFolioAddLens === "share") {
-                    return `${folioAdditionsShare.length} quarter${folioAdditionsShare.length === 1 ? "" : "s"} · % of folio base`;
-                  }
-                  const span = `${folioAdditionsTrend.length} quarter${folioAdditionsTrend.length === 1 ? "" : "s"}`;
-                  return folioAdditionsDenomCaption
-                    ? `${span} · lakh · ${folioAdditionsDenomCaption}`
-                    : `${span} · lakh`;
-                })()}
-                denominatorTooltip="Latest quarterly net adds expressed as a percentage of the total folio base — strips out base-rate growth so different years are comparable."
-                insights={folioAdditionsInsights}
-                yoyBadge={(() => {
-                  const v = latestYoyPct(folioAdditionsTrend, 4);
-                  return v === null ? undefined : { label: "YoY", pct: v };
-                })()}
-                action={
-                  <LensToggle
-                    basePath="/quarterly"
-                    paramName="qFolioAddLens"
-                    defaultValue="absolute"
-                    lenses={[
-                      { value: "absolute", label: "Lakh" },
-                      { value: "share", label: "% of base" },
-                    ]}
-                    active={qFolioAddLens}
-                    preserveParams={preservedQueryParams}
-                  />
-                }
-              >
-                {folioAdditionsTrend.length > 0 ? (() => {
-                  const ov = adaptiveAverageOverlay(folioAdditionsFullHistory, folioAdditionsDisplay, 4);
-                  const useOverlay = qFolioAddLens !== "share";
-                  return (
-                    <BarSeries
-                      data={folioAdditionsDisplay}
-                      name="Folio Additions"
-                      color="hsl(var(--chart-4))"
-                      valueFormat={qFolioAddLens === "share" ? "pct" : "lakh"}
-                      axisFormat={qFolioAddLens === "share" ? "pct" : "lakh"}
-                      labelFormat="none"
-                      trendline={useOverlay && ov.kind === "trailing" ? ov.trendline : undefined}
-                      trendlineName={useOverlay && ov.kind === "trailing" ? ov.label : undefined}
-                      referenceValue={useOverlay && ov.kind === "visible-mean" ? ov.referenceValue : undefined}
-                      referenceLabel={useOverlay && ov.kind === "visible-mean" ? ov.label : undefined}
-                    />
-                  );
-                })() : (
-                  <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                    Need at least two consecutive quarters of folio data to derive additions.
-                  </div>
-                )}
-                <div
-                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                  title={foliosHover ?? undefined}
-                >
-                  derived QoQ Δ
-                </div>
-              </ChartWithContext>
-
-              <ChartWithContext
-                title="Open-Ended Scheme Count Trend"
-                subtitle="Number of open-ended schemes on the industry shelf. Tracks shelf expansion."
-                flowKind="stock"
-                denominatorCaption={(() => {
-                  if (qSchemesLens === "share") {
-                    return `${schemesTrendShare.length} quarter${schemesTrendShare.length === 1 ? "" : "s"} · indexed to 4Q avg (100 = on-trend)`;
-                  }
-                  const span = `${schemesTrend.length} quarter${schemesTrend.length === 1 ? "" : "s"}`;
-                  return schemesTrendDenomCaption
-                    ? `${span} · ${schemesTrendDenomCaption}`
-                    : `${span} · sum across 39 open-ended categories`;
-                })()}
-                denominatorTooltip="Latest open-ended scheme count as a % of the trailing 4-quarter average — captures shelf expansion (NFOs net of mergers / closures) without the line going flat at this slow-moving scale."
-                insights={schemesTrendInsights}
-                yoyBadge={(() => {
-                  const v = latestYoyPct(schemesTrend, 4);
-                  return v === null ? undefined : { label: "YoY", pct: v };
-                })()}
-                action={
-                  <LensToggle
-                    basePath="/quarterly"
-                    paramName="qSchemesLens"
-                    defaultValue="absolute"
-                    lenses={[
-                      { value: "absolute", label: "Count" },
-                      { value: "share", label: "vs 4Q avg" },
-                    ]}
-                    active={qSchemesLens}
-                    preserveParams={preservedQueryParams}
-                  />
-                }
-              >
-                {schemesTrend.length > 0 ? (() => {
-                  const ov = adaptiveAverageOverlay(schemesFullHistory, schemesDisplay, 4);
-                  const useOverlay = qSchemesLens !== "share";
-                  const showShareRef = qSchemesLens === "share";
-                  return (
-                    <BarSeries
-                      data={schemesDisplay}
-                      name="Open-Ended Schemes"
-                      color="hsl(var(--chart-5))"
-                      valueFormat={qSchemesLens === "share" ? "pct" : "count"}
-                      axisFormat={qSchemesLens === "share" ? "pct" : "count"}
-                      labelFormat="none"
-                      trendline={useOverlay && ov.kind === "trailing" ? ov.trendline : undefined}
-                      trendlineName={useOverlay && ov.kind === "trailing" ? ov.label : undefined}
-                      referenceValue={
-                        showShareRef
-                          ? 100
-                          : useOverlay && ov.kind === "visible-mean"
-                            ? ov.referenceValue
-                            : undefined
-                      }
-                      referenceLabel={
-                        showShareRef
-                          ? "4-quarter avg"
-                          : useOverlay && ov.kind === "visible-mean"
-                            ? ov.label
-                            : undefined
-                      }
-                    />
-                  );
-                })() : (
-                  <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                    Open-ended scheme count not yet ingested.
-                  </div>
-                )}
-                <div
-                  className="mt-3 text-[10px] tabular text-muted-foreground/80"
-                  title="AMFI Quarterly Report · Sum of categorySchemes across 39 open-ended categories"
-                >
-                  derived from categorySchemes
-                </div>
-              </ChartWithContext>
-            </section>
-          )}
-        </div>
-      )}
-
-      {activeTab === "categories" && (
-        <TabIntroCard
-          headline="Where is flow rotating across categories?"
-          summary="Quarterly QAAUM share and net-inflow share for each active-equity category. Read for which categories are absorbing money and which are quietly losing share through the cycle."
-          watchNext="Which categories show a sustained rise in net-inflow share before AUM share follows — the leading multi-quarter rotation signal."
-        />
-      )}
-
-      {activeTab === "categories" && hasAnyIiflTrend ? (
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 className="text-sm font-medium tracking-tight">
-                Active-Equity Category Trends
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                {qCategoryTrendsScale === "indexed"
-                  ? "QAAUM share vs net inflow share · each series rebased to 100 at the first visible quarter · Source: AMFI Monthly Reports, aggregated quarterly"
-                  : "QAAUM share vs net inflow share · Source: AMFI Monthly Reports, aggregated quarterly"}
-              </p>
-            </div>
-            <LensToggle
-              basePath="/quarterly"
-              paramName="qCategoryTrendsScale"
-              defaultValue="levels"
-              lenses={[
-                { value: "levels", label: "Levels" },
-                { value: "indexed", label: "Indexed (100)" },
-              ]}
-              active={qCategoryTrendsScale}
-              preserveParams={preservedQueryParams}
-            />
-          </div>
-
-          <section className="grid gap-4 lg:grid-cols-2">
-            {iiflFeaturedCards.map((c) => (
-              <Card
-                key={c.slug}
-                title={c.label}
-                subtitle={`${c.series.length} quarter${c.series.length === 1 ? "" : "s"} · % of active-equity envelope`}
-              >
-                {c.hasData ? (
-                  <MultiLine
-                    data={
-                      qCategoryTrendsScale === "indexed"
-                        ? indexSeriesToBase(c.series, [
-                            "aumSharePct",
-                            "flowSharePct",
-                          ])
-                        : c.series
-                    }
-                    xKey="label"
-                    labelFormat="none"
-                    valueFormat={
-                      qCategoryTrendsScale === "indexed" ? "count" : "pct"
-                    }
-                    axisFormat={
-                      qCategoryTrendsScale === "indexed" ? "count" : "pct"
-                    }
-                    dynamicYDomain
-                    lines={[
-                      {
-                        key: "aumSharePct",
-                        name: "QAAUM share",
-                        color: "hsl(var(--chart-1))",
-                      },
-                      {
-                        key: "flowSharePct",
-                        name: "Net inflow share",
-                        color: "hsl(var(--chart-3))",
-                      },
-                    ]}
-                  />
-                ) : (
-                  <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                    Category snapshot not yet ingested for this slug.
-                  </div>
-                )}
-              </Card>
-            ))}
-          </section>
-
-          {hasExpandedIiflTrend && (
-            <section className="grid gap-4 lg:grid-cols-2">
-                  {iiflExpandedCards.map((c) => (
-                    <Card
-                      key={c.slug}
-                      title={c.label}
-                      subtitle={`${c.series.length} quarter${c.series.length === 1 ? "" : "s"} · % of active-equity envelope`}
-                    >
-                      {c.hasData ? (
-                        <MultiLine
-                          data={
-                            qCategoryTrendsScale === "indexed"
-                              ? indexSeriesToBase(c.series, [
-                                  "aumSharePct",
-                                  "flowSharePct",
-                                ])
-                              : c.series
-                          }
-                          xKey="label"
-                          labelFormat="none"
-                          valueFormat={
-                            qCategoryTrendsScale === "indexed" ? "count" : "pct"
-                          }
-                          axisFormat={
-                            qCategoryTrendsScale === "indexed" ? "count" : "pct"
-                          }
-                          dynamicYDomain
-                          lines={[
-                            {
-                              key: "aumSharePct",
-                              name: "QAAUM share",
-                              color: "hsl(var(--chart-1))",
-                            },
-                            {
-                              key: "flowSharePct",
-                              name: "Net inflow share",
-                              color: "hsl(var(--chart-3))",
-                            },
-                          ]}
-                        />
-                      ) : (
-                        <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                          Category snapshot not yet ingested for this slug.
-                        </div>
-                      )}
-                    </Card>
-                  ))}
-            </section>
-          )}
-
-          <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            {qCategoryTrendsScale === "indexed"
-              ? "Each line shows growth relative to its own first visible quarter (=100). Use Levels to read absolute % shares."
-              : "QAAUM share and net inflow share, aggregated monthly into fiscal quarters."}
-            <InfoTooltip
-              label={
-                qCategoryTrendsScale === "indexed"
-                  ? "Each series is rebased independently to 100 at the first visible quarter. A value of 130 means the share is 30% higher than the start of the visible window."
-                  : "QAAUM share = avg(category AAUM) ÷ avg(active-equity AAUM) over the months in each fiscal quarter. Net inflow share = sum(category net inflow) ÷ sum(active-equity net inflow) over the same months. Active equity = Growth/Equity schemes + Hybrid ex-Arbitrage + Solution-Oriented schemes."
-              }
-            />
-          </p>
-        </div>
-      ) : null}
 
       {activeTab === "concentration" && (
         <TabIntroCard
@@ -1970,7 +709,7 @@ export default async function QuarterlyPage({
 
       {activeTab === "concentration" && hhiHasData && (
         <Card
-          title="Industry Concentration · HHI"
+          title="Industry Concentration Index"
           subtitleNode={
             <div className="space-y-0.5">
               <p className="text-xs text-muted-foreground">
@@ -1995,12 +734,12 @@ export default async function QuarterlyPage({
             lines={[
               {
                 key: "amcHhi",
-                name: "AMC HHI",
+                name: "AMC Concentration",
                 color: "hsl(var(--chart-1))",
               },
               {
                 key: "categoryHhi",
-                name: "Category HHI",
+                name: "Category Concentration",
                 color: "hsl(var(--chart-3))",
               },
             ]}

@@ -22,6 +22,27 @@ export function resolveTab<T extends string>(
 }
 
 /**
+ * Like `resolveTab`, but first remaps legacy / removed tab IDs to their current
+ * destination via `aliases` (e.g. a merged-away `?tab=flow-table` → the new
+ * "flows" tab), so old bookmarks land on the nearest surviving tab instead of
+ * silently falling back to the default. A raw value that is already a current
+ * tab id — or an unknown one — is handled by `resolveTab`.
+ */
+export function resolveTabWithAliases<T extends string>(
+  raw: string | string[] | undefined,
+  tabs: readonly T[],
+  aliases: Partial<Record<string, T>>,
+  fallback: T,
+): T {
+  const v = Array.isArray(raw) ? raw[0] : raw;
+  if (typeof v === "string") {
+    const aliased = aliases[v];
+    if (aliased && (tabs as readonly string[]).includes(aliased)) return aliased;
+  }
+  return resolveTab(raw, tabs, fallback);
+}
+
+/**
  * Build a fully-qualified tab href: `<basePath>?…` with every non-`tab`
  * key in `preserved` carried over and `tab` set to `tabId`. Empty /
  * undefined values are dropped so the URL stays clean.
