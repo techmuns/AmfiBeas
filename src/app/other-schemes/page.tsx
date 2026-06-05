@@ -3,7 +3,6 @@ import { Card } from "@/components/ui/Card";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { AreaTrend } from "@/components/charts/AreaTrend";
 import { BarSeries } from "@/components/charts/BarSeries";
-import { adaptiveAverageOverlay } from "@/lib/chart-context";
 import {
   dataMode,
   latestOtherSchemesCategoryBreakdown,
@@ -18,7 +17,7 @@ import {
   type DashboardTabDef,
 } from "@/components/layout/DashboardTabs";
 import { TabIntroCard } from "@/components/ui/TabIntroCard";
-import { resolveTab } from "@/lib/tabs";
+import { resolveTabWithAliases } from "@/lib/tabs";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
 
@@ -39,9 +38,8 @@ const OTHER_SCHEMES_XLSX_COLUMNS: CsvColumn<OtherSchemesXlsxRow>[] = [
 ];
 
 const OTHER_SCHEMES_TABS = [
-  { id: "snapshot", label: "Snapshot" },
+  { id: "snapshot", label: "Snapshot & Mix" },
   { id: "flows", label: "Net Flows" },
-  { id: "scheme-mix", label: "Scheme Mix" },
 ] as const satisfies readonly DashboardTabDef[];
 type OtherSchemesTabId = (typeof OTHER_SCHEMES_TABS)[number]["id"];
 const OTHER_SCHEMES_TAB_IDS = OTHER_SCHEMES_TABS.map(
@@ -54,9 +52,10 @@ export default async function OtherSchemesPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const activeTab = resolveTab<OtherSchemesTabId>(
+  const activeTab = resolveTabWithAliases<OtherSchemesTabId>(
     sp.tab,
     OTHER_SCHEMES_TAB_IDS,
+    { "scheme-mix": "snapshot" },
     "snapshot",
   );
   const isLive = dataMode().otherSchemes === "live";
@@ -91,10 +90,6 @@ export default async function OtherSchemesPage({
   const flowSeries = series.map((s) => ({
     label: s.month,
     value: s.netFlow,
-  }));
-  const mobilizedSeries = series.map((s) => ({
-    label: s.month,
-    value: s.fundsMobilized,
   }));
 
   const trend = (n: number) =>
@@ -174,47 +169,26 @@ export default async function OtherSchemesPage({
       {activeTab === "flows" && (
         <TabIntroCard
           headline="Is the passive pool absorbing or shedding money?"
-          summary="Monthly net flow (inflow vs outflow) and gross funds mobilised before redemptions, with a 12-month moving-average overlay for the latter. Together they separate sentiment from steady contribution."
+          summary="Monthly net flow (inflow vs outflow) into the passive pool — positive means money entered, negative means it left."
           watchNext="Whether net flow stays positive even as the broader market cycle turns — that's the durable structural-shift signal."
         />
       )}
 
       {activeTab === "flows" && (
-        <section className="grid gap-4 lg:grid-cols-2">
-          <Card
-            title="Net Flow"
-            subtitle="Monthly net flow into the passive pool. Positive = money entered; negative = money left."
-          >
-            <BarSeries
-              data={flowSeries}
-              color="hsl(var(--chart-2))"
-              name="Net flow"
-              zeroReference
-            />
-          </Card>
-          <Card
-            title="Funds Mobilised"
-            subtitle="Gross monthly inflow before redemptions. The trailing average smooths out month-to-month noise."
-          >
-            {(() => {
-              const ov = adaptiveAverageOverlay(mobilizedSeries, mobilizedSeries, 12);
-              return (
-                <BarSeries
-                  data={mobilizedSeries}
-                  color="hsl(var(--chart-1))"
-                  name="Mobilised"
-                  trendline={ov.kind === "trailing" ? ov.trendline : undefined}
-                  trendlineName={ov.kind === "trailing" ? ov.label : undefined}
-                  referenceValue={ov.kind === "visible-mean" ? ov.referenceValue : undefined}
-                  referenceLabel={ov.kind === "visible-mean" ? ov.label : undefined}
-                />
-              );
-            })()}
-          </Card>
-        </section>
+        <Card
+          title="Net Flow"
+          subtitle="Monthly net flow into the passive pool. Positive = money entered; negative = money left."
+        >
+          <BarSeries
+            data={flowSeries}
+            color="hsl(var(--chart-2))"
+            name="Net flow"
+            zeroReference
+          />
+        </Card>
       )}
 
-      {activeTab === "scheme-mix" && (
+      {activeTab === "snapshot" && (
         <TabIntroCard
           headline="Where inside the passive pool is the money sitting?"
           summary="Sub-categories of SEBI Group V — ETFs (equity, debt, gold), index funds, FoFs — sorted by AUM, with the latest month's net flow per category."
@@ -222,7 +196,7 @@ export default async function OtherSchemesPage({
         />
       )}
 
-      {activeTab === "scheme-mix" && (
+      {activeTab === "snapshot" && (
         <Card
           title={`Category Breakdown · ${formatMonthLabel(breakdown.month)}`}
           subtitle="Sub-categories of SEBI Group V, sorted by AUM"
