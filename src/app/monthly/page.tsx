@@ -43,7 +43,6 @@ import { episodeRecoveryRows } from "@/data/episode-recovery";
 import { EpisodeReplayStrip } from "@/components/ui/EpisodeReplayStrip";
 import { KeyTakeaway, DeltaCr } from "@/components/ui/KeyTakeaway";
 import { StickyContextFooter } from "@/components/ui/StickyContextFooter";
-import { LensToggle } from "@/components/ui/LensToggle";
 import {
   categoryRotation,
   iiflActiveEquityHeatmapData,
@@ -76,14 +75,12 @@ import {
   DashboardTabs,
   type DashboardTabDef,
 } from "@/components/layout/DashboardTabs";
-import { resolveTab } from "@/lib/tabs";
+import { resolveTabWithAliases } from "@/lib/tabs";
 
 const MONTHLY_TABS = [
   { id: "snapshot", label: "Snapshot" },
-  { id: "flows", label: "AUM" },
-  { id: "flow-table", label: "Flow Table" },
+  { id: "flows", label: "Flows & AUM" },
   { id: "fee-mix", label: "Fee Mix" },
-  { id: "sip-retail", label: "SIP & Retail" },
   { id: "categories", label: "Category Shifts" },
   { id: "market-cycle", label: "Market Phases" },
 ] as const satisfies readonly DashboardTabDef[];
@@ -125,91 +122,6 @@ function monthEndMixShares(
   return shares;
 }
 
-type RenderedCycleBand = {
-  fromLabel: string;
-  toLabel: string;
-  phase: "Correction" | "Peak";
-  color?: string;
-};
-
-/** Prepare cycle-phase bands for a chart whose x-axis is `labels`:
- *  keep only bands fully inside the window, give single-month runs
- *  visible width (pad one label each side, clamped to the window) so a
- *  point-in-time phase reads as a band, and recolour Peak green. Shared
- *  by the Total AAUM Trend and the SIP cards so they render identically. */
-function renderedCycleBands(
-  bands: { fromLabel: string; toLabel: string; phase: "Correction" | "Peak" }[],
-  labels: string[]
-): RenderedCycleBand[] {
-  const idx = new Map(labels.map((l, i) => [l, i]));
-  return bands
-    .filter((b) => idx.has(b.fromLabel) && idx.has(b.toLabel))
-    .map((b) => {
-      const fromIdx = idx.get(b.fromLabel) as number;
-      const toIdx = idx.get(b.toLabel) as number;
-      const single = fromIdx === toIdx;
-      const lo = single ? Math.max(0, fromIdx - 1) : fromIdx;
-      const hi = single ? Math.min(labels.length - 1, toIdx + 1) : toIdx;
-      return {
-        fromLabel: labels[lo],
-        toLabel: labels[hi],
-        phase: b.phase,
-        color: b.phase === "Peak" ? "hsl(var(--positive))" : undefined,
-      };
-    });
-}
-
-/** Legend for the shaded cycle-phase bands. Lists only the phases that
- *  actually appear in `bands`, so a window with no correction (e.g. the
- *  SIP cards) shows just the Peak row. */
-function CyclePhaseLegend({
-  bands,
-  align = "left",
-}: {
-  bands: RenderedCycleBand[];
-  align?: "left" | "center";
-}) {
-  const hasCorrection = bands.some((b) => b.phase === "Correction");
-  const hasPeak = bands.some((b) => b.phase === "Peak");
-  if (!hasCorrection && !hasPeak) return null;
-  // Centered variant matches the BarsWithIndexLine legend (centred row of
-  // round dots); left variant keeps the square chips that read as shaded
-  // area bands.
-  const dotClass = cn(
-    "inline-block h-2.5 w-2.5",
-    align === "center" ? "rounded-full" : "rounded-sm"
-  );
-  return (
-    <p
-      className={cn(
-        "mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground",
-        align === "center" && "justify-center"
-      )}
-    >
-      <span>Shaded bands mark market cycle phases (Nifty 500):</span>
-      {hasCorrection && (
-        <span className="inline-flex items-center gap-1.5">
-          <span
-            aria-hidden
-            className={dotClass}
-            style={{ backgroundColor: "hsl(var(--negative) / 0.4)" }}
-          />
-          Correction — index in drawdown
-        </span>
-      )}
-      {hasPeak && (
-        <span className="inline-flex items-center gap-1.5">
-          <span
-            aria-hidden
-            className={dotClass}
-            style={{ backgroundColor: "hsl(var(--positive) / 0.4)" }}
-          />
-          Peak — stretched / euphoric inflows
-        </span>
-      )}
-    </p>
-  );
-}
 
 export default async function MonthlyPage({
   searchParams,
@@ -251,48 +163,13 @@ export default async function MonthlyPage({
   // an absolute number (₹ Cr / count / etc) and a meaningful share
   // / ratio specific to that card. Default is "absolute" — URL stays
   // clean unless the user actively picked "share".
-  // Primary view toggle for the first SIP card: SIP flows-vs-gross-inflows
-  // (default) or the SIP AUM trend (folded in from the old standalone card).
-  const sipPrimaryView: "flows" | "aum" =
-    sp.sipView === "aum" ? "aum" : "flows";
-  // View toggle for the merged AUM trend card: industry Total AUM
-  // (default) or the Active-Equity AUM & share.
-  const aumView: "total" | "active" =
-    sp.aumView === "active" ? "active" : "total";
-  // Pass-through params for every LensToggle so toggling A doesn't
-  // lose B (or the selected month / active tab).
-  const preservedQueryParams: Record<string, string | undefined> = {
-    tab: typeof sp.tab === "string" ? sp.tab : undefined,
-    month: typeof sp.month === "string" ? sp.month : undefined,
-    aumView: typeof sp.aumView === "string" ? sp.aumView : undefined,
-    aeFlowView:
-      typeof sp.aeFlowView === "string" ? sp.aeFlowView : undefined,
-    aeFlowRange:
-      typeof sp.aeFlowRange === "string" ? sp.aeFlowRange : undefined,
-    activePassiveLens:
-      typeof sp.activePassiveLens === "string"
-        ? sp.activePassiveLens
-        : undefined,
-    sipContribLens:
-      typeof sp.sipContribLens === "string" ? sp.sipContribLens : undefined,
-    sipContribPeriod:
-      typeof sp.sipContribPeriod === "string" ? sp.sipContribPeriod : undefined,
-    sipView: typeof sp.sipView === "string" ? sp.sipView : undefined,
-    sipAccountsLens:
-      typeof sp.sipAccountsLens === "string" ? sp.sipAccountsLens : undefined,
-    aeFlowLens:
-      typeof sp.aeFlowLens === "string" ? sp.aeFlowLens : undefined,
-    nfoCountLens:
-      typeof sp.nfoCountLens === "string" ? sp.nfoCountLens : undefined,
-    nfoFundsLens:
-      typeof sp.nfoFundsLens === "string" ? sp.nfoFundsLens : undefined,
-  };
 
   // Resolve the active tab from the URL. Unknown / missing values
   // silently fall back to "snapshot" so stale bookmarks don't break.
-  const activeTab = resolveTab<MonthlyTabId>(
+  const activeTab = resolveTabWithAliases<MonthlyTabId>(
     sp.tab,
     MONTHLY_TAB_IDS,
+    { "flow-table": "flows", "sip-retail": "snapshot" },
     "snapshot",
   );
 
@@ -481,49 +358,6 @@ export default async function MonthlyPage({
     const [y, m] = ym.split("-").map(Number);
     return `${y - 1}-${String(m).padStart(2, "0")}`;
   };
-  const yoyPctOf = (
-    month: string,
-    field: "totalAum" | "totalAaum"
-  ): number | null => {
-    const cur = amfiRowByMonth.get(month)?.[field];
-    const prev = amfiRowByMonth.get(monthMinus12(month))?.[field];
-    return typeof cur === "number" && typeof prev === "number" && prev > 0
-      ? ((cur - prev) / prev) * 100
-      : null;
-  };
-  const totalAumChart = amfiRowsAsc
-    .filter((r) => typeof r.totalAum === "number")
-    .slice(-24)
-    .map((r) => ({
-      label: r.month,
-      value: r.totalAum as number,
-      line: yoyPctOf(r.month, "totalAum"),
-    }));
-  const totalAumChartHasData = totalAumChart.length > 0;
-  const totalAumYoyLatest = (() => {
-    for (let i = totalAumChart.length - 1; i >= 0; i--) {
-      if (totalAumChart[i].line !== null) return totalAumChart[i].line;
-    }
-    return null;
-  })();
-  const activeEqShareChart = amfiRowsAsc
-    .filter(
-      (r) =>
-        typeof r.activeEquityAaum === "number" &&
-        typeof r.totalAaum === "number" &&
-        (r.totalAaum as number) > 0
-    )
-    .slice(-24)
-    .map((r) => ({
-      label: r.month,
-      value: r.activeEquityAaum as number,
-      line: ((r.activeEquityAaum as number) / (r.totalAaum as number)) * 100,
-    }));
-  const activeEqShareChartHasData = activeEqShareChart.length > 0;
-  const activeEqShareLatest =
-    activeEqShareChart.length > 0
-      ? activeEqShareChart[activeEqShareChart.length - 1].line
-      : null;
 
   // Figure 19: MAAUM breakdown table (3 periods + YoY / MoM). Equity is
   // the broad bucket = Active + ETF & Index + Arbitrage; Debt is Sub
@@ -578,21 +412,6 @@ export default async function MonthlyPage({
   // contribution — proxied by the industry's monthly NFO funds mobilised
   // (the AMFI Monthly Report carries only the all-scheme Grand Total, not
   // an active-equity split). Both span the latest 24 months.
-  const activeEqNetInflowTrend = monthlyTrend("activeEquityNetInflow", 24);
-  const activeEqNetInflowChart = activeEqNetInflowTrend.map((p) => ({
-    month: p.label,
-    value: p.value,
-  }));
-  const activeEqNetInflowHasData = activeEqNetInflowChart.length > 0;
-  const activeEqTtmAvg = (() => {
-    const last12 = activeEqNetInflowTrend
-      .slice(-12)
-      .map((p) => p.value)
-      .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
-    return last12.length > 0
-      ? last12.reduce((s, v) => s + v, 0) / last12.length
-      : null;
-  })();
   const nfoFundsChart = monthlyTrend("industryNfoFundsMobilized", 24).map(
     (p) => ({ month: p.label, value: p.value })
   );
@@ -638,21 +457,6 @@ export default async function MonthlyPage({
     sipAumTrend.length > 0 ||
     sipAccountsTrend.length > 0;
 
-  // ---- "Share" series for SIP AUM (kept for the SIP AUM card) -------
-  // SIP Contribution and SIP Contributing Accounts cards were replaced
-  // with the IIFL Figure 6 / 7 charts above — their share series and
-  // display lookups are no longer needed.
-  const sipAumShare = amfiMonthlyRows()
-    .filter(
-      (r) =>
-        typeof r.sipAum === "number" &&
-        typeof r.totalAum === "number" &&
-        r.totalAum > 0
-    )
-    .map((r) => ({
-      label: r.month,
-      value: ((r.sipAum as number) / (r.totalAum as number)) * 100,
-    }));
 
   // ---- Monthly Flows (Figure 22-style) section -----------------------
   //
@@ -870,41 +674,6 @@ export default async function MonthlyPage({
   // background tint over those stretches. The other phases stay
   // unshaded (most of the timeline) so the bands read as ambient
   // context, not clutter.
-  const cyclePhaseBands: { fromLabel: string; toLabel: string; phase: "Correction" | "Peak" }[] = (() => {
-    const out: { fromLabel: string; toLabel: string; phase: "Correction" | "Peak" }[] = [];
-    let runStart: { idx: number; phase: "Correction" | "Peak" } | null = null;
-    for (let i = 0; i < cyclePhasePoints.length; i++) {
-      const p = cyclePhasePoints[i];
-      const isNotable = p.phase === "Correction" || p.phase === "Peak";
-      if (isNotable) {
-        if (runStart === null || runStart.phase !== p.phase) {
-          if (runStart !== null) {
-            out.push({
-              fromLabel: cyclePhasePoints[runStart.idx].month,
-              toLabel: cyclePhasePoints[i - 1].month,
-              phase: runStart.phase,
-            });
-          }
-          runStart = { idx: i, phase: p.phase as "Correction" | "Peak" };
-        }
-      } else if (runStart !== null) {
-        out.push({
-          fromLabel: cyclePhasePoints[runStart.idx].month,
-          toLabel: cyclePhasePoints[i - 1].month,
-          phase: runStart.phase,
-        });
-        runStart = null;
-      }
-    }
-    if (runStart !== null) {
-      out.push({
-        fromLabel: cyclePhasePoints[runStart.idx].month,
-        toLabel: cyclePhasePoints[cyclePhasePoints.length - 1].month,
-        phase: runStart.phase,
-      });
-    }
-    return out;
-  })();
   const episodes = historicalEpisodes();
   // Recovery-tracker rows derived from the same episode list — for
   // each episode, compute the pre-baseline / trough / recovery
@@ -1113,147 +882,28 @@ export default async function MonthlyPage({
               />
             </Card>
           )}
-          {(totalAumChartHasData || activeEqShareChartHasData) && (
-            <Card
-              title={
-                aumView === "active"
-                  ? "Active Equity AUM & Share of Total"
-                  : "Total AUM Trend"
-              }
-              subtitleNode={
-                <div className="space-y-0.5">
-                  <p className="text-xs text-muted-foreground">
-                    {aumView === "active"
-                      ? "Active-equity MAAUM (excludes ETF / Index / arbitrage) and its share of total industry MAAUM."
-                      : "Industry month-end (EOP) AUM with year-on-year growth."}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground/80">
-                    {aumView === "active"
-                      ? `${activeEqShareChart.length} months${activeEqShareLatest !== null ? ` · latest share ${activeEqShareLatest.toFixed(0)}%` : ""} · Source: AMFI Monthly Report`
-                      : `${totalAumChart.length} months${totalAumYoyLatest !== null ? ` · latest YoY +${totalAumYoyLatest.toFixed(0)}%` : ""} · Source: AMFI Monthly Report`}
-                  </p>
-                </div>
-              }
-              action={
-                <LensToggle
-                  basePath="/monthly"
-                  paramName="aumView"
-                  defaultValue="total"
-                  lenses={[
-                    { value: "total", label: "Total AUM" },
-                    { value: "active", label: "Active Equity AUM" },
-                  ]}
-                  active={aumView}
-                  preserveParams={preservedQueryParams}
-                />
-              }
-            >
-              {aumView === "active" ? (
-                <BarsWithIndexLine
-                  data={activeEqShareChart}
-                  barColor="hsl(var(--chart-1))"
-                  lineColor="hsl(var(--chart-2))"
-                  valueFormat="cr"
-                  axisFormat="cr"
-                  lineValueFormat="pct"
-                  lineAxisFormat="pct"
-                  labelFormat="month"
-                  barName="Active Equity MAAUM"
-                  lineName="Active equity share of total"
-                  lineDomain={[50, 60]}
-                  lineTicks={[50, 52, 54, 56, 58, 60]}
-                />
-              ) : (
-                <BarsWithIndexLine
-                  data={totalAumChart}
-                  barColor="hsl(var(--chart-1))"
-                  lineColor="hsl(var(--foreground))"
-                  valueFormat="cr"
-                  axisFormat="cr"
-                  lineValueFormat="pct"
-                  lineAxisFormat="pct"
-                  labelFormat="month"
-                  barName="Total AUM (EOP)"
-                  lineName="YoY growth"
-                />
-              )}
-            </Card>
-          )}
         </div>
       )}
 
-      {activeTab === "sip-retail" && hasAnySipTrend && (
+      {activeTab === "snapshot" && hasAnySipTrend && (
         <div className="space-y-3">
           <section className="space-y-4">
             {sipGrossShareSeries.length > 0 && (
-              <Card
-                title={
-                  sipPrimaryView === "aum"
-                    ? "SIP AUM Trend"
-                    : "SIP flows vs Industry Gross Inflows"
-                }
-                action={
-                  <LensToggle
-                    basePath="/monthly"
-                    paramName="sipView"
-                    defaultValue="flows"
-                    lenses={[
-                      { value: "flows", label: "SIP Flows" },
-                      { value: "aum", label: "SIP AUM" },
-                    ]}
-                    active={sipPrimaryView}
-                    preserveParams={preservedQueryParams}
-                  />
-                }
-              >
-                {sipPrimaryView === "aum" ? (
-                  sipAumShare.length > 0 ? (
-                    (() => {
-                      // SIP AUM as % of total industry AUM, over the full
-                      // available SIP-AUM history (Jun '24 onward — all the
-                      // months the AMFI press release reports SIP AUM for).
-                      const bands = renderedCycleBands(
-                        cyclePhaseBands,
-                        sipAumShare.map((p) => p.label)
-                      );
-                      return (
-                        <>
-                          <BarSeries
-                            data={sipAumShare}
-                            name="SIP AUM (% of total AUM)"
-                            color="hsl(var(--chart-2))"
-                            valueFormat="pct"
-                            axisFormat="pct1"
-                            labelFormat="month"
-                            cyclePhaseBands={bands}
-                            dynamicYDomain
-                          />
-                          <CyclePhaseLegend bands={bands} />
-                        </>
-                      );
-                    })()
-                  ) : (
-                    <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                      SIP AUM not yet ingested — appears once the next AMFI
-                      Monthly Notes (press release) lands.
-                    </div>
-                  )
-                ) : (
-                  <BarsWithIndexLine
-                    data={sipGrossShareChartData}
-                    barColor="hsl(var(--chart-1))"
-                    lineColor="hsl(var(--chart-3))"
-                    valueFormat="cr"
-                    axisFormat="cr"
-                    lineValueFormat="pct"
-                    lineAxisFormat="pct"
-                    labelFormat="month"
-                    barName="SIP Flows (₹ Cr)"
-                    lineName="SIP Flows as % of gross Inflows (RHS)"
-                    lineDomain={[0, 110]}
-                    lineTicks={[0, 25, 50, 75, 100]}
-                  />
-                )}
+              <Card title="SIP flows vs Industry Gross Inflows">
+                <BarsWithIndexLine
+                  data={sipGrossShareChartData}
+                  barColor="hsl(var(--chart-1))"
+                  lineColor="hsl(var(--chart-3))"
+                  valueFormat="cr"
+                  axisFormat="cr"
+                  lineValueFormat="pct"
+                  lineAxisFormat="pct"
+                  labelFormat="month"
+                  barName="SIP Flows (₹ Cr)"
+                  lineName="SIP Flows as % of gross Inflows (RHS)"
+                  lineDomain={[0, 110]}
+                  lineTicks={[0, 25, 50, 75, 100]}
+                />
               </Card>
             )}
 
@@ -1320,7 +970,7 @@ export default async function MonthlyPage({
         </div>
       )}
 
-      {activeTab === "sip-retail" && nfoFundsHasData && (
+      {activeTab === "snapshot" && nfoFundsHasData && (
         <Card
           title="New Fund Offers Mobilised"
           subtitleNode={
@@ -1353,47 +1003,8 @@ export default async function MonthlyPage({
         </Card>
       )}
 
-      {activeTab === "snapshot" && activeEqNetInflowHasData && (
-        <Card
-          title="Active Equity Net Inflows"
-          subtitleNode={
-            <div className="space-y-0.5">
-              <p className="text-xs text-muted-foreground">
-                Monthly net inflows into the active-equity envelope, against
-                the trailing 12-month (TTM) average.
-              </p>
-              <p className="text-[11px] text-muted-foreground/80">
-                {`${activeEqNetInflowChart.length} months${activeEqTtmAvg !== null ? ` · TTM avg ${formatCompactCrSafe(activeEqTtmAvg)}` : ""} · Source: AMFI Monthly Report`}
-              </p>
-            </div>
-          }
-        >
-          <VerticalBars
-            data={activeEqNetInflowChart}
-            xKey="month"
-            bars={[
-              {
-                key: "value",
-                name: "Active equity net inflows",
-                color: "hsl(var(--chart-1))",
-              },
-            ]}
-            valueFormat="cr"
-            axisFormat="cr"
-            labelFormat="month"
-            referenceValue={activeEqTtmAvg}
-            referenceLabel="TTM avg"
-            labelMode="last"
-          />
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Bars: monthly active-equity net inflow (₹ Cr). Dashed line =
-            trailing 12-month average. Active equity = equity-oriented + hybrid
-            (ex-arbitrage) + solution-oriented schemes.
-          </p>
-        </Card>
-      )}
 
-      {activeTab === "flow-table" && (
+      {activeTab === "flows" && (
         <Card
           title="Monthly Flows & AUM · Table"
           subtitleNode={
