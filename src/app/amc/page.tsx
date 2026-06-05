@@ -345,7 +345,14 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {activeTab === "overview" && <AmcSearchTable rows={data.rows} />}
+      {activeTab === "overview" && (
+        <Card
+          title="All AMCs — Rank, Assets & Market Share"
+          subtitle="Searchable directory of every AMC — click any row to drill into its schemes."
+        >
+          <AmcSearchTable rows={data.rows} />
+        </Card>
+      )}
 
       <Card>
         <div className="space-y-1 text-xs text-muted-foreground">

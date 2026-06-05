@@ -60,7 +60,6 @@ import {
 } from "@/components/data/MaaumTable";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import { FeeMixInflows } from "@/components/data/FeeMixInflows";
-import { ProductFlowHeatmap } from "@/components/data/ProductFlowHeatmap";
 import { feeMixByMonth } from "@/data/fee-mix";
 import { HowToRead } from "@/components/ui/HowToRead";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
@@ -1066,14 +1065,9 @@ export default async function MonthlyPage({
       )}
 
       {activeTab === "fee-mix" && feeMix.length > 0 && (
-        <div className="space-y-3">
-          <Card title="Fee Mix of Net Inflows">
-            <FeeMixInflows months={feeMix} />
-          </Card>
-          <Card title="Net Flows by Product Category">
-            <ProductFlowHeatmap months={feeMix} />
-          </Card>
-        </div>
+        <Card title="Fee Mix of Net Inflows">
+          <FeeMixInflows months={feeMix} />
+        </Card>
       )}
 
       {activeTab === "categories" &&
@@ -1107,17 +1101,12 @@ export default async function MonthlyPage({
           );
         })()}
 
-      {activeTab === "categories" && rotation && (
-        <CategoryRotationCard rotation={rotation} />
-      )}
-
-
       {activeTab === "categories" && iiflHeatmapHasData && (
         <div className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-sm font-medium tracking-tight">
-                Active Equity Net Inflow Rotation
+                Active-Equity Flows by Category
               </h2>
             </div>
             <DownloadXlsxButton
@@ -1192,95 +1181,4 @@ export default async function MonthlyPage({
     </div>
   );
 }
-
-/** Sign-aware compact ₹ Cr — local helper so a negative active-equity
- *  net inflow renders as "−₹32.4K Cr" rather than the unsigned value. */
-
-/** Two-column compact rotation card: top gainers (green) on the left,
- *  top losers (red) on the right. Δ shown in percentage points. */
-function CategoryRotationCard({
-  rotation,
-}: {
-  rotation: NonNullable<ReturnType<typeof categoryRotation>>;
-}) {
-  return (
-    <Card
-      title="Category Flow Shifts"
-      subtitle={`${rotation.windowMonths}M avg vs prior ${rotation.windowMonths}M · share of active-equity net inflow`}
-      action={
-        <InfoTooltip
-          label={`For each category in the active-equity envelope, the trailing ${rotation.windowMonths}-month average net-inflow share (${rotation.currentRange.start} → ${rotation.currentRange.end}) is compared to the prior ${rotation.windowMonths}-month window (${rotation.priorRange.start} → ${rotation.priorRange.end}). Δ is the difference in percentage points. Active equity = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes.`}
-        />
-      }
-    >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <RotationList
-          title="Gaining flow share"
-          entries={rotation.gainers}
-          accent="positive"
-        />
-        <RotationList
-          title="Losing flow share"
-          entries={rotation.losers}
-          accent="negative"
-        />
-      </div>
-    </Card>
-  );
-}
-
-function RotationList({
-  title,
-  entries,
-  accent,
-}: {
-  title: string;
-  entries: NonNullable<ReturnType<typeof categoryRotation>>["gainers"];
-  accent: "positive" | "negative";
-}) {
-  if (entries.length === 0) {
-    return (
-      <div>
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          {title}
-        </div>
-        <div className="mt-2 text-xs text-muted-foreground">
-          No category moved meaningfully in this window.
-        </div>
-      </div>
-    );
-  }
-  const deltaClass =
-    accent === "positive" ? "text-positive" : "text-negative";
-  return (
-    <div>
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-        {title}
-      </div>
-      <ul className="mt-2 space-y-1.5">
-        {entries.map((e) => (
-          <li
-            key={e.slug}
-            className="flex items-center justify-between gap-3 text-xs"
-          >
-            <span className="truncate" title={e.label}>
-              {e.label}
-            </span>
-            <span className="shrink-0 inline-flex items-center gap-2 text-[11px] tabular">
-              <span className="text-muted-foreground">
-                {e.priorSharePct.toFixed(1)}% → {e.currentSharePct.toFixed(1)}%
-              </span>
-              <span className={cn("font-semibold", deltaClass)}>
-                {e.deltaSharePct >= 0 ? "+" : ""}
-                {e.deltaSharePct.toFixed(2)}pp
-              </span>
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-
 
