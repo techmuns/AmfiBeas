@@ -9,19 +9,7 @@ import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
 import { quarterlyMarketWrap } from "@/data/market-wrap-quarterly";
 import { FiscalQuarterPicker } from "@/components/filters/FiscalQuarterPicker";
 import { PageHeader } from "@/components/layout/PageHeader";
-import {
-  chartInsights,
-  yoyPctSeries,
-} from "@/lib/chart-context";
-import {
-  IIFL_ACTIVE_EQUITY_CATEGORIES,
-  IIFL_TREND_EXPANDED_SLUGS,
-  IIFL_TREND_FEATURED_SLUGS,
-  iiflActiveEquityQuarterlyTrendCard,
-  latestCategoryProvenance,
-} from "@/data/amfi-monthly-category";
-import { formatKpiProvenanceTooltip } from "@/data/amfi-monthly";
-import { cyclePhaseHistory, historicalEpisodes } from "@/data/market-indices";
+import { cyclePhaseHistory } from "@/data/market-indices";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import {
@@ -30,19 +18,12 @@ import {
   formatQuarterlyProvenanceTooltip,
   getQuarterlyKpiProvenance,
   getQuarterlyKpiValue,
-  latestOpenEndedSchemeCount,
-  latestQuarterlyFolioAdditions,
   liquidAumForQuarter,
   quarterlyCategoryAumProvenance,
-  quarterlyActiveEquityLastMonthAaumTrend,
-  quarterlyActiveEquityLastMonthShareTrend,
   quarterlyEquityLastMonthAaumBreakdown,
   quarterlyFlowsData,
   quarterlyFolioAdditionsTrend,
-  quarterlyFlowsSectionRead,
-  quarterlyFoliosSectionRead,
   quarterlyKpiContext,
-  quarterlyOpenEndedSchemeCountTrend,
   quarterlySnapshotSectionRead,
   quarterlyTrend,
   categoryHhiPercentileRead,
@@ -96,24 +77,6 @@ export default async function QuarterlyPage({
 }) {
   const sp = await searchParams;
 
-  // ---- Lens toggles (parsed up-front) ----
-  const quarterlyFlowsLens: "absolute" | "share" =
-    sp.qFlowsLens === "share" ? "share" : "absolute";
-  const equityMixLens: "absolute" | "share" =
-    sp.qEquityMixLens === "share" ? "share" : "absolute";
-  // Per-card lens toggles for /quarterly. Each one switches a trend
-  // chart between absolute and a card-specific share/ratio view.
-  const qAaumLens: "absolute" | "share" =
-    sp.qAaumLens === "share" ? "share" : "absolute";
-  const qAeAaumLens: "absolute" | "share" =
-    sp.qAeAaumLens === "share" ? "share" : "absolute";
-  const qFoliosLens: "absolute" | "share" =
-    sp.qFoliosLens === "share" ? "share" : "absolute";
-  const qFolioAddLens: "absolute" | "share" =
-    sp.qFolioAddLens === "share" ? "share" : "absolute";
-  const qSchemesLens: "absolute" | "share" =
-    sp.qSchemesLens === "share" ? "share" : "absolute";
-
   const activeTab = resolveTabWithAliases<QuarterlyTabId>(
     sp.tab,
     QUARTERLY_TAB_IDS,
@@ -125,27 +88,6 @@ export default async function QuarterlyPage({
     "snapshot",
   );
 
-  // Share-mode transform helper for grouped-bar series.
-  const toShareRow = (
-    row: Record<string, number | null | string>,
-    keys: string[]
-  ): Record<string, number | null | string> => {
-    const total = keys.reduce((s, k) => {
-      const v = row[k];
-      return s + (typeof v === "number" ? Math.abs(v) : 0);
-    }, 0);
-    if (total === 0) {
-      const out = { ...row };
-      for (const k of keys) out[k] = null;
-      return out;
-    }
-    const out = { ...row };
-    for (const k of keys) {
-      const v = row[k];
-      out[k] = typeof v === "number" ? (v / total) * 100 : null;
-    }
-    return out;
-  };
 
   // Quarter selector — `?quarter=FY26-Q4` resolves to the matching
   // row when valid; otherwise we fall back to the latest available
@@ -156,27 +98,6 @@ export default async function QuarterlyPage({
   const selectedRow = resolveSelectedQuarter(requestedQuarter);
   const availableQuarters = availableQuartersDesc();
 
-  // ---- IIFL Active-Equity Category Trends ---------------------------
-  // The single section on /quarterly allowed to source from AMFI
-  // Monthly Reports — true QAAUM share requires period-average AAUM
-  // across all months in the quarter, which the quarterly Report's
-  // Average Net AUM column (last-month only) cannot provide.
-  const iiflTrendCards = IIFL_ACTIVE_EQUITY_CATEGORIES.map((c) => {
-    const { series, hasData } = iiflActiveEquityQuarterlyTrendCard(c.slug);
-    const aumHover = formatKpiProvenanceTooltip(
-      latestCategoryProvenance(c.slug, "categoryAaum")
-    );
-    return { ...c, series, hasData, aumHover };
-  });
-  const iiflTrendBySlug = new Map(iiflTrendCards.map((c) => [c.slug, c]));
-  const iiflFeaturedCards = IIFL_TREND_FEATURED_SLUGS.map(
-    (s) => iiflTrendBySlug.get(s)!
-  );
-  const iiflExpandedCards = IIFL_TREND_EXPANDED_SLUGS.map(
-    (s) => iiflTrendBySlug.get(s)!
-  );
-  const hasAnyIiflTrend = iiflTrendCards.some((c) => c.hasData);
-  const hasExpandedIiflTrend = iiflExpandedCards.some((c) => c.hasData);
 
   // ---- AMFI Quarterly Snapshot — KPI cards (selected quarter) -------
   // Mirrors /monthly's AMFI Monthly Snapshot card list:
@@ -375,397 +296,11 @@ export default async function QuarterlyPage({
         : "Quarter-end AUM not available for the selected quarter";
 
   // Last-month AAUM trend across the full AMFI quarterly history.
-  const aaumTrendData = quarterlyTrend("grandTotalLastMonthAaum", 16);
-  // Full quarterly history so the 4Q trailing average has real prior
-  // data to draw on for the leftmost visible quarters.
-  const aaumTrendFullHistory = quarterlyTrend("grandTotalLastMonthAaum", 10_000);
-  const aaumTrendHasData = aaumTrendData.length > 0;
-  const aaumTrendSubtitle = aaumTrendHasData
-    ? `Last-month AAUM · ${aaumTrendData.length} quarter${aaumTrendData.length === 1 ? "" : "s"} · ₹ Cr`
-    : "Last-month AAUM not available";
 
-  // ---- Shared chart-context helpers (used by every insight call) ----
-  // Convert YYYY-MM → fiscal-quarter display label ("4QFY26") used by
-  // every quarterly chart series. Indian FY ends in March: Apr-Jun =
-  // Q1, Jul-Sep = Q2, Oct-Dec = Q3, Jan-Mar = Q4. FY{YY} is the year
-  // ending in March of that YY.
-  const monthToFiscalQuarterLabel = (month: string): string | null => {
-    const [yStr, mStr] = month.split("-");
-    const y = Number(yStr);
-    const m = Number(mStr);
-    if (!Number.isFinite(y) || !Number.isFinite(m)) return null;
-    let fyYear: number;
-    let fyQ: number;
-    if (m >= 1 && m <= 3) {
-      fyYear = y;
-      fyQ = 4;
-    } else if (m >= 4 && m <= 6) {
-      fyYear = y + 1;
-      fyQ = 1;
-    } else if (m >= 7 && m <= 9) {
-      fyYear = y + 1;
-      fyQ = 2;
-    } else if (m >= 10 && m <= 12) {
-      fyYear = y + 1;
-      fyQ = 3;
-    } else {
-      return null;
-    }
-    return `${fyQ}QFY${String(fyYear).slice(-2)}`;
-  };
-  // Cycle phase by quarter — walking the monthly phase history in
-  // order and overwriting per-quarter means the LAST month of each
-  // quarter wins. That's the most representative read for a
-  // quarter-end snapshot.
-  const cyclePhaseByQuarterLabel: Map<string, string> = (() => {
-    const m = new Map<string, string>();
-    for (const p of cyclePhaseHistory()) {
-      const q = monthToFiscalQuarterLabel(p.month);
-      if (q) m.set(q, p.phase);
-    }
-    return m;
-  })();
-  // Episode anchors translated to fiscal-quarter labels. Multiple
-  // episode months can map to the same quarter (e.g. COVID 2020 spans
-  // Feb-Mar 2020 → both in FY20-Q4) — dedupe so each quarter has one
-  // anchor.
-  const episodeAnchorsForQuarter: { label: string; title: string }[] =
-    (() => {
-      const seen = new Set<string>();
-      const out: { label: string; title: string }[] = [];
-      for (const e of historicalEpisodes()) {
-        const q = monthToFiscalQuarterLabel(e.startMonth);
-        if (!q || seen.has(q)) continue;
-        seen.add(q);
-        out.push({ label: q, title: e.title });
-      }
-      return out;
-    })();
 
-  // Last-month AAUM denominator: latest as % of trailing 4Q (1Y) average
-  // — separates structural growth from quarter-to-quarter mean reversion.
-  const lastMonthAaumDenomCaption = (() => {
-    if (aaumTrendData.length < 4) return undefined;
-    const trailing4 = aaumTrendData.slice(-4);
-    const avg = trailing4.reduce((s, p) => s + p.value, 0) / trailing4.length;
-    const latest = aaumTrendData[aaumTrendData.length - 1];
-    if (avg <= 0) return undefined;
-    const pct = (latest.value / avg) * 100;
-    return `${pct.toFixed(1)}% of trailing 4Q avg · latest ${latest.label}`;
-  })();
-  const lastMonthAaumInsights = chartInsights(aaumTrendData, {
-    metricName: "last-month AAUM",
-    unitSuffix: "₹ Cr",
-    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
-    yoyLag: 4,
-  });
-  // "Share" view: each quarter indexed as a % of its own trailing
-  // 4Q (1Y) moving average. Drops the first 3 points where no
-  // trailing average is available.
-  const aaumTrendShare = aaumTrendData
-    .map((p, i, arr) => {
-      if (i + 1 < 4) return null;
-      const slice = arr.slice(i + 1 - 4, i + 1);
-      const avg = slice.reduce((s, q) => s + q.value, 0) / 4;
-      if (avg <= 0) return null;
-      return { label: p.label, value: (p.value / avg) * 100 };
-    })
-    .filter((p): p is { label: string; value: number } => p !== null);
-  const aaumDisplayData = qAaumLens === "share" ? aaumTrendShare : aaumTrendData;
 
-  // ---- Quarterly Flows ----------------------------------------------
-  // Mirrors /monthly's "Equity / Debt / Liquid Monthly Net Flows"
-  // grouped bar chart exactly. One full-width Card; same colors as
-  // /monthly (Equity = chart-1 blue / Debt = chart-2 green /
-  // Liquid = chart-4 purple). Liquid is shown separately for chart
-  // parity with /monthly even though debtNetInflow already includes
-  // it on the AMFI classification.
-  const flowsData = quarterlyFlowsData(16);
-  const flowsDataDisplay =
-    quarterlyFlowsLens === "share"
-      ? flowsData.map((r) =>
-          toShareRow(r as Record<string, number | null | string>, [
-            "equity",
-            "debt",
-            "liquid",
-          ])
-        )
-      : flowsData;
-  const flowsHasData = flowsData.some(
-    (r) => r.equity !== null || r.debt !== null || r.liquid !== null
-  );
 
-  // ---- Quarterly Active Equity & Equity Mix -------------------------
-  // Mirrors /monthly's Active Equity & Equity Mix section. All three
-  // cards use LAST-MONTH AAUM (not true QAAUM) — labelled explicitly
-  // so the methodology is unambiguous.
-  const aeAaumTrend = quarterlyActiveEquityLastMonthAaumTrend(16);
-  const aeAaumFullHistory = quarterlyActiveEquityLastMonthAaumTrend(10_000);
-  const aeShareTrend = quarterlyActiveEquityLastMonthShareTrend(16);
-  const aeBreakdown = quarterlyEquityLastMonthAaumBreakdown(16);
-  const aeBreakdownDisplay =
-    equityMixLens === "share"
-      ? aeBreakdown.map((r) =>
-          toShareRow(r as Record<string, number | null | string>, [
-            "activeEquity",
-            "etfIndex",
-            "arbitrage",
-          ])
-        )
-      : aeBreakdown;
-  const aeBreakdownHasData = aeBreakdown.some(
-    (r) =>
-      r.activeEquity !== null || r.etfIndex !== null || r.arbitrage !== null
-  );
-  const hasAnyEquityMix =
-    aeAaumTrend.length > 0 ||
-    aeShareTrend.length > 0 ||
-    aeBreakdownHasData;
-  // Latest active/etf/arbitrage mix — proportion-first read for the
-  // breakdown subtitle.
-  const latestQuarterlyEquityMix = (() => {
-    for (let i = aeBreakdown.length - 1; i >= 0; i--) {
-      const r = aeBreakdown[i];
-      const a = r.activeEquity;
-      const e = r.etfIndex;
-      const x = r.arbitrage;
-      if (typeof a === "number" && typeof e === "number" && typeof x === "number") {
-        const total = a + e + x;
-        if (total > 0) {
-          return {
-            activePct: (a / total) * 100,
-            etfPct: (e / total) * 100,
-            arbPct: (x / total) * 100,
-          };
-        }
-      }
-    }
-    return null;
-  })();
-  const aeBreakdownSubtitle = latestQuarterlyEquityMix
-    ? `${aeBreakdown.length} quarter${aeBreakdown.length === 1 ? "" : "s"} · ₹ Cr · latest mix ${latestQuarterlyEquityMix.activePct.toFixed(1)}% Active / ${latestQuarterlyEquityMix.etfPct.toFixed(1)}% ETF & Index / ${latestQuarterlyEquityMix.arbPct.toFixed(1)}% Arbitrage`
-    : `${aeBreakdown.length} quarter${aeBreakdown.length === 1 ? "" : "s"} · ₹ Cr · grouped bars · last-month AAUM`;
-
-  // Quarterly Flows denominator: latest quarter's per-segment share
-  // of total flow magnitude — mirrors /monthly's headline read.
-  const quarterlyFlowsDenomCaption = (() => {
-    if (flowsData.length === 0) return undefined;
-    const latest = flowsData[flowsData.length - 1];
-    const e = typeof latest.equity === "number" ? latest.equity : 0;
-    const d = typeof latest.debt === "number" ? latest.debt : 0;
-    const l = typeof latest.liquid === "number" ? latest.liquid : 0;
-    const total = Math.abs(e) + Math.abs(d) + Math.abs(l);
-    if (total === 0) return undefined;
-    return `Equity = ${((Math.abs(e) / total) * 100).toFixed(0)}% / Debt = ${((Math.abs(d) / total) * 100).toFixed(0)}% / Liquid = ${((Math.abs(l) / total) * 100).toFixed(0)}% of latest flow magnitude · ${latest.quarterLabel}`;
-  })();
-  const equityFlowFromQuarterly = flowsData
-    .filter((r) => typeof r.equity === "number")
-    .map((r) => ({ label: r.quarterLabel, value: r.equity as number }));
-  // Full quarterly equity-flow history + YoY (lag=4) for the optional
-  // Bars + Growth view on this card.
-  const quarterlyFlowsFullHistory = quarterlyFlowsData(10_000);
-  const quarterlyEquityFullSeries = quarterlyFlowsFullHistory
-    .filter((r) => typeof r.equity === "number")
-    .map((r) => ({ label: r.quarterLabel, value: r.equity as number }));
-  const quarterlyEquityYoyByLabel = new Map(
-    yoyPctSeries(quarterlyEquityFullSeries, 4).map((p) => [p.label, p.value])
-  );
-  const quarterlyFlowsBarsData = equityFlowFromQuarterly.map((p) => ({
-    label: p.label,
-    value: p.value,
-    growthPct: quarterlyEquityYoyByLabel.get(p.label) ?? null,
-  }));
-  const quarterlyFlowsInsights = chartInsights(equityFlowFromQuarterly, {
-    metricName: "equity net inflow",
-    unitSuffix: "₹ Cr",
-    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
-    episodeAnchors: episodeAnchorsForQuarter,
-    yoyLag: 4,
-  });
-  // Series specs shared by the bars and trend views of multi-series
-  // chart cards on /quarterly. `BarSpec` and `LineSpec` are both
-  // `{ key, name, color }` so the same array works as `bars=` on
-  // GroupedBars and `lines=` on MultiLine.
-  const qFlowsSeries = [
-    { key: "equity", name: "Equity", color: "hsl(var(--chart-1))" },
-    { key: "debt", name: "Debt", color: "hsl(var(--chart-2))" },
-    { key: "liquid", name: "Liquid", color: "hsl(var(--chart-4))" },
-  ];
-  const qEquityMixSeries = [
-    { key: "activeEquity", name: "Active Equity", color: "hsl(var(--chart-1))" },
-    { key: "etfIndex", name: "ETF & Index", color: "hsl(var(--chart-5))" },
-    { key: "arbitrage", name: "Arbitrage", color: "hsl(var(--chart-2))" },
-  ];
-
-  // Active Equity Last-month AAUM denominator: latest as % of total
-  // industry last-month AAUM — same framing as /monthly but on the
-  // quarterly basis.
-  const aeAaumDenomCaption = (() => {
-    if (aeAaumTrend.length === 0) return undefined;
-    const latest = aeAaumTrend[aeAaumTrend.length - 1];
-    // Pull the matching quarter's grandTotalLastMonthAaum from
-    // aaumTrendData computed earlier in the page.
-    const totalRow = aaumTrendData.find((p) => p.label === latest.label);
-    if (!totalRow || totalRow.value <= 0) return undefined;
-    const pct = (latest.value / totalRow.value) * 100;
-    return `${pct.toFixed(1)}% of total industry last-month AAUM · latest ${latest.label}`;
-  })();
-  const aeAaumInsights = chartInsights(aeAaumTrend, {
-    metricName: "active-equity AAUM",
-    unitSuffix: "₹ Cr",
-    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
-    yoyLag: 4,
-  });
-  // Active Equity AAUM share: % of total industry last-month AAUM.
-  const aeAaumShare = aeAaumTrend
-    .map((p) => {
-      const totalRow = aaumTrendData.find((q) => q.label === p.label);
-      if (!totalRow || totalRow.value <= 0) return null;
-      return { label: p.label, value: (p.value / totalRow.value) * 100 };
-    })
-    .filter((p): p is { label: string; value: number } => p !== null);
-  const aeAaumDisplay = qAeAaumLens === "share" ? aeAaumShare : aeAaumTrend;
-
-  // Equity Breakdown denominator: ETF & Index share = passive
-  // penetration — same framing as /monthly so the quarterly read
-  // is comparable.
-  const aeBreakdownDenomCaption = latestQuarterlyEquityMix
-    ? `ETF & Index = ${latestQuarterlyEquityMix.etfPct.toFixed(1)}% of equity AUM · latest available quarter`
-    : undefined;
-  const activeEquityFromQBreakdown = aeBreakdown
-    .filter((r) => typeof r.activeEquity === "number")
-    .map((r) => ({
-      label: r.quarterLabel,
-      value: r.activeEquity as number,
-    }));
-  const aeBreakdownInsights = chartInsights(activeEquityFromQBreakdown, {
-    metricName: "active-equity AAUM",
-    unitSuffix: "₹ Cr",
-    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
-    yoyLag: 4,
-  });
-
-  // ---- Folios & Scheme Count ----------------------------------------
-  const totalFolios = selectedRow?.grandTotalFolios ?? null;
-  const folioAdditions = latestQuarterlyFolioAdditions();
-  const foliosCtx = quarterlyKpiContext("grandTotalFolios", 16);
-  const openEndedSchemes = latestOpenEndedSchemeCount();
-  const foliosTrend = quarterlyTrend("grandTotalFolios", 16);
-  const foliosFullHistory = quarterlyTrend("grandTotalFolios", 10_000);
   const folioAdditionsTrend = quarterlyFolioAdditionsTrend(16);
-  const folioAdditionsFullHistory = quarterlyFolioAdditionsTrend(10_000);
-  const schemesTrend = quarterlyOpenEndedSchemeCountTrend(16);
-  const schemesFullHistory = quarterlyOpenEndedSchemeCountTrend(10_000);
-  const foliosHover = formatQuarterlyProvenanceTooltip(
-    getQuarterlyKpiProvenance(selectedRow, "grandTotalFolios")
-  );
-  const hasAnyFolioKpi =
-    totalFolios !== null || folioAdditions !== null || openEndedSchemes !== null;
-  const hasAnyFolioTrend =
-    foliosTrend.length > 0 ||
-    folioAdditionsTrend.length > 0 ||
-    schemesTrend.length > 0;
-
-  // Folios denominator: latest as % of trailing 4Q (1Y) average — the
-  // folio base grows monotonically, so the read separates fresh
-  // investor onboarding from a flat shelf.
-  const foliosTrendDenomCaption = (() => {
-    if (foliosTrend.length < 4) return undefined;
-    const trailing4 = foliosTrend.slice(-4);
-    const avg = trailing4.reduce((s, p) => s + p.value, 0) / trailing4.length;
-    const latest = foliosTrend[foliosTrend.length - 1];
-    if (avg <= 0) return undefined;
-    const pct = (latest.value / avg) * 100;
-    return `${pct.toFixed(1)}% of trailing 4Q avg · latest ${latest.label}`;
-  })();
-  const foliosTrendInsights = chartInsights(foliosTrend, {
-    metricName: "folios",
-    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
-    yoyLag: 4,
-  });
-
-  // Folio additions denominator: latest quarterly net adds as bps of
-  // the existing folio base — normalises growth against the (large)
-  // base so the trend is comparable across years. Both values are raw
-  // counts; ratio is additions ÷ base, expressed as a percentage.
-  const folioAdditionsDenomCaption = (() => {
-    if (folioAdditionsTrend.length === 0) return undefined;
-    const latest = folioAdditionsTrend[folioAdditionsTrend.length - 1];
-    const base = totalFolios;
-    if (typeof base !== "number" || base <= 0) return undefined;
-    const pct = (latest.value / base) * 100;
-    return `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}% of folio base · latest ${latest.label}`;
-  })();
-  const folioAdditionsInsights = chartInsights(folioAdditionsTrend, {
-    metricName: "folio additions",
-    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
-    episodeAnchors: episodeAnchorsForQuarter,
-    yoyLag: 4,
-  });
-
-  // Scheme count denominator: latest as % of trailing 4Q avg — keeps
-  // an eye on shelf expansion (NFOs net of mergers/closures) without
-  // the chart looking flat at this slow-moving scale.
-  const schemesTrendDenomCaption = (() => {
-    if (schemesTrend.length < 4) return undefined;
-    const trailing4 = schemesTrend.slice(-4);
-    const avg = trailing4.reduce((s, p) => s + p.value, 0) / trailing4.length;
-    const latest = schemesTrend[schemesTrend.length - 1];
-    if (avg <= 0) return undefined;
-    const pct = (latest.value / avg) * 100;
-    return `${pct.toFixed(1)}% of trailing 4Q avg · latest ${latest.label}`;
-  })();
-  const schemesTrendInsights = chartInsights(schemesTrend, {
-    metricName: "open-ended scheme count",
-    cyclePhaseByLabel: cyclePhaseByQuarterLabel,
-    yoyLag: 4,
-  });
-
-  // ---- "Share" series for each folio + scheme card ----------------
-  // Folios indexed to trailing 4Q (1Y) average — turns the slow
-  // mostly-monotonic line into a meaningful "above/below trend"
-  // read.
-  const foliosTrendShare = foliosTrend
-    .map((p, i, arr) => {
-      if (i + 1 < 4) return null;
-      const slice = arr.slice(i + 1 - 4, i + 1);
-      const avg = slice.reduce((s, q) => s + q.value, 0) / 4;
-      if (avg <= 0) return null;
-      return { label: p.label, value: (p.value / avg) * 100 };
-    })
-    .filter((p): p is { label: string; value: number } => p !== null);
-  const foliosDisplay =
-    qFoliosLens === "share" ? foliosTrendShare : foliosTrend;
-
-  // Folio additions as % of the folio base. The base value comes
-  // from the matching `quarterlyTrend("grandTotalFolios", 16)` row.
-  // Both `value` (additions) and the folio base are stored as raw
-  // counts in the snapshot, so the ratio is additions ÷ base × 100.
-  const folioAdditionsShare = (() => {
-    const baseByQuarter = new Map<string, number>();
-    for (const p of foliosTrend) baseByQuarter.set(p.label, p.value);
-    return folioAdditionsTrend.flatMap((p) => {
-      const base = baseByQuarter.get(p.label);
-      if (typeof base !== "number" || base <= 0) return [];
-      const pct = (p.value / base) * 100;
-      return [{ label: p.label, value: pct }];
-    });
-  })();
-  const folioAdditionsDisplay =
-    qFolioAddLens === "share" ? folioAdditionsShare : folioAdditionsTrend;
-
-  // Open-ended scheme count: % of trailing 4Q average.
-  const schemesTrendShare = schemesTrend
-    .map((p, i, arr) => {
-      if (i + 1 < 4) return null;
-      const slice = arr.slice(i + 1 - 4, i + 1);
-      const avg = slice.reduce((s, q) => s + q.value, 0) / 4;
-      if (avg <= 0) return null;
-      return { label: p.label, value: (p.value / avg) * 100 };
-    })
-    .filter((p): p is { label: string; value: number } => p !== null);
-  const schemesDisplay =
-    qSchemesLens === "share" ? schemesTrendShare : schemesTrend;
 
   // AUM Market Share — live Top 7 + Others from AMFI Fundwise AAUM.
   // Same helper as /monthly so the two pages render an identical view.
@@ -777,8 +312,6 @@ export default async function QuarterlyPage({
   // Three-sentence "today's read" surfaced at the top of the page.
   const marketWrapData = quarterlyMarketWrap();
   const quarterlySnapshotRead = quarterlySnapshotSectionRead();
-  const quarterlyFlowsRead = quarterlyFlowsSectionRead();
-  const quarterlyFoliosRead = quarterlyFoliosSectionRead();
 
   // Concentration tracker — HHI of AMC-level + category-level AUM.
   const amcHhi = amcLevelHhiSeries(8);
@@ -803,6 +336,12 @@ export default async function QuarterlyPage({
   }));
   const latestAmcHhi = amcHhi[amcHhi.length - 1] ?? null;
   const latestCatHhi = catHhi[catHhi.length - 1] ?? null;
+
+  // Shared inputs for the snapshot signal tiles below (these series also
+  // fed the now-removed AUM / flows / equity-mix trend charts).
+  const aaumTrendData = quarterlyTrend("grandTotalLastMonthAaum", 16);
+  const flowsData = quarterlyFlowsData(16);
+  const aeBreakdown = quarterlyEquityLastMonthAaumBreakdown(16);
 
   // ---- Quarterly Signal Summary --------------------------------------
   // Five buy-side tiles synthesised from data already loaded above.
