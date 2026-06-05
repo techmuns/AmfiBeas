@@ -8,7 +8,7 @@ import {
 } from "@/lib/chart-context";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BarSeries } from "@/components/charts/BarSeries";
-import { IiflHeatmap } from "@/components/charts/IiflHeatmap";
+import { IiflHeatmap, formatHeatmapMonth } from "@/components/charts/IiflHeatmap";
 import { latestMonth } from "@/data/aggregate";
 import {
   activeEquityNetInflowSignal,
@@ -1493,6 +1493,26 @@ export default async function MonthlyPage({
                 Active Equity Net Inflow Rotation
               </h2>
             </div>
+            <DownloadXlsxButton
+              rows={iiflHeatmap.rows.map((r) => {
+                const row: Record<string, string | number | null> = {
+                  category: r.label,
+                };
+                iiflHeatmap.months.forEach((m, i) => {
+                  row[m] = r.values[i];
+                });
+                return row;
+              })}
+              columns={[
+                { key: "category", header: "Category" },
+                ...iiflHeatmap.months.map((m) => ({
+                  key: m,
+                  header: formatHeatmapMonth(m),
+                })),
+              ]}
+              filename="active-equity-net-inflow-rotation.xlsx"
+              sheetName="Flow Rotation"
+            />
           </div>
 
           <IiflHeatmap

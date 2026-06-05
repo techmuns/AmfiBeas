@@ -1,5 +1,6 @@
 import { BarSeries } from "@/components/charts/BarSeries";
-import { Donut, type DonutSlice } from "@/components/charts/Donut";
+import type { DonutSlice } from "@/components/charts/Donut";
+import { QuarterEndMixTable } from "@/components/data/QuarterEndMixTable";
 import { GroupedBars } from "@/components/charts/GroupedBars";
 import { MultiLine } from "@/components/charts/MultiLine";
 import { StackedArea } from "@/components/charts/StackedArea";
@@ -1192,7 +1193,10 @@ export default async function QuarterlyPage({
           <section className="grid gap-4 lg:grid-cols-2">
             <Card title="Quarter-end AUM Mix" subtitle={mixSubtitle}>
               {mixHasData ? (
-                <Donut data={mixSlices} />
+                <QuarterEndMixTable
+                  slices={mixSlices}
+                  quarterLabel={selectedRow.quarterLabel}
+                />
               ) : (
                 <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
                   AUM mix not published for the selected quarter — pick a more recent quarter or upload the AMFI Quarterly PDF.
