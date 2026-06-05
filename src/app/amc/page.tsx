@@ -30,8 +30,8 @@ import { resolveTab } from "@/lib/tabs";
 
 const AMC_TABS = [
   { id: "overview", label: "AMC Overview" },
-  { id: "insights", label: "Insights" },
-  { id: "share-positioning", label: "Share & Positioning" },
+  { id: "insights", label: "Fund Concentration" },
+  { id: "share-positioning", label: "Market Share Insights" },
 ] as const satisfies readonly DashboardTabDef[];
 type AmcTabId = (typeof AMC_TABS)[number]["id"];
 const AMC_TAB_IDS = AMC_TABS.map((t) => t.id) as readonly AmcTabId[];

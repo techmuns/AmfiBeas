@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { toneBg, toneText } from "@/lib/tone";
 
 /**
  * Monthly Flows & AUM heatmap table — a tabular re-creation of the
@@ -108,24 +109,6 @@ function fmtPp(v: number | null): string {
   if (v === null || !Number.isFinite(v)) return "—";
   if (Math.abs(v) < 0.05) return "±0.0";
   return `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}`;
-}
-
-/** Faint tone background, intensity ∝ |value| / column max. */
-function toneBg(value: number | null, maxAbs: number): React.CSSProperties {
-  if (value === null || !Number.isFinite(value) || Math.abs(value) < 1e-9) {
-    return {};
-  }
-  const t = maxAbs > 0 ? Math.min(1, Math.abs(value) / maxAbs) : 0;
-  const alpha = (0.08 + 0.42 * t).toFixed(3);
-  const tone = value > 0 ? "--positive" : "--negative";
-  return { backgroundColor: `hsl(var(${tone}) / ${alpha})` };
-}
-
-function toneText(value: number | null): string {
-  if (value === null || !Number.isFinite(value) || Math.abs(value) < 1e-9) {
-    return "text-muted-foreground";
-  }
-  return value > 0 ? "text-positive" : "text-negative";
 }
 
 function maxAbsOf(rows: MonthlyFlowsTableRow[], key: keyof MonthlyFlowsTableRow): number {
