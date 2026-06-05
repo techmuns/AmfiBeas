@@ -1,5 +1,7 @@
 import { cn } from "@/lib/cn";
 import type { CapFlowRow, CapFlows } from "@/data/cap-flows";
+import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
+import type { CsvColumn } from "@/lib/csv";
 
 function displayName(name: string): string {
   return name.replace(/\s+(Ltd\.?|Limited)$/i, "").trim();
@@ -75,8 +77,49 @@ export function CapFlowsView({ flows }: { flows: CapFlows }) {
     { key: "mid", label: "Mid-cap" },
     { key: "small", label: "Small-cap" },
   ];
+  type XRow = {
+    tier: string;
+    side: string;
+    company: string;
+    netCr: number;
+    amcs: string;
+  };
+  const exportRows: XRow[] = tiers.flatMap((t) => [
+    ...flows[t.key].bought.map((r) => ({
+      tier: t.label,
+      side: "Bought",
+      company: displayName(r.company),
+      netCr: r.netCr,
+      amcs: r.amcs.join(", "),
+    })),
+    ...flows[t.key].sold.map((r) => ({
+      tier: t.label,
+      side: "Sold",
+      company: displayName(r.company),
+      netCr: -r.netCr,
+      amcs: r.amcs.join(", "),
+    })),
+  ]);
+  const exportColumns: CsvColumn<XRow>[] = [
+    { key: "tier", header: "Cap tier" },
+    { key: "side", header: "Side" },
+    { key: "company", header: "Company" },
+    { key: "netCr", header: "Net (₹ Cr, + bought / − sold)" },
+    { key: "amcs", header: "AMCs" },
+  ];
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[11px] text-muted-foreground">
+          MF net buying / selling by company · {meta.monthCur}.
+        </p>
+        <DownloadXlsxButton
+          rows={exportRows}
+          columns={exportColumns}
+          filename="mf-cap-flows.xlsx"
+          sheetName="Cap Flows"
+        />
+      </div>
       {tiers.map((t) => (
         <div key={t.key} className="space-y-3">
           <h2 className="text-base font-semibold tracking-tight">{t.label}</h2>

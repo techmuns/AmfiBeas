@@ -3,6 +3,8 @@ import {
   sectorFlowRows,
   sectorFlowTotals,
 } from "@/data/sector-flows";
+import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
+import type { CsvColumn } from "@/lib/csv";
 
 /**
  * Monthly sector net-flows in a red→yellow→green heatmap, reproduced from a
@@ -57,8 +59,41 @@ export function SectorFlowHeatmap() {
     return mix(YELLOW, GREEN, hi === mid ? 0 : (c - mid) / (hi - mid));
   };
 
+  // Excel export: raw ₹ Cr (source is Rs bn → ×100), one column per month + YTD.
+  const cr = (vBn: number) => Math.round(vBn * 100);
+  type ExportRow = Record<string, string | number>;
+  const exportColumns: CsvColumn<ExportRow>[] = [
+    { key: "sector", header: "Sector" },
+    ...sectorFlowMonths.map((m) => ({ key: m, header: `${m} (₹ Cr)` })),
+    { key: "ytd", header: "CY26 YTD (₹ Cr)" },
+  ];
+  const exportRows: ExportRow[] = [
+    ...sectorFlowRows.map((r) => {
+      const row: ExportRow = { sector: r.sector };
+      sectorFlowMonths.forEach((m, i) => (row[m] = cr(r.monthly[i])));
+      row.ytd = cr(r.ytd);
+      return row;
+    }),
+    (() => {
+      const row: ExportRow = { sector: "Total" };
+      sectorFlowMonths.forEach(
+        (m, i) => (row[m] = cr(sectorFlowTotals.monthly[i]))
+      );
+      row.ytd = cr(sectorFlowTotals.ytd);
+      return row;
+    })(),
+  ];
+
   return (
-    <div>
+    <div className="space-y-2">
+      <div className="flex justify-end">
+        <DownloadXlsxButton
+          rows={exportRows}
+          columns={exportColumns}
+          filename="sector-flows.xlsx"
+          sheetName="Sector Flows"
+        />
+      </div>
       <div className="overflow-x-auto rounded-lg border bg-card">
         <table className="w-full border-collapse text-[11px]">
           <thead>

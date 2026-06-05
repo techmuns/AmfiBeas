@@ -1,6 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
+import type { CsvColumn } from "@/lib/csv";
 
 type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y";
 
@@ -90,14 +92,72 @@ export function TrendsPeerTable({
     (r) => r.periodRanks[period]?.statsAvailable === true,
   );
 
+  type XRow = {
+    fund: string;
+    classification: string;
+    ret: number | null;
+    rank: number | null;
+    peerCount: number | null;
+    percentile: number | null;
+    quartile: string;
+    vsMedian: number | null;
+  };
+  const exportColumns: CsvColumn<XRow>[] = [
+    { key: "fund", header: "Fund" },
+    { key: "classification", header: "Category" },
+    { key: "ret", header: `${periodLabel} (%)` },
+    { key: "rank", header: "Rank" },
+    { key: "peerCount", header: "Peer count" },
+    { key: "percentile", header: "Percentile" },
+    { key: "quartile", header: "Quartile" },
+    { key: "vsMedian", header: "Excess vs median (pp)" },
+  ];
+  const exportRows: XRow[] = sorted.map((r) => {
+    const e = r.periodRanks[period];
+    const ret =
+      e && "return" in e && typeof e.return === "number" ? e.return : null;
+    if (e && e.statsAvailable) {
+      return {
+        fund: r.fundName,
+        classification: r.classification ?? "",
+        ret,
+        rank: e.rank,
+        peerCount: e.peerCount,
+        percentile: e.percentile,
+        quartile: e.quartile,
+        vsMedian: e.excessVsMedian,
+      };
+    }
+    return {
+      fund: r.fundName,
+      classification: r.classification ?? "",
+      ret,
+      rank: null,
+      peerCount: e?.peerCount ?? null,
+      percentile: null,
+      quartile: "",
+      vsMedian: null,
+    };
+  });
+
   return (
     <section className="space-y-2">
-      <div>
-        <h2 className="text-base font-semibold tracking-tight">Peer ranking</h2>
-        <p className="text-xs text-muted-foreground">
-          Same-cohort comparison · {cohortLabel} · sorted by {period} rank ·{" "}
-          {sorted.length} fund{sorted.length === 1 ? "" : "s"}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h2 className="text-base font-semibold tracking-tight">
+            Peer ranking
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Same-cohort comparison · {cohortLabel} · sorted by {period} rank ·{" "}
+            {sorted.length} fund{sorted.length === 1 ? "" : "s"}
+          </p>
+        </div>
+        <DownloadXlsxButton
+          rows={exportRows}
+          columns={exportColumns}
+          filename="peer-ranking.xlsx"
+          sheetName="Peer ranking"
+        />
       </div>
       <div className="overflow-x-auto rounded-md border bg-card">
         <table className="w-full min-w-[640px] border-collapse text-sm">
