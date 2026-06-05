@@ -8,6 +8,7 @@ import {
 } from "@/components/data/FundwiseTable";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import { AmcEquityBookHeatmap } from "@/components/data/AmcEquityBookHeatmap";
+import { AmcHeadToHead } from "@/components/data/AmcHeadToHead";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
 import { StrategicMovesCohortLane } from "@/components/amc/StrategicMovesCohortLane";
 import { CohortUniqueInvestorShare } from "@/components/amc/CohortUniqueInvestorShare";
@@ -19,6 +20,11 @@ import {
   amcEquityBook,
   amcEquityBookDiagnostics,
 } from "@/data/amc-equity-book";
+import {
+  amcCompareUniverse,
+  amcComparison,
+  industryComparison,
+} from "@/data/amc-compare";
 import {
   fundwiseAumMatrix,
   latestQoqAnomalies,
@@ -37,6 +43,7 @@ const AMC_TABS = [
   { id: "overview", label: "AMC Overview" },
   { id: "insights", label: "Fund Concentration" },
   { id: "share-positioning", label: "Market Share Insights" },
+  { id: "compare", label: "Compare" },
 ] as const satisfies readonly DashboardTabDef[];
 type AmcTabId = (typeof AMC_TABS)[number]["id"];
 const AMC_TAB_IDS = AMC_TABS.map((t) => t.id) as readonly AmcTabId[];
@@ -125,6 +132,20 @@ export default async function AmcListPage({
 
   const equityBook = amcEquityBook();
   const equityBookDiag = amcEquityBookDiagnostics();
+
+  const compareUniverse = amcCompareUniverse();
+  const compareSlugs = new Set(compareUniverse.map((u) => u.slug));
+  const aSlug =
+    typeof sp.a === "string" && compareSlugs.has(sp.a)
+      ? sp.a
+      : compareUniverse[0]?.slug ?? "";
+  const bSlug =
+    typeof sp.b === "string" && compareSlugs.has(sp.b)
+      ? sp.b
+      : compareUniverse[1]?.slug ?? "";
+  const aCompare = amcComparison(aSlug);
+  const bCompare = amcComparison(bSlug);
+  const industryCompare = industryComparison();
 
   return (
     <div className="space-y-6">
@@ -310,6 +331,18 @@ export default async function AmcListPage({
       {activeTab === "share-positioning" && <AmcCashAllocationTrend />}
 
       {activeTab === "share-positioning" && <IndustryConcentrationStack />}
+
+      {activeTab === "compare" && aCompare && bCompare && (
+        <Card title="AMC Head-to-Head">
+          <AmcHeadToHead
+            a={aCompare}
+            b={bCompare}
+            industry={industryCompare}
+            universe={compareUniverse}
+            quarterLabel={data.fiscalLabel}
+          />
+        </Card>
+      )}
 
       {activeTab === "overview" && <AmcSearchTable rows={data.rows} />}
 
