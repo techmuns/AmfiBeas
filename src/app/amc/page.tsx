@@ -162,8 +162,13 @@ export default async function AmcListPage({
       : compareUniverse[1]?.slug ?? "";
   const aCompare = amcComparison(aSlug);
   const bCompare = amcComparison(bSlug);
-  const industryCompare = industryComparison();
-  const industryAvgCompare = industryAverageComparison();
+  // Only the Compare tab uses these; compute them lazily so Overview / Market
+  // Share don't pay for the industry aggregation (keeps the Worker under its
+  // CPU budget — see Cloudflare Error 1102).
+  const industryCompare =
+    activeTab === "compare" ? industryComparison() : null;
+  const industryAvgCompare =
+    activeTab === "compare" ? industryAverageComparison() : null;
 
   return (
     <div className="space-y-6">
@@ -360,7 +365,11 @@ export default async function AmcListPage({
 
       {activeTab === "share" && <AmcCashAllocationTrend />}
 
-      {activeTab === "compare" && aCompare && bCompare && (
+      {activeTab === "compare" &&
+        aCompare &&
+        bCompare &&
+        industryCompare &&
+        industryAvgCompare && (
         <Card title="AMC Head-to-Head">
           <AmcHeadToHead
             a={aCompare}
