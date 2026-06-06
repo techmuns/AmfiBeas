@@ -10,7 +10,7 @@ import {
   UNAVAILABLE,
 } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import { DownloadCsvButton } from "@/components/data/DownloadCsvButton";
+import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
 
 export interface AmcSearchRow {
@@ -119,10 +119,11 @@ export function AmcSearchTable({ rows }: Props) {
             </button>
           )}
         </div>
-        <DownloadCsvButton
+        <DownloadXlsxButton
           rows={filtered}
           columns={CSV_COLUMNS}
-          filename={`amc-aaum-${new Date().toISOString().slice(0, 10)}.csv`}
+          filename={`amc-aaum-${new Date().toISOString().slice(0, 10)}.xlsx`}
+          sheetName="AMCs"
         />
       </div>
 

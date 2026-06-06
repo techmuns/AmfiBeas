@@ -9,9 +9,9 @@ const AAUM_BRIDGE_XLSX_COLUMNS: CsvColumn<AaumBridgeRow>[] = [
   { key: "quarterLabel", header: "Quarter" },
   { key: "aaum", header: "AAUM last-month (₹ Cr)" },
   { key: "deltaAaum", header: "Delta AAUM QoQ (₹ Cr)" },
-  { key: "netInflow", header: "Net inflow (₹ Cr)" },
-  { key: "residual", header: "AAUM bridge residual (₹ Cr)" },
-  { key: "residualPctOfDelta", header: "Residual (% of Delta AAUM)" },
+  { key: "netInflow", header: "Net inflow / new money (₹ Cr)" },
+  { key: "residual", header: "Market & other / residual (₹ Cr)" },
+  { key: "residualPctOfDelta", header: "Market & other (% of AUM change)" },
 ];
 
 // Signed compact ₹: "+₹1.20L Cr" for a rise, "−₹45.0K Cr" for a fall.
@@ -59,16 +59,16 @@ export function AaumBridgeTable({ rows }: { rows: AaumBridgeRow[] }) {
                 AAUM
               </th>
               <th className="border px-2.5 py-2 text-right font-semibold">
-                Δ AAUM QoQ
+                AUM Change
               </th>
               <th className="border px-2.5 py-2 text-right font-semibold">
-                Net Inflow
+                New Money
               </th>
               <th className="border px-2.5 py-2 text-right font-semibold">
-                Residual
+                Market &amp; Other
               </th>
               <th className="border px-2.5 py-2 text-right font-semibold">
-                Residual % of Δ
+                Market &amp; Other %
               </th>
             </tr>
           </thead>
@@ -127,15 +127,17 @@ export function AaumBridgeTable({ rows }: { rows: AaumBridgeRow[] }) {
         </table>
       </div>
       <p className="text-[11px] leading-relaxed text-muted-foreground">
-        <span className="font-medium text-foreground">
-          Residual = Δ AAUM − net inflow.
-        </span>{" "}
-        It is <span className="font-medium">not</span> a clean mark-to-market
-        figure: it blends market movement, within-quarter timing, an averaging
-        mismatch (AMFI&rsquo;s quarterly AAUM is the last-month average, not a
-        true quarterly average, while net inflow is the quarter&rsquo;s flow
-        sum), and any classification / reporting differences. Read it as a
-        flow-adjusted AAUM change. Source: AMFI Quarterly Report.
+        Each quarter&rsquo;s AUM change splits into{" "}
+        <span className="font-medium text-foreground">New Money</span> (net
+        inflow) and{" "}
+        <span className="font-medium text-foreground">Market &amp; Other</span>{" "}
+        (the residual = Δ AAUM − net inflow). The residual is{" "}
+        <span className="font-medium">not</span> a clean mark-to-market figure:
+        it blends market movement, within-quarter timing, an averaging mismatch
+        (AMFI&rsquo;s quarterly AAUM is the last-month average, not a true
+        quarterly average, while net inflow is the quarter&rsquo;s flow sum), and
+        any classification / reporting differences. Source: AMFI Quarterly
+        Report.
       </p>
     </div>
   );

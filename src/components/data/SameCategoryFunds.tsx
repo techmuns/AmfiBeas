@@ -7,6 +7,8 @@ import {
   type FundPortfolio,
   monthSlug,
 } from "@/data/portfolio-tracker";
+import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
+import type { CsvColumn } from "@/lib/csv";
 
 interface PeerSummary {
   topAdd: { name: string; d: number } | null;
@@ -80,16 +82,59 @@ export function SameCategoryFunds({
     .filter(Boolean)
     .join(" · ");
 
+  type XRow = {
+    fund: string;
+    aumCr: number | null;
+    top10Pct: number | null;
+    topAddPp: number | null;
+    topAddName: string;
+    topTrimPp: number | null;
+    topTrimName: string;
+  };
+  const exportColumns: CsvColumn<XRow>[] = [
+    { key: "fund", header: "Fund" },
+    { key: "aumCr", header: "Latest AUM (₹ Cr)" },
+    { key: "top10Pct", header: "Top-10 concentration (%)" },
+    { key: "topAddPp", header: "Biggest add (pp MoM)" },
+    { key: "topAddName", header: "Biggest add — stock" },
+    { key: "topTrimPp", header: "Biggest trim (pp MoM)" },
+    { key: "topTrimName", header: "Biggest trim — stock" },
+  ];
+  const exportRows: XRow[] = peers.map((p) => {
+    const summary = errored[p.schemecode]
+      ? null
+      : computePeerSummary(loaded[p.schemecode]);
+    return {
+      fund: p.fund,
+      aumCr: p.aumTotalCr ?? null,
+      top10Pct: summary?.top10Concentration ?? null,
+      topAddPp: summary?.topAdd?.d ?? null,
+      topAddName: summary?.topAdd?.name ?? "",
+      topTrimPp: summary?.topTrim?.d ?? null,
+      topTrimName: summary?.topTrim?.name ?? "",
+    };
+  });
+
   return (
     <section className="space-y-2">
-      <div>
-        <h2 className="text-base font-semibold tracking-tight">
-          Same-category funds
-        </h2>
-        <p className="text-xs text-muted-foreground">
-          Compare the selected fund with similar funds in the same category.
-          {metaLine && <span className="ml-1">{metaLine}</span>}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h2 className="text-base font-semibold tracking-tight">
+            Same-category funds
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Compare the selected fund with similar funds in the same category.
+            {metaLine && <span className="ml-1">{metaLine}</span>}
+          </p>
+        </div>
+        {peers.length > 1 && (
+          <DownloadXlsxButton
+            rows={exportRows}
+            columns={exportColumns}
+            filename="same-category-funds.xlsx"
+            sheetName="Same Category"
+          />
+        )}
       </div>
       {peers.length <= 1 ? (
         <div className="rounded-md border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">

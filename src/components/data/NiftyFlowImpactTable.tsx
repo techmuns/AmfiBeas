@@ -1,5 +1,7 @@
 import { formatMonthLabel } from "@/lib/format";
 import type { NiftyFlowImpactRow } from "@/data/market-indices";
+import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
+import type { CsvColumn } from "@/lib/csv";
 
 interface Props {
   rows: NiftyFlowImpactRow[];
@@ -19,9 +21,56 @@ export function NiftyFlowImpactTable({ rows }: Props) {
       </div>
     );
   }
+  type XRow = {
+    underperfPeriod: string;
+    underperfMonths: number;
+    declinePct: number;
+    postPeriod: string;
+    postMonths: number;
+    avgMonthlyFlow: number | null;
+    priorAvgFlow: number | null;
+    flowChangePct: number | null;
+  };
+  const exportColumns: CsvColumn<XRow>[] = [
+    { key: "underperfPeriod", header: "Underperformance period" },
+    { key: "underperfMonths", header: "Underperf. months" },
+    { key: "declinePct", header: "Index decline (%)" },
+    { key: "postPeriod", header: "Post period" },
+    { key: "postMonths", header: "Post months" },
+    { key: "avgMonthlyFlow", header: "Avg monthly flow (₹ Cr)" },
+    { key: "priorAvgFlow", header: "Prior period avg flow (₹ Cr)" },
+    { key: "flowChangePct", header: "Flow change (%)" },
+  ];
+  const exportRows: XRow[] = rows.map((r) => ({
+    underperfPeriod: `${formatMonthLabel(r.underperformance.startMonth)} to ${formatMonthLabel(r.underperformance.endMonth)}`,
+    underperfMonths: r.underperformance.monthsCount,
+    declinePct: Number(r.underperformance.declinePct.toFixed(0)),
+    postPeriod: `${formatMonthLabel(r.postPeriod.startMonth)} to ${formatMonthLabel(r.postPeriod.endMonth)}`,
+    postMonths: r.postPeriod.monthsCount,
+    avgMonthlyFlow:
+      r.postPeriod.avgMonthlyFlow === null
+        ? null
+        : Math.round(r.postPeriod.avgMonthlyFlow),
+    priorAvgFlow:
+      r.priorPeriod.avgMonthlyFlow === null
+        ? null
+        : Math.round(r.priorPeriod.avgMonthlyFlow),
+    flowChangePct:
+      r.declineInFlowPct === null ? null : Number(r.declineInFlowPct.toFixed(0)),
+  }));
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-[12px]">
+    <div className="space-y-2">
+      <div className="flex justify-end">
+        <DownloadXlsxButton
+          rows={exportRows}
+          columns={exportColumns}
+          filename="nifty-flow-impact.xlsx"
+          sheetName="Flow Impact"
+        />
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[12px]">
         <thead>
           <tr className="border-b border-border">
             <th
@@ -100,6 +149,7 @@ export function NiftyFlowImpactTable({ rows }: Props) {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
+import type { CsvColumn } from "@/lib/csv";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
 import { SameCategoryFunds } from "@/components/data/SameCategoryFunds";
 import {
@@ -309,6 +311,19 @@ export function PortfolioTrackerView({
       r.company_name.toLowerCase().includes(q)
     );
   }, [portfolio, holdingQuery]);
+
+  type HoldingExportRow = Record<string, string | number | null>;
+  const holdingsExportColumns: CsvColumn<HoldingExportRow>[] = [
+    { key: "company", header: "Company" },
+    ...months.map((m) => ({ key: m.label, header: `${m.label} AUM %` })),
+  ];
+  const holdingsExportRows: HoldingExportRow[] = holdings.map((r) => {
+    const row: HoldingExportRow = { company: r.company_name };
+    slugs.forEach((slug, i) => {
+      row[months[i].label] = r.months[slug]?.aum_pct_num ?? null;
+    });
+    return row;
+  });
 
   // Month-over-month read for the selected fund: biggest weight add/trim
   // and the top-10 concentration shift, in percentage points of AUM.
@@ -626,6 +641,14 @@ export function PortfolioTrackerView({
                     </button>
                   )}
                 </div>
+                {portfolio && holdingsExportRows.length > 0 && (
+                  <DownloadXlsxButton
+                    rows={holdingsExportRows}
+                    columns={holdingsExportColumns}
+                    filename="fund-holdings.xlsx"
+                    sheetName="Holdings"
+                  />
+                )}
               </div>
 
               {loading ? (

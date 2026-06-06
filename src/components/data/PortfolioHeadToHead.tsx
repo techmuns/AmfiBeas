@@ -9,6 +9,8 @@ import {
   type FundPortfolio,
   monthSlug,
 } from "@/data/portfolio-tracker";
+import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
+import type { CsvColumn } from "@/lib/csv";
 
 const MAX_B_SUGGESTIONS = 60;
 const MAX_COMPARE_ROWS = 50;
@@ -197,6 +199,27 @@ export function PortfolioHeadToHead({
   const latestMonth = aPortfolio.meta.months[0]?.label ?? "";
   const totalRows = compareRows.length;
   const displayRows = compareRows.slice(0, MAX_COMPARE_ROWS);
+  type XRow = {
+    company: string;
+    a: number | null;
+    b: number | null;
+    delta: number;
+    signal: string;
+  };
+  const compareExportColumns: CsvColumn<XRow>[] = [
+    { key: "company", header: "Company" },
+    { key: "a", header: `${aEntry.fund} (%)` },
+    { key: "b", header: bEntry ? `${bEntry.fund} (%)` : "Comparison fund (%)" },
+    { key: "delta", header: "Δ A − B (pp)" },
+    { key: "signal", header: "Signal" },
+  ];
+  const compareExportRows: XRow[] = compareRows.map((r) => ({
+    company: r.name,
+    a: r.a,
+    b: r.b,
+    delta: r.delta,
+    signal: r.signal,
+  }));
 
   if (bCandidates.length === 0) {
     return (
@@ -307,6 +330,16 @@ export function PortfolioHeadToHead({
         </div>
       ) : (
         <>
+          {totalRows > 0 && (
+            <div className="flex justify-end">
+              <DownloadXlsxButton
+                rows={compareExportRows}
+                columns={compareExportColumns}
+                filename="portfolio-head-to-head.xlsx"
+                sheetName="A vs B"
+              />
+            </div>
+          )}
           {(headline.over || headline.under) && bEntry && (
             <p className="text-sm leading-snug text-foreground">
               vs <strong>{bEntry.fund}</strong>,{" "}
