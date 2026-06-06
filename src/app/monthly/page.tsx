@@ -31,7 +31,6 @@ import {
 import type { AmfiMonthlyPdfRow } from "@/data/snapshots/types";
 import {
   cyclePhaseHistory,
-  historicalEpisodes,
   latestNifty500Row,
   marketIndexRows,
 } from "@/data/market-indices";
@@ -40,7 +39,6 @@ import { BarsWithLabels } from "@/components/charts/BarsWithLabels";
 import { CalendarHeatGrid } from "@/components/ui/CalendarHeatGrid";
 import { EpisodeRecoveryCard } from "@/components/ui/EpisodeRecoveryCard";
 import { episodeRecoveryRows } from "@/data/episode-recovery";
-import { EpisodeReplayStrip } from "@/components/ui/EpisodeReplayStrip";
 import { KeyTakeaway, DeltaCr } from "@/components/ui/KeyTakeaway";
 import { StickyContextFooter } from "@/components/ui/StickyContextFooter";
 import {
@@ -673,7 +671,6 @@ export default async function MonthlyPage({
   // background tint over those stretches. The other phases stay
   // unshaded (most of the timeline) so the bands read as ambient
   // context, not clutter.
-  const episodes = historicalEpisodes();
   // Recovery-tracker rows derived from the same episode list — for
   // each episode, compute the pre-baseline / trough / recovery
   // metrics so we can render "how long did it take investors to
@@ -1158,18 +1155,6 @@ export default async function MonthlyPage({
 
       {activeTab === "market-cycle" && episodeRecoveryData.length > 0 && (
         <EpisodeRecoveryCard rows={episodeRecoveryData} />
-      )}
-
-      {activeTab === "market-cycle" && episodes.length > 0 && (
-        <Card
-          title="Cycle Replay · How investors behaved in past drawdowns"
-          subtitle="Each card is a distinct drawdown episode — colour pill captures the average flow z-score during the episode"
-        >
-          <EpisodeReplayStrip
-            episodes={episodes}
-            formatValue={(v) => formatCompactCrSafe(v)}
-          />
-        </Card>
       )}
 
       <StickyContextFooter

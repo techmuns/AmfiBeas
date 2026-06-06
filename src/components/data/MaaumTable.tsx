@@ -50,15 +50,6 @@ function fmtPct(v: number | null): string {
   if (v === null || !Number.isFinite(v)) return "—";
   return `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}%`;
 }
-function fmtSharePct(v: number | null): string {
-  if (v === null || !Number.isFinite(v)) return "—";
-  return `${v.toFixed(1)}%`;
-}
-function fmtPp(v: number | null): string {
-  if (v === null || !Number.isFinite(v)) return "—";
-  if (Math.abs(v) < 0.05) return "0.0";
-  return `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}`;
-}
 function toneText(v: number | null): string {
   if (v === null || !Number.isFinite(v) || Math.abs(v) < 1e-9) {
     return "text-muted-foreground";
@@ -70,11 +61,6 @@ function pctChange(cur: number | null, base: number | null): number | null {
     ? ((cur - base) / Math.abs(base)) * 100
     : null;
 }
-function shareOf(col: MaaumColumn, key: RowKey): number | null {
-  const v = col[key];
-  return typeof v === "number" && col.total ? (v / col.total) * 100 : null;
-}
-
 const LEVEL_ROWS: { label: string; key: RowKey; indent?: boolean; bold?: boolean }[] = [
   { label: "Equity", key: "equity" },
   { label: "– Active", key: "active", indent: true },
@@ -83,13 +69,6 @@ const LEVEL_ROWS: { label: string; key: RowKey; indent?: boolean; bold?: boolean
   { label: "Debt (incl. Liquid)", key: "debt" },
   { label: "Others", key: "others" },
   { label: "Total", key: "total", bold: true },
-];
-
-const MIX_ROWS: { label: string; key: RowKey; indent?: boolean }[] = [
-  { label: "Equity Share", key: "equity" },
-  { label: "– Active", key: "active", indent: true },
-  { label: "– ETF & Index", key: "etf", indent: true },
-  { label: "Debt (incl. Liquid)", key: "debt" },
 ];
 
 export function MaaumTable({
@@ -157,68 +136,6 @@ export function MaaumTable({
                   </td>
                   <td className={cn("border px-2.5 py-1.5 text-right", toneText(mom))}>
                     {fmtPct(mom)}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      {/* MAAUM mix */}
-      <div className="overflow-x-auto rounded-lg border bg-card">
-        <table className="w-full border-collapse text-[13px] tabular-nums">
-          <thead>
-            <tr>
-              <th className="sticky left-0 z-10 border bg-card px-2.5 py-2 text-left font-semibold">
-                MAAUM Mix
-              </th>
-              {cols.map((c) => (
-                <th key={c.monthLabel} className={cellTh}>
-                  {c.monthLabel}
-                </th>
-              ))}
-              <th className={cellTh}>YoY</th>
-              <th className={cellTh}>MoM</th>
-            </tr>
-          </thead>
-          <tbody>
-            {MIX_ROWS.map((row) => {
-              const cur = shareOf(latest, row.key);
-              const yoyPp = (() => {
-                const a = shareOf(yearAgo, row.key);
-                return cur !== null && a !== null ? cur - a : null;
-              })();
-              const momPp = (() => {
-                const p = shareOf(prevMonth, row.key);
-                return cur !== null && p !== null ? cur - p : null;
-              })();
-              return (
-                <tr key={row.key}>
-                  <th
-                    scope="row"
-                    className={cn(
-                      rowTh,
-                      row.indent
-                        ? "pl-5 font-normal text-foreground/75"
-                        : "font-medium"
-                    )}
-                  >
-                    {row.label}
-                  </th>
-                  {cols.map((c) => (
-                    <td
-                      key={c.monthLabel}
-                      className="border px-2.5 py-1.5 text-right text-foreground"
-                    >
-                      {fmtSharePct(shareOf(c, row.key))}
-                    </td>
-                  ))}
-                  <td className={cn("border px-2.5 py-1.5 text-right", toneText(yoyPp))}>
-                    {fmtPp(yoyPp)}
-                  </td>
-                  <td className={cn("border px-2.5 py-1.5 text-right", toneText(momPp))}>
-                    {fmtPp(momPp)}
                   </td>
                 </tr>
               );
