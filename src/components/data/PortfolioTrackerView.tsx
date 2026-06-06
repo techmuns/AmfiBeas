@@ -89,6 +89,13 @@ export function PortfolioTrackerView({
   const [query, setQuery] = useState(initialFund?.fund ?? "");
   const [focused, setFocused] = useState(false);
   const [holdingQuery, setHoldingQuery] = useState("");
+  // Holdings sort: which month-column + field, and direction. null = the
+  // default (latest month, % of AUM, descending — biggest weights on top).
+  const [holdingSort, setHoldingSort] = useState<{
+    slug: string;
+    field: "pct" | "shares";
+    dir: "asc" | "desc";
+  } | null>(null);
   // Head-to-head fund B — null means "use the variant-skipped default
   // for the current A". Cleared whenever A changes (see effect below).
   const [bUserPick, setBUserPick] = useState<string | null>(null);
@@ -311,6 +318,33 @@ export function PortfolioTrackerView({
       r.company_name.toLowerCase().includes(q)
     );
   }, [portfolio, holdingQuery]);
+
+  // Sort the holdings by the chosen month-column (default: latest month's
+  // % of AUM, descending). Clicking a "% of AUM" / "Shares" header re-sorts.
+  const sortSlug = holdingSort?.slug ?? slugs[0] ?? "";
+  const sortField = holdingSort?.field ?? "pct";
+  const sortDir = holdingSort?.dir ?? "desc";
+  const sortValue = (r: (typeof holdings)[number]): number | null => {
+    const c = r.months[sortSlug];
+    const v = sortField === "pct" ? c?.aum_pct_num : c?.shares_num;
+    return typeof v === "number" && Number.isFinite(v) ? v : null;
+  };
+  const sortedHoldings = [...holdings].sort((a, b) => {
+    const av = sortValue(a);
+    const bv = sortValue(b);
+    if (av === null && bv === null) return 0;
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    return sortDir === "desc" ? bv - av : av - bv;
+  });
+  const onSortHolding = (slug: string, field: "pct" | "shares") => {
+    setHoldingSort((prev) => {
+      if (prev && prev.slug === slug && prev.field === field) {
+        return { slug, field, dir: prev.dir === "desc" ? "asc" : "desc" };
+      }
+      return { slug, field, dir: "desc" };
+    });
+  };
 
   type HoldingExportRow = Record<string, string | number | null>;
   const holdingsExportColumns: CsvColumn<HoldingExportRow>[] = [
@@ -681,8 +715,15 @@ export function PortfolioTrackerView({
                           ))}
                         </tr>
                         <tr className="bg-muted/60 text-[11px] uppercase tracking-wide text-muted-foreground">
-                          {months.map((m) => (
-                            <FragmentSubHead key={m.label} />
+                          {months.map((m, i) => (
+                            <FragmentSubHead
+                              key={m.label}
+                              slug={slugs[i]}
+                              sortSlug={sortSlug}
+                              sortField={sortField}
+                              sortDir={sortDir}
+                              onSort={onSortHolding}
+                            />
                           ))}
                         </tr>
                       </thead>
@@ -697,7 +738,7 @@ export function PortfolioTrackerView({
                             </td>
                           </tr>
                         ) : (
-                          holdings.map((row) => (
+                          sortedHoldings.map((row) => (
                             <tr
                               key={row.fincode}
                               className="border-b last:border-0 hover:bg-accent/40"
@@ -796,14 +837,45 @@ export function PortfolioTrackerView({
   );
 }
 
-function FragmentSubHead() {
+function FragmentSubHead({
+  slug,
+  sortSlug,
+  sortField,
+  sortDir,
+  onSort,
+}: {
+  slug: string;
+  sortSlug: string;
+  sortField: "pct" | "shares";
+  sortDir: "asc" | "desc";
+  onSort: (slug: string, field: "pct" | "shares") => void;
+}) {
+  const indicator = (field: "pct" | "shares") =>
+    sortSlug === slug && sortField === field
+      ? sortDir === "desc"
+        ? " ▼"
+        : " ▲"
+      : "";
+  const btn = "ml-auto inline-flex items-center hover:text-foreground";
   return (
     <>
       <th className="border-b border-l px-3 py-1.5 text-right font-medium">
-        % of AUM
+        <button
+          type="button"
+          onClick={() => onSort(slug, "pct")}
+          className={btn}
+        >
+          % of AUM{indicator("pct")}
+        </button>
       </th>
       <th className="border-b px-3 py-1.5 text-right font-medium">
-        Shares
+        <button
+          type="button"
+          onClick={() => onSort(slug, "shares")}
+          className={btn}
+        >
+          Shares{indicator("shares")}
+        </button>
       </th>
     </>
   );
