@@ -380,11 +380,11 @@ export function PortfolioHeadToHead({
                 <thead>
                   <tr className="bg-muted/60 text-xs text-muted-foreground">
                     <th className="px-3 py-2 text-left font-medium">Company</th>
-                    <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
-                      A %
+                    <th className="px-3 py-2 text-right font-medium">
+                      {aEntry.fund}
                     </th>
-                    <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
-                      B %
+                    <th className="px-3 py-2 text-right font-medium">
+                      {bEntry?.fund ?? "Comparison fund"}
                     </th>
                     <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
                       Δ A − B
