@@ -188,42 +188,70 @@ export function industryComparison(): AmcCompareMetrics {
 /** Industry-AVERAGE benchmark column — the MEAN of each metric across all
  *  comparable AMCs (distinct from industryComparison()'s total/aggregate).
  *  Answers "is this AMC above or below the typical AMC?" rather than "vs the
- *  whole market". Nulls are skipped per field; rank isn't meaningful as a mean. */
+ *  whole market". Computed straight off the already-built index rows + equity
+ *  book (O(AMCs)) — it must NOT call rowToMetrics per AMC, which re-derives the
+ *  per-AMC market-share series and is O(quarters × AMCs²) (blows the Worker
+ *  CPU budget). Nulls are skipped per field; rank isn't meaningful as a mean. */
 export function industryAverageComparison(): AmcCompareMetrics {
   const idx = amcIndexRows();
+  const rows = idx?.rows ?? [];
   const book = amcEquityBook();
-  const rows = idx ? idx.rows.map((r) => rowToMetrics(r, book)) : [];
-  const mean = (
-    pick: (m: AmcCompareMetrics) => number | null
-  ): number | null => {
-    const vals = rows
-      .map(pick)
-      .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
-    if (vals.length === 0) return null;
-    return vals.reduce((s, v) => s + v, 0) / vals.length;
+  const mean = (vals: (number | null | undefined)[]): number | null => {
+    const f = vals.filter(
+      (v): v is number => typeof v === "number" && Number.isFinite(v)
+    );
+    return f.length ? f.reduce((s, v) => s + v, 0) / f.length : null;
   };
+
+  // Listed-AMC financials: only the sourced-financials slugs (a small set),
+  // so this stays O(listed), not O(all AMCs).
+  type Fin = {
+    revenue: number | null;
+    yield: number | null;
+    op: number | null;
+    pat: number | null;
+  };
+  const fins: Fin[] = rows
+    .filter((r) => SOURCED_FINANCIALS_SLUGS.has(r.amcSlug))
+    .map((r): Fin | null => {
+      const fin = quarterlyForAmc(r.amcSlug);
+      const yields = yieldsForAmc(r.amcSlug);
+      const lastFin = fin[fin.length - 1];
+      const lastY = yields[yields.length - 1];
+      if (!lastFin || !lastY) return null;
+      return {
+        revenue: lastFin.revenue,
+        yield: lastFin.avgAum ? lastY.revenueYieldBps : null,
+        op: lastY.opMargin,
+        pat: lastY.patMargin,
+      };
+    })
+    .filter((f): f is Fin => f !== null);
+
   return {
     slug: "industry-average",
     displayName: "Industry avg",
     isIndustry: true,
-    aaumCr: mean((m) => m.aaumCr),
-    marketSharePct: mean((m) => m.marketSharePct),
-    shareDeltaBps: mean((m) => m.shareDeltaBps),
-    qoqGrowthPct: mean((m) => m.qoqGrowthPct),
-    yoyGrowthPct: mean((m) => m.yoyGrowthPct),
+    aaumCr: mean(rows.map((r) => r.avgAum)),
+    marketSharePct: mean(rows.map((r) => r.marketSharePct)),
+    // Mean of per-AMC share deltas is ~0 (shares are zero-sum), so skip the
+    // expensive per-AMC series and report 0.
+    shareDeltaBps: 0,
+    qoqGrowthPct: mean(rows.map((r) => r.qoqGrowthPct)),
+    yoyGrowthPct: mean(rows.map((r) => r.yoyGrowthPct)),
     rank: null,
     isListed: false,
-    revenueCr: mean((m) => m.revenueCr),
-    revenueYieldBps: mean((m) => m.revenueYieldBps),
-    opMarginPct: mean((m) => m.opMarginPct),
-    patMarginPct: mean((m) => m.patMarginPct),
+    revenueCr: mean(fins.map((f) => f.revenue)),
+    revenueYieldBps: mean(fins.map((f) => f.yield)),
+    opMarginPct: mean(fins.map((f) => f.op)),
+    patMarginPct: mean(fins.map((f) => f.pat)),
     finQuarter: null,
-    equityMatched: rows.some((m) => m.equityMatched),
-    activeEquityCr: mean((m) => m.activeEquityCr),
-    passiveEquityCr: mean((m) => m.passiveEquityCr),
-    activePct: mean((m) => m.activePct),
-    passivePct: mean((m) => m.passivePct),
-    equitySharePct: mean((m) => m.equitySharePct),
+    equityMatched: book.length > 0,
+    activeEquityCr: mean(book.map((b) => b.activeEquityCr)),
+    passiveEquityCr: mean(book.map((b) => b.passiveEquityCr)),
+    activePct: mean(book.map((b) => b.activePct)),
+    passivePct: mean(book.map((b) => b.passivePct)),
+    equitySharePct: mean(book.map((b) => b.equitySharePct)),
   };
 }
 
