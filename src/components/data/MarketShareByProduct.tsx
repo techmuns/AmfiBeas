@@ -6,7 +6,6 @@ import { formatMonthLabel } from "@/lib/format";
 export type ProductShareDisplayRow = ProductShareRow & { displayName: string };
 
 const COLS: { key: keyof ProductShareRow; label: string }[] = [
-  { key: "totalSharePct", label: "Overall" },
   { key: "activeEquitySharePct", label: "Active Equity" },
   { key: "debtSharePct", label: "Debt" },
   { key: "liquidSharePct", label: "Liquid" },
@@ -16,7 +15,6 @@ const COLS: { key: keyof ProductShareRow; label: string }[] = [
 
 const XLSX_COLUMNS: CsvColumn<ProductShareDisplayRow>[] = [
   { key: "displayName", header: "AMC" },
-  { key: "totalSharePct", header: "Overall share (%)" },
   { key: "activeEquitySharePct", header: "Active equity share (%)" },
   { key: "debtSharePct", header: "Debt share (%)" },
   { key: "liquidSharePct", header: "Liquid share (%)" },

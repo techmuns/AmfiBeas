@@ -177,13 +177,6 @@ export default async function AmcPage({
     : [];
   const thisAmcAnomaly =
     anomalyReport?.outliers.find((o) => o.amcSlug === slug) ?? null;
-  const peerChart =
-    peer?.rows.map((r) => ({
-      label: r.displayName,
-      value: r.avgAum,
-      slug: r.amcSlug,
-      isFocused: r.isFocused,
-    })) ?? [];
 
   const trend = (n: number | null | undefined) =>
     n === null || n === undefined
@@ -458,27 +451,8 @@ export default async function AmcPage({
       <SectionDivider
         eyebrow="Section 4"
         label="Peer comparison"
-        context="Side-by-side with the Top 7 cohort and the full peer table."
+        context="The Top 7 cohort plus this AMC, ranked by assets."
       />
-
-      <section className="grid gap-4 lg:grid-cols-2">
-        <Card
-          title="Peer Comparison"
-          subtitle={
-            peer
-              ? `Top 7 by AAUM · ${peer.fiscalLabel}${
-                  latest && !latest.isTop7 ? ` + ${detail.displayName}` : ""
-                } · Source: AMFI Fundwise AAUM`
-              : "Latest quarter · Source: AMFI Fundwise AAUM"
-          }
-        >
-          {peerChart.length > 0 ? (
-            <FocusedPeerList rows={peerChart} />
-          ) : (
-            <EmptyChart>No peer data</EmptyChart>
-          )}
-        </Card>
-      </section>
 
       {peer && peer.rows.length > 0 && (
         <Card
@@ -616,64 +590,3 @@ function EmptyChart({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Ranked peer-comparison list — focused AMC highlighted, with
- *  a dot-plot magnitude indicator (no proportional bar fills). The
- *  detailed peer table sits directly below this card. */
-function FocusedPeerList({
-  rows,
-}: {
-  rows: { label: string; value: number; slug: string; isFocused: boolean }[];
-}) {
-  const max = Math.max(...rows.map((r) => r.value), 1);
-  const sorted = [...rows].sort((a, b) => b.value - a.value);
-  return (
-    <ol className="space-y-1.5">
-      {sorted.map((r, i) => {
-        const dotLeftPct = (r.value / max) * 100;
-        return (
-          <li
-            key={r.slug}
-            className={cn(
-              "grid grid-cols-[24px_minmax(120px,_1.4fr)_2fr_minmax(80px,_auto)] items-center gap-3 rounded-md px-2 py-1.5 text-xs",
-              r.isFocused && "bg-accent/40 ring-1 ring-positive/30"
-            )}
-          >
-            <span className="tabular text-muted-foreground">
-              #{i + 1}
-            </span>
-            <span
-              className={cn(
-                "truncate",
-                r.isFocused ? "font-semibold text-foreground" : "text-foreground"
-              )}
-              title={r.label}
-            >
-              {r.label}
-            </span>
-            <span className="relative block h-2">
-              <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-border" />
-              <span
-                className={cn(
-                  "absolute top-1/2 inline-block h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-card",
-                  r.isFocused
-                    ? "bg-positive"
-                    : "bg-foreground/35"
-                )}
-                style={{ left: `${dotLeftPct}%` }}
-                aria-hidden
-              />
-            </span>
-            <span
-              className={cn(
-                "text-right tabular",
-                r.isFocused ? "font-semibold text-foreground" : "text-muted-foreground"
-              )}
-            >
-              {formatCompactCrSafe(r.value)}
-            </span>
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
