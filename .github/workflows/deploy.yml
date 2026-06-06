@@ -1,0 +1,57 @@
+name: Deploy
+
+# Deploys the app to Cloudflare Workers via OpenNext.
+#   - Automatically on every push to `main` (i.e. when a PR merges).
+#   - Manually via "Run workflow" (workflow_dispatch) to redeploy the current
+#     `main` on demand, without needing a new commit.
+#
+# Requires two repository secrets (Settings → Secrets and variables → Actions):
+#   - CLOUDFLARE_API_TOKEN   — a token with "Edit Cloudflare Workers" permission
+#   - CLOUDFLARE_ACCOUNT_ID  — the account that owns the `amfibeas` Worker
+# wrangler (invoked by `opennextjs-cloudflare deploy`) reads both from the env.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are you deploying manually?"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+# Never run two production deploys at once, and never cancel a deploy that is
+# already in flight (cancelling mid-upload can leave a half-published Worker).
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Verify Cloudflare credentials are configured
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN repository secret is not set." \
+                 "Add it (and CLOUDFLARE_ACCOUNT_ID) under Settings → Secrets" \
+                 "and variables → Actions, then re-run this workflow."
+            exit 1
+          fi
+      - run: npm ci
+      - name: Deploy to Cloudflare Workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npm run deploy
