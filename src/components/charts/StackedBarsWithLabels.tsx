@@ -15,7 +15,7 @@ import { ChartTooltip } from "./Tooltip";
 /**
  * Two-segment stacked bar chart with per-segment data labels rendered
  * inside the bars + a total label above each bar. Used by the
- * Industry Concentration card on `/amcs?tab=share-positioning`.
+ * Industry Concentration card on `/amc?tab=insights`.
  *
  * Values are passed in the unit the caller wants displayed (e.g. ₹
  * trillions). The chart writes labels with one decimal place.

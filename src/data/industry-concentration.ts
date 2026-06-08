@@ -2,7 +2,7 @@
  * Industry concentration data — Top 10 AMCs vs the rest by Fundwise
  * AAUM, computed at each fiscal year-end available in the snapshot
  * (plus an optional H1 marker). Powers the Industry Concentration
- * stacked-bar card on `/amcs?tab=share-positioning`.
+ * stacked-bar card on `/amc?tab=insights`.
  */
 
 import { amcAaumQuarterlySnapshot } from "./source";
