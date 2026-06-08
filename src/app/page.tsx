@@ -1,30 +1,1277 @@
+import { KpiCard } from "@/components/ui/KpiCard";
+import { Card } from "@/components/ui/Card";
+import { ChartWithContext } from "@/components/ui/ChartWithContext";
+import {
+  adaptiveAverageOverlay,
+  chartInsights,
+  latestYoyPct,
+} from "@/lib/chart-context";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { BarSeries } from "@/components/charts/BarSeries";
+import { IiflHeatmap, formatHeatmapMonth } from "@/components/charts/IiflHeatmap";
+import { latestMonth } from "@/data/aggregate";
+import {
+  activeEquityNetInflowSignal,
+  amfiMonthlyRows,
+  availableMonthsDesc,
+  formatKpiProvenanceLine,
+  formatKpiProvenanceTooltip,
+  getKpiProvenance,
+  getKpiValue,
+  kpiContext,
+  latestAmfiMonthlyRow,
+  snapshotSectionRead,
+  monthlyFlowsData,
+  monthlyIndustryFolioAdditionsTrend,
+  monthlySipGrossShareTrend,
+  monthlyTrend,
+  resolveSelectedRow,
+  type AmfiMonthlyKpiField,
+} from "@/data/amfi-monthly";
+import type { AmfiMonthlyPdfRow } from "@/data/snapshots/types";
+import {
+  cyclePhaseHistory,
+  latestNifty500Row,
+  marketIndexRows,
+} from "@/data/market-indices";
+import { BarsWithIndexLine } from "@/components/charts/BarsWithIndexLine";
+import { BarsWithLabels } from "@/components/charts/BarsWithLabels";
+import { CalendarHeatGrid } from "@/components/ui/CalendarHeatGrid";
+import { EpisodeRecoveryCard } from "@/components/ui/EpisodeRecoveryCard";
+import { episodeRecoveryRows } from "@/data/episode-recovery";
+import { KeyTakeaway, DeltaCr } from "@/components/ui/KeyTakeaway";
+import { StickyContextFooter } from "@/components/ui/StickyContextFooter";
+import {
+  categoryRotation,
+  iiflActiveEquityHeatmapData,
+} from "@/data/amfi-monthly-category";
+import { VerticalBars } from "@/components/charts/VerticalBars";
+import {
+  MonthlyFlowsTable,
+  MONTHLY_FLOWS_XLSX_COLUMNS,
+  type MonthlyFlowsTableRow,
+} from "@/components/data/MonthlyFlowsTable";
+import {
+  MaaumTable,
+  MAAUM_XLSX_COLUMNS,
+  type MaaumColumn,
+} from "@/components/data/MaaumTable";
+import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
+import { FeeMixInflows } from "@/components/data/FeeMixInflows";
+import { feeMixByMonth } from "@/data/fee-mix";
+import { HowToRead } from "@/components/ui/HowToRead";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
+import { MonthPicker } from "@/components/filters/MonthPicker";
+import {
+  formatCompactCrSafe,
+  formatCroreCountSafe,
+  formatMonthLabel,
+} from "@/lib/format";
+import { cn } from "@/lib/cn";
+import {
+  DashboardTabs,
+  type DashboardTabDef,
+} from "@/components/layout/DashboardTabs";
+import { resolveTabWithAliases } from "@/lib/tabs";
+// --- Total Market additions: industry snapshot (relocated from /) and the
+// AUM Mix + Attribution tabs (relocated from /quarterly). ----------------
 import { CapFlowsView } from "@/components/data/CapFlowsView";
-import { SectorFlowHeatmap } from "@/components/data/SectorFlowHeatmap";
 import { capFlows } from "@/data/cap-flows";
+import { SectorFlowHeatmap } from "@/components/data/SectorFlowHeatmap";
+import { QuarterEndMixTable } from "@/components/data/QuarterEndMixTable";
+import { AaumBridgeTable } from "@/components/data/AaumBridgeTable";
+import type { DonutSlice } from "@/components/charts/Donut";
+import {
+  resolveSelectedQuarter,
+  liquidAumForQuarter,
+  quarterlyAaumBridge,
+} from "@/data/amfi-quarterly";
 
-export default function HomePage() {
+const MONTHLY_TABS = [
+  { id: "snapshot", label: "Industry Snapshot" },
+  { id: "flow-table", label: "Flow Table" },
+  { id: "aum-mix", label: "AUM Mix" },
+  { id: "attribution", label: "Estimated AUM Attribution" },
+  { id: "fee-mix", label: "Fee Mix" },
+  { id: "categories", label: "Category Shifts" },
+  { id: "market-cycle", label: "Market Phases" },
+] as const satisfies readonly DashboardTabDef[];
+type MonthlyTabId = (typeof MONTHLY_TABS)[number]["id"];
+const MONTHLY_TAB_IDS = MONTHLY_TABS.map((t) => t.id) as readonly MonthlyTabId[];
+
+/** Month-end AUM mix shares (% of the month's own breakdown total) for a
+ *  single row, keyed by category. Mirrors the Month-end AUM Mix card's
+ *  segment logic exactly — including the residual "Other" bucket — so a
+ *  month-over-month delta computed from two of these maps lines up with
+ *  the shares the card renders. Returns an empty map when the row lacks
+ *  a usable breakdown. */
+function monthEndMixShares(
+  row: AmfiMonthlyPdfRow | null
+): Map<string, number> {
+  const shares = new Map<string, number>();
+  if (!row) return shares;
+  const eq = getKpiValue(row, "equityAum");
+  const db = getKpiValue(row, "debtAum");
+  const lq = getKpiValue(row, "liquidAum");
+  const total = getKpiValue(row, "totalAum");
+  const segs: { key: string; value: number }[] = [];
+  if (typeof eq === "number") segs.push({ key: "equity", value: eq });
+  if (typeof db === "number") segs.push({ key: "debt", value: db });
+  if (typeof lq === "number") segs.push({ key: "liquid", value: lq });
+  if (
+    typeof total === "number" &&
+    typeof eq === "number" &&
+    typeof db === "number" &&
+    typeof lq === "number"
+  ) {
+    const residual = total - (eq + db + lq);
+    if (residual > 0) segs.push({ key: "other", value: residual });
+  }
+  const sum = segs.reduce((s, x) => s + x.value, 0);
+  if (sum > 0) {
+    for (const s of segs) shares.set(s.key, (s.value / sum) * 100);
+  }
+  return shares;
+}
+
+
+export default async function MonthlyPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+
+  // ---- Lens toggles (parsed up-front so any chart below can read them).
+  // Each chart owns its own URL param so the toggles don't collide.
+  // SIP Contribution period toggle. History now runs to ~10 years, so
+  // the card offers 1Y / 3Y / 5Y / All — where "All" is capped at 84
+  // months (the range that aligns with the cycle-phase / market-data
+  // window and shows both correction phases). Defaults to All.
+  const sipContribRange: "1y" | "3y" | "5y" | "all" =
+    sp.sipContribPeriod === "1y"
+      ? "1y"
+      : sp.sipContribPeriod === "3y"
+        ? "3y"
+        : sp.sipContribPeriod === "5y"
+          ? "5y"
+          : "all";
+  const sipContribMonths =
+    sipContribRange === "1y"
+      ? 12
+      : sipContribRange === "3y"
+        ? 36
+        : sipContribRange === "5y"
+          ? 60
+          : 84;
+  // Chart-type toggles. Each eligible bar-style time-series card on
+  // the page owns its own `<thing>View` URL param. Bars is the
+  // default and is never echoed into the URL — only the "trend"
+  // value rides along so the default page stays URL-clean.
+  // Chart-style toggles (Bars vs Trend) were removed across the
+  // dashboard — every chart now renders the trend visual directly.
+  // Stale `?...View=bars|trend` URLs are ignored silently.
+  // Per-card lens toggles. Each one switches a trend chart between
+  // an absolute number (₹ Cr / count / etc) and a meaningful share
+  // / ratio specific to that card. Default is "absolute" — URL stays
+  // clean unless the user actively picked "share".
+
+  // Resolve the active tab from the URL. Unknown / missing values
+  // silently fall back to "snapshot" so stale bookmarks don't break.
+  const activeTab = resolveTabWithAliases<MonthlyTabId>(
+    sp.tab,
+    MONTHLY_TAB_IDS,
+    { flows: "flow-table", "sip-retail": "snapshot" },
+    "snapshot",
+  );
+
+  // AMFI Monthly Snapshot — first live AMFI widget. Reads directly from
+  // the manually-uploaded-PDF snapshot. The selected row is whichever
+  // month the URL `?month=YYYY-MM` query param picked, falling back to
+  // the latest available month when missing or invalid. Cards only
+  // render for KPIs the SELECTED row carries — never substitutes zero
+  // or a dash for a missing value, never falls back to demo data.
+  const requestedMonthRaw = sp.month;
+  const requestedMonth =
+    typeof requestedMonthRaw === "string" ? requestedMonthRaw : undefined;
+  const amfiSelected = resolveSelectedRow(requestedMonth);
+  const amfiAvailableMonths = availableMonthsDesc();
+  // Header subtitle tracks the global period filter so the page title
+  // agrees with the picker. Falls back to the dataset's latest month
+  // when nothing is explicitly selected (keeps the default unchanged).
+  const subtitle = `Industry-wide · ${
+    requestedMonth ? amfiSelected?.month ?? latestMonth() : latestMonth()
+  }`;
+
+  /** All cards we'd surface if the row had every field. The render below
+   *  hides any whose value is null on the latest row, so a press-release-
+   *  only month would skip totalAaum/netInflow, and a Monthly-Report-only
+   *  month would skip the SIP cards.
+   *
+   *  totalAum is intentionally NOT in this list — totalAaum (period
+   *  average) is the dashboard-canonical headline and is comparable to
+   *  the bps-of-MF-QAAUM yields elsewhere. The closing-balance totalAum
+   *  is still extracted and stored in the snapshot for any future
+   *  consumer; just not rendered here. */
+  const AMFI_CARDS: {
+    field: AmfiMonthlyKpiField;
+    label: string;
+    format: (v: number) => string;
+    sparklineColor?: string;
+    /** Optional ratio caption derived from the selected row (e.g. "20.6% of total AUM"). */
+    ratio?: (row: NonNullable<typeof amfiSelected>) => string | undefined;
+  }[] = [
+    {
+      field: "totalAaum",
+      label: "Total AAUM",
+      format: formatCompactCrSafe,
+      sparklineColor: "hsl(var(--chart-1))",
+    },
+    {
+      field: "equityAum",
+      label: "Equity AUM",
+      format: formatCompactCrSafe,
+      sparklineColor: "hsl(var(--chart-1))",
+      ratio: (r) => {
+        if (typeof r.equityAum !== "number" || typeof r.totalAum !== "number")
+          return undefined;
+        if (r.totalAum <= 0) return undefined;
+        return `${((r.equityAum / r.totalAum) * 100).toFixed(1)}% of total AUM`;
+      },
+    },
+    {
+      field: "debtAum",
+      label: "Debt AUM",
+      format: formatCompactCrSafe,
+      sparklineColor: "hsl(var(--chart-2))",
+      ratio: (r) => {
+        if (typeof r.debtAum !== "number" || typeof r.totalAum !== "number")
+          return undefined;
+        if (r.totalAum <= 0) return undefined;
+        return `${((r.debtAum / r.totalAum) * 100).toFixed(1)}% of total AUM`;
+      },
+    },
+    {
+      field: "liquidAum",
+      label: "Liquid AUM",
+      format: formatCompactCrSafe,
+      sparklineColor: "hsl(var(--chart-4))",
+      ratio: (r) => {
+        if (typeof r.liquidAum !== "number" || typeof r.totalAum !== "number")
+          return undefined;
+        if (r.totalAum <= 0) return undefined;
+        return `${((r.liquidAum / r.totalAum) * 100).toFixed(1)}% of total AUM`;
+      },
+    },
+    {
+      field: "netInflow",
+      label: "Net Inflow",
+      // formatCompactCrSafe handles only positive values via its compact
+      // suffixes; for negative net-flow values we render the magnitude
+      // with the same suffix and a leading minus so signs are obvious.
+      format: (v: number) => {
+        if (v >= 0) return formatCompactCrSafe(v);
+        return "−" + formatCompactCrSafe(-v);
+      },
+      sparklineColor: "hsl(var(--chart-3))",
+      ratio: (r) => {
+        if (typeof r.netInflow !== "number" || typeof r.totalAum !== "number")
+          return undefined;
+        if (r.totalAum <= 0) return undefined;
+        return `${((r.netInflow / r.totalAum) * 100).toFixed(2)}% of opening AUM`;
+      },
+    },
+    {
+      field: "sipContribution",
+      label: "SIP Contribution",
+      format: formatCompactCrSafe,
+      sparklineColor: "hsl(var(--chart-1))",
+      ratio: (r) => {
+        if (
+          typeof r.sipContribution !== "number" ||
+          typeof r.netInflow !== "number" ||
+          r.netInflow <= 0
+        )
+          return undefined;
+        return `${((r.sipContribution / r.netInflow) * 100).toFixed(0)}% of net inflow`;
+      },
+    },
+    {
+      field: "sipAum",
+      label: "SIP AUM",
+      format: formatCompactCrSafe,
+      sparklineColor: "hsl(var(--chart-2))",
+      ratio: (r) => {
+        if (typeof r.sipAum !== "number" || typeof r.totalAum !== "number")
+          return undefined;
+        if (r.totalAum <= 0) return undefined;
+        return `${((r.sipAum / r.totalAum) * 100).toFixed(1)}% of total AUM`;
+      },
+    },
+    {
+      field: "sipAccounts",
+      label: "SIP Accounts",
+      // SIP accounts are stored as a raw count (e.g. 97,200,000); the
+      // safe formatter divides by 1e7 and emits "9.72 Cr".
+      format: (v: number) => formatCroreCountSafe(v),
+      sparklineColor: "hsl(var(--chart-3))",
+      ratio: (r) => {
+        if (typeof r.sipAccounts !== "number" || typeof r.totalAum !== "number")
+          return undefined;
+        if (r.totalAum <= 0) return undefined;
+        // Accounts per ₹ Cr of AUM — investor density.
+        return `${(r.sipAccounts / r.totalAum).toFixed(1)} per ₹ Cr AUM`;
+      },
+    },
+  ];
+
+  const amfiCardsToRender = AMFI_CARDS.flatMap((spec) => {
+    const value = getKpiValue(amfiSelected, spec.field);
+    if (value === null) return [];
+    const provenance = getKpiProvenance(amfiSelected, spec.field);
+    // Anchor YoY / percentile / sparkline window to the user-selected
+    // month, not the latest available. Otherwise the picker changes the
+    // headline value but the pills stay stuck on the latest snapshot.
+    const ctx = kpiContext(spec.field, 24, amfiSelected?.month);
+    return [
+      {
+        ...spec,
+        value,
+        formatted: spec.format(value),
+        // Visible note: "Source: AMFI Monthly Report · p.1" — short.
+        // Tooltip on hover: same plus the full PDF filename for users
+        // who want to verify provenance. Filename stays in the data
+        // (row.fieldSources[field].sourcePdf) regardless.
+        note: formatKpiProvenanceLine(provenance) ?? "",
+        noteHover: formatKpiProvenanceTooltip(provenance) ?? undefined,
+        sparkline: ctx.sparkline,
+        yoyPct: ctx.yoyPct,
+        percentile: ctx.percentile,
+        ratioLine: amfiSelected ? spec.ratio?.(amfiSelected) : undefined,
+      },
+    ];
+  });
+
+  // Subtitle no longer carries the month; the month picker on the right
+  // is the canonical place for period selection.
+  const amfiSectionSubtitle = amfiSelected
+    ? "Industry-wide · Source: AMFI Monthly Report"
+    : "Upload AMFI monthly PDFs to manual-data/amfi-monthly/pdfs/, then run npm run ingest:amfi-pdf";
+
+  // ---- Industry Performance (IIFL Research Figures 19-21) -----------
+  // Figure 20: Total EOP AUM (₹ Cr bars) + YoY % line.
+  // Figure 21: Active-Equity MAAUM (₹ Cr bars) + active-equity share of
+  //            total MAAUM (%) line — "share has hovered ~54%".
+  // Both span the latest 24 months (matching the report's window) and
+  // share the BarsWithIndexLine dual-axis visual.
+  const amfiRowsAsc = amfiMonthlyRows();
+  const amfiRowByMonth = new Map(amfiRowsAsc.map((r) => [r.month, r]));
+  const monthMinus12 = (ym: string): string => {
+    const [y, m] = ym.split("-").map(Number);
+    return `${y - 1}-${String(m).padStart(2, "0")}`;
+  };
+
+  // Figure 19: MAAUM breakdown table (3 periods + YoY / MoM). Equity is
+  // the broad bucket = Active + ETF & Index + Arbitrage; Debt is Sub
+  // Total I (still includes Liquid); Others = Sub Total V ex. ETF & Index.
+  const maaumColumns: { yearAgo: MaaumColumn; prevMonth: MaaumColumn; latest: MaaumColumn } | null =
+    (() => {
+      const num = (v: number | undefined): number | null =>
+        typeof v === "number" && Number.isFinite(v) ? v : null;
+      const toColumn = (
+        r: (typeof amfiRowsAsc)[number] | undefined
+      ): MaaumColumn | null => {
+        if (!r) return null;
+        const active = num(r.activeEquityAaum);
+        const etf = num(r.etfIndexAaum);
+        const arb = num(r.arbitrageAaum);
+        const debt = num(r.debtAaum);
+        const total = num(r.totalAaum);
+        const otherSub5 = num(r.otherSchemesAaum);
+        if (active === null || etf === null || arb === null || total === null) {
+          return null;
+        }
+        return {
+          monthLabel: formatMonthLabel(r.month),
+          equity: active + etf + arb,
+          active,
+          etf,
+          arb,
+          debt,
+          others: otherSub5 !== null ? otherSub5 - etf : null,
+          total,
+        };
+      };
+      // Latest row that carries the full IIFL-style equity breakdown.
+      let latestIdx = -1;
+      for (let i = amfiRowsAsc.length - 1; i >= 0; i--) {
+        if (toColumn(amfiRowsAsc[i])) {
+          latestIdx = i;
+          break;
+        }
+      }
+      if (latestIdx < 1) return null;
+      const latestRow = amfiRowsAsc[latestIdx];
+      const latest = toColumn(latestRow);
+      const prevMonth = toColumn(amfiRowsAsc[latestIdx - 1]);
+      const yearAgo = toColumn(amfiRowByMonth.get(monthMinus12(latestRow.month)));
+      if (!latest || !prevMonth || !yearAgo) return null;
+      return { yearAgo, prevMonth, latest };
+    })();
+
+  // Figure 23: Active-equity net inflows (₹ Cr bars) with a trailing-12-
+  // month (TTM) average reference line. Figure 25: Active-equity NFO
+  // contribution — proxied by the industry's monthly NFO funds mobilised
+  // (the AMFI Monthly Report carries only the all-scheme Grand Total, not
+  // an active-equity split). Both span the latest 24 months.
+  const nfoFundsChart = monthlyTrend("industryNfoFundsMobilized", 24).map(
+    (p) => ({ month: p.label, value: p.value })
+  );
+  const nfoFundsHasData = nfoFundsChart.length > 0;
+
+  // ---- Shared chart-context helpers (used by every insight call) ----
+  // Computed once so we don't recompute the same maps per chart.
+  const ddByMonthForInsights: Map<string, number> = (() => {
+    const m = new Map<string, number>();
+    for (const r of marketIndexRows("NIFTY_500")) {
+      if (typeof r.drawdownPct === "number") m.set(r.month, r.drawdownPct);
+    }
+    return m;
+  })();
+  const cyclePhaseByMonth: Map<string, string> = (() => {
+    const m = new Map<string, string>();
+    for (const p of cyclePhaseHistory()) m.set(p.month, p.phase);
+    return m;
+  })();
+
+  // Provenance captions for the section. All four contributing fields
+  // (totalAum / equityAum / debtAum / liquidAum / totalAaum) come from
+  // the AMFI Monthly Report on the current snapshot, so a single
+  // "Source: AMFI Monthly Report" caption is accurate. Hover surfaces
+  // the same per-field detail the KPI cards expose.
+
+  // ---- SIP Trends section --------------------------------------------
+  //
+  // Three line/bar trend charts driven by the press-release Monthly
+  // Notes' SIP fields. monthlyTrend(field, 24) returns the chronological
+  // series of months that have a value for `field` — months where the
+  // field is absent are OMITTED, never zeroed or interpolated. The
+  // x-axis can therefore be non-uniform (e.g. sipAccounts is missing on
+  // 2024-12 / 2025-01 because those Notes don't carry the row), but no
+  // synthetic data is introduced.
+  const sipContribTrend = monthlyTrend("sipContribution", sipContribMonths);
+  const sipAumTrend = monthlyTrend("sipAum", 24);
+  const sipAccountsTrend = monthlyTrend("sipAccounts", 24);
+
+
+  const hasAnySipTrend =
+    sipContribTrend.length > 0 ||
+    sipAumTrend.length > 0 ||
+    sipAccountsTrend.length > 0;
+
+
+  // ---- Monthly Flows (Figure 22-style) section -----------------------
+  //
+  // Three category-level net-flow series: equity (Sub Total - II),
+  // debt (Sub Total - I; INCLUDES liquid), and liquid (Liquid Fund
+  // row alone). All from the AMFI Monthly Report. Cells are null
+  // when a month's row didn't carry the field — Recharts' GroupedBars
+  // skips null cells, which honours the "no fake zero" rule while
+  // still rendering the other categories on the same x-axis.
+  // Category net-flow rows (equity / debt / liquid, ₹ Cr) — still used by
+  // the "Where the Money Went" Sankey to split the latest month's flow.
+  const monthlyFlowsRows = monthlyFlowsData(24);
+
+  // ---- Flow Table tab -----------------------------------------------
+  // Tabular re-creation of the whole Flows tab: each row is a month,
+  // columns consolidate net flows by category, month-end AUM-mix shares
+  // (+ MoM pp move) and Industry AAUM (level + MoM / YoY). Built from
+  // the same AMFI Monthly rows the Flows charts use; missing fields stay
+  // null (rendered "—"), never zero-filled. Newest month first, capped
+  // to the most recent 36 months so the grid stays scannable.
+  //
+  // Total net flow is shown as an absolute ₹ Cr figure; Equity / Hybrid /
+  // Active Eq are shown as a SIGNED % of the month's gross flow magnitude
+  // (mirrors the AUM-mix "share of the whole" treatment). Gross magnitude
+  // = Σ|Sub-total flows| over the non-overlapping majors (Equity II +
+  // Debt I + Hybrid III + Other V) — Debt is kept in the denominator even
+  // though it's no longer a displayed column, and Debt already contains
+  // Liquid so Liquid is NOT added again. Dividing by gross gives values
+  // bounded in [−100%, +100%] that stay meaningful even in churny /
+  // outflow months, where dividing by the (small, possibly negative) net
+  // total would flip signs and blow up.
+  const feeMix = feeMixByMonth(18);
+  const flowTableRows: MonthlyFlowsTableRow[] = (() => {
+    const rows = amfiMonthlyRows(); // ascending
+    const num = (v: number | null | undefined): number | null =>
+      typeof v === "number" && Number.isFinite(v) ? v : null;
+    const built = rows.map((r, i) => {
+      const prev = i > 0 ? rows[i - 1] : null;
+      const prev12 = i >= 12 ? rows[i - 12] : null;
+      const shares = monthEndMixShares(r);
+      const prevShares = monthEndMixShares(prev);
+      const shareOf = (k: string): number | null =>
+        shares.has(k) ? (shares.get(k) as number) : null;
+      const ppMoM = (k: string): number | null =>
+        shares.has(k) && prevShares.has(k)
+          ? (shares.get(k) as number) - (prevShares.get(k) as number)
+          : null;
+
+      const equity = num(r.equityNetInflow);
+      const debt = num(r.debtNetInflow);
+      const hybrid = num(r.hybridNetInflow);
+      const other = num(r.otherSchemesNetInflow);
+      const total = num(r.netInflow);
+      const activeEquity = num(r.activeEquityNetInflow);
+      // Gross = Σ|non-overlapping majors|. Debt ⊇ Liquid, so Liquid is
+      // excluded from the sum to avoid double-counting.
+      const gross =
+        Math.abs(equity ?? 0) +
+        Math.abs(debt ?? 0) +
+        Math.abs(hybrid ?? 0) +
+        Math.abs(other ?? 0);
+      const pctOfGross = (v: number | null): number | null =>
+        v !== null && gross > 0 ? (v / gross) * 100 : null;
+
+      const aaum = num(r.totalAaum);
+      const prevAaum = prev ? num(prev.totalAaum) : null;
+      const prev12Aaum = prev12 ? num(prev12.totalAaum) : null;
+      return {
+        month: r.month,
+        totalFlow: total,
+        equityFlowPct: pctOfGross(equity),
+        hybridFlowPct: pctOfGross(hybrid),
+        activeEquityFlowPct: pctOfGross(activeEquity),
+        equityShare: shareOf("equity"),
+        debtShare: shareOf("debt"),
+        liquidShare: shareOf("liquid"),
+        otherShare: shareOf("other"),
+        equitySharePpMoM: ppMoM("equity"),
+        debtSharePpMoM: ppMoM("debt"),
+        liquidSharePpMoM: ppMoM("liquid"),
+        otherSharePpMoM: ppMoM("other"),
+        aaum,
+        aaumMoMPct:
+          aaum !== null && prevAaum !== null && prevAaum > 0
+            ? ((aaum - prevAaum) / prevAaum) * 100
+            : null,
+        aaumYoYPct:
+          aaum !== null && prev12Aaum !== null && prev12Aaum > 0
+            ? ((aaum - prev12Aaum) / prev12Aaum) * 100
+            : null,
+      };
+    });
+    return built
+      .filter(
+        (r) =>
+          r.totalFlow !== null ||
+          r.equityFlowPct !== null ||
+          r.aaum !== null
+      )
+      .reverse()
+      .slice(0, 36);
+  })();
+  const flowTableHasData = flowTableRows.length > 0;
+
+  // ---- Active Equity & Equity Mix (IIFL Figure 19 / 21) section -----
+  //
+  // Three charts driven by the IIFL-derived equity breakdown fields
+  // (activeEquityAaum, etfIndexAaum, arbitrageAaum) extracted from
+  // the AMFI Monthly Report. All charts in this section use the AAUM
+  // (period-average) basis so the trend line and share denominator
+  // are consistent with IIFL's Figure 19 / 21 framing. Missing months
+  // are omitted from each per-field series — never zero-filled.
+
+
+
+
+
+  // ---- Industry Folios & NFO section ---------------------------------
+  //
+  // Four live KPI cards + up to three trend charts driven by the
+  // industry-wide AMFI Monthly Report fields landed by PR #48:
+  //   - industryFolios            (raw folio count)
+  //   - industryNfoCount          (open + close-ended NFO launches)
+  //   - industryNfoFundsMobilized (₹ Cr raised during the month)
+  //
+  // industryFolioAdditions is DERIVED from consecutive months of
+  // industryFolios (delta) — never stored, always computed at render
+  // time. When the prior month's folios are missing the delta is
+  // omitted (no fake zero).
+  const folioLatestRow = latestAmfiMonthlyRow();
+  const industryFoliosLatest =
+    folioLatestRow && typeof folioLatestRow.industryFolios === "number"
+      ? folioLatestRow.industryFolios
+      : null;
+  const folioAdditionsTrend = monthlyIndustryFolioAdditionsTrend(24);
+  const folioAdditionsFullHistory = monthlyIndustryFolioAdditionsTrend(10_000);
+
+  // Folio additions denominator: latest monthly net add as % of the
+  // existing folio base. Both `latest.value` (additions) and
+  // `industryFoliosLatest` (folio base) are raw counts; the ratio is
+  // therefore additions / base, expressed as a percentage.
+  const folioAdditionsDenomCaption = (() => {
+    if (folioAdditionsTrend.length === 0 || industryFoliosLatest === null)
+      return undefined;
+    const latest = folioAdditionsTrend[folioAdditionsTrend.length - 1];
+    if (industryFoliosLatest <= 0) return undefined;
+    const pct = (latest.value / industryFoliosLatest) * 100;
+    return `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}% of folio base · latest ${latest.label}`;
+  })();
+  const folioAdditionsInsights = chartInsights(folioAdditionsTrend, {
+    metricName: "folio additions",
+    drawdownByLabel: ddByMonthForInsights,
+    cyclePhaseByLabel: cyclePhaseByMonth,
+    yoyLag: 12,
+  });
+
+
+  const hasAnyFolioOrNfoTrend = folioAdditionsTrend.length > 0;
+
+
+  // ---- Category Flow Share (IIFL Figure 31-34) section ---------------
+  //
+  // 12-month × 12-category heatmap of net-inflow share within the
+  // IIFL active-equity envelope:
+  //   netInflowSharePct = categoryNetInflow / activeEquityNetInflow × 100
+  // Always anchored on the latest available month — independent of
+  // the `?month=` selection elsewhere on /monthly — so the window
+  // rolls forward automatically when new months are ingested. Cells
+  // are null when either side is missing; the heatmap renders a
+  // muted "—", never a fake zero.
+  const iiflHeatmap = iiflActiveEquityHeatmapData();
+  const iiflHeatmapHasData = iiflHeatmap.rows.some((r) =>
+    r.values.some((v) => v !== null)
+  );
+  // Hover provenance for the source line — pull a representative
+  // category's `categoryNetInflow` provenance (Flexi Cap is dense
+  // across all months).
+
+  // ---- Active Equity Flow Diagnostics ------------------------------
+  // Three derived views sitting on top of the existing AMFI Monthly
+  // Report fields. No new ingestion / no new categories — just
+  // active-equity envelope flow vs. trailing-average, an AUM bridge
+  // (Δ closing AAUM split into net flow + market-residual), and SIP
+  // AUM as a % of Total AUM. Gross-inflow share is intentionally
+  // dropped: the monthly snapshot only carries net flow, gross
+  // (Funds Mobilized) lives on the quarterly snapshot.
+  // ---- IIFL-style "MF Flows — Risk of Slowdown" (Figures 4-7) ---------
+  // Composite data feeding the new combined section. Single-pass setup so
+  // the JSX below stays declarative.
+  const sipGrossShareSeries = monthlySipGrossShareTrend(72);
+  const sipGrossShareChartData = sipGrossShareSeries.map((p) => ({
+    label: p.month,
+    value: p.sipContribution,
+    line: p.sipShareOfGrossPct,
+  }));
+  const sipAccountsChartData = monthlyTrend("sipAccounts", 12).map((p) => ({
+    label: p.label,
+    // Raw SIP-account count; rendered in crore via the "crore-count" format
+    // (e.g. 9.65 Cr) to keep the dashboard on Indian numbering.
+    value: p.value,
+  }));
+
+  // Proportion diagnostics: category rotation + passive flow share. Each
+  // renders independently under its own tab (rotation in categories,
+  // passiveFlowShare in active-passive).
+  const rotation = categoryRotation(3, 5, amfiSelected?.month);
+
+  // The headline active-equity flow signal — feeds the market-tape /
+  // sticky context footer at the foot of the page.
+  const activeEquitySignal = activeEquityNetInflowSignal();
+  const latestNifty = latestNifty500Row();
+  const cyclePhasePoints = cyclePhaseHistory();
+  // Cycle-phase bands — group consecutive months of "Correction" or
+  // "Peak" into runs so any BarSeries on the page can draw a subtle
+  // background tint over those stretches. The other phases stay
+  // unshaded (most of the timeline) so the bands read as ambient
+  // context, not clutter.
+  // Recovery-tracker rows derived from the same episode list — for
+  // each episode, compute the pre-baseline / trough / recovery
+  // metrics so we can render "how long did it take investors to
+  // come back?".
+  const episodeRecoveryData = episodeRecoveryRows();
+  // Sankey data — composes SIP vs Lump-sum on the source side, and
+  // Calendar heat grid cells: every month in the active-equity
+  // history, value = z-score of that month's flow vs the full
+  // distribution. Drives the "7-year calendar" surface below.
+  const flowHeatCells: { month: string; value: number | null; hoverDetail?: string }[] = (() => {
+    const rows = amfiMonthlyRows();
+    const series = rows
+      .filter((r) => typeof r.activeEquityNetInflow === "number")
+      .map((r) => ({ month: r.month, value: r.activeEquityNetInflow as number }));
+    if (series.length === 0) return [];
+    const values = series.map((p) => p.value);
+    const n = values.length;
+    const mean = values.reduce((s, v) => s + v, 0) / n;
+    const variance = values.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
+    const stdDev = n >= 2 && variance > 0 ? Math.sqrt(variance) : null;
+    return series.map((p) => ({
+      month: p.month,
+      value: stdDev !== null ? (p.value - mean) / stdDev : null,
+      hoverDetail: `${formatCompactCrSafe(p.value)} · ${
+        stdDev !== null
+          ? `${((p.value - mean) / stdDev).toFixed(2)}σ`
+          : "—"
+      }`,
+    }));
+  })();
+  const latestCyclePhase =
+    cyclePhasePoints.length > 0
+      ? cyclePhasePoints[cyclePhasePoints.length - 1].phase
+      : null;
+  // Section reads — short data-driven 1-liners surfaced under
+  // each section title.
+  const snapshotRead = snapshotSectionRead();
+
+  // Ambit-style headline for the Snapshot card: net inflow level, its
+  // MoM ₹ change, SIP contribution share, and equity's share of gross
+  // flows. Built from already-computed values (selected row + flows).
+  const netInflowHeadline = (() => {
+    if (!amfiSelected || typeof amfiSelected.netInflow !== "number") return null;
+    const rows = amfiMonthlyRows();
+    const idx = rows.findIndex((r) => r.month === amfiSelected.month);
+    const prev = idx > 0 ? rows[idx - 1] : null;
+    const ni = amfiSelected.netInflow;
+    const prevNi =
+      prev && typeof prev.netInflow === "number" ? prev.netInflow : null;
+    const sipShare =
+      typeof amfiSelected.sipContribution === "number" && ni > 0
+        ? (amfiSelected.sipContribution / ni) * 100
+        : null;
+    const lf =
+      monthlyFlowsRows.find((r) => r.month === amfiSelected.month) ?? null;
+    let equityShare: number | null = null;
+    if (lf && typeof lf.equity === "number") {
+      const e = Math.abs(lf.equity);
+      const d = typeof lf.debt === "number" ? Math.abs(lf.debt) : 0;
+      const l = typeof lf.liquid === "number" ? Math.abs(lf.liquid) : 0;
+      const tot = e + d + l;
+      if (tot > 0) equityShare = (e / tot) * 100;
+    }
+    return { month: amfiSelected.month, ni, prevNi, sipShare, equityShare };
+  })();
+  const fmtNi = (v: number) =>
+    v >= 0 ? formatCompactCrSafe(v) : "−" + formatCompactCrSafe(-v);
+
+  // ---- AUM Mix + Attribution (relocated from /quarterly) -----------
+  // Quarter-end AUM mix table (Equity / Debt / Liquid / residual Other)
+  // and the AUM-change bridge (net flow vs market & timing residual).
+  // Both read the AMFI Quarterly snapshot via the same helpers /quarterly
+  // used, so the numbers are identical to the legacy page.
+  const tmQuarterRow = resolveSelectedQuarter(undefined);
+  const tmLiquidAum = tmQuarterRow
+    ? liquidAumForQuarter(tmQuarterRow.quarter)
+    : null;
+  const tmMixSlices: DonutSlice[] = [];
+  if (typeof tmQuarterRow?.equityAum === "number") {
+    tmMixSlices.push({
+      key: "equity",
+      label: "Equity",
+      value: tmQuarterRow.equityAum,
+      color: "hsl(var(--chart-1))",
+    });
+  }
+  if (typeof tmQuarterRow?.debtAum === "number") {
+    tmMixSlices.push({
+      key: "debt",
+      label: "Debt",
+      value: tmQuarterRow.debtAum,
+      color: "hsl(var(--chart-2))",
+    });
+  }
+  if (typeof tmLiquidAum === "number") {
+    tmMixSlices.push({
+      key: "liquid",
+      label: "Liquid",
+      value: tmLiquidAum,
+      color: "hsl(var(--chart-4))",
+    });
+  }
+  if (
+    typeof tmQuarterRow?.equityAum === "number" &&
+    typeof tmQuarterRow?.debtAum === "number" &&
+    typeof tmLiquidAum === "number" &&
+    typeof tmQuarterRow?.grandTotalAum === "number"
+  ) {
+    const residual =
+      tmQuarterRow.grandTotalAum -
+      tmQuarterRow.equityAum -
+      tmQuarterRow.debtAum -
+      tmLiquidAum;
+    if (residual > 0) {
+      tmMixSlices.push({
+        key: "other",
+        label: "Other",
+        value: residual,
+        color: "hsl(var(--muted-foreground))",
+      });
+    }
+  }
+  const tmAaumBridge = quarterlyAaumBridge(10);
+
   return (
-    <div className="space-y-6">
-      <PageHeader title="Overview" subtitle="Industry snapshot" />
+    <div className="space-y-8">
+      <PageHeader
+        title="Total Market"
+        subtitle={`Industry-wide · ${subtitle.replace(/^Industry-wide · /, "")}`}
+      />
 
-      <section className="space-y-3">
-        <div>
-          <h2 className="text-sm font-medium tracking-tight">
-            What mutual funds are buying &amp; selling
-          </h2>
-        </div>
-        <CapFlowsView flows={capFlows} />
-      </section>
+      <DashboardTabs
+        basePath="/"
+        tabs={MONTHLY_TABS}
+        activeId={activeTab}
+        searchParams={sp}
+      />
 
-      <section className="space-y-3">
-        <div>
-          <h2 className="text-sm font-medium tracking-tight">
-            Monthly sector flows
-          </h2>
+      {activeTab === "snapshot" && (
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight">
+              What mutual funds are buying &amp; selling
+            </h2>
+          </div>
+          <CapFlowsView flows={capFlows} />
+        </section>
+      )}
+
+      {activeTab === "snapshot" && (
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight">
+              Monthly sector flows
+            </h2>
+          </div>
+          <SectorFlowHeatmap />
+        </section>
+      )}
+
+      {activeTab === "snapshot" &&
+        amfiSelected &&
+        amfiAvailableMonths.length > 0 && (
+          <MonthPicker
+            availableMonths={amfiAvailableMonths}
+            selectedMonth={amfiSelected.month}
+          />
+        )}
+
+      {activeTab === "snapshot" && (
+      <Card
+        title="AMFI Monthly Snapshot"
+        subtitle={
+          snapshotRead && amfiSelected
+            ? `${amfiSectionSubtitle} · ${snapshotRead}`
+            : amfiSectionSubtitle
+        }
+        action={
+          <span
+            className={cn(
+              "shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
+              amfiSelected
+                ? "border-positive/40 bg-positive/10 text-positive"
+                : "border-border text-muted-foreground"
+            )}
+          >
+            {amfiSelected ? "Live" : "Not connected"}
+          </span>
+        }
+      >
+        {netInflowHeadline && (
+          <KeyTakeaway
+            className="mb-4"
+            headline={
+              <>
+                Industry net inflow in {netInflowHeadline.month} was{" "}
+                {fmtNi(netInflowHeadline.ni)}
+                {netInflowHeadline.prevNi !== null && (
+                  <>
+                    {" "}
+                    (<DeltaCr cr={netInflowHeadline.ni - netInflowHeadline.prevNi} />{" "}
+                    MoM)
+                  </>
+                )}
+                {netInflowHeadline.sipShare !== null && (
+                  <>
+                    ; SIPs contributed {netInflowHeadline.sipShare.toFixed(0)}% of
+                    it
+                  </>
+                )}
+                {netInflowHeadline.equityShare !== null && (
+                  <>, and equity took {netInflowHeadline.equityShare.toFixed(0)}% of gross flows</>
+                )}
+                .
+              </>
+            }
+          />
+        )}
+        {amfiCardsToRender.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {amfiCardsToRender.map((c) => (
+              <KpiCard
+                key={c.field}
+                label={c.label}
+                value={c.formatted}
+                note={c.note}
+                noteHover={c.noteHover}
+                sparkline={c.sparkline}
+                sparklineColor={c.sparklineColor}
+                yoyPct={c.yoyPct}
+                percentile={c.percentile}
+                ratio={c.ratioLine}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
+            No AMFI PDF data ingested yet.
+          </div>
+        )}
+      </Card>
+      )}
+
+      {activeTab === "aum-mix" && tmQuarterRow && tmMixSlices.length > 0 && (
+        <Card
+          title="Quarter-end AUM Mix"
+          subtitle={`Quarter-end AUM · share of Total AUM (residual = Other) · ${tmQuarterRow.quarterLabel} · Source: AMFI Quarterly Report`}
+        >
+          <QuarterEndMixTable
+            slices={tmMixSlices}
+            quarterLabel={tmQuarterRow.quarterLabel}
+          />
+        </Card>
+      )}
+
+      {activeTab === "aum-mix" && amfiSelected && (
+        <div className="space-y-3">
+          {maaumColumns && (
+            <Card
+              title="Monthly Avg Assets by Category"
+              subtitleNode={
+                <div className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground">
+                    Monthly average AUM by category, with the active-equity
+                    split. Equity = Active + ETF &amp; Index + Arbitrage.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/80">
+                    {`${maaumColumns.yearAgo.monthLabel} · ${maaumColumns.prevMonth.monthLabel} · ${maaumColumns.latest.monthLabel} · Source: AMFI Monthly Report`}
+                  </p>
+                </div>
+              }
+              action={
+                <DownloadXlsxButton
+                  rows={[
+                    maaumColumns.latest,
+                    maaumColumns.prevMonth,
+                    maaumColumns.yearAgo,
+                  ]}
+                  columns={MAAUM_XLSX_COLUMNS}
+                  filename="industry-maaum-breakdown.xlsx"
+                  sheetName="MAAUM Breakdown"
+                />
+              }
+            >
+              <MaaumTable
+                yearAgo={maaumColumns.yearAgo}
+                prevMonth={maaumColumns.prevMonth}
+                latest={maaumColumns.latest}
+              />
+            </Card>
+          )}
         </div>
-        <SectorFlowHeatmap />
-      </section>
+      )}
+
+      {activeTab === "snapshot" && hasAnySipTrend && (
+        <div className="space-y-3">
+          <section className="space-y-4">
+            {sipGrossShareSeries.length > 0 && (
+              <Card title="SIP flows vs Industry Gross Inflows">
+                <BarsWithIndexLine
+                  data={sipGrossShareChartData}
+                  barColor="hsl(var(--chart-1))"
+                  lineColor="hsl(var(--chart-3))"
+                  valueFormat="cr"
+                  axisFormat="cr"
+                  lineValueFormat="pct"
+                  lineAxisFormat="pct"
+                  labelFormat="month"
+                  barName="SIP Flows (₹ Cr)"
+                  lineName="SIP Flows as % of gross Inflows (RHS)"
+                  lineDomain={[0, 110]}
+                  lineTicks={[0, 25, 50, 75, 100]}
+                />
+              </Card>
+            )}
+
+            <div className="grid gap-4 lg:grid-cols-2">
+            {hasAnyFolioOrNfoTrend && folioAdditionsTrend.length > 0 && (
+              <ChartWithContext
+                title="Folio Additions Trend"
+                subtitle="Net new folios opened each month. A breadth-of-investor signal."
+                flowKind="net"
+                denominatorCaption={(() => {
+                  const span = `${folioAdditionsTrend.length} month${folioAdditionsTrend.length === 1 ? "" : "s"}`;
+                  return folioAdditionsDenomCaption
+                    ? `${span} · lakh · ${folioAdditionsDenomCaption}`
+                    : `${span} · lakh`;
+                })()}
+                denominatorTooltip="Net new folios opened each month, in lakh — a breadth-of-investor signal tracking how many new accounts the industry adds."
+                insights={folioAdditionsInsights}
+                yoyBadge={(() => {
+                  const v = latestYoyPct(folioAdditionsTrend, 12);
+                  return v === null ? undefined : { label: "YoY", pct: v };
+                })()}
+              >
+                {(() => {
+                  const ov = adaptiveAverageOverlay(folioAdditionsFullHistory, folioAdditionsTrend, 12);
+                  return (
+                    <BarSeries
+                      data={folioAdditionsTrend}
+                      name="Folio Additions"
+                      color="hsl(var(--chart-4))"
+                      valueFormat="lakh"
+                      axisFormat="lakh"
+                      labelFormat="month"
+                      trendline={ov.kind === "trailing" ? ov.trendline : undefined}
+                      trendlineName={ov.kind === "trailing" ? ov.label : undefined}
+                      referenceValue={ov.kind === "visible-mean" ? ov.referenceValue : undefined}
+                      referenceLabel={ov.kind === "visible-mean" ? ov.label : undefined}
+                    />
+                  );
+                })()}
+              </ChartWithContext>
+            )}
+
+            {sipAccountsChartData.length > 0 && (
+              <Card
+                title="SIP Active contributing accounts (Cr)"
+              >
+                <BarsWithLabels
+                  data={sipAccountsChartData}
+                  barColor="hsl(var(--chart-3))"
+                  valueFormat="crore-count"
+                  axisFormat="crore-count"
+                  labelFormat="month"
+                  name="SIP Active contributing accounts (Cr)"
+                  labelValueFormat="crore-count"
+                />
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Live SIP-account count, expressed in crore. Sourced from
+                  the AMFI Monthly Note&apos;s SIP trend table.
+                </p>
+              </Card>
+            )}
+            </div>
+          </section>
+        </div>
+      )}
+
+      {activeTab === "snapshot" && nfoFundsHasData && (
+        <Card
+          title="New Fund Offers Mobilised"
+          subtitleNode={
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">
+                New Fund Offer money raised each month — a read on how much
+                fresh supply is launching.
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">
+                {`${nfoFundsChart.length} months · industry total (active-equity split not separately disclosed) · Source: AMFI Monthly Report`}
+              </p>
+            </div>
+          }
+        >
+          <VerticalBars
+            data={nfoFundsChart}
+            xKey="month"
+            bars={[
+              {
+                key: "value",
+                name: "NFO funds mobilised",
+                color: "hsl(var(--chart-1))",
+              },
+            ]}
+            valueFormat="cr"
+            axisFormat="cr"
+            labelFormat="month"
+            labelMode="all"
+          />
+        </Card>
+      )}
+
+
+      {activeTab === "attribution" && tmAaumBridge.length > 0 && (
+        <Card
+          title="Estimated AUM Attribution — New Money vs Market & Residual"
+          subtitle="How much of each quarter's AUM change came from net flows versus a residual (market movement, within-quarter timing, and an averaging mismatch). Estimated — the residual is not a clean net-flow figure."
+        >
+          <AaumBridgeTable rows={tmAaumBridge} />
+        </Card>
+      )}
+
+      {activeTab === "flow-table" && (
+        <Card
+          title="Monthly Flows & AUM · Table"
+          subtitleNode={
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">
+                The whole Flows tab as one grid — net flows by category,
+                month-end AUM mix, and Industry AAUM, one row per month.
+              </p>
+              <p className="text-[11px] text-muted-foreground/80">
+                {`Latest ${flowTableRows.length} month${flowTableRows.length === 1 ? "" : "s"} · newest first (★) · Source: AMFI Monthly Report`}
+              </p>
+            </div>
+          }
+          action={
+            <DownloadXlsxButton
+              rows={flowTableRows}
+              columns={MONTHLY_FLOWS_XLSX_COLUMNS}
+              filename="monthly-flows.xlsx"
+              sheetName="Monthly Flows"
+            />
+          }
+        >
+          {flowTableHasData ? (
+            <>
+              <HowToRead>
+                <ul className="list-disc space-y-0.5 pl-4">
+                  <li>
+                    <span className="text-foreground">Net Flows</span>: Total is
+                    the industry net flow in ₹ Cr; Equity / Hybrid / Active Eq are
+                    each a signed % of the month&rsquo;s gross flow magnitude
+                    (which still counts debt &amp; liquid). {" "}
+                    <span className="text-positive">Green = inflow</span>,{" "}
+                    <span className="text-negative">red = outflow</span>; shade
+                    intensity scales with the size of the move within each column.
+                  </li>
+                  <li>
+                    <span className="text-foreground">AUM Mix</span> shows each
+                    segment&rsquo;s share of month-end AUM, with the small MoM
+                    change (pp) beneath.
+                  </li>
+                  <li>
+                    <span className="text-foreground">Industry AAUM</span> is the
+                    period-average asset base (₹ Cr) with its MoM / YoY growth.
+                  </li>
+                  <li>
+                    &ldquo;—&rdquo; means that month&rsquo;s AMFI report
+                    didn&rsquo;t carry the field — not zero.
+                  </li>
+                </ul>
+              </HowToRead>
+              <MonthlyFlowsTable rows={flowTableRows} />
+            </>
+          ) : (
+            <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+              No monthly flow data ingested yet.
+            </div>
+          )}
+        </Card>
+      )}
+
+      {activeTab === "fee-mix" && feeMix.length > 0 && (
+        <Card title="Fee Mix of Net Inflows">
+          <FeeMixInflows months={feeMix} />
+        </Card>
+      )}
+
+      {activeTab === "categories" &&
+        rotation &&
+        rotation.gainers.length > 0 &&
+        rotation.losers.length > 0 &&
+        (() => {
+          const topGainer = rotation.gainers[0];
+          const topLoser = rotation.losers.reduce((m, e) =>
+            e.deltaSharePct < m.deltaSharePct ? e : m
+          );
+          return (
+            <KeyTakeaway
+              headline={
+                <>
+                  Over the {rotation.windowMonths}M ending{" "}
+                  {formatMonthLabel(rotation.currentRange.end)},{" "}
+                  <strong>{topGainer.label}</strong> gained the most
+                  active-equity flow share (
+                  <span className="text-positive">
+                    +{topGainer.deltaSharePct.toFixed(2)}pp
+                  </span>
+                  ), while <strong>{topLoser.label}</strong> lost the most (
+                  <span className="text-negative">
+                    {topLoser.deltaSharePct.toFixed(2)}pp
+                  </span>
+                  ).
+                </>
+              }
+            />
+          );
+        })()}
+
+      {activeTab === "categories" && iiflHeatmapHasData && (
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-medium tracking-tight">
+                Active-Equity Flows by Category
+              </h2>
+            </div>
+            <DownloadXlsxButton
+              rows={iiflHeatmap.rows.map((r) => {
+                const row: Record<string, string | number | null> = {
+                  category: r.label,
+                };
+                iiflHeatmap.months.forEach((m, i) => {
+                  row[m] = r.values[i];
+                });
+                return row;
+              })}
+              columns={[
+                { key: "category", header: "Category" },
+                ...iiflHeatmap.months.map((m) => ({
+                  key: m,
+                  header: formatHeatmapMonth(m),
+                })),
+              ]}
+              filename="active-equity-net-inflow-rotation.xlsx"
+              sheetName="Flow Rotation"
+            />
+          </div>
+
+          <IiflHeatmap
+            months={iiflHeatmap.months}
+            rows={iiflHeatmap.rows}
+            lens="share"
+          />
+
+          <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <InfoTooltip label="Share = category net inflow ÷ active-equity net inflow. Active equity = equity-oriented schemes + hybrid schemes excluding arbitrage + solution-oriented schemes." />
+          </p>
+        </div>
+      )}
+
+      {activeTab === "market-cycle" && flowHeatCells.length > 0 && (
+        <Card
+          title="Active Equity Flow · 7-year Calendar"
+          subtitle="Each cell = one month · colour = z-score vs full history"
+        >
+          <CalendarHeatGrid
+            cells={flowHeatCells}
+            saturationBound={2}
+            caption="Active-equity net inflow z-score per month"
+          />
+        </Card>
+      )}
+
+      {activeTab === "market-cycle" && episodeRecoveryData.length > 0 && (
+        <EpisodeRecoveryCard rows={episodeRecoveryData} />
+      )}
+
+      <StickyContextFooter
+        cyclePhase={latestCyclePhase}
+        flowZScore={activeEquitySignal?.zScore ?? null}
+        drawdownPct={latestNifty?.drawdownPct ?? null}
+        latestMonth={activeEquitySignal?.latestMonth ?? null}
+      />
     </div>
   );
 }
+
