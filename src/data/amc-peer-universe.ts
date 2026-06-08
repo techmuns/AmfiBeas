@@ -27,10 +27,11 @@
  */
 import { amcAaumQuarterlySnapshot } from "./source";
 import type { AmcAaumQuarterlyRow } from "./snapshots/types";
+import { memoize } from "@/lib/memoize";
 
 /** Return the most recent quarter id (YYYY-Qn) with at least one
  *  `status="ok"` row. Returns null when the snapshot has no ok rows. */
-export function latestAaumQuarter(): string | null {
+function latestAaumQuarter_impl(): string | null {
   const quarters = new Set<string>();
   for (const r of amcAaumQuarterlySnapshot.rows) {
     if (r.status === "ok") quarters.add(r.quarter);
@@ -42,7 +43,7 @@ export function latestAaumQuarter(): string | null {
 /** All AMC AAUM rows for a specific quarter, sorted by avgAum
  *  descending. Excludes non-ok rows. Returns [] for an unknown
  *  quarter. */
-export function allAmcAaumRowsForQuarter(
+function allAmcAaumRowsForQuarter_impl(
   quarter: string
 ): AmcAaumQuarterlyRow[] {
   return amcAaumQuarterlySnapshot.rows
@@ -64,7 +65,7 @@ export function topAumAmcsForQuarter(
 /** Convenience: top N slugs for the LATEST quarter. Used as the
  *  default peer universe for /monthly and /quarterly market-share
  *  widgets. Returns [] when the snapshot is empty. */
-export function topAumAmcSlugs(n = 7): string[] {
+function topAumAmcSlugs_impl(n = 7): string[] {
   const q = latestAaumQuarter();
   if (!q) return [];
   return topAumAmcsForQuarter(q, n).map((r) => r.amcSlug);
@@ -245,7 +246,7 @@ export const MIN_FULL_UNIVERSE = 30;
  * Returns `rows: []`, `topAmcs: []`, `coverage: null`, and
  * `isFullUniverse: false` when the snapshot is empty.
  */
-export function topAumMarketShareSeries(
+function topAumMarketShareSeries_impl(
   n = 7,
   lastN = 8
 ): AumMarketShareData {
@@ -375,7 +376,7 @@ export interface AmcHealthMatrix {
  * AMCs sorted by latest-quarter AAUM descending so the largest
  * AMCs render at the top of the heatmap.
  */
-export function amcHealthGrowthMatrix(lastN = 8): AmcHealthMatrix {
+function amcHealthGrowthMatrix_impl(lastN = 8): AmcHealthMatrix {
   // Build the chronological quarter window.
   const allQuarters = Array.from(
     new Set(
@@ -462,7 +463,7 @@ export function amcHealthGrowthMatrix(lastN = 8): AmcHealthMatrix {
  * quarter?". Cells with no growth value, or quarters where stdDev
  * is zero / only one AMC has a value, return null.
  */
-export function amcHealthGrowthZScoreMatrix(lastN = 8): AmcHealthMatrix {
+function amcHealthGrowthZScoreMatrix_impl(lastN = 8): AmcHealthMatrix {
   const base = amcHealthGrowthMatrix(lastN);
   if (base.rows.length === 0) return base;
   // For each visible quarter index, gather the cohort's growth
@@ -559,7 +560,7 @@ export interface AmcAnomalyReport {
  * Returns `null` when fewer than 10 AMCs have a measurable QoQ
  * — the cohort is too small for a meaningful z-score.
  */
-export function latestQoqAnomalies(threshold = 2): AmcAnomalyReport | null {
+function latestQoqAnomalies_impl(threshold = 2): AmcAnomalyReport | null {
   const allQuarters = Array.from(
     new Set(
       amcAaumQuarterlySnapshot.rows
@@ -665,7 +666,7 @@ export function latestQoqAnomalies(threshold = 2): AmcAnomalyReport | null {
  *
  * Returns the latest `lastN` quarters in chronological order.
  */
-export function amcLevelHhiSeries(lastN = 8): HhiPoint[] {
+function amcLevelHhiSeries_impl(lastN = 8): HhiPoint[] {
   const quarters = Array.from(
     new Set(
       amcAaumQuarterlySnapshot.rows
@@ -918,7 +919,7 @@ export interface FundwiseMatrix {
   rows: FundwiseRow[];
 }
 
-export function fundwiseAumMatrix(topN = 25, lastN = 8): FundwiseMatrix {
+function fundwiseAumMatrix_impl(topN = 25, lastN = 8): FundwiseMatrix {
   const allQuarters = Array.from(
     new Set(
       amcAaumQuarterlySnapshot.rows
@@ -994,3 +995,19 @@ export function fundwiseAumMatrix(topN = 25, lastN = 8): FundwiseMatrix {
   };
 }
 
+
+// Memoized public exports. These helpers repeatedly walk the immutable AAUM
+// snapshot (allAmcAaumRowsForQuarter alone is called per-quarter, per-AMC from
+// the detail/index helpers), so caching per isolate keeps each render under the
+// Cloudflare Worker CPU budget (Error 1102). See src/lib/memoize.ts.
+export const latestAaumQuarter = memoize(latestAaumQuarter_impl);
+export const allAmcAaumRowsForQuarter = memoize(allAmcAaumRowsForQuarter_impl);
+export const topAumAmcSlugs = memoize(topAumAmcSlugs_impl);
+export const fundwiseAumMatrix = memoize(fundwiseAumMatrix_impl);
+export const latestQoqAnomalies = memoize(latestQoqAnomalies_impl);
+export const topAumMarketShareSeries = memoize(topAumMarketShareSeries_impl);
+export const amcHealthGrowthMatrix = memoize(amcHealthGrowthMatrix_impl);
+export const amcHealthGrowthZScoreMatrix = memoize(
+  amcHealthGrowthZScoreMatrix_impl,
+);
+export const amcLevelHhiSeries = memoize(amcLevelHhiSeries_impl);

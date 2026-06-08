@@ -1,5 +1,6 @@
 import indexJson from "@/data/portfolio-tracker/index.json";
 import { amcOf } from "@/data/amc-name-map";
+import { memoize } from "@/lib/memoize";
 
 /**
  * Derived per-AMC EQUITY active/passive book.
@@ -108,7 +109,11 @@ export interface AmcEquityBookRow {
   schemes: number;
 }
 
-function buildBook(): {
+// Memoized per isolate: buildBook walks the full RupeeVest scheme index and is
+// called by both amcEquityBook() and amcEquityBookDiagnostics() on every Market
+// Share / Compare render, so caching keeps the Worker under its CPU budget
+// (Cloudflare Error 1102). See src/lib/memoize.ts.
+const buildBook = memoize(function buildBook_impl(): {
   rows: AmcEquityBookRow[];
   dedup: DedupResult;
   industryTotal: number;
@@ -144,7 +149,7 @@ function buildBook(): {
     })
     .sort((a, b) => b.totalEquityCr - a.totalEquityCr);
   return { rows, dedup, industryTotal };
-}
+});
 
 /** Per-AMC derived equity book, largest total equity first. */
 export function amcEquityBook(): AmcEquityBookRow[] {

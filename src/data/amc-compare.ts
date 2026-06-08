@@ -10,6 +10,7 @@ import {
 } from "@/data/aggregate";
 import { amcAaumQuarterlySnapshot } from "@/data/source";
 import { amcEquityBook, type AmcEquityBookRow } from "@/data/amc-equity-book";
+import { memoize } from "@/lib/memoize";
 
 /**
  * Unified per-AMC comparison metrics for the head-to-head tool. Joins three
@@ -45,7 +46,7 @@ export interface AmcCompareMetrics {
 }
 
 /** All comparable AMCs (those in the latest AAUM quarter), largest first. */
-export function amcCompareUniverse(): { slug: string; displayName: string }[] {
+function amcCompareUniverse_impl(): { slug: string; displayName: string }[] {
   const idx = amcIndexRows();
   if (!idx) return [];
   return idx.rows.map((r) => ({ slug: r.amcSlug, displayName: r.displayName }));
@@ -125,7 +126,7 @@ function rowToMetrics(
 }
 
 /** Comparison metrics for one AMC slug, or null if it isn't in the universe. */
-export function amcComparison(slug: string): AmcCompareMetrics | null {
+function amcComparison_impl(slug: string): AmcCompareMetrics | null {
   const idx = amcIndexRows();
   if (!idx) return null;
   const row = idx.rows.find((r) => r.amcSlug === slug);
@@ -135,7 +136,7 @@ export function amcComparison(slug: string): AmcCompareMetrics | null {
 
 /** Industry-total benchmark column. AAUM is the sum of per-AMC AAUM; growth is
  *  computed on that summed series; the equity mix sums the derived book. */
-export function industryComparison(): AmcCompareMetrics {
+function industryComparison_impl(): AmcCompareMetrics {
   const book = amcEquityBook();
   const totalsByQuarter = new Map<string, number>();
   for (const r of amcAaumQuarterlySnapshot.rows) {
@@ -192,7 +193,7 @@ export function industryComparison(): AmcCompareMetrics {
  *  book (O(AMCs)) — it must NOT call rowToMetrics per AMC, which re-derives the
  *  per-AMC market-share series and is O(quarters × AMCs²) (blows the Worker
  *  CPU budget). Nulls are skipped per field; rank isn't meaningful as a mean. */
-export function industryAverageComparison(): AmcCompareMetrics {
+function industryAverageComparison_impl(): AmcCompareMetrics {
   const idx = amcIndexRows();
   const rows = idx?.rows ?? [];
   const book = amcEquityBook();
@@ -256,6 +257,16 @@ export function industryAverageComparison(): AmcCompareMetrics {
 }
 
 /** The fiscal label of the latest AAUM quarter (for subtitles). */
-export function amcCompareQuarterLabel(): string | null {
+function amcCompareQuarterLabel_impl(): string | null {
   return amcIndexRows()?.fiscalLabel ?? null;
 }
+
+// Memoized public exports. The Compare tab calls amcComparison three times
+// (A, B, industry) plus the two industry aggregates per render, each fanning
+// out to amcIndexRows / amcEquityBook, so caching per isolate keeps the Worker
+// under its CPU budget (Cloudflare Error 1102). See src/lib/memoize.ts.
+export const amcCompareUniverse = memoize(amcCompareUniverse_impl);
+export const amcComparison = memoize(amcComparison_impl);
+export const industryComparison = memoize(industryComparison_impl);
+export const industryAverageComparison = memoize(industryAverageComparison_impl);
+export const amcCompareQuarterLabel = memoize(amcCompareQuarterLabel_impl);

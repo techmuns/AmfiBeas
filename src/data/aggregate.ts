@@ -10,6 +10,7 @@ import {
   amcQuarterlySnapshot,
   industryMonthlySnapshot,
 } from "./source";
+import { memoize } from "@/lib/memoize";
 
 const liveQuarterlyBySlug = (() => {
   const m = new Map<string, QuarterlyFinancial[]>();
@@ -253,7 +254,7 @@ export interface ProductShareRow {
  * by total AUM. Lets an analyst see where an AMC punches above its overall
  * weight by product (e.g. strong in equity, thin in debt).
  */
-export function marketShareByProduct(
+function marketShareByProduct_impl(
   month?: string
 ): { month: string; rows: ProductShareRow[] } {
   const m = month ?? latestMonth();
@@ -504,3 +505,8 @@ export function pickMonthly(
 ): number[] {
   return MONTHLY.filter((r) => r.amcSlug === slug).map((r) => r[field]);
 }
+
+// Memoized per isolate — the Market Share tab calls this each render and it
+// walks the full MONTHLY dataset; caching keeps the Worker under its CPU
+// budget (Cloudflare Error 1102). See src/lib/memoize.ts.
+export const marketShareByProduct = memoize(marketShareByProduct_impl);

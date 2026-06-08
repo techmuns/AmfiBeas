@@ -16,6 +16,7 @@
  */
 import { amcAaumQuarterlySnapshot } from "./source";
 import type { AmcAaumQuarterlyRow } from "./snapshots/types";
+import { memoize } from "@/lib/memoize";
 import {
   allAmcAaumRowsForQuarter,
   fiscalLabelFromCalendarQuarter,
@@ -36,7 +37,7 @@ export interface AmcSummary {
 /** All AMC slugs that appear in any `status="ok"` AAUM row, sorted
  *  alphabetically by display name. Used to drive
  *  `generateStaticParams` and the /amc index. */
-export function allAaumAmcs(): AmcSummary[] {
+function allAaumAmcs_impl(): AmcSummary[] {
   const seen = new Map<string, AmcSummary>();
   for (const r of amcAaumQuarterlySnapshot.rows) {
     if (r.status !== "ok") continue;
@@ -75,7 +76,7 @@ interface QuarterPoint {
 
 /** Per-AMC AAUM time series, sorted ascending by quarter. Empty
  *  array when the AMC has no ok rows. */
-export function amcAaumSeries(slug: string): QuarterPoint[] {
+function amcAaumSeries_impl(slug: string): QuarterPoint[] {
   return amcAaumQuarterlySnapshot.rows
     .filter((r) => r.amcSlug === slug && r.status === "ok")
     .slice()
@@ -98,7 +99,7 @@ interface MarketSharePoint extends QuarterPoint {
  *  the SAME quarter's industry total — so the share % moves on the
  *  same time basis as the AAUM trend. Returns [] when the AMC has
  *  no rows. */
-export function amcMarketShareSeries(slug: string): MarketSharePoint[] {
+function amcMarketShareSeries_impl(slug: string): MarketSharePoint[] {
   const series = amcAaumSeries(slug);
   return series
     .map((point) => {
@@ -129,7 +130,7 @@ interface RankPoint {
 /** Per-AMC rank time series. The rank denominator (`outOf`) is the
  *  count of `status="ok"` AMCs in each quarter, so a quarter where
  *  AMFI added new AMCs widens the universe. */
-export function amcRankSeries(slug: string): RankPoint[] {
+function amcRankSeries_impl(slug: string): RankPoint[] {
   const out: RankPoint[] = [];
   const series = amcAaumSeries(slug);
   for (const point of series) {
@@ -158,7 +159,7 @@ export interface AmcGrowthMetrics {
 /** QoQ (latest vs prior quarter) and YoY (latest vs same quarter
  *  one year ago) AAUM growth percentages. Returns null for any
  *  metric whose comparison quarter isn't in the snapshot. */
-export function amcGrowthMetrics(slug: string): AmcGrowthMetrics | null {
+function amcGrowthMetrics_impl(slug: string): AmcGrowthMetrics | null {
   const series = amcAaumSeries(slug);
   if (series.length === 0) return null;
   const latest = series[series.length - 1];
@@ -328,7 +329,7 @@ export interface AmcIndexRow {
   isTop7: boolean;
 }
 
-export function amcIndexRows(): {
+function amcIndexRows_impl(): {
   quarter: string;
   fiscalLabel: string;
   rows: AmcIndexRow[];
@@ -360,7 +361,7 @@ export function amcIndexRows(): {
 /** Industry-total AAUM per quarter, used as a reference line when an
  *  AMC's AAUM trend is rebased so the reader can compare the AMC's
  *  growth trajectory against the industry's. */
-export function industryAaumSeries(): QuarterPoint[] {
+function industryAaumSeries_impl(): QuarterPoint[] {
   const byQuarter = new Map<string, number>();
   for (const r of amcAaumQuarterlySnapshot.rows) {
     if (r.status !== "ok") continue;
@@ -384,7 +385,7 @@ export interface CohortMedianSharePoint {
  *  reference line on the per-AMC Market Share Trend chart so the
  *  reader can see whether the AMC is above / below the typical
  *  AMC's share. */
-export function cohortMedianMarketShareSeries(): CohortMedianSharePoint[] {
+function cohortMedianMarketShareSeries_impl(): CohortMedianSharePoint[] {
   const byQuarter = new Map<string, number[]>();
   for (const r of amcAaumQuarterlySnapshot.rows) {
     if (r.status !== "ok") continue;
@@ -412,3 +413,19 @@ export function cohortMedianMarketShareSeries(): CohortMedianSharePoint[] {
   }
   return out;
 }
+
+// Memoized public exports. These helpers walk the immutable AAUM snapshot and
+// are called repeatedly within a single render (e.g. amcIndexRows fans out to
+// amcGrowthMetrics → amcAaumSeries for every AMC) and across tab switches, so
+// caching per isolate keeps each render under the Cloudflare CPU budget
+// (Error 1102). See src/lib/memoize.ts.
+export const allAaumAmcs = memoize(allAaumAmcs_impl);
+export const amcAaumSeries = memoize(amcAaumSeries_impl);
+export const amcMarketShareSeries = memoize(amcMarketShareSeries_impl);
+export const amcRankSeries = memoize(amcRankSeries_impl);
+export const amcGrowthMetrics = memoize(amcGrowthMetrics_impl);
+export const amcIndexRows = memoize(amcIndexRows_impl);
+export const industryAaumSeries = memoize(industryAaumSeries_impl);
+export const cohortMedianMarketShareSeries = memoize(
+  cohortMedianMarketShareSeries_impl,
+);
