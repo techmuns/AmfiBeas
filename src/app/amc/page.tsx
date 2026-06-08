@@ -10,8 +10,6 @@ import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import { AmcEquityBookHeatmap } from "@/components/data/AmcEquityBookHeatmap";
 import { AmcHeadToHead } from "@/components/data/AmcHeadToHead";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
-import { MarketShareByProduct } from "@/components/data/MarketShareByProduct";
-import { marketShareByProduct } from "@/data/aggregate";
 import { StrategicMovesCohortLane } from "@/components/amc/StrategicMovesCohortLane";
 import { CohortUniqueInvestorShare } from "@/components/amc/CohortUniqueInvestorShare";
 import { AmcCashAllocationTrend } from "@/components/amc/AmcCashAllocationTrend";
@@ -42,8 +40,8 @@ import {
 import { resolveTabWithAliases } from "@/lib/tabs";
 
 const AMC_TABS = [
-  { id: "overview", label: "AMC Overview" },
-  { id: "share", label: "Market Share & Concentration" },
+  { id: "directory", label: "AMC Directory" },
+  { id: "insights", label: "Market Share Insights" },
   { id: "compare", label: "Compare" },
 ] as const satisfies readonly DashboardTabDef[];
 type AmcTabId = (typeof AMC_TABS)[number]["id"];
@@ -58,8 +56,13 @@ export default async function AmcListPage({
   const activeTab = resolveTabWithAliases<AmcTabId>(
     sp.tab,
     AMC_TAB_IDS,
-    { insights: "share", "share-positioning": "share" },
-    "overview",
+    {
+      overview: "directory",
+      share: "insights",
+      "share-positioning": "insights",
+      concentration: "insights",
+    },
+    "directory",
   );
   const data = amcIndexRows();
 
@@ -76,18 +79,7 @@ export default async function AmcListPage({
   // Each helper below walks the full AAUM / portfolio snapshot. Running all of
   // them on every tab needlessly burns the Worker's CPU budget (Cloudflare
   // Error 1102), so compute only what the ACTIVE tab actually renders.
-  const anomalies = activeTab === "overview" ? latestQoqAnomalies(2) : null;
-
-  // Per-AMC market share within each product category (latest month); top AMCs
-  // by total AUM, display names joined from the AAUM index.
-  const productShare = activeTab === "share" ? marketShareByProduct() : null;
-  const amcNameBySlug = new Map(
-    data.rows.map((r) => [r.amcSlug, r.displayName])
-  );
-  const productShareRows = (productShare?.rows ?? [])
-    .filter((r) => amcNameBySlug.has(r.amcSlug))
-    .slice(0, 20)
-    .map((r) => ({ ...r, displayName: amcNameBySlug.get(r.amcSlug) as string }));
+  const anomalies = activeTab === "directory" ? latestQoqAnomalies(2) : null;
 
   // Fundwise (per-AMC) AUM & market-share heatmap. Metric toggle picks
   // what the cells show; default is market share + QoQ Δ bps.
@@ -98,7 +90,7 @@ export default async function AmcListPage({
         ? "growth"
         : "share";
   const fundwise =
-    activeTab === "share"
+    activeTab === "insights"
       ? fundwiseAumMatrix(25, 8)
       : { quarters: [], quarterLabels: [], rows: [] };
   const fundwiseLatestIdx = fundwise.quarterLabels.length - 1;
@@ -154,9 +146,9 @@ export default async function AmcListPage({
     ...fundwise.quarterLabels.map((label) => ({ key: label, header: label })),
   ];
 
-  const equityBook = activeTab === "share" ? amcEquityBook() : [];
+  const equityBook = activeTab === "insights" ? amcEquityBook() : [];
   const equityBookDiag =
-    activeTab === "share" ? amcEquityBookDiagnostics() : null;
+    activeTab === "insights" ? amcEquityBookDiagnostics() : null;
 
   const compareUniverse =
     activeTab === "compare" ? amcCompareUniverse() : [];
@@ -190,7 +182,7 @@ export default async function AmcListPage({
         searchParams={sp}
       />
 
-      {activeTab === "overview" && anomalies && anomalies.outliers.length > 0 && (
+      {activeTab === "directory" && anomalies && anomalies.outliers.length > 0 && (
         <Card
           title="Outliers this quarter"
           subtitleNode={
@@ -243,11 +235,11 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {activeTab === "share" && <AmcStockConcentration />}
+      {activeTab === "insights" && <AmcStockConcentration />}
 
-      {activeTab === "share" && <CohortUniqueInvestorShare />}
+      {activeTab === "insights" && <CohortUniqueInvestorShare />}
 
-      {activeTab === "share" && (
+      {activeTab === "insights" && (
         <StrategicMovesCohortLane
           selectedAmc={typeof sp.moveAmc === "string" ? sp.moveAmc : undefined}
           selectedPeriod={
@@ -256,7 +248,7 @@ export default async function AmcListPage({
         />
       )}
 
-      {activeTab === "share" && fundwise.rows.length > 0 && (
+      {activeTab === "insights" && fundwise.rows.length > 0 && (
         <Card
           title="Fund-by-Fund Market Share"
           subtitleNode={
@@ -354,25 +346,13 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {activeTab === "share" && productShare && productShareRows.length > 0 && (
-        <Card
-          title="Market Share by Product"
-          subtitle="Where each AMC is strong by category — its share within Equity, Debt, Liquid and more."
-        >
-          <MarketShareByProduct
-            month={productShare.month}
-            rows={productShareRows}
-          />
-        </Card>
-      )}
-
-      {activeTab === "share" && equityBook.length > 0 && equityBookDiag && (
+      {activeTab === "insights" && equityBook.length > 0 && equityBookDiag && (
         <Card title="Per-AMC Equity Holdings Mix — Active vs Passive (derived)">
           <AmcEquityBookHeatmap rows={equityBook} diagnostics={equityBookDiag} />
         </Card>
       )}
 
-      {activeTab === "share" && <AmcCashAllocationTrend />}
+      {activeTab === "insights" && <AmcCashAllocationTrend />}
 
       {activeTab === "compare" &&
         aCompare &&
@@ -391,7 +371,7 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {activeTab === "overview" && (
+      {activeTab === "directory" && (
         <Card
           title="All AMCs — Rank, Assets & Market Share"
           subtitle="Searchable directory of every AMC — click any row to drill into its schemes."

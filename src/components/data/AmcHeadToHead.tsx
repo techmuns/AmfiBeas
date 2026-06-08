@@ -23,15 +23,17 @@ interface Spec {
   fmt: (v: number | null) => string;
   /** When true, the SMALLER value is the leader (e.g. rank). */
   invert?: boolean;
+  /** When true, tint A/B values green (>0) / red (<0) — movement metrics. */
+  signed?: boolean;
 }
 
 const SPECS: Spec[] = [
   { group: "AUM & Market Share", label: "Total Average Assets", pick: (m) => m.aaumCr, fmt: fmtCr },
   { group: "AUM & Market Share", label: "Market share", pick: (m) => m.marketSharePct, fmt: (v) => fmtPct(v, 2) },
-  { group: "AUM & Market Share", label: "Share Δ QoQ", pick: (m) => m.shareDeltaBps, fmt: fmtBps },
+  { group: "AUM & Market Share", label: "Share Δ QoQ", pick: (m) => m.shareDeltaBps, fmt: fmtBps, signed: true },
   { group: "AUM & Market Share", label: "Rank by Assets", pick: (m) => m.rank, fmt: fmtRank, invert: true },
-  { group: "Growth", label: "QoQ Asset Growth", pick: (m) => m.qoqGrowthPct, fmt: fmtSigned },
-  { group: "Growth", label: "YoY Asset Growth", pick: (m) => m.yoyGrowthPct, fmt: fmtSigned },
+  { group: "Growth", label: "QoQ Asset Growth", pick: (m) => m.qoqGrowthPct, fmt: fmtSigned, signed: true },
+  { group: "Growth", label: "YoY Asset Growth", pick: (m) => m.yoyGrowthPct, fmt: fmtSigned, signed: true },
   { group: "Listed financials", label: "Operating revenue", pick: (m) => m.revenueCr, fmt: fmtCr },
   { group: "Listed financials", label: "Revenue yield", pick: (m) => m.revenueYieldBps, fmt: fmtBpsAbs },
   { group: "Listed financials", label: "Operating margin", pick: (m) => m.opMarginPct, fmt: (v) => fmtPct(v, 1) },
@@ -136,6 +138,12 @@ export function AmcHeadToHead({
                 (s.invert ? bNum < aNum : bNum > aNum);
               const groupHeader =
                 i === 0 || SPECS[i - 1].group !== s.group ? s.group : null;
+              const toneClass = (v: number | null): string | undefined =>
+                s.signed && v != null && v !== 0
+                  ? v > 0
+                    ? "text-positive"
+                    : "text-negative"
+                  : undefined;
               return (
                 <ConfigRow
                   key={s.label}
@@ -147,6 +155,8 @@ export function AmcHeadToHead({
                   indAvgText={s.fmt(s.pick(industryAvg))}
                   aLeads={aLeads}
                   bLeads={bLeads}
+                  aToneClass={toneClass(aNum)}
+                  bToneClass={toneClass(bNum)}
                 />
               );
             })}
@@ -186,6 +196,8 @@ function ConfigRow({
   indAvgText,
   aLeads,
   bLeads,
+  aToneClass,
+  bToneClass,
 }: {
   groupHeader: string | null;
   label: string;
@@ -195,6 +207,8 @@ function ConfigRow({
   indAvgText: string;
   aLeads: boolean;
   bLeads: boolean;
+  aToneClass?: string;
+  bToneClass?: string;
 }) {
   return (
     <>
@@ -218,6 +232,7 @@ function ConfigRow({
         <td
           className={cn(
             "border px-2.5 py-1.5 text-right text-foreground",
+            aToneClass,
             aLeads && "font-bold"
           )}
         >
@@ -226,6 +241,7 @@ function ConfigRow({
         <td
           className={cn(
             "border px-2.5 py-1.5 text-right text-foreground",
+            bToneClass,
             bLeads && "font-bold"
           )}
         >
