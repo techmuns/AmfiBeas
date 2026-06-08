@@ -72,15 +72,19 @@ export default async function AmcListPage({
   }
 
   const subtitle = `${data.rows.length} AMCs · ${data.fiscalLabel}`;
-  const anomalies = latestQoqAnomalies(2);
+
+  // Each helper below walks the full AAUM / portfolio snapshot. Running all of
+  // them on every tab needlessly burns the Worker's CPU budget (Cloudflare
+  // Error 1102), so compute only what the ACTIVE tab actually renders.
+  const anomalies = activeTab === "overview" ? latestQoqAnomalies(2) : null;
 
   // Per-AMC market share within each product category (latest month); top AMCs
   // by total AUM, display names joined from the AAUM index.
-  const productShare = marketShareByProduct();
+  const productShare = activeTab === "share" ? marketShareByProduct() : null;
   const amcNameBySlug = new Map(
     data.rows.map((r) => [r.amcSlug, r.displayName])
   );
-  const productShareRows = productShare.rows
+  const productShareRows = (productShare?.rows ?? [])
     .filter((r) => amcNameBySlug.has(r.amcSlug))
     .slice(0, 20)
     .map((r) => ({ ...r, displayName: amcNameBySlug.get(r.amcSlug) as string }));
@@ -93,7 +97,10 @@ export default async function AmcListPage({
       : sp.fundwiseMetric === "growth"
         ? "growth"
         : "share";
-  const fundwise = fundwiseAumMatrix(25, 8);
+  const fundwise =
+    activeTab === "share"
+      ? fundwiseAumMatrix(25, 8)
+      : { quarters: [], quarterLabels: [], rows: [] };
   const fundwiseLatestIdx = fundwise.quarterLabels.length - 1;
 
   // Headline read: biggest share gainer / loser in the latest quarter (bps).
@@ -147,10 +154,12 @@ export default async function AmcListPage({
     ...fundwise.quarterLabels.map((label) => ({ key: label, header: label })),
   ];
 
-  const equityBook = amcEquityBook();
-  const equityBookDiag = amcEquityBookDiagnostics();
+  const equityBook = activeTab === "share" ? amcEquityBook() : [];
+  const equityBookDiag =
+    activeTab === "share" ? amcEquityBookDiagnostics() : null;
 
-  const compareUniverse = amcCompareUniverse();
+  const compareUniverse =
+    activeTab === "compare" ? amcCompareUniverse() : [];
   const compareSlugs = new Set(compareUniverse.map((u) => u.slug));
   const aSlug =
     typeof sp.a === "string" && compareSlugs.has(sp.a)
@@ -160,8 +169,8 @@ export default async function AmcListPage({
     typeof sp.b === "string" && compareSlugs.has(sp.b)
       ? sp.b
       : compareUniverse[1]?.slug ?? "";
-  const aCompare = amcComparison(aSlug);
-  const bCompare = amcComparison(bSlug);
+  const aCompare = activeTab === "compare" ? amcComparison(aSlug) : null;
+  const bCompare = activeTab === "compare" ? amcComparison(bSlug) : null;
   // Only the Compare tab uses these; compute them lazily so Overview / Market
   // Share don't pay for the industry aggregation (keeps the Worker under its
   // CPU budget — see Cloudflare Error 1102).
@@ -345,7 +354,7 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {activeTab === "share" && productShareRows.length > 0 && (
+      {activeTab === "share" && productShare && productShareRows.length > 0 && (
         <Card
           title="Market Share by Product"
           subtitle="Where each AMC is strong by category — its share within Equity, Debt, Liquid and more."
@@ -357,7 +366,7 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {activeTab === "share" && equityBook.length > 0 && (
+      {activeTab === "share" && equityBook.length > 0 && equityBookDiag && (
         <Card title="Per-AMC Equity Holdings Mix — Active vs Passive (derived)">
           <AmcEquityBookHeatmap rows={equityBook} diagnostics={equityBookDiag} />
         </Card>
