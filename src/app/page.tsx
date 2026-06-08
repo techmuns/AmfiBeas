@@ -70,9 +70,11 @@ import { resolveTabWithAliases } from "@/lib/tabs";
 import { CapFlowsView } from "@/components/data/CapFlowsView";
 import { capFlows } from "@/data/cap-flows";
 import { SectorFlowHeatmap } from "@/components/data/SectorFlowHeatmap";
-import { QuarterEndMixTable } from "@/components/data/QuarterEndMixTable";
+import {
+  QuarterEndMixTable,
+  type DonutSlice,
+} from "@/components/data/QuarterEndMixTable";
 import { AaumBridgeTable } from "@/components/data/AaumBridgeTable";
-import type { DonutSlice } from "@/components/charts/Donut";
 import {
   resolveSelectedQuarter,
   liquidAumForQuarter,

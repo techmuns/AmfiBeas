@@ -1,7 +1,14 @@
-import type { DonutSlice } from "@/components/charts/Donut";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
 import { formatCompactCr } from "@/lib/format";
+
+/** One category slice of an AUM-mix table (Equity / Debt / Liquid / Other). */
+export interface DonutSlice {
+  key: string;
+  label: string;
+  value: number;
+  color: string;
+}
 
 /**
  * Quarter-end AUM mix as a colored table — the analyst-terminal replacement for
