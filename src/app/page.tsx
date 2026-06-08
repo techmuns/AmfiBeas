@@ -1,13 +1,7 @@
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card } from "@/components/ui/Card";
-import { ChartWithContext } from "@/components/ui/ChartWithContext";
-import {
-  adaptiveAverageOverlay,
-  chartInsights,
-  latestYoyPct,
-} from "@/lib/chart-context";
+import { latestYoyPct } from "@/lib/chart-context";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { BarSeries } from "@/components/charts/BarSeries";
 import { IiflHeatmap, formatHeatmapMonth } from "@/components/charts/IiflHeatmap";
 import { latestMonth } from "@/data/aggregate";
 import {
@@ -32,10 +26,8 @@ import type { AmfiMonthlyPdfRow } from "@/data/snapshots/types";
 import {
   cyclePhaseHistory,
   latestNifty500Row,
-  marketIndexRows,
 } from "@/data/market-indices";
 import { BarsWithIndexLine } from "@/components/charts/BarsWithIndexLine";
-import { BarsWithLabels } from "@/components/charts/BarsWithLabels";
 import { CalendarHeatGrid } from "@/components/ui/CalendarHeatGrid";
 import { EpisodeRecoveryCard } from "@/components/ui/EpisodeRecoveryCard";
 import { episodeRecoveryRows } from "@/data/episode-recovery";
@@ -45,7 +37,6 @@ import {
   categoryRotation,
   iiflActiveEquityHeatmapData,
 } from "@/data/amfi-monthly-category";
-import { VerticalBars } from "@/components/charts/VerticalBars";
 import {
   MonthlyFlowsTable,
   MONTHLY_FLOWS_XLSX_COLUMNS,
@@ -65,6 +56,7 @@ import { MonthPicker } from "@/components/filters/MonthPicker";
 import {
   formatCompactCrSafe,
   formatCroreCountSafe,
+  formatLakhSafe,
   formatMonthLabel,
 } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -429,21 +421,6 @@ export default async function MonthlyPage({
   );
   const nfoFundsHasData = nfoFundsChart.length > 0;
 
-  // ---- Shared chart-context helpers (used by every insight call) ----
-  // Computed once so we don't recompute the same maps per chart.
-  const ddByMonthForInsights: Map<string, number> = (() => {
-    const m = new Map<string, number>();
-    for (const r of marketIndexRows("NIFTY_500")) {
-      if (typeof r.drawdownPct === "number") m.set(r.month, r.drawdownPct);
-    }
-    return m;
-  })();
-  const cyclePhaseByMonth: Map<string, string> = (() => {
-    const m = new Map<string, string>();
-    for (const p of cyclePhaseHistory()) m.set(p.month, p.phase);
-    return m;
-  })();
-
   // Provenance captions for the section. All four contributing fields
   // (totalAum / equityAum / debtAum / liquidAum / totalAaum) come from
   // the AMFI Monthly Report on the current snapshot, so a single
@@ -604,7 +581,6 @@ export default async function MonthlyPage({
       ? folioLatestRow.industryFolios
       : null;
   const folioAdditionsTrend = monthlyIndustryFolioAdditionsTrend(24);
-  const folioAdditionsFullHistory = monthlyIndustryFolioAdditionsTrend(10_000);
 
   // Folio additions denominator: latest monthly net add as % of the
   // existing folio base. Both `latest.value` (additions) and
@@ -618,16 +594,6 @@ export default async function MonthlyPage({
     const pct = (latest.value / industryFoliosLatest) * 100;
     return `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}% of folio base · latest ${latest.label}`;
   })();
-  const folioAdditionsInsights = chartInsights(folioAdditionsTrend, {
-    metricName: "folio additions",
-    drawdownByLabel: ddByMonthForInsights,
-    cyclePhaseByLabel: cyclePhaseByMonth,
-    yoyLag: 12,
-  });
-
-
-  const hasAnyFolioOrNfoTrend = folioAdditionsTrend.length > 0;
-
 
   // ---- Category Flow Share (IIFL Figure 31-34) section ---------------
   //
@@ -663,12 +629,6 @@ export default async function MonthlyPage({
     label: p.month,
     value: p.sipContribution,
     line: p.sipShareOfGrossPct,
-  }));
-  const sipAccountsChartData = monthlyTrend("sipAccounts", 12).map((p) => ({
-    label: p.label,
-    // Raw SIP-account count; rendered in crore via the "crore-count" format
-    // (e.g. 9.65 Cr) to keep the dashboard on Indian numbering.
-    value: p.value,
   }));
 
   // Proportion diagnostics: category rotation + passive flow share. Each
@@ -1002,100 +962,43 @@ export default async function MonthlyPage({
               </Card>
             )}
 
-            <div className="grid gap-4 lg:grid-cols-2">
-            {hasAnyFolioOrNfoTrend && folioAdditionsTrend.length > 0 && (
-              <ChartWithContext
-                title="Folio Additions Trend"
-                subtitle="Net new folios opened each month. A breadth-of-investor signal."
-                flowKind="net"
-                denominatorCaption={(() => {
-                  const span = `${folioAdditionsTrend.length} month${folioAdditionsTrend.length === 1 ? "" : "s"}`;
-                  return folioAdditionsDenomCaption
-                    ? `${span} · lakh · ${folioAdditionsDenomCaption}`
-                    : `${span} · lakh`;
-                })()}
-                denominatorTooltip="Net new folios opened each month, in lakh — a breadth-of-investor signal tracking how many new accounts the industry adds."
-                insights={folioAdditionsInsights}
-                yoyBadge={(() => {
-                  const v = latestYoyPct(folioAdditionsTrend, 12);
-                  return v === null ? undefined : { label: "YoY", pct: v };
-                })()}
-              >
-                {(() => {
-                  const ov = adaptiveAverageOverlay(folioAdditionsFullHistory, folioAdditionsTrend, 12);
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {folioAdditionsTrend.length > 0 &&
+                (() => {
+                  const latest =
+                    folioAdditionsTrend[folioAdditionsTrend.length - 1];
+                  const yoy = latestYoyPct(folioAdditionsTrend, 12);
                   return (
-                    <BarSeries
-                      data={folioAdditionsTrend}
-                      name="Folio Additions"
-                      color="hsl(var(--chart-4))"
-                      valueFormat="lakh"
-                      axisFormat="lakh"
-                      labelFormat="month"
-                      trendline={ov.kind === "trailing" ? ov.trendline : undefined}
-                      trendlineName={ov.kind === "trailing" ? ov.label : undefined}
-                      referenceValue={ov.kind === "visible-mean" ? ov.referenceValue : undefined}
-                      referenceLabel={ov.kind === "visible-mean" ? ov.label : undefined}
+                    <KpiCard
+                      label="Folio Additions"
+                      value={formatLakhSafe(latest.value)}
+                      note={`Net new folios · ${latest.label} · Source: AMFI Monthly Report`}
+                      sparkline={folioAdditionsTrend}
+                      sparklineColor="hsl(var(--chart-4))"
+                      yoyPct={yoy ?? undefined}
+                      ratio={folioAdditionsDenomCaption}
                     />
                   );
                 })()}
-              </ChartWithContext>
-            )}
-
-            {sipAccountsChartData.length > 0 && (
-              <Card
-                title="SIP Active contributing accounts (Cr)"
-              >
-                <BarsWithLabels
-                  data={sipAccountsChartData}
-                  barColor="hsl(var(--chart-3))"
-                  valueFormat="crore-count"
-                  axisFormat="crore-count"
-                  labelFormat="month"
-                  name="SIP Active contributing accounts (Cr)"
-                  labelValueFormat="crore-count"
-                />
-                <p className="mt-2 text-[11px] text-muted-foreground">
-                  Live SIP-account count, expressed in crore. Sourced from
-                  the AMFI Monthly Note&apos;s SIP trend table.
-                </p>
-              </Card>
-            )}
+              {nfoFundsHasData &&
+                (() => {
+                  const latest = nfoFundsChart[nfoFundsChart.length - 1];
+                  return (
+                    <KpiCard
+                      label="NFO Mobilised"
+                      value={formatCompactCrSafe(latest.value)}
+                      note={`New Fund Offer money raised · ${latest.month} · Source: AMFI Monthly Report`}
+                      sparkline={nfoFundsChart.map((p) => ({
+                        label: p.month,
+                        value: p.value,
+                      }))}
+                      sparklineColor="hsl(var(--chart-1))"
+                    />
+                  );
+                })()}
             </div>
           </section>
         </div>
-      )}
-
-      {activeTab === "snapshot" && nfoFundsHasData && (
-        <Card
-          title="New Fund Offers Mobilised"
-          subtitleNode={
-            <div className="space-y-0.5">
-              <p className="text-xs text-muted-foreground">
-                New Fund Offer money raised each month — a read on how much
-                fresh supply is launching.
-              </p>
-              <p className="text-[11px] text-muted-foreground/80">
-                {`${nfoFundsChart.length} months · industry total (active-equity split not separately disclosed) · Source: AMFI Monthly Report`}
-              </p>
-            </div>
-          }
-        >
-          <VerticalBars
-            data={nfoFundsChart}
-            xKey="month"
-            bars={[
-              {
-                key: "value",
-                name: "NFO funds mobilised",
-                color: "hsl(var(--chart-1))",
-              },
-            ]}
-            valueFormat="cr"
-            axisFormat="cr"
-            labelFormat="month"
-            labelMode="all"
-          />
-        </Card>
       )}
 
 
