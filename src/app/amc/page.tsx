@@ -2,11 +2,8 @@ import Link from "next/link";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
-import {
-  FundwiseTable,
-  type FundwiseMetric,
-} from "@/components/data/FundwiseTable";
-import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
+import { ClientTabs, type ClientTabDef } from "@/components/layout/ClientTabs";
+import { FundwiseCard } from "@/components/data/FundwiseCard";
 import { AmcEquityBookHeatmap } from "@/components/data/AmcEquityBookHeatmap";
 import { AmcHeadToHead } from "@/components/data/AmcHeadToHead";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
@@ -26,41 +23,27 @@ import {
   amcComparison,
   industryComparison,
   industryAverageComparison,
+  type AmcCompareMetrics,
 } from "@/data/amc-compare";
 import {
   fundwiseAumMatrix,
   latestQoqAnomalies,
 } from "@/data/amc-peer-universe";
-import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
-import { LensToggle } from "@/components/ui/LensToggle";
-import type { CsvColumn } from "@/lib/csv";
 import { cn } from "@/lib/cn";
-import {
-  DashboardTabs,
-  type DashboardTabDef,
-} from "@/components/layout/DashboardTabs";
-import { resolveTabWithAliases } from "@/lib/tabs";
+
+// Statically rendered: all three tabs are built at deploy time and switched in
+// the browser (see ClientTabs), so a tab switch never spends Worker CPU — which
+// is what keeps the page under the Cloudflare Free-plan CPU budget (Error 1102).
+// The interactive bits (fundwise lens, compare A/B picker) are client-side too.
+export const dynamic = "force-static";
 
 const AMC_TABS = [
   { id: "overview", label: "AMC Overview" },
   { id: "share", label: "Market Share & Concentration" },
   { id: "compare", label: "Compare" },
-] as const satisfies readonly DashboardTabDef[];
-type AmcTabId = (typeof AMC_TABS)[number]["id"];
-const AMC_TAB_IDS = AMC_TABS.map((t) => t.id) as readonly AmcTabId[];
+] as const satisfies readonly ClientTabDef[];
 
-export default async function AmcListPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const sp = await searchParams;
-  const activeTab = resolveTabWithAliases<AmcTabId>(
-    sp.tab,
-    AMC_TAB_IDS,
-    { insights: "share", "share-positioning": "share" },
-    "overview",
-  );
+export default async function AmcListPage() {
   const data = amcIndexRows();
 
   if (!data) {
@@ -73,14 +56,14 @@ export default async function AmcListPage({
 
   const subtitle = `${data.rows.length} AMCs · ${data.fiscalLabel}`;
 
-  // Each helper below walks the full AAUM / portfolio snapshot. Running all of
-  // them on every tab needlessly burns the Worker's CPU budget (Cloudflare
-  // Error 1102), so compute only what the ACTIVE tab actually renders.
-  const anomalies = activeTab === "overview" ? latestQoqAnomalies(2) : null;
+  // Everything below is computed at BUILD time (this page is force-static), so
+  // none of it counts against the per-request Worker CPU budget at runtime.
+  const anomalies = latestQoqAnomalies(2);
+  const fundwise = fundwiseAumMatrix(25, 8);
+  const equityBook = amcEquityBook();
+  const equityBookDiag = amcEquityBookDiagnostics();
 
-  // Per-AMC market share within each product category (latest month); top AMCs
-  // by total AUM, display names joined from the AAUM index.
-  const productShare = activeTab === "share" ? marketShareByProduct() : null;
+  const productShare = marketShareByProduct();
   const amcNameBySlug = new Map(
     data.rows.map((r) => [r.amcSlug, r.displayName])
   );
@@ -89,108 +72,16 @@ export default async function AmcListPage({
     .slice(0, 20)
     .map((r) => ({ ...r, displayName: amcNameBySlug.get(r.amcSlug) as string }));
 
-  // Fundwise (per-AMC) AUM & market-share heatmap. Metric toggle picks
-  // what the cells show; default is market share + QoQ Δ bps.
-  const fundwiseMetric: FundwiseMetric =
-    sp.fundwiseMetric === "aaum"
-      ? "aaum"
-      : sp.fundwiseMetric === "growth"
-        ? "growth"
-        : "share";
-  const fundwise =
-    activeTab === "share"
-      ? fundwiseAumMatrix(25, 8)
-      : { quarters: [], quarterLabels: [], rows: [] };
-  const fundwiseLatestIdx = fundwise.quarterLabels.length - 1;
+  const compareUniverse = amcCompareUniverse();
+  const compareMetrics = compareUniverse
+    .map((u) => amcComparison(u.slug))
+    .filter((m): m is AmcCompareMetrics => m !== null);
+  const industryCompare = industryComparison();
+  const industryAvgCompare = industryAverageComparison();
 
-  // Headline read: biggest share gainer / loser in the latest quarter (bps).
-  const fundwiseLeaders =
-    fundwise.rows.length >= 4 && fundwiseLatestIdx >= 1
-      ? (() => {
-          const withDelta = fundwise.rows
-            .map((r) => ({ row: r, cell: r.cells[fundwiseLatestIdx] }))
-            .filter(
-              (x): x is { row: (typeof fundwise.rows)[number]; cell: NonNullable<typeof x.cell> } =>
-                x.cell !== null && x.cell.shareDeltaBps !== null
-            )
-            .sort((a, b) => (b.cell.shareDeltaBps ?? 0) - (a.cell.shareDeltaBps ?? 0));
-          if (withDelta.length === 0) return null;
-          const top5 = [...fundwise.rows]
-            .map((r) => r.cells[fundwiseLatestIdx]?.sharePct ?? 0)
-            .sort((a, b) => b - a)
-            .slice(0, 5)
-            .reduce((s, v) => s + v, 0);
-          return {
-            gainer: withDelta[0],
-            loser: withDelta[withDelta.length - 1],
-            top5,
-            prevLabel: fundwise.quarterLabels[fundwiseLatestIdx - 1],
-            latestLabel: fundwise.quarterLabels[fundwiseLatestIdx],
-          };
-        })()
-      : null;
-
-  // Flatten the current metric's grid for the Excel (CSV) export.
-  type FundwiseCsvRow = Record<string, string | number>;
-  const fundwiseCsvRows: FundwiseCsvRow[] = fundwise.rows.map((r) => {
-    const obj: FundwiseCsvRow = { AMC: r.displayName };
-    fundwise.quarterLabels.forEach((label, i) => {
-      const c = r.cells[i];
-      obj[label] =
-        c === null
-          ? ""
-          : fundwiseMetric === "aaum"
-            ? Math.round(c.aaum)
-            : fundwiseMetric === "growth"
-              ? c.growthPct === null
-                ? ""
-                : Number(c.growthPct.toFixed(2))
-              : Number(c.sharePct.toFixed(2));
-    });
-    return obj;
-  });
-  const fundwiseCsvColumns: CsvColumn<FundwiseCsvRow>[] = [
-    { key: "AMC", header: "AMC" },
-    ...fundwise.quarterLabels.map((label) => ({ key: label, header: label })),
-  ];
-
-  const equityBook = activeTab === "share" ? amcEquityBook() : [];
-  const equityBookDiag =
-    activeTab === "share" ? amcEquityBookDiagnostics() : null;
-
-  const compareUniverse =
-    activeTab === "compare" ? amcCompareUniverse() : [];
-  const compareSlugs = new Set(compareUniverse.map((u) => u.slug));
-  const aSlug =
-    typeof sp.a === "string" && compareSlugs.has(sp.a)
-      ? sp.a
-      : compareUniverse[0]?.slug ?? "";
-  const bSlug =
-    typeof sp.b === "string" && compareSlugs.has(sp.b)
-      ? sp.b
-      : compareUniverse[1]?.slug ?? "";
-  const aCompare = activeTab === "compare" ? amcComparison(aSlug) : null;
-  const bCompare = activeTab === "compare" ? amcComparison(bSlug) : null;
-  // Only the Compare tab uses these; compute them lazily so Overview / Market
-  // Share don't pay for the industry aggregation (keeps the Worker under its
-  // CPU budget — see Cloudflare Error 1102).
-  const industryCompare =
-    activeTab === "compare" ? industryComparison() : null;
-  const industryAvgCompare =
-    activeTab === "compare" ? industryAverageComparison() : null;
-
-  return (
-    <div className="space-y-6">
-      <PageHeader title="AMCs" subtitle={subtitle} />
-
-      <DashboardTabs
-        basePath="/amc"
-        tabs={AMC_TABS}
-        activeId={activeTab}
-        searchParams={sp}
-      />
-
-      {activeTab === "overview" && anomalies && anomalies.outliers.length > 0 && (
+  const overviewPanel = (
+    <>
+      {anomalies && anomalies.outliers.length > 0 && (
         <Card
           title="Outliers this quarter"
           subtitleNode={
@@ -243,118 +134,22 @@ export default async function AmcListPage({
         </Card>
       )}
 
-      {activeTab === "share" && <AmcStockConcentration />}
+      <Card
+        title="All AMCs — Rank, Assets & Market Share"
+        subtitle="Searchable directory of every AMC — click any row to drill into its schemes."
+      >
+        <AmcSearchTable rows={data.rows} />
+      </Card>
+    </>
+  );
 
-      {activeTab === "share" && <CohortUniqueInvestorShare />}
-
-      {activeTab === "share" && (
-        <StrategicMovesCohortLane
-          selectedAmc={typeof sp.moveAmc === "string" ? sp.moveAmc : undefined}
-          selectedPeriod={
-            typeof sp.movePeriod === "string" ? sp.movePeriod : undefined
-          }
-        />
-      )}
-
-      {activeTab === "share" && fundwise.rows.length > 0 && (
-        <Card
-          title="Fund-by-Fund Market Share"
-          subtitleNode={
-            <div className="space-y-0.5">
-              <p className="text-xs text-muted-foreground">
-                Each AMC&rsquo;s share of cohort AAUM by quarter, with the QoQ
-                move in basis points — read down a column for the pecking order,
-                across a row for momentum.
-              </p>
-              <p className="text-[11px] text-muted-foreground/80">
-                {`Top ${fundwise.rows.length} AMCs by AAUM · ${fundwise.quarterLabels[0]} → ${fundwise.quarterLabels[fundwiseLatestIdx]}`}
-              </p>
-            </div>
-          }
-          action={
-            <div className="flex flex-wrap items-center gap-2">
-              <LensToggle
-                basePath="/amc"
-                paramName="fundwiseMetric"
-                defaultValue="share"
-                lenses={[
-                  { value: "share", label: "Market share" },
-                  { value: "aaum", label: "AAUM" },
-                  { value: "growth", label: "QoQ growth" },
-                ]}
-                active={fundwiseMetric}
-                preserveParams={{
-                  tab: typeof sp.tab === "string" ? sp.tab : undefined,
-                }}
-                wrap
-              />
-              <DownloadXlsxButton
-                rows={fundwiseCsvRows}
-                columns={fundwiseCsvColumns}
-                filename={`fundwise-${fundwiseMetric}.xlsx`}
-                sheetName={`Fundwise ${fundwiseMetric}`}
-                label="Excel"
-              />
-            </div>
-          }
-        >
-          {fundwiseLeaders && (
-            <KeyTakeaway
-              className="mb-3"
-              headline={
-                <>
-                  Over {fundwiseLeaders.prevLabel} →{" "}
-                  {fundwiseLeaders.latestLabel},{" "}
-                  <strong>{fundwiseLeaders.gainer.row.displayName}</strong>{" "}
-                  gained the most share (
-                  <span className="text-positive">
-                    {(fundwiseLeaders.gainer.cell.shareDeltaBps ?? 0) >= 0
-                      ? "+"
-                      : "−"}
-                    {Math.abs(
-                      Math.round(fundwiseLeaders.gainer.cell.shareDeltaBps ?? 0)
-                    )}{" "}
-                    bps
-                  </span>{" "}
-                  to {fundwiseLeaders.gainer.cell.sharePct.toFixed(2)}%), while{" "}
-                  <strong>{fundwiseLeaders.loser.row.displayName}</strong> gave
-                  up the most (
-                  <span className="text-negative">
-                    {(fundwiseLeaders.loser.cell.shareDeltaBps ?? 0) >= 0
-                      ? "+"
-                      : "−"}
-                    {Math.abs(
-                      Math.round(fundwiseLeaders.loser.cell.shareDeltaBps ?? 0)
-                    )}{" "}
-                    bps
-                  </span>{" "}
-                  to {fundwiseLeaders.loser.cell.sharePct.toFixed(2)}%).
-                </>
-              }
-              detail={
-                <>
-                  Top-5 AMCs hold {fundwiseLeaders.top5.toFixed(1)}% of cohort
-                  AAUM.{" "}
-                  {fundwiseMetric === "share"
-                    ? "Cells are tinted green where share was gained over the prior quarter, red where it was given up."
-                    : "Cells are tinted green where AAUM grew over the prior quarter, red where it shrank."}
-                </>
-              }
-            />
-          )}
-          <FundwiseTable matrix={fundwise} metric={fundwiseMetric} />
-          <p className="mt-3 text-[11px] text-muted-foreground">
-            Share % = each AMC&rsquo;s AAUM as a fraction of the cohort total
-            that quarter; the small figure beneath is the QoQ change in basis
-            points (100 bps = 1pp). Toggle to <strong>AAUM</strong> for the rupee
-            base (₹ Cr) or <strong>QoQ growth</strong> for the period-on-period
-            change; both are tinted by momentum. Export sends the active view to
-            Excel.
-          </p>
-        </Card>
-      )}
-
-      {activeTab === "share" && productShare && productShareRows.length > 0 && (
+  const sharePanel = (
+    <>
+      <AmcStockConcentration />
+      <CohortUniqueInvestorShare />
+      <StrategicMovesCohortLane />
+      <FundwiseCard matrix={fundwise} />
+      {productShare && productShareRows.length > 0 && (
         <Card
           title="Market Share by Product"
           subtitle="Where each AMC is strong by category — its share within Equity, Debt, Liquid and more."
@@ -365,40 +160,41 @@ export default async function AmcListPage({
           />
         </Card>
       )}
-
-      {activeTab === "share" && equityBook.length > 0 && equityBookDiag && (
+      {equityBook.length > 0 && equityBookDiag && (
         <Card title="Per-AMC Equity Holdings Mix — Active vs Passive (derived)">
           <AmcEquityBookHeatmap rows={equityBook} diagnostics={equityBookDiag} />
         </Card>
       )}
+      <AmcCashAllocationTrend />
+    </>
+  );
 
-      {activeTab === "share" && <AmcCashAllocationTrend />}
+  const comparePanel =
+    compareMetrics.length >= 2 ? (
+      <Card title="AMC Head-to-Head">
+        <AmcHeadToHead
+          metrics={compareMetrics}
+          industry={industryCompare}
+          industryAvg={industryAvgCompare}
+          universe={compareUniverse}
+          quarterLabel={data.fiscalLabel}
+        />
+      </Card>
+    ) : null;
 
-      {activeTab === "compare" &&
-        aCompare &&
-        bCompare &&
-        industryCompare &&
-        industryAvgCompare && (
-        <Card title="AMC Head-to-Head">
-          <AmcHeadToHead
-            a={aCompare}
-            b={bCompare}
-            industry={industryCompare}
-            industryAvg={industryAvgCompare}
-            universe={compareUniverse}
-            quarterLabel={data.fiscalLabel}
-          />
-        </Card>
-      )}
+  return (
+    <div className="space-y-6">
+      <PageHeader title="AMCs" subtitle={subtitle} />
 
-      {activeTab === "overview" && (
-        <Card
-          title="All AMCs — Rank, Assets & Market Share"
-          subtitle="Searchable directory of every AMC — click any row to drill into its schemes."
-        >
-          <AmcSearchTable rows={data.rows} />
-        </Card>
-      )}
+      <ClientTabs
+        tabs={AMC_TABS}
+        defaultId="overview"
+        panels={{
+          overview: overviewPanel,
+          share: sharePanel,
+          compare: comparePanel,
+        }}
+      />
 
       <Card>
         <div className="space-y-1 text-xs text-muted-foreground">
@@ -421,4 +217,3 @@ export default async function AmcListPage({
     </div>
   );
 }
-

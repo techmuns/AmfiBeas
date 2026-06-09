@@ -1,5 +1,7 @@
+"use client";
+
+import { useState } from "react";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
-import { AmcComparePicker } from "@/components/data/AmcComparePicker";
 import type { CsvColumn } from "@/lib/csv";
 import { cn } from "@/lib/cn";
 import { formatCompactCr } from "@/lib/format";
@@ -23,15 +25,17 @@ interface Spec {
   fmt: (v: number | null) => string;
   /** When true, the SMALLER value is the leader (e.g. rank). */
   invert?: boolean;
+  /** When true, tint A/B values green (>0) / red (<0) — movement metrics. */
+  signed?: boolean;
 }
 
 const SPECS: Spec[] = [
   { group: "AUM & Market Share", label: "Total Average Assets", pick: (m) => m.aaumCr, fmt: fmtCr },
   { group: "AUM & Market Share", label: "Market share", pick: (m) => m.marketSharePct, fmt: (v) => fmtPct(v, 2) },
-  { group: "AUM & Market Share", label: "Share Δ QoQ", pick: (m) => m.shareDeltaBps, fmt: fmtBps },
+  { group: "AUM & Market Share", label: "Share Δ QoQ", pick: (m) => m.shareDeltaBps, fmt: fmtBps, signed: true },
   { group: "AUM & Market Share", label: "Rank by Assets", pick: (m) => m.rank, fmt: fmtRank, invert: true },
-  { group: "Growth", label: "QoQ Asset Growth", pick: (m) => m.qoqGrowthPct, fmt: fmtSigned },
-  { group: "Growth", label: "YoY Asset Growth", pick: (m) => m.yoyGrowthPct, fmt: fmtSigned },
+  { group: "Growth", label: "QoQ Asset Growth", pick: (m) => m.qoqGrowthPct, fmt: fmtSigned, signed: true },
+  { group: "Growth", label: "YoY Asset Growth", pick: (m) => m.yoyGrowthPct, fmt: fmtSigned, signed: true },
   { group: "Listed financials", label: "Operating revenue", pick: (m) => m.revenueCr, fmt: fmtCr },
   { group: "Listed financials", label: "Revenue yield", pick: (m) => m.revenueYieldBps, fmt: fmtBpsAbs },
   { group: "Listed financials", label: "Operating margin", pick: (m) => m.opMarginPct, fmt: (v) => fmtPct(v, 1) },
@@ -51,27 +55,34 @@ interface ExportRow {
 }
 
 /**
- * AMC head-to-head comparison table — A vs B vs Industry on AAUM, market share
- * (+ QoQ Δ bps), growth, listed-AMC fee yield & margins (where available), and
- * the derived active/passive equity mix. The larger of A vs B is bolded per
- * row. Table-first with an Excel export; caveats flag listed-only and derived
- * fields. Server component (the picker is the only client island).
+ * AMC head-to-head comparison — A vs B vs Industry (total) vs Industry (avg) on
+ * AAUM, market share (+ QoQ Δ bps), growth, listed-AMC fee yield & margins, and
+ * the derived active/passive equity mix. Fully client-side: it receives the
+ * prebuilt metrics for every comparable AMC and switches the A/B selection in
+ * the browser, so the page stays statically rendered and changing the pair
+ * never spends Worker CPU (Cloudflare Error 1102 on the Free plan).
  */
 export function AmcHeadToHead({
-  a,
-  b,
+  metrics,
   industry,
   industryAvg,
   universe,
   quarterLabel,
 }: {
-  a: AmcCompareMetrics;
-  b: AmcCompareMetrics;
+  metrics: AmcCompareMetrics[];
   industry: AmcCompareMetrics;
   industryAvg: AmcCompareMetrics;
   universe: { slug: string; displayName: string }[];
   quarterLabel: string | null;
 }) {
+  const bySlug = new Map(metrics.map((m) => [m.slug, m]));
+  const [aSlug, setASlug] = useState(universe[0]?.slug ?? "");
+  const [bSlug, setBSlug] = useState(universe[1]?.slug ?? universe[0]?.slug ?? "");
+  const a = bySlug.get(aSlug) ?? metrics[0];
+  const b = bySlug.get(bSlug) ?? metrics[1] ?? metrics[0];
+
+  if (!a || !b) return null;
+
   const exportRows: ExportRow[] = SPECS.map((s) => ({
     metric: s.label,
     a: s.fmt(s.pick(a)),
@@ -89,10 +100,30 @@ export function AmcHeadToHead({
 
   const finQuarter = a.finQuarter ?? b.finQuarter;
 
+  const picker = (value: string, onChange: (v: string) => void) => (
+    <select
+      className="max-w-[14rem] rounded-md border bg-card px-2 py-1 text-sm"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    >
+      {universe.map((u) => (
+        <option key={u.slug} value={u.slug}>
+          {u.displayName}
+        </option>
+      ))}
+    </select>
+  );
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <AmcComparePicker universe={universe} a={a.slug} b={b.slug} />
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground">A</span>
+          {picker(a.slug, setASlug)}
+          <span className="text-xs text-muted-foreground">vs</span>
+          <span className="text-xs font-medium text-muted-foreground">B</span>
+          {picker(b.slug, setBSlug)}
+        </div>
         <DownloadXlsxButton
           rows={exportRows}
           columns={exportColumns}
@@ -136,6 +167,12 @@ export function AmcHeadToHead({
                 (s.invert ? bNum < aNum : bNum > aNum);
               const groupHeader =
                 i === 0 || SPECS[i - 1].group !== s.group ? s.group : null;
+              const toneClass = (v: number | null): string | undefined =>
+                s.signed && v != null && v !== 0
+                  ? v > 0
+                    ? "text-positive"
+                    : "text-negative"
+                  : undefined;
               return (
                 <ConfigRow
                   key={s.label}
@@ -147,6 +184,8 @@ export function AmcHeadToHead({
                   indAvgText={s.fmt(s.pick(industryAvg))}
                   aLeads={aLeads}
                   bLeads={bLeads}
+                  aToneClass={toneClass(aNum)}
+                  bToneClass={toneClass(bNum)}
                 />
               );
             })}
@@ -160,18 +199,15 @@ export function AmcHeadToHead({
         <span className="font-medium text-foreground">Listed financials</span>{" "}
         (revenue, yield, margins{finQuarter ? `, ${finQuarter}` : ""}) exist
         only for the listed AMCs — &ldquo;—&rdquo; otherwise.{" "}
-        <span className="font-medium text-foreground">
-          Derived equity book
-        </span>{" "}
-        (active / passive) is equity-only, from the RupeeVest snapshot on Market
-        Share Insights, matched to the AMC by name (&ldquo;—&rdquo; where
-        unmatched), so its active/passive shares describe the equity sleeve, not
-        total AAUM.{" "}
+        <span className="font-medium text-foreground">Derived equity book</span>{" "}
+        (active / passive) is equity-only, matched to the AMC by name
+        (&ldquo;—&rdquo; where unmatched), so its active/passive shares describe
+        the equity sleeve, not total AAUM.{" "}
         <span className="font-medium text-foreground">Industry · total</span>{" "}
         sums all AMCs; <span className="font-medium text-foreground">Industry ·
-        avg</span> is the mean across AMCs (the typical AMC) — the benchmark for
-        &ldquo;is this AMC above or below average?&rdquo;. The larger of A vs B
-        is bolded per row.
+        avg</span> is the mean across AMCs (the typical AMC). The larger of A vs
+        B is bolded per row; basis-point and growth moves are tinted green for a
+        gain, red for a loss.
       </p>
     </div>
   );
@@ -186,6 +222,8 @@ function ConfigRow({
   indAvgText,
   aLeads,
   bLeads,
+  aToneClass,
+  bToneClass,
 }: {
   groupHeader: string | null;
   label: string;
@@ -195,6 +233,8 @@ function ConfigRow({
   indAvgText: string;
   aLeads: boolean;
   bLeads: boolean;
+  aToneClass?: string;
+  bToneClass?: string;
 }) {
   return (
     <>
@@ -218,6 +258,7 @@ function ConfigRow({
         <td
           className={cn(
             "border px-2.5 py-1.5 text-right text-foreground",
+            aToneClass,
             aLeads && "font-bold"
           )}
         >
@@ -226,6 +267,7 @@ function ConfigRow({
         <td
           className={cn(
             "border px-2.5 py-1.5 text-right text-foreground",
+            bToneClass,
             bLeads && "font-bold"
           )}
         >
