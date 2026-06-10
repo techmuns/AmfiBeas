@@ -42,7 +42,7 @@ export function DashboardTabs({
 }: DashboardTabsProps) {
   return (
     <div
-      className="sticky top-14 z-10 -mx-6 mb-6 border-b border-border bg-background/85 backdrop-blur lg:-mx-8"
+      className="sticky top-14 z-20 -mx-6 mb-6 border-b border-border bg-background/85 backdrop-blur lg:-mx-8"
       data-component="dashboard-tabs"
     >
       <div className="flex items-center gap-3 px-6 py-2 lg:px-8">
