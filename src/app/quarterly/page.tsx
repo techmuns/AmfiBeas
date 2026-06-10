@@ -44,22 +44,14 @@ import {
 } from "@/data/amc-peer-universe";
 import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
 import { cn } from "@/lib/cn";
-import {
-  DashboardTabs,
-  type DashboardTabDef,
-} from "@/components/layout/DashboardTabs";
+import { ClientTabs, type ClientTabDef } from "@/components/layout/ClientTabs";
 import { TabIntroCard } from "@/components/ui/TabIntroCard";
-import { resolveTabWithAliases } from "@/lib/tabs";
 
 const QUARTERLY_TABS = [
   { id: "snapshot", label: "Snapshot" },
   { id: "aaum-flows", label: "AUM & Flows" },
   { id: "concentration", label: "Market Competition" },
-] as const satisfies readonly DashboardTabDef[];
-type QuarterlyTabId = (typeof QUARTERLY_TABS)[number]["id"];
-const QUARTERLY_TAB_IDS = QUARTERLY_TABS.map(
-  (t) => t.id,
-) as readonly QuarterlyTabId[];
+] as const satisfies readonly ClientTabDef[];
 
 /** Sign-aware compact ₹ Cr formatter — mirrors the equivalent helper
  *  on /monthly so a negative net inflow KPI renders as "−₹32.4K Cr"
@@ -76,18 +68,6 @@ export default async function QuarterlyPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-
-  const activeTab = resolveTabWithAliases<QuarterlyTabId>(
-    sp.tab,
-    QUARTERLY_TAB_IDS,
-    {
-      categories: "aaum-flows",
-      "retail-schemes": "concentration",
-      "active-passive": "concentration",
-    },
-    "snapshot",
-  );
-
 
   // Quarter selector — `?quarter=FY26-Q4` resolves to the matching
   // row when valid; otherwise we fall back to the latest available
@@ -401,35 +381,14 @@ export default async function QuarterlyPage({
         100
       : null;
 
-  return (
-    <div className="space-y-8">
-      <PageHeader
-        title="Quarterly Operating KPIs"
-        subtitle={
-          selectedRow
-            ? `Industry-wide · ${selectedRow.quarterLabel}`
-            : "Industry-wide"
-        }
+  const snapshotPanel = (
+    <>
+      <TabIntroCard
+        headline="What's the state of the industry this quarter?"
+        summary="Five quarterly signals — AAUM trend, flow quality, active vs passive, retail health, and concentration — synthesised from the latest live quarter."
+        watchNext="Whether the signals reinforce each other (broad recovery / broad drawdown) or pull in opposite directions (rotation underway)."
       />
 
-      <DashboardTabs
-        basePath="/quarterly"
-        tabs={QUARTERLY_TABS}
-        activeId={activeTab}
-        searchParams={sp}
-      />
-
-      <MarketWrapCard wrap={marketWrapData} />
-
-      {activeTab === "snapshot" && (
-        <TabIntroCard
-          headline="What's the state of the industry this quarter?"
-          summary="Five quarterly signals — AAUM trend, flow quality, active vs passive, retail health, and concentration — synthesised from the latest live quarter."
-          watchNext="Whether the signals reinforce each other (broad recovery / broad drawdown) or pull in opposite directions (rotation underway)."
-        />
-      )}
-
-      {activeTab === "snapshot" && (
       <section className="space-y-3">
         <div>
           <h2 className="text-sm font-medium tracking-tight">
@@ -594,9 +553,8 @@ export default async function QuarterlyPage({
           />
         </div>
       </section>
-      )}
 
-      {activeTab === "snapshot" && cyclePhasePoints.length > 0 && (
+      {cyclePhasePoints.length > 0 && (
         <Card
           title="Cycle Regime"
           subtitle={`Per-month cycle phase since ${cyclePhasePoints[0].month} · derived from active-equity flow z-score + Nifty 500 drawdown`}
@@ -604,16 +562,17 @@ export default async function QuarterlyPage({
           <CycleRibbon points={cyclePhasePoints} lastN={84} />
         </Card>
       )}
+    </>
+  );
 
-      {activeTab === "aaum-flows" && (
-        <TabIntroCard
-          headline="Where did the quarter's AUM change come from?"
-          summary="The quarter-end AUM mix by category, plus the AUM-change bridge — how much of each quarter's move was net flows versus residual (market movement, within-quarter timing and an averaging mismatch)."
-          watchNext="Whether the residual keeps outweighing net flows — the sign that market moves, not investor flows, are driving the AUM line."
-        />
-      )}
+  const aaumFlowsPanel = (
+    <>
+      <TabIntroCard
+        headline="Where did the quarter's AUM change come from?"
+        summary="The quarter-end AUM mix by category, plus the AUM-change bridge — how much of each quarter's move was net flows versus residual (market movement, within-quarter timing and an averaging mismatch)."
+        watchNext="Whether the residual keeps outweighing net flows — the sign that market moves, not investor flows, are driving the AUM line."
+      />
 
-      {activeTab === "aaum-flows" && (
       <Card
         title="AMFI Quarterly Snapshot"
         subtitle={
@@ -665,9 +624,8 @@ export default async function QuarterlyPage({
           </div>
         )}
       </Card>
-      )}
 
-      {activeTab === "aaum-flows" && selectedRow && (
+      {selectedRow && (
         <div className="space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight">
@@ -692,22 +650,23 @@ export default async function QuarterlyPage({
         </div>
       )}
 
-      {activeTab === "aaum-flows" && aaumBridge.length > 0 && (
+      {aaumBridge.length > 0 && (
         <Card title="AUM Change: New Money vs Market & Other">
           <AaumBridgeTable rows={aaumBridge} />
         </Card>
       )}
+    </>
+  );
 
+  const concentrationPanel = (
+    <>
+      <TabIntroCard
+        headline="How concentrated is the industry?"
+        summary="AMC and category Herfindahl–Hirschman Indexes, plus the Top-7 AMC share of industry AUM. Together they show whether incumbents are pulling away or whether challengers have a window."
+        watchNext="Whether the AMC HHI percentile holds in the top decile — the structural signal for incumbent moat strength."
+      />
 
-      {activeTab === "concentration" && (
-        <TabIntroCard
-          headline="How concentrated is the industry?"
-          summary="AMC and category Herfindahl–Hirschman Indexes, plus the Top-7 AMC share of industry AUM. Together they show whether incumbents are pulling away or whether challengers have a window."
-          watchNext="Whether the AMC HHI percentile holds in the top decile — the structural signal for incumbent moat strength."
-        />
-      )}
-
-      {activeTab === "concentration" && hhiHasData && (
+      {hhiHasData && (
         <Card
           title="Industry Concentration Index"
           subtitleNode={
@@ -772,7 +731,6 @@ export default async function QuarterlyPage({
         </Card>
       )}
 
-      {activeTab === "concentration" && (
       <Card
         tone={aumMarketShare.isFullUniverse ? undefined : "pending"}
         title="AUM Market Share"
@@ -812,8 +770,31 @@ export default async function QuarterlyPage({
           <InfoTooltip label="Denominator is total AAUM of all AMCs in the snapshot." />
         </p>
       </Card>
-      )}
+    </>
+  );
 
+  return (
+    <div className="space-y-8">
+      <PageHeader
+        title="Quarterly Operating KPIs"
+        subtitle={
+          selectedRow
+            ? `Industry-wide · ${selectedRow.quarterLabel}`
+            : "Industry-wide"
+        }
+      />
+
+      <MarketWrapCard wrap={marketWrapData} />
+
+      <ClientTabs
+        tabs={QUARTERLY_TABS}
+        defaultId="snapshot"
+        panels={{
+          snapshot: snapshotPanel,
+          "aaum-flows": aaumFlowsPanel,
+          concentration: concentrationPanel,
+        }}
+      />
     </div>
   );
 }

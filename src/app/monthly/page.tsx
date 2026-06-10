@@ -68,11 +68,7 @@ import {
   formatMonthLabel,
 } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import {
-  DashboardTabs,
-  type DashboardTabDef,
-} from "@/components/layout/DashboardTabs";
-import { resolveTabWithAliases } from "@/lib/tabs";
+import { ClientTabs, type ClientTabDef } from "@/components/layout/ClientTabs";
 
 const MONTHLY_TABS = [
   { id: "snapshot", label: "Snapshot" },
@@ -80,9 +76,7 @@ const MONTHLY_TABS = [
   { id: "fee-mix", label: "Fee Mix" },
   { id: "categories", label: "Category Shifts" },
   { id: "market-cycle", label: "Market Phases" },
-] as const satisfies readonly DashboardTabDef[];
-type MonthlyTabId = (typeof MONTHLY_TABS)[number]["id"];
-const MONTHLY_TAB_IDS = MONTHLY_TABS.map((t) => t.id) as readonly MonthlyTabId[];
+] as const satisfies readonly ClientTabDef[];
 
 /** Month-end AUM mix shares (% of the month's own breakdown total) for a
  *  single row, keyed by category. Mirrors the Month-end AUM Mix card's
@@ -160,15 +154,6 @@ export default async function MonthlyPage({
   // an absolute number (₹ Cr / count / etc) and a meaningful share
   // / ratio specific to that card. Default is "absolute" — URL stays
   // clean unless the user actively picked "share".
-
-  // Resolve the active tab from the URL. Unknown / missing values
-  // silently fall back to "snapshot" so stale bookmarks don't break.
-  const activeTab = resolveTabWithAliases<MonthlyTabId>(
-    sp.tab,
-    MONTHLY_TAB_IDS,
-    { "flow-table": "flows", "sip-retail": "snapshot" },
-    "snapshot",
-  );
 
   // AMFI Monthly Snapshot — first live AMFI widget. Reads directly from
   // the manually-uploaded-PDF snapshot. The selected row is whichever
@@ -745,22 +730,9 @@ export default async function MonthlyPage({
   // self-filters; other consumers of this trend only look at the tail
   // so the wider window costs nothing.
 
-  return (
-    <div className="space-y-8">
-      <PageHeader
-        title="Monthly Operating KPIs"
-        subtitle={subtitle}
-      />
-
-      <DashboardTabs
-        basePath="/monthly"
-        tabs={MONTHLY_TABS}
-        activeId={activeTab}
-        searchParams={sp}
-      />
-
-      {activeTab === "snapshot" &&
-        amfiSelected &&
+  const snapshotPanel = (
+    <>
+      {amfiSelected &&
         amfiAvailableMonths.length > 0 && (
           <MonthPicker
             availableMonths={amfiAvailableMonths}
@@ -768,7 +740,6 @@ export default async function MonthlyPage({
           />
         )}
 
-      {activeTab === "snapshot" && (
       <Card
         title="AMFI Monthly Snapshot"
         subtitle={
@@ -840,48 +811,8 @@ export default async function MonthlyPage({
           </div>
         )}
       </Card>
-      )}
 
-      {activeTab === "flows" && amfiSelected && (
-        <div className="space-y-3">
-          {maaumColumns && (
-            <Card
-              title="Monthly Avg Assets by Category"
-              subtitleNode={
-                <div className="space-y-0.5">
-                  <p className="text-xs text-muted-foreground">
-                    Monthly average AUM by category, with the active-equity
-                    split. Equity = Active + ETF &amp; Index + Arbitrage.
-                  </p>
-                  <p className="text-[11px] text-muted-foreground/80">
-                    {`${maaumColumns.yearAgo.monthLabel} · ${maaumColumns.prevMonth.monthLabel} · ${maaumColumns.latest.monthLabel} · Source: AMFI Monthly Report`}
-                  </p>
-                </div>
-              }
-              action={
-                <DownloadXlsxButton
-                  rows={[
-                    maaumColumns.latest,
-                    maaumColumns.prevMonth,
-                    maaumColumns.yearAgo,
-                  ]}
-                  columns={MAAUM_XLSX_COLUMNS}
-                  filename="industry-maaum-breakdown.xlsx"
-                  sheetName="MAAUM Breakdown"
-                />
-              }
-            >
-              <MaaumTable
-                yearAgo={maaumColumns.yearAgo}
-                prevMonth={maaumColumns.prevMonth}
-                latest={maaumColumns.latest}
-              />
-            </Card>
-          )}
-        </div>
-      )}
-
-      {activeTab === "snapshot" && hasAnySipTrend && (
+      {hasAnySipTrend && (
         <div className="space-y-3">
           <section className="space-y-4">
             {sipGrossShareSeries.length > 0 && (
@@ -966,7 +897,7 @@ export default async function MonthlyPage({
         </div>
       )}
 
-      {activeTab === "snapshot" && nfoFundsHasData && (
+      {nfoFundsHasData && (
         <Card
           title="New Fund Offers Mobilised"
           subtitleNode={
@@ -998,9 +929,50 @@ export default async function MonthlyPage({
           />
         </Card>
       )}
+    </>
+  );
 
+  const flowsPanel = (
+    <>
+      {amfiSelected && (
+        <div className="space-y-3">
+          {maaumColumns && (
+            <Card
+              title="Monthly Avg Assets by Category"
+              subtitleNode={
+                <div className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground">
+                    Monthly average AUM by category, with the active-equity
+                    split. Equity = Active + ETF &amp; Index + Arbitrage.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/80">
+                    {`${maaumColumns.yearAgo.monthLabel} · ${maaumColumns.prevMonth.monthLabel} · ${maaumColumns.latest.monthLabel} · Source: AMFI Monthly Report`}
+                  </p>
+                </div>
+              }
+              action={
+                <DownloadXlsxButton
+                  rows={[
+                    maaumColumns.latest,
+                    maaumColumns.prevMonth,
+                    maaumColumns.yearAgo,
+                  ]}
+                  columns={MAAUM_XLSX_COLUMNS}
+                  filename="industry-maaum-breakdown.xlsx"
+                  sheetName="MAAUM Breakdown"
+                />
+              }
+            >
+              <MaaumTable
+                yearAgo={maaumColumns.yearAgo}
+                prevMonth={maaumColumns.prevMonth}
+                latest={maaumColumns.latest}
+              />
+            </Card>
+          )}
+        </div>
+      )}
 
-      {activeTab === "flows" && (
         <Card
           title="Monthly Flows & AUM · Table"
           subtitleNode={
@@ -1059,16 +1031,22 @@ export default async function MonthlyPage({
             </div>
           )}
         </Card>
-      )}
+    </>
+  );
 
-      {activeTab === "fee-mix" && feeMix.length > 0 && (
+  const feeMixPanel = (
+    <>
+      {feeMix.length > 0 && (
         <Card title="Fee Mix of Net Inflows">
           <FeeMixInflows months={feeMix} />
         </Card>
       )}
+    </>
+  );
 
-      {activeTab === "categories" &&
-        rotation &&
+  const categoriesPanel = (
+    <>
+      {rotation &&
         rotation.gainers.length > 0 &&
         rotation.losers.length > 0 &&
         (() => {
@@ -1098,7 +1076,7 @@ export default async function MonthlyPage({
           );
         })()}
 
-      {activeTab === "categories" && iiflHeatmapHasData && (
+      {iiflHeatmapHasData && (
         <div className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
@@ -1139,8 +1117,12 @@ export default async function MonthlyPage({
           </p>
         </div>
       )}
+    </>
+  );
 
-      {activeTab === "market-cycle" && flowHeatCells.length > 0 && (
+  const marketCyclePanel = (
+    <>
+      {flowHeatCells.length > 0 && (
         <Card
           title="Active Equity Flow · 7-year Calendar"
           subtitle="Each cell = one month · colour = z-score vs full history"
@@ -1153,9 +1135,30 @@ export default async function MonthlyPage({
         </Card>
       )}
 
-      {activeTab === "market-cycle" && episodeRecoveryData.length > 0 && (
+      {episodeRecoveryData.length > 0 && (
         <EpisodeRecoveryCard rows={episodeRecoveryData} />
       )}
+    </>
+  );
+
+  return (
+    <div className="space-y-8">
+      <PageHeader
+        title="Monthly Operating KPIs"
+        subtitle={subtitle}
+      />
+
+      <ClientTabs
+        tabs={MONTHLY_TABS}
+        defaultId="snapshot"
+        panels={{
+          snapshot: snapshotPanel,
+          flows: flowsPanel,
+          "fee-mix": feeMixPanel,
+          categories: categoriesPanel,
+          "market-cycle": marketCyclePanel,
+        }}
+      />
 
       <StickyContextFooter
         cyclePhase={latestCyclePhase}
