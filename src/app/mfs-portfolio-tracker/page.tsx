@@ -38,7 +38,7 @@ export default async function MfsPortfolioTrackerPage({
       <PortfolioTrackerView
         funds={fundDirectory}
         tabs={TRACKER_TABS}
-        activeTab={activeTab}
+        initialTab={activeTab}
         searchParams={sp}
       />
     </div>
