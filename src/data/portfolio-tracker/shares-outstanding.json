@@ -1,9 +1,253 @@
 {
   "meta": {
-    "generatedAt": "",
+    "generatedAt": "2026-06-11T17:53:18.665Z",
     "source": "screener.in (Market Cap ÷ Current Price)",
     "staleDays": 30,
-    "note": "sharesOutstanding = marketCapCr·1e7 / priceInr. Keyed by RupeeVest fincode. Populated by scripts/ingest/shares-outstanding.ts (run via the shares-outstanding GitHub Action — this sandbox has no network egress). Only companies surfacing in cap-flows.json are fetched. Fix bad symbol matches in shares-outstanding-overrides.json."
+    "note": "sharesOutstanding = marketCapCr·1e7 / priceInr. Keyed by RupeeVest fincode. Only companies surfacing in cap-flows.json are fetched. Fix bad symbol matches in shares-outstanding-overrides.json (fincode → screener symbol)."
   },
-  "companies": {}
+  "companies": {
+    "100112": {
+      "company": "State Bank of India",
+      "symbol": "SBIN",
+      "sharesOutstanding": 9227392607,
+      "marketCapCr": 923662,
+      "priceInr": 1001,
+      "asOf": "2026-06-11T17:51:29.573Z",
+      "source": "https://www.screener.in/company/SBIN/consolidated/"
+    },
+    "100180": {
+      "company": "HDFC Bank Limited",
+      "symbol": "HDFCBANK",
+      "sharesOutstanding": 15386295302,
+      "marketCapCr": 1146279,
+      "priceInr": 745,
+      "asOf": "2026-06-11T17:52:00.468Z",
+      "source": "https://www.screener.in/company/HDFCBANK/consolidated/"
+    },
+    "100233": {
+      "company": "Kajaria Ceramics Limited",
+      "symbol": "KAJARIACER",
+      "sharesOutstanding": 159155060,
+      "marketCapCr": 17141,
+      "priceInr": 1077,
+      "asOf": "2026-06-11T17:53:13.377Z",
+      "source": "https://www.screener.in/company/KAJARIACER/consolidated/"
+    },
+    "100257": {
+      "company": "Lupin Ltd.",
+      "symbol": "LUPIN",
+      "sharesOutstanding": 456986362,
+      "marketCapCr": 103873,
+      "priceInr": 2273,
+      "asOf": "2026-06-11T17:52:30.777Z",
+      "source": "https://www.screener.in/company/LUPIN/consolidated/"
+    },
+    "100325": {
+      "company": "Reliance Industries Limited",
+      "symbol": "RELIANCE",
+      "sharesOutstanding": 13524473476,
+      "marketCapCr": 1708141,
+      "priceInr": 1263,
+      "asOf": "2026-06-11T17:51:45.314Z",
+      "source": "https://www.screener.in/company/RELIANCE/consolidated/"
+    },
+    "102986": {
+      "company": "Vardhman Textiles Limited",
+      "symbol": "VTL",
+      "sharesOutstanding": 289918567,
+      "marketCapCr": 17801,
+      "priceInr": 614,
+      "asOf": "2026-06-11T17:53:02.021Z",
+      "source": "https://www.screener.in/company/VTL/consolidated/"
+    },
+    "107685": {
+      "company": "Wipro Limited",
+      "symbol": "WIPRO",
+      "sharesOutstanding": 10517796610,
+      "marketCapCr": 186165,
+      "priceInr": 177,
+      "asOf": "2026-06-11T17:51:56.673Z",
+      "source": "https://www.screener.in/company/WIPRO/consolidated/"
+    },
+    "124000": {
+      "company": "Poonawalla Fincorp Limited",
+      "symbol": "POONAWALLA",
+      "sharesOutstanding": 881505376,
+      "marketCapCr": 32792,
+      "priceInr": 372,
+      "asOf": "2026-06-11T17:52:04.255Z",
+      "source": "https://www.screener.in/company/POONAWALLA/consolidated/"
+    },
+    "132174": {
+      "company": "ICICI Bank Limited",
+      "symbol": "ICICIBANK",
+      "sharesOutstanding": 7172270311,
+      "marketCapCr": 944588,
+      "priceInr": 1317,
+      "asOf": "2026-06-11T17:51:25.735Z",
+      "source": "https://www.screener.in/company/ICICIBANK/consolidated/"
+    },
+    "132210": {
+      "company": "City Union Bank Limited",
+      "symbol": "CUB",
+      "sharesOutstanding": 742062257,
+      "marketCapCr": 19071,
+      "priceInr": 257,
+      "asOf": "2026-06-11T17:52:58.230Z",
+      "source": "https://www.screener.in/company/CUB/"
+    },
+    "132432": {
+      "company": "United Spirits Limited",
+      "symbol": "UNITDSPR",
+      "sharesOutstanding": 727122417,
+      "marketCapCr": 91472,
+      "priceInr": 1258,
+      "asOf": "2026-06-11T17:52:08.046Z",
+      "source": "https://www.screener.in/company/UNITDSPR/consolidated/"
+    },
+    "132500": {
+      "company": "Maruti Suzuki India Limited",
+      "symbol": "MARUTI",
+      "sharesOutstanding": 314328905,
+      "marketCapCr": 411708,
+      "priceInr": 13098,
+      "asOf": "2026-06-11T17:51:41.488Z",
+      "source": "https://www.screener.in/company/MARUTI/consolidated/"
+    },
+    "132539": {
+      "company": "UNO Minda Limited",
+      "symbol": "UNOMINDA",
+      "sharesOutstanding": 579690722,
+      "marketCapCr": 61853,
+      "priceInr": 1067,
+      "asOf": "2026-06-11T17:52:38.828Z",
+      "source": "https://www.screener.in/company/UNOMINDA/consolidated/"
+    },
+    "132555": {
+      "company": "NTPC Limited",
+      "symbol": "NTPC",
+      "sharesOutstanding": 9693920455,
+      "marketCapCr": 341226,
+      "priceInr": 352,
+      "asOf": "2026-06-11T17:51:52.875Z",
+      "source": "https://www.screener.in/company/NTPC/consolidated/"
+    },
+    "132720": {
+      "company": "Mahindra & Mahindra Financial Services Ltd",
+      "symbol": "M&MFIN",
+      "sharesOutstanding": 1390724638,
+      "marketCapCr": 38384,
+      "priceInr": 276,
+      "asOf": "2026-06-11T17:52:26.986Z",
+      "source": "https://www.screener.in/company/M&MFIN/consolidated/"
+    },
+    "132756": {
+      "company": "CIE Automotive India Ltd",
+      "symbol": "CIEINDIA",
+      "sharesOutstanding": 379587156,
+      "marketCapCr": 16550,
+      "priceInr": 436,
+      "asOf": "2026-06-11T17:53:17.164Z",
+      "source": "https://www.screener.in/company/CIEINDIA/consolidated/"
+    },
+    "200132": {
+      "company": "Bajaj Auto Limited",
+      "symbol": "BAJAJ-AUTO",
+      "sharesOutstanding": 279592644,
+      "marketCapCr": 282780,
+      "priceInr": 10114,
+      "asOf": "2026-06-11T17:51:49.112Z",
+      "source": "https://www.screener.in/company/BAJAJ-AUTO/consolidated/"
+    },
+    "209068": {
+      "company": "RBL Bank Limited",
+      "symbol": "RBLBANK",
+      "sharesOutstanding": 620724234,
+      "marketCapCr": 22284,
+      "priceInr": 359,
+      "asOf": "2026-06-11T17:52:15.625Z",
+      "source": "https://www.screener.in/company/RBLBANK/"
+    },
+    "210590": {
+      "company": "Persistent Systems Limited",
+      "symbol": "PERSISTENT",
+      "sharesOutstanding": 157634387,
+      "marketCapCr": 76831,
+      "priceInr": 4874,
+      "asOf": "2026-06-11T17:52:23.195Z",
+      "source": "https://www.screener.in/company/PERSISTENT/consolidated/"
+    },
+    "214084": {
+      "company": "Sansera Engineering Limited",
+      "symbol": "SANSERA",
+      "sharesOutstanding": 62250175,
+      "marketCapCr": 17816,
+      "priceInr": 2862,
+      "asOf": "2026-06-11T17:53:09.588Z",
+      "source": "https://www.screener.in/company/SANSERA/consolidated/"
+    },
+    "218071": {
+      "company": "Max Healthcare Institute Limited",
+      "symbol": "MAXHEALTH",
+      "sharesOutstanding": 972861386,
+      "marketCapCr": 98259,
+      "priceInr": 1010,
+      "asOf": "2026-06-11T17:52:11.841Z",
+      "source": "https://www.screener.in/company/MAXHEALTH/consolidated/"
+    },
+    "241214": {
+      "company": "Paradeep Phosphates Limited",
+      "symbol": "PARADEEP",
+      "sharesOutstanding": 1033688525,
+      "marketCapCr": 12611,
+      "priceInr": 122,
+      "asOf": "2026-06-11T17:52:54.439Z",
+      "source": "https://www.screener.in/company/PARADEEP/consolidated/"
+    },
+    "252306": {
+      "company": "Eternal Limited",
+      "symbol": "ETERNAL",
+      "sharesOutstanding": 9666638298,
+      "marketCapCr": 227166,
+      "priceInr": 235,
+      "asOf": "2026-06-11T17:51:33.379Z",
+      "source": "https://www.screener.in/company/ETERNAL/consolidated/"
+    },
+    "297629": {
+      "company": "Cohance Lifesciences Limited",
+      "symbol": "COHANCE",
+      "sharesOutstanding": 382529551,
+      "marketCapCr": 16181,
+      "priceInr": 423,
+      "asOf": "2026-06-11T17:53:05.805Z",
+      "source": "https://www.screener.in/company/COHANCE/consolidated/"
+    },
+    "311653": {
+      "company": "Cello World Ltd",
+      "symbol": "CELLO",
+      "sharesOutstanding": 220700809,
+      "marketCapCr": 8188,
+      "priceInr": 371,
+      "asOf": "2026-06-11T17:52:50.655Z",
+      "source": "https://www.screener.in/company/CELLO/consolidated/"
+    },
+    "318188": {
+      "company": "Onesource Specialty Pharma Limited",
+      "symbol": "ONESOURCE",
+      "sharesOutstanding": 114482132,
+      "marketCapCr": 18901,
+      "priceInr": 1651,
+      "asOf": "2026-06-11T17:52:42.611Z",
+      "source": "https://www.screener.in/company/ONESOURCE/consolidated/"
+    },
+    "318678": {
+      "company": "ITC Hotels Limited",
+      "symbol": "ITCHOTELS",
+      "sharesOutstanding": 2088120805,
+      "marketCapCr": 31113,
+      "priceInr": 149,
+      "asOf": "2026-06-11T17:52:19.405Z",
+      "source": "https://www.screener.in/company/ITCHOTELS/consolidated/"
+    }
+  }
 }
