@@ -7,6 +7,14 @@ function displayName(name: string): string {
   return name.replace(/\s+(Ltd\.?|Limited)$/i, "").trim();
 }
 
+// Net MF buying/selling as a % of the company's shares outstanding. "—" when
+// the screener feed doesn't cover the company yet (pctOutstanding === null).
+function fmtPctOut(pct: number | null, kind: "bought" | "sold"): string {
+  if (pct === null || !Number.isFinite(pct)) return "—";
+  const sign = kind === "bought" ? "+" : "−";
+  return `${sign}${Math.abs(pct).toFixed(2)}%`;
+}
+
 function FlowCard({
   title,
   rows,
@@ -17,7 +25,8 @@ function FlowCard({
   kind: "bought" | "sold";
 }) {
   const movers = kind === "bought" ? "Top MF Buyers" : "Top MF Sellers";
-  const valHead = kind === "bought" ? "Net bought (₹ Cr)" : "Net sold (₹ Cr)";
+  const valHead =
+    kind === "bought" ? "Bought (% shares out.)" : "Sold (% shares out.)";
   return (
     <div className="overflow-hidden rounded-lg border bg-card">
       <div className="border-b bg-muted/60 px-4 py-3 text-base font-bold tracking-tight text-foreground">
@@ -52,11 +61,15 @@ function FlowCard({
                 <td
                   className={cn(
                     "px-3 py-2.5 text-right tabular font-medium",
-                    kind === "bought" ? "text-positive" : "text-negative"
+                    r.pctOutstanding === null
+                      ? "text-muted-foreground"
+                      : kind === "bought"
+                        ? "text-positive"
+                        : "text-negative"
                   )}
+                  title={`Net ${kind} ${(kind === "bought" ? "+" : "−")}₹${r.netCr.toLocaleString("en-IN")} Cr`}
                 >
-                  {kind === "bought" ? "+" : "−"}
-                  {r.netCr.toLocaleString("en-IN")}
+                  {fmtPctOut(r.pctOutstanding, kind)}
                 </td>
                 <td className="px-4 py-2.5 text-muted-foreground">
                   {r.amcs.length ? r.amcs.join(", ") : "—"}
@@ -81,6 +94,7 @@ export function CapFlowsView({ flows }: { flows: CapFlows }) {
     tier: string;
     side: string;
     company: string;
+    pctOutstanding: number | null;
     netCr: number;
     amcs: string;
   };
@@ -89,6 +103,7 @@ export function CapFlowsView({ flows }: { flows: CapFlows }) {
       tier: t.label,
       side: "Bought",
       company: displayName(r.company),
+      pctOutstanding: r.pctOutstanding,
       netCr: r.netCr,
       amcs: r.amcs.join(", "),
     })),
@@ -96,6 +111,7 @@ export function CapFlowsView({ flows }: { flows: CapFlows }) {
       tier: t.label,
       side: "Sold",
       company: displayName(r.company),
+      pctOutstanding: r.pctOutstanding === null ? null : -r.pctOutstanding,
       netCr: -r.netCr,
       amcs: r.amcs.join(", "),
     })),
@@ -104,6 +120,7 @@ export function CapFlowsView({ flows }: { flows: CapFlows }) {
     { key: "tier", header: "Cap tier" },
     { key: "side", header: "Side" },
     { key: "company", header: "Company" },
+    { key: "pctOutstanding", header: "% shares outstanding (+ bought / − sold)" },
     { key: "netCr", header: "Net (₹ Cr, + bought / − sold)" },
     { key: "amcs", header: "AMCs" },
   ];
@@ -111,7 +128,9 @@ export function CapFlowsView({ flows }: { flows: CapFlows }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-2">
         <p className="text-[11px] text-muted-foreground">
-          MF net buying / selling by company · {meta.monthCur}.
+          MF net buying / selling as % of shares outstanding · {meta.monthCur}.
+          Ranked by net ₹ Cr; hover a % for the rupee value. &ldquo;—&rdquo; =
+          shares-outstanding not yet sourced.
         </p>
         <DownloadXlsxButton
           rows={exportRows}

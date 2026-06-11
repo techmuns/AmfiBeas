@@ -447,20 +447,9 @@ export default async function MonthlyPage() {
           : null;
 
       const equity = num(r.equityNetInflow);
-      const debt = num(r.debtNetInflow);
       const hybrid = num(r.hybridNetInflow);
-      const other = num(r.otherSchemesNetInflow);
       const total = num(r.netInflow);
       const activeEquity = num(r.activeEquityNetInflow);
-      // Gross = Σ|non-overlapping majors|. Debt ⊇ Liquid, so Liquid is
-      // excluded from the sum to avoid double-counting.
-      const gross =
-        Math.abs(equity ?? 0) +
-        Math.abs(debt ?? 0) +
-        Math.abs(hybrid ?? 0) +
-        Math.abs(other ?? 0);
-      const pctOfGross = (v: number | null): number | null =>
-        v !== null && gross > 0 ? (v / gross) * 100 : null;
 
       const aaum = num(r.totalAaum);
       const prevAaum = prev ? num(prev.totalAaum) : null;
@@ -468,9 +457,9 @@ export default async function MonthlyPage() {
       return {
         month: r.month,
         totalFlow: total,
-        equityFlowPct: pctOfGross(equity),
-        hybridFlowPct: pctOfGross(hybrid),
-        activeEquityFlowPct: pctOfGross(activeEquity),
+        equityFlow: equity,
+        hybridFlow: hybrid,
+        activeEquityFlow: activeEquity,
         equityShare: shareOf("equity"),
         debtShare: shareOf("debt"),
         liquidShare: shareOf("liquid"),
@@ -494,7 +483,7 @@ export default async function MonthlyPage() {
       .filter(
         (r) =>
           r.totalFlow !== null ||
-          r.equityFlowPct !== null ||
+          r.equityFlow !== null ||
           r.aaum !== null
       )
       .reverse()

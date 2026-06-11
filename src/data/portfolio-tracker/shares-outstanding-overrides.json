@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "note": "Manual fincode → screener.in symbol overrides for the shares-outstanding feed. Add an entry here when scripts/ingest/shares-outstanding.ts resolves a company to the wrong screener page (the autocomplete top-hit was ambiguous). The symbol is the slug in the company URL, e.g. https://www.screener.in/company/HDFCBANK/ → \"HDFCBANK\". An override forces that page and skips the search step."
+  },
+  "companies": {}
+}

@@ -5,12 +5,12 @@ import type { CsvColumn } from "@/lib/csv";
 /**
  * Monthly Flows & AUM heatmap table — a tabular re-creation of the
  * /monthly Flows tab. Each row is a month (newest first; the latest
- * month is starred), columns are grouped into Net Flows (Total in ₹ Cr;
- * Equity / Hybrid / Active Eq as a signed % of the month's gross flow
- * magnitude), Month-end AUM Mix (% share + MoM pp move), and Industry
- * AAUM (level + MoM / YoY). Signed cells are tinted green (inflow / up)
- * or red (outflow / down) with intensity scaled to each column's own
- * range, so the table reads as a heatmap the way a returns grid does.
+ * month is starred), columns are grouped into Net Flows (Total, Equity,
+ * Hybrid and Active Eq, all as signed ₹ Cr), Month-end AUM Mix (% share +
+ * MoM pp move), and Industry AAUM (level + MoM / YoY). Signed cells are
+ * tinted green (inflow / up) or red (outflow / down) with intensity scaled
+ * to each column's own range, so the table reads as a heatmap the way a
+ * returns grid does.
  *
  * Server component — no interactivity, colours are derived at render.
  */
@@ -18,11 +18,11 @@ export interface MonthlyFlowsTableRow {
   month: string; // YYYY-MM
   // Industry net flow (₹ Cr, signed; null when the row didn't carry it).
   totalFlow: number | null;
-  // Net flows as a signed % of the month's gross flow magnitude
-  // (null when the AMFI row didn't carry the field).
-  equityFlowPct: number | null;
-  hybridFlowPct: number | null;
-  activeEquityFlowPct: number | null;
+  // Per-category net flows (₹ Cr, signed; null when the AMFI row didn't
+  // carry the field).
+  equityFlow: number | null;
+  hybridFlow: number | null;
+  activeEquityFlow: number | null;
   // Month-end AUM mix shares (% of month-end breakdown) + MoM pp move.
   equityShare: number | null;
   debtShare: number | null;
@@ -46,9 +46,9 @@ export interface MonthlyFlowsTableRow {
 export const MONTHLY_FLOWS_XLSX_COLUMNS: CsvColumn<MonthlyFlowsTableRow>[] = [
   { key: "month", header: "Month" },
   { key: "totalFlow", header: "Net Flow · Total (₹ Cr)" },
-  { key: "equityFlowPct", header: "Net Flow · Equity (% of gross)" },
-  { key: "hybridFlowPct", header: "Net Flow · Hybrid (% of gross)" },
-  { key: "activeEquityFlowPct", header: "Net Flow · Active Equity (% of gross)" },
+  { key: "equityFlow", header: "Net Flow · Equity (₹ Cr)" },
+  { key: "hybridFlow", header: "Net Flow · Hybrid (₹ Cr)" },
+  { key: "activeEquityFlow", header: "Net Flow · Active Equity (₹ Cr)" },
   { key: "equityShare", header: "AUM Mix · Equity (%)" },
   { key: "debtShare", header: "AUM Mix · Debt (%)" },
   { key: "liquidShare", header: "AUM Mix · Liquid (%)" },
@@ -64,16 +64,16 @@ export const MONTHLY_FLOWS_XLSX_COLUMNS: CsvColumn<MonthlyFlowsTableRow>[] = [
 
 type FlowKey =
   | "totalFlow"
-  | "equityFlowPct"
-  | "hybridFlowPct"
-  | "activeEquityFlowPct";
+  | "equityFlow"
+  | "hybridFlow"
+  | "activeEquityFlow";
 
-// `abs` columns render absolute ₹ Cr; the rest render a signed %.
-const FLOW_COLS: { key: FlowKey; label: string; abs?: boolean }[] = [
-  { key: "totalFlow", label: "Total (₹ Cr)", abs: true },
-  { key: "equityFlowPct", label: "Equity" },
-  { key: "hybridFlowPct", label: "Hybrid" },
-  { key: "activeEquityFlowPct", label: "Active Eq" },
+// Every flow column now renders a signed ₹ Cr figure (compact via fmtFlow).
+const FLOW_COLS: { key: FlowKey; label: string }[] = [
+  { key: "totalFlow", label: "Total (₹ Cr)" },
+  { key: "equityFlow", label: "Equity" },
+  { key: "hybridFlow", label: "Hybrid" },
+  { key: "activeEquityFlow", label: "Active Eq" },
 ];
 
 const MIX_COLS: {
@@ -176,7 +176,7 @@ export function MonthlyFlowsTable({ rows }: { rows: MonthlyFlowsTableRow[] }) {
               Period
             </th>
             <th colSpan={FLOW_COLS.length} className={groupTh}>
-              Net Flows (% of monthly flow)
+              Net Flows (₹ Cr)
             </th>
             <th colSpan={MIX_COLS.length} className={groupTh}>
               Month-end AUM Mix (%)
@@ -220,7 +220,7 @@ export function MonthlyFlowsTable({ rows }: { rows: MonthlyFlowsTableRow[] }) {
                   {monthLabel(r.month)}
                 </th>
 
-                {/* Net Flows — Total in ₹ Cr, rest as signed % of gross */}
+                {/* Net Flows — every column a signed ₹ Cr figure */}
                 {FLOW_COLS.map((c) => {
                   const v = r[c.key] as number | null;
                   return (
@@ -232,7 +232,7 @@ export function MonthlyFlowsTable({ rows }: { rows: MonthlyFlowsTableRow[] }) {
                       )}
                       style={toneBg(v, flowMax.get(c.key) ?? 0)}
                     >
-                      {c.abs ? fmtFlow(v) : fmtPct(v)}
+                      {fmtFlow(v)}
                     </td>
                   );
                 })}

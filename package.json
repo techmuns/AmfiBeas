@@ -26,7 +26,9 @@
     "ingest:index:history-catchup": "tsx scripts/ingest/index-history-catchup.ts",
     "ingest:amc-narratives": "tsx scripts/ingest/amc-narratives.ts",
     "ingest:amfi-aaum-pdf-backfill": "tsx scripts/ingest/amfi-aaum-pdf-backfill.ts",
-    "ingest:amfi-sip-backfill": "tsx scripts/ingest/amfi-sip-contribution-backfill.ts"
+    "ingest:amfi-sip-backfill": "tsx scripts/ingest/amfi-sip-contribution-backfill.ts",
+    "build:cap-flows": "tsx scripts/build-cap-flows.ts",
+    "ingest:shares-outstanding": "tsx scripts/ingest/shares-outstanding.ts"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.19.6",

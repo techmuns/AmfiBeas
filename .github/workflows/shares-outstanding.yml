@@ -1,0 +1,63 @@
+name: Shares outstanding (cap-flows %)
+
+# Refreshes the shares-outstanding feed that powers the "% of shares
+# outstanding" column on the Overview buy/sell cards. Runs the chain:
+#   build:cap-flows         → surface the ~30 companies + their fincodes
+#   ingest:shares-outstanding → scrape screener.in for the missing/stale names
+#   build:cap-flows         → re-build to attach pctOutstanding
+# then commits the two JSON files when anything changed.
+#
+# Monthly cadence (the holdings the cap flows derive from update monthly).
+# Trigger manually via the Actions tab for an on-demand refresh.
+
+on:
+  schedule:
+    # 03:00 UTC on the 3rd of each month — a few days after the monthly
+    # portfolio refresh typically lands.
+    - cron: "0 3 3 * *"
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are you running this manually?"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: shares-outstanding-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shares-outstanding:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Rebuild cap-flows (surface target companies)
+        run: npm run build:cap-flows
+      - name: Fetch shares outstanding from screener.in
+        run: npm run ingest:shares-outstanding
+      - name: Rebuild cap-flows (attach pctOutstanding)
+        run: npm run build:cap-flows
+      - name: Show diff
+        run: git diff --stat src/data/portfolio-tracker || true
+      - name: Commit data
+        run: |
+          FILES="src/data/portfolio-tracker/shares-outstanding.json src/data/portfolio-tracker/cap-flows.json"
+          if [ -z "$(git status --porcelain $FILES)" ]; then
+            echo "No shares-outstanding / cap-flows changes."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add $FILES
+          git commit -m "chore(data): refresh shares-outstanding + cap-flows % ($(date -u +%Y-%m-%d))"
+          git push

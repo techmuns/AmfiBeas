@@ -1,0 +1,9 @@
+{
+  "meta": {
+    "generatedAt": "",
+    "source": "screener.in (Market Cap ÷ Current Price)",
+    "staleDays": 30,
+    "note": "sharesOutstanding = marketCapCr·1e7 / priceInr. Keyed by RupeeVest fincode. Populated by scripts/ingest/shares-outstanding.ts (run via the shares-outstanding GitHub Action — this sandbox has no network egress). Only companies surfacing in cap-flows.json are fetched. Fix bad symbol matches in shares-outstanding-overrides.json."
+  },
+  "companies": {}
+}

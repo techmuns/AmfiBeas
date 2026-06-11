@@ -9,7 +9,14 @@ import data from "./portfolio-tracker/cap-flows.json";
 
 export interface CapFlowRow {
   company: string;
+  /** RupeeVest financial code — the join key into the shares-outstanding
+   *  feed; not displayed. */
+  fincode: string;
   netCr: number;
+  /** Net shares MFs traded this month as a % of the company's total shares
+   *  outstanding (unsigned magnitude; the card applies the bought/sold sign).
+   *  null when no shares-outstanding figure is available for the fincode. */
+  pctOutstanding: number | null;
   amcs: string[];
 }
 

@@ -22,7 +22,40 @@ import { amcOf } from "../src/data/amc-name-map";
 
 const DIR = path.join(process.cwd(), "public", "holdings");
 const OUT = path.join(process.cwd(), "src", "data", "portfolio-tracker", "cap-flows.json");
+// Shares-outstanding feed (keyed by fincode), populated out-of-band by
+// scripts/ingest/shares-outstanding.ts from screener.in. Optional — when a
+// company is missing here, its pctOutstanding is emitted as null and the UI
+// renders "—". Read defensively so an absent/parse-broken file never blocks
+// the cap-flows build.
+const SHARES_OUT = path.join(
+  process.cwd(),
+  "src",
+  "data",
+  "portfolio-tracker",
+  "shares-outstanding.json"
+);
 const TOP_N = 5;
+
+interface SharesOutstandingEntry {
+  sharesOutstanding: number;
+}
+
+function loadSharesOutstanding(): Map<string, number> {
+  const m = new Map<string, number>();
+  try {
+    const raw = JSON.parse(fs.readFileSync(SHARES_OUT, "utf8")) as {
+      companies?: Record<string, SharesOutstandingEntry>;
+    };
+    for (const [fincode, e] of Object.entries(raw.companies ?? {})) {
+      if (e && Number.isFinite(e.sharesOutstanding) && e.sharesOutstanding > 0) {
+        m.set(fincode, e.sharesOutstanding);
+      }
+    }
+  } catch {
+    // No feed yet (first run) or unreadable — proceed with empty map.
+  }
+  return m;
+}
 
 const isActiveEquity = (c: string) => /^Equity/.test(c) && !/ETF|Index|International/.test(c);
 
@@ -115,15 +148,22 @@ function main() {
     }
   }
 
+  const sharesOutstanding = loadSharesOutstanding();
+
   interface Row {
     company: string;
+    fincode: string;
     netCr: number;
+    // Net shares traded by MFs (signed: + bought / − sold) as a % of the
+    // company's total shares outstanding. null when no shares-outstanding
+    // figure is available for this fincode yet.
+    pctOutstanding: number | null;
     buyers: string[];
     sellers: string[];
     tier: CapTier;
   }
   const rows: Row[] = [];
-  for (const [, a] of agg) {
+  for (const [fincode, a] of agg) {
     const priceCur = a.shCur > 0 ? a.valCur / a.shCur : 0;
     const pricePrev = a.shPrev > 0 ? a.valPrev / a.shPrev : 0;
     const price = priceCur > 0 ? priceCur : pricePrev;
@@ -139,8 +179,16 @@ function main() {
       }
     }
 
-    const netCr = (a.shCur - a.shPrev) * price;
+    const netShares = a.shCur - a.shPrev;
+    const netCr = netShares * price;
     if (Math.abs(netCr) < 1) continue; // ignore sub-1cr noise
+
+    // % of the company's total shares outstanding that MFs net traded this
+    // month (signed, mirrors netCr). null until the screener feed carries
+    // a shares-outstanding figure for this fincode.
+    const so = sharesOutstanding.get(fincode);
+    const pctOutstanding =
+      so && so > 0 ? (netShares / so) * 100 : null;
 
     const tier = classifyCapFromNames(a.names.keys());
 
@@ -161,12 +209,17 @@ function main() {
 
     rows.push({
       company: pickName(a.names),
+      fincode,
       netCr: Math.round(netCr),
+      pctOutstanding,
       buyers,
       sellers,
       tier,
     });
   }
+
+  const round2 = (v: number | null): number | null =>
+    v === null ? null : Math.round(v * 100) / 100;
 
   const card = (tier: CapTier) => {
     const inTier = rows.filter((r) => r.tier === tier);
@@ -174,12 +227,25 @@ function main() {
       .filter((r) => r.netCr > 0)
       .sort((x, y) => y.netCr - x.netCr)
       .slice(0, TOP_N)
-      .map((r) => ({ company: r.company, netCr: r.netCr, amcs: r.buyers }));
+      .map((r) => ({
+        company: r.company,
+        fincode: r.fincode,
+        netCr: r.netCr,
+        pctOutstanding: round2(r.pctOutstanding),
+        amcs: r.buyers,
+      }));
     const sold = inTier
       .filter((r) => r.netCr < 0)
       .sort((x, y) => x.netCr - y.netCr)
       .slice(0, TOP_N)
-      .map((r) => ({ company: r.company, netCr: Math.abs(r.netCr), amcs: r.sellers }));
+      .map((r) => ({
+        company: r.company,
+        fincode: r.fincode,
+        netCr: Math.abs(r.netCr),
+        pctOutstanding:
+          r.pctOutstanding === null ? null : round2(Math.abs(r.pctOutstanding)),
+        amcs: r.sellers,
+      }));
     return { bought, sold };
   };
 
@@ -191,7 +257,7 @@ function main() {
       universe: "Active equity schemes only (excludes ETFs, index, international and hybrid funds)",
       activeEquityFunds: fundCount,
       metric:
-        "Net Rs Cr bought/sold = change in aggregate shares held x current implied price. Excludes corporate actions (split/bonus).",
+        "Net Rs Cr bought/sold = change in aggregate shares held x current implied price. Excludes corporate actions (split/bonus). pctOutstanding = net shares traded ÷ company shares outstanding x 100 (null until the screener feed covers the fincode).",
       topN: TOP_N,
     },
     large: card("large"),
@@ -199,14 +265,19 @@ function main() {
     small: card("small"),
   };
   fs.writeFileSync(OUT, JSON.stringify(out, null, 2) + "\n");
+  const withPct = [out.large, out.mid, out.small].flatMap((c) => [
+    ...c.bought,
+    ...c.sold,
+  ]).filter((r) => r.pctOutstanding !== null).length;
   console.log(`wrote ${OUT}`);
-  console.log(`months: ${monthCurLabel} vs ${monthPrevLabel} | active-equity funds: ${fundCount} | companies: ${agg.size}`);
+  console.log(`months: ${monthCurLabel} vs ${monthPrevLabel} | active-equity funds: ${fundCount} | companies: ${agg.size} | rows with shares-outstanding: ${withPct}`);
+  const fmtPct = (v: number | null) => (v === null ? "  —  " : `${v.toFixed(2)}%`);
   for (const t of ["large", "mid", "small"] as CapTier[]) {
     const c = out[t];
     console.log(`\n### ${t.toUpperCase()} — bought ###`);
-    c.bought.forEach((r) => console.log(`  +${r.netCr.toLocaleString("en-IN").padStart(7)} Cr  ${r.company}  [${r.amcs.join(", ")}]`));
+    c.bought.forEach((r) => console.log(`  +${r.netCr.toLocaleString("en-IN").padStart(7)} Cr  ${fmtPct(r.pctOutstanding).padStart(7)}  ${r.company}  [${r.amcs.join(", ")}]`));
     console.log(`### ${t.toUpperCase()} — sold ###`);
-    c.sold.forEach((r) => console.log(`  -${r.netCr.toLocaleString("en-IN").padStart(7)} Cr  ${r.company}  [${r.amcs.join(", ")}]`));
+    c.sold.forEach((r) => console.log(`  -${r.netCr.toLocaleString("en-IN").padStart(7)} Cr  ${fmtPct(r.pctOutstanding).padStart(7)}  ${r.company}  [${r.amcs.join(", ")}]`));
   }
 }
 
