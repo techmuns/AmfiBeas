@@ -17,10 +17,7 @@ import {
   SectorAllocationChart,
   type SectorAllocationRow,
 } from "@/components/data/SectorAllocationChart";
-import {
-  DashboardTabs,
-  type DashboardTabDef,
-} from "@/components/layout/DashboardTabs";
+import type { DashboardTabDef } from "@/components/layout/DashboardTabs";
 import type { TrackerTabId } from "@/components/data/PortfolioTrackerTabs";
 import {
   formatCompactCrSafe,
@@ -69,14 +66,28 @@ function aumNum(aumCr: string | number | null): number | null {
 export function PortfolioTrackerView({
   funds,
   tabs,
-  activeTab,
+  initialTab,
   searchParams,
 }: {
   funds: FundDirectoryEntry[];
   tabs: readonly DashboardTabDef[];
-  activeTab: TrackerTabId;
+  initialTab: TrackerTabId;
   searchParams: Record<string, string | string[] | undefined>;
 }) {
+  // Tab state lives entirely in the browser. Switching tabs is a pure client
+  // state change (the active tab is mirrored to the URL hash, e.g. `#holdings`)
+  // so it never triggers a `?tab=` round-trip to the Cloudflare Worker — which
+  // is what keeps the Worker under its per-request CPU budget (Error 1102) on
+  // the Free plan. `initialTab` seeds the first render from any incoming
+  // `?tab=` deep link so existing bookmarks still land on the right tab.
+  const [activeTab, setActiveTab] = useState<TrackerTabId>(initialTab);
+
+  const selectTab = (id: TrackerTabId) => {
+    setActiveTab(id);
+    if (typeof window !== "undefined") {
+      history.replaceState(null, "", `#${id}`);
+    }
+  };
   // Optional deep-link: /mfs-portfolio-tracker?fund=<schemecode> pre-selects a
   // scheme (used by the AMC scheme drill-down). Falls back to the first fund.
   const initialFund =
@@ -538,14 +549,39 @@ export function PortfolioTrackerView({
         )}
       </div>
 
-      {/* URL-driven tab strip — preserves every non-`tab` query param so per-tab
-       *  deep links and future controls survive switches. */}
-      <DashboardTabs
-        basePath="/mfs-portfolio-tracker"
-        tabs={tabs}
-        activeId={activeTab}
-        searchParams={searchParams}
-      />
+      {/* Client-side tab strip — switching tabs is pure browser state (mirrored
+       *  to the URL hash), so a tab switch never spends Worker CPU (Error 1102). */}
+      <div
+        className="sticky top-14 z-20 -mx-6 mb-6 border-b border-border bg-background/85 backdrop-blur lg:-mx-8"
+        data-component="dashboard-tabs"
+      >
+        <nav
+          role="tablist"
+          aria-label="Portfolio tracker sections"
+          className="flex gap-1 overflow-x-auto px-6 py-2 lg:px-8"
+        >
+          {tabs.map((t) => {
+            const active = t.id === activeTab;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => selectTab(t.id as TrackerTabId)}
+                className={cn(
+                  "whitespace-nowrap rounded-md px-3 py-1.5 text-sm transition-colors",
+                  active
+                    ? "bg-primary/10 font-medium text-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
 
       {activeTab === "amc-mix" ? (
         // Industry-wide fund-house allocation charts — independent of the
