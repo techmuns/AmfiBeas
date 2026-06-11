@@ -61,7 +61,8 @@ import { FeeMixInflows } from "@/components/data/FeeMixInflows";
 import { feeMixByMonth } from "@/data/fee-mix";
 import { HowToRead } from "@/components/ui/HowToRead";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
-import { MonthPicker } from "@/components/filters/MonthPicker";
+import type { ReactNode } from "react";
+import { ClientPeriodSwitcher } from "@/components/layout/ClientPeriodSwitcher";
 import {
   formatCompactCrSafe,
   formatCroreCountSafe,
@@ -114,64 +115,27 @@ function monthEndMixShares(
 }
 
 
-export default async function MonthlyPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const sp = await searchParams;
+// Statically rendered: every tab's panel — including all offered months of the
+// AMFI Snapshot KPI card — is built at deploy time and switched in the browser
+// (ClientTabs + ClientPeriodSwitcher), so neither a tab nor a period switch ever
+// spends Worker CPU. That is what keeps this snapshot-heavy route under the
+// Cloudflare Free-plan CPU budget (Error 1102).
+export const dynamic = "force-static";
 
-  // ---- Lens toggles (parsed up-front so any chart below can read them).
-  // Each chart owns its own URL param so the toggles don't collide.
-  // SIP Contribution period toggle. History now runs to ~10 years, so
-  // the card offers 1Y / 3Y / 5Y / All — where "All" is capped at 84
-  // months (the range that aligns with the cycle-phase / market-data
-  // window and shows both correction phases). Defaults to All.
-  const sipContribRange: "1y" | "3y" | "5y" | "all" =
-    sp.sipContribPeriod === "1y"
-      ? "1y"
-      : sp.sipContribPeriod === "3y"
-        ? "3y"
-        : sp.sipContribPeriod === "5y"
-          ? "5y"
-          : "all";
-  const sipContribMonths =
-    sipContribRange === "1y"
-      ? 12
-      : sipContribRange === "3y"
-        ? 36
-        : sipContribRange === "5y"
-          ? 60
-          : 84;
-  // Chart-type toggles. Each eligible bar-style time-series card on
-  // the page owns its own `<thing>View` URL param. Bars is the
-  // default and is never echoed into the URL — only the "trend"
-  // value rides along so the default page stays URL-clean.
-  // Chart-style toggles (Bars vs Trend) were removed across the
-  // dashboard — every chart now renders the trend visual directly.
-  // Stale `?...View=bars|trend` URLs are ignored silently.
-  // Per-card lens toggles. Each one switches a trend chart between
-  // an absolute number (₹ Cr / count / etc) and a meaningful share
-  // / ratio specific to that card. Default is "absolute" — URL stays
-  // clean unless the user actively picked "share".
+export default async function MonthlyPage() {
+  // SIP-contribution trend window. The 1Y/3Y/5Y/All toggle was removed from the
+  // UI, so this is fixed at the "All" range (84 months).
+  const sipContribMonths = 84;
 
-  // AMFI Monthly Snapshot — first live AMFI widget. Reads directly from
-  // the manually-uploaded-PDF snapshot. The selected row is whichever
-  // month the URL `?month=YYYY-MM` query param picked, falling back to
-  // the latest available month when missing or invalid. Cards only
-  // render for KPIs the SELECTED row carries — never substitutes zero
-  // or a dash for a missing value, never falls back to demo data.
-  const requestedMonthRaw = sp.month;
-  const requestedMonth =
-    typeof requestedMonthRaw === "string" ? requestedMonthRaw : undefined;
-  const amfiSelected = resolveSelectedRow(requestedMonth);
+  // AMFI Monthly Snapshot — first live AMFI widget, read directly from the
+  // manually-uploaded-PDF snapshot. The page defaults to the latest available
+  // month; the in-card period switcher (client-side) lets readers step back
+  // through recent months without a Worker round-trip. Cards only render for
+  // KPIs the selected row carries — never substitutes zero or demo data.
   const amfiAvailableMonths = availableMonthsDesc();
-  // Header subtitle tracks the global period filter so the page title
-  // agrees with the picker. Falls back to the dataset's latest month
-  // when nothing is explicitly selected (keeps the default unchanged).
-  const subtitle = `Industry-wide · ${
-    requestedMonth ? amfiSelected?.month ?? latestMonth() : latestMonth()
-  }`;
+  const latestMonthId = amfiAvailableMonths[0];
+  const amfiSelected = resolveSelectedRow(undefined);
+  const subtitle = `Industry-wide · ${latestMonth()}`;
 
   /** All cards we'd surface if the row had every field. The render below
    *  hides any whose value is null on the latest row, so a press-release-
@@ -295,38 +259,33 @@ export default async function MonthlyPage({
     },
   ];
 
-  const amfiCardsToRender = AMFI_CARDS.flatMap((spec) => {
-    const value = getKpiValue(amfiSelected, spec.field);
-    if (value === null) return [];
-    const provenance = getKpiProvenance(amfiSelected, spec.field);
-    // Anchor YoY / percentile / sparkline window to the user-selected
-    // month, not the latest available. Otherwise the picker changes the
-    // headline value but the pills stay stuck on the latest snapshot.
-    const ctx = kpiContext(spec.field, 24, amfiSelected?.month);
-    return [
-      {
-        ...spec,
-        value,
-        formatted: spec.format(value),
-        // Visible note: "Source: AMFI Monthly Report · p.1" — short.
-        // Tooltip on hover: same plus the full PDF filename for users
-        // who want to verify provenance. Filename stays in the data
-        // (row.fieldSources[field].sourcePdf) regardless.
-        note: formatKpiProvenanceLine(provenance) ?? "",
-        noteHover: formatKpiProvenanceTooltip(provenance) ?? undefined,
-        sparkline: ctx.sparkline,
-        yoyPct: ctx.yoyPct,
-        percentile: ctx.percentile,
-        ratioLine: amfiSelected ? spec.ratio?.(amfiSelected) : undefined,
-      },
-    ];
-  });
+  // KPI cards for a given selected row. Anchors YoY / percentile / sparkline
+  // window to that month so each period shows its own pills.
+  const buildCardsToRender = (sel: ReturnType<typeof resolveSelectedRow>) =>
+    AMFI_CARDS.flatMap((spec) => {
+      const value = getKpiValue(sel, spec.field);
+      if (value === null) return [];
+      const provenance = getKpiProvenance(sel, spec.field);
+      const ctx = kpiContext(spec.field, 24, sel?.month);
+      return [
+        {
+          ...spec,
+          value,
+          formatted: spec.format(value),
+          note: formatKpiProvenanceLine(provenance) ?? "",
+          noteHover: formatKpiProvenanceTooltip(provenance) ?? undefined,
+          sparkline: ctx.sparkline,
+          yoyPct: ctx.yoyPct,
+          percentile: ctx.percentile,
+          ratioLine: sel ? spec.ratio?.(sel) : undefined,
+        },
+      ];
+    });
 
-  // Subtitle no longer carries the month; the month picker on the right
-  // is the canonical place for period selection.
-  const amfiSectionSubtitle = amfiSelected
-    ? "Industry-wide · Source: AMFI Monthly Report"
-    : "Upload AMFI monthly PDFs to manual-data/amfi-monthly/pdfs/, then run npm run ingest:amfi-pdf";
+  const sectionSubtitleFor = (sel: ReturnType<typeof resolveSelectedRow>) =>
+    sel
+      ? "Industry-wide · Source: AMFI Monthly Report"
+      : "Upload AMFI monthly PDFs to manual-data/amfi-monthly/pdfs/, then run npm run ingest:amfi-pdf";
 
   // ---- Industry Performance (IIFL Research Figures 19-21) -----------
   // Figure 20: Total EOP AUM (₹ Cr bars) + YoY % line.
@@ -697,20 +656,19 @@ export default async function MonthlyPage({
   // Ambit-style headline for the Snapshot card: net inflow level, its
   // MoM ₹ change, SIP contribution share, and equity's share of gross
   // flows. Built from already-computed values (selected row + flows).
-  const netInflowHeadline = (() => {
-    if (!amfiSelected || typeof amfiSelected.netInflow !== "number") return null;
+  const buildHeadline = (sel: ReturnType<typeof resolveSelectedRow>) => {
+    if (!sel || typeof sel.netInflow !== "number") return null;
     const rows = amfiMonthlyRows();
-    const idx = rows.findIndex((r) => r.month === amfiSelected.month);
+    const idx = rows.findIndex((r) => r.month === sel.month);
     const prev = idx > 0 ? rows[idx - 1] : null;
-    const ni = amfiSelected.netInflow;
+    const ni = sel.netInflow;
     const prevNi =
       prev && typeof prev.netInflow === "number" ? prev.netInflow : null;
     const sipShare =
-      typeof amfiSelected.sipContribution === "number" && ni > 0
-        ? (amfiSelected.sipContribution / ni) * 100
+      typeof sel.sipContribution === "number" && ni > 0
+        ? (sel.sipContribution / ni) * 100
         : null;
-    const lf =
-      monthlyFlowsRows.find((r) => r.month === amfiSelected.month) ?? null;
+    const lf = monthlyFlowsRows.find((r) => r.month === sel.month) ?? null;
     let equityShare: number | null = null;
     if (lf && typeof lf.equity === "number") {
       const e = Math.abs(lf.equity);
@@ -719,78 +677,71 @@ export default async function MonthlyPage({
       const tot = e + d + l;
       if (tot > 0) equityShare = (e / tot) * 100;
     }
-    return { month: amfiSelected.month, ni, prevNi, sipShare, equityShare };
-  })();
+    return { month: sel.month, ni, prevNi, sipShare, equityShare };
+  };
   const fmtNi = (v: number) =>
     v >= 0 ? formatCompactCrSafe(v) : "−" + formatCompactCrSafe(-v);
 
-  // ---- Active vs Passive series ------------------------------------
-  // 96-month window so the Share-of-Passive card can pick every
-  // available March year-end + the most-recent Sep marker. The chart
-  // self-filters; other consumers of this trend only look at the tail
-  // so the wider window costs nothing.
-
-  const snapshotPanel = (
-    <>
-      {amfiSelected &&
-        amfiAvailableMonths.length > 0 && (
-          <MonthPicker
-            availableMonths={amfiAvailableMonths}
-            selectedMonth={amfiSelected.month}
-          />
-        )}
-
+  // The AMFI Monthly Snapshot KPI card, rendered for one selected row. We build
+  // one per offered month at deploy time and let ClientPeriodSwitcher toggle
+  // them in the browser, so changing the period costs zero Worker CPU.
+  const renderAmfiSnapshotCard = (
+    sel: ReturnType<typeof resolveSelectedRow>
+  ): ReactNode => {
+    const cards = buildCardsToRender(sel);
+    const headline = buildHeadline(sel);
+    const sectionSubtitle = sectionSubtitleFor(sel);
+    return (
       <Card
         title="AMFI Monthly Snapshot"
         subtitle={
-          snapshotRead && amfiSelected
-            ? `${amfiSectionSubtitle} · ${snapshotRead}`
-            : amfiSectionSubtitle
+          snapshotRead && sel
+            ? `${sectionSubtitle} · ${snapshotRead}`
+            : sectionSubtitle
         }
         action={
           <span
             className={cn(
               "shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
-              amfiSelected
+              sel
                 ? "border-positive/40 bg-positive/10 text-positive"
                 : "border-border text-muted-foreground"
             )}
           >
-            {amfiSelected ? "Live" : "Not connected"}
+            {sel ? "Live" : "Not connected"}
           </span>
         }
       >
-        {netInflowHeadline && (
+        {headline && (
           <KeyTakeaway
             className="mb-4"
             headline={
               <>
-                Industry net inflow in {netInflowHeadline.month} was{" "}
-                {fmtNi(netInflowHeadline.ni)}
-                {netInflowHeadline.prevNi !== null && (
+                Industry net inflow in {headline.month} was{" "}
+                {fmtNi(headline.ni)}
+                {headline.prevNi !== null && (
                   <>
                     {" "}
-                    (<DeltaCr cr={netInflowHeadline.ni - netInflowHeadline.prevNi} />{" "}
-                    MoM)
+                    (<DeltaCr cr={headline.ni - headline.prevNi} /> MoM)
                   </>
                 )}
-                {netInflowHeadline.sipShare !== null && (
+                {headline.sipShare !== null && (
+                  <>; SIPs contributed {headline.sipShare.toFixed(0)}% of it</>
+                )}
+                {headline.equityShare !== null && (
                   <>
-                    ; SIPs contributed {netInflowHeadline.sipShare.toFixed(0)}% of
-                    it
+                    , and equity took {headline.equityShare.toFixed(0)}% of gross
+                    flows
                   </>
-                )}
-                {netInflowHeadline.equityShare !== null && (
-                  <>, and equity took {netInflowHeadline.equityShare.toFixed(0)}% of gross flows</>
                 )}
                 .
               </>
             }
           />
         )}
-        {amfiCardsToRender.length > 0 ? (
+        {cards.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {amfiCardsToRender.map((c) => (
+            {cards.map((c) => (
               <KpiCard
                 key={c.field}
                 label={c.label}
@@ -811,6 +762,36 @@ export default async function MonthlyPage({
           </div>
         )}
       </Card>
+    );
+  };
+
+  // Months offered in the in-card period switcher (most-recent first, capped to
+  // 12 like the old MonthPicker), each pre-rendered for instant client switch.
+  const snapshotMonths = amfiAvailableMonths.slice(0, 12);
+  const snapshotCardPanels: Record<string, ReactNode> = Object.fromEntries(
+    snapshotMonths.map((m) => [m, renderAmfiSnapshotCard(resolveSelectedRow(m))])
+  );
+
+  // ---- Active vs Passive series ------------------------------------
+  // 96-month window so the Share-of-Passive card can pick every
+  // available March year-end + the most-recent Sep marker. The chart
+  // self-filters; other consumers of this trend only look at the tail
+  // so the wider window costs nothing.
+
+  const snapshotPanel = (
+    <>
+      {snapshotMonths.length > 0 ? (
+        <ClientPeriodSwitcher
+          periods={snapshotMonths.map((m) => ({
+            id: m,
+            label: formatMonthLabel(m),
+          }))}
+          defaultId={latestMonthId}
+          panels={snapshotCardPanels}
+        />
+      ) : (
+        renderAmfiSnapshotCard(amfiSelected)
+      )}
 
       {hasAnySipTrend && (
         <div className="space-y-3">

@@ -7,7 +7,8 @@ import { Card } from "@/components/ui/Card";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
 import { quarterlyMarketWrap } from "@/data/market-wrap-quarterly";
-import { FiscalQuarterPicker } from "@/components/filters/FiscalQuarterPicker";
+import type { ReactNode } from "react";
+import { ClientPeriodSwitcher } from "@/components/layout/ClientPeriodSwitcher";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { cyclePhaseHistory } from "@/data/market-indices";
 import { CycleRibbon } from "@/components/ui/CycleRibbon";
@@ -62,23 +63,23 @@ function formatSignedCompactCrSafe(v: number | null): string {
   return "−" + formatCompactCrSafe(-v);
 }
 
-export default async function QuarterlyPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const sp = await searchParams;
+export const dynamic = "force-static";
 
-  // Quarter selector — `?quarter=FY26-Q4` resolves to the matching
-  // row when valid; otherwise we fall back to the latest available
-  // quarter.
-  const requestedQuarterRaw = sp.quarter;
-  const requestedQuarter =
-    typeof requestedQuarterRaw === "string" ? requestedQuarterRaw : undefined;
-  const selectedRow = resolveSelectedQuarter(requestedQuarter);
+export default async function QuarterlyPage() {
+  // The page defaults to the latest available quarter; the in-card period
+  // switcher (client-side) steps back through recent quarters without a Worker
+  // round-trip. `selectedRow` here is the latest, used for the page header.
+  const selectedRow = resolveSelectedQuarter(undefined);
   const availableQuarters = availableQuartersDesc();
+  const latestQuarterId = availableQuarters[0]?.id;
+  const aaumBridge = quarterlyAaumBridge(10);
 
-
+  // Per-quarter snapshot view-model (KPI cards + AUM-mix), built for each
+  // offered quarter at deploy time so ClientPeriodSwitcher can toggle them in
+  // the browser with zero Worker CPU.
+  const buildQuarterView = (
+    sel: ReturnType<typeof resolveSelectedQuarter>
+  ) => {
   // ---- AMFI Quarterly Snapshot — KPI cards (selected quarter) -------
   // Mirrors /monthly's AMFI Monthly Snapshot card list:
   //   Total AAUM / Equity AUM / Debt AUM / Liquid AUM / Net Inflow.
@@ -91,9 +92,9 @@ export default async function QuarterlyPage({
   //   - Hybrid + Other Schemes don't appear on /monthly's Snapshot
   //     and would clutter the headline grid; the AUM Mix donut
   //     handles those buckets.
-  const liquidAum = selectedRow ? liquidAumForQuarter(selectedRow.quarter) : null;
-  const liquidProvenance = selectedRow
-    ? quarterlyCategoryAumProvenance("liquid", selectedRow.quarter)
+  const liquidAum = sel ? liquidAumForQuarter(sel.quarter) : null;
+  const liquidProvenance = sel
+    ? quarterlyCategoryAumProvenance("liquid", sel.quarter)
     : null;
 
   type SnapshotCardSpec = {
@@ -117,13 +118,13 @@ export default async function QuarterlyPage({
     sparklineColor?: string,
     ratio?: string
   ) => {
-    const value = getQuarterlyKpiValue(selectedRow, field);
+    const value = getQuarterlyKpiValue(sel, field);
     if (value === null) return;
-    const provenance = getQuarterlyKpiProvenance(selectedRow, field);
+    const provenance = getQuarterlyKpiProvenance(sel, field);
     // Anchor YoY / percentile / sparkline to the user-selected quarter,
     // not the latest. Without this the picker only changes the headline
     // value while the pills stay pinned to the most recent quarter.
-    const ctx = quarterlyKpiContext(field, 16, selectedRow?.quarter);
+    const ctx = quarterlyKpiContext(field, 16, sel?.quarter);
     SNAPSHOT_KPI_CARDS.push({
       key: field,
       label,
@@ -142,11 +143,11 @@ export default async function QuarterlyPage({
   const ratioOfTotalAum = (numerator: number | null | undefined): string | undefined => {
     if (
       typeof numerator !== "number" ||
-      typeof selectedRow?.grandTotalAum !== "number" ||
-      selectedRow.grandTotalAum <= 0
+      typeof sel?.grandTotalAum !== "number" ||
+      sel.grandTotalAum <= 0
     )
       return undefined;
-    return `${((numerator / selectedRow.grandTotalAum) * 100).toFixed(1)}% of total AUM`;
+    return `${((numerator / sel.grandTotalAum) * 100).toFixed(1)}% of total AUM`;
   };
   pushSnapshotCard(
     "grandTotalLastMonthAaum",
@@ -159,14 +160,14 @@ export default async function QuarterlyPage({
     "Equity AUM",
     formatCompactCrSafe,
     "hsl(var(--chart-1))",
-    ratioOfTotalAum(selectedRow?.equityAum)
+    ratioOfTotalAum(sel?.equityAum)
   );
   pushSnapshotCard(
     "debtAum",
     "Debt AUM",
     formatCompactCrSafe,
     "hsl(var(--chart-2))",
-    ratioOfTotalAum(selectedRow?.debtAum)
+    ratioOfTotalAum(sel?.debtAum)
   );
   if (liquidAum !== null) {
     SNAPSHOT_KPI_CARDS.push({
@@ -186,10 +187,10 @@ export default async function QuarterlyPage({
     "Net Inflow",
     formatSignedCompactCrSafe,
     "hsl(var(--chart-3))",
-    typeof selectedRow?.grandTotalNetInflow === "number" &&
-      typeof selectedRow?.grandTotalAum === "number" &&
-      selectedRow.grandTotalAum > 0
-      ? `${((selectedRow.grandTotalNetInflow / selectedRow.grandTotalAum) * 100).toFixed(2)}% of opening AUM`
+    typeof sel?.grandTotalNetInflow === "number" &&
+      typeof sel?.grandTotalAum === "number" &&
+      sel.grandTotalAum > 0
+      ? `${((sel.grandTotalNetInflow / sel.grandTotalAum) * 100).toFixed(2)}% of opening AUM`
       : undefined
   );
   // Total AUM rounds out the row to a clean grid; comes last so the
@@ -201,11 +202,10 @@ export default async function QuarterlyPage({
     "hsl(var(--chart-1))"
   );
 
-  const snapshotSubtitle = selectedRow
-    ? `Industry-wide · ${selectedRow.quarterLabel} · Source: AMFI Quarterly Report`
+  const snapshotSubtitle = sel
+    ? `Industry-wide · ${sel.quarterLabel} · Source: AMFI Quarterly Report`
     : "Upload AMFI Quarterly PDFs to manual-data/amfi-quarterly/pdfs/, then run npm run ingest:amfi-quarterly-pdf";
 
-  const aaumBridge = quarterlyAaumBridge(10);
 
   // ---- AMFI Quarterly AUM Mix & Trend -------------------------------
   // Mirrors /monthly's AMFI AUM Mix & Trend exactly:
@@ -220,10 +220,10 @@ export default async function QuarterlyPage({
   //   the residual is > 0 (otherwise rendering it would mis-state
   //   share). Hybrid / Other Schemes / Solution / close-ended schemes
   //   all sit inside the residual.
-  const mixEquity = selectedRow?.equityAum ?? null;
-  const mixDebt = selectedRow?.debtAum ?? null;
+  const mixEquity = sel?.equityAum ?? null;
+  const mixDebt = sel?.debtAum ?? null;
   const mixLiquid = liquidAum;
-  const mixGrand = selectedRow?.grandTotalAum ?? null;
+  const mixGrand = sel?.grandTotalAum ?? null;
   const mixSlices: DonutSlice[] = [];
   if (typeof mixEquity === "number") {
     mixSlices.push({
@@ -270,10 +270,12 @@ export default async function QuarterlyPage({
   const mixHasData = mixSlices.length > 0;
   const mixSubtitle =
     mixHasData && mixOther !== null
-      ? `Quarter-end AUM · share of Total AUM (residual = Other) · ${selectedRow?.quarterLabel ?? ""}`
+      ? `Quarter-end AUM · share of Total AUM (residual = Other) · ${sel?.quarterLabel ?? ""}`
       : mixHasData
-        ? `Quarter-end AUM · partial breakdown · Other not computed · ${selectedRow?.quarterLabel ?? ""}`
+        ? `Quarter-end AUM · partial breakdown · Other not computed · ${sel?.quarterLabel ?? ""}`
         : "Quarter-end AUM not available for the selected quarter";
+    return { SNAPSHOT_KPI_CARDS, snapshotSubtitle, mixSlices, mixHasData, mixSubtitle };
+  };
 
   // Last-month AAUM trend across the full AMFI quarterly history.
 
@@ -292,6 +294,97 @@ export default async function QuarterlyPage({
   // Three-sentence "today's read" surfaced at the top of the page.
   const marketWrapData = quarterlyMarketWrap();
   const quarterlySnapshotRead = quarterlySnapshotSectionRead();
+
+  // The AMFI Quarterly Snapshot KPI card + AUM-mix card, rendered for one
+  // selected quarter. Built per offered quarter at deploy time; the period
+  // pills are provided by ClientPeriodSwitcher (no Worker round-trip).
+  const renderQuarterNode = (
+    sel: ReturnType<typeof resolveSelectedQuarter>
+  ): ReactNode => {
+    const view = buildQuarterView(sel);
+    return (
+      <>
+        <Card
+          title="AMFI Quarterly Snapshot"
+          subtitle={
+            quarterlySnapshotRead && sel
+              ? `${view.snapshotSubtitle} · ${quarterlySnapshotRead}`
+              : view.snapshotSubtitle
+          }
+          action={
+            <span
+              className={cn(
+                "shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
+                sel
+                  ? "border-positive/40 bg-positive/10 text-positive"
+                  : "border-border text-muted-foreground"
+              )}
+            >
+              {sel ? "Live" : "Not connected"}
+            </span>
+          }
+        >
+          {view.SNAPSHOT_KPI_CARDS.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {view.SNAPSHOT_KPI_CARDS.map((c) => (
+                <KpiCard
+                  key={c.key}
+                  label={c.label}
+                  value={c.formatted}
+                  note={c.note}
+                  noteHover={c.noteHover}
+                  sparkline={c.sparkline}
+                  sparklineColor={c.sparklineColor}
+                  yoyPct={c.yoyPct ?? undefined}
+                  percentile={c.percentile ?? undefined}
+                  ratio={c.ratio}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
+              No AMFI quarterly PDF data ingested yet.
+            </div>
+          )}
+        </Card>
+
+        {sel && (
+          <div className="space-y-3">
+            <div>
+              <h2 className="text-sm font-medium tracking-tight">
+                AMFI Quarterly AUM Mix
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Source: AMFI Quarterly Report
+              </p>
+            </div>
+            <Card title="Quarter-end AUM Mix" subtitle={view.mixSubtitle}>
+              {view.mixHasData ? (
+                <QuarterEndMixTable
+                  slices={view.mixSlices}
+                  quarterLabel={sel.quarterLabel}
+                />
+              ) : (
+                <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                  AUM mix not published for the selected quarter — pick a more recent quarter or upload the AMFI Quarterly PDF.
+                </div>
+              )}
+            </Card>
+          </div>
+        )}
+      </>
+    );
+  };
+
+  // Quarters offered in the in-card period switcher (most-recent first, capped
+  // to 8 like the old FiscalQuarterPicker), each pre-rendered.
+  const quarterDisplay = availableQuarters.slice(0, 8);
+  const quarterPanels: Record<string, ReactNode> = Object.fromEntries(
+    quarterDisplay.map((q) => [
+      q.id,
+      renderQuarterNode(resolveSelectedQuarter(q.id)),
+    ])
+  );
 
   // Concentration tracker — HHI of AMC-level + category-level AUM.
   const amcHhi = amcLevelHhiSeries(8);
@@ -573,81 +666,14 @@ export default async function QuarterlyPage({
         watchNext="Whether the residual keeps outweighing net flows — the sign that market moves, not investor flows, are driving the AUM line."
       />
 
-      <Card
-        title="AMFI Quarterly Snapshot"
-        subtitle={
-          quarterlySnapshotRead && selectedRow
-            ? `${snapshotSubtitle} · ${quarterlySnapshotRead}`
-            : snapshotSubtitle
-        }
-        action={
-          <div className="flex flex-col items-end gap-2">
-            <span
-              className={cn(
-                "shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
-                selectedRow
-                  ? "border-positive/40 bg-positive/10 text-positive"
-                  : "border-border text-muted-foreground"
-              )}
-            >
-              {selectedRow ? "Live" : "Not connected"}
-            </span>
-            {selectedRow && availableQuarters.length > 0 && (
-              <FiscalQuarterPicker
-                availableQuarters={availableQuarters}
-                selectedQuarterId={selectedRow.quarter}
-              />
-            )}
-          </div>
-        }
-      >
-        {SNAPSHOT_KPI_CARDS.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {SNAPSHOT_KPI_CARDS.map((c) => (
-              <KpiCard
-                key={c.key}
-                label={c.label}
-                value={c.formatted}
-                note={c.note}
-                noteHover={c.noteHover}
-                sparkline={c.sparkline}
-                sparklineColor={c.sparklineColor}
-                yoyPct={c.yoyPct ?? undefined}
-                percentile={c.percentile ?? undefined}
-                ratio={c.ratio}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
-            No AMFI quarterly PDF data ingested yet.
-          </div>
-        )}
-      </Card>
-
-      {selectedRow && (
-        <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-medium tracking-tight">
-              AMFI Quarterly AUM Mix
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Source: AMFI Quarterly Report
-            </p>
-          </div>
-          <Card title="Quarter-end AUM Mix" subtitle={mixSubtitle}>
-            {mixHasData ? (
-              <QuarterEndMixTable
-                slices={mixSlices}
-                quarterLabel={selectedRow.quarterLabel}
-              />
-            ) : (
-              <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-                AUM mix not published for the selected quarter — pick a more recent quarter or upload the AMFI Quarterly PDF.
-              </div>
-            )}
-          </Card>
-        </div>
+      {quarterDisplay.length > 0 ? (
+        <ClientPeriodSwitcher
+          periods={quarterDisplay.map((q) => ({ id: q.id, label: q.label }))}
+          defaultId={latestQuarterId ?? ""}
+          panels={quarterPanels}
+        />
+      ) : (
+        renderQuarterNode(selectedRow)
       )}
 
       {aaumBridge.length > 0 && (
