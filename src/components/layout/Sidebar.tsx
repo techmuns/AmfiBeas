@@ -5,24 +5,24 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   CalendarDays,
-  // CalendarRange, // hidden along with the /quarterly nav item
+  CalendarRange,
   FileBarChart,
   Building2,
   Briefcase,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
-// Main nav — five analytical pages a client actually scrolls through.
+// Main nav — the analytical pages a client actually scrolls through.
 // /premium is a "what licensed data could enable" pitch and not part
 // of the client narrative; we leave the page live but pull it out of
 // the main nav so the sidebar stays focused. /data-sources and
 // /other-schemes remain reachable via deep links and footer copy.
+// /quarterly carries the AUM-change attribution (new money vs market)
+// and quarter-end mix tables, so it stays in the nav.
 const nav = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
   { href: "/monthly", label: "Monthly", icon: CalendarDays },
-  // Quarterly hidden from the nav for now (route still live at /quarterly).
-  // To unhide: restore this line and the CalendarRange import above.
-  // { href: "/quarterly", label: "Quarterly", icon: CalendarRange },
+  { href: "/quarterly", label: "Quarterly", icon: CalendarRange },
   { href: "/amc", label: "AMCs", icon: Building2 },
   { href: "/financials", label: "Financials", icon: FileBarChart },
   { href: "/mfs-portfolio-tracker", label: "MFs Portfolio Tracker", icon: Briefcase },

@@ -6,7 +6,9 @@ import type { CsvColumn } from "@/lib/csv";
 import { amcStockConcentration } from "@/data/amc-portfolio";
 
 /**
- * AUM Concentration — Top 10 vs Top 25 stocks per AMC, as a heatmap table.
+ * Fund Concentration — Top 10 vs Top 25 stocks per AMC, as a heatmap table.
+ * (Client nomenclature: "Fund Concentration" tracks holding density across a
+ * fund house's offerings — the term "Portfolio Concentration" is retired.)
  * This is a cross-sectional (AMC-by-AMC) read, not a time series, so per the
  * client's "tables over charts" rule it renders as a shaded table rather than
  * grouped bars. For each AMC's active-equity schemes the snapshot aggregates
@@ -19,7 +21,7 @@ export function AmcStockConcentration() {
   if (conc.bars.length < 2) {
     return (
       <Card
-        title="AUM Concentration — Top 10 vs Top 25 stocks"
+        title="Fund Concentration — Top 10 vs Top 25 stocks"
         subtitle="Not enough AMCs reported holdings this month to render the cohort view."
         stackHeader
       />
@@ -50,7 +52,7 @@ export function AmcStockConcentration() {
 
   return (
     <Card
-      title="AUM Concentration — Top 10 vs Top 25 stocks"
+      title="Fund Concentration — Top 10 vs Top 25 stocks"
       stackHeader
       action={
         <DownloadXlsxButton

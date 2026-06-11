@@ -55,9 +55,11 @@ export function FundwiseTable({
     );
   }
 
-  // Per-table colour scale for the tinting metric.
+  // Per-table colour scale for the tinting metric. The Total-Market row is
+  // excluded — its AAUM growth would otherwise compress every per-AMC tint.
   let maxAbs = 0.01;
-  for (const row of matrix.rows) {
+  const scaleRows = [...matrix.rows, ...(matrix.othersRow ? [matrix.othersRow] : [])];
+  for (const row of scaleRows) {
     for (const cell of row.cells) {
       if (!cell) continue;
       const v = tintValue(cell, metric);
@@ -68,6 +70,66 @@ export function FundwiseTable({
   }
 
   const th = "border px-2 py-1.5 text-right font-semibold whitespace-nowrap";
+
+  const renderCells = (row: { cells: (FundwiseCell | null)[] }, opts?: { totalMarket?: boolean }) =>
+    row.cells.map((cell, i) => {
+      if (!cell) {
+        return (
+          <td
+            key={i}
+            className="border px-2 py-1 text-right text-muted-foreground"
+          >
+            —
+          </td>
+        );
+      }
+      const tv = tintValue(cell, metric);
+      // Total Market: no share tint (share is 100% by construction); the QoQ
+      // Δ bps line is suppressed for the same reason.
+      const tint = opts?.totalMarket && metric === "share" ? null : tv;
+      if (metric === "share") {
+        return (
+          <td
+            key={i}
+            className="border px-2 py-1 text-right"
+            style={toneBg(tint, maxAbs)}
+          >
+            <div className="flex flex-col items-end leading-tight">
+              <span className="text-foreground">{fmtShare(cell.sharePct)}</span>
+              {!opts?.totalMarket && cell.shareDeltaBps !== null && (
+                <span className={cn("text-[9px]", toneText(cell.shareDeltaBps))}>
+                  {fmtBps(cell.shareDeltaBps)}
+                </span>
+              )}
+            </div>
+          </td>
+        );
+      }
+      if (metric === "growth") {
+        return (
+          <td
+            key={i}
+            className={cn("border px-2 py-1 text-right", toneText(cell.growthPct))}
+            style={toneBg(cell.growthPct, maxAbs)}
+          >
+            {cell.growthPct === null ? "—" : fmtGrowth(cell.growthPct)}
+          </td>
+        );
+      }
+      // aaum — value tinted by QoQ growth (momentum)
+      return (
+        <td
+          key={i}
+          className="border px-2 py-1 text-right text-foreground"
+          style={toneBg(cell.growthPct, maxAbs)}
+        >
+          {fmtAaum(cell.aaum)}
+        </td>
+      );
+    });
+
+  const pinnedTh =
+    "sticky left-0 z-10 whitespace-nowrap border bg-card px-2 py-1 text-left";
 
   return (
     <div className="overflow-x-auto rounded-lg border bg-card">
@@ -89,67 +151,34 @@ export function FundwiseTable({
             <tr key={row.amcSlug}>
               <th
                 scope="row"
-                className="sticky left-0 z-10 whitespace-nowrap border bg-card px-2 py-1 text-left font-medium"
+                className={cn(pinnedTh, "font-medium")}
                 title={row.displayName}
               >
                 {row.displayName}
               </th>
-              {row.cells.map((cell, i) => {
-                if (!cell) {
-                  return (
-                    <td
-                      key={i}
-                      className="border px-2 py-1 text-right text-muted-foreground"
-                    >
-                      —
-                    </td>
-                  );
-                }
-                const tv = tintValue(cell, metric);
-                if (metric === "share") {
-                  return (
-                    <td
-                      key={i}
-                      className="border px-2 py-1 text-right"
-                      style={toneBg(tv, maxAbs)}
-                    >
-                      <div className="flex flex-col items-end leading-tight">
-                        <span className="text-foreground">
-                          {fmtShare(cell.sharePct)}
-                        </span>
-                        {cell.shareDeltaBps !== null && (
-                          <span className={cn("text-[9px]", toneText(cell.shareDeltaBps))}>
-                            {fmtBps(cell.shareDeltaBps)}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                  );
-                }
-                if (metric === "growth") {
-                  return (
-                    <td
-                      key={i}
-                      className={cn("border px-2 py-1 text-right", toneText(cell.growthPct))}
-                      style={toneBg(cell.growthPct, maxAbs)}
-                    >
-                      {cell.growthPct === null ? "—" : fmtGrowth(cell.growthPct)}
-                    </td>
-                  );
-                }
-                // aaum — value tinted by QoQ growth (momentum)
-                return (
-                  <td
-                    key={i}
-                    className="border px-2 py-1 text-right text-foreground"
-                    style={toneBg(cell.growthPct, maxAbs)}
-                  >
-                    {fmtAaum(cell.aaum)}
-                  </td>
-                );
-              })}
+              {renderCells(row)}
             </tr>
           ))}
+          {matrix.othersRow && (
+            <tr className="border-t-2">
+              <th
+                scope="row"
+                className={cn(pinnedTh, "font-medium text-muted-foreground")}
+                title="Aggregate of every AMC outside the rows above — keeps the share column summing to 100% of the market."
+              >
+                {matrix.othersRow.displayName}
+              </th>
+              {renderCells(matrix.othersRow)}
+            </tr>
+          )}
+          {matrix.totalRow && (
+            <tr className="font-bold">
+              <th scope="row" className={cn(pinnedTh, "font-bold")}>
+                {matrix.totalRow.displayName}
+              </th>
+              {renderCells(matrix.totalRow, { totalMarket: true })}
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

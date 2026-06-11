@@ -1,8 +1,8 @@
+import Link from "next/link";
 import type { DonutSlice } from "@/components/charts/Donut";
 import { QuarterEndMixTable } from "@/components/data/QuarterEndMixTable";
 import { AaumBridgeTable } from "@/components/data/AaumBridgeTable";
 import { MultiLine } from "@/components/charts/MultiLine";
-import { StackedArea } from "@/components/charts/StackedArea";
 import { Card } from "@/components/ui/Card";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { MarketWrapCard } from "@/components/ui/MarketWrapCard";
@@ -41,9 +41,7 @@ import {
 import {
   amcLevelHhiPercentileRead,
   amcLevelHhiSeries,
-  topAumMarketShareSeries,
 } from "@/data/amc-peer-universe";
-import { AMC_COLORS, amcLabel } from "@/lib/chart-meta";
 import { cn } from "@/lib/cn";
 import { ClientTabs, type ClientTabDef } from "@/components/layout/ClientTabs";
 import { TabIntroCard } from "@/components/ui/TabIntroCard";
@@ -283,11 +281,6 @@ export default async function QuarterlyPage() {
 
 
   const folioAdditionsTrend = quarterlyFolioAdditionsTrend(16);
-
-  // AUM Market Share — live Top 7 + Others from AMFI Fundwise AAUM.
-  // Same helper as /monthly so the two pages render an identical view.
-  const aumMarketShare = topAumMarketShareSeries(7, 8);
-  const aumMarketShareCoverage = aumMarketShare.coverage;
 
   // Cycle regime + section reads.
   const cyclePhasePoints = cyclePhaseHistory();
@@ -758,42 +751,20 @@ export default async function QuarterlyPage() {
       )}
 
       <Card
-        tone={aumMarketShare.isFullUniverse ? undefined : "pending"}
         title="AUM Market Share"
-        subtitle={
-          aumMarketShareCoverage
-            ? `Top ${aumMarketShare.topAmcs.length} AMCs + Others · ${aumMarketShareCoverage.quarterLabel} · Source: AMFI Fundwise AAUM`
-            : `Top ${aumMarketShare.topAmcs.length} AMCs + Others · Source: AMFI Fundwise AAUM`
-        }
+        subtitle="Fund-house market share lives on the AMCs page — one canonical table, no duplicated views."
       >
-        {aumMarketShare.rows.length > 0 ? (
-          <StackedArea
-            data={aumMarketShare.rows}
-            xKey="quarterLabel"
-            labelFormat="none"
-            reverseTooltipOrder
-            series={[
-              ...aumMarketShare.topAmcs.map((a) => ({
-                key: a.slug,
-                name: amcLabel(a.slug),
-                color: AMC_COLORS[a.slug] ?? "hsl(var(--muted-foreground))",
-              })),
-              {
-                key: "others",
-                name: "Others",
-                color: "hsl(var(--muted-foreground))",
-              },
-            ]}
-          />
-        ) : (
-          <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
-            AMFI Fundwise AAUM disclosure not yet ingested for the latest quarter.
-          </div>
-        )}
-        <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          Top {aumMarketShare.topAmcs.length} AMCs by latest AAUM;
-          Others includes all remaining AMCs.
-          <InfoTooltip label="Denominator is total AAUM of all AMCs in the snapshot." />
+        <p className="text-sm text-muted-foreground">
+          The quarter-by-quarter market-share table (every AMC&rsquo;s share of
+          total industry AAUM with the QoQ move in basis points, plus Remaining
+          Others and Total Market rows) is on{" "}
+          <Link
+            href="/amc"
+            className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+          >
+            AMCs → Market Share &amp; Concentration
+          </Link>
+          .
         </p>
       </Card>
     </>

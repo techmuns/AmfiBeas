@@ -286,6 +286,14 @@ export function latestMonth(): string {
   return MONTHS_LIST[MONTHS_LIST.length - 1];
 }
 
+/** The month immediately before `month` in the snapshot's month list, or
+ *  null when `month` is the first month (or unknown). Drives MoM deltas on
+ *  per-month tables (e.g. Market Share by Product Δ bps). */
+export function previousMonth(month: string): string | null {
+  const i = MONTHS_LIST.indexOf(month);
+  return i > 0 ? MONTHS_LIST[i - 1] : null;
+}
+
 /**
  * Latest quarter visible to the dashboard. Prefers the most recent quarter
  * that has either sourced P&L (screener) or sourced AAUM (AMFI) — so when

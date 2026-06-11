@@ -917,6 +917,14 @@ export interface FundwiseMatrix {
   quarters: string[];
   quarterLabels: string[];
   rows: FundwiseRow[];
+  /** Aggregate of every AMC OUTSIDE the top-N rows ("Remaining Others"),
+   *  so the share column still accounts for 100% of the market. null when
+   *  the snapshot has no AMCs beyond the top N. `displayName` carries the
+   *  count, e.g. "Remaining Others (21)". */
+  othersRow: FundwiseRow | null;
+  /** Whole-industry total ("Total Market"): full-universe AAUM per quarter,
+   *  sharePct pinned at 100, growthPct = QoQ change in the total. */
+  totalRow: FundwiseRow | null;
 }
 
 function fundwiseAumMatrix_impl(topN = 25, lastN = 8): FundwiseMatrix {
@@ -929,7 +937,13 @@ function fundwiseAumMatrix_impl(topN = 25, lastN = 8): FundwiseMatrix {
   ).sort();
   const quarters = allQuarters.slice(-lastN);
   if (quarters.length === 0) {
-    return { quarters: [], quarterLabels: [], rows: [] };
+    return {
+      quarters: [],
+      quarterLabels: [],
+      rows: [],
+      othersRow: null,
+      totalRow: null,
+    };
   }
   const inWindow = new Set(quarters);
 
@@ -988,10 +1002,69 @@ function fundwiseAumMatrix_impl(topN = 25, lastN = 8): FundwiseMatrix {
       (aaumBySlug.get(a.amcSlug)?.get(latestQ) ?? 0)
   );
 
+  const topRows = rows.slice(0, topN);
+
+  // Build aggregate cells from a per-quarter AAUM series (used for both the
+  // Remaining-Others and Total-Market rows). sharePct/Δbps derive from the
+  // same totalByQuarter denominator the per-AMC cells use, so the table's
+  // share column sums to exactly 100% per quarter.
+  const aggregateCells = (
+    aaumOf: (q: string) => number | null
+  ): (FundwiseCell | null)[] =>
+    quarters.map((q, i) => {
+      const aaum = aaumOf(q);
+      const total = totalByQuarter.get(q);
+      if (aaum === null || total === undefined || total <= 0) return null;
+      const sharePct = (aaum / total) * 100;
+      let growthPct: number | null = null;
+      let shareDeltaBps: number | null = null;
+      if (i > 0) {
+        const prevAaum = aaumOf(quarters[i - 1]);
+        const prevTotal = totalByQuarter.get(quarters[i - 1]);
+        if (prevAaum !== null && prevAaum > 0) {
+          growthPct = ((aaum - prevAaum) / prevAaum) * 100;
+        }
+        if (prevAaum !== null && prevTotal !== undefined && prevTotal > 0) {
+          shareDeltaBps = (sharePct - (prevAaum / prevTotal) * 100) * 100;
+        }
+      }
+      return { aaum, sharePct, growthPct, shareDeltaBps };
+    });
+
+  const topSlugSet = new Set(topRows.map((r) => r.amcSlug));
+  const otherSlugs = rows.filter((r) => !topSlugSet.has(r.amcSlug));
+  const othersRow: FundwiseRow | null =
+    otherSlugs.length > 0
+      ? {
+          amcSlug: "__others__",
+          displayName: `Remaining Others (${otherSlugs.length})`,
+          cells: aggregateCells((q) => {
+            let sum = 0;
+            let seen = false;
+            for (const r of otherSlugs) {
+              const v = aaumBySlug.get(r.amcSlug)?.get(q);
+              if (v !== undefined) {
+                sum += v;
+                seen = true;
+              }
+            }
+            return seen ? sum : null;
+          }),
+        }
+      : null;
+
+  const totalRow: FundwiseRow | null = {
+    amcSlug: "__total__",
+    displayName: "Total Market",
+    cells: aggregateCells((q) => totalByQuarter.get(q) ?? null),
+  };
+
   return {
     quarters,
     quarterLabels: quarters.map(fiscalLabelFromCalendarQuarter),
-    rows: rows.slice(0, topN),
+    rows: topRows,
+    othersRow,
+    totalRow,
   };
 }
 

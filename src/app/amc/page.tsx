@@ -8,7 +8,7 @@ import { AmcEquityBookHeatmap } from "@/components/data/AmcEquityBookHeatmap";
 import { AmcHeadToHead } from "@/components/data/AmcHeadToHead";
 import { AmcSearchTable } from "@/components/data/AmcSearchTable";
 import { MarketShareByProduct } from "@/components/data/MarketShareByProduct";
-import { marketShareByProduct } from "@/data/aggregate";
+import { marketShareByProduct, previousMonth } from "@/data/aggregate";
 import { StrategicMovesCohortLane } from "@/components/amc/StrategicMovesCohortLane";
 import { CohortUniqueInvestorShare } from "@/components/amc/CohortUniqueInvestorShare";
 import { AmcCashAllocationTrend } from "@/components/amc/AmcCashAllocationTrend";
@@ -71,6 +71,13 @@ export default async function AmcListPage() {
     .filter((r) => amcNameBySlug.has(r.amcSlug))
     .slice(0, 20)
     .map((r) => ({ ...r, displayName: amcNameBySlug.get(r.amcSlug) as string }));
+  // Prior-month share rows drive the MoM Δ bps sub-figures in the table.
+  const productSharePrevMonth = productShare
+    ? previousMonth(productShare.month)
+    : null;
+  const productSharePrevRows = productSharePrevMonth
+    ? marketShareByProduct(productSharePrevMonth).rows
+    : [];
 
   const compareUniverse = amcCompareUniverse();
   const compareMetrics = compareUniverse
@@ -157,6 +164,8 @@ export default async function AmcListPage() {
           <MarketShareByProduct
             month={productShare.month}
             rows={productShareRows}
+            prevMonth={productSharePrevMonth}
+            prevRows={productSharePrevRows}
           />
         </Card>
       )}

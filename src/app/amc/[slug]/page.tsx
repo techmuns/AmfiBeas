@@ -355,7 +355,7 @@ export default async function AmcPage({
 
       {peerDistributionShares.length > 1 && latest && (
         <Card
-          title="Peer Position"
+          title="Peer Standing"
           subtitle="Where this AMC sits on the cohort distribution for each metric"
         >
           <div className="space-y-3">

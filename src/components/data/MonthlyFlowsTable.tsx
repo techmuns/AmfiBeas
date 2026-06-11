@@ -19,8 +19,12 @@ export interface MonthlyFlowsTableRow {
   // Industry net flow (₹ Cr, signed; null when the row didn't carry it).
   totalFlow: number | null;
   // Per-category net flows (₹ Cr, signed; null when the AMFI row didn't
-  // carry the field).
+  // carry the field). Debt is the AMFI debt subtotal and still CONTAINS
+  // Liquid (no clean ex-Liquid split is published), so the two columns
+  // overlap by construction — the header marks Debt as "incl. Liquid".
   equityFlow: number | null;
+  debtFlow: number | null;
+  liquidFlow: number | null;
   hybridFlow: number | null;
   activeEquityFlow: number | null;
   // Month-end AUM mix shares (% of month-end breakdown) + MoM pp move.
@@ -47,6 +51,8 @@ export const MONTHLY_FLOWS_XLSX_COLUMNS: CsvColumn<MonthlyFlowsTableRow>[] = [
   { key: "month", header: "Month" },
   { key: "totalFlow", header: "Net Flow · Total (₹ Cr)" },
   { key: "equityFlow", header: "Net Flow · Equity (₹ Cr)" },
+  { key: "debtFlow", header: "Net Flow · Debt incl. Liquid (₹ Cr)" },
+  { key: "liquidFlow", header: "Net Flow · Liquid (₹ Cr)" },
   { key: "hybridFlow", header: "Net Flow · Hybrid (₹ Cr)" },
   { key: "activeEquityFlow", header: "Net Flow · Active Equity (₹ Cr)" },
   { key: "equityShare", header: "AUM Mix · Equity (%)" },
@@ -65,13 +71,19 @@ export const MONTHLY_FLOWS_XLSX_COLUMNS: CsvColumn<MonthlyFlowsTableRow>[] = [
 type FlowKey =
   | "totalFlow"
   | "equityFlow"
+  | "debtFlow"
+  | "liquidFlow"
   | "hybridFlow"
   | "activeEquityFlow";
 
-// Every flow column now renders a signed ₹ Cr figure (compact via fmtFlow).
+// Every flow column renders a signed ₹ Cr figure (compact via fmtFlow).
+// Equity / Debt / Liquid is the headline split; Hybrid and Active Eq
+// add the granularity an analyst needs without a second table.
 const FLOW_COLS: { key: FlowKey; label: string }[] = [
   { key: "totalFlow", label: "Total (₹ Cr)" },
   { key: "equityFlow", label: "Equity" },
+  { key: "debtFlow", label: "Debt*" },
+  { key: "liquidFlow", label: "Liquid" },
   { key: "hybridFlow", label: "Hybrid" },
   { key: "activeEquityFlow", label: "Active Eq" },
 ];
@@ -276,6 +288,11 @@ export function MonthlyFlowsTable({ rows }: { rows: MonthlyFlowsTableRow[] }) {
           })}
         </tbody>
       </table>
+      <p className="border-t px-2 py-1.5 text-[10px] text-muted-foreground">
+        *Debt is the AMFI debt subtotal and still includes Liquid (AMFI
+        publishes no clean ex-Liquid monthly flow), so the Debt and Liquid
+        columns overlap by construction.
+      </p>
     </div>
   );
 }

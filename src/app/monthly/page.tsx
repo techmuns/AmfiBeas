@@ -447,6 +447,8 @@ export default async function MonthlyPage() {
           : null;
 
       const equity = num(r.equityNetInflow);
+      const debt = num(r.debtNetInflow);
+      const liquid = num(r.liquidNetInflow);
       const hybrid = num(r.hybridNetInflow);
       const total = num(r.netInflow);
       const activeEquity = num(r.activeEquityNetInflow);
@@ -458,6 +460,8 @@ export default async function MonthlyPage() {
         month: r.month,
         totalFlow: total,
         equityFlow: equity,
+        debtFlow: debt,
+        liquidFlow: liquid,
         hybridFlow: hybrid,
         activeEquityFlow: activeEquity,
         equityShare: shareOf("equity"),
@@ -944,12 +948,13 @@ export default async function MonthlyPage() {
       )}
 
         <Card
-          title="Monthly Flows & AUM · Table"
+          title="Flow Table — Net Flows, AUM Mix & Industry AAUM"
           subtitleNode={
             <div className="space-y-0.5">
               <p className="text-xs text-muted-foreground">
-                The whole Flows tab as one grid — net flows by category,
-                month-end AUM mix, and Industry AAUM, one row per month.
+                The whole Flows tab as one heatmap grid — net flows split by
+                Equity / Debt / Liquid (plus Hybrid and Active Eq), month-end
+                AUM mix, and Industry AAUM, one row per month.
               </p>
               <p className="text-[11px] text-muted-foreground/80">
                 {`Latest ${flowTableRows.length} month${flowTableRows.length === 1 ? "" : "s"} · newest first (★) · Source: AMFI Monthly Report`}
