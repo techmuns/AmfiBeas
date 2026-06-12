@@ -7,66 +7,27 @@ import { formatPctSafe } from "@/lib/format";
 import {
   type FundDirectoryEntry,
   type FundPortfolio,
-  monthSlug,
 } from "@/data/portfolio-tracker";
+import {
+  type CompareRow,
+  type Signal,
+  buildCompareRows,
+  compareHeadline,
+  partitionCompareRows,
+  shortFundLabel,
+  signalLabel,
+  signalTone,
+} from "@/lib/head-to-head";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
 
 const MAX_B_SUGGESTIONS = 60;
 const MAX_COMPARE_ROWS = 50;
-// Same neutral band the rest of the dashboard uses for pp-comparisons —
-// stocks within ±0.1pp of B count as "In line" rather than over/under-weight.
-const NEUTRAL_BAND_PP = 0.1;
 
-/**
- * Normalise a fund name for the variant-skip default-B heuristic. Strips
- * parenthetical plan suffixes ("(G)", "(IDCW)"), separator chars (so
- * "-Reg(G)" becomes " Reg G "), common plan tokens, and the noise word
- * "fund"; then lowercases and collapses whitespace. Two names that match
- * after this scrub are treated as variants of the same underlying scheme.
- */
-export function normalizeSchemeKey(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/\([^)]*\)/g, " ")
-    .replace(/[-_/]+/g, " ")
-    .replace(
-      /\b(direct|dir|regular|reg|growth|g|idcw|dividend|div|payout|reinvestment|reinv|plan)\b/g,
-      " "
-    )
-    .replace(/\bfund\b/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+// Re-exported for the few call sites that pick the default comparison fund.
+export { isLikelySameScheme, normalizeSchemeKey } from "@/lib/head-to-head";
 
-/** True when `a` and `b` look like variants of the same scheme (Direct/Reg,
- *  Growth/IDCW, …). Used only by the default-B selector — the picker itself
- *  still lists every same-category fund so users can pick variants manually. */
-export function isLikelySameScheme(
-  a: FundDirectoryEntry,
-  b: FundDirectoryEntry
-): boolean {
-  const ka = normalizeSchemeKey(a.fund);
-  const kb = normalizeSchemeKey(b.fund);
-  if (!ka || !kb) return false;
-  return ka === kb;
-}
-
-type Signal =
-  | "A overweight"
-  | "A underweight"
-  | "In line"
-  | "Only A holds"
-  | "Only B holds";
-
-interface CompareRow {
-  fincode: string;
-  name: string;
-  a: number | null;
-  b: number | null;
-  delta: number;
-  signal: Signal;
-}
+type CompareView = "mutual" | "exclusive";
 
 interface Props {
   aEntry: FundDirectoryEntry;
@@ -79,26 +40,6 @@ interface Props {
   onRetryB: () => void;
   bCandidates: FundDirectoryEntry[];
   category: string;
-}
-
-function cleanCompanyName(s: string): string {
-  return s
-    .replace(/^eq\s*-\s*/i, "")
-    .replace(/^[\s^*#~]+/, "")
-    .replace(/[£@*#~]+$/, "")
-    .trim();
-}
-
-function classify(
-  a: number | null,
-  b: number | null
-): { delta: number; signal: Signal } {
-  if (a === null && b !== null) return { delta: -b, signal: "Only B holds" };
-  if (a !== null && b === null) return { delta: a, signal: "Only A holds" };
-  const delta = (a ?? 0) - (b ?? 0);
-  if (Math.abs(delta) <= NEUTRAL_BAND_PP) return { delta, signal: "In line" };
-  if (delta > 0) return { delta, signal: "A overweight" };
-  return { delta, signal: "A underweight" };
 }
 
 export function PortfolioHeadToHead({
@@ -115,6 +56,12 @@ export function PortfolioHeadToHead({
 }: Props) {
   const [bQuery, setBQuery] = useState(bEntry?.fund ?? "");
   const [bFocused, setBFocused] = useState(false);
+  // Mutual (shared) holdings are the default lens; Exclusive surfaces what
+  // only one of the two funds holds.
+  const [view, setView] = useState<CompareView>("mutual");
+
+  const shortA = shortFundLabel(aEntry.fund);
+  const shortB = bEntry ? shortFundLabel(bEntry.fund) : "";
 
   // Externally-driven B changes (A re-picked → default-B re-derives) sync
   // into the picker's text so the visible fund-name tracks the fund being
@@ -136,69 +83,32 @@ export function PortfolioHeadToHead({
     return matched.slice(0, MAX_B_SUGGESTIONS);
   }, [bCandidates, bQuery]);
 
-  // Outer-join A and B's latest-month holdings by fincode. Holdings present
-  // in only one fund land with a null on the missing side; classify() then
-  // maps to "Only A/B holds" / "A over/under-weight" / "In line".
-  const compareRows = useMemo<CompareRow[]>(() => {
-    if (!bPortfolio) return [];
-    const slugA = monthSlug(aPortfolio.meta.months[0]?.label ?? "");
-    const slugB = monthSlug(bPortfolio.meta.months[0]?.label ?? "");
-    if (!slugA || !slugB) return [];
+  const compareRows = useMemo<CompareRow[]>(
+    () => buildCompareRows(aPortfolio, bPortfolio),
+    [aPortfolio, bPortfolio]
+  );
+  const { mutual, exclusive } = useMemo(
+    () => partitionCompareRows(compareRows),
+    [compareRows]
+  );
 
-    const map = new Map<
-      string,
-      { name: string; a: number | null; b: number | null }
-    >();
-    for (const r of aPortfolio.rows) {
-      const w = r.months[slugA]?.aum_pct_num ?? null;
-      if (w === null) continue;
-      map.set(r.fincode, {
-        name: cleanCompanyName(r.company_name),
-        a: w,
-        b: null,
-      });
-    }
-    for (const r of bPortfolio.rows) {
-      const w = r.months[slugB]?.aum_pct_num ?? null;
-      if (w === null) continue;
-      const ex = map.get(r.fincode);
-      if (ex) ex.b = w;
-      else
-        map.set(r.fincode, {
-          name: cleanCompanyName(r.company_name),
-          a: null,
-          b: w,
-        });
-    }
+  // Largest A>B and largest A<B amongst mutually-held stocks — the
+  // apples-to-apples extremes for the one-line summary.
+  const headline = useMemo(() => compareHeadline(compareRows), [compareRows]);
 
-    const rows: CompareRow[] = [];
-    for (const [fincode, { name, a, b }] of map) {
-      const { delta, signal } = classify(a, b);
-      rows.push({ fincode, name, a, b, delta, signal });
-    }
-    rows.sort((x, y) => Math.abs(y.delta) - Math.abs(x.delta));
-    return rows;
-  }, [aPortfolio, bPortfolio]);
-
-  // Largest A>B and largest A<B *amongst stocks both funds hold* — the
-  // apples-to-apples extremes for the one-line summary. Holdings only one
-  // fund holds are surfaced in the table itself and don't dominate the
-  // headline (otherwise a single 6% bet would always crowd it out).
-  const headline = useMemo(() => {
-    let over: CompareRow | null = null;
-    let under: CompareRow | null = null;
-    for (const r of compareRows) {
-      if (r.signal === "A overweight" && (!over || r.delta > over.delta))
-        over = r;
-      if (r.signal === "A underweight" && (!under || r.delta < under.delta))
-        under = r;
-    }
-    return { over, under };
-  }, [compareRows]);
+  // Per-fund exclusive counts for the Exclusive-view summary line.
+  const onlyACount = useMemo(
+    () => exclusive.filter((r) => r.signal === "only-a").length,
+    [exclusive]
+  );
+  const onlyBCount = exclusive.length - onlyACount;
 
   const latestMonth = aPortfolio.meta.months[0]?.label ?? "";
-  const totalRows = compareRows.length;
-  const displayRows = compareRows.slice(0, MAX_COMPARE_ROWS);
+  const viewRows = view === "mutual" ? mutual : exclusive;
+  const displayRows = viewRows.slice(0, MAX_COMPARE_ROWS);
+
+  // Excel export mirrors the visible lens (mutual vs exclusive) and never
+  // shows positional "A"/"B" — columns carry the funds' own names.
   type XRow = {
     company: string;
     a: number | null;
@@ -210,15 +120,17 @@ export function PortfolioHeadToHead({
     { key: "company", header: "Company" },
     { key: "a", header: `${aEntry.fund} (%)` },
     { key: "b", header: bEntry ? `${bEntry.fund} (%)` : "Comparison fund (%)" },
-    { key: "delta", header: "Δ A − B (pp)" },
-    { key: "signal", header: "Signal" },
+    ...(view === "mutual"
+      ? ([{ key: "delta", header: `Δ ${shortA} − ${shortB} (pp)` }] as CsvColumn<XRow>[])
+      : []),
+    { key: "signal", header: view === "mutual" ? "Signal" : "Held by" },
   ];
-  const compareExportRows: XRow[] = compareRows.map((r) => ({
+  const compareExportRows: XRow[] = viewRows.map((r) => ({
     company: r.name,
     a: r.a,
     b: r.b,
     delta: r.delta,
-    signal: r.signal,
+    signal: signalLabel(r.signal, shortA, shortB),
   }));
 
   if (bCandidates.length === 0) {
@@ -270,7 +182,7 @@ export function PortfolioHeadToHead({
             </button>
           )}
           {bFocused && bSuggestions.length > 0 && (
-            <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-md border bg-card py-1 shadow-md">
+            <ul className="absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-md border bg-card py-1 shadow-lg">
               {bSuggestions.map((f) => (
                 <li key={f.schemecode}>
                   <button
@@ -330,49 +242,107 @@ export function PortfolioHeadToHead({
         </div>
       ) : (
         <>
-          {totalRows > 0 && (
-            <div className="flex justify-end">
+          {/* Mutual ↔ Exclusive lens + export */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div
+              role="tablist"
+              aria-label="Holdings overlap lens"
+              className="inline-flex rounded-lg border bg-card p-0.5 text-sm"
+            >
+              {(
+                [
+                  ["mutual", "Mutual holdings", mutual.length],
+                  ["exclusive", "Exclusive holdings", exclusive.length],
+                ] as const
+              ).map(([id, label, count]) => {
+                const active = view === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setView(id)}
+                    className={cn(
+                      "rounded-md px-3 py-1.5 font-medium transition-colors",
+                      active
+                        ? "bg-foreground text-background"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {label}
+                    <span
+                      className={cn(
+                        "ml-1.5 text-xs tabular",
+                        active ? "text-background/70" : "text-muted-foreground"
+                      )}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {viewRows.length > 0 && (
               <DownloadXlsxButton
                 rows={compareExportRows}
                 columns={compareExportColumns}
-                filename="portfolio-head-to-head.xlsx"
-                sheetName="A vs B"
+                filename={`head-to-head-${view}.xlsx`}
+                sheetName={view === "mutual" ? "Mutual holdings" : "Exclusive holdings"}
               />
-            </div>
-          )}
-          {(headline.over || headline.under) && bEntry && (
-            <p className="text-sm leading-snug text-foreground">
-              vs <strong>{bEntry.fund}</strong>,{" "}
-              <strong>{aEntry.fund}</strong> is
-              {headline.over && (
-                <>
-                  {" "}most overweight{" "}
-                  <strong>{headline.over.name}</strong> (
-                  <span className="text-positive">
-                    +{headline.over.delta.toFixed(1)}pp
-                  </span>
-                  )
-                </>
-              )}
-              {headline.over && headline.under && " and"}
-              {headline.under && (
-                <>
-                  {" "}most underweight{" "}
-                  <strong>{headline.under.name}</strong> (
-                  <span className="text-negative">
-                    {headline.under.delta.toFixed(1)}pp
-                  </span>
-                  )
-                </>
-              )}
-              .
-            </p>
-          )}
+            )}
+          </div>
 
-          {totalRows === 0 ? (
+          {/* View-appropriate one-liner */}
+          {view === "mutual"
+            ? (headline.over || headline.under) &&
+              bEntry && (
+                <p className="text-sm leading-snug text-foreground">
+                  vs <strong>{bEntry.fund}</strong>,{" "}
+                  <strong>{aEntry.fund}</strong> is
+                  {headline.over && (
+                    <>
+                      {" "}most overweight{" "}
+                      <strong>{headline.over.name}</strong> (
+                      <span className="text-positive">
+                        +{headline.over.delta.toFixed(1)}pp
+                      </span>
+                      )
+                    </>
+                  )}
+                  {headline.over && headline.under && " and"}
+                  {headline.under && (
+                    <>
+                      {" "}most underweight{" "}
+                      <strong>{headline.under.name}</strong> (
+                      <span className="text-negative">
+                        {headline.under.delta.toFixed(1)}pp
+                      </span>
+                      )
+                    </>
+                  )}
+                  .
+                </p>
+              )
+            : bEntry && (
+                <p className="text-sm leading-snug text-foreground">
+                  <strong>{shortA}</strong> alone holds{" "}
+                  <strong>{onlyACount}</strong> stock{onlyACount === 1 ? "" : "s"}{" "}
+                  {shortB} doesn&apos;t, and <strong>{shortB}</strong> alone holds{" "}
+                  <strong>{onlyBCount}</strong> stock{onlyBCount === 1 ? "" : "s"}{" "}
+                  {shortA} doesn&apos;t.
+                </p>
+              )}
+
+          {viewRows.length === 0 ? (
             <div className="rounded-md border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">
-              No comparable equity holdings between these two funds for{" "}
-              {latestMonth || "the latest month"}.
+              {view === "mutual"
+                ? `These two funds share no common equity holdings for ${
+                    latestMonth || "the latest month"
+                  }.`
+                : `Neither fund holds anything the other doesn't for ${
+                    latestMonth || "the latest month"
+                  } — every position is shared.`}
             </div>
           ) : (
             <div className="overflow-x-auto rounded-md border bg-card">
@@ -386,11 +356,16 @@ export function PortfolioHeadToHead({
                     <th className="px-3 py-2 text-right font-medium">
                       {bEntry?.fund ?? "Comparison fund"}
                     </th>
-                    <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
-                      Δ A − B
-                    </th>
+                    {view === "mutual" && (
+                      <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
+                        Δ
+                        <span className="ml-1 font-normal normal-case text-muted-foreground/80">
+                          {shortA} − {shortB}
+                        </span>
+                      </th>
+                    )}
                     <th className="whitespace-nowrap px-3 py-2 text-left font-medium">
-                      Signal
+                      {view === "mutual" ? "Signal" : "Held by"}
                     </th>
                   </tr>
                 </thead>
@@ -407,11 +382,17 @@ export function PortfolioHeadToHead({
                       <td className="px-3 py-2.5 text-right tabular text-muted-foreground">
                         {formatPctSafe(r.b, 1)}
                       </td>
-                      <td className="px-3 py-2.5 text-right tabular">
-                        <DeltaPp value={r.delta} signal={r.signal} />
-                      </td>
+                      {view === "mutual" && (
+                        <td className="px-3 py-2.5 text-right tabular">
+                          <DeltaPp value={r.delta} signal={r.signal} />
+                        </td>
+                      )}
                       <td className="px-3 py-2.5">
-                        <SignalBadge signal={r.signal} />
+                        <SignalBadge
+                          signal={r.signal}
+                          shortA={shortA}
+                          shortB={shortB}
+                        />
                       </td>
                     </tr>
                   ))}
@@ -420,11 +401,15 @@ export function PortfolioHeadToHead({
             </div>
           )}
 
-          {totalRows > 0 && (
+          {viewRows.length > 0 && (
             <p className="text-xs text-muted-foreground">
-              {totalRows > MAX_COMPARE_ROWS
-                ? `Showing top ${MAX_COMPARE_ROWS} of ${totalRows} joined holdings by |Δ|`
-                : `${totalRows} joined holding${totalRows === 1 ? "" : "s"}, sorted by |Δ|`}
+              {viewRows.length > MAX_COMPARE_ROWS
+                ? `Showing top ${MAX_COMPARE_ROWS} of ${viewRows.length} ${view} holdings by ${
+                    view === "mutual" ? "|Δ|" : "weight"
+                  }`
+                : `${viewRows.length} ${view} holding${
+                    viewRows.length === 1 ? "" : "s"
+                  }, sorted by ${view === "mutual" ? "|Δ|" : "weight"}`}
               {latestMonth && ` · Latest month: ${latestMonth}`}.
             </p>
           )}
@@ -447,7 +432,8 @@ function Header({
       <p className="text-xs text-muted-foreground">
         Compare{" "}
         <span className="font-medium text-foreground">{aEntry.fund}</span> with
-        another fund in {category}.
+        another fund in {category}. <strong>Mutual</strong> shows stocks both
+        funds hold; <strong>Exclusive</strong> shows what only one of them holds.
       </p>
     </div>
   );
@@ -456,12 +442,13 @@ function Header({
 function DeltaPp({ value, signal }: { value: number; signal: Signal }) {
   const sign = value > 0 ? "+" : value < 0 ? "−" : "";
   const abs = Math.abs(value).toFixed(1);
+  const tone = signalTone(signal);
   const cls =
-    signal === "In line"
-      ? "text-muted-foreground"
-      : value > 0
-        ? "text-positive"
-        : "text-negative";
+    tone === "positive"
+      ? "text-positive"
+      : tone === "negative"
+        ? "text-negative"
+        : "text-muted-foreground";
   return (
     <span className={cls}>
       {sign}
@@ -470,12 +457,21 @@ function DeltaPp({ value, signal }: { value: number; signal: Signal }) {
   );
 }
 
-function SignalBadge({ signal }: { signal: Signal }) {
-  const tone =
-    signal === "A overweight"
+function SignalBadge({
+  signal,
+  shortA,
+  shortB,
+}: {
+  signal: Signal;
+  shortA: string;
+  shortB: string;
+}) {
+  const tone = signalTone(signal);
+  const cls =
+    tone === "positive"
       ? "text-positive"
-      : signal === "A underweight"
+      : tone === "negative"
         ? "text-negative"
         : "text-muted-foreground";
-  return <span className={cn("text-xs", tone)}>{signal}</span>;
+  return <span className={cn("text-xs", cls)}>{signalLabel(signal, shortA, shortB)}</span>;
 }

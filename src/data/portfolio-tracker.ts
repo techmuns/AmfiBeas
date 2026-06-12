@@ -78,6 +78,20 @@ export function monthSlug(label: string): string {
     .replace(/^_+|_+$/g, "");
 }
 
+/**
+ * Drop the trailing plan-option marker from a scheme name for display —
+ * e.g. "HDFC Flexi Cap Fund(G)" -> "HDFC Flexi Cap Fund". RupeeVest tags
+ * every Growth scheme with a "(G)" suffix (and the odd IDCW/Dividend variant
+ * with its own marker); the dashboard shows the clean scheme name. Only a
+ * trailing option parenthesis is stripped — the "-Reg"/"-Dir" plan token and
+ * any in-name parentheses are left untouched.
+ */
+export function cleanSchemeName(name: string): string {
+  return name
+    .replace(/\s*\((?:G|Growth|IDCW|D|Div|Dividend|B|Bonus|Payout|Reinvestment)\)\s*$/i, "")
+    .trim();
+}
+
 /** Funds with equity holdings, sorted by AUM desc (largest first). */
 export const fundDirectory: FundDirectoryEntry[] = (
   indexJson.funds as RawIndexEntry[]
@@ -85,7 +99,7 @@ export const fundDirectory: FundDirectoryEntry[] = (
   .filter((f): f is RawIndexEntry & { file: string } => Boolean(f.file))
   .map((f) => ({
     schemecode: f.schemecode,
-    fund: f.fundName ?? f.name,
+    fund: cleanSchemeName(f.fundName ?? f.name),
     classification: f.classification,
     aumTotalCr: f.aumTotalCr,
     rowCount: f.rowCount,

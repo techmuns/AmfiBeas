@@ -4,12 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
+import { DownloadTrackerExcelButton } from "@/components/data/DownloadTrackerExcelButton";
+import type { TrackerExportInput } from "@/lib/portfolio-tracker-export";
 import type { CsvColumn } from "@/lib/csv";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
-import {
-  PortfolioHeadToHead,
-  isLikelySameScheme,
-} from "@/components/data/PortfolioHeadToHead";
+import { PortfolioHeadToHead } from "@/components/data/PortfolioHeadToHead";
+import { isLikelySameScheme } from "@/lib/head-to-head";
 import { PortfolioTrendsTab } from "@/components/data/PortfolioTrendsTab";
 import {
   SectorAllocationChart,
@@ -506,6 +506,23 @@ export function PortfolioTrackerView({
     </div>
   );
 
+  // Whole-tab Excel: one styled workbook (Overview + Holdings + Head-to-head +
+  // Trends) for the selected fund. Built from the data already in hand; the
+  // button itself stays disabled until the holdings payload lands.
+  const exportInput: TrackerExportInput | null = selectedEntry
+    ? {
+        entry: selectedEntry,
+        portfolio,
+        sectorRows: sectorVsCategory,
+        peerLabel: selectedEntry.classification,
+        peerLoaded: peerAvgLoadedCount,
+        peerTotal: peerAvgRows.length,
+        flowSummary,
+        bEntry: effectiveBEntry,
+        bPortfolio,
+      }
+    : null;
+
   return (
     <div className="space-y-5">
       {/* Global fund picker + AMC filter — visible above the tab strip. */}
@@ -552,7 +569,7 @@ export function PortfolioTrackerView({
           </button>
         )}
         {focused && suggestions.length > 0 && (
-          <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-md border bg-card py-1 shadow-md">
+          <ul className="absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-md border bg-card py-1 shadow-lg">
             {suggestions.map((f) => (
               <li key={f.schemecode}>
                 <button
@@ -587,32 +604,35 @@ export function PortfolioTrackerView({
         className="sticky top-14 z-20 -mx-6 mb-6 border-b border-border bg-background/85 backdrop-blur lg:-mx-8"
         data-component="dashboard-tabs"
       >
-        <nav
-          role="tablist"
-          aria-label="Portfolio tracker sections"
-          className="flex gap-1 overflow-x-auto px-6 py-2 lg:px-8"
-        >
-          {tabs.map((t) => {
-            const active = t.id === activeTab;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => selectTab(t.id as TrackerTabId)}
-                className={cn(
-                  "whitespace-nowrap rounded-md px-3 py-1.5 text-sm transition-colors",
-                  active
-                    ? "bg-primary/10 font-medium text-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                )}
-              >
-                {t.label}
-              </button>
-            );
-          })}
-        </nav>
+        <div className="flex items-center gap-3 px-6 py-2 lg:px-8">
+          <nav
+            role="tablist"
+            aria-label="Portfolio tracker sections"
+            className="flex flex-1 gap-1 overflow-x-auto"
+          >
+            {tabs.map((t) => {
+              const active = t.id === activeTab;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => selectTab(t.id as TrackerTabId)}
+                  className={cn(
+                    "whitespace-nowrap rounded-md px-3 py-1.5 text-sm transition-colors",
+                    active
+                      ? "bg-primary/10 font-medium text-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </nav>
+          {exportInput && <DownloadTrackerExcelButton input={exportInput} />}
+        </div>
       </div>
 
       {!selectedEntry ? (

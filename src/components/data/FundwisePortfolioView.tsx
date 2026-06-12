@@ -240,7 +240,7 @@ export function FundwisePortfolioView({
           </button>
         )}
         {focused && suggestions.length > 0 && (
-          <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-md border bg-card py-1 shadow-md">
+          <ul className="absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-md border bg-card py-1 shadow-lg">
             {suggestions.map((f) => (
               <li key={f.slug}>
                 <button
