@@ -8,10 +8,10 @@ import type { DashboardTabDef } from "@/components/layout/DashboardTabs";
 export const TRACKER_TABS = [
   { id: "overview", label: "Overview" },
   { id: "holdings", label: "Holdings" },
-  // "Peers" moved to the Fund-wise view (peers = fund houses, not schemes).
+  // "Peers" and "AMC Mix" moved to the Fund-wise view (both are fund-house
+  // level concepts; AMC Mix is now "Allocation mix" there).
   { id: "head-to-head", label: "Head-to-head" },
   { id: "trends", label: "Trends" },
-  { id: "amc-mix", label: "AMC Mix" },
 ] as const satisfies readonly DashboardTabDef[];
 
 export type TrackerTabId = (typeof TRACKER_TABS)[number]["id"];
