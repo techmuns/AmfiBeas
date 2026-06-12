@@ -34,8 +34,7 @@ function FlowCard({
   rowSlots: number;
 }) {
   const movers = kind === "bought" ? "Top MF Buyers" : "Top MF Sellers";
-  const valHead =
-    kind === "bought" ? "Bought (% shares out.)" : "Sold (% shares out.)";
+  const valHead = kind === "bought" ? "Bought (% out.)" : "Sold (% out.)";
   const blanks = Math.max(0, rowSlots - rows.length);
   return (
     <div className="overflow-hidden rounded-lg border bg-card">
@@ -44,14 +43,14 @@ function FlowCard({
       </div>
       <table className="w-full table-fixed border-collapse text-sm">
         <colgroup>
-          <col className="w-[44%]" />
-          <col className="w-[24%]" />
+          <col className="w-[40%]" />
+          <col className="w-[28%]" />
           <col className="w-[32%]" />
         </colgroup>
         <thead>
           <tr className="text-sm font-semibold text-foreground">
-            <th className="px-4 py-2 text-left font-semibold">Company</th>
-            <th className="whitespace-nowrap px-3 py-2 text-right font-semibold">
+            <th className="px-3 py-2 text-left font-semibold">Company</th>
+            <th className="px-3 py-2 text-right font-semibold leading-tight">
               {valHead}
             </th>
             <th className="px-4 py-2 text-left font-semibold">{movers}</th>
