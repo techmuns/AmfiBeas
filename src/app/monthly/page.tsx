@@ -266,7 +266,7 @@ export default async function MonthlyPage() {
       const value = getKpiValue(sel, spec.field);
       if (value === null) return [];
       const provenance = getKpiProvenance(sel, spec.field);
-      const ctx = kpiContext(spec.field, 24, sel?.month);
+      const ctx = kpiContext(spec.field, 16, sel?.month);
       return [
         {
           ...spec,
@@ -476,7 +476,7 @@ export default async function MonthlyPage() {
           r.aaum !== null
       )
       .reverse()
-      .slice(0, 36);
+      .slice(0, 24);
   })();
   const flowTableHasData = flowTableRows.length > 0;
 
@@ -565,7 +565,7 @@ export default async function MonthlyPage() {
   // ---- IIFL-style "MF Flows — Risk of Slowdown" (Figures 4-7) ---------
   // Composite data feeding the new combined section. Single-pass setup so
   // the JSX below stays declarative.
-  const sipGrossShareSeries = monthlySipGrossShareTrend(72);
+  const sipGrossShareSeries = monthlySipGrossShareTrend(48);
   const sipGrossShareChartData = sipGrossShareSeries.map((p) => ({
     label: p.month,
     value: p.sipContribution,
@@ -720,9 +720,12 @@ export default async function MonthlyPage() {
     );
   };
 
-  // Months offered in the in-card period dropdown (most-recent first, capped to
-  // 12 like the old MonthPicker), each pre-rendered for instant client switch.
-  const snapshotMonths = amfiAvailableMonths.slice(0, 12);
+  // Months offered in the in-card period dropdown (most-recent first), each
+  // pre-rendered for instant client switch. Capped to 6 so this static page
+  // stays light enough to render under the Cloudflare Worker resource limit
+  // (Error 1102) on a cache-miss — 12 full KPI-card panels was the bulk of
+  // the page weight.
+  const snapshotMonths = amfiAvailableMonths.slice(0, 6);
   const snapshotCardPanels: Record<
     string,
     { body: ReactNode; live: boolean }
