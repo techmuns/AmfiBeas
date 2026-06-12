@@ -177,6 +177,14 @@ function main() {
     holdingsCount: number;
     equityValueCr: number;
     latestMonth: string;
+    prevMonth: string | null;
+    /** Top-10 holdings as a % of the equity book (latest month). */
+    top10Pct: number;
+    /** MoM change in that top-10 concentration, in pp. null when no prior month. */
+    top10DeltaPp: number | null;
+    /** Largest MoM increase / decrease in a single company's % of book. */
+    biggestAdd: { company: string; pp: number } | null;
+    biggestTrim: { company: string; pp: number } | null;
     path: string;
   }
   const directory: DirEntry[] = [];
@@ -257,6 +265,36 @@ function main() {
       path.join(OUT_DIR, `${slug}.json`),
       JSON.stringify(portfolio) + "\n"
     );
+
+    // Peer stats (precomputed so the fund-wise Peers tab needs no fetch):
+    // top-10 concentration + its MoM move, and the biggest single-stock
+    // weight add / trim across the AMC's whole book.
+    const prevSlug = orderedSlugs[1];
+    const pctOf = (r: (typeof rows)[number], s: string): number =>
+      (r.months[s] as { aum_pct_num: number | null } | undefined)?.aum_pct_num ?? 0;
+    const sumTop10 = (key: string) =>
+      rows
+        .map((r) => pctOf(r, key))
+        .sort((a, b) => b - a)
+        .slice(0, 10)
+        .reduce((s, x) => s + x, 0);
+    const top10Pct = Math.round(sumTop10(latestSlug) * 10) / 10;
+    const top10DeltaPp =
+      prevSlug === undefined
+        ? null
+        : Math.round((top10Pct - sumTop10(prevSlug)) * 10) / 10;
+    let biggestAdd: { company: string; pp: number } | null = null;
+    let biggestTrim: { company: string; pp: number } | null = null;
+    if (prevSlug !== undefined) {
+      for (const r of rows) {
+        const d = pctOf(r, latestSlug) - pctOf(r, prevSlug);
+        if (!biggestAdd || d > biggestAdd.pp)
+          biggestAdd = { company: r.company_name, pp: Math.round(d * 10) / 10 };
+        if (!biggestTrim || d < biggestTrim.pp)
+          biggestTrim = { company: r.company_name, pp: Math.round(d * 10) / 10 };
+      }
+    }
+
     directory.push({
       slug,
       amc: agg.amc,
@@ -264,6 +302,11 @@ function main() {
       holdingsCount: rows.length,
       equityValueCr,
       latestMonth: monthEntries[0][0],
+      prevMonth: monthEntries[1]?.[0] ?? null,
+      top10Pct,
+      top10DeltaPp,
+      biggestAdd,
+      biggestTrim,
       path: `/fundwise/${slug}.json`,
     });
   }

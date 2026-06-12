@@ -6,7 +6,6 @@ import { cn } from "@/lib/cn";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
-import { SameCategoryFunds } from "@/components/data/SameCategoryFunds";
 import {
   PortfolioHeadToHead,
   isLikelySameScheme,
@@ -33,7 +32,6 @@ import {
 import { classifySector, UNCLASSIFIED } from "@/data/sector-classification";
 
 const MAX_SUGGESTIONS = 60;
-const MAX_PEER_ROWS = 10;
 // Peer-average cohort cap. Top-N same-category peers by AUM are fetched
 // and averaged to compute the OW/UW chips in the Holdings tab. Bounds
 // the worst-case fetch (Thematic, n=91 → 20 fetches instead of 91).
@@ -152,14 +150,6 @@ export function PortfolioTrackerView({
       .slice()
       .sort((a, b) => (b.aumTotalCr ?? 0) - (a.aumTotalCr ?? 0));
   }, [funds, selectedEntry]);
-
-  const peerRows = useMemo(() => {
-    if (!selectedEntry) return [] as FundDirectoryEntry[];
-    const others = sameCategoryFunds.filter(
-      (f) => f.schemecode !== selectedEntry.schemecode
-    );
-    return [selectedEntry, ...others.slice(0, MAX_PEER_ROWS - 1)];
-  }, [sameCategoryFunds, selectedEntry]);
 
   // Top-N same-category peers by AUM EXCLUDING the selected fund — the set
   // averaged into the OW/UW chip baseline. min(MAX_PEER_AVG_PEERS, cohort − 1).
@@ -802,30 +792,6 @@ export function PortfolioTrackerView({
                 </>
               ) : null}
             </div>
-          )}
-
-          {activeTab === "peers" && (
-            <>
-              {loading ? (
-                loaderUi
-              ) : hasError ? (
-                errorUi
-              ) : portfolio && selectedEntry.classification ? (
-                <SameCategoryFunds
-                  selectedCode={selectedEntry.schemecode}
-                  category={selectedEntry.classification}
-                  cohortSize={sameCategoryFunds.length}
-                  latestMonth={portfolio.meta.months[0]?.label ?? null}
-                  peers={peerRows}
-                  loaded={loaded}
-                  errored={errored}
-                />
-              ) : portfolio && !selectedEntry.classification ? (
-                <div className="rounded-md border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">
-                  No peer cohort available — this fund has no classification.
-                </div>
-              ) : null}
-            </>
           )}
 
           {activeTab === "head-to-head" && (

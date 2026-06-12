@@ -54,6 +54,7 @@ export function FundwisePortfolioView({
   const [query, setQuery] = useState(fundHouses[0]?.amc ?? "");
   const [focused, setFocused] = useState(false);
   const [holdingQuery, setHoldingQuery] = useState("");
+  const [tab, setTab] = useState<"holdings" | "peers">("holdings");
 
   const [loaded, setLoaded] = useState<Record<string, FundHousePortfolio>>({});
   const [errored, setErrored] = useState<Record<string, true>>({});
@@ -260,7 +261,32 @@ export function FundwisePortfolioView({
             </div>
           </div>
 
-          {loading ? (
+          {/* Holdings ↔ Peers sub-tabs (sticky under the Topbar). */}
+          <div className="sticky top-14 z-20 -mx-6 flex gap-1 border-b bg-background/95 px-6 pt-1 backdrop-blur lg:-mx-8 lg:px-8">
+            {(["holdings", "peers"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTab(t)}
+                aria-current={t === tab ? "page" : undefined}
+                className={cn(
+                  "-mb-px rounded-t-md border-b-2 px-3 py-2 text-sm font-medium capitalize transition-colors",
+                  t === tab
+                    ? "border-foreground text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+
+          {tab === "peers" ? (
+            <FundHousePeers
+              fundHouses={fundHouses}
+              selectedSlug={selectedSlug}
+            />
+          ) : loading ? (
             loaderUi
           ) : hasError ? (
             <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-md border border-dashed text-sm text-muted-foreground">
@@ -423,6 +449,177 @@ export function FundwisePortfolioView({
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * Fund-wise Peers — every fund house side by side on equity-book scale,
+ * top-10 concentration (+ MoM move) and the biggest single-stock weight add /
+ * trim. The AMC-level counterpart of the scheme-wise Same-category funds
+ * table. All figures are precomputed in the directory, so no holdings fetch
+ * is needed. */
+function FundHousePeers({
+  fundHouses,
+  selectedSlug,
+}: {
+  fundHouses: FundHouseEntry[];
+  selectedSlug: string;
+}) {
+  const rows = [...fundHouses].sort((a, b) => b.equityValueCr - a.equityValueCr);
+  const latestMonth = fundHouses.find((f) => f.slug === selectedSlug)?.latestMonth;
+
+  type XRow = {
+    fundHouse: string;
+    schemes: number;
+    equityBookCr: number;
+    top10Pct: number;
+    top10DeltaPp: number | null;
+    biggestAddPp: number | null;
+    biggestAddName: string;
+    biggestTrimPp: number | null;
+    biggestTrimName: string;
+  };
+  const exportColumns: CsvColumn<XRow>[] = [
+    { key: "fundHouse", header: "Fund house" },
+    { key: "schemes", header: "Schemes" },
+    { key: "equityBookCr", header: "Equity book (₹ Cr)" },
+    { key: "top10Pct", header: "Top-10 concentration (%)" },
+    { key: "top10DeltaPp", header: "Top-10 MoM (pp)" },
+    { key: "biggestAddPp", header: "Biggest add (pp MoM)" },
+    { key: "biggestAddName", header: "Biggest add — stock" },
+    { key: "biggestTrimPp", header: "Biggest trim (pp MoM)" },
+    { key: "biggestTrimName", header: "Biggest trim — stock" },
+  ];
+  const exportRows: XRow[] = rows.map((p) => ({
+    fundHouse: p.amc,
+    schemes: p.schemeCount,
+    equityBookCr: p.equityValueCr,
+    top10Pct: p.top10Pct,
+    top10DeltaPp: p.top10DeltaPp,
+    biggestAddPp: p.biggestAdd?.pp ?? null,
+    biggestAddName: p.biggestAdd?.company ?? "",
+    biggestTrimPp: p.biggestTrim?.pp ?? null,
+    biggestTrimName: p.biggestTrim?.company ?? "",
+  }));
+
+  return (
+    <section className="space-y-2">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h2 className="text-base font-semibold tracking-tight">
+            Peer fund houses
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Every fund house compared on equity-book scale, concentration and
+            the month&apos;s biggest weight shifts — aggregated across all of
+            each house&apos;s schemes.
+            {latestMonth && <span className="ml-1">As of {latestMonth}.</span>}
+          </p>
+        </div>
+        <DownloadXlsxButton
+          rows={exportRows}
+          columns={exportColumns}
+          filename="fund-house-peers.xlsx"
+          sheetName="Fund-house Peers"
+        />
+      </div>
+      <div className="overflow-x-auto rounded-md border bg-card">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-muted/60 text-xs text-muted-foreground">
+              <th className="px-3 py-2 text-left font-medium">Fund house</th>
+              <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
+                Equity book
+              </th>
+              <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
+                Top-10 conc.
+              </th>
+              <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
+                Biggest add (pp MoM)
+              </th>
+              <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
+                Biggest trim (pp MoM)
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((p) => {
+              const isSelected = p.slug === selectedSlug;
+              return (
+                <tr
+                  key={p.slug}
+                  className={cn(
+                    "border-b last:border-0",
+                    isSelected ? "bg-accent/60" : "hover:bg-accent/30"
+                  )}
+                >
+                  <td className="px-3 py-2.5 align-top">
+                    <div className="flex flex-wrap items-center gap-x-2">
+                      <span className={cn(isSelected && "font-semibold")}>
+                        {p.amc}
+                      </span>
+                      {isSelected && (
+                        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                          Selected
+                        </span>
+                      )}
+                      <span className="text-[11px] text-muted-foreground">
+                        {p.schemeCount} schemes
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-3 py-2.5 text-right tabular align-top">
+                    {formatCompactCrSafe(p.equityValueCr)}
+                  </td>
+                  <td className="px-3 py-2.5 text-right tabular align-top text-muted-foreground">
+                    <div>{p.top10Pct.toFixed(1)}%</div>
+                    {p.top10DeltaPp !== null && (
+                      <div
+                        className={cn(
+                          "text-[11px]",
+                          p.top10DeltaPp >= 0 ? "text-positive" : "text-negative"
+                        )}
+                      >
+                        {p.top10DeltaPp >= 0 ? "+" : ""}
+                        {p.top10DeltaPp.toFixed(1)}pp
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-3 py-2.5 text-right tabular align-top">
+                    {p.biggestAdd ? (
+                      <>
+                        <div className="text-positive">
+                          +{p.biggestAdd.pp.toFixed(1)}pp
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {p.biggestAdd.company}
+                        </div>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2.5 text-right tabular align-top">
+                    {p.biggestTrim ? (
+                      <>
+                        <div className="text-negative">
+                          {p.biggestTrim.pp.toFixed(1)}pp
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {p.biggestTrim.company}
+                        </div>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
 

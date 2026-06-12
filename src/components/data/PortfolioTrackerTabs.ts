@@ -8,7 +8,7 @@ import type { DashboardTabDef } from "@/components/layout/DashboardTabs";
 export const TRACKER_TABS = [
   { id: "overview", label: "Overview" },
   { id: "holdings", label: "Holdings" },
-  { id: "peers", label: "Peers" },
+  // "Peers" moved to the Fund-wise view (peers = fund houses, not schemes).
   { id: "head-to-head", label: "Head-to-head" },
   { id: "trends", label: "Trends" },
   { id: "amc-mix", label: "AMC Mix" },

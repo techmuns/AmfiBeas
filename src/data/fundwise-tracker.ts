@@ -25,6 +25,15 @@ export interface FundHouseEntry {
   equityValueCr: number;
   /** Latest month label, e.g. "Apr-26". */
   latestMonth: string;
+  /** Prior month label, or null when only one month is available. */
+  prevMonth: string | null;
+  /** Top-10 holdings as a % of the equity book (latest month). */
+  top10Pct: number;
+  /** MoM change in top-10 concentration (pp); null when no prior month. */
+  top10DeltaPp: number | null;
+  /** Biggest single-stock weight add / trim across the book (pp MoM). */
+  biggestAdd: { company: string; pp: number } | null;
+  biggestTrim: { company: string; pp: number } | null;
   /** Public path to the aggregated holdings JSON. */
   path: string;
 }
