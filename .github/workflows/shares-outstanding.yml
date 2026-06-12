@@ -49,11 +49,13 @@ jobs:
         run: npm run build:cap-flows
       - name: Rebuild fund-wise (AMC-level) portfolios
         run: npm run build:fundwise
+      - name: Rebuild Insights inputs (uniques + share shifts)
+        run: npm run build:insights
       - name: Show diff
         run: git diff --stat src/data/portfolio-tracker public/fundwise || true
       - name: Commit data
         run: |
-          FILES="src/data/portfolio-tracker/shares-outstanding.json src/data/portfolio-tracker/cap-flows.json src/data/portfolio-tracker/fundwise-index.json public/fundwise"
+          FILES="src/data/portfolio-tracker/shares-outstanding.json src/data/portfolio-tracker/cap-flows.json src/data/portfolio-tracker/fundwise-index.json src/data/portfolio-tracker/insights-holdings.json public/fundwise"
           if [ -z "$(git status --porcelain $FILES)" ]; then
             echo "No shares-outstanding / cap-flows / fundwise changes."
             exit 0

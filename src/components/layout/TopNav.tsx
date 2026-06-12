@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Sparkles,
   LayoutDashboard,
   CalendarDays,
   // CalendarRange, // hidden along with the /quarterly nav item
@@ -13,11 +14,13 @@ import {
 import { cn } from "@/lib/cn";
 
 // Main nav — the analytical pages a client actually scrolls through.
-// /premium is a "what licensed data could enable" pitch and not part of the
-// client narrative; the page stays live but is pulled out of the main nav.
-// /data-sources and /other-schemes remain reachable via deep links / footer.
-// /quarterly is hidden per client request (route still live at /quarterly).
+// Insights leads (the client's "so what?" tab). /premium is a "what licensed
+// data could enable" pitch and not part of the client narrative; the page
+// stays live but is pulled out of the main nav. /data-sources and
+// /other-schemes remain reachable via deep links / footer. /quarterly is
+// hidden per client request (route still live at /quarterly).
 const nav = [
+  { href: "/insights", label: "Insights", icon: Sparkles },
   { href: "/", label: "Overview", icon: LayoutDashboard },
   { href: "/monthly", label: "Monthly", icon: CalendarDays },
   // { href: "/quarterly", label: "Quarterly", icon: CalendarRange },
