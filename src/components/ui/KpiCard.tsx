@@ -76,12 +76,12 @@ export function KpiCard({
   return (
     <div
       className={cn(
-        "rounded-lg border bg-card px-5 py-4 shadow-sm",
+        "rounded-lg border bg-card px-3.5 py-2.5 shadow-sm",
         isDemo && "border-dashed border-muted-foreground/40 opacity-80"
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="text-xs uppercase tracking-wide text-muted-foreground">
+        <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
           {label}
         </div>
         {toneBadge && (
@@ -92,7 +92,7 @@ export function KpiCard({
       </div>
       <div
         className={cn(
-          "mt-2 text-2xl font-semibold tabular tracking-tight",
+          "mt-1 text-lg font-semibold tabular leading-tight tracking-tight",
           isDemo && "text-muted-foreground"
         )}
       >
@@ -106,7 +106,7 @@ export function KpiCard({
       {delta && (
         <div
           className={cn(
-            "mt-1 inline-flex items-center gap-1 text-xs tabular",
+            "mt-0.5 inline-flex items-center gap-1 text-xs tabular",
             trend === "up" && !isDemo && "text-positive",
             trend === "down" && !isDemo && "text-negative",
             (trend === "flat" || isDemo) && "text-muted-foreground"
@@ -117,7 +117,7 @@ export function KpiCard({
         </div>
       )}
       {(yoyDir !== null || typeof percentile === "number") && (
-        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+        <div className="mt-1 flex flex-wrap items-center gap-1.5">
           {yoyDir !== null && (
             <span
               className={cn(
@@ -147,13 +147,13 @@ export function KpiCard({
         </div>
       )}
       {sparkline && sparkline.length > 1 && !isDemo && (
-        <div className="mt-2 -mx-1">
-          <Sparkline data={sparkline} color={sparklineColor} height={28} />
+        <div className="mt-1.5 -mx-1">
+          <Sparkline data={sparkline} color={sparklineColor} height={18} />
         </div>
       )}
       {note && (
         <div
-          className="mt-1.5 text-[10px] tabular text-muted-foreground/80"
+          className="mt-1 text-[10px] tabular text-muted-foreground/80"
           title={noteHover}
         >
           {note}
