@@ -137,26 +137,6 @@ function fmtPct(v: number | null): string {
   return `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}%`;
 }
 
-// MoM % change of a signed flow vs the prior month: (cur − prev) / |prev|.
-// Returns null when either month is missing or the prior month is ~0 (the
-// percentage would be meaningless / explode).
-function momPct(cur: number | null, prev: number | null): number | null {
-  if (cur === null || prev === null) return null;
-  if (!Number.isFinite(cur) || !Number.isFinite(prev)) return null;
-  if (Math.abs(prev) < 0.5) return null;
-  return ((cur - prev) / Math.abs(prev)) * 100;
-}
-
-// Compact signed MoM %, capped at ±999% so a sign-flip month doesn't blow
-// out the column width. "—" when not computable.
-function fmtMoMPct(v: number | null): string {
-  if (v === null || !Number.isFinite(v)) return "—";
-  const sign = v >= 0 ? "+" : "−";
-  const abs = Math.abs(v);
-  if (abs >= 1000) return `${sign}>999%`;
-  return `${sign}${abs.toFixed(abs >= 100 ? 0 : 1)}%`;
-}
-
 function fmtShare(v: number | null): string {
   if (v === null || !Number.isFinite(v)) return "—";
   return `${v.toFixed(1)}%`;
@@ -193,17 +173,17 @@ export function MonthlyFlowsTable({ rows }: { rows: MonthlyFlowsTableRow[] }) {
   const momMax = maxAbsOf(rows, "aaumMoMPct");
   const yoyMax = maxAbsOf(rows, "aaumYoYPct");
 
-  const th = "border px-2 py-1.5 text-right align-bottom font-semibold whitespace-nowrap";
-  const groupTh = "border px-2 py-1.5 text-center font-semibold";
+  const th = "border px-3 py-2.5 text-right align-bottom font-semibold whitespace-nowrap";
+  const groupTh = "border px-3 py-2.5 text-center text-[13px] font-semibold";
 
   return (
     <div className="overflow-x-auto rounded-lg border bg-card">
-      <table className="w-full border-collapse text-[11px] tabular-nums">
+      <table className="w-full border-collapse text-[13px] tabular-nums">
         <thead>
           <tr>
             <th
               rowSpan={2}
-              className="sticky left-0 z-10 border bg-card px-2 py-1.5 text-left align-bottom font-semibold"
+              className="sticky left-0 z-10 border bg-card px-3 py-2.5 text-left align-bottom font-semibold"
             >
               Period
             </th>
@@ -236,8 +216,6 @@ export function MonthlyFlowsTable({ rows }: { rows: MonthlyFlowsTableRow[] }) {
         <tbody>
           {rows.map((r, ri) => {
             const isLatest = ri === 0;
-            // Rows are newest-first, so the previous month is the next row.
-            const prev = rows[ri + 1] ?? null;
             return (
               <tr
                 key={r.month}
@@ -246,7 +224,7 @@ export function MonthlyFlowsTable({ rows }: { rows: MonthlyFlowsTableRow[] }) {
                 <th
                   scope="row"
                   className={cn(
-                    "sticky left-0 z-10 whitespace-nowrap border px-2 py-1 text-left font-medium",
+                    "sticky left-0 z-10 whitespace-nowrap border px-3 py-2.5 text-left font-medium",
                     isLatest ? "bg-accent text-foreground" : "bg-card"
                   )}
                 >
@@ -254,25 +232,19 @@ export function MonthlyFlowsTable({ rows }: { rows: MonthlyFlowsTableRow[] }) {
                   {monthLabel(r.month)}
                 </th>
 
-                {/* Net Flows — absolute ₹ Cr figure + MoM % change beneath
-                    (mirrors the AUM-mix "value + delta" treatment). */}
+                {/* Net Flows — absolute signed ₹ Cr figure (heatmap-tinted). */}
                 {FLOW_COLS.map((c) => {
                   const v = r[c.key] as number | null;
-                  const mom = momPct(v, prev ? (prev[c.key] as number | null) : null);
                   return (
                     <td
                       key={c.key}
-                      className="border px-2 py-1 text-right"
+                      className={cn(
+                        "border px-3 py-2 text-right",
+                        toneText(v)
+                      )}
                       style={toneBg(v, flowMax.get(c.key) ?? 0)}
                     >
-                      <div className="flex flex-col items-end leading-tight">
-                        <span className={toneText(v)}>{fmtFlow(v)}</span>
-                        {v !== null && mom !== null && (
-                          <span className={cn("text-[9px]", toneText(mom))}>
-                            {fmtMoMPct(mom)}
-                          </span>
-                        )}
-                      </div>
+                      {fmtFlow(v)}
                     </td>
                   );
                 })}
@@ -282,11 +254,11 @@ export function MonthlyFlowsTable({ rows }: { rows: MonthlyFlowsTableRow[] }) {
                   const share = r[c.share] as number | null;
                   const pp = r[c.pp] as number | null;
                   return (
-                    <td key={c.label} className="border px-2 py-1 text-right">
+                    <td key={c.label} className="border px-3 py-2.5 text-right">
                       <div className="flex flex-col items-end leading-tight">
                         <span className="text-foreground">{fmtShare(share)}</span>
                         {share !== null && (
-                          <span className={cn("text-[9px]", toneText(pp))}>
+                          <span className={cn("text-[11px]", toneText(pp))}>
                             {fmtPp(pp)}
                           </span>
                         )}
@@ -296,17 +268,17 @@ export function MonthlyFlowsTable({ rows }: { rows: MonthlyFlowsTableRow[] }) {
                 })}
 
                 {/* Industry AAUM — level + MoM / YoY heatmap */}
-                <td className="border px-2 py-1 text-right text-foreground">
+                <td className="border px-3 py-2.5 text-right text-foreground">
                   {fmtLevel(r.aaum)}
                 </td>
                 <td
-                  className={cn("border px-2 py-1 text-right", toneText(r.aaumMoMPct))}
+                  className={cn("border px-3 py-2.5 text-right", toneText(r.aaumMoMPct))}
                   style={toneBg(r.aaumMoMPct, momMax)}
                 >
                   {fmtPct(r.aaumMoMPct)}
                 </td>
                 <td
-                  className={cn("border px-2 py-1 text-right", toneText(r.aaumYoYPct))}
+                  className={cn("border px-3 py-2.5 text-right", toneText(r.aaumYoYPct))}
                   style={toneBg(r.aaumYoYPct, yoyMax)}
                 >
                   {fmtPct(r.aaumYoYPct)}
@@ -316,7 +288,7 @@ export function MonthlyFlowsTable({ rows }: { rows: MonthlyFlowsTableRow[] }) {
           })}
         </tbody>
       </table>
-      <p className="border-t px-2 py-1.5 text-[10px] text-muted-foreground">
+      <p className="border-t px-3 py-2 text-[11px] text-muted-foreground">
         *Debt is the AMFI debt subtotal and still includes Liquid (AMFI
         publishes no clean ex-Liquid monthly flow), so the Debt and Liquid
         columns overlap by construction.
