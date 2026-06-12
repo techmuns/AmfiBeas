@@ -1,7 +1,6 @@
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { Sparkline } from "@/components/charts/Sparkline";
 import { cn } from "@/lib/cn";
-import { formatPercentilePill } from "@/lib/format";
 
 interface KpiCardProps {
   label: string;
@@ -34,9 +33,9 @@ interface KpiCardProps {
    *  red = down, grey near zero). When `delta` is also set, the pill is
    *  rendered AFTER the delta line so cards can show both deltas. */
   yoyPct?: number | null;
-  /** Optional 0-100 percentile rank of the latest value vs the
-   *  historical series. Renders as a compact plain-language pill
-   *  ("Top 4%", "Bottom 9%", "Median", "Highest", "Lowest"). */
+  /** Accepted for backwards compatibility but NO LONGER RENDERED — the
+   *  client flagged "Highest" / "Top 8%" style tags as vague (no period or
+   *  baseline context). */
   percentile?: number | null;
   /** Optional ratio / context line ("20.6% of total AUM"). Rendered
    *  with subtle styling between the headline and the sparkline. */
@@ -65,6 +64,7 @@ export function KpiCard({
   percentile,
   ratio,
 }: KpiCardProps) {
+  void percentile; // accepted but intentionally unrendered (vague-tag rule)
   const Icon =
     trend === "up" ? ArrowUpRight : trend === "down" ? ArrowDownRight : null;
   const isDemo = tone === "demo" || tone === "pending";
@@ -116,7 +116,7 @@ export function KpiCard({
           {delta}
         </div>
       )}
-      {(yoyDir !== null || typeof percentile === "number") && (
+      {yoyDir !== null && (
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
           {yoyDir !== null && (
             <span
@@ -132,16 +132,12 @@ export function KpiCard({
                   "border-border bg-muted text-muted-foreground"
               )}
             >
-              {yoyPct !== null && yoyPct !== undefined && yoyPct >= 0 ? "+" : ""}
-              {yoyPct !== null && yoyPct !== undefined
-                ? yoyPct.toFixed(1)
-                : "—"}
-              % YoY
-            </span>
-          )}
-          {typeof percentile === "number" && (
-            <span className="inline-flex items-center rounded-full border border-border bg-muted px-1.5 py-0 text-[10px] tabular font-medium text-muted-foreground">
-              {formatPercentilePill(percentile)}
+              {yoyPct === null || yoyPct === undefined
+                ? "—"
+                : yoyPct < 0
+                  ? `(${Math.abs(yoyPct).toFixed(1)}%)`
+                  : `+${yoyPct.toFixed(1)}%`}{" "}
+              YoY
             </span>
           )}
         </div>

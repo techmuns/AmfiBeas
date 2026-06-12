@@ -29,6 +29,7 @@ import {
   monthSlug,
 } from "@/data/portfolio-tracker";
 import { classifySector, UNCLASSIFIED } from "@/data/sector-classification";
+import { amcOf } from "@/data/amc-name-map";
 
 const MAX_SUGGESTIONS = 60;
 // Peer-average cohort cap. Top-N same-category peers by AUM are fetched
@@ -97,6 +98,10 @@ export function PortfolioTrackerView({
   const [query, setQuery] = useState(initialFund?.fund ?? "");
   const [focused, setFocused] = useState(false);
   const [holdingQuery, setHoldingQuery] = useState("");
+  // Client-requested filters: narrow the scheme picker to one fund house and
+  // the holdings table to one sector — for surfacing "top conviction ideas".
+  const [amcFilter, setAmcFilter] = useState("");
+  const [sectorFilter, setSectorFilter] = useState("");
   // Holdings sort: which month-column + field, and direction. null = the
   // default (latest month, % of AUM, descending — biggest weights on top).
   const [holdingSort, setHoldingSort] = useState<{
@@ -299,25 +304,45 @@ export function PortfolioTrackerView({
     setReloadNonce((n) => n + 1);
   }
 
+  const amcOptions = useMemo(
+    () => [...new Set(funds.map((f) => amcOf(f.fund)))].sort(),
+    [funds]
+  );
+
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const matched = q
-      ? funds.filter((f) => f.fund.toLowerCase().includes(q))
+    const pool = amcFilter
+      ? funds.filter((f) => amcOf(f.fund) === amcFilter)
       : funds;
+    const matched = q
+      ? pool.filter((f) => f.fund.toLowerCase().includes(q))
+      : pool;
     return matched.slice(0, MAX_SUGGESTIONS);
-  }, [funds, query]);
+  }, [funds, query, amcFilter]);
 
   const months = portfolio?.meta.months ?? [];
   const slugs = months.map((m) => monthSlug(m.label));
 
+  const sectorOptions = useMemo(() => {
+    if (!portfolio) return [] as string[];
+    const set = new Set<string>();
+    for (const r of portfolio.rows) set.add(classifySector(r.fincode, r.company_name));
+    return [...set].sort(
+      (a, b) =>
+        (a === UNCLASSIFIED ? 1 : 0) - (b === UNCLASSIFIED ? 1 : 0) ||
+        a.localeCompare(b)
+    );
+  }, [portfolio]);
+
   const holdings = useMemo(() => {
     if (!portfolio) return [];
     const q = holdingQuery.trim().toLowerCase();
-    if (!q) return portfolio.rows;
-    return portfolio.rows.filter((r) =>
-      r.company_name.toLowerCase().includes(q)
+    return portfolio.rows.filter(
+      (r) =>
+        (!q || r.company_name.toLowerCase().includes(q)) &&
+        (!sectorFilter || classifySector(r.fincode, r.company_name) === sectorFilter)
     );
-  }, [portfolio, holdingQuery]);
+  }, [portfolio, holdingQuery, sectorFilter]);
 
   // Sort the holdings by the chosen month-column (default: latest month's
   // % of AUM, descending). Clicking a "% of AUM" / "Shares" header re-sorts.
@@ -483,8 +508,25 @@ export function PortfolioTrackerView({
 
   return (
     <div className="space-y-5">
-      {/* Global fund picker — visible above the tab strip across every tab. */}
-      <div className="relative max-w-xl">
+      {/* Global fund picker + AMC filter — visible above the tab strip. */}
+      <div className="flex max-w-3xl flex-wrap items-center gap-3">
+        <select
+          value={amcFilter}
+          onChange={(e) => {
+            setAmcFilter(e.target.value);
+            setFocused(true);
+          }}
+          aria-label="Filter schemes by fund house"
+          className="rounded-md border bg-card px-2 py-2.5 text-sm text-foreground focus:border-foreground focus:outline-none"
+        >
+          <option value="">All fund houses</option>
+          {amcOptions.map((a) => (
+            <option key={a} value={a}>
+              {a}
+            </option>
+          ))}
+        </select>
+      <div className="relative min-w-[16rem] flex-1">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           type="search"
@@ -536,6 +578,7 @@ export function PortfolioTrackerView({
             ))}
           </ul>
         )}
+      </div>
       </div>
 
       {/* Client-side tab strip — switching tabs is pure browser state (mirrored
@@ -675,6 +718,21 @@ export function PortfolioTrackerView({
                 <h2 className="text-base font-semibold tracking-tight">
                   {portfolio?.meta.section || "Equity Holdings"}
                 </h2>
+                <div className="flex items-center gap-2">
+                <select
+                  value={sectorFilter}
+                  onChange={(e) => setSectorFilter(e.target.value)}
+                  aria-label="Filter holdings by sector"
+                  disabled={!portfolio}
+                  className="rounded-md border bg-card px-2 py-1.5 text-sm text-foreground focus:border-foreground focus:outline-none disabled:opacity-50"
+                >
+                  <option value="">All sectors</option>
+                  {sectorOptions.map((sec) => (
+                    <option key={sec} value={sec}>
+                      {sec}
+                    </option>
+                  ))}
+                </select>
                 <div className="relative">
                   <input
                     type="search"
@@ -695,6 +753,7 @@ export function PortfolioTrackerView({
                       <X className="h-3.5 w-3.5" />
                     </button>
                   )}
+                </div>
                 </div>
                 {portfolio && holdingsExportRows.length > 0 && (
                   <DownloadXlsxButton

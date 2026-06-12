@@ -14,7 +14,8 @@ const AAUM_BRIDGE_XLSX_COLUMNS: CsvColumn<AaumBridgeRow>[] = [
   { key: "residualPctOfDelta", header: "Market & other (% of AUM change)" },
 ];
 
-// Signed compact ₹: "+₹1.20L Cr" for a rise, "−₹45.0K Cr" for a fall.
+// Signed ₹: "+₹1,20,000 Cr" for a rise; falls come back already bracketed
+// from formatCompactCr ("(₹45,000 Cr)") per the client formatting rules.
 function signedCr(v: number): string {
   return v >= 0 ? `+${formatCompactCr(v)}` : formatCompactCr(v);
 }

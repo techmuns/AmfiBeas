@@ -1,20 +1,30 @@
+"use client";
+
+import { useState } from "react";
 import {
   sectorFlowMonths,
   sectorFlowRows,
   sectorFlowTotals,
 } from "@/data/sector-flows";
+import sectorGross from "@/data/portfolio-tracker/sector-gross-flows.json";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
+import { cn } from "@/lib/cn";
 
 /**
- * Monthly sector net-flows in a red→yellow→green heatmap, reproduced from a
- * research snapshot (Apr-25 → Apr-26 + CY26 YTD). The cell colour is an Excel-
- * style 3-colour scale computed at render time from the values themselves
- * (clamped to the 5th/95th percentile so a single large outlier doesn't wash
- * the scale out), so the colours stay correct if the underlying numbers change.
+ * Monthly sector flows in a red→yellow→green heatmap with a Net / Gross
+ * toggle (client request: gross shows activity, net shows whether money is
+ * actually entering or leaving a sector).
+ *
+ *  - NET: the 13-month research-snapshot history (Apr-25 → Apr-26).
+ *  - GROSS BUYING / GROSS SELLING: computed from the tracked scheme holdings
+ *    (sum of positive / negative stock-level share changes × implied price),
+ *    available for the months the holdings window covers.
+ *
+ * Cell colour is an Excel-style 3-colour scale computed at render time from
+ * the active view's own values (clamped at the 5th/95th percentile).
  */
 
-// 3-colour scale endpoints (the classic Excel red / yellow / green).
 const RED = [248, 105, 107];
 const YELLOW = [255, 235, 132];
 const GREEN = [99, 190, 123];
@@ -36,19 +46,93 @@ function percentile(sorted: number[], p: number): number {
   return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
 }
 
-// Source values are in Rs bn; 1 Rs bn = 100 ₹ crore. Render compact ₹ Cr
-// (k = thousand crore, L = lakh crore) — the column header carries the unit.
-const fmt = (vBn: number): string => {
-  const cr = vBn * 100;
-  const abs = Math.abs(cr);
-  const sign = cr < 0 ? "−" : "";
-  if (abs >= 1e5) return `${sign}${(abs / 1e5).toFixed(2)}L`;
-  if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(1)}k`;
-  return `${sign}${Math.round(abs)}`;
+// Client formatting rules: full Indian-grouped ₹ Cr numbers (no "K"/"L"
+// compaction); negatives in brackets.
+const fmtCr = (cr: number): string => {
+  const abs = Math.round(Math.abs(cr)).toLocaleString("en-IN");
+  return cr < 0 ? `(${abs})` : abs;
 };
 
+type Lens = "net" | "grossBuy" | "grossSell";
+
+interface ViewRow {
+  sector: string;
+  monthly: number[]; // ₹ Cr, oldest → newest
+  total: number; // trailing total for the right-hand column
+}
+interface View {
+  months: string[]; // oldest → newest
+  rows: ViewRow[];
+  totals: number[]; // per month
+  totalsTotal: number;
+  totalLabel: string;
+  caption: string;
+}
+
+interface GrossData {
+  meta: { months: string[]; funds: number };
+  rows: { sector: string; grossBuy: number[]; grossSell: number[]; net: number[] }[];
+  totals: { grossBuy: number[]; grossSell: number[]; net: number[] };
+}
+const gross = sectorGross as GrossData;
+
+function buildView(lens: Lens): View {
+  if (lens === "net") {
+    return {
+      months: sectorFlowMonths,
+      rows: sectorFlowRows.map((r) => ({
+        sector: r.sector,
+        monthly: r.monthly.map((v) => v * 100), // Rs bn → ₹ Cr
+        total: r.ytd * 100,
+      })),
+      totals: sectorFlowTotals.monthly.map((v) => v * 100),
+      totalsTotal: sectorFlowTotals.ytd * 100,
+      totalLabel: "CY26 YTD",
+      caption:
+        "Net flows — whether money is actually entering or leaving each sector. 13-month research-snapshot history.",
+    };
+  }
+  const key = lens === "grossBuy" ? "grossBuy" : "grossSell";
+  const monthsAsc = [...gross.meta.months].reverse(); // stored newest-first
+  const reorder = (xs: number[]) => [...xs].reverse();
+  const sign = lens === "grossSell" ? -1 : 1;
+  return {
+    months: monthsAsc,
+    rows: gross.rows
+      .map((r) => {
+        const monthly = reorder(r[key]).map((v) => sign * v);
+        return {
+          sector: r.sector,
+          monthly,
+          total: monthly.reduce((s, v) => s + v, 0),
+        };
+      })
+      .sort(
+        (a, b) =>
+          Math.abs(b.monthly[b.monthly.length - 1]) -
+          Math.abs(a.monthly[a.monthly.length - 1])
+      ),
+    totals: reorder(gross.totals[key]).map((v) => sign * v),
+    totalsTotal: gross.totals[key].reduce((s, v) => s + sign * v, 0),
+    totalLabel: "Window total",
+    caption:
+      lens === "grossBuy"
+        ? `Gross buying — total money entering each sector before netting sells. Computed from ${gross.meta.funds} tracked active-equity schemes.`
+        : `Gross selling — total money leaving each sector before netting buys (shown as negatives). Computed from ${gross.meta.funds} tracked active-equity schemes.`,
+  };
+}
+
+const LENSES: { id: Lens; label: string }[] = [
+  { id: "net", label: "Net" },
+  { id: "grossBuy", label: "Gross buying" },
+  { id: "grossSell", label: "Gross selling" },
+];
+
 export function SectorFlowHeatmap() {
-  const all = sectorFlowRows.flatMap((r) => r.monthly).sort((a, b) => a - b);
+  const [lens, setLens] = useState<Lens>("net");
+  const view = buildView(lens);
+
+  const all = view.rows.flatMap((r) => r.monthly).sort((a, b) => a - b);
   const lo = percentile(all, 0.05);
   const mid = percentile(all, 0.5);
   const hi = percentile(all, 0.95);
@@ -59,41 +143,56 @@ export function SectorFlowHeatmap() {
     return mix(YELLOW, GREEN, hi === mid ? 0 : (c - mid) / (hi - mid));
   };
 
-  // Excel export: raw ₹ Cr (source is Rs bn → ×100), one column per month + YTD.
-  const cr = (vBn: number) => Math.round(vBn * 100);
   type ExportRow = Record<string, string | number>;
   const exportColumns: CsvColumn<ExportRow>[] = [
     { key: "sector", header: "Sector" },
-    ...sectorFlowMonths.map((m) => ({ key: m, header: `${m} (₹ Cr)` })),
-    { key: "ytd", header: "CY26 YTD (₹ Cr)" },
+    ...view.months.map((m) => ({ key: m, header: `${m} (₹ Cr)` })),
+    { key: "total", header: `${view.totalLabel} (₹ Cr)` },
   ];
   const exportRows: ExportRow[] = [
-    ...sectorFlowRows.map((r) => {
+    ...view.rows.map((r) => {
       const row: ExportRow = { sector: r.sector };
-      sectorFlowMonths.forEach((m, i) => (row[m] = cr(r.monthly[i])));
-      row.ytd = cr(r.ytd);
+      view.months.forEach((m, i) => (row[m] = Math.round(r.monthly[i])));
+      row.total = Math.round(r.total);
       return row;
     }),
     (() => {
       const row: ExportRow = { sector: "Total" };
-      sectorFlowMonths.forEach(
-        (m, i) => (row[m] = cr(sectorFlowTotals.monthly[i]))
-      );
-      row.ytd = cr(sectorFlowTotals.ytd);
+      view.months.forEach((m, i) => (row[m] = Math.round(view.totals[i])));
+      row.total = Math.round(view.totalsTotal);
       return row;
     })(),
   ];
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="inline-flex rounded-md border bg-card p-0.5">
+          {LENSES.map((l) => (
+            <button
+              key={l.id}
+              type="button"
+              onClick={() => setLens(l.id)}
+              aria-pressed={lens === l.id}
+              className={cn(
+                "rounded px-2.5 py-1 text-xs font-medium transition-colors",
+                lens === l.id
+                  ? "bg-accent text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {l.label}
+            </button>
+          ))}
+        </div>
         <DownloadXlsxButton
           rows={exportRows}
           columns={exportColumns}
-          filename="sector-flows.xlsx"
+          filename={`sector-flows-${lens}.xlsx`}
           sheetName="Sector Flows"
         />
       </div>
+      <p className="text-[11px] text-muted-foreground">{view.caption}</p>
       <div className="overflow-x-auto rounded-lg border bg-card">
         <table className="w-full border-collapse text-[11px]">
           <thead>
@@ -105,7 +204,7 @@ export function SectorFlowHeatmap() {
                 Sector
               </th>
               <th
-                colSpan={sectorFlowMonths.length}
+                colSpan={view.months.length}
                 className="border px-2 py-1.5 text-center font-semibold"
               >
                 Monthly flows (₹ Cr)
@@ -114,15 +213,13 @@ export function SectorFlowHeatmap() {
                 rowSpan={2}
                 className="border px-2 py-1.5 text-right align-bottom font-semibold leading-tight"
               >
-                CY26 YTD
-                <br />
-                flows
+                {view.totalLabel}
                 <br />
                 (₹ Cr)
               </th>
             </tr>
             <tr>
-              {sectorFlowMonths.map((m) => (
+              {view.months.map((m) => (
                 <th
                   key={m}
                   className="whitespace-nowrap border px-2 py-1 text-right font-semibold"
@@ -133,7 +230,7 @@ export function SectorFlowHeatmap() {
             </tr>
           </thead>
           <tbody>
-            {sectorFlowRows.map((row) => (
+            {view.rows.map((row) => (
               <tr key={row.sector}>
                 <th
                   scope="row"
@@ -147,11 +244,11 @@ export function SectorFlowHeatmap() {
                     className="border px-2 py-1 text-right tabular-nums"
                     style={{ backgroundColor: heat(v), color: "#111827" }}
                   >
-                    {fmt(v)}
+                    {fmtCr(v)}
                   </td>
                 ))}
                 <td className="border bg-card px-2 py-1 text-right font-semibold tabular-nums">
-                  {fmt(row.ytd)}
+                  {fmtCr(row.total)}
                 </td>
               </tr>
             ))}
@@ -159,16 +256,16 @@ export function SectorFlowHeatmap() {
               <th scope="row" className="border bg-card px-2 py-1.5 text-left">
                 Total
               </th>
-              {sectorFlowTotals.monthly.map((v, i) => (
+              {view.totals.map((v, i) => (
                 <td
                   key={i}
                   className="border bg-card px-2 py-1.5 text-right tabular-nums"
                 >
-                  {fmt(v)}
+                  {fmtCr(v)}
                 </td>
               ))}
               <td className="border bg-card px-2 py-1.5 text-right tabular-nums">
-                {fmt(sectorFlowTotals.ytd)}
+                {fmtCr(view.totalsTotal)}
               </td>
             </tr>
           </tbody>

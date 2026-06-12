@@ -20,6 +20,7 @@ import {
   monthSlug,
 } from "@/data/portfolio-tracker";
 import { classifyCap } from "@/data/cap-classification";
+import { classifySector, UNCLASSIFIED } from "@/data/sector-classification";
 import { AmcAllocationCharts } from "@/components/data/AmcAllocationCharts";
 
 const MAX_SUGGESTIONS = 60;
@@ -65,6 +66,8 @@ export function FundwisePortfolioView({
   const [query, setQuery] = useState(fundHouses[0]?.amc ?? "");
   const [focused, setFocused] = useState(false);
   const [holdingQuery, setHoldingQuery] = useState("");
+  // Client-requested sector filter for "top conviction ideas" within a house.
+  const [sectorFilter, setSectorFilter] = useState("");
   const [tab, setTab] = useState<FundwiseTab>("holdings");
 
   const [loaded, setLoaded] = useState<Record<string, FundHousePortfolio>>({});
@@ -127,14 +130,26 @@ export function FundwisePortfolioView({
   const months = portfolio?.meta.months ?? [];
   const slugs = months.map((m) => monthSlug(m.label));
 
+  const sectorOptions = useMemo(() => {
+    if (!portfolio) return [] as string[];
+    const set = new Set<string>();
+    for (const r of portfolio.rows) set.add(classifySector(r.fincode, r.company_name));
+    return [...set].sort(
+      (a, b) =>
+        (a === UNCLASSIFIED ? 1 : 0) - (b === UNCLASSIFIED ? 1 : 0) ||
+        a.localeCompare(b)
+    );
+  }, [portfolio]);
+
   const holdings = useMemo(() => {
     if (!portfolio) return [];
     const q = holdingQuery.trim().toLowerCase();
-    if (!q) return portfolio.rows;
-    return portfolio.rows.filter((r) =>
-      r.company_name.toLowerCase().includes(q)
+    return portfolio.rows.filter(
+      (r) =>
+        (!q || r.company_name.toLowerCase().includes(q)) &&
+        (!sectorFilter || classifySector(r.fincode, r.company_name) === sectorFilter)
     );
-  }, [portfolio, holdingQuery]);
+  }, [portfolio, holdingQuery, sectorFilter]);
 
   // Month-over-month read: biggest weight add / trim and the top-10
   // concentration shift, in percentage points of the AMC's equity book.
@@ -366,6 +381,19 @@ export function FundwisePortfolioView({
                   Equity Holdings — all schemes combined
                 </h2>
                 <div className="flex items-center gap-3">
+                  <select
+                    value={sectorFilter}
+                    onChange={(e) => setSectorFilter(e.target.value)}
+                    aria-label="Filter holdings by sector"
+                    className="rounded-md border bg-card px-2 py-1.5 text-sm text-foreground focus:border-foreground focus:outline-none"
+                  >
+                    <option value="">All sectors</option>
+                    {sectorOptions.map((sec) => (
+                      <option key={sec} value={sec}>
+                        {sec}
+                      </option>
+                    ))}
+                  </select>
                   <div className="relative">
                     <input
                       type="search"

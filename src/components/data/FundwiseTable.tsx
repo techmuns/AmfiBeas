@@ -14,19 +14,21 @@ import type { FundwiseMatrix, FundwiseCell } from "@/data/amc-peer-universe";
  */
 export type FundwiseMetric = "share" | "aaum" | "growth";
 
+// Client formatting rules: one decimal place, negatives in brackets, and
+// full Indian-grouped numbers instead of "K"/"L" compaction.
 function fmtShare(v: number): string {
-  return `${v.toFixed(2)}%`;
+  return `${v.toFixed(1)}%`;
 }
 function fmtBps(v: number): string {
-  return `${v >= 0 ? "+" : "−"}${Math.round(Math.abs(v))}`;
+  const abs = Math.round(Math.abs(v)).toLocaleString("en-IN");
+  return v < 0 ? `(${abs})` : `+${abs}`;
 }
 function fmtGrowth(v: number): string {
-  return `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}%`;
+  const abs = Math.abs(v).toFixed(1);
+  return v < 0 ? `(${abs}%)` : `+${abs}%`;
 }
 function fmtAaum(v: number): string {
-  if (v >= 1e5) return `${(v / 1e5).toFixed(2)}L`;
-  if (v >= 1e3) return `${(v / 1e3).toFixed(1)}k`;
-  return `${Math.round(v)}`;
+  return Math.round(v).toLocaleString("en-IN");
 }
 
 /** The signed value a cell is tinted by (share Δ bps, or growth %). */

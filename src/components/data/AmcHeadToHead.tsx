@@ -11,9 +11,13 @@ const fmtCr = (v: number | null) => (v == null ? "—" : formatCompactCr(v));
 const fmtPct = (v: number | null, d = 1) =>
   v == null ? "—" : `${v.toFixed(d)}%`;
 const fmtSigned = (v: number | null) =>
-  v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`;
+  v == null ? "—" : v < 0 ? `(${Math.abs(v).toFixed(1)}%)` : `+${v.toFixed(1)}%`;
 const fmtBps = (v: number | null) =>
-  v == null ? "—" : `${v >= 0 ? "+" : ""}${Math.round(v)} bps`;
+  v == null
+    ? "—"
+    : v < 0
+      ? `(${Math.abs(Math.round(v))}) bps`
+      : `+${Math.round(v)} bps`;
 const fmtBpsAbs = (v: number | null) =>
   v == null ? "—" : `${v.toFixed(1)} bps`;
 const fmtRank = (v: number | null) => (v == null ? "—" : `#${v}`);
@@ -31,7 +35,7 @@ interface Spec {
 
 const SPECS: Spec[] = [
   { group: "AUM & Market Share", label: "Total Average Assets", pick: (m) => m.aaumCr, fmt: fmtCr },
-  { group: "AUM & Market Share", label: "Market share", pick: (m) => m.marketSharePct, fmt: (v) => fmtPct(v, 2) },
+  { group: "AUM & Market Share", label: "Market share", pick: (m) => m.marketSharePct, fmt: (v) => fmtPct(v, 1) },
   { group: "AUM & Market Share", label: "Share Δ QoQ", pick: (m) => m.shareDeltaBps, fmt: fmtBps, signed: true },
   { group: "AUM & Market Share", label: "Rank by Assets", pick: (m) => m.rank, fmt: fmtRank, invert: true },
   { group: "Growth", label: "QoQ Asset Growth", pick: (m) => m.qoqGrowthPct, fmt: fmtSigned, signed: true },

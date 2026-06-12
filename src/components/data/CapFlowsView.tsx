@@ -11,8 +11,8 @@ function displayName(name: string): string {
 // the screener feed doesn't cover the company yet (pctOutstanding === null).
 function fmtPctOut(pct: number | null, kind: "bought" | "sold"): string {
   if (pct === null || !Number.isFinite(pct)) return "—";
-  const sign = kind === "bought" ? "+" : "−";
-  return `${sign}${Math.abs(pct).toFixed(2)}%`;
+  const abs = Math.abs(pct).toFixed(1);
+  return kind === "bought" ? `+${abs}%` : `(${abs}%)`;
 }
 
 // Fixed data-row height so every row is the same size and the two adjacent
@@ -82,7 +82,7 @@ function FlowCard({
                           ? "text-positive"
                           : "text-negative"
                     )}
-                    title={`Net ${kind} ${(kind === "bought" ? "+" : "−")}₹${r.netCr.toLocaleString("en-IN")} Cr`}
+                    title={`Net ${kind} ${kind === "bought" ? `+₹${r.netCr.toLocaleString("en-IN")} Cr` : `(₹${r.netCr.toLocaleString("en-IN")} Cr)`}`}
                   >
                     {fmtPctOut(r.pctOutstanding, kind)}
                   </td>

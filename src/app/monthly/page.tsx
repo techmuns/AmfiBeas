@@ -653,8 +653,8 @@ export default async function MonthlyPage() {
     }
     return { month: sel.month, ni, prevNi, sipShare, equityShare };
   };
-  const fmtNi = (v: number) =>
-    v >= 0 ? formatCompactCrSafe(v) : "−" + formatCompactCrSafe(-v);
+  // formatCompactCrSafe already renders negatives in brackets.
+  const fmtNi = (v: number) => formatCompactCrSafe(v);
 
   // The AMFI Monthly Snapshot card BODY (KeyTakeaway + KPI grid), rendered for
   // one selected month. We build one per offered month at deploy time and let

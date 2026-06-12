@@ -16,8 +16,9 @@ export function formatBps(value: number) {
 }
 
 export function formatDelta(value: number) {
-  const sign = value > 0 ? "+" : "";
-  return `${sign}${value.toFixed(2)}%`;
+  // Client formatting rules: one decimal place; negatives in brackets.
+  const abs = Math.abs(value).toFixed(1);
+  return value < 0 ? `(${abs}%)` : `+${abs}%`;
 }
 
 const MONTH_NAMES = [
@@ -124,22 +125,18 @@ export function formatQuarterLabelLong(quarter: string) {
 }
 
 /**
- * Compact INR formatter. Input is always treated as ₹ Cr (the dashboard's
- * canonical storage unit), and the output is scaled with Indian-numbering
- * suffixes ("Cr" / "K Cr" / "L Cr"):
- *   value ∈ ₹ Cr    → output
- *   1052            → "₹1.1K Cr"   (1,052 Cr)
- *   952867          → "₹9.53L Cr"  (9.53 lakh Cr ≡ 952,867 Cr)
- *   12500000        → "₹125L Cr"   (industry-scale total AUM)
- * Values < 1,000 Cr render plain. Suffixes never lie about scale —
- * "K Cr" only used for thousand-Cr range, "L Cr" only for lakh-Cr range.
+ * INR (₹ Cr) formatter. Input is always treated as ₹ Cr (the dashboard's
+ * canonical storage unit). Per the client formatting rules the output is a
+ * FULL Indian-grouped number — never "K"/"L" compaction — with negatives in
+ * brackets: 1052 → "₹1,052 Cr"; 952867 → "₹9,52,867 Cr"; −64000 →
+ * "(₹64,000 Cr)". The historical name is kept so existing callers pick the
+ * new behaviour up without churn.
  */
 export function formatCompactCr(value: number) {
-  const abs = Math.abs(value);
-  const sign = value < 0 ? "−" : "";
-  if (abs >= 1e5) return `${sign}₹${(abs / 1e5).toFixed(2)}L Cr`;
-  if (abs >= 1e3) return `${sign}₹${(abs / 1e3).toFixed(1)}K Cr`;
-  return `${sign}₹${abs.toFixed(0)} Cr`;
+  // Client formatting rules: no K/L compaction — full Indian-grouped numbers
+  // ("22,400" not "22.4K"); negatives in brackets rather than a minus sign.
+  const abs = Math.round(Math.abs(value)).toLocaleString("en-IN");
+  return value < 0 ? `(₹${abs} Cr)` : `₹${abs} Cr`;
 }
 
 export function formatAxisCr(value: number) {
@@ -210,7 +207,10 @@ export function formatPctSafe(
   value: number | null | undefined,
   digits = 1
 ): string {
-  return formatOrUnavailable(value, (v) => `${v.toFixed(digits)}%`);
+  // Negatives render in brackets per the client formatting rules.
+  return formatOrUnavailable(value, (v) =>
+    v < 0 ? `(${Math.abs(v).toFixed(digits)}%)` : `${v.toFixed(digits)}%`
+  );
 }
 
 /** Compact INR (₹ Cr) with safe fallback. */

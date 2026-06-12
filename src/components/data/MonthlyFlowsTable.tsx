@@ -111,30 +111,26 @@ function monthLabel(ym: string): string {
   return `${MONTHS[idx]} '${y.slice(2)}`;
 }
 
-// Signed compact ₹ Cr for the Total net-flow column. "+1.24L" = +1.24
-// lakh crore; "−45.0k" = −45 thousand crore (header carries the unit).
+// Signed ₹ Cr — full Indian-grouped number per the client formatting rules
+// (no "K"/"L" compaction); negatives in brackets (header carries the unit).
 function fmtFlow(v: number | null): string {
   if (v === null || !Number.isFinite(v)) return "—";
   const abs = Math.abs(v);
   if (abs < 0.5) return "0";
-  const sign = v < 0 ? "−" : "+";
-  if (abs >= 1e5) return `${sign}${(abs / 1e5).toFixed(2)}L`;
-  if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(1)}k`;
-  return `${sign}${Math.round(abs)}`;
+  const grouped = Math.round(abs).toLocaleString("en-IN");
+  return v < 0 ? `(${grouped})` : grouped;
 }
 
-// Unsigned compact ₹ Cr for the AAUM level column.
+// Unsigned ₹ Cr for the AAUM level column — full Indian-grouped number.
 function fmtLevel(v: number | null): string {
   if (v === null || !Number.isFinite(v)) return "—";
-  const abs = Math.abs(v);
-  if (abs >= 1e5) return `${(abs / 1e5).toFixed(2)}L`;
-  if (abs >= 1e3) return `${(abs / 1e3).toFixed(1)}k`;
-  return `${Math.round(abs)}`;
+  return Math.round(Math.abs(v)).toLocaleString("en-IN");
 }
 
 function fmtPct(v: number | null): string {
   if (v === null || !Number.isFinite(v)) return "—";
-  return `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}%`;
+  const abs = Math.abs(v).toFixed(1);
+  return v < 0 ? `(${abs}%)` : `+${abs}%`;
 }
 
 function fmtShare(v: number | null): string {
@@ -145,7 +141,8 @@ function fmtShare(v: number | null): string {
 function fmtPp(v: number | null): string {
   if (v === null || !Number.isFinite(v)) return "—";
   if (Math.abs(v) < 0.05) return "±0.0";
-  return `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}`;
+  const abs = Math.abs(v).toFixed(1);
+  return v < 0 ? `(${abs})` : `+${abs}`;
 }
 
 function maxAbsOf(rows: MonthlyFlowsTableRow[], key: keyof MonthlyFlowsTableRow): number {
