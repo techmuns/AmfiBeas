@@ -17,11 +17,9 @@ import {
 } from "@/data/fundwise-tracker";
 import {
   type HoldingArrow,
-  type FundPortfolio,
   monthSlug,
 } from "@/data/portfolio-tracker";
-import { classifyCap } from "@/data/cap-classification";
-import { classifySector, UNCLASSIFIED } from "@/data/sector-classification";
+import { AmcAllocationCharts } from "@/components/data/AmcAllocationCharts";
 
 const MAX_SUGGESTIONS = 60;
 
@@ -296,6 +294,10 @@ export function FundwisePortfolioView({
               fundHouses={fundHouses}
               selectedSlug={selectedSlug}
             />
+          ) : tab === "allocation" ? (
+            // Fund-house allocation bar charts (Cap + Sector by AMC) —
+            // independent of the holdings fetch, same presentation as before.
+            <AmcAllocationCharts />
           ) : loading ? (
             loaderUi
           ) : hasError ? (
@@ -311,12 +313,6 @@ export function FundwisePortfolioView({
                 Retry
               </button>
             </div>
-          ) : portfolio && tab === "allocation" ? (
-            <FundHouseAllocation
-              portfolio={portfolio}
-              amc={selected.amc}
-              latestMonth={selected.latestMonth}
-            />
           ) : portfolio ? (
             <>
               {flowSummary && flowSummary.topAdd && flowSummary.topTrim && (
@@ -465,179 +461,6 @@ export function FundwisePortfolioView({
         </>
       )}
     </div>
-  );
-}
-
-const CAP_META: { key: "large" | "mid" | "small"; label: string; color: string }[] = [
-  { key: "large", label: "Large-cap", color: "hsl(var(--chart-1))" },
-  { key: "mid", label: "Mid-cap", color: "hsl(var(--chart-2))" },
-  { key: "small", label: "Small-cap", color: "hsl(var(--chart-4))" },
-];
-
-/**
- * Fund-wise Allocation mix — the selected fund house's equity book split by
- * market-cap tier and by sector, computed from the SAME aggregated holdings
- * the Holdings tab shows (each company weighted by its % of the book in the
- * latest month). Tables-first per the dashboard's house style. */
-function FundHouseAllocation({
-  portfolio,
-  amc,
-  latestMonth,
-}: {
-  portfolio: FundPortfolio;
-  amc: string;
-  latestMonth: string;
-}) {
-  const latestSlug = monthSlug(portfolio.meta.months[0]?.label ?? "");
-
-  const { cap, sectors } = useMemo(() => {
-    const capRaw = { large: 0, mid: 0, small: 0 };
-    const secRaw = new Map<string, number>();
-    let total = 0;
-    for (const r of portfolio.rows) {
-      const w = r.months[latestSlug]?.aum_pct_num ?? 0;
-      if (!w) continue;
-      total += w;
-      capRaw[classifyCap(r.company_name)] += w;
-      const s = classifySector(r.fincode, r.company_name);
-      secRaw.set(s, (secRaw.get(s) ?? 0) + w);
-    }
-    const norm = (v: number) => (total > 0 ? (v / total) * 100 : 0);
-    const sectors = [...secRaw.entries()]
-      .map(([label, v]) => ({ label, pct: norm(v) }))
-      .sort(
-        (a, b) =>
-          (a.label === UNCLASSIFIED ? 1 : 0) - (b.label === UNCLASSIFIED ? 1 : 0) ||
-          b.pct - a.pct
-      );
-    return {
-      cap: {
-        large: norm(capRaw.large),
-        mid: norm(capRaw.mid),
-        small: norm(capRaw.small),
-      },
-      sectors,
-    };
-  }, [portfolio, latestSlug]);
-
-  type XRow = { kind: string; bucket: string; pct: number };
-  const exportRows: XRow[] = [
-    ...CAP_META.map((c) => ({ kind: "Cap", bucket: c.label, pct: Number(cap[c.key].toFixed(1)) })),
-    ...sectors.map((s) => ({ kind: "Sector", bucket: s.label, pct: Number(s.pct.toFixed(1)) })),
-  ];
-  const exportColumns: CsvColumn<XRow>[] = [
-    { key: "kind", header: "Allocation" },
-    { key: "bucket", header: "Bucket" },
-    { key: "pct", header: "% of equity book" },
-  ];
-
-  const sectorMax = Math.max(0.01, ...sectors.map((s) => s.pct));
-
-  return (
-    <section className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h2 className="text-base font-semibold tracking-tight">
-            Allocation mix — {amc}
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            How {amc}&apos;s combined equity book splits by market-cap tier and
-            by sector. Each holding is weighted by its % of the book. As of{" "}
-            {latestMonth}.
-          </p>
-        </div>
-        <DownloadXlsxButton
-          rows={exportRows}
-          columns={exportColumns}
-          filename={`${amc.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-allocation-mix.xlsx`}
-          sheetName="Allocation Mix"
-        />
-      </div>
-
-      {/* Cap allocation — stacked proportion bar + table */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium">Market-cap allocation</h3>
-        <div className="flex h-6 w-full overflow-hidden rounded-md border">
-          {CAP_META.map((c) =>
-            cap[c.key] > 0 ? (
-              <div
-                key={c.key}
-                className="flex items-center justify-center text-[10px] font-medium text-white"
-                style={{ width: `${cap[c.key]}%`, backgroundColor: c.color }}
-                title={`${c.label} ${cap[c.key].toFixed(1)}%`}
-              >
-                {cap[c.key] >= 8 ? `${cap[c.key].toFixed(0)}%` : ""}
-              </div>
-            ) : null
-          )}
-        </div>
-        <div className="overflow-x-auto rounded-md border bg-card">
-          <table className="w-full border-collapse text-sm">
-            <tbody>
-              {CAP_META.map((c) => (
-                <tr key={c.key} className="border-b last:border-0">
-                  <td className="px-3 py-2">
-                    <span
-                      className="mr-2 inline-block h-2.5 w-2.5 rounded-[2px] align-middle"
-                      style={{ backgroundColor: c.color }}
-                    />
-                    {c.label}
-                  </td>
-                  <td className="px-3 py-2 text-right tabular font-medium">
-                    {cap[c.key].toFixed(1)}%
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Sector allocation — table with proportion bars */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium">Sector allocation</h3>
-        <div className="overflow-x-auto rounded-md border bg-card">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="bg-muted/60 text-xs text-muted-foreground">
-                <th className="px-3 py-2 text-left font-medium">Sector</th>
-                <th className="px-3 py-2 text-right font-medium">% of book</th>
-                <th className="w-[40%] px-3 py-2 text-left font-medium">Weight</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sectors.map((s) => (
-                <tr key={s.label} className="border-b last:border-0">
-                  <td className="px-3 py-2">
-                    {s.label === UNCLASSIFIED ? (
-                      <span className="text-muted-foreground">{s.label}</span>
-                    ) : (
-                      s.label
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-right tabular text-foreground">
-                    {s.pct.toFixed(1)}%
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="h-2 w-full overflow-hidden rounded-sm bg-muted">
-                      <div
-                        className="h-full rounded-sm bg-[hsl(var(--chart-1))]"
-                        style={{ width: `${(s.pct / sectorMax) * 100}%` }}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="text-[11px] text-muted-foreground">
-          Sectors derive from a curated company→sector map; holdings outside it
-          show as Unclassified. Weights are % of {amc}&apos;s aggregated equity
-          book (latest month), so they sum to ~100%.
-        </p>
-      </div>
-    </section>
   );
 }
 
