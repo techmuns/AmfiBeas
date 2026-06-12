@@ -15,24 +15,39 @@ function fmtPctOut(pct: number | null, kind: "bought" | "sold"): string {
   return `${sign}${Math.abs(pct).toFixed(2)}%`;
 }
 
+// Fixed data-row height so every row is the same size and the two adjacent
+// cards (bought / sold) line up row-for-row regardless of how a company name
+// wraps or how many rows a side has.
+const ROW_H = "h-[3.25rem]";
+
 function FlowCard({
   title,
   rows,
   kind,
+  rowSlots,
 }: {
   title: string;
   rows: CapFlowRow[];
   kind: "bought" | "sold";
+  /** Total data-row slots to render; short sides are padded with blank rows
+   *  so both cards in a tier are exactly the same height. */
+  rowSlots: number;
 }) {
   const movers = kind === "bought" ? "Top MF Buyers" : "Top MF Sellers";
   const valHead =
     kind === "bought" ? "Bought (% shares out.)" : "Sold (% shares out.)";
+  const blanks = Math.max(0, rowSlots - rows.length);
   return (
     <div className="overflow-hidden rounded-lg border bg-card">
       <div className="border-b bg-muted/60 px-4 py-3 text-base font-bold tracking-tight text-foreground">
         {title}
       </div>
-      <table className="w-full border-collapse text-sm">
+      <table className="w-full table-fixed border-collapse text-sm">
+        <colgroup>
+          <col className="w-[44%]" />
+          <col className="w-[24%]" />
+          <col className="w-[32%]" />
+        </colgroup>
         <thead>
           <tr className="text-sm font-semibold text-foreground">
             <th className="px-4 py-2 text-left font-semibold">Company</th>
@@ -43,39 +58,48 @@ function FlowCard({
           </tr>
         </thead>
         <tbody>
-          {rows.length === 0 ? (
-            <tr>
+          {rows.length === 0 && blanks === rowSlots ? (
+            <tr style={{ height: `${rowSlots * 3.25}rem` }}>
               <td
                 colSpan={3}
-                className="px-4 py-6 text-center text-muted-foreground"
+                className="px-4 text-center align-middle text-muted-foreground"
               >
                 No qualifying names this month.
               </td>
             </tr>
           ) : (
-            rows.map((r) => (
-              <tr key={r.company} className="border-t last:border-b-0">
-                <td className="px-4 py-2.5 font-medium">
-                  {displayName(r.company)}
-                </td>
-                <td
-                  className={cn(
-                    "px-3 py-2.5 text-right tabular font-medium",
-                    r.pctOutstanding === null
-                      ? "text-muted-foreground"
-                      : kind === "bought"
-                        ? "text-positive"
-                        : "text-negative"
-                  )}
-                  title={`Net ${kind} ${(kind === "bought" ? "+" : "−")}₹${r.netCr.toLocaleString("en-IN")} Cr`}
-                >
-                  {fmtPctOut(r.pctOutstanding, kind)}
-                </td>
-                <td className="px-4 py-2.5 text-muted-foreground">
-                  {r.amcs.length ? r.amcs.join(", ") : "—"}
-                </td>
-              </tr>
-            ))
+            <>
+              {rows.map((r) => (
+                <tr key={r.company} className={cn("border-t", ROW_H)}>
+                  <td className="px-4 py-2 align-middle font-medium leading-tight">
+                    {displayName(r.company)}
+                  </td>
+                  <td
+                    className={cn(
+                      "px-3 py-2 text-right align-middle tabular font-medium",
+                      r.pctOutstanding === null
+                        ? "text-muted-foreground"
+                        : kind === "bought"
+                          ? "text-positive"
+                          : "text-negative"
+                    )}
+                    title={`Net ${kind} ${(kind === "bought" ? "+" : "−")}₹${r.netCr.toLocaleString("en-IN")} Cr`}
+                  >
+                    {fmtPctOut(r.pctOutstanding, kind)}
+                  </td>
+                  <td className="px-4 py-2 align-middle text-muted-foreground leading-tight">
+                    {r.amcs.length ? r.amcs.join(", ") : "—"}
+                  </td>
+                </tr>
+              ))}
+              {Array.from({ length: blanks }).map((_, i) => (
+                <tr key={`blank-${i}`} className={cn("border-t", ROW_H)} aria-hidden>
+                  <td className="px-4" />
+                  <td className="px-3" />
+                  <td className="px-4" />
+                </tr>
+              ))}
+            </>
           )}
         </tbody>
       </table>
@@ -126,12 +150,7 @@ export function CapFlowsView({ flows }: { flows: CapFlows }) {
   ];
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] text-muted-foreground">
-          MF net buying / selling as % of shares outstanding · {meta.monthCur}.
-          Ranked by net ₹ Cr; hover a % for the rupee value. &ldquo;—&rdquo; =
-          shares-outstanding not yet sourced.
-        </p>
+      <div className="flex items-center justify-end gap-2">
         <DownloadXlsxButton
           rows={exportRows}
           columns={exportColumns}
@@ -139,23 +158,33 @@ export function CapFlowsView({ flows }: { flows: CapFlows }) {
           sheetName="Cap Flows"
         />
       </div>
-      {tiers.map((t) => (
-        <div key={t.key} className="space-y-3">
-          <h2 className="text-base font-semibold tracking-tight">{t.label}</h2>
-          <div className="grid gap-4 lg:grid-cols-2">
-            <FlowCard
-              title={`Top ${t.label} names bought by MFs (${meta.monthCur})`}
-              rows={flows[t.key].bought}
-              kind="bought"
-            />
-            <FlowCard
-              title={`Top ${t.label} names sold by MFs (${meta.monthCur})`}
-              rows={flows[t.key].sold}
-              kind="sold"
-            />
+      {tiers.map((t) => {
+        // Equal row slots across the bought / sold pair so the two adjacent
+        // cards are exactly the same height (capped at the configured top-N).
+        const rowSlots = Math.min(
+          meta.topN,
+          Math.max(flows[t.key].bought.length, flows[t.key].sold.length, 1)
+        );
+        return (
+          <div key={t.key} className="space-y-3">
+            <h2 className="text-base font-semibold tracking-tight">{t.label}</h2>
+            <div className="grid items-stretch gap-4 lg:grid-cols-2">
+              <FlowCard
+                title={`Top ${t.label} names bought by MFs (${meta.monthCur})`}
+                rows={flows[t.key].bought}
+                kind="bought"
+                rowSlots={rowSlots}
+              />
+              <FlowCard
+                title={`Top ${t.label} names sold by MFs (${meta.monthCur})`}
+                rows={flows[t.key].sold}
+                kind="sold"
+                rowSlots={rowSlots}
+              />
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

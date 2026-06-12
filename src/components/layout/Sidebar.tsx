@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   CalendarDays,
-  CalendarRange,
+  // CalendarRange, // hidden along with the /quarterly nav item
   FileBarChart,
   Building2,
   Briefcase,
@@ -17,12 +17,13 @@ import { cn } from "@/lib/cn";
 // of the client narrative; we leave the page live but pull it out of
 // the main nav so the sidebar stays focused. /data-sources and
 // /other-schemes remain reachable via deep links and footer copy.
-// /quarterly carries the AUM-change attribution (new money vs market)
-// and quarter-end mix tables, so it stays in the nav.
+// /quarterly is hidden from the nav per client request (route still
+// live at /quarterly). To unhide: restore the line below and the
+// CalendarRange import above.
 const nav = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
   { href: "/monthly", label: "Monthly", icon: CalendarDays },
-  { href: "/quarterly", label: "Quarterly", icon: CalendarRange },
+  // { href: "/quarterly", label: "Quarterly", icon: CalendarRange },
   { href: "/amc", label: "AMCs", icon: Building2 },
   { href: "/financials", label: "Financials", icon: FileBarChart },
   { href: "/mfs-portfolio-tracker", label: "MFs Portfolio Tracker", icon: Briefcase },

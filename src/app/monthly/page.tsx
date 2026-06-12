@@ -20,7 +20,6 @@ import {
   getKpiValue,
   kpiContext,
   latestAmfiMonthlyRow,
-  snapshotSectionRead,
   monthlyFlowsData,
   monthlyIndustryFolioAdditionsTrend,
   monthlySipGrossShareTrend,
@@ -62,13 +61,12 @@ import { feeMixByMonth } from "@/data/fee-mix";
 import { HowToRead } from "@/components/ui/HowToRead";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import type { ReactNode } from "react";
-import { ClientPeriodSwitcher } from "@/components/layout/ClientPeriodSwitcher";
+import { ClientPeriodCard } from "@/components/layout/ClientPeriodCard";
 import {
   formatCompactCrSafe,
   formatCroreCountSafe,
   formatMonthLabel,
 } from "@/lib/format";
-import { cn } from "@/lib/cn";
 import { ClientTabs, type ClientTabDef } from "@/components/layout/ClientTabs";
 
 const MONTHLY_TABS = [
@@ -281,11 +279,6 @@ export default async function MonthlyPage() {
         },
       ];
     });
-
-  const sectionSubtitleFor = (sel: ReturnType<typeof resolveSelectedRow>) =>
-    sel
-      ? "Industry-wide · Source: AMFI Monthly Report"
-      : "Upload AMFI monthly PDFs to manual-data/amfi-monthly/pdfs/, then run npm run ingest:amfi-pdf";
 
   // ---- Industry Performance (IIFL Research Figures 19-21) -----------
   // Figure 20: Total EOP AUM (₹ Cr bars) + YoY % line.
@@ -642,10 +635,6 @@ export default async function MonthlyPage() {
     cyclePhasePoints.length > 0
       ? cyclePhasePoints[cyclePhasePoints.length - 1].phase
       : null;
-  // Section reads — short data-driven 1-liners surfaced under
-  // each section title.
-  const snapshotRead = snapshotSectionRead();
-
   // Ambit-style headline for the Snapshot card: net inflow level, its
   // MoM ₹ change, SIP contribution share, and equity's share of gross
   // flows. Built from already-computed values (selected row + flows).
@@ -675,36 +664,17 @@ export default async function MonthlyPage() {
   const fmtNi = (v: number) =>
     v >= 0 ? formatCompactCrSafe(v) : "−" + formatCompactCrSafe(-v);
 
-  // The AMFI Monthly Snapshot KPI card, rendered for one selected row. We build
-  // one per offered month at deploy time and let ClientPeriodSwitcher toggle
-  // them in the browser, so changing the period costs zero Worker CPU.
-  const renderAmfiSnapshotCard = (
+  // The AMFI Monthly Snapshot card BODY (KeyTakeaway + KPI grid), rendered for
+  // one selected month. We build one per offered month at deploy time and let
+  // ClientPeriodCard toggle them in the browser via its in-header period
+  // dropdown, so changing the period costs zero Worker CPU.
+  const renderAmfiSnapshotBody = (
     sel: ReturnType<typeof resolveSelectedRow>
   ): ReactNode => {
     const cards = buildCardsToRender(sel);
     const headline = buildHeadline(sel);
-    const sectionSubtitle = sectionSubtitleFor(sel);
     return (
-      <Card
-        title="AMFI Monthly Snapshot"
-        subtitle={
-          snapshotRead && sel
-            ? `${sectionSubtitle} · ${snapshotRead}`
-            : sectionSubtitle
-        }
-        action={
-          <span
-            className={cn(
-              "shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
-              sel
-                ? "border-positive/40 bg-positive/10 text-positive"
-                : "border-border text-muted-foreground"
-            )}
-          >
-            {sel ? "Live" : "Not connected"}
-          </span>
-        }
-      >
+      <>
         {headline && (
           <KeyTakeaway
             className="mb-4"
@@ -754,15 +724,21 @@ export default async function MonthlyPage() {
             No AMFI PDF data ingested yet.
           </div>
         )}
-      </Card>
+      </>
     );
   };
 
-  // Months offered in the in-card period switcher (most-recent first, capped to
+  // Months offered in the in-card period dropdown (most-recent first, capped to
   // 12 like the old MonthPicker), each pre-rendered for instant client switch.
   const snapshotMonths = amfiAvailableMonths.slice(0, 12);
-  const snapshotCardPanels: Record<string, ReactNode> = Object.fromEntries(
-    snapshotMonths.map((m) => [m, renderAmfiSnapshotCard(resolveSelectedRow(m))])
+  const snapshotCardPanels: Record<
+    string,
+    { body: ReactNode; live: boolean }
+  > = Object.fromEntries(
+    snapshotMonths.map((m) => {
+      const sel = resolveSelectedRow(m);
+      return [m, { body: renderAmfiSnapshotBody(sel), live: Boolean(sel) }];
+    })
   );
 
   // ---- Active vs Passive series ------------------------------------
@@ -774,7 +750,8 @@ export default async function MonthlyPage() {
   const snapshotPanel = (
     <>
       {snapshotMonths.length > 0 ? (
-        <ClientPeriodSwitcher
+        <ClientPeriodCard
+          title="AMFI Monthly Snapshot"
           periods={snapshotMonths.map((m) => ({
             id: m,
             label: formatMonthLabel(m),
@@ -783,14 +760,28 @@ export default async function MonthlyPage() {
           panels={snapshotCardPanels}
         />
       ) : (
-        renderAmfiSnapshotCard(amfiSelected)
+        <Card
+          title="AMFI Monthly Snapshot"
+          action={
+            <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+              Not connected
+            </span>
+          }
+        >
+          {renderAmfiSnapshotBody(amfiSelected)}
+        </Card>
       )}
 
       {hasAnySipTrend && (
         <div className="space-y-3">
           <section className="space-y-4">
             {sipGrossShareSeries.length > 0 && (
-              <Card title="SIP flows vs Industry Gross Inflows">
+              <Card
+                title="SIP Inflows (gross)"
+                action={
+                  <InfoTooltip label="SIP Inflows are GROSS — the total amount invested through SIPs each month, as reported by AMFI (SIP contribution). Redemptions, SIP stoppages and STP/SWP-outs are NOT netted off. The orange line is gross SIP inflow as a share of the industry's total gross inflows." />
+                }
+              >
                 <BarsWithIndexLine
                   data={sipGrossShareChartData}
                   barColor="hsl(var(--chart-1))"
@@ -800,8 +791,8 @@ export default async function MonthlyPage() {
                   lineValueFormat="pct"
                   lineAxisFormat="pct"
                   labelFormat="month"
-                  barName="SIP Flows (₹ Cr)"
-                  lineName="SIP Flows as % of gross Inflows (RHS)"
+                  barName="SIP Inflows (₹ Cr, gross)"
+                  lineName="SIP Inflows as % of gross inflows (RHS)"
                   lineDomain={[0, 110]}
                   lineTicks={[0, 25, 50, 75, 100]}
                 />
