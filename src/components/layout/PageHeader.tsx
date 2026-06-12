@@ -12,7 +12,7 @@ export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-0.5 text-[12.5px] text-muted-foreground">
+          <p className="mt-1 text-base font-medium text-foreground/80">
             {subtitle}
           </p>
         )}

@@ -42,6 +42,30 @@ export function formatMonthLabel(month: string) {
   return `${MONTH_NAMES[idx]} '${y}`;
 }
 
+const MONTH_NAMES_LONG = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+/** "2026-04" → "April 2026". Falls back to the raw string when the month
+ *  index is out of range. */
+export function formatMonthLong(month: string) {
+  const [yStr, mStr] = month.split("-");
+  const idx = Number(mStr) - 1;
+  if (!(idx >= 0 && idx < 12) || !yStr) return month;
+  return `${MONTH_NAMES_LONG[idx]} ${yStr}`;
+}
+
 /**
  * Maps a calendar-quarter id (e.g. "2026-Q1") to the calendar month range
  * for that quarter. Quarters are Jan–Mar / Apr–Jun / Jul–Sep / Oct–Dec.

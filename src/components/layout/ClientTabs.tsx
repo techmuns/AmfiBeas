@@ -39,7 +39,10 @@ export function ClientTabs({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-1 border-b">
+      {/* Sticky sub-tab strip: stays pinned just under the 56px Topbar
+       *  (top-14) so tabs are reachable from anywhere on a long page. The
+       *  negative margins + padding bleed the backdrop to the content edges. */}
+      <div className="sticky top-14 z-20 -mx-6 flex flex-wrap gap-1 border-b bg-background/95 px-6 pt-1 backdrop-blur lg:-mx-8 lg:px-8">
         {tabs.map((t) => (
           <button
             key={t.id}

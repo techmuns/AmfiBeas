@@ -56,8 +56,6 @@ import {
   type MaaumColumn,
 } from "@/components/data/MaaumTable";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
-import { FeeMixInflows } from "@/components/data/FeeMixInflows";
-import { feeMixByMonth } from "@/data/fee-mix";
 import { HowToRead } from "@/components/ui/HowToRead";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import type { ReactNode } from "react";
@@ -66,13 +64,16 @@ import {
   formatCompactCrSafe,
   formatCroreCountSafe,
   formatMonthLabel,
+  formatMonthLong,
 } from "@/lib/format";
 import { ClientTabs, type ClientTabDef } from "@/components/layout/ClientTabs";
 
 const MONTHLY_TABS = [
   { id: "snapshot", label: "Snapshot" },
   { id: "flows", label: "Flows & AUM" },
-  { id: "fee-mix", label: "Fee Mix" },
+  // "Fee Mix" tab hidden from the UI per client request (the fee-tier
+  // net-inflow split now lives implicitly in the Flow Table's Active Eq
+  // column). Re-add { id: "fee-mix", label: "Fee Mix" } to restore it.
   { id: "categories", label: "Category Shifts" },
   { id: "market-cycle", label: "Market Phases" },
 ] as const satisfies readonly ClientTabDef[];
@@ -133,7 +134,8 @@ export default async function MonthlyPage() {
   const amfiAvailableMonths = availableMonthsDesc();
   const latestMonthId = amfiAvailableMonths[0];
   const amfiSelected = resolveSelectedRow(undefined);
-  const subtitle = `Industry-wide · ${latestMonth()}`;
+  // Header reads the latest available data month as "April 2026".
+  const subtitle = formatMonthLong(latestMonthId ?? latestMonth());
 
   /** All cards we'd surface if the row had every field. The render below
    *  hides any whose value is null on the latest row, so a press-release-
@@ -410,19 +412,9 @@ export default async function MonthlyPage() {
   // (+ MoM pp move) and Industry AAUM (level + MoM / YoY). Built from
   // the same AMFI Monthly rows the Flows charts use; missing fields stay
   // null (rendered "—"), never zero-filled. Newest month first, capped
-  // to the most recent 36 months so the grid stays scannable.
-  //
-  // Total net flow is shown as an absolute ₹ Cr figure; Equity / Hybrid /
-  // Active Eq are shown as a SIGNED % of the month's gross flow magnitude
-  // (mirrors the AUM-mix "share of the whole" treatment). Gross magnitude
-  // = Σ|Sub-total flows| over the non-overlapping majors (Equity II +
-  // Debt I + Hybrid III + Other V) — Debt is kept in the denominator even
-  // though it's no longer a displayed column, and Debt already contains
-  // Liquid so Liquid is NOT added again. Dividing by gross gives values
-  // bounded in [−100%, +100%] that stay meaningful even in churny /
-  // outflow months, where dividing by the (small, possibly negative) net
-  // total would flip signs and blow up.
-  const feeMix = feeMixByMonth(18);
+  // to the most recent 36 months so the grid stays scannable. Every flow
+  // column shows the absolute ₹ Cr figure plus its MoM % change, mirroring
+  // the AUM-mix "value + delta" treatment.
   const flowTableRows: MonthlyFlowsTableRow[] = (() => {
     const rows = amfiMonthlyRows(); // ascending
     const num = (v: number | null | undefined): number | null =>
@@ -1000,15 +992,6 @@ export default async function MonthlyPage() {
     </>
   );
 
-  const feeMixPanel = (
-    <>
-      {feeMix.length > 0 && (
-        <Card title="Fee Mix of Net Inflows">
-          <FeeMixInflows months={feeMix} />
-        </Card>
-      )}
-    </>
-  );
 
   const categoriesPanel = (
     <>
@@ -1120,7 +1103,6 @@ export default async function MonthlyPage() {
         panels={{
           snapshot: snapshotPanel,
           flows: flowsPanel,
-          "fee-mix": feeMixPanel,
           categories: categoriesPanel,
           "market-cycle": marketCyclePanel,
         }}

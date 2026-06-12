@@ -137,6 +137,26 @@ function fmtPct(v: number | null): string {
   return `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}%`;
 }
 
+// MoM % change of a signed flow vs the prior month: (cur − prev) / |prev|.
+// Returns null when either month is missing or the prior month is ~0 (the
+// percentage would be meaningless / explode).
+function momPct(cur: number | null, prev: number | null): number | null {
+  if (cur === null || prev === null) return null;
+  if (!Number.isFinite(cur) || !Number.isFinite(prev)) return null;
+  if (Math.abs(prev) < 0.5) return null;
+  return ((cur - prev) / Math.abs(prev)) * 100;
+}
+
+// Compact signed MoM %, capped at ±999% so a sign-flip month doesn't blow
+// out the column width. "—" when not computable.
+function fmtMoMPct(v: number | null): string {
+  if (v === null || !Number.isFinite(v)) return "—";
+  const sign = v >= 0 ? "+" : "−";
+  const abs = Math.abs(v);
+  if (abs >= 1000) return `${sign}>999%`;
+  return `${sign}${abs.toFixed(abs >= 100 ? 0 : 1)}%`;
+}
+
 function fmtShare(v: number | null): string {
   if (v === null || !Number.isFinite(v)) return "—";
   return `${v.toFixed(1)}%`;
@@ -216,6 +236,8 @@ export function MonthlyFlowsTable({ rows }: { rows: MonthlyFlowsTableRow[] }) {
         <tbody>
           {rows.map((r, ri) => {
             const isLatest = ri === 0;
+            // Rows are newest-first, so the previous month is the next row.
+            const prev = rows[ri + 1] ?? null;
             return (
               <tr
                 key={r.month}
@@ -232,19 +254,25 @@ export function MonthlyFlowsTable({ rows }: { rows: MonthlyFlowsTableRow[] }) {
                   {monthLabel(r.month)}
                 </th>
 
-                {/* Net Flows — every column a signed ₹ Cr figure */}
+                {/* Net Flows — absolute ₹ Cr figure + MoM % change beneath
+                    (mirrors the AUM-mix "value + delta" treatment). */}
                 {FLOW_COLS.map((c) => {
                   const v = r[c.key] as number | null;
+                  const mom = momPct(v, prev ? (prev[c.key] as number | null) : null);
                   return (
                     <td
                       key={c.key}
-                      className={cn(
-                        "border px-2 py-1 text-right",
-                        toneText(v)
-                      )}
+                      className="border px-2 py-1 text-right"
                       style={toneBg(v, flowMax.get(c.key) ?? 0)}
                     >
-                      {fmtFlow(v)}
+                      <div className="flex flex-col items-end leading-tight">
+                        <span className={toneText(v)}>{fmtFlow(v)}</span>
+                        {v !== null && mom !== null && (
+                          <span className={cn("text-[9px]", toneText(mom))}>
+                            {fmtMoMPct(mom)}
+                          </span>
+                        )}
+                      </div>
                     </td>
                   );
                 })}
