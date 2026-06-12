@@ -9,15 +9,18 @@ export interface ClientTabDef {
 }
 
 /**
- * Client-side tab switcher for statically-rendered pages.
+ * Client-side tab switcher that mounts ONLY the active tab.
  *
- * The page renders every tab's panel at BUILD time and hands the panels to this
- * component, which shows/hides them in the browser. Because switching tabs is a
- * pure client state change (no `?tab=` round-trip to the Worker), a static page
- * using this never spends server CPU on a tab switch — which is what keeps the
- * Cloudflare Worker under its per-request CPU budget (Error 1102) on the Free
- * plan. The active tab is mirrored to the URL hash (e.g. `#compare`) so links
- * and refreshes land on the right tab without making the route dynamic.
+ * Unlike a show/hide tab strip, the inactive panels are not rendered into the
+ * DOM at all — their live component instances (charts, tables, event handlers)
+ * never exist, so they hold no browser memory, and `key={active}` forces a
+ * clean unmount/remount on every switch so nothing from the previous tab
+ * lingers. (The panels arrive as already-serialized React nodes from the
+ * statically-rendered server page, so this is purely a client mount/unmount
+ * optimisation.)
+ *
+ * Switching is a pure client state change (mirrored to the URL hash), so it
+ * never spends Cloudflare Worker CPU (Error 1102).
  */
 export function ClientTabs({
   tabs,
@@ -60,11 +63,11 @@ export function ClientTabs({
           </button>
         ))}
       </div>
-      {tabs.map((t) => (
-        <div key={t.id} hidden={t.id !== active} className="space-y-6">
-          {panels[t.id]}
-        </div>
-      ))}
+      {/* Only the active panel is mounted; key forces a fresh mount so the
+       *  previous tab's component tree is fully released. */}
+      <div key={active} className="space-y-6">
+        {panels[active] ?? null}
+      </div>
     </div>
   );
 }
