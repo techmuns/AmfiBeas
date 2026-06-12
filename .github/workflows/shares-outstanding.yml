@@ -47,17 +47,19 @@ jobs:
         run: npm run ingest:shares-outstanding
       - name: Rebuild cap-flows (attach pctOutstanding)
         run: npm run build:cap-flows
+      - name: Rebuild fund-wise (AMC-level) portfolios
+        run: npm run build:fundwise
       - name: Show diff
-        run: git diff --stat src/data/portfolio-tracker || true
+        run: git diff --stat src/data/portfolio-tracker public/fundwise || true
       - name: Commit data
         run: |
-          FILES="src/data/portfolio-tracker/shares-outstanding.json src/data/portfolio-tracker/cap-flows.json"
+          FILES="src/data/portfolio-tracker/shares-outstanding.json src/data/portfolio-tracker/cap-flows.json src/data/portfolio-tracker/fundwise-index.json public/fundwise"
           if [ -z "$(git status --porcelain $FILES)" ]; then
-            echo "No shares-outstanding / cap-flows changes."
+            echo "No shares-outstanding / cap-flows / fundwise changes."
             exit 0
           fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add $FILES
-          git commit -m "chore(data): refresh shares-outstanding + cap-flows % ($(date -u +%Y-%m-%d))"
+          git commit -m "chore(data): refresh shares-outstanding + cap-flows % + fund-wise portfolios ($(date -u +%Y-%m-%d))"
           git push

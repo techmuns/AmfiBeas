@@ -1,0 +1,464 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Search, X, Loader2 } from "lucide-react";
+import { cn } from "@/lib/cn";
+import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
+import type { CsvColumn } from "@/lib/csv";
+import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
+import {
+  formatCompactCrSafe,
+  formatPctSafe,
+  formatSharesIndian,
+} from "@/lib/format";
+import {
+  type FundHouseEntry,
+  type FundHousePortfolio,
+} from "@/data/fundwise-tracker";
+import {
+  type HoldingArrow,
+  monthSlug,
+} from "@/data/portfolio-tracker";
+
+const MAX_SUGGESTIONS = 60;
+
+function ArrowMark({ arrow }: { arrow: HoldingArrow }) {
+  if (arrow === "up")
+    return (
+      <span className="text-positive" aria-label="increased">
+        ▲
+      </span>
+    );
+  if (arrow === "down")
+    return (
+      <span className="text-negative" aria-label="decreased">
+        ▼
+      </span>
+    );
+  return null;
+}
+
+/**
+ * Fund-WISE portfolio view: pick a fund house (HDFC / SBI / ICICI …) and see
+ * its holdings aggregated across every scheme it runs — share counts summed
+ * and each company's weight expressed as a % of the AMC's whole equity book.
+ * Mirrors the scheme-wise Holdings tab; the aggregated payload is precomputed
+ * (scripts/build-fundwise-portfolios.ts) and fetched on demand.
+ */
+export function FundwisePortfolioView({
+  fundHouses,
+}: {
+  fundHouses: FundHouseEntry[];
+}) {
+  const [selectedSlug, setSelectedSlug] = useState(fundHouses[0]?.slug ?? "");
+  const [query, setQuery] = useState(fundHouses[0]?.amc ?? "");
+  const [focused, setFocused] = useState(false);
+  const [holdingQuery, setHoldingQuery] = useState("");
+
+  const [loaded, setLoaded] = useState<Record<string, FundHousePortfolio>>({});
+  const [errored, setErrored] = useState<Record<string, true>>({});
+  const [reloadNonce, setReloadNonce] = useState(0);
+
+  const selected =
+    fundHouses.find((f) => f.slug === selectedSlug) ?? fundHouses[0] ?? null;
+  const portfolio = selected ? loaded[selected.slug] ?? null : null;
+  const hasError = selected ? Boolean(errored[selected.slug]) : false;
+  const loading = Boolean(selected) && !portfolio && !hasError;
+
+  // Avoid restarting the in-flight fetch on unrelated state changes.
+  const loadedRef = useRef(loaded);
+  const erroredRef = useRef(errored);
+  useEffect(() => {
+    loadedRef.current = loaded;
+  }, [loaded]);
+  useEffect(() => {
+    erroredRef.current = errored;
+  }, [errored]);
+
+  useEffect(() => {
+    if (!selected) return;
+    const slug = selected.slug;
+    if (loadedRef.current[slug] || erroredRef.current[slug]) return;
+    const ctrl = new AbortController();
+    fetch(selected.path, { signal: ctrl.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json() as Promise<FundHousePortfolio>;
+      })
+      .then((data) => setLoaded((prev) => ({ ...prev, [slug]: data })))
+      .catch((e: unknown) => {
+        if ((e as Error).name === "AbortError") return;
+        setErrored((prev) => ({ ...prev, [slug]: true }));
+      });
+    return () => ctrl.abort();
+  }, [selected, reloadNonce]);
+
+  function retry() {
+    if (!selected) return;
+    const slug = selected.slug;
+    setErrored((prev) => {
+      const next = { ...prev };
+      delete next[slug];
+      return next;
+    });
+    setReloadNonce((n) => n + 1);
+  }
+
+  const suggestions = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const matched = q
+      ? fundHouses.filter((f) => f.amc.toLowerCase().includes(q))
+      : fundHouses;
+    return matched.slice(0, MAX_SUGGESTIONS);
+  }, [fundHouses, query]);
+
+  const months = portfolio?.meta.months ?? [];
+  const slugs = months.map((m) => monthSlug(m.label));
+
+  const holdings = useMemo(() => {
+    if (!portfolio) return [];
+    const q = holdingQuery.trim().toLowerCase();
+    if (!q) return portfolio.rows;
+    return portfolio.rows.filter((r) =>
+      r.company_name.toLowerCase().includes(q)
+    );
+  }, [portfolio, holdingQuery]);
+
+  // Month-over-month read: biggest weight add / trim and the top-10
+  // concentration shift, in percentage points of the AMC's equity book.
+  const flowSummary = useMemo(() => {
+    if (!portfolio || portfolio.meta.months.length < 2) return null;
+    const cur = monthSlug(portfolio.meta.months[0].label);
+    const prev = monthSlug(portfolio.meta.months[1].label);
+    let topAdd: { name: string; d: number } | null = null;
+    let topTrim: { name: string; d: number } | null = null;
+    const curPcts: number[] = [];
+    const prevPcts: number[] = [];
+    for (const r of portfolio.rows) {
+      const c = r.months[cur]?.aum_pct_num ?? 0;
+      const p = r.months[prev]?.aum_pct_num ?? 0;
+      const d = c - p;
+      if (!topAdd || d > topAdd.d) topAdd = { name: r.company_name, d };
+      if (!topTrim || d < topTrim.d) topTrim = { name: r.company_name, d };
+      curPcts.push(c);
+      prevPcts.push(p);
+    }
+    const top10 = (arr: number[]) =>
+      arr.slice().sort((a, b) => b - a).slice(0, 10).reduce((s, x) => s + x, 0);
+    const concCur = top10(curPcts);
+    return {
+      label: portfolio.meta.months[0].label,
+      topAdd,
+      topTrim,
+      concCur,
+      concDelta: concCur - top10(prevPcts),
+    };
+  }, [portfolio]);
+
+  type ExportRow = Record<string, string | number | null>;
+  const exportColumns: CsvColumn<ExportRow>[] = [
+    { key: "company", header: "Company" },
+    ...months.map((m) => ({ key: m.label, header: `${m.label} % of book` })),
+    ...months.map((m) => ({ key: `${m.label} shares`, header: `${m.label} shares` })),
+  ];
+  const exportRows: ExportRow[] = holdings.map((r) => {
+    const row: ExportRow = { company: r.company_name };
+    slugs.forEach((slug, i) => {
+      row[months[i].label] = r.months[slug]?.aum_pct_num ?? null;
+      row[`${months[i].label} shares`] = r.months[slug]?.shares_num ?? null;
+    });
+    return row;
+  });
+
+  function pick(f: FundHouseEntry) {
+    setSelectedSlug(f.slug);
+    setQuery(f.amc);
+    setHoldingQuery("");
+    setFocused(false);
+  }
+
+  const loaderUi = (
+    <div className="flex h-40 items-center justify-center gap-2 rounded-md border bg-card text-sm text-muted-foreground">
+      <Loader2 className="h-4 w-4 animate-spin" />
+      Loading holdings…
+    </div>
+  );
+
+  return (
+    <div className="space-y-5">
+      {/* Fund-house picker */}
+      <div className="relative max-w-xl">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setFocused(true);
+          }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder="Search a fund house — HDFC, SBI, ICICI…"
+          aria-label="Search fund houses"
+          className="w-full rounded-md border bg-background py-2.5 pl-9 pr-9 text-sm placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            aria-label="Clear search"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+        {focused && suggestions.length > 0 && (
+          <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-md border bg-card py-1 shadow-md">
+            {suggestions.map((f) => (
+              <li key={f.slug}>
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    pick(f);
+                  }}
+                  className={cn(
+                    "flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-accent",
+                    f.slug === selectedSlug && "bg-accent/60"
+                  )}
+                >
+                  <span className="font-medium">{f.amc}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {f.schemeCount} schemes · {formatCompactCrSafe(f.equityValueCr)}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {!selected ? (
+        <div className="flex h-32 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
+          No fund houses available.
+        </div>
+      ) : (
+        <>
+          {/* Fund-house header */}
+          <div className="rounded-lg border bg-card px-5 py-4 text-sm">
+            <div>
+              Fund House -{" "}
+              <span className="font-semibold">{selected.amc}</span>
+            </div>
+            <div className="mt-1 text-muted-foreground">
+              {selected.schemeCount} schemes combined ·{" "}
+              {selected.holdingsCount} distinct holdings
+            </div>
+            <div className="mt-1 text-muted-foreground">
+              Equity book — {formatCompactCrSafe(selected.equityValueCr)} ·{" "}
+              latest {selected.latestMonth}
+            </div>
+          </div>
+
+          {loading ? (
+            loaderUi
+          ) : hasError ? (
+            <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-md border border-dashed text-sm text-muted-foreground">
+              <span className="text-negative">
+                Couldn&apos;t load holdings for this fund house.
+              </span>
+              <button
+                type="button"
+                onClick={retry}
+                className="rounded-md border px-3 py-1 text-xs hover:bg-accent"
+              >
+                Retry
+              </button>
+            </div>
+          ) : portfolio ? (
+            <>
+              {flowSummary && flowSummary.topAdd && flowSummary.topTrim && (
+                <KeyTakeaway
+                  headline={
+                    <>
+                      In {flowSummary.label}, across all its schemes{" "}
+                      {selected.amc} raised its aggregate weight most in{" "}
+                      <strong>{flowSummary.topAdd.name}</strong> (
+                      <span className="text-positive">
+                        +{flowSummary.topAdd.d.toFixed(1)}pp
+                      </span>
+                      ) and trimmed{" "}
+                      <strong>{flowSummary.topTrim.name}</strong> (
+                      <span className="text-negative">
+                        {flowSummary.topTrim.d.toFixed(1)}pp
+                      </span>
+                      ).
+                    </>
+                  }
+                  detail={
+                    <>
+                      Top-10 holdings = {flowSummary.concCur.toFixed(1)}% of the
+                      equity book (
+                      <span
+                        className={
+                          flowSummary.concDelta >= 0
+                            ? "text-positive"
+                            : "text-negative"
+                        }
+                      >
+                        {flowSummary.concDelta >= 0 ? "+" : ""}
+                        {flowSummary.concDelta.toFixed(1)}pp
+                      </span>{" "}
+                      MoM).
+                    </>
+                  }
+                />
+              )}
+
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-base font-semibold tracking-tight">
+                  Equity Holdings — all schemes combined
+                </h2>
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <input
+                      type="search"
+                      value={holdingQuery}
+                      onChange={(e) => setHoldingQuery(e.target.value)}
+                      placeholder="Search holdings"
+                      aria-label="Search holdings by company"
+                      className="w-56 rounded-md border bg-background py-1.5 pl-3 pr-8 text-sm placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+                    />
+                    {holdingQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setHoldingQuery("")}
+                        aria-label="Clear holdings filter"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  {exportRows.length > 0 && (
+                    <DownloadXlsxButton
+                      rows={exportRows}
+                      columns={exportColumns}
+                      filename={`${selected.slug}-fundwise-holdings.xlsx`}
+                      sheetName="Holdings"
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="overflow-x-auto rounded-md border bg-card">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-muted/60 text-xs">
+                      <th
+                        rowSpan={2}
+                        className="border-b border-r px-3 py-2 text-left font-medium align-bottom"
+                      >
+                        Company
+                      </th>
+                      {months.map((m) => (
+                        <th
+                          key={m.label}
+                          colSpan={2}
+                          className="border-b border-l px-3 py-2 text-center font-medium"
+                        >
+                          <div>{m.label}</div>
+                          <div className="text-[11px] font-normal text-muted-foreground">
+                            Book: {formatCompactCrSafe(Number(m.aumCr))}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                    <tr className="bg-muted/60 text-[11px] uppercase tracking-wide text-muted-foreground">
+                      {months.map((m) => (
+                        <SubHead key={m.label} />
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {holdings.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={1 + months.length * 2}
+                          className="px-3 py-8 text-center text-muted-foreground"
+                        >
+                          No holdings match &ldquo;{holdingQuery}&rdquo;.
+                        </td>
+                      </tr>
+                    ) : (
+                      holdings.map((row) => (
+                        <tr
+                          key={row.fincode || row.company_name}
+                          className="border-b last:border-0 hover:bg-accent/40"
+                        >
+                          <td className="border-r px-3 py-2.5 font-medium">
+                            {row.company_name}
+                          </td>
+                          {slugs.map((slug) => (
+                            <Cells key={slug} cell={row.months[slug]} />
+                          ))}
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                {portfolio.rows.length} distinct equity holdings across{" "}
+                {selected.schemeCount} {selected.amc} schemes. Weight = each
+                company&apos;s aggregated ₹ value ÷ the fund house&apos;s total
+                equity-holdings value that month; arrows compare a month&apos;s
+                summed share count to the next-older month (
+                {months.map((m) => m.label).join(" → ")}). Source: aggregated
+                from RupeeVest Portfolio Tracker scheme holdings.
+              </p>
+            </>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+}
+
+function SubHead() {
+  return (
+    <>
+      <th className="border-b border-l px-3 py-1.5 text-right font-medium">
+        % of book
+      </th>
+      <th className="border-b px-3 py-1.5 text-right font-medium">Shares</th>
+    </>
+  );
+}
+
+function Cells({
+  cell,
+}: {
+  cell:
+    | {
+        aum_pct_num: number | null;
+        shares_num: number | null;
+        arrow: HoldingArrow;
+      }
+    | undefined;
+}) {
+  const arrow = cell ? cell.arrow : "missing";
+  return (
+    <>
+      <td className="border-l px-3 py-2.5 text-right tabular text-muted-foreground">
+        {formatPctSafe(cell?.aum_pct_num, 1)}
+      </td>
+      <td className="px-3 py-2.5 text-right tabular">
+        <span className="inline-flex items-center justify-end gap-1">
+          {formatSharesIndian(cell?.shares_num)} <ArrowMark arrow={arrow} />
+        </span>
+      </td>
+    </>
+  );
+}

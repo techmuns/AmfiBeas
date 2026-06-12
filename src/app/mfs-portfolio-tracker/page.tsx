@@ -1,11 +1,12 @@
 import { PageHeader } from "@/components/layout/PageHeader";
-import { PortfolioTrackerView } from "@/components/data/PortfolioTrackerView";
+import { PortfolioTrackerSwitch } from "@/components/data/PortfolioTrackerSwitch";
 import {
   TRACKER_TABS,
   TRACKER_TAB_IDS,
   type TrackerTabId,
 } from "@/components/data/PortfolioTrackerTabs";
 import { fundDirectory } from "@/data/portfolio-tracker";
+import { fundHouseDirectory } from "@/data/fundwise-tracker";
 import { resolveTab } from "@/lib/tabs";
 
 export const metadata = {
@@ -31,15 +32,18 @@ export default async function MfsPortfolioTrackerPage({
         subtitle="Portfolio changes over the last 4 months for mutual fund schemes."
       />
       <p className="max-w-3xl text-sm text-muted-foreground">
-        Use the search bar below to check the month-over-month equity holdings of
-        a mutual fund scheme. Data is updated each month once the most recent
-        month&apos;s portfolio is available.
+        Toggle between <span className="font-medium text-foreground">Scheme-wise</span>{" "}
+        (one scheme&apos;s month-over-month equity holdings) and{" "}
+        <span className="font-medium text-foreground">Fund-wise</span> (a whole
+        fund house&apos;s holdings aggregated across every scheme it runs). Data
+        is updated each month once the latest portfolios are available.
       </p>
-      <PortfolioTrackerView
+      <PortfolioTrackerSwitch
         funds={fundDirectory}
         tabs={TRACKER_TABS}
         initialTab={activeTab}
         searchParams={sp}
+        fundHouses={fundHouseDirectory}
       />
     </div>
   );

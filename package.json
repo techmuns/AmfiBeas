@@ -28,6 +28,7 @@
     "ingest:amfi-aaum-pdf-backfill": "tsx scripts/ingest/amfi-aaum-pdf-backfill.ts",
     "ingest:amfi-sip-backfill": "tsx scripts/ingest/amfi-sip-contribution-backfill.ts",
     "build:cap-flows": "tsx scripts/build-cap-flows.ts",
+    "build:fundwise": "tsx scripts/build-fundwise-portfolios.ts",
     "ingest:shares-outstanding": "tsx scripts/ingest/shares-outstanding.ts"
   },
   "dependencies": {
