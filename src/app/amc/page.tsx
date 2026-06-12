@@ -10,7 +10,6 @@ import { AmcSearchTable } from "@/components/data/AmcSearchTable";
 import { StrategicMovesCohortLane } from "@/components/amc/StrategicMovesCohortLane";
 import { CohortUniqueInvestorShare } from "@/components/amc/CohortUniqueInvestorShare";
 import { AmcCashAllocationTrend } from "@/components/amc/AmcCashAllocationTrend";
-import { AmcStockConcentration } from "@/components/amc/AmcStockConcentration";
 import { amcIndexRows } from "@/data/amc-detail";
 import {
   amcEquityBook,
@@ -134,7 +133,6 @@ export default async function AmcListPage() {
 
   const sharePanel = (
     <>
-      <AmcStockConcentration />
       <CohortUniqueInvestorShare />
       <StrategicMovesCohortLane />
       <FundwiseCard matrix={fundwise} />
