@@ -49,8 +49,12 @@ function formatCompact(value: number): string {
 function formatCrLong(value: number): string {
   const abs = Math.abs(value);
   const sign = value < 0 ? "−" : "";
+  // 1 trillion rupees = 1 lakh crore = 1e5 ₹ Cr. Above ₹100 trn (1e7 Cr)
+  // switch the label to "trn" to avoid an unwieldy "100.00L Cr"; both
+  // branches scale by 1e5 (the old "trn" branch divided by 1e7, rendering
+  // ₹100 trn as a wrong "1.00 trn").
   if (abs >= 1e7) {
-    return `${sign}₹${(abs / 1e7).toFixed(2)} trn`;
+    return `${sign}₹${(abs / 1e5).toFixed(2)} trn`;
   }
   if (abs >= 1e5) {
     return `${sign}₹${(abs / 1e5).toFixed(2)}L Cr`;
@@ -86,9 +90,11 @@ export function industryNarrative(maxFacts = 6): NarrativeFact[] {
       detail: `Closing AUM at ${last.month}. A year ago: ${formatCrLong(yearAgo.totalAum)}.`,
     });
 
-    // Round-trillion threshold crossing.
-    const lastInTrn = Math.floor(last.totalAum / 1e7);
-    const yearAgoInTrn = Math.floor(yearAgo.totalAum / 1e7);
+    // Round-trillion threshold crossing. totalAum is in ₹ Cr and 1 trillion
+    // rupees = 1 lakh crore = 1e5 Cr (NOT 1e7 — that divisor is ₹100 trn per
+    // unit, which kept lastInTrn pinned at 0 so this milestone never fired).
+    const lastInTrn = Math.floor(last.totalAum / 1e5);
+    const yearAgoInTrn = Math.floor(yearAgo.totalAum / 1e5);
     if (lastInTrn > yearAgoInTrn) {
       facts.push({
         id: "industry-aum-milestone",

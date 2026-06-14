@@ -62,12 +62,19 @@ function normalizeAmcName(raw: string): string {
 }
 
 function inferQuarterAndDate(): { quarter: string; date: string } {
-  // Most-recent COMPLETED calendar quarter.
+  // Most-recent COMPLETED calendar quarter — the latest quarter whose final
+  // day is strictly in the past. A quarter-end month (Mar/Jun/Sep/Dec) is only
+  // "complete" once we're past its last day, so the current in-progress quarter
+  // must be excluded. (The old walk-back started from the current month and so
+  // returned the still-running quarter whenever the script ran in the third
+  // month of a quarter, e.g. any June day → 2026-Q2 before it had finished.)
   const now = new Date();
   let yr = now.getFullYear();
-  let mo = now.getMonth() + 1;
-  while (![3, 6, 9, 12].includes(mo)) {
-    mo -= 1;
+  // Current quarter's end month (3/6/9/12).
+  let mo = Math.ceil((now.getMonth() + 1) / 3) * 3;
+  // Step back a quarter at a time until the quarter-end has fully elapsed.
+  while (new Date(yr, mo, 0) >= now) {
+    mo -= 3;
     if (mo <= 0) { mo = 12; yr -= 1; }
   }
   const qNum = Math.ceil(mo / 3);

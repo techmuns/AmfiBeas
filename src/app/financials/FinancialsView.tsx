@@ -211,8 +211,12 @@ export function FinancialsView() {
   const revenueQoq = qoqChange(seriesUpToSelected.map((q) => q.revenue));
   const opQoq = qoqChange(seriesUpToSelected.map((q) => q.operatingProfit));
   const patQoq = qoqChange(seriesUpToSelected.map((q) => q.pat));
-  const patMargin = (latest.pat / latest.revenue) * 100;
-  const opMargin = (latest.operatingProfit / latest.revenue) * 100;
+  // Guard revenue > 0 like every other margin computation in this file (the
+  // per-quarter margin series below and the signal card) so a zero-revenue
+  // row renders "—" rather than "NaN%".
+  const patMargin = latest.revenue > 0 ? (latest.pat / latest.revenue) * 100 : null;
+  const opMargin =
+    latest.revenue > 0 ? (latest.operatingProfit / latest.revenue) * 100 : null;
   // Management-comparable "bps of AAUM": quarterly P&L × 4 / AAUM × 10,000.
   // Mirrors the disclosure on listed AMC investor decks.
   const revenueYieldBps = latest.avgAum
@@ -577,13 +581,13 @@ export function FinancialsView() {
         />
         <CompactStatCard
           label="Operating Margin"
-          value={opMargin.toFixed(1) + "%"}
+          value={opMargin === null ? "—" : opMargin.toFixed(1) + "%"}
           yoyPct={opMarginYoy}
           qoqPct={opMarginQoq}
         />
         <CompactStatCard
           label="PAT Margin"
-          value={patMargin.toFixed(1) + "%"}
+          value={patMargin === null ? "—" : patMargin.toFixed(1) + "%"}
           yoyPct={patMarginYoy}
           qoqPct={patMarginQoq}
         />

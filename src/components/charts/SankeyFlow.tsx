@@ -73,15 +73,22 @@ export function SankeyFlow({
   const grandTotal = links.reduce((s, l) => s + Math.abs(l.value), 0);
   if (grandTotal === 0) return null;
 
-  // Per-node available pixel-height (proportional to its total).
+  // Per-node available pixel-height (proportional to its total). A ribbon
+  // has ONE thickness, so source block heights, target block heights, and
+  // link thickness must all share a single pixel scale — otherwise the
+  // stacked ribbons under/overflow the target blocks whenever the two
+  // columns have different node counts (hence different gap totals). Use the
+  // smaller usable height so both columns fit within innerHeight.
   const totalNodeGapsLeft = nodeGap * (sources.length - 1);
   const totalNodeGapsRight = nodeGap * (targets.length - 1);
-  const usableLeft = innerHeight - totalNodeGapsLeft;
-  const usableRight = innerHeight - totalNodeGapsRight;
+  const usable = Math.min(
+    innerHeight - totalNodeGapsLeft,
+    innerHeight - totalNodeGapsRight
+  );
   const sourceHeight = (id: string) =>
-    ((sourceTotals.get(id) ?? 0) / grandTotal) * usableLeft;
+    ((sourceTotals.get(id) ?? 0) / grandTotal) * usable;
   const targetHeight = (id: string) =>
-    ((targetTotals.get(id) ?? 0) / grandTotal) * usableRight;
+    ((targetTotals.get(id) ?? 0) / grandTotal) * usable;
 
   // Compute y-anchor for each node (top of its block).
   const sourceYByIndex: number[] = [];
@@ -97,8 +104,9 @@ export function SankeyFlow({
     cursor += targetHeight(targets[i].id) + (i < targets.length - 1 ? nodeGap : 0);
   }
 
-  // Per-link thickness in pixels.
-  const linkThickness = (v: number) => Math.max(1, (Math.abs(v) / grandTotal) * usableLeft);
+  // Per-link thickness in pixels — same scale as the node blocks above so
+  // ribbons exactly fill both their source and target blocks.
+  const linkThickness = (v: number) => Math.max(1, (Math.abs(v) / grandTotal) * usable);
   // For each link, we need the y-offset within its source / target block.
   const sourceCursor = new Map<string, number>();
   const targetCursor = new Map<string, number>();

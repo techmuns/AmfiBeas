@@ -52,9 +52,12 @@ const seed = (names: string[], tier: CapTier) => {
     if (key && !tierByKey.has(key)) tierByKey.set(key, tier);
   }
 };
-// Seed mid first, then large, so large wins on any (unexpected) collision.
-seed(capData.mid, "mid");
+// Seed large first, then mid: the seed() guard is first-writer-wins
+// (`!tierByKey.has(key)`), so seeding large first is what actually makes
+// large win on any (unexpected) large/mid collision. (Seeding mid first
+// did the opposite of the intended priority.)
 seed(capData.large, "large");
+seed(capData.mid, "mid");
 
 /** Classify a single company name. Unknown / unlisted names fall back to small. */
 export function classifyCap(companyName: string): CapTier {

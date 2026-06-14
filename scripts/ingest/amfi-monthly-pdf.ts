@@ -1437,6 +1437,22 @@ const PRESS_RELEASE_PATTERNS: PressReleaseLineSpec[] = [
           NUM,
         "i"
       ),
+    ],
+    unit: "crore-count",
+    // SIP-account counts are tens of millions; reject anything below
+    // 1M to filter out percentages / counts on the wrong scale.
+    minScaledValue: 1_000_000,
+    label: "SIP trend table · Number of contributing SIP accounts row (crore)",
+  },
+  {
+    // The "(in lakh)" wording carries a lakh-denominated count, so it
+    // needs the lakh-count unit (×100,000) — NOT crore-count (×10⁷),
+    // which would over-count by 100×. Kept as a separate spec (same
+    // field) because each spec carries a single unit; the consumer
+    // dedups by field, so this only fires for months whose Note uses
+    // the lakh wording and the crore pattern above didn't match.
+    field: "sipAccounts",
+    patterns: [
       // "No. of SIP Accounts (in lakh) 9,943.55"
       new RegExp(
         String.raw`(?:No\.?\s+of\s+)?SIP\s+Accounts(?:[^\n]{0,40}\bin\s+lakh\b)` +
@@ -1444,11 +1460,9 @@ const PRESS_RELEASE_PATTERNS: PressReleaseLineSpec[] = [
         "i"
       ),
     ],
-    unit: "crore-count",
-    // SIP-account counts are tens of millions; reject anything below
-    // 1M to filter out percentages / counts on the wrong scale.
+    unit: "lakh-count",
     minScaledValue: 1_000_000,
-    label: "SIP trend table · Number of contributing SIP accounts row",
+    label: "SIP trend table · No. of SIP Accounts row (in lakh)",
   },
   {
     field: "sipContribution",
