@@ -34,6 +34,15 @@ const FUNDWISE_TABS: { id: FundwiseTab; label: string }[] = [
   { id: "compare", label: "Compare" },
 ];
 
+/** Coerce a month's aumCr (string | number | null) to number-or-null for
+ *  formatCompactCrSafe. Raw `Number(null)` / `Number("")` collapse to 0,
+ *  which would render a missing book as a fake "₹0 Cr" instead of "—". */
+function aumNum(aumCr: string | number | null): number | null {
+  if (aumCr === null || aumCr === "" || aumCr === "-") return null;
+  const n = typeof aumCr === "number" ? aumCr : Number(aumCr);
+  return Number.isFinite(n) ? n : null;
+}
+
 function ArrowMark({ arrow }: { arrow: HoldingArrow }) {
   if (arrow === "up")
     return (
@@ -443,7 +452,7 @@ export function FundwisePortfolioView({
                         >
                           <div>{m.label}</div>
                           <div className="text-[11px] font-normal text-muted-foreground">
-                            Book: {formatCompactCrSafe(Number(m.aumCr))}
+                            Book: {formatCompactCrSafe(aumNum(m.aumCr))}
                           </div>
                         </th>
                       ))}
@@ -564,7 +573,15 @@ function FundHouseCompare({
     if (initialSlug && bySlug.has(initialSlug)) s[0] = initialSlug;
     return s;
   });
-  const selected = slots.filter((s, i) => s && slots.indexOf(s) === i);
+  // Memoised so the fetch effect below keys off a STABLE reference. Built
+  // inline it was a fresh array every render, so the effect's [selected]
+  // dep changed on every unrelated re-render — re-running the effect and
+  // aborting in-flight compare fetches mid-flight (the loadedRef dedup
+  // couldn't help because the abort fired before the request resolved).
+  const selected = useMemo(
+    () => slots.filter((s, i) => s && slots.indexOf(s) === i),
+    [slots]
+  );
 
   const [loaded, setLoaded] = useState<Record<string, FundHousePortfolio>>({});
   const [errored, setErrored] = useState<Record<string, true>>({});

@@ -34,7 +34,6 @@ import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const HOLDINGS_DIR = path.resolve(ROOT, "public/holdings");
 const INDEX_PATH = path.resolve(ROOT, "src/data/portfolio-tracker/index.json");
 const OUT_PATH = path.resolve(
   ROOT,

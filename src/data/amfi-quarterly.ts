@@ -23,7 +23,6 @@
  */
 import quarterlyIndustryRaw from "./snapshots/amfi-quarterly-industry.json";
 import quarterlyCategoryRaw from "./snapshots/amfi-quarterly-category.json";
-import { fiscalLabelFromCalendarQuarter } from "./amc-peer-universe";
 import type {
   AmfiMonthlyCategorySlug,
   AmfiQuarterlyCategoryFieldSources,
@@ -901,11 +900,17 @@ export interface CategoryHhiPoint {
 export function categoryHhiSeries(lastN = 8): CategoryHhiPoint[] {
   const rows = quarterlyCategoryRaw.rows;
   const byQuarter = new Map<string, { slug: string; aum: number }[]>();
+  // The category snapshot keys rows by FISCAL-quarter ids ("FY20-Q1"),
+  // which `fiscalLabelFromCalendarQuarter` (calendar-quarter parser) can't
+  // decode — it would return the raw id. Each row already carries the
+  // correct human label ("1QFY20"), so capture it and use it directly.
+  const labelByQuarter = new Map<string, string>();
   for (const r of rows) {
     if (typeof r.categoryAum !== "number") continue;
     const arr = byQuarter.get(r.quarter) ?? [];
     arr.push({ slug: r.categorySlug, aum: r.categoryAum });
     byQuarter.set(r.quarter, arr);
+    if (!labelByQuarter.has(r.quarter)) labelByQuarter.set(r.quarter, r.quarterLabel);
   }
   const quarters = Array.from(byQuarter.keys()).sort().slice(-lastN);
 
@@ -927,7 +932,7 @@ export function categoryHhiSeries(lastN = 8): CategoryHhiPoint[] {
     }
     return {
       quarter: q,
-      quarterLabel: fiscalLabelFromCalendarQuarter(q),
+      quarterLabel: labelByQuarter.get(q) ?? q,
       hhi,
       participantCount: entries.length,
       topCategorySharePct: topShare,

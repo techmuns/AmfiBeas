@@ -34,6 +34,21 @@ const OUT = path.join(
 const MIN_UNIQUE_VALUE_CR = 25;
 const TOP_UNIQUES = 12;
 
+const MONTHS_LOOKUP: Record<string, number> = {
+  jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+  jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
+};
+/** "Apr-26" → sortable key 202604 (descending = newest first). Mirrors the
+ *  helper in build-fundwise-portfolios.ts so the month axes stay in agreement. */
+function monthSortKey(label: string): number {
+  const m = label.trim().toLowerCase().match(/^([a-z]{3})[^0-9]*'?(\d{2,4})$/);
+  if (!m) return 0;
+  const mo = MONTHS_LOOKUP[m[1]] ?? 0;
+  let y = Number(m[2]);
+  if (y < 100) y += 2000;
+  return y * 100 + mo;
+}
+
 const num = (v: unknown): number => {
   if (v == null) return 0;
   const n = typeof v === "number" ? v : Number(String(v).replace(/[, ]/g, ""));
@@ -151,27 +166,33 @@ function main() {
     : [];
   // label → (amc → bookCr)
   const bookByMonth = new Map<string, Map<string, number>>();
-  const monthOrder: string[] = [];
   for (const f of fwFiles) {
     const j = JSON.parse(fs.readFileSync(path.join(FUNDWISE_DIR, f), "utf8"));
     const amc: string = j.meta?.fund ?? f.replace(/\.json$/, "");
     for (const m of j.meta?.months ?? []) {
-      if (!bookByMonth.has(m.label)) {
-        bookByMonth.set(m.label, new Map());
-        monthOrder.push(m.label);
-      }
+      if (!bookByMonth.has(m.label)) bookByMonth.set(m.label, new Map());
       bookByMonth.get(m.label)!.set(amc, num(m.aumCr));
     }
   }
-  // monthOrder follows first-file order (newest first in fundwise meta).
-  const labels = monthOrder.slice(0, 4);
+  // Newest 4 months across ALL files, sorted by actual calendar month — not
+  // by whichever file was read first. If the first fundwise file processed
+  // happened to miss the latest month, the old first-file order made
+  // labels[0] a stale month and the MoM share-shift pairing wrong for every
+  // AMC.
+  const labels = [...bookByMonth.keys()]
+    .sort((a, b) => monthSortKey(b) - monthSortKey(a))
+    .slice(0, 4);
   const totals = labels.map((l) =>
     [...(bookByMonth.get(l)?.values() ?? [])].reduce((s, v) => s + v, 0)
   );
   const shareRows = [...new Set(fwFiles.map((f) => f))]
     .map((f) => {
       const j = JSON.parse(fs.readFileSync(path.join(FUNDWISE_DIR, f), "utf8"));
-      const amc: string = j.meta?.fund ?? f;
+      // Must match the populate-loop fallback above (`f.replace(/\.json$/, "")`)
+      // exactly — otherwise, when meta.fund is absent, this lookup key keeps the
+      // ".json" suffix, never matches bookByMonth's key, and the AMC silently
+      // shows 0% share / ₹0 book.
+      const amc: string = j.meta?.fund ?? f.replace(/\.json$/, "");
       const shares = labels.map((l, i) => {
         const book = bookByMonth.get(l)?.get(amc) ?? 0;
         return totals[i] > 0 ? (book / totals[i]) * 100 : 0;

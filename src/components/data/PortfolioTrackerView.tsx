@@ -125,11 +125,28 @@ export function PortfolioTrackerView({
   const hasError = selectedEntry ? Boolean(errored[selectedEntry.schemecode]) : false;
   const loading = Boolean(selectedEntry) && !portfolio && !hasError;
 
+  // Ref mirrors of loaded/errored so the fetch effects can dedup without
+  // putting them in deps — which would otherwise abort the in-flight
+  // request each time any OTHER fetch resolves and mutates state.
+  const loadedRef = useRef(loaded);
+  const erroredRef = useRef(errored);
+  useEffect(() => {
+    loadedRef.current = loaded;
+  }, [loaded]);
+  useEffect(() => {
+    erroredRef.current = errored;
+  }, [errored]);
+
   // Load the selected fund's holdings on demand (stale fetches are aborted).
+  // Dedup via refs rather than putting loaded/errored in the deps: with
+  // them in deps, every resolving peer fetch (up to 21 in parallel) re-ran
+  // this effect, whose cleanup aborted the selected fund's still-in-flight
+  // request and restarted it — so the holdings the user is waiting on only
+  // settled after the whole peer fan-out finished.
   useEffect(() => {
     if (!selectedEntry) return;
     const code = selectedEntry.schemecode;
-    if (loaded[code] || errored[code]) return;
+    if (loadedRef.current[code] || erroredRef.current[code]) return;
     const ctrl = new AbortController();
     fetch(selectedEntry.path, { signal: ctrl.signal })
       .then((res) => {
@@ -142,7 +159,7 @@ export function PortfolioTrackerView({
         setErrored((prev) => ({ ...prev, [code]: true }));
       });
     return () => ctrl.abort();
-  }, [selectedEntry, loaded, errored, reloadNonce]);
+  }, [selectedEntry, reloadNonce]);
 
   // Funds sharing the selected fund's category, sorted by AUM desc. The
   // SameCategoryFunds section renders top-9 peers + selected (pinned), with
@@ -172,18 +189,6 @@ export function PortfolioTrackerView({
   const peerAvgFetchTargets = useMemo(() => {
     return sameCategoryFunds.slice(0, MAX_PEER_AVG_PEERS + 1);
   }, [sameCategoryFunds]);
-
-  // Ref mirrors of loaded/errored so the peer-fetch effect can dedup without
-  // putting them in deps — which would otherwise abort other in-flight peers
-  // each time one resolves and updates state.
-  const loadedRef = useRef(loaded);
-  const erroredRef = useRef(errored);
-  useEffect(() => {
-    loadedRef.current = loaded;
-  }, [loaded]);
-  useEffect(() => {
-    erroredRef.current = errored;
-  }, [errored]);
 
   // Fan-out fetch peer holdings in parallel. Bounded at MAX_PEER_AVG_PEERS+1
   // requests per category (vs ~91 uncapped for Thematic). Aborts only on

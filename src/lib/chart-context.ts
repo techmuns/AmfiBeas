@@ -561,25 +561,24 @@ export function chartInsights(
   //    YoY % so the reader sees whether growth is speeding up or
   //    slowing.
   if (opts.yoyLag && series.length > opts.yoyLag + 1) {
-    const lag = opts.yoyLag;
-    const lastIdx = series.length - 1;
-    const priorY = series[lastIdx - lag].value;
-    if (priorY !== 0 && Number.isFinite(priorY)) {
-      const yoy = ((latest.value - priorY) / Math.abs(priorY)) * 100;
+    // Use the SAME calendar-label-aware, base-meaningful YoY math as
+    // latestYoyPct() (both defer to yoyPctSeries) so the insight line and
+    // the header YoY badge stay in lockstep. The old positional lookback
+    // here ignored ingest gaps and the isYoyBaseMeaningful guard, so a
+    // near-zero / sign-flipped year-ago base could emit a spurious
+    // "+38,654% YoY" line next to a hidden badge.
+    const yoySeries = yoyPctSeries(series, opts.yoyLag);
+    const yoy = yoySeries[yoySeries.length - 1]?.value ?? null;
+    if (yoy !== null) {
       let accelTag = "";
-      const prevIdx = lastIdx - 1;
-      if (prevIdx - lag >= 0) {
-        const prevSelf = series[prevIdx].value;
-        const prevPriorY = series[prevIdx - lag].value;
-        if (prevPriorY !== 0 && Number.isFinite(prevPriorY)) {
-          const prevYoy = ((prevSelf - prevPriorY) / Math.abs(prevPriorY)) * 100;
-          const delta = yoy - prevYoy;
-          if (Math.abs(delta) >= 1) {
-            accelTag =
-              delta > 0
-                ? ` — accelerating from ${prevYoy >= 0 ? "+" : ""}${prevYoy.toFixed(1)}% last period`
-                : ` — decelerating from ${prevYoy >= 0 ? "+" : ""}${prevYoy.toFixed(1)}% last period`;
-          }
+      const prevYoy = yoySeries[yoySeries.length - 2]?.value ?? null;
+      if (prevYoy !== null) {
+        const delta = yoy - prevYoy;
+        if (Math.abs(delta) >= 1) {
+          accelTag =
+            delta > 0
+              ? ` — accelerating from ${prevYoy >= 0 ? "+" : ""}${prevYoy.toFixed(1)}% last period`
+              : ` — decelerating from ${prevYoy >= 0 ? "+" : ""}${prevYoy.toFixed(1)}% last period`;
         }
       }
       out.push(
