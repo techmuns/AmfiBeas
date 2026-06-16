@@ -2,11 +2,11 @@
  * Synthetic test for scripts/ingest/holdings-tracker.ts.
  *
  * Exercises the import-safe pure logic without hitting RupeeVest:
- *   - month helpers (canonMonthLabel / monthSortKey / monthEndIso / numbers)
- *   - parseTracker against a synthetic HTML holdings table
+ *   - month/number helpers + the faithful arrowFor change-arrow logic
+ *   - parseTracker against the real get_mf_portfolio_tracker JSON shape
  *   - mergeHoldings against a REAL on-disk snapshot + a fresh May fetch,
  *     asserting history is preserved, the new month is appended newest-first,
- *     and change arrows are recomputed over the merged window.
+ *     and arrows are recomputed over the merged window.
  *
  * Run:    npx tsx scripts/ingest/holdings-tracker-test.ts
  * Exits:  0 on all-pass, 1 on any failure.
@@ -17,7 +17,9 @@ import {
   canonMonthLabel,
   monthSortKey,
   monthEndIso,
-  parseIndianNumber,
+  toNumOrNull,
+  indianFmt,
+  arrowFor,
   parseTracker,
   mergeHoldings,
   type FundPortfolio,
@@ -38,104 +40,93 @@ function check(name: string, ok: boolean, detail?: string): void {
 }
 
 // ---------------------------------------------------------------------------
-// 1. Month helpers
+// 1. Helpers
 // ---------------------------------------------------------------------------
 check("canonMonthLabel Apr-26", canonMonthLabel("Apr-26") === "Apr-26");
 check("canonMonthLabel 'April 2026'", canonMonthLabel("April 2026") === "Apr-26");
-check("canonMonthLabel 'May 26'", canonMonthLabel("May 26") === "May-26");
 check("canonMonthLabel rejects 'Total'", canonMonthLabel("Total") === null);
-
 check("monthSortKey May>Apr", monthSortKey("May-26") > monthSortKey("Apr-26"));
 check("monthSortKey Jan-26>Dec-25", monthSortKey("Jan-26") > monthSortKey("Dec-25"));
+check("monthEndIso May-26 -> 2026-05-31", monthEndIso("May-26") === "2026-05-31T00:00:00.000Z");
+check("monthEndIso Feb-24 -> leap 2024-02-29", monthEndIso("Feb-24") === "2024-02-29T00:00:00.000Z");
+check("toNumOrNull 76,97,626", toNumOrNull("76,97,626") === 7697626);
+check("toNumOrNull 8.26%", toNumOrNull("8.26%") === 8.26);
+check("toNumOrNull '-'", toNumOrNull("-") === null);
+check("indianFmt 7697626 -> 76,97,626", indianFmt(7697626) === "76,97,626");
+check("indianFmt 120 -> 120", indianFmt(120) === "120");
 
-check(
-  "monthEndIso May-26 -> 2026-05-31",
-  monthEndIso("May-26") === "2026-05-31T00:00:00.000Z",
-  String(monthEndIso("May-26"))
-);
-check(
-  "monthEndIso Apr-26 -> 2026-04-30",
-  monthEndIso("Apr-26") === "2026-04-30T00:00:00.000Z",
-  String(monthEndIso("Apr-26"))
-);
-check(
-  "monthEndIso Feb-24 -> leap 2024-02-29",
-  monthEndIso("Feb-24") === "2024-02-29T00:00:00.000Z",
-  String(monthEndIso("Feb-24"))
-);
-
-check("parseIndianNumber 76,97,626", parseIndianNumber("76,97,626") === 7697626);
-check("parseIndianNumber 8.26", parseIndianNumber("8.26") === 8.26);
-check("parseIndianNumber '-'", parseIndianNumber("-") === null);
+// arrowFor — shares[0]=newest … shares[n-1]=oldest
+check("arrowFor up (cur>prev)", arrowFor([8000000, 7697626], 0) === "up");
+check("arrowFor down (cur<prev)", arrowFor([5, 9], 0) === "down");
+check("arrowFor flat (cur==prev)", arrowFor([5, 5], 0) === "flat/none");
+check("arrowFor appeared (prev null) -> up", arrowFor([5, null], 0) === "up");
+check("arrowFor cur null -> missing", arrowFor([null, 5], 0) === "missing");
+check("arrowFor oldest col -> flat/none", arrowFor([5, 9], 1) === "flat/none");
 
 // ---------------------------------------------------------------------------
-// 2. parseTracker — synthetic HTML table in the shape the parser targets
+// 2. parseTracker — the real get_mf_portfolio_tracker JSON shape
 // ---------------------------------------------------------------------------
-const SYNTH_HTML = `
-  <div class="wrap">
-    <table class="portfolio">
-      <tr><th>Company</th><th>May-26</th><th>Apr-26</th></tr>
-      <tr data-fincode="132174">
-        <td>ICICI Bank Limited</td>
-        <td>80,00,000 (8.50%)</td>
-        <td>76,97,626 (8.26%)</td>
-      </tr>
-      <tr data-fincode="100180">
-        <td>HDFC Bank Limited</td>
-        <td>1,20,17,612 (7.88%)</td>
-        <td>97,14,287 (6.63%)</td>
-      </tr>
-    </table>
-  </div>`;
+const SYNTH_JSON = {
+  fund_info: [
+    {
+      s_name: "DSP Flexi Cap Fund-Reg(G)",
+      aumtotal: "12010.5",
+      aumdate: "2026-05-31T00:00:00.000Z",
+      classification: "Equity : Flexi Cap",
+    },
+  ],
+  month_name: ["May-26", "Apr-26"],
+  MonthwiseAUM: [{ aum: "-" }, { aum: "-" }],
+  stock_data: [
+    [
+      { fincode: "132174", noshares: "8000000", percent_aum: "8.50" },
+      { fincode: "100180", noshares: "1,20,17,612", percent_aum: "7.88" },
+    ],
+    [{ fincode: "132174", noshares: "7697626", percent_aum: "8.26" }],
+  ],
+  stock_mapping: { "132174": "ICICI Bank Limited", "100180": "HDFC Bank Limited" },
+};
 
-const parsed = parseTracker(SYNTH_HTML, "642");
+const parsed = parseTracker(SYNTH_JSON, "642");
+check("parseTracker fund name", parsed.fund === "DSP Flexi Cap Fund-Reg(G)");
+check("parseTracker aumTotalCr", parsed.aumTotalCr === 12010.5, String(parsed.aumTotalCr));
 check(
-  "parseTracker finds 2 months newest-first",
-  parsed.months.map((m) => m.label).join(",") === "May-26,Apr-26",
-  parsed.months.map((m) => m.label).join(",")
+  "parseTracker months newest-first",
+  parsed.months.map((m) => m.label).join(",") === "May-26,Apr-26"
 );
-check("parseTracker finds 2 rows", parsed.rows.length === 2);
+check("parseTracker 2 rows", parsed.rows.length === 2);
 const icici = parsed.rows.find((r) => r.fincode === "132174");
-check("parseTracker ICICI fincode", Boolean(icici));
-check(
-  "parseTracker ICICI May shares",
-  icici?.cells["may_26"]?.shares_num === 8000000,
-  String(icici?.cells["may_26"]?.shares_num)
-);
-check(
-  "parseTracker ICICI May pct",
-  icici?.cells["may_26"]?.aum_pct_num === 8.5,
-  String(icici?.cells["may_26"]?.aum_pct_num)
-);
+check("parseTracker ICICI May shares", icici?.cells["may_26"]?.shares_num === 8000000);
+check("parseTracker ICICI May pct", icici?.cells["may_26"]?.aum_pct_num === 8.5);
+check("parseTracker ICICI has Apr cell", icici?.cells["apr_26"]?.shares_num === 7697626);
+const hdfc = parsed.rows.find((r) => r.fincode === "100180");
+check("parseTracker HDFC May shares (Indian-string input)", hdfc?.cells["may_26"]?.shares_num === 12017612);
+check("parseTracker HDFC has no Apr cell (present-only)", hdfc?.cells["apr_26"] === undefined);
 
-// parseTracker must THROW (not return blanks) on an unrecognised response.
-let threw = false;
-try {
-  parseTracker("not a table at all", "999");
-} catch {
-  threw = true;
-}
-check("parseTracker throws on junk", threw);
+// THROWS (not blanks) on unrecognised responses → caller keeps last-good.
+const throws = (fn: () => unknown) => {
+  try {
+    fn();
+    return false;
+  } catch {
+    return true;
+  }
+};
+check("parseTracker throws on non-JSON", throws(() => parseTracker("<html>nope</html>", "x")));
+check("parseTracker throws on missing month_name", throws(() => parseTracker({ fund_info: [] }, "x")));
 
 // ---------------------------------------------------------------------------
 // 3. mergeHoldings — real snapshot + a fresh May fetch
 // ---------------------------------------------------------------------------
-const REAL = path.join(
-  process.cwd(),
-  "public/holdings/642-dsp-flexi-cap-fund-reg-g.json"
-);
+const REAL = path.join(process.cwd(), "public/holdings/642-dsp-flexi-cap-fund-reg-g.json");
 const existing = JSON.parse(fs.readFileSync(REAL, "utf8")) as FundPortfolio;
-const existingMonths = existing.meta.months.map((m) => m.label).join(",");
 check(
   "fixture has Apr..Jan window",
-  existingMonths === "Apr-26,Mar-26,Feb-26,Jan-26",
-  existingMonths
+  existing.meta.months.map((m) => m.label).join(",") === "Apr-26,Mar-26,Feb-26,Jan-26"
 );
 const iciciJanShares =
-  existing.rows.find((r) => r.fincode === "132174")?.months["jan_26"]?.shares_num ??
-  null;
+  existing.rows.find((r) => r.fincode === "132174")?.months["jan_26"]?.shares_num ?? null;
 
-// Fresh fetch returns the tracker's new rolling window (May + the Apr overlap).
 const freshMay: ParsedTracker = {
   fund: "DSP Flexi Cap Fund-Reg(G)",
   classification: "Equity : Flexi Cap",
@@ -154,7 +145,7 @@ const freshMay: ParsedTracker = {
       },
     },
   ],
-  method: "html-table",
+  method: "json-endpoint",
 };
 
 const entry: IndexEntry = {
@@ -169,49 +160,28 @@ const entry: IndexEntry = {
 };
 
 const merged = mergeHoldings(existing, freshMay, entry);
-const mergedMonths = merged.meta.months.map((m) => m.label).join(",");
 check(
   "merge appends May, preserves Jan (5-month window)",
-  mergedMonths === "May-26,Apr-26,Mar-26,Feb-26,Jan-26",
-  mergedMonths
+  merged.meta.months.map((m) => m.label).join(",") === "May-26,Apr-26,Mar-26,Feb-26,Jan-26",
+  merged.meta.months.map((m) => m.label).join(",")
 );
-check(
-  "merge updates aumAsOf to May month-end",
-  merged.meta.aumAsOf === "2026-05-31T00:00:00.000Z",
-  String(merged.meta.aumAsOf)
-);
-check(
-  "merge takes fresh aumTotalCr",
-  merged.meta.aumTotalCr === 12010.5,
-  String(merged.meta.aumTotalCr)
-);
+check("merge aumAsOf -> May month-end", merged.meta.aumAsOf === "2026-05-31T00:00:00.000Z");
+check("merge takes fresh aumTotalCr", merged.meta.aumTotalCr === 12010.5);
 
 const mIcici = merged.rows.find((r) => r.fincode === "132174");
-check("merge keeps ICICI row", Boolean(mIcici));
-check(
-  "merge added ICICI May cell",
-  mIcici?.months["may_26"]?.shares_num === 8000000
-);
+check("merge added ICICI May cell", mIcici?.months["may_26"]?.shares_num === 8000000);
 check(
   "merge preserved ICICI Jan cell from disk",
   mIcici?.months["jan_26"]?.shares_num === iciciJanShares && iciciJanShares !== null,
   `merged=${mIcici?.months["jan_26"]?.shares_num} disk=${iciciJanShares}`
 );
+check("merge arrow: May up vs Apr", mIcici?.months["may_26"]?.arrow === "up");
+check("merge arrow: oldest Jan flat/none", mIcici?.months["jan_26"]?.arrow === "flat/none");
 check(
-  "merge arrow: May up vs Apr (80L > 76.9L)",
-  mIcici?.months["may_26"]?.arrow === "up",
-  String(mIcici?.months["may_26"]?.arrow)
+  "merge full-grid: every row has all 5 window months",
+  merged.rows.every((r) => Object.keys(r.months).length === 5)
 );
-check(
-  "merge arrow: oldest Jan is flat/none",
-  mIcici?.months["jan_26"]?.arrow === "flat/none",
-  String(mIcici?.months["jan_26"]?.arrow)
-);
-check(
-  "merge preserves other existing rows (count grows or holds)",
-  merged.rows.length >= existing.rows.length,
-  `merged=${merged.rows.length} existing=${existing.rows.length}`
-);
+check("merge keeps all disk rows", merged.rows.length >= existing.rows.length);
 
 // ---------------------------------------------------------------------------
 console.log(`\n${pass} passed, ${fail} failed`);

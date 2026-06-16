@@ -2,57 +2,66 @@
  * Scheme-wise equity-holdings refresh from the RupeeVest Mutual Fund Portfolio
  * Tracker (https://www.rupeevest.com/Mutual-Fund-Portfolio-Tracker).
  *
- * Each scheme's holdings come from
- *   https://www.rupeevest.com/home/get_mf_portfolio_tracker?schemecode=<code>
- * which returns a per-scheme grid of "No. of Shares" + "% of AUM" per company
- * across the last few months. We refresh it monthly so a new month (e.g. May)
- * appends to the public/holdings/<code>-<slug>.json snapshots the dashboard
- * already serves.
+ * Each scheme's holdings come from the same JSON endpoint the tracker page uses:
+ *   GET /home/get_mf_portfolio_tracker?schemecode=<code>
+ *     -> { fund_info:[{ s_name, aumtotal, aumdate, classification }],
+ *          month_name:[m0,m1,m2,m3],          // m0 = most recent (column labels)
+ *          MonthwiseAUM:[{ aum }, ...],        // per-month total AUM ("-" for equity)
+ *          stock_data:[ [ { fincode, noshares, percent_aum }, ... ], ... ], // per month
+ *          stock_mapping:{ fincode: companyName }, ... (debt fields ignored) }
  *
- * UNIVERSE — "based on the previous benchmark (> ₹500 Cr AUM)". We do NOT
- * re-derive the universe from scratch; we iterate the funds already recorded in
- *   src/data/portfolio-tracker/index.json
- * which is exactly the cohort that passed the > ₹500 Cr filter on the last full
- * build (meta.minAumCr = 500, meta.keptAboveThreshold = 1112). That keeps the
- * monthly job tightly scoped to the ~1.1k funds that matter instead of the full
- * ~2.1k scheme list.
+ * The endpoint is session-gated (403 to a bare request), so — exactly like the
+ * one-off bootstrap scraper that built this dataset — we drive a real browser:
+ * load the tracker page once for cookies, then call the endpoint through the
+ * browser context's request (shares cookies/origin) with AJAX headers.
  *
- * MERGE, never clobber — the tracker only exposes a short rolling window, so we
- * MERGE the freshly fetched months into each existing snapshot (fresh data wins
- * for overlapping months; older months already on disk are preserved) and
- * recompute the change arrows across the full merged window. History grows
- * forward, matching the repo's nav-history-forward / index-history-forward
- * convention. Cap with HOLDINGS_MAX_MONTHS (default 18).
+ * UNIVERSE — "based on the previous benchmark (> ₹500 Cr AUM)". We iterate the
+ * funds already recorded in src/data/portfolio-tracker/index.json, which is
+ * exactly the cohort that passed the > ₹500 Cr filter on the last full build
+ * (meta.minAumCr = 500). So the monthly job touches the ~1.1k funds that matter,
+ * not the full ~2.1k scheme list.
  *
- * SAFETY — per fund, a fetch/parse failure or an empty parse keeps the
- * last-good snapshot untouched (never wiped). The parser THROWS on an
- * unrecognised response rather than writing blanks, so a wrong assumption
- * surfaces as a loud "kept (failed)" count instead of silent corruption. If
- * EVERY attempted fund fails, the script exits non-zero without rewriting the
- * index, so the workflow's commit step is skipped (keep-last-good, globally).
+ * MERGE, never clobber — the endpoint only exposes a short rolling window, so we
+ * MERGE the freshly fetched month(s) into each existing snapshot (fresh data
+ * wins for overlapping months; older months already on disk are preserved) and
+ * recompute the UI's change arrows across the full merged window. History grows
+ * forward, matching the repo's nav-history-forward convention. Cap with
+ * HOLDINGS_MAX_MONTHS (default 18).
+ *
+ * SAFETY — per fund, a fetch/parse failure or an empty parse keeps the last-good
+ * snapshot untouched (never wiped). parseTracker THROWS on an unrecognised
+ * response rather than writing blanks. If EVERY attempted fund fails, the script
+ * exits non-zero without rewriting the index, so the workflow's commit step is
+ * skipped (keep-last-good, globally).
  *
  * MODES (env or argv):
- *   HOLDINGS_PROBE=1 | --probe   Fetch a few schemes, dump the raw response to
+ *   HOLDINGS_PROBE=1 | --probe   Fetch a few schemes, dump the raw JSON to
  *                                data/debug/ and print its shape. No writes.
- *                                Use this FIRST to confirm the response format.
  *   HOLDINGS_LIMIT=N | --limit N Only process the first N funds (test runs).
- *   HOLDINGS_CONCURRENCY=N       Parallel in-flight requests (default 4).
- *   HOLDINGS_DELAY_MS=N          Polite per-request jitter ceiling (default 350).
+ *   HOLDINGS_DELAY_MS=N          Polite delay between requests (default 200).
  *   HOLDINGS_MAX_MONTHS=N        Cap merged window length (default 18).
  *
- * Run:  npx tsx scripts/ingest/holdings-tracker.ts
+ * Run (needs `npx playwright install chromium`):
+ *   npx tsx scripts/ingest/holdings-tracker.ts
  */
+import { chromium, type APIRequestContext, type Page } from "playwright";
 import fs from "node:fs";
 import path from "node:path";
-import * as cheerio from "cheerio";
-import { fetchText, info, warn, nowIso } from "./utils";
+import { info, warn, nowIso } from "./utils";
 
 const ROOT = process.cwd();
 const INDEX_PATH = path.join(ROOT, "src", "data", "portfolio-tracker", "index.json");
 const DEBUG_DIR = path.join(ROOT, "data", "debug");
 
-const SOURCE_URL = "https://www.rupeevest.com/Mutual-Fund-Portfolio-Tracker";
-const ENDPOINT = "https://www.rupeevest.com/home/get_mf_portfolio_tracker";
+const ORIGIN = "https://www.rupeevest.com";
+const PAGE_URL = `${ORIGIN}/Mutual-Fund-Portfolio-Tracker`;
+const ENDPOINT = `${ORIGIN}/home/get_mf_portfolio_tracker`;
+const AJAX_HEADERS = {
+  "X-Requested-With": "XMLHttpRequest",
+  Referer: PAGE_URL,
+  Accept: "application/json, text/javascript, */*; q=0.01",
+  "Accept-Language": "en-US,en;q=0.9",
+};
 const ARROW_LOGIC =
   "Per the tracker UI: arrow compares a month's share count to the next-older " +
   "month (up=increase, down=decrease, flat/none=no change). Oldest column shows " +
@@ -60,27 +69,17 @@ const ARROW_LOGIC =
 
 // ---- knobs ---------------------------------------------------------------
 const argv = process.argv.slice(2);
-function flag(name: string): boolean {
-  return argv.includes(`--${name}`);
-}
+const flag = (name: string) => argv.includes(`--${name}`);
 function argVal(name: string): string | undefined {
   const i = argv.indexOf(`--${name}`);
-  if (i >= 0 && i + 1 < argv.length) return argv[i + 1];
-  return undefined;
+  return i >= 0 && i + 1 < argv.length ? argv[i + 1] : undefined;
 }
 const PROBE = flag("probe") || process.env.HOLDINGS_PROBE === "1";
 const LIMIT = Number(argVal("limit") ?? process.env.HOLDINGS_LIMIT ?? "0") || 0;
-const CONCURRENCY = Math.max(
-  1,
-  Number(process.env.HOLDINGS_CONCURRENCY ?? "4") || 4
-);
-const DELAY_MS = Math.max(0, Number(process.env.HOLDINGS_DELAY_MS ?? "350") || 0);
-const MAX_MONTHS = Math.max(
-  1,
-  Number(process.env.HOLDINGS_MAX_MONTHS ?? "18") || 18
-);
-const FETCH_TIMEOUT_MS = 30_000;
-const FETCH_ATTEMPTS = 3;
+const DELAY_MS = Math.max(0, Number(process.env.HOLDINGS_DELAY_MS ?? "200") || 0);
+const MAX_MONTHS = Math.max(1, Number(process.env.HOLDINGS_MAX_MONTHS ?? "18") || 18);
+const FETCH_TIMEOUT_MS = 60_000;
+const FETCH_RETRIES = 2;
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
@@ -101,12 +100,13 @@ interface IndexFile {
   errors?: unknown[];
 }
 
+export type Arrow = "up" | "down" | "flat/none" | "missing" | "unknown";
 interface Cell {
   aum_pct_raw: string;
   aum_pct_num: number | null;
   shares_raw: string;
   shares_num: number | null;
-  arrow: "up" | "down" | "flat/none" | "missing" | "unknown";
+  arrow: Arrow;
   arrow_raw: string | null;
 }
 interface Row {
@@ -136,7 +136,8 @@ export interface FundPortfolio {
   rows: Row[];
 }
 
-// Parser output (arrows are derived later, over the merged window).
+// Parser output: present cells only (no nulls, no arrows). The merge step
+// null-fills the window and derives arrows.
 interface ParsedCell {
   aum_pct_raw: string;
   aum_pct_num: number | null;
@@ -168,11 +169,7 @@ function readJson<T>(file: string, fallback: T): T {
 
 /** "Apr-26" -> "apr_26" (matches portfolio-tracker.ts monthSlug). */
 function monthSlug(label: string): string {
-  return label
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
+  return label.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
 }
 
 const MONTHS_LOOKUP: Record<string, number> = {
@@ -199,17 +196,29 @@ export function monthEndIso(label: string | undefined): string | null {
   if (!mo) return null;
   let y = Number(m[2]);
   if (y < 100) y += 2000;
-  // Day 0 of the *next* month (1-based mo) === last day of `mo`.
   return new Date(Date.UTC(y, mo, 0)).toISOString();
 }
 
-/** Indian-grouped numeric string -> number. "76,97,626" -> 7697626. */
-export function parseIndianNumber(s: string): number | null {
-  if (!s) return null;
-  const cleaned = s.replace(/[,₹%\s]/g, "");
-  if (!cleaned || cleaned === "-") return null;
-  const n = Number(cleaned);
+/** Loose numeric coercion: "76,97,626" -> 7697626, "8.26%" -> 8.26, "-" -> null. */
+export function toNumOrNull(v: unknown): number | null {
+  if (v == null) return null;
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  const s = String(v).replace(/[,\s₹%]/g, "");
+  if (s === "" || s === "-" || s.toLowerCase() === "null") return null;
+  const n = Number(s);
   return Number.isFinite(n) ? n : null;
+}
+
+/** Indian digit grouping: 7697626 -> "76,97,626" (matches the tracker UI). */
+export function indianFmt(n: number): string {
+  const neg = n < 0;
+  let s = String(Math.abs(Math.round(n)));
+  if (s.length > 3) {
+    const last3 = s.slice(-3);
+    const rest = s.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ",");
+    s = `${rest},${last3}`;
+  }
+  return neg ? `-${s}` : s;
 }
 
 /** Normalise "Apr-26", "April 2026", "Apr 26" -> canonical "Apr-26". */
@@ -224,6 +233,21 @@ export function canonMonthLabel(raw: string): string | null {
   return `${MON[mo]}-${String(y).padStart(2, "0")}`;
 }
 
+/**
+ * Faithful replication of the tracker UI's incr/decr/nochange logic.
+ * shares[0] = most recent month … shares[n-1] = oldest. `i` is the month index.
+ */
+export function arrowFor(shares: (number | null)[], i: number): Arrow {
+  const cur = shares[i];
+  if (cur == null) return "missing";
+  if (i >= shares.length - 1) return "flat/none"; // oldest column: no arrow
+  const prev = shares[i + 1];
+  if (prev == null) return "up"; // appeared this month (nothing older)
+  if (cur > prev) return "up";
+  if (cur < prev) return "down";
+  return "flat/none";
+}
+
 /** Stable identity for a holdings row across snapshots. */
 function keyOf(r: { fincode?: string | null; company_name?: string | null }): string {
   const fc = String(r.fincode ?? "").trim();
@@ -235,171 +259,88 @@ function keyOf(r: { fincode?: string | null; company_name?: string | null }): st
 function fundFileSlug(schemecode: string, name: string): string {
   const slug = name
     .toLowerCase()
+    .replace(/&/g, " and ")
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
   return `${schemecode}-${slug}.json`;
 }
 
-// ---- fetch ---------------------------------------------------------------
-async function fetchTracker(schemecode: string): Promise<string> {
-  const url = `${ENDPOINT}?schemecode=${encodeURIComponent(schemecode)}`;
-  let lastErr: unknown;
-  for (let attempt = 1; attempt <= FETCH_ATTEMPTS; attempt++) {
+// ---- parse (JSON endpoint) -----------------------------------------------
+/**
+ * Parse the get_mf_portfolio_tracker JSON into present-cells-only rows. THROWS
+ * on an unrecognised response so the caller keeps the last-good snapshot instead
+ * of overwriting it with blanks. Accepts the parsed object or a raw JSON string.
+ */
+export function parseTracker(raw: unknown, schemecode: string): ParsedTracker {
+  let data: Record<string, unknown>;
+  if (typeof raw === "string") {
     try {
-      return await fetchText(url, FETCH_TIMEOUT_MS);
-    } catch (e) {
-      lastErr = e;
-      if (attempt < FETCH_ATTEMPTS) await sleep(500 * attempt * attempt);
-    }
-  }
-  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
-}
-
-// ---- parse ---------------------------------------------------------------
-// The tracker response is parsed here in isolation. RupeeVest's endpoint
-// returns the holdings grid as an HTML table (optionally wrapped in a small
-// JSON envelope); we handle both. The parser THROWS when it cannot find a
-// month-bearing holdings table so the caller keeps the last-good snapshot
-// instead of overwriting it with blanks. Confirm/adjust the selectors with
-// `--probe` before trusting a full run.
-export function parseTracker(raw: string, schemecode: string): ParsedTracker {
-  const text = raw.trim();
-
-  // JSON envelope? Pull out an embedded HTML payload or structured rows.
-  let html: string | null = null;
-  let envelope: Record<string, unknown> | null = null;
-  if (text.startsWith("{") || text.startsWith("[")) {
-    try {
-      const j = JSON.parse(text) as unknown;
-      if (typeof j === "string") {
-        html = j;
-      } else if (j && typeof j === "object") {
-        envelope = j as Record<string, unknown>;
-        for (const v of Object.values(envelope)) {
-          if (typeof v === "string" && /<\s*(table|tr|td|th)\b/i.test(v)) {
-            html = v;
-            break;
-          }
-        }
-      }
+      data = JSON.parse(raw) as Record<string, unknown>;
     } catch {
-      /* not JSON after all — treat as raw HTML below */
+      throw new Error(
+        `scheme ${schemecode}: response is not JSON (head=${JSON.stringify(raw.slice(0, 120))})`
+      );
     }
+  } else if (raw && typeof raw === "object") {
+    data = raw as Record<string, unknown>;
+  } else {
+    throw new Error(`scheme ${schemecode}: empty/non-object response`);
   }
-  if (html === null && /<\s*(table|tr|td|th)\b/i.test(text)) html = text;
 
-  if (html === null) {
+  const fundInfo = data.fund_info;
+  const info = Array.isArray(fundInfo) ? (fundInfo[0] as Record<string, unknown>) : null;
+
+  const monthLabelsRaw: string[] = (Array.isArray(data.month_name) ? data.month_name : [])
+    .map((m: unknown) => String(m).trim())
+    .filter((m: string) => m.length > 0);
+  if (monthLabelsRaw.length === 0) {
     throw new Error(
-      `scheme ${schemecode}: no HTML holdings table found in response ` +
-        `(len=${text.length}, head=${JSON.stringify(text.slice(0, 120))})`
+      `scheme ${schemecode}: no month_name[] in response (keys=${Object.keys(data).slice(0, 12).join(",")})`
     );
   }
 
-  const $ = cheerio.load(html);
+  const monthlyAum = (Array.isArray(data.MonthwiseAUM) ? data.MonthwiseAUM : []).map(
+    (a: unknown) => (a && typeof a === "object" ? (a as Record<string, unknown>).aum ?? null : null)
+  );
+  const stockData = (Array.isArray(data.stock_data) ? data.stock_data : []) as unknown[][];
+  const mapping = (data.stock_mapping ?? {}) as Record<string, string>;
 
-  // Locate the holdings table: the one whose header row carries >= 1
-  // month-like token (e.g. "Apr-26" / "April 2026").
-  let table: ReturnType<typeof $>[number] | null = null;
-  let headerCells: string[] = [];
-  $("table").each((_i, el) => {
-    if (table) return;
-    const headRow = $(el).find("tr").first();
-    const cells = headRow
-      .find("th,td")
-      .map((_j, c) => $(c).text().replace(/\s+/g, " ").trim())
-      .get();
-    const monthHits = cells.filter((c) => canonMonthLabel(c) !== null);
-    if (monthHits.length >= 1) {
-      table = el;
-      headerCells = cells;
-    }
-  });
+  const months: MonthMeta[] = monthLabelsRaw.map((label, i) => ({
+    label: canonMonthLabel(label) ?? label,
+    aumCr: (monthlyAum[i] as string | number | null) ?? "-",
+  }));
+  const slugs = months.map((m) => monthSlug(m.label));
 
-  if (!table) {
-    throw new Error(
-      `scheme ${schemecode}: holdings table present but no month columns ` +
-        `recognised (tables=${$("table").length})`
-    );
-  }
-
-  // Header cell index -> canonical month label.
-  const monthCols: { idx: number; label: string }[] = [];
-  headerCells.forEach((c, idx) => {
-    const label = canonMonthLabel(c);
-    if (label) monthCols.push({ idx, label });
-  });
-
-  const seenMonths = new Set<string>();
-  const months: MonthMeta[] = [];
-  for (const mc of monthCols) {
-    if (seenMonths.has(mc.label)) continue;
-    seenMonths.add(mc.label);
-    months.push({ label: mc.label, aumCr: "-" });
-  }
-
-  const rows: ParsedRow[] = [];
-  $(table)
-    .find("tr")
-    .slice(1)
-    .each((_i, tr) => {
-      const $tr = $(tr);
-      const tds = $tr.find("td");
-      if (tds.length === 0) return;
-      const nameCell = $(tds.get(0));
-      const company_name = nameCell.text().replace(/\s+/g, " ").trim();
-      if (!company_name) return;
-
-      // fincode: a data attribute or a numeric id in a link, if exposed.
-      const fincode =
-        ($tr.attr("data-fincode") ||
-          nameCell.attr("data-fincode") ||
-          (nameCell.find("a").attr("href") || "").match(/(\d{4,})/)?.[1] ||
-          "").trim();
-
-      const cells: Record<string, ParsedCell> = {};
-      for (const mc of monthCols) {
-        const cellText = $(tds.get(mc.idx)).text().replace(/\s+/g, " ").trim();
-        if (!cellText || cellText === "-") continue;
-        // A month cell carries a share count (large grouped int) and a % of AUM.
-        const pctMatch = cellText.match(/(\d+(?:\.\d+)?)\s*%/) ||
-          cellText.match(/(\d+\.\d+)/);
-        const sharesMatch = cellText.match(/(\d[\d,]{2,})(?!\.\d)/);
-        const aum_pct_raw = pctMatch ? pctMatch[1] : "";
-        const shares_raw = sharesMatch ? sharesMatch[1] : "";
-        if (!aum_pct_raw && !shares_raw) continue;
-        cells[monthSlug(mc.label)] = {
-          aum_pct_raw,
-          aum_pct_num: parseIndianNumber(aum_pct_raw),
-          shares_raw,
-          shares_num: parseIndianNumber(shares_raw),
-        };
+  const byFin = new Map<string, ParsedRow>();
+  for (let i = 0; i < months.length; i++) {
+    const monthArr = Array.isArray(stockData[i]) ? stockData[i] : [];
+    for (const raw of monthArr) {
+      const h = raw as Record<string, unknown>;
+      if (!h || h.fincode == null) continue;
+      const fin = String(h.fincode);
+      let row = byFin.get(fin);
+      if (!row) {
+        row = { company_name: mapping[fin] ?? `#${fin}`, fincode: fin, cells: {} };
+        byFin.set(fin, row);
       }
-      if (Object.keys(cells).length === 0) return;
-      rows.push({ company_name, fincode, cells });
-    });
-
-  // Fund-level fields, if the envelope/markup exposes them (best-effort).
-  const pickStr = (...keys: string[]): string | null => {
-    if (!envelope) return null;
-    for (const k of keys) {
-      const v = envelope[k];
-      if (typeof v === "string" && v.trim()) return v.trim();
-      if (typeof v === "number" && Number.isFinite(v)) return String(v);
+      const sharesNum = toNumOrNull(h.noshares);
+      row.cells[slugs[i]] = {
+        aum_pct_raw: h.percent_aum == null ? "" : String(h.percent_aum),
+        aum_pct_num: toNumOrNull(h.percent_aum),
+        shares_raw: sharesNum == null ? "" : indianFmt(sharesNum),
+        shares_num: sharesNum,
+      };
     }
-    return null;
-  };
-  const fund = pickStr("scheme_name", "schemename", "fund", "name");
-  const classification = pickStr("category", "classification", "subcategory");
-  const aumRaw = pickStr("aum", "aum_cr", "fund_size", "total_aum");
-  const aumTotalCr = aumRaw ? parseIndianNumber(aumRaw) : null;
+  }
 
   return {
-    fund,
-    classification,
-    aumTotalCr,
+    fund: (info?.s_name as string) ?? null,
+    classification: (info?.classification as string) ?? null,
+    aumTotalCr: toNumOrNull(info?.aumtotal),
     months,
-    rows,
-    method: envelope ? "json-endpoint" : "html-table",
+    rows: [...byFin.values()],
+    method: "json-endpoint",
   };
 }
 
@@ -425,72 +366,61 @@ export function mergeHoldings(
     .sort((a, b) => monthSortKey(labelBySlug.get(b)!) - monthSortKey(labelBySlug.get(a)!))
     .slice(0, MAX_MONTHS);
   const orderedLabels = orderedSlugs.map((s) => labelBySlug.get(s)!);
+  const freshSlugs = new Set(parsed.months.map((m) => monthSlug(m.label)));
 
-  // Merge rows by stable key; fresh month cells overwrite existing.
-  interface Merged {
-    company_name: string;
-    fincode: string;
-    months: Record<string, Cell>;
-  }
-  const byKey = new Map<string, Merged>();
+  // Merge present cells by stable key; fresh wins on overlapping months only.
+  const byKey = new Map<string, { company_name: string; fincode: string; cells: Record<string, ParsedCell> }>();
   for (const r of existing?.rows ?? []) {
-    byKey.set(keyOf(r), {
-      company_name: r.company_name,
-      fincode: r.fincode,
-      months: { ...r.months },
-    });
+    const cells: Record<string, ParsedCell> = {};
+    for (const [slug, c] of Object.entries(r.months)) {
+      if (c.shares_num == null && c.aum_pct_num == null) continue; // drop disk null-fill
+      cells[slug] = {
+        aum_pct_raw: c.aum_pct_raw,
+        aum_pct_num: c.aum_pct_num,
+        shares_raw: c.shares_raw,
+        shares_num: c.shares_num,
+      };
+    }
+    byKey.set(keyOf(r), { company_name: r.company_name, fincode: r.fincode, cells });
   }
   for (const r of parsed.rows) {
     const k = keyOf(r);
     let cur = byKey.get(k);
     if (!cur) {
-      cur = { company_name: r.company_name, fincode: r.fincode, months: {} };
+      cur = { company_name: r.company_name, fincode: r.fincode, cells: {} };
       byKey.set(k, cur);
     } else if (!cur.fincode && r.fincode) {
       cur.fincode = r.fincode;
     }
-    for (const [slug, c] of Object.entries(r.cells)) {
-      cur.months[slug] = {
-        aum_pct_raw: c.aum_pct_raw,
-        aum_pct_num: c.aum_pct_num,
-        shares_raw: c.shares_raw,
-        shares_num: c.shares_num,
-        arrow: "flat/none",
-        arrow_raw: null,
-      };
-    }
+    // Fresh is authoritative for the months it covers: clear then re-apply so a
+    // holding dropped this month doesn't linger from the prior overlap fetch.
+    for (const slug of freshSlugs) delete cur.cells[slug];
+    for (const [slug, c] of Object.entries(r.cells)) cur.cells[slug] = { ...c };
   }
 
-  // Restrict to the window, recompute arrows, drop empty rows.
+  // Build the full-grid output (null-fill the window) + faithful arrows.
   const rows: Row[] = [];
   for (const cur of byKey.values()) {
+    if (!orderedSlugs.some((s) => cur.cells[s] !== undefined)) continue; // nothing in window
+    const shrArr = orderedSlugs.map((s) => cur.cells[s]?.shares_num ?? null);
     const months: Record<string, Cell> = {};
-    for (const slug of orderedSlugs) {
-      if (cur.months[slug] !== undefined) months[slug] = cur.months[slug];
-    }
-    const present = Object.keys(months);
-    if (present.length === 0) continue;
-
     orderedSlugs.forEach((slug, i) => {
-      const cell = months[slug];
-      if (!cell) return;
-      const olderSlug = orderedSlugs[i + 1];
-      const olderSh = olderSlug ? months[olderSlug]?.shares_num : undefined;
-      const sh = cell.shares_num;
-      let arrow: Cell["arrow"];
-      if (olderSlug === undefined || olderSh == null || sh == null) {
-        arrow = i === orderedSlugs.length - 1 ? "flat/none" : "missing";
-      } else if (sh > olderSh) arrow = "up";
-      else if (sh < olderSh) arrow = "down";
-      else arrow = "flat/none";
-      cell.arrow = arrow;
-      cell.arrow_raw = null;
+      const c = cur.cells[slug];
+      const pctNum = c?.aum_pct_num ?? null;
+      const shrNum = c?.shares_num ?? null;
+      months[slug] = {
+        aum_pct_raw: pctNum == null ? "-" : c?.aum_pct_raw || String(pctNum),
+        aum_pct_num: pctNum,
+        shares_raw: shrNum == null ? "-" : c?.shares_raw || indianFmt(shrNum),
+        shares_num: shrNum,
+        arrow: arrowFor(shrArr, i),
+        arrow_raw: null,
+      };
     });
-
     rows.push({ company_name: cur.company_name, fincode: cur.fincode, months });
   }
 
-  // Sort by latest-month % of AUM, descending (stable diffs + sensible order).
+  // Sort by latest-month % of AUM, descending.
   const latestSlug = orderedSlugs[0];
   const latestPct = (r: Row) => r.months[latestSlug]?.aum_pct_num ?? -1;
   rows.sort((a, b) => latestPct(b) - latestPct(a));
@@ -498,12 +428,11 @@ export function mergeHoldings(
   const newest = orderedLabels[0];
   return {
     meta: {
-      source: existing?.meta.source ?? SOURCE_URL,
+      source: existing?.meta.source ?? PAGE_URL,
       endpoint: `${ENDPOINT}?schemecode=${entry.schemecode}`,
       fund: existing?.meta.fund ?? parsed.fund ?? entry.fundName ?? entry.name,
       schemecode: String(entry.schemecode),
-      classification:
-        parsed.classification ?? existing?.meta.classification ?? entry.classification ?? null,
+      classification: parsed.classification ?? existing?.meta.classification ?? entry.classification ?? null,
       aumTotalCr: parsed.aumTotalCr ?? existing?.meta.aumTotalCr ?? entry.aumTotalCr ?? null,
       aumAsOf: monthEndIso(newest) ?? existing?.meta.aumAsOf ?? entry.aumAsOf ?? null,
       scrapedAt: nowIso(),
@@ -516,62 +445,102 @@ export function mergeHoldings(
   };
 }
 
+// ---- fetch (browser session) ---------------------------------------------
+async function getJson(
+  req: APIRequestContext,
+  schemecode: string
+): Promise<{ ok: boolean; status: number; body: string; json: unknown | null }> {
+  const url = `${ENDPOINT}?schemecode=${encodeURIComponent(schemecode)}`;
+  try {
+    const res = await req.get(url, { headers: AJAX_HEADERS, timeout: FETCH_TIMEOUT_MS });
+    const body = await res.text();
+    if (!res.ok()) return { ok: false, status: res.status(), body, json: null };
+    try {
+      return { ok: true, status: res.status(), body, json: JSON.parse(body) };
+    } catch {
+      return { ok: false, status: res.status(), body, json: null };
+    }
+  } catch (e) {
+    return { ok: false, status: 0, body: (e as Error).message, json: null };
+  }
+}
+
+async function refreshSession(page: Page): Promise<void> {
+  try {
+    await page.goto(PAGE_URL, { waitUntil: "domcontentloaded", timeout: 90_000 });
+    await page.waitForTimeout(1500);
+  } catch (e) {
+    warn(`session refresh failed: ${(e as Error).message}`);
+  }
+}
+
+/** Fetch one scheme, refreshing the session and retrying on 403/5xx/network. */
+async function fetchScheme(
+  req: APIRequestContext,
+  page: Page,
+  schemecode: string
+): Promise<{ ok: boolean; status: number; body: string; json: unknown | null }> {
+  let r = await getJson(req, schemecode);
+  for (let attempt = 1; !r.ok && attempt <= FETCH_RETRIES; attempt++) {
+    if (r.status === 403 || r.status === 0 || r.status >= 500) await refreshSession(page);
+    await sleep(500 * attempt);
+    r = await getJson(req, schemecode);
+  }
+  return r;
+}
+
+async function withSession<T>(fn: (req: APIRequestContext, page: Page) => Promise<T>): Promise<T> {
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const ctx = await browser.newContext({
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      viewport: { width: 1440, height: 900 },
+      locale: "en-IN",
+      timezoneId: "Asia/Kolkata",
+    });
+    const page = await ctx.newPage();
+    await page.goto(PAGE_URL, { waitUntil: "domcontentloaded", timeout: 90_000 });
+    await page.waitForTimeout(2000);
+    info("tracker page loaded (session cookies established)");
+    return await fn(ctx.request, page);
+  } finally {
+    await browser.close();
+  }
+}
+
 // ---- probe ---------------------------------------------------------------
 async function runProbe(universe: IndexEntry[]): Promise<void> {
   fs.mkdirSync(DEBUG_DIR, { recursive: true });
   const n = Math.min(LIMIT || 3, universe.length);
-  info(`PROBE mode — fetching ${n} scheme(s), dumping raw responses, no writes.`);
-  for (let i = 0; i < n; i++) {
-    const e = universe[i];
-    try {
-      const raw = await fetchTracker(e.schemecode);
-      const out = path.join(DEBUG_DIR, `holdings-probe-${e.schemecode}.txt`);
-      fs.writeFileSync(out, raw, "utf8");
-      const looksJson = raw.trim().startsWith("{") || raw.trim().startsWith("[");
-      const hasTable = /<\s*table\b/i.test(raw);
-      info(
-        `  ${e.schemecode} ${e.name} — ${raw.length} bytes, ` +
-          `json=${looksJson} html-table=${hasTable} → ${path.relative(ROOT, out)}`
-      );
-      info(`    head: ${JSON.stringify(raw.slice(0, 200))}`);
+  info(`PROBE mode — fetching ${n} scheme(s), dumping raw JSON, no writes.`);
+  await withSession(async (req, page) => {
+    for (let i = 0; i < n; i++) {
+      const e = universe[i];
+      const r = await fetchScheme(req, page, e.schemecode);
+      const out = path.join(DEBUG_DIR, `holdings-probe-${e.schemecode}.json`);
+      fs.writeFileSync(out, r.body, "utf8");
+      info(`  ${e.schemecode} ${e.name} — status ${r.status}, ${r.body.length} bytes → ${path.relative(ROOT, out)}`);
+      if (r.json && typeof r.json === "object") {
+        info(`    keys: ${Object.keys(r.json as object).slice(0, 12).join(", ")}`);
+      } else {
+        info(`    head: ${JSON.stringify(r.body.slice(0, 200))}`);
+      }
       try {
-        const p = parseTracker(raw, e.schemecode);
+        const p = parseTracker(r.json ?? r.body, e.schemecode);
         info(
-          `    parsed OK — method=${p.method} months=[${p.months
-            .map((m) => m.label)
-            .join(", ")}] rows=${p.rows.length}`
+          `    parsed OK — fund=${JSON.stringify(p.fund)} aumCr=${p.aumTotalCr} ` +
+            `months=[${p.months.map((m) => m.label).join(", ")}] rows=${p.rows.length}`
         );
       } catch (err) {
         warn(`    parse failed: ${(err as Error).message}`);
       }
-    } catch (err) {
-      warn(`  ${e.schemecode} fetch failed: ${(err as Error).message}`);
+      if (DELAY_MS) await sleep(DELAY_MS);
     }
-    if (DELAY_MS) await sleep(DELAY_MS);
-  }
+  });
 }
 
 // ---- orchestrator --------------------------------------------------------
-async function runPool<T>(
-  items: T[],
-  concurrency: number,
-  worker: (item: T, i: number) => Promise<void>
-): Promise<void> {
-  let idx = 0;
-  const runners = Array.from(
-    { length: Math.min(concurrency, items.length) },
-    async () => {
-      for (;;) {
-        const i = idx++;
-        if (i >= items.length) break;
-        await worker(items[i], i);
-        if (DELAY_MS) await sleep(Math.random() * DELAY_MS);
-      }
-    }
-  );
-  await Promise.all(runners);
-}
-
 async function main(): Promise<void> {
   const index = readJson<IndexFile | null>(INDEX_PATH, null);
   if (!index || !Array.isArray(index.funds)) {
@@ -583,8 +552,7 @@ async function main(): Promise<void> {
   if (LIMIT > 0) universe = universe.slice(0, LIMIT);
   info(
     `universe: ${universe.length} funds (previous > ₹500 Cr benchmark` +
-      `${LIMIT ? `, limited to ${LIMIT}` : ""}); ` +
-      `concurrency=${CONCURRENCY} maxMonths=${MAX_MONTHS}`
+      `${LIMIT ? `, limited to ${LIMIT}` : ""}); maxMonths=${MAX_MONTHS}`
   );
 
   if (PROBE) {
@@ -595,55 +563,60 @@ async function main(): Promise<void> {
   const stats = { refreshed: 0, created: 0, keptEmpty: 0, keptFailed: 0, skipped: 0 };
   const errors: { schemecode: string; reason: string }[] = [];
 
-  await runPool(universe, CONCURRENCY, async (entry) => {
-    let raw: string;
-    try {
-      raw = await fetchTracker(entry.schemecode);
-    } catch (e) {
-      stats.keptFailed++;
-      errors.push({ schemecode: entry.schemecode, reason: `fetch: ${(e as Error).message}` });
-      return;
+  await withSession(async (req, page) => {
+    let i = 0;
+    for (const entry of universe) {
+      i++;
+      const r = await fetchScheme(req, page, entry.schemecode);
+      if (!r.ok || r.json == null) {
+        stats.keptFailed++;
+        errors.push({ schemecode: entry.schemecode, reason: `fetch (status ${r.status})` });
+        if (DELAY_MS) await sleep(DELAY_MS);
+        continue;
+      }
+
+      let parsed: ParsedTracker;
+      try {
+        parsed = parseTracker(r.json, entry.schemecode);
+      } catch (e) {
+        stats.keptFailed++;
+        errors.push({ schemecode: entry.schemecode, reason: `parse: ${(e as Error).message}` });
+        if (DELAY_MS) await sleep(DELAY_MS);
+        continue;
+      }
+
+      if (parsed.rows.length === 0) {
+        stats[entry.file ? "keptEmpty" : "skipped"]++; // never wipe an existing snapshot
+        if (DELAY_MS) await sleep(DELAY_MS);
+        continue;
+      }
+
+      const existingPath = entry.file ? path.join(ROOT, "public", entry.file) : null;
+      const existing =
+        existingPath && fs.existsSync(existingPath)
+          ? readJson<FundPortfolio | null>(existingPath, null)
+          : null;
+
+      const merged = mergeHoldings(existing, parsed, entry);
+      const file = entry.file ?? `holdings/${fundFileSlug(entry.schemecode, merged.meta.fund)}`;
+      const outPath = path.join(ROOT, "public", file);
+      fs.mkdirSync(path.dirname(outPath), { recursive: true });
+      fs.writeFileSync(outPath, JSON.stringify(merged, null, 2) + "\n", "utf8");
+
+      entry.file = file;
+      entry.rowCount = merged.rows.length;
+      entry.aumTotalCr = merged.meta.aumTotalCr;
+      entry.aumAsOf = merged.meta.aumAsOf;
+      entry.classification = merged.meta.classification;
+
+      stats[existing ? "refreshed" : "created"]++;
+      if ((stats.refreshed + stats.created) % 50 === 0) {
+        info(`  …${i}/${universe.length} processed (refreshed ${stats.refreshed}, created ${stats.created})`);
+      }
+      if (DELAY_MS) await sleep(DELAY_MS);
     }
-
-    let parsed: ParsedTracker;
-    try {
-      parsed = parseTracker(raw, entry.schemecode);
-    } catch (e) {
-      stats.keptFailed++;
-      errors.push({ schemecode: entry.schemecode, reason: `parse: ${(e as Error).message}` });
-      return;
-    }
-
-    if (parsed.rows.length === 0) {
-      // No equity holdings reported. Never wipe an existing snapshot.
-      stats[entry.file ? "keptEmpty" : "skipped"]++;
-      return;
-    }
-
-    const existingPath = entry.file ? path.join(ROOT, "public", entry.file) : null;
-    const existing =
-      existingPath && fs.existsSync(existingPath)
-        ? readJson<FundPortfolio | null>(existingPath, null)
-        : null;
-
-    const merged = mergeHoldings(existing, parsed, entry);
-
-    const file = entry.file ?? `holdings/${fundFileSlug(entry.schemecode, merged.meta.fund)}`;
-    const outPath = path.join(ROOT, "public", file);
-    fs.mkdirSync(path.dirname(outPath), { recursive: true });
-    fs.writeFileSync(outPath, JSON.stringify(merged, null, 2) + "\n", "utf8");
-
-    // Reflect the refresh back into the index entry.
-    entry.file = file;
-    entry.rowCount = merged.rows.length;
-    entry.aumTotalCr = merged.meta.aumTotalCr;
-    entry.aumAsOf = merged.meta.aumAsOf;
-    entry.classification = merged.meta.classification;
-
-    stats[existing ? "refreshed" : "created"]++;
   });
 
-  const attempted = universe.length;
   const succeeded = stats.refreshed + stats.created;
   info(
     `done — refreshed ${stats.refreshed}, created ${stats.created}, ` +
@@ -654,14 +627,12 @@ async function main(): Promise<void> {
     for (const e of errors.slice(0, 8)) warn(`  ${e.schemecode}: ${e.reason}`);
   }
 
-  // Global keep-last-good: if nothing succeeded, do NOT rewrite the index and
-  // signal failure so the workflow's commit step is skipped.
+  // Global keep-last-good: nothing succeeded → leave the index untouched + fail.
   if (succeeded === 0) {
-    warn(`no funds refreshed (attempted ${attempted}); leaving index untouched.`);
+    warn(`no funds refreshed (attempted ${universe.length}); leaving index untouched.`);
     process.exit(1);
   }
 
-  // Refresh index: newest month-end + provenance, re-sort by AUM desc.
   const newestAsOf = index.funds
     .map((f) => f.aumAsOf)
     .filter((d): d is string => Boolean(d))
@@ -672,7 +643,7 @@ async function main(): Promise<void> {
   if (newestAsOf) index.meta.holdingsAsOf = newestAsOf;
   index.meta.lastHoldingsRefresh = {
     at: nowIso(),
-    attempted,
+    attempted: universe.length,
     refreshed: stats.refreshed,
     created: stats.created,
     keptEmpty: stats.keptEmpty,
@@ -682,9 +653,8 @@ async function main(): Promise<void> {
   info(`index updated → ${path.relative(ROOT, INDEX_PATH)} (holdingsAsOf=${newestAsOf ?? "n/a"})`);
 }
 
-// Import-safe: the synthetic test imports parseTracker / mergeHoldings and the
-// month helpers and must NOT trigger a real run. Only invoke main() when this
-// file is executed directly (works for tsx / node ESM + CJS).
+// Import-safe: the synthetic test imports parseTracker / mergeHoldings / helpers
+// and must NOT trigger a real run. Only invoke main() when executed directly.
 const _argv1 = process.argv[1] ?? "";
 const _isEntry =
   _argv1.endsWith("/holdings-tracker.ts") ||
