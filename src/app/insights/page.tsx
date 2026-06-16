@@ -567,7 +567,7 @@ export default function InsightsPage() {
               <thead>
                 <tr className="bg-muted/60 text-xs text-muted-foreground">
                   <th className="px-3 py-2 text-left font-medium">Company</th>
-                  <th className="px-3 py-2 text-left font-medium">Cap tier</th>
+                  <th className="px-3 py-2 text-left font-medium">Sector</th>
                   <th className="px-3 py-2 text-right font-medium">
                     % of shares outstanding
                   </th>
@@ -579,7 +579,7 @@ export default function InsightsPage() {
                 {moves.rows.map((r) => (
                   <tr key={r.company} className="border-b last:border-0">
                     <td className="px-3 py-2 font-medium">{r.company}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{r.tier}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{r.sector}</td>
                     <td
                       className={cn(
                         "px-3 py-2 text-right tabular font-medium",

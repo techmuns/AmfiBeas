@@ -244,7 +244,7 @@ export interface OwnershipMove {
   pctOutstanding: number; // signed: + bought / − sold
   netCr: number; // signed
   amcs: string[];
-  tier: string;
+  sector: string;
 }
 
 export function topOwnershipMoves(n = 6): {
@@ -266,7 +266,7 @@ export function topOwnershipMoves(n = 6): {
           pctOutstanding: r.pctOutstanding,
           netCr: r.netCr,
           amcs: r.amcs,
-          tier: t.label,
+          sector: classifySector(r.fincode, r.company),
         });
       }
     }
@@ -277,7 +277,7 @@ export function topOwnershipMoves(n = 6): {
           pctOutstanding: -r.pctOutstanding,
           netCr: -r.netCr,
           amcs: r.amcs,
-          tier: t.label,
+          sector: classifySector(r.fincode, r.company),
         });
       }
     }
