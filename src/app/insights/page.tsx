@@ -463,30 +463,26 @@ export default function InsightsPage() {
             kicker={`Where MF money rotated · ${rotation.month}`}
             headline={
               <>
-                Across the top names MFs traded this month, money rotated{" "}
+                Across the Top-20 names MFs traded this month,{" "}
                 {rotation.inflow && (
                   <>
-                    into{" "}
-                    <span className={pos}>
-                      {rotation.inflow.sector} (+₹{fmtINR(rotation.inflow.netCr)}{" "}
-                      Cr net)
-                    </span>
+                    <span className={pos}>{rotation.inflow.sector}</span> has the
+                    most buys ({rotation.inflow.count} of {rotation.totalBought}{" "}
+                    names)
                   </>
                 )}
-                {rotation.inflow && rotation.outflow && " and "}
+                {rotation.inflow && rotation.outflow && " while "}
                 {rotation.outflow && (
                   <>
-                    out of{" "}
-                    <span className={neg}>
-                      {rotation.outflow.sector} (−₹
-                      {fmtINR(Math.abs(rotation.outflow.netCr))} Cr net)
-                    </span>
+                    <span className={neg}>{rotation.outflow.sector}</span> has the
+                    most sells ({rotation.outflow.count} of {rotation.totalSold}{" "}
+                    names)
                   </>
                 )}
                 .
               </>
             }
-            support="Buys minus sells across the Top-20 large/mid/small-cap names on the Overview, bucketed by sector. The leading stocks driving each side are below."
+            support="How many of the Overview's Top-20 large/mid/small-cap names fall in each sector — the side with the most names is highlighted. The leading buys and sells in those sectors are below."
             source={`Source: aggregated scheme holdings, ${rotation.month}; sector map (Capitaline/RupeeVest taxonomy).`}
           />
           <div className="grid gap-4 lg:grid-cols-2">
@@ -546,9 +542,11 @@ export default function InsightsPage() {
                   </table>
                 </div>
                 <p className="mt-3 text-[10px] text-muted-foreground/70">
-                  Net {kind === "in" ? "buying" : "selling"} in {flow.sector} this
-                  month: ₹{fmtINR(Math.abs(flow.netCr))} Cr across the Overview
-                  Top-20 names.
+                  {flow.count} of the{" "}
+                  {kind === "in" ? rotation.totalBought : rotation.totalSold}{" "}
+                  top-{kind === "in" ? "bought" : "sold"} names are {flow.sector} —
+                  net {kind === "in" ? "buying" : "selling"} ₹
+                  {fmtINR(Math.abs(flow.netCr))} Cr across the Overview Top-20.
                 </p>
               </Card>
             ))}
