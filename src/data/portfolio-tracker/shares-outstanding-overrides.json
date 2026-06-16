@@ -1,6 +1,15 @@
 {
   "meta": {
-    "note": "Manual fincode → screener.in symbol overrides for the shares-outstanding feed. Add an entry here when scripts/ingest/shares-outstanding.ts resolves a company to the wrong screener page (the autocomplete top-hit was ambiguous). The symbol is the slug in the company URL, e.g. https://www.screener.in/company/HDFCBANK/ → \"HDFCBANK\". An override forces that page and skips the search step."
+    "note": "Manual overrides for the shares-outstanding feed (scripts/ingest/shares-outstanding.ts), keyed by RupeeVest fincode. Two forms: (a) \"symbol\" forces a screener.in company slug, e.g. https://www.screener.in/company/HDFCBANK/ -> \"HDFCBANK\" (use when the autocomplete top-hit is wrong/ambiguous); (b) \"sharesOutstanding\" supplies the figure directly for names screener.in can't serve (e.g. foreign stocks), skipping the scrape."
   },
-  "companies": {}
+  "companies": {
+    "249927": { "symbol": "GUJGASLTD", "note": "Gujarat Gas Ltd." },
+    "132757": { "symbol": "VOLTAMP", "note": "Voltamp Transformers Ltd." },
+    "132209": { "symbol": "J&KBANK", "note": "The Jammu & Kashmir Bank Ltd." },
+    "132702": { "symbol": "GSPL", "note": "Gujarat State Petronet Ltd." },
+    "279017": {
+      "sharesOutstanding": 5800000000,
+      "note": "Alphabet Inc Class A (GOOGL) - US stock, not on screener.in. Class A shares outstanding ~5.8B; foreign holding so % of o/s is ~0. Update if materially stale."
+    }
+  }
 }
