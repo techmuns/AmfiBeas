@@ -52,7 +52,7 @@ concurrency:
 jobs:
   holdings:
     runs-on: ubuntu-22.04
-    timeout-minutes: 60
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -61,13 +61,15 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Install Playwright Chromium
+        # The endpoint is session-gated, so the scraper drives a real browser.
+        run: npx playwright install --with-deps chromium
 
       - name: Refresh schemewise holdings
         env:
           HOLDINGS_PROBE: ${{ inputs.mode == 'probe' && '1' || '0' }}
           HOLDINGS_LIMIT: ${{ inputs.limit }}
-          HOLDINGS_CONCURRENCY: "4"
-          HOLDINGS_DELAY_MS: "350"
+          HOLDINGS_DELAY_MS: "200"
         run: npm run ingest:holdings
 
       - name: Upload probe responses
@@ -75,7 +77,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: holdings-probe
-          path: data/debug/holdings-probe-*.txt
+          path: data/debug/holdings-probe-*.json
           if-no-files-found: warn
           retention-days: 14
 
