@@ -79,7 +79,10 @@ interface SoFile {
 }
 
 interface Overrides {
-  companies: Record<string, { symbol: string; note?: string }>;
+  companies: Record<
+    string,
+    { symbol?: string; sharesOutstanding?: number; note?: string }
+  >;
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -143,9 +146,16 @@ async function resolveSymbol(query: string): Promise<SearchHit | null> {
     return null;
   }
   if (!Array.isArray(hits) || hits.length === 0) return null;
-  const first = hits[0] as { name?: string; url?: string };
-  if (typeof first.url !== "string") return null;
-  return { name: first.name ?? query, url: first.url };
+  // Pick the first hit that is an actual company page ("/company/<slug>/").
+  // The autocomplete sometimes returns screens / index URLs first, which used
+  // to slip through and resolve to an empty symbol + an unparseable page.
+  for (const h of hits) {
+    const u = (h as { url?: string }).url;
+    if (typeof u === "string" && /^\/company\/[^/]+\//.test(u)) {
+      return { name: (h as { name?: string }).name ?? query, url: u };
+    }
+  }
+  return null;
 }
 
 /** Parse "12,34,567" style strings into a number; null when unparseable. */
@@ -180,8 +190,21 @@ function parseTopRatios(html: string): TopRatios | null {
 async function fetchEntry(
   fincode: string,
   company: string,
-  override: { symbol: string } | undefined
+  override: { symbol?: string; sharesOutstanding?: number } | undefined
 ): Promise<SoEntry | null> {
+  // Manual shares-outstanding figure — for names screener.in can't serve
+  // (e.g. foreign stocks like Alphabet). Skips the screener fetch entirely.
+  if (override?.sharesOutstanding && override.sharesOutstanding > 0) {
+    return {
+      company,
+      symbol: override.symbol ?? "",
+      sharesOutstanding: Math.round(override.sharesOutstanding),
+      marketCapCr: 0,
+      priceInr: 0,
+      asOf: nowIso(),
+      source: "manual override (not on screener.in)",
+    };
+  }
   let hit: SearchHit | null;
   if (override?.symbol) {
     hit = { name: company, url: `/company/${override.symbol}/` };
