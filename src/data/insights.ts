@@ -327,102 +327,111 @@ export interface SectorFlowStock {
 }
 export interface SectorFlow {
   sector: string;
-  netCr: number; // signed net across the Overview names in this sector
-  boughtCr: number; // gross bought (₹ Cr)
-  soldCr: number; // gross sold (₹ Cr, positive magnitude)
-  stocks: SectorFlowStock[];
+  count: number; // # of the top names that fall in this sector on this side
+  netCr: number; // signed Σ ₹ Cr for this side (+ bought / − sold)
+  stocks: SectorFlowStock[]; // leading names in this sector, most-traded first
 }
 export interface SectorRotation {
   month: string;
-  inflow: SectorFlow | null; // sector with the most net money coming in
-  outflow: SectorFlow | null; // sector with the most net money going out
-  /** All real sectors, ranked by signed net flow (desc) — for context. */
-  sectors: { sector: string; netCr: number }[];
+  totalBought: number; // top names on the buy side considered
+  totalSold: number; // top names on the sell side considered
+  inflow: SectorFlow | null; // sector with the MOST bought names (by count)
+  outflow: SectorFlow | null; // sector with the MOST sold names (by count)
 }
 
-// Buckets that aren't real Indian sectors — excluded from the headline picks
-// and the ranked list so the rotation read stays meaningful.
+// Buckets that aren't real Indian sectors — excluded from the picks so the
+// rotation read stays meaningful.
 const NON_SECTORS = new Set([UNCLASSIFIED, OVERSEAS_EQUITY, MUTUAL_FUND]);
+const TIER_LABEL: Record<"large" | "mid" | "small", string> = {
+  large: "Large-cap",
+  mid: "Mid-cap",
+  small: "Small-cap",
+};
 
 /**
  * Roll the Overview's Top-20 most-bought / most-sold names (large + mid + small)
- * up to their sectors and read which sector money rotated INTO (net buys) and
- * OUT OF (net sells) this month, plus the leading stocks driving each side.
+ * up to their sectors and surface, on each side, the sector that the MOST names
+ * fall into — i.e. where MF activity is most concentrated by count — plus the
+ * leading stocks driving it. Buy and sell sides are picked independently.
  * Computed at build time from the same cap-flows snapshot the Overview renders.
  */
 export function sectorRotation(topStocks = 5): SectorRotation {
-  const tiers = [
-    { key: "large", label: "Large-cap" },
-    { key: "mid", label: "Mid-cap" },
-    { key: "small", label: "Small-cap" },
-  ] as const;
+  const tiers = ["large", "mid", "small"] as const;
+  const clean = (s: string) => s.replace(/\s+(Ltd\.?|Limited)$/i, "");
 
-  const bySector = new Map<string, SectorFlow>();
-  const ensure = (sector: string): SectorFlow => {
-    let e = bySector.get(sector);
-    if (!e) {
-      e = { sector, netCr: 0, boughtCr: 0, soldCr: 0, stocks: [] };
-      bySector.set(sector, e);
-    }
-    return e;
+  const bought = new Map<string, SectorFlowStock[]>();
+  const sold = new Map<string, SectorFlowStock[]>();
+  let totalBought = 0;
+  let totalSold = 0;
+
+  const push = (
+    map: Map<string, SectorFlowStock[]>,
+    sector: string,
+    stock: SectorFlowStock
+  ) => {
+    const arr = map.get(sector);
+    if (arr) arr.push(stock);
+    else map.set(sector, [stock]);
   };
 
-  const add = (
-    rows: (typeof capFlows)["large"]["bought"],
-    side: "bought" | "sold",
-    tier: string
-  ) => {
-    for (const r of rows) {
+  for (const key of tiers) {
+    for (const r of capFlows[key].bought) {
+      totalBought += 1;
       const sector = classifySector(r.fincode, r.company);
-      const signedCr = side === "bought" ? r.netCr : -r.netCr;
-      const e = ensure(sector);
-      e.netCr += signedCr;
-      if (side === "bought") e.boughtCr += r.netCr;
-      else e.soldCr += r.netCr;
-      e.stocks.push({
-        company: r.company.replace(/\s+(Ltd\.?|Limited)$/i, ""),
-        netCr: signedCr,
-        pctOutstanding:
-          r.pctOutstanding === null
-            ? null
-            : side === "bought"
-              ? r.pctOutstanding
-              : -r.pctOutstanding,
+      if (NON_SECTORS.has(sector)) continue;
+      push(bought, sector, {
+        company: clean(r.company),
+        netCr: r.netCr,
+        pctOutstanding: r.pctOutstanding,
         amcs: r.amcs,
-        tier,
+        tier: TIER_LABEL[key],
       });
     }
+    for (const r of capFlows[key].sold) {
+      totalSold += 1;
+      const sector = classifySector(r.fincode, r.company);
+      if (NON_SECTORS.has(sector)) continue;
+      push(sold, sector, {
+        company: clean(r.company),
+        netCr: -r.netCr,
+        pctOutstanding: r.pctOutstanding === null ? null : -r.pctOutstanding,
+        amcs: r.amcs,
+        tier: TIER_LABEL[key],
+      });
+    }
+  }
+
+  // Pick the sector with the MOST names on this side (ties broken by total ₹
+  // traded), then keep its leading names, most-traded first.
+  const pick = (
+    map: Map<string, SectorFlowStock[]>,
+    side: "bought" | "sold"
+  ): SectorFlow | null => {
+    let best: SectorFlow | null = null;
+    for (const [sector, stocks] of map) {
+      const netCr = stocks.reduce((s, x) => s + x.netCr, 0);
+      const count = stocks.length;
+      if (
+        !best ||
+        count > best.count ||
+        (count === best.count && Math.abs(netCr) > Math.abs(best.netCr))
+      ) {
+        best = { sector, count, netCr, stocks };
+      }
+    }
+    if (best) {
+      best.stocks = [...best.stocks]
+        .sort((a, b) => (side === "bought" ? b.netCr - a.netCr : a.netCr - b.netCr))
+        .slice(0, topStocks);
+    }
+    return best;
   };
-
-  for (const t of tiers) {
-    add(capFlows[t.key].bought, "bought", t.label);
-    add(capFlows[t.key].sold, "sold", t.label);
-  }
-
-  const real = [...bySector.values()].filter((s) => !NON_SECTORS.has(s.sector));
-  const ranked = [...real].sort((a, b) => b.netCr - a.netCr);
-
-  const inflow = ranked.length > 0 && ranked[0].netCr > 0 ? ranked[0] : null;
-  const last = ranked[ranked.length - 1];
-  const outflow = ranked.length > 0 && last.netCr < 0 ? last : null;
-
-  if (inflow) {
-    inflow.stocks = inflow.stocks
-      .filter((s) => s.netCr > 0)
-      .sort((a, b) => b.netCr - a.netCr)
-      .slice(0, topStocks);
-  }
-  if (outflow) {
-    outflow.stocks = outflow.stocks
-      .filter((s) => s.netCr < 0)
-      .sort((a, b) => a.netCr - b.netCr)
-      .slice(0, topStocks);
-  }
 
   return {
     month: capFlows.meta.monthCur,
-    inflow,
-    outflow,
-    sectors: ranked.map((s) => ({ sector: s.sector, netCr: Math.round(s.netCr) })),
+    totalBought,
+    totalSold,
+    inflow: pick(bought, "bought"),
+    outflow: pick(sold, "sold"),
   };
 }
