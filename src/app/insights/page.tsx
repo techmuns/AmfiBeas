@@ -10,6 +10,8 @@ import {
   categoryStreaks,
   streakBreaks,
   topOwnershipMoves,
+  sectorRotation,
+  type SectorFlow,
   holdingsInsights,
   fmtINR,
   fmtPct1,
@@ -67,6 +69,7 @@ export default function InsightsPage() {
   const streaks = categoryStreaks(3);
   const breaks = streakBreaks(4);
   const moves = topOwnershipMoves(6);
+  const rotation = sectorRotation(5);
   const { uniques, amcShare, meta } = holdingsInsights;
 
   const shareGainers = amcShare.rows.filter((r) => (r.momBps ?? 0) > 0).slice(0, 3);
@@ -452,7 +455,108 @@ export default function InsightsPage() {
         </Card>
       </section>
 
-      {/* ---- 6. Ownership moves ----------------------------------------------*/}
+      {/* ---- 6. Sector rotation (from the Overview top-20) ------------------*/}
+      {(rotation.inflow || rotation.outflow) && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium tracking-tight">Sector rotation</h2>
+          <Insight
+            kicker={`Where MF money rotated · ${rotation.month}`}
+            headline={
+              <>
+                Across the top names MFs traded this month, money rotated{" "}
+                {rotation.inflow && (
+                  <>
+                    into{" "}
+                    <span className={pos}>
+                      {rotation.inflow.sector} (+₹{fmtINR(rotation.inflow.netCr)}{" "}
+                      Cr net)
+                    </span>
+                  </>
+                )}
+                {rotation.inflow && rotation.outflow && " and "}
+                {rotation.outflow && (
+                  <>
+                    out of{" "}
+                    <span className={neg}>
+                      {rotation.outflow.sector} (−₹
+                      {fmtINR(Math.abs(rotation.outflow.netCr))} Cr net)
+                    </span>
+                  </>
+                )}
+                .
+              </>
+            }
+            support="Buys minus sells across the Top-20 large/mid/small-cap names on the Overview, bucketed by sector. The leading stocks driving each side are below."
+            source={`Source: aggregated scheme holdings, ${rotation.month}; sector map (Capitaline/RupeeVest taxonomy).`}
+          />
+          <div className="grid gap-4 lg:grid-cols-2">
+            {(
+              [
+                rotation.inflow && { flow: rotation.inflow, kind: "in" as const },
+                rotation.outflow && { flow: rotation.outflow, kind: "out" as const },
+              ].filter(Boolean) as { flow: SectorFlow; kind: "in" | "out" }[]
+            ).map(({ flow, kind }) => (
+              <Card
+                key={flow.sector}
+                title={`${flow.sector} — ${kind === "in" ? "top buys" : "top sells"} (${rotation.month})`}
+              >
+                <div className="overflow-x-auto rounded-md border bg-card">
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-muted/60 text-xs text-muted-foreground">
+                        <th className="px-3 py-2 text-left font-medium">Company</th>
+                        <th className="px-3 py-2 text-right font-medium">% of o/s</th>
+                        <th className="px-3 py-2 text-right font-medium">Net ₹ Cr</th>
+                        <th className="px-3 py-2 text-left font-medium">
+                          {kind === "in" ? "Lead buyers" : "Lead sellers"}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {flow.stocks.map((s) => (
+                        <tr key={s.company} className="border-b last:border-0">
+                          <td className="px-3 py-2 font-medium">
+                            {s.company}
+                            <span className="ml-2 text-[11px] font-normal text-muted-foreground">
+                              {s.tier}
+                            </span>
+                          </td>
+                          <td
+                            className={cn(
+                              "px-3 py-2 text-right tabular",
+                              kind === "in" ? "text-positive" : "text-negative"
+                            )}
+                          >
+                            {s.pctOutstanding === null ? "—" : fmtPct1(s.pctOutstanding)}
+                          </td>
+                          <td
+                            className={cn(
+                              "px-3 py-2 text-right tabular",
+                              kind === "in" ? "text-positive" : "text-negative"
+                            )}
+                          >
+                            {fmtINR(s.netCr)}
+                          </td>
+                          <td className="px-3 py-2 text-muted-foreground">
+                            {s.amcs.join(", ")}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="mt-3 text-[10px] text-muted-foreground/70">
+                  Net {kind === "in" ? "buying" : "selling"} in {flow.sector} this
+                  month: ₹{fmtINR(Math.abs(flow.netCr))} Cr across the Overview
+                  Top-20 names.
+                </p>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ---- 7. Ownership moves ----------------------------------------------*/}
       <section className="space-y-3">
         <h2 className="text-sm font-medium tracking-tight">
           Biggest ownership moves

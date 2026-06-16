@@ -5,6 +5,12 @@ import {
 } from "./amfi-monthly-category";
 import { cyclePhaseHistory } from "./market-indices";
 import { capFlows } from "./cap-flows";
+import {
+  classifySector,
+  UNCLASSIFIED,
+  OVERSEAS_EQUITY,
+  MUTUAL_FUND,
+} from "./sector-classification";
 import insightsHoldings from "./portfolio-tracker/insights-holdings.json";
 
 /**
@@ -309,3 +315,114 @@ interface InsightsHoldings {
 }
 
 export const holdingsInsights = insightsHoldings as InsightsHoldings;
+
+// ---------- 6. Sector rotation (from the Overview top-20 buys/sells) ---------
+
+export interface SectorFlowStock {
+  company: string;
+  netCr: number; // signed: + bought / − sold
+  pctOutstanding: number | null; // signed
+  amcs: string[];
+  tier: string;
+}
+export interface SectorFlow {
+  sector: string;
+  netCr: number; // signed net across the Overview names in this sector
+  boughtCr: number; // gross bought (₹ Cr)
+  soldCr: number; // gross sold (₹ Cr, positive magnitude)
+  stocks: SectorFlowStock[];
+}
+export interface SectorRotation {
+  month: string;
+  inflow: SectorFlow | null; // sector with the most net money coming in
+  outflow: SectorFlow | null; // sector with the most net money going out
+  /** All real sectors, ranked by signed net flow (desc) — for context. */
+  sectors: { sector: string; netCr: number }[];
+}
+
+// Buckets that aren't real Indian sectors — excluded from the headline picks
+// and the ranked list so the rotation read stays meaningful.
+const NON_SECTORS = new Set([UNCLASSIFIED, OVERSEAS_EQUITY, MUTUAL_FUND]);
+
+/**
+ * Roll the Overview's Top-20 most-bought / most-sold names (large + mid + small)
+ * up to their sectors and read which sector money rotated INTO (net buys) and
+ * OUT OF (net sells) this month, plus the leading stocks driving each side.
+ * Computed at build time from the same cap-flows snapshot the Overview renders.
+ */
+export function sectorRotation(topStocks = 5): SectorRotation {
+  const tiers = [
+    { key: "large", label: "Large-cap" },
+    { key: "mid", label: "Mid-cap" },
+    { key: "small", label: "Small-cap" },
+  ] as const;
+
+  const bySector = new Map<string, SectorFlow>();
+  const ensure = (sector: string): SectorFlow => {
+    let e = bySector.get(sector);
+    if (!e) {
+      e = { sector, netCr: 0, boughtCr: 0, soldCr: 0, stocks: [] };
+      bySector.set(sector, e);
+    }
+    return e;
+  };
+
+  const add = (
+    rows: (typeof capFlows)["large"]["bought"],
+    side: "bought" | "sold",
+    tier: string
+  ) => {
+    for (const r of rows) {
+      const sector = classifySector(r.fincode, r.company);
+      const signedCr = side === "bought" ? r.netCr : -r.netCr;
+      const e = ensure(sector);
+      e.netCr += signedCr;
+      if (side === "bought") e.boughtCr += r.netCr;
+      else e.soldCr += r.netCr;
+      e.stocks.push({
+        company: r.company.replace(/\s+(Ltd\.?|Limited)$/i, ""),
+        netCr: signedCr,
+        pctOutstanding:
+          r.pctOutstanding === null
+            ? null
+            : side === "bought"
+              ? r.pctOutstanding
+              : -r.pctOutstanding,
+        amcs: r.amcs,
+        tier,
+      });
+    }
+  };
+
+  for (const t of tiers) {
+    add(capFlows[t.key].bought, "bought", t.label);
+    add(capFlows[t.key].sold, "sold", t.label);
+  }
+
+  const real = [...bySector.values()].filter((s) => !NON_SECTORS.has(s.sector));
+  const ranked = [...real].sort((a, b) => b.netCr - a.netCr);
+
+  const inflow = ranked.length > 0 && ranked[0].netCr > 0 ? ranked[0] : null;
+  const last = ranked[ranked.length - 1];
+  const outflow = ranked.length > 0 && last.netCr < 0 ? last : null;
+
+  if (inflow) {
+    inflow.stocks = inflow.stocks
+      .filter((s) => s.netCr > 0)
+      .sort((a, b) => b.netCr - a.netCr)
+      .slice(0, topStocks);
+  }
+  if (outflow) {
+    outflow.stocks = outflow.stocks
+      .filter((s) => s.netCr < 0)
+      .sort((a, b) => a.netCr - b.netCr)
+      .slice(0, topStocks);
+  }
+
+  return {
+    month: capFlows.meta.monthCur,
+    inflow,
+    outflow,
+    sectors: ranked.map((s) => ({ sector: s.sector, netCr: Math.round(s.netCr) })),
+  };
+}
