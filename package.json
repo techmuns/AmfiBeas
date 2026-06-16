@@ -31,7 +31,8 @@
     "build:fundwise": "tsx scripts/build-fundwise-portfolios.ts",
     "build:insights": "tsx scripts/build-insights.ts",
     "build:sector-gross": "tsx scripts/build-sector-gross-flows.ts",
-    "ingest:shares-outstanding": "tsx scripts/ingest/shares-outstanding.ts"
+    "ingest:shares-outstanding": "tsx scripts/ingest/shares-outstanding.ts",
+    "ingest:holdings": "tsx scripts/ingest/holdings-tracker.ts"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.19.6",

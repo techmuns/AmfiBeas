@@ -1,0 +1,97 @@
+name: Schemewise holdings (monthly)
+
+# Monthly refresh of per-scheme equity holdings from the RupeeVest Mutual Fund
+# Portfolio Tracker (scripts/ingest/holdings-tracker.ts). Iterates the funds in
+# src/data/portfolio-tracker/index.json — i.e. the cohort that passed the
+# previous > ₹500 Cr AUM benchmark — fetches each scheme's grid, MERGES the new
+# month(s) into public/holdings/<code>-<slug>.json (history grows forward), and
+# refreshes the index. Commits to the branch when something changed.
+#
+# Safety: per-fund failures keep the last-good snapshot; if EVERY attempted fund
+# fails the script exits non-zero and the commit step is skipped, so a degraded
+# fetch can never overwrite good data. Use the `probe` mode first (uploads the
+# raw responses as an artifact) to confirm the endpoint format.
+
+on:
+  # Mid-month: SEBI requires monthly portfolio disclosure within 10 days of
+  # month-end, and the tracker needs a few more days to aggregate, so the 15th
+  # (21:00 UTC = 02:30 IST on the 16th) reliably captures the prior month.
+  schedule:
+    - cron: "0 21 15 * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "full = fetch + merge + commit; probe = dump raw responses only (no writes)"
+        required: false
+        default: "full"
+        type: choice
+        options:
+          - "full"
+          - "probe"
+      limit:
+        description: "Process only the first N funds (blank/0 = all). Handy for a quick test run."
+        required: false
+        default: ""
+        type: string
+      commit:
+        description: "Commit the refreshed holdings to the branch? (false = run only)"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: holdings-tracker-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  holdings:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refresh schemewise holdings
+        env:
+          HOLDINGS_PROBE: ${{ inputs.mode == 'probe' && '1' || '0' }}
+          HOLDINGS_LIMIT: ${{ inputs.limit }}
+          HOLDINGS_CONCURRENCY: "4"
+          HOLDINGS_DELAY_MS: "350"
+        run: npm run ingest:holdings
+
+      - name: Upload probe responses
+        if: ${{ always() && inputs.mode == 'probe' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: holdings-probe
+          path: data/debug/holdings-probe-*.txt
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Commit refreshed holdings
+        # Scheduled runs always commit (no inputs on cron); manual runs honour
+        # the commit toggle and never commit in probe mode. Only runs when the
+        # refresh step SUCCEEDED, so a global keep-last-good (non-zero exit)
+        # skips the commit entirely.
+        if: ${{ github.event_name == 'schedule' || (inputs.mode == 'full' && inputs.commit == 'true') }}
+        run: |
+          git add public/holdings src/data/portfolio-tracker/index.json
+          if git diff --cached --quiet; then
+            echo "No holdings changes."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(data): refresh schemewise holdings ($(date -u +%Y-%m-%d))"
+          git push
