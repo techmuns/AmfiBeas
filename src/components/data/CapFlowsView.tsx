@@ -34,7 +34,7 @@ function FlowCard({
   rowSlots: number;
 }) {
   const movers = kind === "bought" ? "Top MF Buyers" : "Top MF Sellers";
-  const valHead = kind === "bought" ? "Bought (% out.)" : "Sold (% out.)";
+  const valHead = kind === "bought" ? "Bought (% of o/s)" : "Sold (% of o/s)";
   const blanks = Math.max(0, rowSlots - rows.length);
   return (
     <div className="overflow-hidden rounded-lg border bg-card">

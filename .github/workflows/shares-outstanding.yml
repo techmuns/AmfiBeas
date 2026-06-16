@@ -8,13 +8,14 @@ name: Shares outstanding (cap-flows %)
 # then commits the two JSON files when anything changed.
 #
 # Monthly cadence (the holdings the cap flows derive from update monthly).
-# Trigger manually via the Actions tab for an on-demand refresh.
+# Auto-runs right after "Schemewise holdings (monthly)" finishes (workflow_run),
+# so a new month's holdings immediately get their shares-outstanding %. Also
+# runnable on demand from the Actions tab.
 
 on:
-  schedule:
-    # 03:00 UTC on the 3rd of each month — a few days after the monthly
-    # portfolio refresh typically lands.
-    - cron: "0 3 3 * *"
+  workflow_run:
+    workflows: ["Schemewise holdings (monthly)"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       reason:
@@ -31,10 +32,17 @@ concurrency:
 
 jobs:
   shares-outstanding:
+    # On workflow_run, only proceed if the holdings refresh succeeded; a manual
+    # dispatch always runs.
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          # workflow_run checks out in detached HEAD by default; pin to the
+          # branch (main, from the holdings run) so the commit step can push.
+          ref: ${{ github.event.workflow_run.head_branch || github.ref_name }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
