@@ -1,28 +1,20 @@
 "use client";
 
-import { useState } from "react";
 import {
   sectorFlowMonths,
   sectorFlowRows,
   sectorFlowTotals,
 } from "@/data/sector-flows";
-import sectorGross from "@/data/portfolio-tracker/sector-gross-flows.json";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
-import { cn } from "@/lib/cn";
 
 /**
- * Monthly sector flows in a red→yellow→green heatmap with a Net / Gross
- * toggle (client request: gross shows activity, net shows whether money is
- * actually entering or leaving a sector).
+ * Monthly NET sector flows in a red→yellow→green heatmap — whether money is
+ * actually entering or leaving each sector across the 13-month research-snapshot
+ * history (Apr-25 → Apr-26).
  *
- *  - NET: the 13-month research-snapshot history (Apr-25 → Apr-26).
- *  - GROSS BUYING / GROSS SELLING: computed from the tracked scheme holdings
- *    (sum of positive / negative stock-level share changes × implied price),
- *    available for the months the holdings window covers.
- *
- * Cell colour is an Excel-style 3-colour scale computed at render time from
- * the active view's own values (clamped at the 5th/95th percentile).
+ * Cell colour is an Excel-style 3-colour scale computed at render time from the
+ * values (clamped at the 5th/95th percentile).
  */
 
 const RED = [248, 105, 107];
@@ -53,8 +45,6 @@ const fmtCr = (cr: number): string => {
   return cr < 0 ? `(${abs})` : abs;
 };
 
-type Lens = "net" | "grossBuy" | "grossSell";
-
 interface ViewRow {
   sector: string;
   monthly: number[]; // ₹ Cr, oldest → newest
@@ -69,68 +59,24 @@ interface View {
   caption: string;
 }
 
-interface GrossData {
-  meta: { months: string[]; funds: number };
-  rows: { sector: string; grossBuy: number[]; grossSell: number[]; net: number[] }[];
-  totals: { grossBuy: number[]; grossSell: number[]; net: number[] };
-}
-const gross = sectorGross as GrossData;
-
-function buildView(lens: Lens): View {
-  if (lens === "net") {
-    return {
-      months: sectorFlowMonths,
-      rows: sectorFlowRows.map((r) => ({
-        sector: r.sector,
-        monthly: r.monthly.map((v) => v * 100), // Rs bn → ₹ Cr
-        total: r.ytd * 100,
-      })),
-      totals: sectorFlowTotals.monthly.map((v) => v * 100),
-      totalsTotal: sectorFlowTotals.ytd * 100,
-      totalLabel: "CY26 YTD",
-      caption:
-        "Net flows — whether money is actually entering or leaving each sector. 13-month research-snapshot history.",
-    };
-  }
-  const key = lens === "grossBuy" ? "grossBuy" : "grossSell";
-  const monthsAsc = [...gross.meta.months].reverse(); // stored newest-first
-  const reorder = (xs: number[]) => [...xs].reverse();
-  const sign = lens === "grossSell" ? -1 : 1;
+function buildView(): View {
   return {
-    months: monthsAsc,
-    rows: gross.rows
-      .map((r) => {
-        const monthly = reorder(r[key]).map((v) => sign * v);
-        return {
-          sector: r.sector,
-          monthly,
-          total: monthly.reduce((s, v) => s + v, 0),
-        };
-      })
-      .sort(
-        (a, b) =>
-          Math.abs(b.monthly[b.monthly.length - 1]) -
-          Math.abs(a.monthly[a.monthly.length - 1])
-      ),
-    totals: reorder(gross.totals[key]).map((v) => sign * v),
-    totalsTotal: gross.totals[key].reduce((s, v) => s + sign * v, 0),
-    totalLabel: "Window total",
+    months: sectorFlowMonths,
+    rows: sectorFlowRows.map((r) => ({
+      sector: r.sector,
+      monthly: r.monthly.map((v) => v * 100), // Rs bn → ₹ Cr
+      total: r.ytd * 100,
+    })),
+    totals: sectorFlowTotals.monthly.map((v) => v * 100),
+    totalsTotal: sectorFlowTotals.ytd * 100,
+    totalLabel: "CY26 YTD",
     caption:
-      lens === "grossBuy"
-        ? `Gross buying — total money entering each sector before netting sells. Computed from ${gross.meta.funds} tracked active-equity schemes.`
-        : `Gross selling — total money leaving each sector before netting buys (shown as negatives). Computed from ${gross.meta.funds} tracked active-equity schemes.`,
+      "Net flows — whether money is actually entering or leaving each sector. 13-month research-snapshot history.",
   };
 }
 
-const LENSES: { id: Lens; label: string }[] = [
-  { id: "net", label: "Net" },
-  { id: "grossBuy", label: "Gross buying" },
-  { id: "grossSell", label: "Gross selling" },
-];
-
 export function SectorFlowHeatmap() {
-  const [lens, setLens] = useState<Lens>("net");
-  const view = buildView(lens);
+  const view = buildView();
 
   const all = view.rows.flatMap((r) => r.monthly).sort((a, b) => a - b);
   const lo = percentile(all, 0.05);
@@ -166,29 +112,11 @@ export function SectorFlowHeatmap() {
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="inline-flex rounded-md border bg-card p-0.5">
-          {LENSES.map((l) => (
-            <button
-              key={l.id}
-              type="button"
-              onClick={() => setLens(l.id)}
-              aria-pressed={lens === l.id}
-              className={cn(
-                "rounded px-2.5 py-1 text-xs font-medium transition-colors",
-                lens === l.id
-                  ? "bg-accent text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {l.label}
-            </button>
-          ))}
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <DownloadXlsxButton
           rows={exportRows}
           columns={exportColumns}
-          filename={`sector-flows-${lens}.xlsx`}
+          filename="sector-flows-net.xlsx"
           sheetName="Sector Flows"
         />
       </div>
