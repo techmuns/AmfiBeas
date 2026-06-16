@@ -34,7 +34,10 @@ const SHARES_OUT = path.join(
   "portfolio-tracker",
   "shares-outstanding.json"
 );
-const TOP_N = 5;
+// Top-N retained per card. The UI exposes a Top 5 / 10 / 20 toggle, so we store
+// 20 and let the client slice; shares-outstanding coverage follows whatever
+// surfaces here (collectTargets reads these rows).
+const TOP_N = 20;
 
 interface SharesOutstandingEntry {
   sharesOutstanding: number;
@@ -164,6 +167,13 @@ function main() {
   }
   const rows: Row[] = [];
   for (const [fincode, a] of agg) {
+    // Data-discontinuity guard: a company held last month but with NO shares in
+    // the latest month has almost certainly changed fincode / been delisted or
+    // merged (a corporate action) — not been sold to zero by every fund at
+    // once. Counting the whole prior holding as a "sell" yields a phantom flow
+    // (e.g. Gujarat State Petronet in May-26: all 48 holders → 0, a spurious
+    // ₹3,258 Cr / 22%-of-float "sell"). Skip names absent from the latest month.
+    if (a.shCur <= 0) continue;
     const priceCur = a.shCur > 0 ? a.valCur / a.shCur : 0;
     const pricePrev = a.shPrev > 0 ? a.valPrev / a.shPrev : 0;
     const price = priceCur > 0 ? priceCur : pricePrev;
