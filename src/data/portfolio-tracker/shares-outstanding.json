@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-06-16T10:57:50.733Z",
+    "generatedAt": "2026-06-16T13:34:00.414Z",
     "source": "screener.in (Market Cap ÷ Current Price)",
     "staleDays": 30,
     "note": "sharesOutstanding = marketCapCr·1e7 / priceInr. Keyed by RupeeVest fincode. Only companies surfacing in cap-flows.json are fetched. Fix bad symbol matches in shares-outstanding-overrides.json (fincode → screener symbol)."
@@ -132,6 +132,15 @@
       "asOf": "2026-06-11T17:51:25.735Z",
       "source": "https://www.screener.in/company/ICICIBANK/consolidated/"
     },
+    "132209": {
+      "company": "The Jammu & Kashmir Bank Limited",
+      "symbol": "J&KBANK",
+      "sharesOutstanding": 1100123457,
+      "marketCapCr": 17822,
+      "priceInr": 162,
+      "asOf": "2026-06-16T13:33:55.466Z",
+      "source": "https://www.screener.in/company/J&KBANK/"
+    },
     "132210": {
       "company": "City Union Bank Limited",
       "symbol": "CUB",
@@ -186,6 +195,15 @@
       "asOf": "2026-06-11T17:51:52.875Z",
       "source": "https://www.screener.in/company/NTPC/consolidated/"
     },
+    "132702": {
+      "company": "Gujarat State Petronet Ltd.",
+      "symbol": "GSPL",
+      "sharesOutstanding": 564962687,
+      "marketCapCr": 15141,
+      "priceInr": 268,
+      "asOf": "2026-06-16T13:33:57.412Z",
+      "source": "https://www.screener.in/company/GSPL/"
+    },
     "132720": {
       "company": "Mahindra & Mahindra Financial Services Ltd",
       "symbol": "M&MFIN",
@@ -203,6 +221,15 @@
       "priceInr": 436,
       "asOf": "2026-06-11T17:53:17.164Z",
       "source": "https://www.screener.in/company/CIEINDIA/consolidated/"
+    },
+    "132757": {
+      "company": "Voltamp Transformers Ltd.",
+      "symbol": "VOLTAMP",
+      "sharesOutstanding": 10119634,
+      "marketCapCr": 10066,
+      "priceInr": 9947,
+      "asOf": "2026-06-16T13:33:53.513Z",
+      "source": "https://www.screener.in/company/VOLTAMP/"
     },
     "200132": {
       "company": "Bajaj Auto Limited",
@@ -330,6 +357,15 @@
       "asOf": "2026-06-11T17:52:54.439Z",
       "source": "https://www.screener.in/company/PARADEEP/consolidated/"
     },
+    "249927": {
+      "company": "Gujarat Gas Ltd.",
+      "symbol": "GUJGASLTD",
+      "sharesOutstanding": 689263959,
+      "marketCapCr": 27157,
+      "priceInr": 394,
+      "asOf": "2026-06-16T13:33:51.527Z",
+      "source": "https://www.screener.in/company/GUJGASLTD/"
+    },
     "252306": {
       "company": "Eternal Limited",
       "symbol": "ETERNAL",
@@ -347,6 +383,15 @@
       "priceInr": 1597,
       "asOf": "2026-06-16T10:56:59.164Z",
       "source": "https://www.screener.in/company/POLICYBZR/consolidated/"
+    },
+    "279017": {
+      "company": "Alphabet Inc A",
+      "symbol": "",
+      "sharesOutstanding": 5800000000,
+      "marketCapCr": 0,
+      "priceInr": 0,
+      "asOf": "2026-06-16T13:33:58.913Z",
+      "source": "manual override (not on screener.in)"
     },
     "294320": {
       "company": "KPIT Technologies Limited",
