@@ -1,7 +1,22 @@
+"use client";
+
+import { useState } from "react";
 import { cn } from "@/lib/cn";
 import type { CapFlowRow, CapFlows } from "@/data/cap-flows";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
+
+type TopN = 5 | 10 | 20;
+
+/** Sort by % of shares outstanding, largest first; "—" (null) rows last. */
+function byPctOutDesc(a: CapFlowRow, b: CapFlowRow): number {
+  const pa = a.pctOutstanding;
+  const pb = b.pctOutstanding;
+  if (pa === null && pb === null) return 0;
+  if (pa === null) return 1;
+  if (pb === null) return -1;
+  return Math.abs(pb) - Math.abs(pa);
+}
 
 function displayName(name: string): string {
   return name.replace(/\s+(Ltd\.?|Limited)$/i, "").trim();
@@ -108,6 +123,7 @@ function FlowCard({
 
 export function CapFlowsView({ flows }: { flows: CapFlows }) {
   const { meta } = flows;
+  const [topN, setTopN] = useState<TopN>(5);
   const tiers: { key: "large" | "mid" | "small"; label: string }[] = [
     { key: "large", label: "Large-cap" },
     { key: "mid", label: "Mid-cap" },
@@ -147,9 +163,32 @@ export function CapFlowsView({ flows }: { flows: CapFlows }) {
     { key: "netCr", header: "Net (₹ Cr, + bought / − sold)" },
     { key: "amcs", header: "AMCs" },
   ];
+  const topOptions: TopN[] = [5, 10, 20];
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-end gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <div
+          className="inline-flex rounded-lg border bg-card p-0.5 text-sm"
+          role="group"
+          aria-label="How many names to show"
+        >
+          {topOptions.map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setTopN(n)}
+              aria-pressed={topN === n}
+              className={cn(
+                "rounded-md px-3 py-1 font-medium transition-colors",
+                topN === n
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Top {n}
+            </button>
+          ))}
+        </div>
         <DownloadXlsxButton
           rows={exportRows}
           columns={exportColumns}
@@ -158,25 +197,26 @@ export function CapFlowsView({ flows }: { flows: CapFlows }) {
         />
       </div>
       {tiers.map((t) => {
+        // Take the N biggest net-₹ moves (the stored order), then display them
+        // sorted by % of shares outstanding, descending.
+        const bought = flows[t.key].bought.slice(0, topN).sort(byPctOutDesc);
+        const sold = flows[t.key].sold.slice(0, topN).sort(byPctOutDesc);
         // Equal row slots across the bought / sold pair so the two adjacent
-        // cards are exactly the same height (capped at the configured top-N).
-        const rowSlots = Math.min(
-          meta.topN,
-          Math.max(flows[t.key].bought.length, flows[t.key].sold.length, 1)
-        );
+        // cards are exactly the same height.
+        const rowSlots = Math.max(bought.length, sold.length, 1);
         return (
           <div key={t.key} className="space-y-3">
             <h2 className="text-base font-semibold tracking-tight">{t.label}</h2>
             <div className="grid items-stretch gap-4 lg:grid-cols-2">
               <FlowCard
-                title={`Top ${t.label} names bought by MFs (${meta.monthCur})`}
-                rows={flows[t.key].bought}
+                title={`Top ${topN} ${t.label} names bought by MFs (${meta.monthCur})`}
+                rows={bought}
                 kind="bought"
                 rowSlots={rowSlots}
               />
               <FlowCard
-                title={`Top ${t.label} names sold by MFs (${meta.monthCur})`}
-                rows={flows[t.key].sold}
+                title={`Top ${topN} ${t.label} names sold by MFs (${meta.monthCur})`}
+                rows={sold}
                 kind="sold"
                 rowSlots={rowSlots}
               />
