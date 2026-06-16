@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-06-11T17:53:18.665Z",
+    "generatedAt": "2026-06-16T10:57:50.733Z",
     "source": "screener.in (Market Cap ÷ Current Price)",
     "staleDays": 30,
     "note": "sharesOutstanding = marketCapCr·1e7 / priceInr. Keyed by RupeeVest fincode. Only companies surfacing in cap-flows.json are fetched. Fix bad symbol matches in shares-outstanding-overrides.json (fincode → screener symbol)."
@@ -15,6 +15,15 @@
       "asOf": "2026-06-11T17:51:29.573Z",
       "source": "https://www.screener.in/company/SBIN/consolidated/"
     },
+    "100113": {
+      "company": "Steel Authority of India Limited",
+      "symbol": "SAIL",
+      "sharesOutstanding": 4130276243,
+      "marketCapCr": 74758,
+      "priceInr": 181,
+      "asOf": "2026-06-16T10:57:10.591Z",
+      "source": "https://www.screener.in/company/SAIL/consolidated/"
+    },
     "100180": {
       "company": "HDFC Bank Limited",
       "symbol": "HDFCBANK",
@@ -23,6 +32,15 @@
       "priceInr": 745,
       "asOf": "2026-06-11T17:52:00.468Z",
       "source": "https://www.screener.in/company/HDFCBANK/consolidated/"
+    },
+    "100209": {
+      "company": "Infosys Limited",
+      "symbol": "INFY",
+      "sharesOutstanding": 4055839161,
+      "marketCapCr": 463988,
+      "priceInr": 1144,
+      "asOf": "2026-06-16T10:56:39.734Z",
+      "source": "https://www.screener.in/company/INFY/consolidated/"
     },
     "100233": {
       "company": "Kajaria Ceramics Limited",
@@ -51,6 +69,15 @@
       "asOf": "2026-06-11T17:51:45.314Z",
       "source": "https://www.screener.in/company/RELIANCE/consolidated/"
     },
+    "100510": {
+      "company": "Larsen & Toubro Limited",
+      "symbol": "LT",
+      "sharesOutstanding": 1375860010,
+      "marketCapCr": 575935,
+      "priceInr": 4186,
+      "asOf": "2026-06-16T10:56:35.864Z",
+      "source": "https://www.screener.in/company/LT/consolidated/"
+    },
     "102986": {
       "company": "Vardhman Textiles Limited",
       "symbol": "VTL",
@@ -68,6 +95,24 @@
       "priceInr": 177,
       "asOf": "2026-06-11T17:51:56.673Z",
       "source": "https://www.screener.in/company/WIPRO/consolidated/"
+    },
+    "112599": {
+      "company": "Adani Enterprises Limited",
+      "symbol": "ADANIENT",
+      "sharesOutstanding": 1300726902,
+      "marketCapCr": 382934,
+      "priceInr": 2944,
+      "asOf": "2026-06-16T10:56:28.233Z",
+      "source": "https://www.screener.in/company/ADANIENT/consolidated/"
+    },
+    "122275": {
+      "company": "GE Vernova T&D India Limited",
+      "symbol": "GVT&D",
+      "sharesOutstanding": 256075534,
+      "marketCapCr": 124760,
+      "priceInr": 4872,
+      "asOf": "2026-06-16T10:56:32.040Z",
+      "source": "https://www.screener.in/company/GVT&D/"
     },
     "124000": {
       "company": "Poonawalla Fincorp Limited",
@@ -104,6 +149,15 @@
       "priceInr": 1258,
       "asOf": "2026-06-11T17:52:08.046Z",
       "source": "https://www.screener.in/company/UNITDSPR/consolidated/"
+    },
+    "132466": {
+      "company": "Oracle Financial Services Software Ltd",
+      "symbol": "OFSS",
+      "sharesOutstanding": 87068421,
+      "marketCapCr": 82715,
+      "priceInr": 9500,
+      "asOf": "2026-06-16T10:57:14.400Z",
+      "source": "https://www.screener.in/company/OFSS/consolidated/"
     },
     "132500": {
       "company": "Maruti Suzuki India Limited",
@@ -159,6 +213,42 @@
       "asOf": "2026-06-11T17:51:49.112Z",
       "source": "https://www.screener.in/company/BAJAJ-AUTO/consolidated/"
     },
+    "207901": {
+      "company": "BSE Limited",
+      "symbol": "BSE",
+      "sharesOutstanding": 407337818,
+      "marketCapCr": 169534,
+      "priceInr": 4162,
+      "asOf": "2026-06-16T10:56:43.529Z",
+      "source": "https://www.screener.in/company/BSE/consolidated/"
+    },
+    "208461": {
+      "company": "JSW Energy Limited",
+      "symbol": "JSWENERGY",
+      "sharesOutstanding": 1833647687,
+      "marketCapCr": 103051,
+      "priceInr": 562,
+      "asOf": "2026-06-16T10:56:55.353Z",
+      "source": "https://www.screener.in/company/JSWENERGY/consolidated/"
+    },
+    "208763": {
+      "company": "MTAR Technologies Limited",
+      "symbol": "MTARTECH",
+      "sharesOutstanding": 30761237,
+      "marketCapCr": 23680,
+      "priceInr": 7698,
+      "asOf": "2026-06-16T10:57:18.220Z",
+      "source": "https://www.screener.in/company/MTARTECH/"
+    },
+    "208766": {
+      "company": "Multi Commodity Exchange of India Limited",
+      "symbol": "MCX",
+      "sharesOutstanding": 255025997,
+      "marketCapCr": 73575,
+      "priceInr": 2885,
+      "asOf": "2026-06-16T10:57:06.784Z",
+      "source": "https://www.screener.in/company/MCX/consolidated/"
+    },
     "209068": {
       "company": "RBL Bank Limited",
       "symbol": "RBLBANK",
@@ -186,6 +276,15 @@
       "asOf": "2026-06-11T17:53:09.588Z",
       "source": "https://www.screener.in/company/SANSERA/consolidated/"
     },
+    "216065": {
+      "company": "Jyoti CNC Automation Ltd",
+      "symbol": "JYOTICNC",
+      "sharesOutstanding": 227403709,
+      "marketCapCr": 15941,
+      "priceInr": 701,
+      "asOf": "2026-06-16T10:57:49.232Z",
+      "source": "https://www.screener.in/company/JYOTICNC/consolidated/"
+    },
     "218071": {
       "company": "Max Healthcare Institute Limited",
       "symbol": "MAXHEALTH",
@@ -194,6 +293,33 @@
       "priceInr": 1010,
       "asOf": "2026-06-11T17:52:11.841Z",
       "source": "https://www.screener.in/company/MAXHEALTH/consolidated/"
+    },
+    "223658": {
+      "company": "TD Power Systems Limited",
+      "symbol": "TDPOWERSYS",
+      "sharesOutstanding": 156162393,
+      "marketCapCr": 18271,
+      "priceInr": 1170,
+      "asOf": "2026-06-16T10:57:22.041Z",
+      "source": "https://www.screener.in/company/TDPOWERSYS/consolidated/"
+    },
+    "226611": {
+      "company": "JSW Cement Ltd.",
+      "symbol": "JSWCEMENT",
+      "sharesOutstanding": 1366821705,
+      "marketCapCr": 17632,
+      "priceInr": 129,
+      "asOf": "2026-06-16T10:57:30.033Z",
+      "source": "https://www.screener.in/company/JSWCEMENT/consolidated/"
+    },
+    "233063": {
+      "company": "Lenskart Solutions Limited",
+      "symbol": "LENSKART",
+      "sharesOutstanding": 1738886680,
+      "marketCapCr": 87466,
+      "priceInr": 503,
+      "asOf": "2026-06-16T10:56:51.542Z",
+      "source": "https://www.screener.in/company/LENSKART/consolidated/"
     },
     "241214": {
       "company": "Paradeep Phosphates Limited",
@@ -213,6 +339,24 @@
       "asOf": "2026-06-11T17:51:33.379Z",
       "source": "https://www.screener.in/company/ETERNAL/consolidated/"
     },
+    "254493": {
+      "company": "PB Fintech Limited",
+      "symbol": "POLICYBZR",
+      "sharesOutstanding": 462636193,
+      "marketCapCr": 73883,
+      "priceInr": 1597,
+      "asOf": "2026-06-16T10:56:59.164Z",
+      "source": "https://www.screener.in/company/POLICYBZR/consolidated/"
+    },
+    "294320": {
+      "company": "KPIT Technologies Limited",
+      "symbol": "KPITTECH",
+      "sharesOutstanding": 273976222,
+      "marketCapCr": 20740,
+      "priceInr": 757,
+      "asOf": "2026-06-16T10:57:33.830Z",
+      "source": "https://www.screener.in/company/KPITTECH/consolidated/"
+    },
     "297629": {
       "company": "Cohance Lifesciences Limited",
       "symbol": "COHANCE",
@@ -231,6 +375,15 @@
       "asOf": "2026-06-11T17:52:50.655Z",
       "source": "https://www.screener.in/company/CELLO/consolidated/"
     },
+    "314935": {
+      "company": "Premier Energies Limited",
+      "symbol": "PREMIERENE",
+      "sharesOutstanding": 454085308,
+      "marketCapCr": 47906,
+      "priceInr": 1055,
+      "asOf": "2026-06-16T10:57:02.965Z",
+      "source": "https://www.screener.in/company/PREMIERENE/consolidated/"
+    },
     "318188": {
       "company": "Onesource Specialty Pharma Limited",
       "symbol": "ONESOURCE",
@@ -248,6 +401,15 @@
       "priceInr": 149,
       "asOf": "2026-06-11T17:52:19.405Z",
       "source": "https://www.screener.in/company/ITCHOTELS/consolidated/"
+    },
+    "322541": {
+      "company": "Billionbrains Garage Ventures Ltd",
+      "symbol": "GROWW",
+      "sharesOutstanding": 6263550000,
+      "marketCapCr": 125271,
+      "priceInr": 200,
+      "asOf": "2026-06-16T10:56:24.383Z",
+      "source": "https://www.screener.in/company/GROWW/consolidated/"
     }
   }
 }
