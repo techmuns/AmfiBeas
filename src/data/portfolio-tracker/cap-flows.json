@@ -2,7 +2,7 @@
   "meta": {
     "monthCur": "May-26",
     "monthPrev": "Apr-26",
-    "generatedAt": "2026-06-16T14:14:17.921Z",
+    "generatedAt": "2026-06-19T17:52:29.306Z",
     "universe": "Active equity schemes only (excludes ETFs, index, international and hybrid funds)",
     "activeEquityFunds": 454,
     "metric": "Net Rs Cr bought/sold = change in aggregate shares held x current implied price. Excludes corporate actions (split/bonus). pctOutstanding = net shares traded ÷ company shares outstanding x 100 (null until the screener feed covers the fincode).",
@@ -1323,6 +1323,227 @@
           "HSBC",
           "Nippon",
           "UTI"
+        ]
+      }
+    ]
+  },
+  "sectorShifts": {
+    "monthCur": "May-26",
+    "monthPrev": "Apr-26",
+    "rows": [
+      {
+        "sector": "Healthcare",
+        "direction": "up",
+        "pctCur": 8.63,
+        "pctPrev": 8.31,
+        "changePp": 0.32,
+        "stocks": [
+          {
+            "company": "Sun Pharmaceutical Industries Limited",
+            "netCr": 1413,
+            "amcs": [
+              "Nippon",
+              "Mirae",
+              "Axis"
+            ]
+          },
+          {
+            "company": "Max Healthcare Institute Limited",
+            "netCr": 811,
+            "amcs": [
+              "ICICI Pru",
+              "Axis",
+              "Motilal Oswal"
+            ]
+          },
+          {
+            "company": "Dr. Reddy's Laboratories Limited",
+            "netCr": 653,
+            "amcs": [
+              "ICICI Pru",
+              "Bandhan",
+              "UTI"
+            ]
+          },
+          {
+            "company": "Apollo Hospitals Enterprise Limited",
+            "netCr": 479,
+            "amcs": [
+              "SBI",
+              "Kotak",
+              "Motilal Oswal"
+            ]
+          },
+          {
+            "company": "Global Health Limited",
+            "netCr": 329,
+            "amcs": [
+              "HDFC",
+              "SBI",
+              "Kotak"
+            ]
+          }
+        ]
+      },
+      {
+        "sector": "Capital Goods",
+        "direction": "up",
+        "pctCur": 6.78,
+        "pctPrev": 6.48,
+        "changePp": 0.31,
+        "stocks": [
+          {
+            "company": "Hindustan Aeronautics Limited",
+            "netCr": 1113,
+            "amcs": [
+              "Franklin Templeton",
+              "Nippon",
+              "Tata"
+            ]
+          },
+          {
+            "company": "ABB India Limited",
+            "netCr": 294,
+            "amcs": [
+              "Invesco",
+              "Motilal Oswal",
+              "HDFC"
+            ]
+          },
+          {
+            "company": "TD Power Systems Limited",
+            "netCr": 267,
+            "amcs": [
+              "Axis",
+              "Sundaram",
+              "Union"
+            ]
+          },
+          {
+            "company": "Voltamp Transformers Ltd.",
+            "netCr": 254,
+            "amcs": [
+              "ICICI Pru",
+              "Bandhan",
+              "Mirae"
+            ]
+          },
+          {
+            "company": "Siemens Limited",
+            "netCr": 204,
+            "amcs": [
+              "Motilal Oswal",
+              "SBI",
+              "ICICI Pru"
+            ]
+          }
+        ]
+      },
+      {
+        "sector": "Financials",
+        "direction": "down",
+        "pctCur": 27.48,
+        "pctPrev": 27.76,
+        "changePp": -0.27,
+        "stocks": [
+          {
+            "company": "Multi Commodity Exchange of India Limited",
+            "netCr": -1355,
+            "amcs": [
+              "Axis",
+              "HDFC",
+              "UTI"
+            ]
+          },
+          {
+            "company": "BSE Limited",
+            "netCr": -1004,
+            "amcs": [
+              "Nippon",
+              "Kotak",
+              "HSBC"
+            ]
+          },
+          {
+            "company": "Bank of Baroda",
+            "netCr": -915,
+            "amcs": [
+              "HDFC",
+              "Aditya Birla",
+              "ICICI Pru"
+            ]
+          },
+          {
+            "company": "Life Insurance Corporation of India",
+            "netCr": -692,
+            "amcs": [
+              "Quant",
+              "UTI"
+            ]
+          },
+          {
+            "company": "Canara Bank",
+            "netCr": -346,
+            "amcs": [
+              "Edelweiss",
+              "Baroda BNP Paribas",
+              "Aditya Birla"
+            ]
+          }
+        ]
+      },
+      {
+        "sector": "Energy",
+        "direction": "down",
+        "pctCur": 7.69,
+        "pctPrev": 7.88,
+        "changePp": -0.19,
+        "stocks": [
+          {
+            "company": "NTPC Limited",
+            "netCr": -984,
+            "amcs": [
+              "ICICI Pru",
+              "Nippon",
+              "Bandhan"
+            ]
+          },
+          {
+            "company": "GAIL (India) Limited",
+            "netCr": -386,
+            "amcs": [
+              "DSP",
+              "Nippon",
+              "ICICI Pru"
+            ]
+          },
+          {
+            "company": "Adani Power Limited",
+            "netCr": -367,
+            "amcs": [
+              "Quant",
+              "SBI",
+              "JM"
+            ]
+          },
+          {
+            "company": "Oil India Limited",
+            "netCr": -295,
+            "amcs": [
+              "HSBC",
+              "ICICI Pru",
+              "SBI"
+            ]
+          },
+          {
+            "company": "NLC India Limited",
+            "netCr": -129,
+            "amcs": [
+              "ICICI Pru",
+              "Nippon",
+              "Kotak"
+            ]
+          }
         ]
       }
     ]

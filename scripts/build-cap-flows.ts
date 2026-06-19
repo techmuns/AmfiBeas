@@ -18,6 +18,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { classifyCapFromNames, type CapTier } from "../src/data/cap-classification";
+import {
+  classifySector,
+  UNCLASSIFIED,
+  OVERSEAS_EQUITY,
+  MUTUAL_FUND,
+} from "../src/data/sector-classification";
 import { amcOf } from "../src/data/amc-name-map";
 
 const DIR = path.join(process.cwd(), "public", "holdings");
@@ -259,6 +265,74 @@ function main() {
     return { bought, sold };
   };
 
+  // ---- Sector allocation shifts (share of active-equity MF AUM, MoM) -------
+  // Which sectors' SHARE of total active-equity holdings value moved most this
+  // month — a size-normalised read (unlike raw stock counts, where a big sector
+  // like Financials always dominates). Robust to fincode changes too: value
+  // just moves between fincodes inside the same sector. We surface the 2 biggest
+  // share gainers and 2 biggest losers, each with the names driving the move.
+  const NON_SECTORS = new Set([UNCLASSIFIED, OVERSEAS_EQUITY, MUTUAL_FUND]);
+  const secVal = new Map<string, { cur: number; prev: number }>();
+  let secTotCur = 0;
+  let secTotPrev = 0;
+  for (const [fincode, a] of agg) {
+    if (a.valCur <= 0 && a.valPrev <= 0) continue;
+    secTotCur += a.valCur;
+    secTotPrev += a.valPrev;
+    const sector = classifySector(fincode, pickName(a.names));
+    const e = secVal.get(sector) ?? { cur: 0, prev: 0 };
+    e.cur += a.valCur;
+    e.prev += a.valPrev;
+    secVal.set(sector, e);
+  }
+  // Net-flow movers per sector (from the filtered rows; signed netCr).
+  const secMovers = new Map<
+    string,
+    { company: string; netCr: number; amcs: string[] }[]
+  >();
+  for (const r of rows) {
+    const sector = classifySector(r.fincode, r.company);
+    if (NON_SECTORS.has(sector)) continue;
+    const arr = secMovers.get(sector) ?? [];
+    arr.push({ company: r.company, netCr: r.netCr, amcs: r.netCr >= 0 ? r.buyers : r.sellers });
+    secMovers.set(sector, arr);
+  }
+  const pickStocks = (sector: string, dir: "up" | "down") =>
+    (secMovers.get(sector) ?? [])
+      .filter((m) => (dir === "up" ? m.netCr > 0 : m.netCr < 0))
+      .sort((x, y) => (dir === "up" ? y.netCr - x.netCr : x.netCr - y.netCr))
+      .slice(0, 5)
+      .map((m) => ({ company: m.company, netCr: m.netCr, amcs: m.amcs }));
+  const r2 = (v: number) => Math.round(v * 100) / 100;
+  const secStats = [...secVal.entries()]
+    .filter(([sector, v]) => !NON_SECTORS.has(sector) && (v.cur > 0 || v.prev > 0))
+    .map(([sector, v]) => ({
+      sector,
+      pctCur: secTotCur > 0 ? (v.cur / secTotCur) * 100 : 0,
+      pctPrev: secTotPrev > 0 ? (v.prev / secTotPrev) * 100 : 0,
+      changePp: (secTotCur > 0 ? (v.cur / secTotCur) * 100 : 0) - (secTotPrev > 0 ? (v.prev / secTotPrev) * 100 : 0),
+    }));
+  const gainers = [...secStats].sort((a, b) => b.changePp - a.changePp).slice(0, 2);
+  const losers = [...secStats]
+    .sort((a, b) => a.changePp - b.changePp)
+    .filter((s) => !gainers.some((g) => g.sector === s.sector))
+    .slice(0, 2);
+  const sectorShifts = {
+    monthCur: monthCurLabel,
+    monthPrev: monthPrevLabel,
+    rows: [...gainers, ...losers].map((s) => {
+      const direction: "up" | "down" = s.changePp >= 0 ? "up" : "down";
+      return {
+        sector: s.sector,
+        direction,
+        pctCur: r2(s.pctCur),
+        pctPrev: r2(s.pctPrev),
+        changePp: r2(s.changePp),
+        stocks: pickStocks(s.sector, direction),
+      };
+    }),
+  };
+
   const out = {
     meta: {
       monthCur: monthCurLabel,
@@ -273,6 +347,7 @@ function main() {
     large: card("large"),
     mid: card("mid"),
     small: card("small"),
+    sectorShifts,
   };
   fs.writeFileSync(OUT, JSON.stringify(out, null, 2) + "\n");
   const withPct = [out.large, out.mid, out.small].flatMap((c) => [

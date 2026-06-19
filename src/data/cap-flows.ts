@@ -25,6 +25,30 @@ export interface CapFlowCard {
   sold: CapFlowRow[];
 }
 
+/** A name driving a sector's allocation shift (signed net ₹ Cr; + bought). */
+export interface SectorShiftStock {
+  company: string;
+  netCr: number;
+  amcs: string[];
+}
+/** One sector whose share of active-equity MF AUM moved notably this month. */
+export interface SectorShiftRow {
+  sector: string;
+  direction: "up" | "down";
+  /** Sector's share of total active-equity holdings value, latest / prior (%). */
+  pctCur: number;
+  pctPrev: number;
+  /** Change in that share, in percentage points (signed). */
+  changePp: number;
+  stocks: SectorShiftStock[];
+}
+export interface SectorShifts {
+  monthCur: string;
+  monthPrev: string;
+  /** The biggest share gainers then losers (up to 2 + 2). */
+  rows: SectorShiftRow[];
+}
+
 export interface CapFlows {
   meta: {
     monthCur: string;
@@ -38,6 +62,8 @@ export interface CapFlows {
   large: CapFlowCard;
   mid: CapFlowCard;
   small: CapFlowCard;
+  /** Optional — present once build-cap-flows has emitted it. */
+  sectorShifts?: SectorShifts;
 }
 
 export const capFlows: CapFlows = data as CapFlows;

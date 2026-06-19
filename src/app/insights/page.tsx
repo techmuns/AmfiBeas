@@ -11,7 +11,6 @@ import {
   streakBreaks,
   topOwnershipMoves,
   sectorRotation,
-  type SectorFlow,
   holdingsInsights,
   fmtINR,
   fmtPct1,
@@ -69,7 +68,9 @@ export default function InsightsPage() {
   const streaks = categoryStreaks(3);
   const breaks = streakBreaks(4);
   const moves = topOwnershipMoves(6);
-  const rotation = sectorRotation(5);
+  const rotation = sectorRotation();
+  const sectorGainers = rotation.rows.filter((r) => r.direction === "up");
+  const sectorLosers = rotation.rows.filter((r) => r.direction === "down");
   const { uniques, amcShare, meta } = holdingsInsights;
 
   const shareGainers = amcShare.rows.filter((r) => (r.momBps ?? 0) > 0).slice(0, 3);
@@ -455,101 +456,102 @@ export default function InsightsPage() {
         </Card>
       </section>
 
-      {/* ---- 6. Sector rotation (from the Overview top-20) ------------------*/}
-      {(rotation.inflow || rotation.outflow) && (
+      {/* ---- 6. Sector rotation (active-equity AUM-share shifts) ------------*/}
+      {rotation.rows.length > 0 && (
         <section className="space-y-3">
           <h2 className="text-sm font-medium tracking-tight">Sector rotation</h2>
           <Insight
-            kicker={`Where MF money rotated · ${rotation.month}`}
+            kicker={`Sector allocation shifts · ${rotation.monthPrev} → ${rotation.month}`}
             headline={
               <>
-                Across the Top-20 names MFs traded this month,{" "}
-                {rotation.inflow && (
-                  <>
-                    <span className={pos}>{rotation.inflow.sector}</span> has the
-                    most buys ({rotation.inflow.count} of {rotation.totalBought}{" "}
-                    names)
-                  </>
-                )}
-                {rotation.inflow && rotation.outflow && " while "}
-                {rotation.outflow && (
-                  <>
-                    <span className={neg}>{rotation.outflow.sector}</span> has the
-                    most sells ({rotation.outflow.count} of {rotation.totalSold}{" "}
-                    names)
-                  </>
-                )}
+                This month MFs raised their equity allocation most in{" "}
+                {sectorGainers.map((r, i) => (
+                  <span key={r.sector}>
+                    {i > 0 && " and "}
+                    <span className={pos}>{r.sector}</span> (+
+                    {r.changePp.toFixed(2)}pp)
+                  </span>
+                ))}
+                {sectorGainers.length > 0 && sectorLosers.length > 0 && ", and cut it most in "}
+                {sectorLosers.map((r, i) => (
+                  <span key={r.sector}>
+                    {i > 0 && " and "}
+                    <span className={neg}>{r.sector}</span> ({r.changePp.toFixed(2)}pp)
+                  </span>
+                ))}
                 .
               </>
             }
-            support="How many of the Overview's Top-20 large/mid/small-cap names fall in each sector — the side with the most names is highlighted. The leading buys and sells in those sectors are below."
-            source={`Source: aggregated scheme holdings, ${rotation.month}; sector map (Capitaline/RupeeVest taxonomy).`}
+            support="Each sector's share of total active-equity MF holdings value, latest vs prior month — the 2 biggest share gainers and 2 biggest losers. This is size-normalised (a large sector only surfaces when its share actually moves) and robust to fincode changes. The names driving each move are below."
+            source={`Source: aggregated active-equity scheme holdings, ${rotation.monthPrev} → ${rotation.month}; sector map (Capitaline/RupeeVest taxonomy).`}
           />
           <div className="grid gap-4 lg:grid-cols-2">
-            {(
-              [
-                rotation.inflow && { flow: rotation.inflow, kind: "in" as const },
-                rotation.outflow && { flow: rotation.outflow, kind: "out" as const },
-              ].filter(Boolean) as { flow: SectorFlow; kind: "in" | "out" }[]
-            ).map(({ flow, kind }) => (
-              <Card
-                key={flow.sector}
-                title={`${flow.sector} — ${kind === "in" ? "top buys" : "top sells"} (${rotation.month})`}
-              >
-                <div className="overflow-x-auto rounded-md border bg-card">
-                  <table className="w-full border-collapse text-sm">
-                    <thead>
-                      <tr className="bg-muted/60 text-xs text-muted-foreground">
-                        <th className="px-3 py-2 text-left font-medium">Company</th>
-                        <th className="px-3 py-2 text-right font-medium">% of o/s</th>
-                        <th className="px-3 py-2 text-right font-medium">Net ₹ Cr</th>
-                        <th className="px-3 py-2 text-left font-medium">
-                          {kind === "in" ? "Lead buyers" : "Lead sellers"}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {flow.stocks.map((s) => (
-                        <tr key={s.company} className="border-b last:border-0">
-                          <td className="px-3 py-2 font-medium">
-                            {s.company}
-                            <span className="ml-2 text-[11px] font-normal text-muted-foreground">
-                              {s.tier}
-                            </span>
-                          </td>
-                          <td
-                            className={cn(
-                              "px-3 py-2 text-right tabular",
-                              kind === "in" ? "text-positive" : "text-negative"
-                            )}
-                          >
-                            {s.pctOutstanding === null ? "—" : fmtPct1(s.pctOutstanding)}
-                          </td>
-                          <td
-                            className={cn(
-                              "px-3 py-2 text-right tabular",
-                              kind === "in" ? "text-positive" : "text-negative"
-                            )}
-                          >
-                            {fmtINR(s.netCr)}
-                          </td>
-                          <td className="px-3 py-2 text-muted-foreground">
-                            {s.amcs.join(", ")}
-                          </td>
+            {rotation.rows.map((r) => {
+              const up = r.direction === "up";
+              return (
+                <Card
+                  key={r.sector}
+                  title={`${r.sector} — AUM share ${up ? "+" : ""}${r.changePp.toFixed(2)}pp (${rotation.month})`}
+                >
+                  <p className="mb-3 text-[13px] leading-snug text-muted-foreground">
+                    {r.sector}&rsquo;s share of active-equity MF AUM{" "}
+                    {up ? "rose" : "fell"} from{" "}
+                    <span className="font-medium text-foreground">
+                      {r.pctPrev.toFixed(2)}%
+                    </span>{" "}
+                    to{" "}
+                    <span className={cn("font-medium", up ? pos : neg)}>
+                      {r.pctCur.toFixed(2)}%
+                    </span>
+                    . MFs {up ? "added the most" : "trimmed the most"}:
+                  </p>
+                  <div className="overflow-x-auto rounded-md border bg-card">
+                    <table className="w-full border-collapse text-sm">
+                      <thead>
+                        <tr className="bg-muted/60 text-xs text-muted-foreground">
+                          <th className="px-3 py-2 text-left font-medium">Company</th>
+                          <th className="px-3 py-2 text-right font-medium">Net ₹ Cr</th>
+                          <th className="px-3 py-2 text-left font-medium">
+                            {up ? "Lead buyers" : "Lead sellers"}
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="mt-3 text-[10px] text-muted-foreground/70">
-                  {flow.count} of the{" "}
-                  {kind === "in" ? rotation.totalBought : rotation.totalSold}{" "}
-                  top-{kind === "in" ? "bought" : "sold"} names are {flow.sector} —
-                  net {kind === "in" ? "buying" : "selling"} ₹
-                  {fmtINR(Math.abs(flow.netCr))} Cr across the Overview Top-20.
-                </p>
-              </Card>
-            ))}
+                      </thead>
+                      <tbody>
+                        {r.stocks.length === 0 ? (
+                          <tr>
+                            <td
+                              colSpan={3}
+                              className="px-3 py-3 text-center text-muted-foreground"
+                            >
+                              Share moved on price; no notable net {up ? "buys" : "sells"}.
+                            </td>
+                          </tr>
+                        ) : (
+                          r.stocks.map((s) => (
+                            <tr key={s.company} className="border-b last:border-0">
+                              <td className="px-3 py-2 font-medium">
+                                {s.company.replace(/\s+(Ltd\.?|Limited)$/i, "")}
+                              </td>
+                              <td
+                                className={cn(
+                                  "px-3 py-2 text-right tabular",
+                                  up ? "text-positive" : "text-negative"
+                                )}
+                              >
+                                {fmtINR(s.netCr)}
+                              </td>
+                              <td className="px-3 py-2 text-muted-foreground">
+                                {s.amcs.join(", ")}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         </section>
       )}

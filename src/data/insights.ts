@@ -5,12 +5,7 @@ import {
 } from "./amfi-monthly-category";
 import { cyclePhaseHistory } from "./market-indices";
 import { capFlows } from "./cap-flows";
-import {
-  classifySector,
-  UNCLASSIFIED,
-  OVERSEAS_EQUITY,
-  MUTUAL_FUND,
-} from "./sector-classification";
+import { classifySector } from "./sector-classification";
 import insightsHoldings from "./portfolio-tracker/insights-holdings.json";
 
 /**
@@ -316,122 +311,29 @@ interface InsightsHoldings {
 
 export const holdingsInsights = insightsHoldings as InsightsHoldings;
 
-// ---------- 6. Sector rotation (from the Overview top-20 buys/sells) ---------
+// ---------- 6. Sector rotation (sector-allocation shifts) --------------------
 
-export interface SectorFlowStock {
-  company: string;
-  netCr: number; // signed: + bought / − sold
-  pctOutstanding: number | null; // signed
-  amcs: string[];
-  tier: string;
-}
-export interface SectorFlow {
-  sector: string;
-  count: number; // # of the top names that fall in this sector on this side
-  netCr: number; // signed Σ ₹ Cr for this side (+ bought / − sold)
-  stocks: SectorFlowStock[]; // leading names in this sector, most-traded first
-}
+export type { SectorShiftRow, SectorShiftStock } from "./cap-flows";
+
 export interface SectorRotation {
   month: string;
-  totalBought: number; // top names on the buy side considered
-  totalSold: number; // top names on the sell side considered
-  inflow: SectorFlow | null; // sector with the MOST bought names (by count)
-  outflow: SectorFlow | null; // sector with the MOST sold names (by count)
+  monthPrev: string;
+  /** Biggest active-equity AUM-share gainers then losers (up to 2 + 2). */
+  rows: import("./cap-flows").SectorShiftRow[];
 }
 
-// Buckets that aren't real Indian sectors — excluded from the picks so the
-// rotation read stays meaningful.
-const NON_SECTORS = new Set([UNCLASSIFIED, OVERSEAS_EQUITY, MUTUAL_FUND]);
-const TIER_LABEL: Record<"large" | "mid" | "small", string> = {
-  large: "Large-cap",
-  mid: "Mid-cap",
-  small: "Small-cap",
-};
-
 /**
- * Roll the Overview's Top-20 most-bought / most-sold names (large + mid + small)
- * up to their sectors and surface, on each side, the sector that the MOST names
- * fall into — i.e. where MF activity is most concentrated by count — plus the
- * leading stocks driving it. Buy and sell sides are picked independently.
- * Computed at build time from the same cap-flows snapshot the Overview renders.
+ * The sectors whose SHARE of total active-equity MF AUM moved most this month —
+ * the biggest gainers and losers — with the names driving each move. This is
+ * size-normalised (a big sector like Financials only surfaces when its *share*
+ * actually shifts, not just because it has the most names) and robust to
+ * fincode changes. Computed by build-cap-flows over the full holdings universe.
  */
-export function sectorRotation(topStocks = 5): SectorRotation {
-  const tiers = ["large", "mid", "small"] as const;
-  const clean = (s: string) => s.replace(/\s+(Ltd\.?|Limited)$/i, "");
-
-  const bought = new Map<string, SectorFlowStock[]>();
-  const sold = new Map<string, SectorFlowStock[]>();
-  let totalBought = 0;
-  let totalSold = 0;
-
-  const push = (
-    map: Map<string, SectorFlowStock[]>,
-    sector: string,
-    stock: SectorFlowStock
-  ) => {
-    const arr = map.get(sector);
-    if (arr) arr.push(stock);
-    else map.set(sector, [stock]);
-  };
-
-  for (const key of tiers) {
-    for (const r of capFlows[key].bought) {
-      totalBought += 1;
-      const sector = classifySector(r.fincode, r.company);
-      if (NON_SECTORS.has(sector)) continue;
-      push(bought, sector, {
-        company: clean(r.company),
-        netCr: r.netCr,
-        pctOutstanding: r.pctOutstanding,
-        amcs: r.amcs,
-        tier: TIER_LABEL[key],
-      });
-    }
-    for (const r of capFlows[key].sold) {
-      totalSold += 1;
-      const sector = classifySector(r.fincode, r.company);
-      if (NON_SECTORS.has(sector)) continue;
-      push(sold, sector, {
-        company: clean(r.company),
-        netCr: -r.netCr,
-        pctOutstanding: r.pctOutstanding === null ? null : -r.pctOutstanding,
-        amcs: r.amcs,
-        tier: TIER_LABEL[key],
-      });
-    }
-  }
-
-  // Pick the sector with the MOST names on this side (ties broken by total ₹
-  // traded), then keep its leading names, most-traded first.
-  const pick = (
-    map: Map<string, SectorFlowStock[]>,
-    side: "bought" | "sold"
-  ): SectorFlow | null => {
-    let best: SectorFlow | null = null;
-    for (const [sector, stocks] of map) {
-      const netCr = stocks.reduce((s, x) => s + x.netCr, 0);
-      const count = stocks.length;
-      if (
-        !best ||
-        count > best.count ||
-        (count === best.count && Math.abs(netCr) > Math.abs(best.netCr))
-      ) {
-        best = { sector, count, netCr, stocks };
-      }
-    }
-    if (best) {
-      best.stocks = [...best.stocks]
-        .sort((a, b) => (side === "bought" ? b.netCr - a.netCr : a.netCr - b.netCr))
-        .slice(0, topStocks);
-    }
-    return best;
-  };
-
+export function sectorRotation(): SectorRotation {
+  const s = capFlows.sectorShifts;
   return {
-    month: capFlows.meta.monthCur,
-    totalBought,
-    totalSold,
-    inflow: pick(bought, "bought"),
-    outflow: pick(sold, "sold"),
+    month: s?.monthCur ?? capFlows.meta.monthCur,
+    monthPrev: s?.monthPrev ?? capFlows.meta.monthPrev,
+    rows: s?.rows ?? [],
   };
 }
