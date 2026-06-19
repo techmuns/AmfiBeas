@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Sparkline } from "@/components/charts/Sparkline";
 import { cn } from "@/lib/cn";
+import { fmtBps } from "@/lib/units";
 import {
   amcMetricTrend,
   fiscalPeriodSortKey,
@@ -160,7 +161,7 @@ export function CohortUniqueInvestorShare() {
                 >
                   {r.delta === null
                     ? "—"
-                    : `${r.delta > 0 ? "▲ +" : r.delta < 0 ? "▼ " : ""}${r.delta.toFixed(1)} pp`}
+                    : `${r.delta > 0 ? "▲ " : r.delta < 0 ? "▼ " : ""}${fmtBps(r.delta)}`}
                 </td>
                 <td className="py-2.5 pr-3 text-right text-[10.5px] text-muted-foreground">
                   {r.series.length > 0

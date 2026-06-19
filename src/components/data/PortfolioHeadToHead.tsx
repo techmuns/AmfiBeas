@@ -11,6 +11,7 @@ import {
 } from "@/data/portfolio-tracker";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
+import { fmtBps, ppToBps } from "@/lib/units";
 
 const MAX_B_SUGGESTIONS = 60;
 const MAX_COMPARE_ROWS = 50;
@@ -210,14 +211,14 @@ export function PortfolioHeadToHead({
     { key: "company", header: "Company" },
     { key: "a", header: `${aEntry.fund} (%)` },
     { key: "b", header: bEntry ? `${bEntry.fund} (%)` : "Comparison fund (%)" },
-    { key: "delta", header: "Δ A − B (pp)" },
+    { key: "delta", header: "Δ A − B (bps)" },
     { key: "signal", header: "Signal" },
   ];
   const compareExportRows: XRow[] = compareRows.map((r) => ({
     company: r.name,
     a: r.a,
     b: r.b,
-    delta: r.delta,
+    delta: ppToBps(r.delta),
     signal: r.signal,
   }));
 
@@ -349,7 +350,7 @@ export function PortfolioHeadToHead({
                   {" "}most overweight{" "}
                   <strong>{headline.over.name}</strong> (
                   <span className="text-positive">
-                    +{headline.over.delta.toFixed(1)}pp
+                    {fmtBps(headline.over.delta)}
                   </span>
                   )
                 </>
@@ -360,7 +361,7 @@ export function PortfolioHeadToHead({
                   {" "}most underweight{" "}
                   <strong>{headline.under.name}</strong> (
                   <span className="text-negative">
-                    {headline.under.delta.toFixed(1)}pp
+                    {fmtBps(headline.under.delta)}
                   </span>
                   )
                 </>
@@ -454,20 +455,13 @@ function Header({
 }
 
 function DeltaPp({ value, signal }: { value: number; signal: Signal }) {
-  const sign = value > 0 ? "+" : value < 0 ? "−" : "";
-  const abs = Math.abs(value).toFixed(1);
   const cls =
     signal === "In line"
       ? "text-muted-foreground"
       : value > 0
         ? "text-positive"
         : "text-negative";
-  return (
-    <span className={cls}>
-      {sign}
-      {abs}pp
-    </span>
-  );
+  return <span className={cls}>{fmtBps(value)}</span>;
 }
 
 function SignalBadge({ signal }: { signal: Signal }) {

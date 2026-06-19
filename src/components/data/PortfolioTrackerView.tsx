@@ -5,6 +5,7 @@ import { Search, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
+import { fmtBps } from "@/lib/units";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
 import {
   PortfolioHeadToHead,
@@ -661,12 +662,12 @@ export function PortfolioTrackerView({
                       weight most in{" "}
                       <strong>{flowSummary.topAdd.name}</strong> (
                       <span className="text-positive">
-                        +{flowSummary.topAdd.d.toFixed(1)}pp
+                        {fmtBps(flowSummary.topAdd.d)}
                       </span>
                       ) and trimmed{" "}
                       <strong>{flowSummary.topTrim.name}</strong> (
                       <span className="text-negative">
-                        {flowSummary.topTrim.d.toFixed(1)}pp
+                        {fmtBps(flowSummary.topTrim.d)}
                       </span>
                       ).
                     </>
@@ -682,8 +683,7 @@ export function PortfolioTrackerView({
                             : "text-negative"
                         }
                       >
-                        {flowSummary.concDelta >= 0 ? "+" : ""}
-                        {flowSummary.concDelta.toFixed(1)}pp
+                        {fmtBps(flowSummary.concDelta)}
                       </span>{" "}
                       MoM).
                     </>

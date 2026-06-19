@@ -3,6 +3,7 @@
 import { cn } from "@/lib/cn";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
+import { fmtBps, ppToBps } from "@/lib/units";
 
 type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y";
 
@@ -110,7 +111,7 @@ export function TrendsPeerTable({
     { key: "peerCount", header: "Peer count" },
     { key: "percentile", header: "Percentile" },
     { key: "quartile", header: "Quartile" },
-    { key: "vsMedian", header: "Excess vs median (pp)" },
+    { key: "vsMedian", header: "Excess vs median (bps)" },
   ];
   const exportRows: XRow[] = sorted.map((r) => {
     const e = r.periodRanks[period];
@@ -125,7 +126,7 @@ export function TrendsPeerTable({
         peerCount: e.peerCount,
         percentile: e.percentile,
         quartile: e.quartile,
-        vsMedian: e.excessVsMedian,
+        vsMedian: ppToBps(e.excessVsMedian),
       };
     }
     return {
@@ -285,8 +286,7 @@ export function TrendsPeerTable({
                               : "text-muted-foreground"
                         }
                       >
-                        {stats.excessVsMedian > 0 ? "+" : ""}
-                        {stats.excessVsMedian.toFixed(1)}pp
+                        {fmtBps(stats.excessVsMedian)}
                       </span>
                     ) : (
                       <span className="text-muted-foreground">—</span>

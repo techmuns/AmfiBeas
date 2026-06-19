@@ -48,6 +48,7 @@ import { VerticalBars } from "@/components/charts/VerticalBars";
 import {
   MonthlyFlowsTable,
   MONTHLY_FLOWS_XLSX_COLUMNS,
+  monthlyFlowsXlsxRows,
   type MonthlyFlowsTableRow,
 } from "@/components/data/MonthlyFlowsTable";
 import {
@@ -58,6 +59,7 @@ import {
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import { HowToRead } from "@/components/ui/HowToRead";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
+import { fmtBps } from "@/lib/units";
 import type { ReactNode } from "react";
 import { ClientPeriodCard } from "@/components/layout/ClientPeriodCard";
 import {
@@ -949,7 +951,7 @@ export default async function MonthlyPage() {
           }
           action={
             <DownloadXlsxButton
-              rows={flowTableRows}
+              rows={monthlyFlowsXlsxRows(flowTableRows)}
               columns={MONTHLY_FLOWS_XLSX_COLUMNS}
               filename="monthly-flows.xlsx"
               sheetName="Monthly Flows"
@@ -972,7 +974,7 @@ export default async function MonthlyPage() {
                   <li>
                     <span className="text-foreground">AUM Mix</span> shows each
                     segment&rsquo;s share of month-end AUM, with the small MoM
-                    change (pp) beneath.
+                    change (bps) beneath.
                   </li>
                   <li>
                     <span className="text-foreground">Industry AAUM</span> is the
@@ -1015,11 +1017,11 @@ export default async function MonthlyPage() {
                   <strong>{topGainer.label}</strong> gained the most
                   active-equity flow share (
                   <span className="text-positive">
-                    +{topGainer.deltaSharePct.toFixed(2)}pp
+                    {fmtBps(topGainer.deltaSharePct)}
                   </span>
                   ), while <strong>{topLoser.label}</strong> lost the most (
                   <span className="text-negative">
-                    {topLoser.deltaSharePct.toFixed(2)}pp
+                    {fmtBps(topLoser.deltaSharePct)}
                   </span>
                   ).
                 </>

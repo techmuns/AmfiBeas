@@ -22,7 +22,7 @@ function fmtPct(v: number | null): string {
 function fmtDelta(v: number | null): string {
   return v === null || !Number.isFinite(v)
     ? "—"
-    : `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}pp`;
+    : `${v >= 0 ? "+" : "−"}${Math.abs(Math.round(v * 100)).toLocaleString("en-IN")} bps`;
 }
 function tone(v: number | null): string {
   if (v === null || !Number.isFinite(v) || Math.abs(v) < 0.05)
@@ -50,13 +50,16 @@ export function SectorAllocationChart({ data, fundName, peerLabel }: Props) {
     sector: r.label,
     fund: r.fund,
     peerAvg: r.peerAvg,
-    delta: r.fund !== null && r.peerAvg !== null ? r.fund - r.peerAvg : null,
+    delta:
+      r.fund !== null && r.peerAvg !== null
+        ? Math.round((r.fund - r.peerAvg) * 100)
+        : null,
   }));
   const exportColumns: CsvColumn<XRow>[] = [
     { key: "sector", header: "Sector" },
     { key: "fund", header: `${fundName} (%)` },
     { key: "peerAvg", header: `${peerLabel} (%)` },
-    { key: "delta", header: "Δ vs peers (pp)" },
+    { key: "delta", header: "Δ vs peers (bps)" },
   ];
 
   return (

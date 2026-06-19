@@ -166,7 +166,8 @@ export function FundwiseCard({ matrix }: { matrix: FundwiseMatrix }) {
       <p className="mt-3 text-[11px] text-muted-foreground">
         Share % = each AMC&rsquo;s AAUM as a fraction of the total market that
         quarter; the small figure beneath is the QoQ change in basis points (100
-        bps = 1pp). Toggle to <strong>AAUM</strong> for the rupee base (₹ Cr) or{" "}
+        bps = 1 percentage point). Toggle to <strong>AAUM</strong> for the rupee
+        base (₹ Cr) or{" "}
         <strong>QoQ growth</strong> for the period-on-period change; both are
         tinted by momentum. Export sends the active view to Excel, including the
         Remaining Others and Total Market rows.

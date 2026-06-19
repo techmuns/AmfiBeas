@@ -33,6 +33,7 @@ import {
   formatPctSafe,
 } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { fmtBps } from "@/lib/units";
 
 export function generateStaticParams() {
   return allAaumAmcs().map((a) => ({ slug: a.amcSlug }));
@@ -273,7 +274,7 @@ export default async function AmcPage({
           percentile={shareOwnPercentile ?? undefined}
           ratio={
             shareDelta5Y !== null
-              ? `${shareDelta5Y >= 0 ? "+" : ""}${shareDelta5Y.toFixed(2)} pp vs 5Y ago`
+              ? `${fmtBps(shareDelta5Y)} vs 5Y ago`
               : undefined
           }
         />
@@ -310,7 +311,7 @@ export default async function AmcPage({
           }
           ratio={
             cohortMedianQoq !== null && growth?.qoqGrowthPct !== undefined && growth?.qoqGrowthPct !== null
-              ? `${(growth.qoqGrowthPct - cohortMedianQoq) >= 0 ? "+" : ""}${(growth.qoqGrowthPct - cohortMedianQoq).toFixed(2)}pp vs cohort median`
+              ? `${fmtBps(growth.qoqGrowthPct - cohortMedianQoq)} vs cohort median`
               : undefined
           }
         />
