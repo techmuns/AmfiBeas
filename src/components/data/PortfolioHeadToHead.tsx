@@ -12,6 +12,7 @@ import {
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
 import { fmtBps, ppToBps } from "@/lib/units";
+import { amcOf } from "@/data/amc-name-map";
 
 const MAX_B_SUGGESTIONS = 60;
 const MAX_COMPARE_ROWS = 50;
@@ -102,6 +103,38 @@ function classify(
   return { delta, signal: "A underweight" };
 }
 
+type HoldingsView = "mutuals" | "exclusive";
+
+/** A short, distinct fund label for same-AMC comparisons (e.g. "HDFC Flexi
+ *  Cap" / "HDFC Mid-Cap") — the first few meaningful words, minus plan tokens. */
+function shortFundLabel(fund: string): string {
+  return fund
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/-?\b(Reg|Dir|Regular|Direct)\b/gi, " ")
+    .replace(/\bFund\b/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .slice(0, 3)
+    .join(" ");
+}
+
+/** Render an abstract signal with the two funds' short labels instead of A/B. */
+function signalLabel(signal: Signal, aLabel: string, bLabel: string): string {
+  switch (signal) {
+    case "A overweight":
+      return `${aLabel} overweight`;
+    case "A underweight":
+      return `${aLabel} underweight`;
+    case "Only A holds":
+      return `Only ${aLabel} holds`;
+    case "Only B holds":
+      return `Only ${bLabel} holds`;
+    default:
+      return "In line";
+  }
+}
+
 export function PortfolioHeadToHead({
   aEntry,
   aPortfolio,
@@ -116,6 +149,9 @@ export function PortfolioHeadToHead({
 }: Props) {
   const [bQuery, setBQuery] = useState(bEntry?.fund ?? "");
   const [bFocused, setBFocused] = useState(false);
+  // Mutual (both funds hold) vs exclusive (only one holds) holdings. Default
+  // mutual — the apples-to-apples weight comparison.
+  const [view, setView] = useState<HoldingsView>("mutuals");
 
   // Externally-driven B changes (A re-picked → default-B re-derives) sync
   // into the picker's text so the visible fund-name tracks the fund being
@@ -197,9 +233,23 @@ export function PortfolioHeadToHead({
     return { over, under };
   }, [compareRows]);
 
+  // Short labels for the two funds (AMC abbreviation, e.g. "HDFC" / "PPFAS").
+  // Fall back to a short fund name when both funds are from the same AMC.
+  const rawA = amcOf(aEntry.fund);
+  const rawB = bEntry ? amcOf(bEntry.fund) : "B";
+  const sameAmc = bEntry != null && rawA === rawB;
+  const aLabel = sameAmc ? shortFundLabel(aEntry.fund) : rawA;
+  const bLabel = sameAmc && bEntry ? shortFundLabel(bEntry.fund) : rawB;
+
+  const mutualRows = compareRows.filter((r) => r.a !== null && r.b !== null);
+  const exclusiveRows = compareRows.filter((r) => r.a === null || r.b === null);
+  const onlyACount = exclusiveRows.filter((r) => r.signal === "Only A holds").length;
+  const onlyBCount = exclusiveRows.length - onlyACount;
+  const viewRows = view === "mutuals" ? mutualRows : exclusiveRows;
+
   const latestMonth = aPortfolio.meta.months[0]?.label ?? "";
-  const totalRows = compareRows.length;
-  const displayRows = compareRows.slice(0, MAX_COMPARE_ROWS);
+  const totalRows = viewRows.length;
+  const displayRows = viewRows.slice(0, MAX_COMPARE_ROWS);
   type XRow = {
     company: string;
     a: number | null;
@@ -211,15 +261,15 @@ export function PortfolioHeadToHead({
     { key: "company", header: "Company" },
     { key: "a", header: `${aEntry.fund} (%)` },
     { key: "b", header: bEntry ? `${bEntry.fund} (%)` : "Comparison fund (%)" },
-    { key: "delta", header: "Δ A − B (bps)" },
+    { key: "delta", header: `Δ ${aLabel} − ${bLabel} (bps)` },
     { key: "signal", header: "Signal" },
   ];
-  const compareExportRows: XRow[] = compareRows.map((r) => ({
+  const compareExportRows: XRow[] = viewRows.map((r) => ({
     company: r.name,
     a: r.a,
     b: r.b,
     delta: ppToBps(r.delta),
-    signal: r.signal,
+    signal: signalLabel(r.signal, aLabel, bLabel),
   }));
 
   if (bCandidates.length === 0) {
@@ -331,49 +381,89 @@ export function PortfolioHeadToHead({
         </div>
       ) : (
         <>
-          {totalRows > 0 && (
-            <div className="flex justify-end">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div
+              className="inline-flex rounded-md border bg-card p-0.5 text-xs"
+              role="group"
+              aria-label="Holdings comparison view"
+            >
+              {(
+                [
+                  { id: "mutuals", label: `Mutual (${mutualRows.length})` },
+                  { id: "exclusive", label: `Exclusive (${exclusiveRows.length})` },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setView(opt.id)}
+                  aria-pressed={view === opt.id}
+                  className={cn(
+                    "rounded px-2.5 py-1 font-medium transition-colors",
+                    view === opt.id
+                      ? "bg-accent text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {totalRows > 0 && (
               <DownloadXlsxButton
                 rows={compareExportRows}
                 columns={compareExportColumns}
                 filename="portfolio-head-to-head.xlsx"
-                sheetName="A vs B"
+                sheetName={`${aLabel} vs ${bLabel}`}
               />
-            </div>
-          )}
-          {(headline.over || headline.under) && bEntry && (
-            <p className="text-sm leading-snug text-foreground">
-              vs <strong>{bEntry.fund}</strong>,{" "}
-              <strong>{aEntry.fund}</strong> is
-              {headline.over && (
-                <>
-                  {" "}most overweight{" "}
-                  <strong>{headline.over.name}</strong> (
-                  <span className="text-positive">
-                    {fmtBps(headline.over.delta)}
-                  </span>
-                  )
-                </>
+            )}
+          </div>
+          {view === "mutuals"
+            ? (headline.over || headline.under) && (
+                <p className="text-sm leading-snug text-foreground">
+                  Among names both hold, <strong>{aLabel}</strong> is
+                  {headline.over && (
+                    <>
+                      {" "}most overweight{" "}
+                      <strong>{headline.over.name}</strong> (
+                      <span className="text-positive">
+                        {fmtBps(headline.over.delta)}
+                      </span>
+                      )
+                    </>
+                  )}
+                  {headline.over && headline.under && " and"}
+                  {headline.under && (
+                    <>
+                      {" "}most underweight{" "}
+                      <strong>{headline.under.name}</strong> (
+                      <span className="text-negative">
+                        {fmtBps(headline.under.delta)}
+                      </span>
+                      )
+                    </>
+                  )}{" "}
+                  vs <strong>{bLabel}</strong>.
+                </p>
+              )
+            : exclusiveRows.length > 0 && (
+                <p className="text-sm leading-snug text-foreground">
+                  <strong>{aLabel}</strong> holds{" "}
+                  <span className="text-positive">{onlyACount}</span> name
+                  {onlyACount === 1 ? "" : "s"} <strong>{bLabel}</strong>{" "}
+                  doesn&apos;t, and <strong>{bLabel}</strong> holds{" "}
+                  <span className="text-negative">{onlyBCount}</span> name
+                  {onlyBCount === 1 ? "" : "s"} <strong>{aLabel}</strong>{" "}
+                  doesn&apos;t.
+                </p>
               )}
-              {headline.over && headline.under && " and"}
-              {headline.under && (
-                <>
-                  {" "}most underweight{" "}
-                  <strong>{headline.under.name}</strong> (
-                  <span className="text-negative">
-                    {fmtBps(headline.under.delta)}
-                  </span>
-                  )
-                </>
-              )}
-              .
-            </p>
-          )}
 
           {totalRows === 0 ? (
             <div className="rounded-md border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">
-              No comparable equity holdings between these two funds for{" "}
-              {latestMonth || "the latest month"}.
+              {view === "mutuals"
+                ? `No holdings ${aLabel} and ${bLabel} both hold`
+                : `No exclusive holdings — every name is held by both`}{" "}
+              for {latestMonth || "the latest month"}.
             </div>
           ) : (
             <div className="overflow-x-auto rounded-md border bg-card">
@@ -388,7 +478,7 @@ export function PortfolioHeadToHead({
                       {bEntry?.fund ?? "Comparison fund"}
                     </th>
                     <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
-                      Δ A − B
+                      Δ {aLabel} − {bLabel}
                     </th>
                     <th className="whitespace-nowrap px-3 py-2 text-left font-medium">
                       Signal
@@ -412,7 +502,11 @@ export function PortfolioHeadToHead({
                         <DeltaPp value={r.delta} signal={r.signal} />
                       </td>
                       <td className="px-3 py-2.5">
-                        <SignalBadge signal={r.signal} />
+                        <SignalBadge
+                          signal={r.signal}
+                          aLabel={aLabel}
+                          bLabel={bLabel}
+                        />
                       </td>
                     </tr>
                   ))}
@@ -424,8 +518,8 @@ export function PortfolioHeadToHead({
           {totalRows > 0 && (
             <p className="text-xs text-muted-foreground">
               {totalRows > MAX_COMPARE_ROWS
-                ? `Showing top ${MAX_COMPARE_ROWS} of ${totalRows} joined holdings by |Δ|`
-                : `${totalRows} joined holding${totalRows === 1 ? "" : "s"}, sorted by |Δ|`}
+                ? `Showing top ${MAX_COMPARE_ROWS} of ${totalRows} ${view === "mutuals" ? "shared" : "exclusive"} holdings by |Δ|`
+                : `${totalRows} ${view === "mutuals" ? "shared" : "exclusive"} holding${totalRows === 1 ? "" : "s"}, sorted by |Δ|`}
               {latestMonth && ` · Latest month: ${latestMonth}`}.
             </p>
           )}
@@ -464,12 +558,24 @@ function DeltaPp({ value, signal }: { value: number; signal: Signal }) {
   return <span className={cls}>{fmtBps(value)}</span>;
 }
 
-function SignalBadge({ signal }: { signal: Signal }) {
+function SignalBadge({
+  signal,
+  aLabel,
+  bLabel,
+}: {
+  signal: Signal;
+  aLabel: string;
+  bLabel: string;
+}) {
   const tone =
     signal === "A overweight"
       ? "text-positive"
       : signal === "A underweight"
         ? "text-negative"
         : "text-muted-foreground";
-  return <span className={cn("text-xs", tone)}>{signal}</span>;
+  return (
+    <span className={cn("text-xs", tone)}>
+      {signalLabel(signal, aLabel, bLabel)}
+    </span>
+  );
 }
