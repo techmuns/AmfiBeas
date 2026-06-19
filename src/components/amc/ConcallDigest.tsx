@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/cn";
+import { fmtBps } from "@/lib/units";
 import {
   amcNarrativesAll,
   type AmcNarrativeRow,
@@ -167,7 +168,9 @@ function buildMetricCard(
     let body: string;
     switch (m.unit) {
       case "pct":
-        body = `${sign}${abs.toFixed(1)} pp`;
+        // pct metrics are tracked in percentage points; surface the QoQ move
+        // as signed basis points (1 pp = 100 bps) via the shared helper.
+        body = fmtBps(diff);
         break;
       case "bps":
         body = `${sign}${abs.toFixed(1)} bps`;

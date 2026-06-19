@@ -5,6 +5,7 @@ import { Search, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
+import { fmtBps, ppToBps } from "@/lib/units";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
 import {
   formatCompactCrSafe,
@@ -355,12 +356,12 @@ export function FundwisePortfolioView({
                       {selected.amc} raised its aggregate weight most in{" "}
                       <strong>{flowSummary.topAdd.name}</strong> (
                       <span className="text-positive">
-                        +{flowSummary.topAdd.d.toFixed(1)}pp
+                        {fmtBps(flowSummary.topAdd.d)}
                       </span>
                       ) and trimmed{" "}
                       <strong>{flowSummary.topTrim.name}</strong> (
                       <span className="text-negative">
-                        {flowSummary.topTrim.d.toFixed(1)}pp
+                        {fmtBps(flowSummary.topTrim.d)}
                       </span>
                       ).
                     </>
@@ -376,8 +377,7 @@ export function FundwisePortfolioView({
                             : "text-negative"
                         }
                       >
-                        {flowSummary.concDelta >= 0 ? "+" : ""}
-                        {flowSummary.concDelta.toFixed(1)}pp
+                        {fmtBps(flowSummary.concDelta)}
                       </span>{" "}
                       MoM).
                     </>
@@ -641,7 +641,9 @@ function FundHouseCompare({
       metric("Schemes", (c) => c.entry.schemeCount),
       metric("Distinct holdings", (c) => c.entry.holdingsCount),
       metric("Top-10 concentration (%)", (c) => c.entry.top10Pct),
-      metric("Top-10 MoM (pp)", (c) => c.entry.top10DeltaPp ?? ""),
+      metric("Top-10 MoM (bps)", (c) =>
+        c.entry.top10DeltaPp === null ? "" : ppToBps(c.entry.top10DeltaPp)
+      ),
       metric("Large-cap (%)", (c) => {
         const s = capSplit(c.portfolio);
         return s ? Number(s.large.toFixed(1)) : "";
@@ -753,8 +755,7 @@ function FundHouseCompare({
                             : "text-negative"
                         )}
                       >
-                        {c.entry.top10DeltaPp >= 0 ? "+" : ""}
-                        {c.entry.top10DeltaPp.toFixed(1)}pp
+                        {fmtBps(c.entry.top10DeltaPp)}
                       </span>
                     )}
                   </StatRow>
@@ -762,7 +763,7 @@ function FundHouseCompare({
                     {c.entry.biggestAdd ? (
                       <span>
                         <span className="text-positive">
-                          +{c.entry.biggestAdd.pp.toFixed(1)}pp
+                          {fmtBps(c.entry.biggestAdd.pp)}
                         </span>{" "}
                         <span className="text-[11px] text-muted-foreground">
                           {c.entry.biggestAdd.company}
@@ -776,7 +777,7 @@ function FundHouseCompare({
                     {c.entry.biggestTrim ? (
                       <span>
                         <span className="text-negative">
-                          {c.entry.biggestTrim.pp.toFixed(1)}pp
+                          {fmtBps(c.entry.biggestTrim.pp)}
                         </span>{" "}
                         <span className="text-[11px] text-muted-foreground">
                           {c.entry.biggestTrim.company}
@@ -919,10 +920,10 @@ function FundHousePeers({
     { key: "schemes", header: "Schemes" },
     { key: "equityBookCr", header: "Equity book (₹ Cr)" },
     { key: "top10Pct", header: "Top-10 concentration (%)" },
-    { key: "top10DeltaPp", header: "Top-10 MoM (pp)" },
-    { key: "biggestAddPp", header: "Biggest add (pp MoM)" },
+    { key: "top10DeltaPp", header: "Top-10 MoM (bps)" },
+    { key: "biggestAddPp", header: "Biggest add (bps MoM)" },
     { key: "biggestAddName", header: "Biggest add — stock" },
-    { key: "biggestTrimPp", header: "Biggest trim (pp MoM)" },
+    { key: "biggestTrimPp", header: "Biggest trim (bps MoM)" },
     { key: "biggestTrimName", header: "Biggest trim — stock" },
   ];
   const exportRows: XRow[] = rows.map((p) => ({
@@ -930,10 +931,10 @@ function FundHousePeers({
     schemes: p.schemeCount,
     equityBookCr: p.equityValueCr,
     top10Pct: p.top10Pct,
-    top10DeltaPp: p.top10DeltaPp,
-    biggestAddPp: p.biggestAdd?.pp ?? null,
+    top10DeltaPp: p.top10DeltaPp === null ? null : ppToBps(p.top10DeltaPp),
+    biggestAddPp: p.biggestAdd == null ? null : ppToBps(p.biggestAdd.pp),
     biggestAddName: p.biggestAdd?.company ?? "",
-    biggestTrimPp: p.biggestTrim?.pp ?? null,
+    biggestTrimPp: p.biggestTrim == null ? null : ppToBps(p.biggestTrim.pp),
     biggestTrimName: p.biggestTrim?.company ?? "",
   }));
 
@@ -970,10 +971,10 @@ function FundHousePeers({
                 Top-10 conc.
               </th>
               <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
-                Biggest add (pp MoM)
+                Biggest add (bps MoM)
               </th>
               <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
-                Biggest trim (pp MoM)
+                Biggest trim (bps MoM)
               </th>
             </tr>
           </thead>
@@ -1015,8 +1016,7 @@ function FundHousePeers({
                           p.top10DeltaPp >= 0 ? "text-positive" : "text-negative"
                         )}
                       >
-                        {p.top10DeltaPp >= 0 ? "+" : ""}
-                        {p.top10DeltaPp.toFixed(1)}pp
+                        {fmtBps(p.top10DeltaPp)}
                       </div>
                     )}
                   </td>
@@ -1024,7 +1024,7 @@ function FundHousePeers({
                     {p.biggestAdd ? (
                       <>
                         <div className="text-positive">
-                          +{p.biggestAdd.pp.toFixed(1)}pp
+                          {fmtBps(p.biggestAdd.pp)}
                         </div>
                         <div className="text-[11px] text-muted-foreground">
                           {p.biggestAdd.company}
@@ -1038,7 +1038,7 @@ function FundHousePeers({
                     {p.biggestTrim ? (
                       <>
                         <div className="text-negative">
-                          {p.biggestTrim.pp.toFixed(1)}pp
+                          {fmtBps(p.biggestTrim.pp)}
                         </div>
                         <div className="text-[11px] text-muted-foreground">
                           {p.biggestTrim.company}

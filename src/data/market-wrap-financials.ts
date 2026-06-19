@@ -15,6 +15,7 @@ import { quarterlyForAmc, SOURCED_FINANCIALS_SLUGS } from "./aggregate";
 import { aaumProvenance } from "./source";
 import { getAMC } from "./amcs";
 import { fiscalLabelFromCalendarQuarter } from "./amc-peer-universe";
+import { fmtBps } from "../lib/units";
 
 export interface FinancialsMarketWrap {
   asOf: string;
@@ -64,8 +65,8 @@ function profitabilitySentence(
       : Math.abs(gap) < 0.5
         ? " · roughly in line with peer median"
         : gap > 0
-          ? ` · +${gap.toFixed(1)} pp above peer median`
-          : ` · ${gap.toFixed(1)} pp below peer median`;
+          ? ` · ${fmtBps(gap, { sign: false })} above peer median`
+          : ` · ${fmtBps(gap, { sign: false })} below peer median`;
   const rankTag =
     rank > 0
       ? ` (rank ${rank} of ${peerMargins.length} listed peers)`

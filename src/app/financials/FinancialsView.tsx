@@ -21,6 +21,7 @@ import { MultiLine } from "@/components/charts/MultiLine";
 import { FinancialsPeerExport } from "@/components/data/FinancialsPeerExport";
 import { HowToRead } from "@/components/ui/HowToRead";
 import { cn } from "@/lib/cn";
+import { fmtBps } from "@/lib/units";
 import {
   SOURCED_FINANCIALS_SLUGS,
   fixedQuarterWindow,
@@ -892,7 +893,7 @@ function FinancialSignalReadCard({
     beats.push(
       `PAT margin ${patMarginPct.toFixed(1)}%${
         marginVsPeer !== null
-          ? ` (${marginVsPeer >= 0 ? "+" : ""}${marginVsPeer.toFixed(1)} pp vs peer median)`
+          ? ` (${fmtBps(marginVsPeer)} vs peer median)`
           : ""
       }`
     );

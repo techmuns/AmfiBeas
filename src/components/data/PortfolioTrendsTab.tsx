@@ -11,6 +11,7 @@ import {
   TrendsPeerTable,
   type PeerRankRow,
 } from "@/components/data/TrendsPeerTable";
+import { fmtBps } from "@/lib/units";
 import mfLatestNav from "@/data/snapshots/mf-latest-nav.json";
 import mfReturns from "@/data/snapshots/mf-returns.json";
 import mfCategoryReturns from "@/data/snapshots/mf-category-returns.json";
@@ -663,8 +664,7 @@ function ReturnKpiCard({
                 : ""
           }
         >
-          {excessPp > 0 ? "+" : ""}
-          {excessPp.toFixed(1)}pp
+          {fmtBps(excessPp)}
         </span>
       )}
     </div>
@@ -906,12 +906,12 @@ function CategoryStrip({
         <Stat label="Median" value={`${signed(stats.categoryMedian)}%`} />
         <Stat
           label="vs avg"
-          value={`${signed(stats.excessVsAverage)}pp`}
+          value={fmtBps(stats.excessVsAverage)}
           tone={toneOf(stats.excessVsAverage)}
         />
         <Stat
           label="vs median"
-          value={`${signed(stats.excessVsMedian)}pp`}
+          value={fmtBps(stats.excessVsMedian)}
           tone={toneOf(stats.excessVsMedian)}
         />
         <Stat

@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { cn } from "@/lib/cn";
+import { fmtBps } from "@/lib/units";
 
 interface JourneyPoint {
   amcSlug: string;
@@ -252,7 +253,7 @@ export function CohortJourneyMap({
               markerEnd={markerOf(p.shareDeltaPp)}
             >
               <title>
-                {`${p.displayName}: rank #${sr} → #${er} · ${p.startMarketSharePct.toFixed(2)}% → ${p.endMarketSharePct.toFixed(2)}% (${p.shareDeltaPp >= 0 ? "+" : ""}${p.shareDeltaPp.toFixed(2)}pp)`}
+                {`${p.displayName}: rank #${sr} → #${er} · ${p.startMarketSharePct.toFixed(2)}% → ${p.endMarketSharePct.toFixed(2)}% (${fmtBps(p.shareDeltaPp)})`}
               </title>
             </line>
           );

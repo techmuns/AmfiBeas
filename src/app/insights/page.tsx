@@ -18,6 +18,7 @@ import {
   fmtBps,
   monthLong,
 } from "@/data/insights";
+import { fmtBps as fmtBpsFromPp } from "@/lib/units";
 
 // Static: every insight is computed at build time from the bundled snapshots,
 // so the Worker serves a prerendered page (no per-request CPU; Error 1102).
@@ -468,15 +469,15 @@ export default function InsightsPage() {
                 {sectorGainers.map((r, i) => (
                   <span key={r.sector}>
                     {i > 0 && " and "}
-                    <span className={pos}>{r.sector}</span> (+
-                    {r.changePp.toFixed(2)}pp)
+                    <span className={pos}>{r.sector}</span> (
+                    {fmtBpsFromPp(r.changePp)})
                   </span>
                 ))}
                 {sectorGainers.length > 0 && sectorLosers.length > 0 && ", and cut it most in "}
                 {sectorLosers.map((r, i) => (
                   <span key={r.sector}>
                     {i > 0 && " and "}
-                    <span className={neg}>{r.sector}</span> ({r.changePp.toFixed(2)}pp)
+                    <span className={neg}>{r.sector}</span> ({fmtBpsFromPp(r.changePp)})
                   </span>
                 ))}
                 .
@@ -491,7 +492,7 @@ export default function InsightsPage() {
               return (
                 <Card
                   key={r.sector}
-                  title={`${r.sector} — AUM share ${up ? "+" : ""}${r.changePp.toFixed(2)}pp (${rotation.month})`}
+                  title={`${r.sector} — AUM share ${fmtBpsFromPp(r.changePp)} (${rotation.month})`}
                 >
                   <p className="mb-3 text-[13px] leading-snug text-muted-foreground">
                     {r.sector}&rsquo;s share of active-equity MF AUM{" "}

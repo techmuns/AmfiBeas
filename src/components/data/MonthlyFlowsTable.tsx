@@ -1,6 +1,7 @@
 import { cn } from "@/lib/cn";
 import { toneBg, toneText } from "@/lib/tone";
 import type { CsvColumn } from "@/lib/csv";
+import { fmtBps, ppToBps } from "@/lib/units";
 
 /**
  * Monthly Flows & AUM heatmap table — a tabular re-creation of the
@@ -59,14 +60,42 @@ export const MONTHLY_FLOWS_XLSX_COLUMNS: CsvColumn<MonthlyFlowsTableRow>[] = [
   { key: "debtShare", header: "AUM Mix · Debt (%)" },
   { key: "liquidShare", header: "AUM Mix · Liquid (%)" },
   { key: "otherShare", header: "AUM Mix · Other (%)" },
-  { key: "equitySharePpMoM", header: "AUM Mix · Equity MoM (pp)" },
-  { key: "debtSharePpMoM", header: "AUM Mix · Debt MoM (pp)" },
-  { key: "liquidSharePpMoM", header: "AUM Mix · Liquid MoM (pp)" },
-  { key: "otherSharePpMoM", header: "AUM Mix · Other MoM (pp)" },
+  { key: "equitySharePpMoM", header: "AUM Mix · Equity MoM (bps)" },
+  { key: "debtSharePpMoM", header: "AUM Mix · Debt MoM (bps)" },
+  { key: "liquidSharePpMoM", header: "AUM Mix · Liquid MoM (bps)" },
+  { key: "otherSharePpMoM", header: "AUM Mix · Other MoM (bps)" },
   { key: "aaum", header: "Industry AAUM (₹ Cr)" },
   { key: "aaumMoMPct", header: "Industry AAUM · MoM (%)" },
   { key: "aaumYoYPct", header: "Industry AAUM · YoY (%)" },
 ];
+
+// The four "AUM Mix · … MoM" columns above report basis points (1 pp = 100 bps),
+// so the exported VALUES must be scaled to match their (bps) headers. The MoM
+// fields are carried in percentage points on MonthlyFlowsTableRow (and the
+// on-screen table still renders them via fmtPp), so the workbook gets a shallow
+// per-row copy with just those fields converted. Kept here alongside the column
+// definitions so header + value stay consistent. The returned rows are plain
+// data (no functions), so they remain serialisable across the Server→Client
+// boundary when handed to DownloadXlsxButton.
+const PP_MOM_KEYS = [
+  "equitySharePpMoM",
+  "debtSharePpMoM",
+  "liquidSharePpMoM",
+  "otherSharePpMoM",
+] as const;
+
+export function monthlyFlowsXlsxRows(
+  rows: readonly MonthlyFlowsTableRow[]
+): MonthlyFlowsTableRow[] {
+  return rows.map((r) => {
+    const out = { ...r };
+    for (const k of PP_MOM_KEYS) {
+      const v = r[k];
+      out[k] = typeof v === "number" && Number.isFinite(v) ? ppToBps(v) : v;
+    }
+    return out;
+  });
+}
 
 type FlowKey =
   | "totalFlow"
@@ -138,11 +167,11 @@ function fmtShare(v: number | null): string {
   return `${v.toFixed(1)}%`;
 }
 
+// MoM share move rendered as signed basis points (1 pp = 100 bps). Delegates
+// to the shared unit helper so the sign, ×100 conversion and Indian grouping
+// match every other bps site; null / NaN render as "—".
 function fmtPp(v: number | null): string {
-  if (v === null || !Number.isFinite(v)) return "—";
-  if (Math.abs(v) < 0.05) return "±0.0";
-  const abs = Math.abs(v).toFixed(1);
-  return v < 0 ? `(${abs})` : `+${abs}`;
+  return fmtBps(v);
 }
 
 function maxAbsOf(rows: MonthlyFlowsTableRow[], key: keyof MonthlyFlowsTableRow): number {

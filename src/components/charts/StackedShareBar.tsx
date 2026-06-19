@@ -1,5 +1,6 @@
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { fmtBps } from "@/lib/units";
 
 export interface StackedShareBarSegment {
   key: string;
@@ -96,8 +97,7 @@ export function StackedShareBar({
                     title={`Share ${deltaDir === "up" ? "rose" : deltaDir === "down" ? "fell" : "was flat"} vs previous month`}
                   >
                     {DeltaIcon && <DeltaIcon className="h-3 w-3" aria-hidden />}
-                    {(delta as number) >= 0 ? "+" : ""}
-                    {(delta as number).toFixed(1)}pp MoM
+                    {fmtBps(delta as number)} MoM
                   </span>
                 )}
                 <span className="tabular text-base font-semibold text-foreground">

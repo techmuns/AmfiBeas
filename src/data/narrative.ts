@@ -15,6 +15,7 @@
  * Callers render the top N facts and hide the rest.
  */
 
+import { fmtBps } from "../lib/units";
 import { amfiMonthlyRows } from "./amfi-monthly";
 import { amfiQuarterlyIndustryRows } from "./amfi-quarterly";
 import {
@@ -177,7 +178,7 @@ export function industryNarrative(maxFacts = 6): NarrativeFact[] {
           id: "active-equity-share-shift",
           tone: delta >= 0 ? "positive" : "negative",
           significance: 55,
-          title: `Active equity share ${delta >= 0 ? "up" : "down"} ${Math.abs(delta).toFixed(2)} pp over 3 months`,
+          title: `Active equity share ${delta >= 0 ? "up" : "down"} ${fmtBps(delta, { sign: false })} over 3 months`,
           detail: `Latest ${ratios[2].toFixed(2)}% of total AAUM, vs ${ratios[0].toFixed(2)}% three months ago.`,
         });
       }
@@ -223,7 +224,7 @@ export function industryNarrative(maxFacts = 6): NarrativeFact[] {
             id: "top7-share-shift",
             tone: delta < 0 ? "positive" : "neutral",
             significance: 65,
-            title: `Top-7 AMC share ${delta >= 0 ? "up" : "down"} ${Math.abs(delta).toFixed(2)} pp YoY`,
+            title: `Top-7 AMC share ${delta >= 0 ? "up" : "down"} ${fmtBps(delta, { sign: false })} YoY`,
             detail: `Top 7 AMCs hold ${nowShare.toFixed(2)}% of industry AAUM at ${latestQ}, vs ${yaShare.toFixed(2)}% at ${yearAgoQ}.`,
           });
         }

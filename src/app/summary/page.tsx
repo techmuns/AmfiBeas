@@ -5,6 +5,7 @@ import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { Sparkline } from "@/components/charts/Sparkline";
 import { FlowStressHistoryChart } from "@/components/charts/FlowStressHistoryChart";
 import { cn } from "@/lib/cn";
+import { fmtBps } from "@/lib/units";
 import {
   activeEquityNetInflowSignal,
   activeEquityNetInflowSparkline,
@@ -410,8 +411,7 @@ function RotationStack({ title, items, tone }: RotationStackProps) {
               {e.label}
             </span>
             <span className={cn("shrink-0 tabular font-semibold", cls)}>
-              {e.deltaSharePct >= 0 ? "+" : ""}
-              {e.deltaSharePct.toFixed(2)}pp
+              {fmtBps(e.deltaSharePct)}
             </span>
           </li>
         ))}

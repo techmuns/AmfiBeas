@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { fmtBps } from "@/lib/units";
 
 export interface NavPerformancePoint {
   date: string; // ISO YYYY-MM-DD
@@ -262,8 +263,7 @@ function PerfTooltip({
           )}
           {excess !== null && (
             <span className="ml-1 text-[10px] tabular text-muted-foreground/80">
-              · vs {benchmark.label}: {excess >= 0 ? "+" : ""}
-              {excess.toFixed(2)}pp
+              · vs {benchmark.label}: {fmtBps(excess)}
             </span>
           )}
         </div>

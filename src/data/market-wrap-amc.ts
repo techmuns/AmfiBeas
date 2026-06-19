@@ -18,6 +18,7 @@ import {
   industryAaumSeries,
 } from "./amc-detail";
 import { chartInsights } from "../lib/chart-context";
+import { fmtBps } from "../lib/units";
 
 export interface AmcMarketWrap {
   asOf: string;
@@ -100,7 +101,7 @@ function growthSentence(slug: string): string | null {
     if (industryYoy !== null) {
       const delta = yoy - industryYoy;
       if (Math.abs(delta) >= 1) {
-        tag += delta > 0 ? ` (outpaced industry by ${delta.toFixed(1)} pp)` : ` (lagged industry by ${Math.abs(delta).toFixed(1)} pp)`;
+        tag += delta > 0 ? ` (outpaced industry by ${fmtBps(delta, { sign: false })})` : ` (lagged industry by ${fmtBps(delta, { sign: false })})`;
       } else {
         tag += " (roughly in line with industry)";
       }
@@ -136,8 +137,8 @@ function anomalySentence(slug: string): string | null {
     const pp = latest.marketSharePct - prior.marketSharePct;
     if (Math.abs(pp) >= 0.1) {
       return pp > 0
-        ? `Market share ${pp >= 0 ? "+" : "−"}${Math.abs(pp).toFixed(2)} pp YoY — gaining ground on the cohort.`
-        : `Market share ${pp >= 0 ? "+" : "−"}${Math.abs(pp).toFixed(2)} pp YoY — ceding ground to the cohort.`;
+        ? `Market share ${fmtBps(pp)} YoY — gaining ground on the cohort.`
+        : `Market share ${fmtBps(pp)} YoY — ceding ground to the cohort.`;
     }
     return `Market share flat YoY at ${latest.marketSharePct.toFixed(2)}%.`;
   }
