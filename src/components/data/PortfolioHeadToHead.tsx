@@ -1,18 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Search, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { formatPctSafe } from "@/lib/format";
+import { formatCompactCrSafe, formatPctSafe } from "@/lib/format";
 import {
   type FundDirectoryEntry,
   type FundPortfolio,
+  type TrackerHolding,
   monthSlug,
 } from "@/data/portfolio-tracker";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
 import { fmtBps, ppToBps } from "@/lib/units";
 import { amcOf } from "@/data/amc-name-map";
+import { classifyCap } from "@/data/cap-classification";
+import { MarketCapBar, type CapMix } from "@/components/data/MarketCapBar";
 
 const MAX_B_SUGGESTIONS = 60;
 const MAX_COMPARE_ROWS = 50;
@@ -101,6 +104,101 @@ function classify(
   if (Math.abs(delta) <= NEUTRAL_BAND_PP) return { delta, signal: "In line" };
   if (delta > 0) return { delta, signal: "A overweight" };
   return { delta, signal: "A underweight" };
+}
+
+/** Latest-month at-a-glance profile of a single scheme, mirroring the AMC
+ *  compare card: scale, top-10 concentration (+ MoM move), the biggest single
+ *  weight add / trim, market-cap mix and the top-10 holdings. */
+interface SchemeSnapshot {
+  equityCr: number | null;
+  top10Pct: number;
+  top10DeltaPp: number | null;
+  biggestAdd: { company: string; pp: number } | null;
+  biggestTrim: { company: string; pp: number } | null;
+  split: CapMix | null;
+  top: { name: string; pct: number }[];
+}
+
+const round1 = (n: number) => Math.round(n * 10) / 10;
+
+/**
+ * Build a scheme snapshot from its latest two months of holdings. The top-10
+ * concentration, MoM delta and biggest add/trim use the same formulas the
+ * fundwise directory build applies at the AMC level, so the head-to-head
+ * summary and the fund-house Compare card stay numerically consistent.
+ */
+function schemeSnapshot(portfolio: FundPortfolio): SchemeSnapshot {
+  const latestSlug = monthSlug(portfolio.meta.months[0]?.label ?? "");
+  const prevSlug = portfolio.meta.months[1]
+    ? monthSlug(portfolio.meta.months[1].label)
+    : null;
+  const pctOf = (r: TrackerHolding, s: string): number =>
+    r.months[s]?.aum_pct_num ?? 0;
+
+  // Top-10 concentration = Σ of the 10 largest weights that month; the MoM
+  // delta compares each month's own top 10.
+  const sumTop10 = (slug: string) =>
+    portfolio.rows
+      .map((r) => pctOf(r, slug))
+      .sort((a, b) => b - a)
+      .slice(0, 10)
+      .reduce((s, x) => s + x, 0);
+  const top10Pct = latestSlug ? round1(sumTop10(latestSlug)) : 0;
+  const top10DeltaPp =
+    latestSlug && prevSlug ? round1(top10Pct - sumTop10(prevSlug)) : null;
+
+  // Biggest single-name weight add / trim, MoM (in pp of book).
+  let biggestAdd: { company: string; pp: number } | null = null;
+  let biggestTrim: { company: string; pp: number } | null = null;
+  if (latestSlug && prevSlug) {
+    for (const r of portfolio.rows) {
+      const d = pctOf(r, latestSlug) - pctOf(r, prevSlug);
+      const company = cleanCompanyName(r.company_name);
+      if (!biggestAdd || d > biggestAdd.pp) biggestAdd = { company, pp: round1(d) };
+      if (!biggestTrim || d < biggestTrim.pp) biggestTrim = { company, pp: round1(d) };
+    }
+  }
+
+  // Market-cap mix (latest month, weighted by % of book, normalised to 100).
+  let split: CapMix | null = null;
+  if (latestSlug) {
+    const raw = { large: 0, mid: 0, small: 0 };
+    let total = 0;
+    for (const r of portfolio.rows) {
+      const w = pctOf(r, latestSlug);
+      if (!w) continue;
+      total += w;
+      raw[classifyCap(r.company_name)] += w;
+    }
+    if (total > 0)
+      split = {
+        large: (raw.large / total) * 100,
+        mid: (raw.mid / total) * 100,
+        small: (raw.small / total) * 100,
+      };
+  }
+
+  // Top-10 holdings (latest % of book), largest first.
+  const top = latestSlug
+    ? portfolio.rows
+        .map((r) => ({
+          name: cleanCompanyName(r.company_name),
+          pct: pctOf(r, latestSlug),
+        }))
+        .filter((h) => h.pct > 0)
+        .sort((a, b) => b.pct - a.pct)
+        .slice(0, 10)
+    : [];
+
+  return {
+    equityCr: portfolio.meta.aumTotalCr,
+    top10Pct,
+    top10DeltaPp,
+    biggestAdd,
+    biggestTrim,
+    split,
+    top,
+  };
 }
 
 type HoldingsView = "mutuals" | "exclusive";
@@ -232,6 +330,13 @@ export function PortfolioHeadToHead({
     }
     return { over, under };
   }, [compareRows]);
+
+  // Per-scheme at-a-glance snapshots for the summary cards above the toggle.
+  const snapA = useMemo(() => schemeSnapshot(aPortfolio), [aPortfolio]);
+  const snapB = useMemo(
+    () => (bPortfolio ? schemeSnapshot(bPortfolio) : null),
+    [bPortfolio]
+  );
 
   // Short labels for the two funds (AMC abbreviation, e.g. "HDFC" / "PPFAS").
   // Fall back to a short fund name when both funds are from the same AMC.
@@ -381,6 +486,33 @@ export function PortfolioHeadToHead({
         </div>
       ) : (
         <>
+          {snapB && (
+            <div className="space-y-2">
+              <div>
+                <h3 className="text-sm font-semibold tracking-tight">
+                  Snapshot
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {aLabel} vs {bLabel} at a glance — concentration, biggest
+                  moves, market-cap mix and top holdings.
+                  {latestMonth && <span className="ml-1">As of {latestMonth}.</span>}
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <SchemeSnapshotCard
+                  title={aLabel}
+                  subtitle={aEntry.fund}
+                  snap={snapA}
+                />
+                <SchemeSnapshotCard
+                  title={bLabel}
+                  subtitle={bEntry?.fund ?? "Comparison fund"}
+                  snap={snapB}
+                />
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div
               className="inline-flex rounded-md border bg-card p-0.5 text-xs"
@@ -546,4 +678,118 @@ function DeltaPp({ value, signal }: { value: number; signal: Signal }) {
         ? "text-positive"
         : "text-negative";
   return <span className={cls}>{fmtBps(value)}</span>;
+}
+
+function SnapRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-2">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="text-right font-medium">{children}</dd>
+    </div>
+  );
+}
+
+/** One scheme's at-a-glance card — the scheme-level mirror of the fund-house
+ *  Compare card, summarising the head-to-head tab above the holdings toggle. */
+function SchemeSnapshotCard({
+  title,
+  subtitle,
+  snap,
+}: {
+  title: string;
+  subtitle: string;
+  snap: SchemeSnapshot;
+}) {
+  return (
+    <div className="space-y-3 rounded-lg border bg-card p-4">
+      <div>
+        <div className="text-sm font-semibold">{title}</div>
+        <div className="truncate text-[11px] text-muted-foreground" title={subtitle}>
+          {subtitle}
+        </div>
+      </div>
+
+      <dl className="space-y-1.5 text-sm">
+        <SnapRow label="Equity book">
+          {formatCompactCrSafe(snap.equityCr)}
+        </SnapRow>
+        <SnapRow label="Top-10 conc.">
+          {snap.top10Pct.toFixed(1)}%
+          {snap.top10DeltaPp !== null && (
+            <span
+              className={cn(
+                "ml-1 text-[11px]",
+                snap.top10DeltaPp >= 0 ? "text-positive" : "text-negative"
+              )}
+            >
+              {fmtBps(snap.top10DeltaPp)}
+            </span>
+          )}
+        </SnapRow>
+        <SnapRow label="Biggest add">
+          {snap.biggestAdd ? (
+            <span>
+              <span className="text-positive">{fmtBps(snap.biggestAdd.pp)}</span>{" "}
+              <span className="text-[11px] text-muted-foreground">
+                {snap.biggestAdd.company}
+              </span>
+            </span>
+          ) : (
+            "—"
+          )}
+        </SnapRow>
+        <SnapRow label="Biggest trim">
+          {snap.biggestTrim ? (
+            <span>
+              <span className="text-negative">{fmtBps(snap.biggestTrim.pp)}</span>{" "}
+              <span className="text-[11px] text-muted-foreground">
+                {snap.biggestTrim.company}
+              </span>
+            </span>
+          ) : (
+            "—"
+          )}
+        </SnapRow>
+      </dl>
+
+      <div>
+        <div className="mb-1 text-xs font-medium text-muted-foreground">
+          Market-cap mix
+        </div>
+        {snap.split ? (
+          <MarketCapBar split={snap.split} />
+        ) : (
+          <div className="text-xs text-muted-foreground">—</div>
+        )}
+      </div>
+
+      <div>
+        <div className="mb-1 text-xs font-medium text-muted-foreground">
+          Top 10 holdings
+        </div>
+        {snap.top.length > 0 ? (
+          <ol className="space-y-1 text-sm">
+            {snap.top.map((h, idx) => (
+              <li
+                key={h.name}
+                className="flex items-baseline justify-between gap-2"
+              >
+                <span className="truncate">
+                  <span className="mr-1 text-[11px] text-muted-foreground">
+                    {idx + 1}.
+                  </span>
+                  {h.name}
+                </span>
+                <span className="shrink-0 tabular text-muted-foreground">
+                  {h.pct.toFixed(1)}%
+                </span>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <div className="text-xs text-muted-foreground">—</div>
+        )}
+      </div>
+    </div>
+  );
 }

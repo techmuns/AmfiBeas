@@ -23,6 +23,7 @@ import {
 import { classifyCap } from "@/data/cap-classification";
 import { classifySector, UNCLASSIFIED } from "@/data/sector-classification";
 import { AmcAllocationCharts } from "@/components/data/AmcAllocationCharts";
+import { MarketCapBar } from "@/components/data/MarketCapBar";
 
 const MAX_SUGGESTIONS = 60;
 const MAX_COMPARE = 3;
@@ -798,38 +799,9 @@ function FundHouseCompare({
                       Couldn&apos;t load.
                     </div>
                   ) : split ? (
-                    <div className="flex h-5 w-full overflow-hidden rounded border text-[10px] font-medium text-white">
-                      <div
-                        className="flex items-center justify-center"
-                        style={{ width: `${split.large}%`, backgroundColor: "hsl(222 64% 44%)" }}
-                        title={`Large ${split.large.toFixed(1)}%`}
-                      >
-                        {split.large >= 14 ? `${split.large.toFixed(0)}` : ""}
-                      </div>
-                      <div
-                        className="flex items-center justify-center"
-                        style={{ width: `${split.mid}%`, backgroundColor: "hsl(200 72% 46%)" }}
-                        title={`Mid ${split.mid.toFixed(1)}%`}
-                      >
-                        {split.mid >= 14 ? `${split.mid.toFixed(0)}` : ""}
-                      </div>
-                      <div
-                        className="flex items-center justify-center"
-                        style={{ width: `${split.small}%`, backgroundColor: "hsl(28 80% 52%)" }}
-                        title={`Small ${split.small.toFixed(1)}%`}
-                      >
-                        {split.small >= 14 ? `${split.small.toFixed(0)}` : ""}
-                      </div>
-                    </div>
+                    <MarketCapBar split={split} />
                   ) : (
                     <div className="text-xs text-muted-foreground">Loading…</div>
-                  )}
-                  {split && (
-                    <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
-                      <span>L {split.large.toFixed(0)}%</span>
-                      <span>M {split.mid.toFixed(0)}%</span>
-                      <span>S {split.small.toFixed(0)}%</span>
-                    </div>
                   )}
                 </div>
 
