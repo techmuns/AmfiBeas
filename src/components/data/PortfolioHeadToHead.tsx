@@ -480,9 +480,6 @@ export function PortfolioHeadToHead({
                     <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
                       Δ {aLabel} − {bLabel}
                     </th>
-                    <th className="whitespace-nowrap px-3 py-2 text-left font-medium">
-                      Signal
-                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -500,13 +497,6 @@ export function PortfolioHeadToHead({
                       </td>
                       <td className="px-3 py-2.5 text-right tabular">
                         <DeltaPp value={r.delta} signal={r.signal} />
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <SignalBadge
-                          signal={r.signal}
-                          aLabel={aLabel}
-                          bLabel={bLabel}
-                        />
                       </td>
                     </tr>
                   ))}
@@ -556,26 +546,4 @@ function DeltaPp({ value, signal }: { value: number; signal: Signal }) {
         ? "text-positive"
         : "text-negative";
   return <span className={cls}>{fmtBps(value)}</span>;
-}
-
-function SignalBadge({
-  signal,
-  aLabel,
-  bLabel,
-}: {
-  signal: Signal;
-  aLabel: string;
-  bLabel: string;
-}) {
-  const tone =
-    signal === "A overweight"
-      ? "text-positive"
-      : signal === "A underweight"
-        ? "text-negative"
-        : "text-muted-foreground";
-  return (
-    <span className={cn("text-xs", tone)}>
-      {signalLabel(signal, aLabel, bLabel)}
-    </span>
-  );
 }
