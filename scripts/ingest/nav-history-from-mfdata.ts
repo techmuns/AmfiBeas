@@ -169,8 +169,12 @@ async function main(): Promise<void> {
     const sib: Sibling = { amfiCode: n.schemeCode, isin: n.isin ?? null, schemeName: n.schemeName, amcName: n.amcName, plan, option };
     let g = groups.get(key);
     if (!g) { g = {}; groups.set(key, g); }
-    if (plan === "regular") g.regular ??= sib;
-    else if (plan === "direct") g.direct ??= sib;
+    // A growth fund has exactly a Regular + Direct plan. The Regular plan is
+    // often named "… Growth Plan" with no "Regular" marker (older schemes), so
+    // detectPlan returns "unknown" for it — treat any NON-direct member as the
+    // Regular sibling (forcing plan="regular") so the plan toggle resolves.
+    if (plan === "direct") g.direct ??= sib;
+    else g.regular ??= { ...sib, plan: "regular" };
   }
 
   // 4) Resolve a Regular + Direct target per matched fund.

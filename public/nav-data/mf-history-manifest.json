@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-22T11:16:51.367Z",
+  "generatedAt": "2026-06-22T12:31:30.123Z",
   "source": "AMFI bulk CSV (mf-data/YYYY/MM/DD.csv)",
   "stage": 3,
   "requestedRange": {
@@ -7,16 +7,16 @@
     "to": "21-Jun-2026",
     "windowCount": 3824
   },
-  "totalFunds": 1848,
-  "fundsAvailable": 1848,
+  "totalFunds": 2008,
+  "fundsAvailable": 2008,
   "fundsMissing": 0,
   "periodCoverage": {
-    "1M": 1848,
-    "3M": 1839,
-    "6M": 1823,
-    "1Y": 1772,
-    "3Y": 1454,
-    "5Y": 1105
+    "1M": 2008,
+    "3M": 1999,
+    "6M": 1983,
+    "1Y": 1931,
+    "3Y": 1613,
+    "5Y": 1251
   },
   "ruleVersion": 1,
   "parserVersion": 2,
@@ -300,7 +300,7 @@
     },
     {
       "schemecode": "293",
-      "amfiSchemeCode": 119568,
+      "amfiSchemeCode": 100047,
       "fundName": "Aditya Birla SL Liquid Fund(G)",
       "classification": "Debt : Liquid",
       "firstDate": "2016-01-01",
@@ -316,6 +316,25 @@
         "5Y"
       ],
       "path": "public/nav-history/293.json"
+    },
+    {
+      "schemecode": "293-D",
+      "amfiSchemeCode": 119568,
+      "fundName": "Aditya Birla SL Liquid Fund(G)",
+      "classification": "Debt : Liquid",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-21",
+      "points": 3735,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/293-D.json"
     },
     {
       "schemecode": "301",
@@ -395,7 +414,7 @@
     },
     {
       "schemecode": "394",
-      "amfiSchemeCode": 119511,
+      "amfiSchemeCode": 101976,
       "fundName": "Aditya Birla SL Money Manager Fund(G)",
       "classification": "Debt : Money Market",
       "firstDate": "2016-01-01",
@@ -411,6 +430,25 @@
         "5Y"
       ],
       "path": "public/nav-history/394.json"
+    },
+    {
+      "schemecode": "394-D",
+      "amfiSchemeCode": 119511,
+      "fundName": "Aditya Birla SL Money Manager Fund(G)",
+      "classification": "Debt : Money Market",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2672,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/394-D.json"
     },
     {
       "schemecode": "405",
@@ -528,7 +566,7 @@
     },
     {
       "schemecode": "413",
-      "amfiSchemeCode": 119514,
+      "amfiSchemeCode": 103476,
       "fundName": "Aditya Birla SL Infrastructure Fund(G)",
       "classification": "Equity : Sectoral - Infrastructure",
       "firstDate": "2016-01-01",
@@ -546,8 +584,27 @@
       "path": "public/nav-history/413.json"
     },
     {
+      "schemecode": "413-D",
+      "amfiSchemeCode": 119514,
+      "fundName": "Aditya Birla SL Infrastructure Fund(G)",
+      "classification": "Equity : Sectoral - Infrastructure",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/413-D.json"
+    },
+    {
       "schemecode": "417",
-      "amfiSchemeCode": 119620,
+      "amfiSchemeCode": 101592,
       "fundName": "Aditya Birla SL Midcap Fund(G)",
       "classification": "Equity : Mid Cap",
       "firstDate": "2016-01-01",
@@ -563,6 +620,25 @@
         "5Y"
       ],
       "path": "public/nav-history/417.json"
+    },
+    {
+      "schemecode": "417-D",
+      "amfiSchemeCode": 119620,
+      "fundName": "Aditya Birla SL Midcap Fund(G)",
+      "classification": "Equity : Mid Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/417-D.json"
     },
     {
       "schemecode": "422",
@@ -870,7 +946,7 @@
     },
     {
       "schemecode": "477",
-      "amfiSchemeCode": 119556,
+      "amfiSchemeCode": 105804,
       "fundName": "Aditya Birla SL Small Cap Fund(G)",
       "classification": "Equity : Small Cap",
       "firstDate": "2016-01-01",
@@ -886,6 +962,25 @@
         "5Y"
       ],
       "path": "public/nav-history/477.json"
+    },
+    {
+      "schemecode": "477-D",
+      "amfiSchemeCode": 119556,
+      "fundName": "Aditya Birla SL Small Cap Fund(G)",
+      "classification": "Equity : Small Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/477-D.json"
     },
     {
       "schemecode": "482",
@@ -927,7 +1022,7 @@
     },
     {
       "schemecode": "489",
-      "amfiSchemeCode": 119564,
+      "amfiSchemeCode": 103309,
       "fundName": "Aditya Birla SL Focused Fund(G)",
       "classification": "Equity : Focused",
       "firstDate": "2016-01-01",
@@ -943,6 +1038,25 @@
         "5Y"
       ],
       "path": "public/nav-history/489.json"
+    },
+    {
+      "schemecode": "489-D",
+      "amfiSchemeCode": 119564,
+      "fundName": "Aditya Birla SL Focused Fund(G)",
+      "classification": "Equity : Focused",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/489-D.json"
     },
     {
       "schemecode": "497",
@@ -1926,7 +2040,7 @@
     },
     {
       "schemecode": "758",
-      "amfiSchemeCode": 138312,
+      "amfiSchemeCode": 138308,
       "fundName": "PGIM India Large Cap Fund(G)",
       "classification": "Equity : Large Cap",
       "firstDate": "2016-03-08",
@@ -1944,8 +2058,27 @@
       "path": "public/nav-history/758.json"
     },
     {
+      "schemecode": "758-D",
+      "amfiSchemeCode": 138312,
+      "fundName": "PGIM India Large Cap Fund(G)",
+      "classification": "Equity : Large Cap",
+      "firstDate": "2016-03-08",
+      "lastDate": "2026-06-19",
+      "points": 2534,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/758-D.json"
+    },
+    {
       "schemecode": "815",
-      "amfiSchemeCode": 138456,
+      "amfiSchemeCode": 138453,
       "fundName": "PGIM India Emerging Markets Equity FoF(G)",
       "classification": "FoFs : Overseas",
       "firstDate": "2016-03-08",
@@ -1963,8 +2096,27 @@
       "path": "public/nav-history/815.json"
     },
     {
+      "schemecode": "815-D",
+      "amfiSchemeCode": 138456,
+      "fundName": "PGIM India Emerging Markets Equity FoF(G)",
+      "classification": "FoFs : Overseas",
+      "firstDate": "2016-03-08",
+      "lastDate": "2026-06-18",
+      "points": 2494,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/815-D.json"
+    },
+    {
       "schemecode": "818",
-      "amfiSchemeCode": 138299,
+      "amfiSchemeCode": 138288,
       "fundName": "PGIM India Liquid Fund(G)",
       "classification": "Debt : Liquid",
       "firstDate": "2016-03-08",
@@ -1980,6 +2132,25 @@
         "5Y"
       ],
       "path": "public/nav-history/818.json"
+    },
+    {
+      "schemecode": "818-D",
+      "amfiSchemeCode": 138299,
+      "fundName": "PGIM India Liquid Fund(G)",
+      "classification": "Debt : Liquid",
+      "firstDate": "2016-03-08",
+      "lastDate": "2026-06-21",
+      "points": 3608,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/818-D.json"
     },
     {
       "schemecode": "865",
@@ -2097,7 +2268,7 @@
     },
     {
       "schemecode": "874",
-      "amfiSchemeCode": 120826,
+      "amfiSchemeCode": 104513,
       "fundName": "Quant Large & Mid Cap Fund(G)",
       "classification": "Equity : Large & Mid Cap",
       "firstDate": "2016-01-01",
@@ -2113,6 +2284,25 @@
         "5Y"
       ],
       "path": "public/nav-history/874.json"
+    },
+    {
+      "schemecode": "874-D",
+      "amfiSchemeCode": 120826,
+      "fundName": "Quant Large & Mid Cap Fund(G)",
+      "classification": "Equity : Large & Mid Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2579,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/874-D.json"
     },
     {
       "schemecode": "876",
@@ -2154,7 +2344,7 @@
     },
     {
       "schemecode": "881",
-      "amfiSchemeCode": 120833,
+      "amfiSchemeCode": 106170,
       "fundName": "Quant Infrastructure Fund(G)",
       "classification": "Equity : Sectoral - Infrastructure",
       "firstDate": "2016-01-01",
@@ -2170,6 +2360,25 @@
         "5Y"
       ],
       "path": "public/nav-history/881.json"
+    },
+    {
+      "schemecode": "881-D",
+      "amfiSchemeCode": 120833,
+      "fundName": "Quant Infrastructure Fund(G)",
+      "classification": "Equity : Sectoral - Infrastructure",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2579,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/881-D.json"
     },
     {
       "schemecode": "883",
@@ -2359,7 +2568,7 @@
     },
     {
       "schemecode": "931",
-      "amfiSchemeCode": 118531,
+      "amfiSchemeCode": 100471,
       "fundName": "Franklin India Large Cap Fund(G)",
       "classification": "Equity : Large Cap",
       "firstDate": "2016-01-01",
@@ -2377,8 +2586,27 @@
       "path": "public/nav-history/931.json"
     },
     {
+      "schemecode": "931-D",
+      "amfiSchemeCode": 118531,
+      "fundName": "Franklin India Large Cap Fund(G)",
+      "classification": "Equity : Large Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/931-D.json"
+    },
+    {
       "schemecode": "933",
-      "amfiSchemeCode": 118510,
+      "amfiSchemeCode": 102883,
       "fundName": "Franklin India Large & Mid Cap Fund(G)",
       "classification": "Equity : Large & Mid Cap",
       "firstDate": "2016-01-01",
@@ -2396,8 +2624,27 @@
       "path": "public/nav-history/933.json"
     },
     {
+      "schemecode": "933-D",
+      "amfiSchemeCode": 118510,
+      "fundName": "Franklin India Large & Mid Cap Fund(G)",
+      "classification": "Equity : Large & Mid Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/933-D.json"
+    },
+    {
       "schemecode": "938",
-      "amfiSchemeCode": 118564,
+      "amfiSchemeCode": 105817,
       "fundName": "Franklin India Focused Equity Fund(G)",
       "classification": "Equity : Focused",
       "firstDate": "2016-01-01",
@@ -2415,8 +2662,27 @@
       "path": "public/nav-history/938.json"
     },
     {
+      "schemecode": "938-D",
+      "amfiSchemeCode": 118564,
+      "fundName": "Franklin India Focused Equity Fund(G)",
+      "classification": "Equity : Focused",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/938-D.json"
+    },
+    {
       "schemecode": "942",
-      "amfiSchemeCode": 118581,
+      "amfiSchemeCode": 100484,
       "fundName": "Franklin India NSE Nifty 50 Index Fund(G)",
       "classification": "Equity : Index Funds",
       "firstDate": "2016-01-01",
@@ -2434,8 +2700,27 @@
       "path": "public/nav-history/942.json"
     },
     {
+      "schemecode": "942-D",
+      "amfiSchemeCode": 118581,
+      "fundName": "Franklin India NSE Nifty 50 Index Fund(G)",
+      "classification": "Equity : Index Funds",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/942-D.json"
+    },
+    {
       "schemecode": "946",
-      "amfiSchemeCode": 118539,
+      "amfiSchemeCode": 103151,
       "fundName": "Franklin India Opportunities Fund(G)",
       "classification": "Equity : Thematic",
       "firstDate": "2016-01-01",
@@ -2453,8 +2738,27 @@
       "path": "public/nav-history/946.json"
     },
     {
+      "schemecode": "946-D",
+      "amfiSchemeCode": 118539,
+      "fundName": "Franklin India Opportunities Fund(G)",
+      "classification": "Equity : Thematic",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/946-D.json"
+    },
+    {
       "schemecode": "948",
-      "amfiSchemeCode": 118533,
+      "amfiSchemeCode": 100473,
       "fundName": "Franklin India Mid Cap Fund(G)",
       "classification": "Equity : Mid Cap",
       "firstDate": "2016-01-01",
@@ -2472,8 +2776,27 @@
       "path": "public/nav-history/948.json"
     },
     {
+      "schemecode": "948-D",
+      "amfiSchemeCode": 118533,
+      "fundName": "Franklin India Mid Cap Fund(G)",
+      "classification": "Equity : Mid Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/948-D.json"
+    },
+    {
       "schemecode": "950",
-      "amfiSchemeCode": 118535,
+      "amfiSchemeCode": 100520,
       "fundName": "Franklin India Flexi Cap Fund(G)",
       "classification": "Equity : Flexi Cap",
       "firstDate": "2016-01-01",
@@ -2491,8 +2814,27 @@
       "path": "public/nav-history/950.json"
     },
     {
+      "schemecode": "950-D",
+      "amfiSchemeCode": 118535,
+      "fundName": "Franklin India Flexi Cap Fund(G)",
+      "classification": "Equity : Flexi Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/950-D.json"
+    },
+    {
       "schemecode": "952",
-      "amfiSchemeCode": 118525,
+      "amfiSchemeCode": 103360,
       "fundName": "Franklin India Small Cap Fund(G)",
       "classification": "Equity : Small Cap",
       "firstDate": "2016-01-01",
@@ -2510,8 +2852,27 @@
       "path": "public/nav-history/952.json"
     },
     {
+      "schemecode": "952-D",
+      "amfiSchemeCode": 118525,
+      "fundName": "Franklin India Small Cap Fund(G)",
+      "classification": "Equity : Small Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/952-D.json"
+    },
+    {
       "schemecode": "957",
-      "amfiSchemeCode": 118540,
+      "amfiSchemeCode": 100526,
       "fundName": "Franklin India ELSS Tax Saver Fund(G)",
       "classification": "Equity : Tax Saving (ELSS)",
       "firstDate": "2016-01-01",
@@ -2529,8 +2890,27 @@
       "path": "public/nav-history/957.json"
     },
     {
+      "schemecode": "957-D",
+      "amfiSchemeCode": 118540,
+      "fundName": "Franklin India ELSS Tax Saver Fund(G)",
+      "classification": "Equity : Tax Saving (ELSS)",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/957-D.json"
+    },
+    {
       "schemecode": "961",
-      "amfiSchemeCode": 118537,
+      "amfiSchemeCode": 100522,
       "fundName": "Franklin India Technology Fund(G)",
       "classification": "Equity : Sectoral - Technology",
       "firstDate": "2016-01-01",
@@ -2548,8 +2928,27 @@
       "path": "public/nav-history/961.json"
     },
     {
+      "schemecode": "961-D",
+      "amfiSchemeCode": 118537,
+      "fundName": "Franklin India Technology Fund(G)",
+      "classification": "Equity : Sectoral - Technology",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/961-D.json"
+    },
+    {
       "schemecode": "999",
-      "amfiSchemeCode": 118546,
+      "amfiSchemeCode": 100550,
       "fundName": "Franklin India Aggressive Hybrid Fund(G)",
       "classification": "Hybrid : Aggressive Hybrid",
       "firstDate": "2016-01-01",
@@ -2565,6 +2964,25 @@
         "5Y"
       ],
       "path": "public/nav-history/999.json"
+    },
+    {
+      "schemecode": "999-D",
+      "amfiSchemeCode": 118546,
+      "fundName": "Franklin India Aggressive Hybrid Fund(G)",
+      "classification": "Hybrid : Aggressive Hybrid",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/999-D.json"
     },
     {
       "schemecode": "1024",
@@ -2777,7 +3195,7 @@
     },
     {
       "schemecode": "1114",
-      "amfiSchemeCode": 118942,
+      "amfiSchemeCode": 102452,
       "fundName": "HDFC Low Duration Fund(G)",
       "classification": "Debt : Low Duration",
       "firstDate": "2016-01-01",
@@ -2795,8 +3213,27 @@
       "path": "public/nav-history/1114.json"
     },
     {
+      "schemecode": "1114-D",
+      "amfiSchemeCode": 118942,
+      "fundName": "HDFC Low Duration Fund(G)",
+      "classification": "Debt : Low Duration",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2532,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1114-D.json"
+    },
+    {
       "schemecode": "1117",
-      "amfiSchemeCode": 119110,
+      "amfiSchemeCode": 101996,
       "fundName": "HDFC Overnight Fund(G)",
       "classification": "Debt : Overnight",
       "firstDate": "2016-01-01",
@@ -2812,6 +3249,25 @@
         "5Y"
       ],
       "path": "public/nav-history/1117.json"
+    },
+    {
+      "schemecode": "1117-D",
+      "amfiSchemeCode": 119110,
+      "fundName": "HDFC Overnight Fund(G)",
+      "classification": "Debt : Overnight",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-21",
+      "points": 3409,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1117-D.json"
     },
     {
       "schemecode": "1119",
@@ -2910,7 +3366,7 @@
     },
     {
       "schemecode": "1131",
-      "amfiSchemeCode": 118955,
+      "amfiSchemeCode": 101762,
       "fundName": "HDFC Flexi Cap Fund(G)",
       "classification": "Equity : Flexi Cap",
       "firstDate": "2016-01-01",
@@ -2928,8 +3384,27 @@
       "path": "public/nav-history/1131.json"
     },
     {
+      "schemecode": "1131-D",
+      "amfiSchemeCode": 118955,
+      "fundName": "HDFC Flexi Cap Fund(G)",
+      "classification": "Equity : Flexi Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1131-D.json"
+    },
+    {
       "schemecode": "1269",
-      "amfiSchemeCode": 119116,
+      "amfiSchemeCode": 101083,
       "fundName": "HDFC Gilt Fund(G)",
       "classification": "Debt : Gilt",
       "firstDate": "2016-01-01",
@@ -2947,8 +3422,27 @@
       "path": "public/nav-history/1269.json"
     },
     {
+      "schemecode": "1269-D",
+      "amfiSchemeCode": 119116,
+      "fundName": "HDFC Gilt Fund(G)",
+      "classification": "Debt : Gilt",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2531,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1269-D.json"
+    },
+    {
       "schemecode": "1273",
-      "amfiSchemeCode": 118968,
+      "amfiSchemeCode": 100119,
       "fundName": "HDFC Balanced Advantage Fund(G)",
       "classification": "Hybrid : Dynamic Asset Allocation",
       "firstDate": "2016-01-01",
@@ -2966,8 +3460,27 @@
       "path": "public/nav-history/1273.json"
     },
     {
+      "schemecode": "1273-D",
+      "amfiSchemeCode": 118968,
+      "fundName": "HDFC Balanced Advantage Fund(G)",
+      "classification": "Hybrid : Dynamic Asset Allocation",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1273-D.json"
+    },
+    {
       "schemecode": "1274",
-      "amfiSchemeCode": 119075,
+      "amfiSchemeCode": 101872,
       "fundName": "HDFC Dynamic Debt Fund(G)",
       "classification": "Debt : Dynamic Bond",
       "firstDate": "2016-01-01",
@@ -2985,8 +3498,27 @@
       "path": "public/nav-history/1274.json"
     },
     {
+      "schemecode": "1274-D",
+      "amfiSchemeCode": 119075,
+      "fundName": "HDFC Dynamic Debt Fund(G)",
+      "classification": "Debt : Dynamic Bond",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2531,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1274-D.json"
+    },
+    {
       "schemecode": "1278",
-      "amfiSchemeCode": 119081,
+      "amfiSchemeCode": 101989,
       "fundName": "HDFC Medium Term Debt Fund(G)",
       "classification": "Debt : Medium Duration",
       "firstDate": "2016-01-01",
@@ -3004,8 +3536,27 @@
       "path": "public/nav-history/1278.json"
     },
     {
+      "schemecode": "1278-D",
+      "amfiSchemeCode": 119081,
+      "fundName": "HDFC Medium Term Debt Fund(G)",
+      "classification": "Debt : Medium Duration",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2531,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1278-D.json"
+    },
+    {
       "schemecode": "1281",
-      "amfiSchemeCode": 119069,
+      "amfiSchemeCode": 100124,
       "fundName": "HDFC Income Fund(G)",
       "classification": "Debt : Medium to Long Duration",
       "firstDate": "2016-01-01",
@@ -3023,8 +3574,27 @@
       "path": "public/nav-history/1281.json"
     },
     {
+      "schemecode": "1281-D",
+      "amfiSchemeCode": 119069,
+      "fundName": "HDFC Income Fund(G)",
+      "classification": "Debt : Medium to Long Duration",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2531,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1281-D.json"
+    },
+    {
       "schemecode": "1286",
-      "amfiSchemeCode": 119091,
+      "amfiSchemeCode": 100868,
       "fundName": "HDFC Liquid Fund(G)",
       "classification": "Debt : Liquid",
       "firstDate": "2016-01-01",
@@ -3042,8 +3612,27 @@
       "path": "public/nav-history/1286.json"
     },
     {
+      "schemecode": "1286-D",
+      "amfiSchemeCode": 119091,
+      "fundName": "HDFC Liquid Fund(G)",
+      "classification": "Debt : Liquid",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-21",
+      "points": 3578,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1286-D.json"
+    },
+    {
       "schemecode": "1298",
-      "amfiSchemeCode": 119118,
+      "amfiSchemeCode": 102147,
       "fundName": "HDFC Hybrid Debt Fund(G)",
       "classification": "Hybrid : Conservative Hybrid",
       "firstDate": "2016-01-01",
@@ -3059,6 +3648,25 @@
         "5Y"
       ],
       "path": "public/nav-history/1298.json"
+    },
+    {
+      "schemecode": "1298-D",
+      "amfiSchemeCode": 119118,
+      "fundName": "HDFC Hybrid Debt Fund(G)",
+      "classification": "Hybrid : Conservative Hybrid",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2531,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1298-D.json"
     },
     {
       "schemecode": "1305",
@@ -3138,7 +3746,7 @@
     },
     {
       "schemecode": "1309",
-      "amfiSchemeCode": 119128,
+      "amfiSchemeCode": 101585,
       "fundName": "HDFC Equity Savings Fund(G)",
       "classification": "Hybrid : Equity Savings",
       "firstDate": "2016-01-01",
@@ -3156,8 +3764,27 @@
       "path": "public/nav-history/1309.json"
     },
     {
+      "schemecode": "1309-D",
+      "amfiSchemeCode": 119128,
+      "fundName": "HDFC Equity Savings Fund(G)",
+      "classification": "Hybrid : Equity Savings",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1309-D.json"
+    },
+    {
       "schemecode": "1311",
-      "amfiSchemeCode": 119062,
+      "amfiSchemeCode": 102948,
       "fundName": "HDFC Hybrid Equity Fund(G)",
       "classification": "Hybrid : Aggressive Hybrid",
       "firstDate": "2016-01-01",
@@ -3175,8 +3802,27 @@
       "path": "public/nav-history/1311.json"
     },
     {
+      "schemecode": "1311-D",
+      "amfiSchemeCode": 119062,
+      "fundName": "HDFC Hybrid Equity Fund(G)",
+      "classification": "Hybrid : Aggressive Hybrid",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1311-D.json"
+    },
+    {
       "schemecode": "1329",
-      "amfiSchemeCode": 119060,
+      "amfiSchemeCode": 101979,
       "fundName": "HDFC ELSS Tax saver(G)",
       "classification": "Equity : Tax Saving (ELSS)",
       "firstDate": "2016-01-01",
@@ -3192,6 +3838,25 @@
         "5Y"
       ],
       "path": "public/nav-history/1329.json"
+    },
+    {
+      "schemecode": "1329-D",
+      "amfiSchemeCode": 119060,
+      "fundName": "HDFC ELSS Tax saver(G)",
+      "classification": "Equity : Tax Saving (ELSS)",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1329-D.json"
     },
     {
       "schemecode": "1331",
@@ -3233,7 +3898,7 @@
     },
     {
       "schemecode": "1340",
-      "amfiSchemeCode": 118902,
+      "amfiSchemeCode": 118907,
       "fundName": "HSBC Liquid Fund(G)",
       "classification": "Debt : Liquid",
       "firstDate": "2016-01-01",
@@ -3385,7 +4050,7 @@
     },
     {
       "schemecode": "1470",
-      "amfiSchemeCode": 120377,
+      "amfiSchemeCode": 104685,
       "fundName": "ICICI Pru Balanced Advantage Fund(G)",
       "classification": "Hybrid : Dynamic Asset Allocation",
       "firstDate": "2016-01-01",
@@ -3403,8 +4068,27 @@
       "path": "public/nav-history/1470.json"
     },
     {
+      "schemecode": "1470-D",
+      "amfiSchemeCode": 120377,
+      "fundName": "ICICI Pru Balanced Advantage Fund(G)",
+      "classification": "Hybrid : Dynamic Asset Allocation",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1470-D.json"
+    },
+    {
       "schemecode": "1482",
-      "amfiSchemeCode": 120251,
+      "amfiSchemeCode": 100356,
       "fundName": "ICICI Pru Equity & Debt Fund(G)",
       "classification": "Hybrid : Aggressive Hybrid",
       "firstDate": "2016-01-01",
@@ -3420,6 +4104,25 @@
         "5Y"
       ],
       "path": "public/nav-history/1482.json"
+    },
+    {
+      "schemecode": "1482-D",
+      "amfiSchemeCode": 120251,
+      "fundName": "ICICI Pru Equity & Debt Fund(G)",
+      "classification": "Hybrid : Aggressive Hybrid",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1482-D.json"
     },
     {
       "schemecode": "1489",
@@ -3461,7 +4164,7 @@
     },
     {
       "schemecode": "1492",
-      "amfiSchemeCode": 120323,
+      "amfiSchemeCode": 102594,
       "fundName": "ICICI Pru Value Fund(G)",
       "classification": "Equity : Value / Contra",
       "firstDate": "2016-01-01",
@@ -3479,8 +4182,27 @@
       "path": "public/nav-history/1492.json"
     },
     {
+      "schemecode": "1492-D",
+      "amfiSchemeCode": 120323,
+      "fundName": "ICICI Pru Value Fund(G)",
+      "classification": "Equity : Value / Contra",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1492-D.json"
+    },
+    {
       "schemecode": "1495",
-      "amfiSchemeCode": 120334,
+      "amfiSchemeCode": 101144,
       "fundName": "ICICI Pru Multi-Asset Fund(G)",
       "classification": "Hybrid : Multi Asset Allocation",
       "firstDate": "2016-01-01",
@@ -3498,8 +4220,27 @@
       "path": "public/nav-history/1495.json"
     },
     {
+      "schemecode": "1495-D",
+      "amfiSchemeCode": 120334,
+      "fundName": "ICICI Pru Multi-Asset Fund(G)",
+      "classification": "Hybrid : Multi Asset Allocation",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1495-D.json"
+    },
+    {
       "schemecode": "1499",
-      "amfiSchemeCode": 120381,
+      "amfiSchemeCode": 102528,
       "fundName": "ICICI Pru Midcap Fund(G)",
       "classification": "Equity : Mid Cap",
       "firstDate": "2016-01-01",
@@ -3517,8 +4258,27 @@
       "path": "public/nav-history/1499.json"
     },
     {
+      "schemecode": "1499-D",
+      "amfiSchemeCode": 120381,
+      "fundName": "ICICI Pru Midcap Fund(G)",
+      "classification": "Equity : Mid Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1499-D.json"
+    },
+    {
       "schemecode": "1500",
-      "amfiSchemeCode": 120616,
+      "amfiSchemeCode": 101619,
       "fundName": "ICICI Pru Savings Fund(G)",
       "classification": "Debt : Low Duration",
       "firstDate": "2016-01-01",
@@ -3556,7 +4316,7 @@
     },
     {
       "schemecode": "1512",
-      "amfiSchemeCode": 120425,
+      "amfiSchemeCode": 101802,
       "fundName": "ICICI Pru Floating Interest Fund(G)",
       "classification": "Debt : Floater",
       "firstDate": "2016-01-01",
@@ -3574,8 +4334,27 @@
       "path": "public/nav-history/1512.json"
     },
     {
+      "schemecode": "1512-D",
+      "amfiSchemeCode": 120425,
+      "fundName": "ICICI Pru Floating Interest Fund(G)",
+      "classification": "Debt : Floater",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1512-D.json"
+    },
+    {
       "schemecode": "1517",
-      "amfiSchemeCode": 120587,
+      "amfiSchemeCode": 100352,
       "fundName": "ICICI Pru FMCG Fund(G)",
       "classification": "Equity : Thematic - Consumption",
       "firstDate": "2016-01-01",
@@ -3593,8 +4372,27 @@
       "path": "public/nav-history/1517.json"
     },
     {
+      "schemecode": "1517-D",
+      "amfiSchemeCode": 120587,
+      "fundName": "ICICI Pru FMCG Fund(G)",
+      "classification": "Equity : Thematic - Consumption",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1517-D.json"
+    },
+    {
       "schemecode": "1606",
-      "amfiSchemeCode": 120590,
+      "amfiSchemeCode": 100369,
       "fundName": "ICICI Pru Gilt Fund(G)",
       "classification": "Debt : Gilt",
       "firstDate": "2016-01-01",
@@ -3612,8 +4410,27 @@
       "path": "public/nav-history/1606.json"
     },
     {
+      "schemecode": "1606-D",
+      "amfiSchemeCode": 120590,
+      "fundName": "ICICI Pru Gilt Fund(G)",
+      "classification": "Debt : Gilt",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1606-D.json"
+    },
+    {
       "schemecode": "1608",
-      "amfiSchemeCode": 120596,
+      "amfiSchemeCode": 100349,
       "fundName": "ICICI Pru Large & Mid Cap Fund(G)",
       "classification": "Equity : Large & Mid Cap",
       "firstDate": "2016-01-01",
@@ -3631,8 +4448,27 @@
       "path": "public/nav-history/1608.json"
     },
     {
+      "schemecode": "1608-D",
+      "amfiSchemeCode": 120596,
+      "fundName": "ICICI Pru Large & Mid Cap Fund(G)",
+      "classification": "Equity : Large & Mid Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1608-D.json"
+    },
+    {
       "schemecode": "1615",
-      "amfiSchemeCode": 120616,
+      "amfiSchemeCode": 101619,
       "fundName": "ICICI Pru Regular Savings Fund-Reg(G)",
       "classification": "Hybrid : Conservative Hybrid",
       "firstDate": "2016-01-01",
@@ -3670,7 +4506,7 @@
     },
     {
       "schemecode": "1617",
-      "amfiSchemeCode": 120743,
+      "amfiSchemeCode": 100365,
       "fundName": "ICICI Pru Long Term Bond Fund(G)",
       "classification": "Debt : Long Duration",
       "firstDate": "2016-01-01",
@@ -3688,8 +4524,27 @@
       "path": "public/nav-history/1617.json"
     },
     {
+      "schemecode": "1617-D",
+      "amfiSchemeCode": 120743,
+      "fundName": "ICICI Pru Long Term Bond Fund(G)",
+      "classification": "Debt : Long Duration",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1617-D.json"
+    },
+    {
       "schemecode": "1623",
-      "amfiSchemeCode": 120620,
+      "amfiSchemeCode": 101349,
       "fundName": "ICICI Pru Nifty 50 Index Fund-Reg(G)",
       "classification": "Equity : Index Funds",
       "firstDate": "2016-01-01",
@@ -3707,8 +4562,27 @@
       "path": "public/nav-history/1623.json"
     },
     {
+      "schemecode": "1623-D",
+      "amfiSchemeCode": 120620,
+      "fundName": "ICICI Pru Nifty 50 Index Fund-Reg(G)",
+      "classification": "Equity : Index Funds",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1623-D.json"
+    },
+    {
       "schemecode": "1625",
-      "amfiSchemeCode": 120591,
+      "amfiSchemeCode": 106823,
       "fundName": "ICICI Pru Smallcap Fund(G)",
       "classification": "Equity : Small Cap",
       "firstDate": "2016-01-04",
@@ -3726,8 +4600,27 @@
       "path": "public/nav-history/1625.json"
     },
     {
+      "schemecode": "1625-D",
+      "amfiSchemeCode": 120591,
+      "fundName": "ICICI Pru Smallcap Fund(G)",
+      "classification": "Equity : Small Cap",
+      "firstDate": "2016-01-04",
+      "lastDate": "2026-06-19",
+      "points": 2564,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1625-D.json"
+    },
+    {
       "schemecode": "1629",
-      "amfiSchemeCode": 120621,
+      "amfiSchemeCode": 103149,
       "fundName": "ICICI Pru Infrastructure Fund(G)",
       "classification": "Equity : Sectoral - Infrastructure",
       "firstDate": "2016-01-01",
@@ -3745,8 +4638,27 @@
       "path": "public/nav-history/1629.json"
     },
     {
+      "schemecode": "1629-D",
+      "amfiSchemeCode": 120621,
+      "fundName": "ICICI Pru Infrastructure Fund(G)",
+      "classification": "Equity : Sectoral - Infrastructure",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1629-D.json"
+    },
+    {
       "schemecode": "1659",
-      "amfiSchemeCode": 120197,
+      "amfiSchemeCode": 103340,
       "fundName": "ICICI Pru Liquid Fund(G)",
       "classification": "Debt : Liquid",
       "firstDate": "2016-01-01",
@@ -3764,8 +4676,27 @@
       "path": "public/nav-history/1659.json"
     },
     {
+      "schemecode": "1659-D",
+      "amfiSchemeCode": 120197,
+      "fundName": "ICICI Pru Liquid Fund(G)",
+      "classification": "Debt : Liquid",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-21",
+      "points": 3731,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1659-D.json"
+    },
+    {
       "schemecode": "1667",
-      "amfiSchemeCode": 120670,
+      "amfiSchemeCode": 102741,
       "fundName": "ICICI Pru Medium Term Bond Fund(G)",
       "classification": "Debt : Medium Duration",
       "firstDate": "2016-01-01",
@@ -3783,8 +4714,27 @@
       "path": "public/nav-history/1667.json"
     },
     {
+      "schemecode": "1667-D",
+      "amfiSchemeCode": 120670,
+      "fundName": "ICICI Pru Medium Term Bond Fund(G)",
+      "classification": "Debt : Medium Duration",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1667-D.json"
+    },
+    {
       "schemecode": "1677",
-      "amfiSchemeCode": 120599,
+      "amfiSchemeCode": 101228,
       "fundName": "ICICI Pru Multicap Fund(G)",
       "classification": "Equity : Multi Cap",
       "firstDate": "2016-01-01",
@@ -3802,8 +4752,27 @@
       "path": "public/nav-history/1677.json"
     },
     {
+      "schemecode": "1677-D",
+      "amfiSchemeCode": 120599,
+      "fundName": "ICICI Pru Multicap Fund(G)",
+      "classification": "Equity : Multi Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1677-D.json"
+    },
+    {
       "schemecode": "1680",
-      "amfiSchemeCode": 120688,
+      "amfiSchemeCode": 103312,
       "fundName": "ICICI Pru Exports & Services Fund(G)",
       "classification": "Equity : Thematic",
       "firstDate": "2016-01-01",
@@ -3821,8 +4790,27 @@
       "path": "public/nav-history/1680.json"
     },
     {
+      "schemecode": "1680-D",
+      "amfiSchemeCode": 120688,
+      "fundName": "ICICI Pru Exports & Services Fund(G)",
+      "classification": "Equity : Thematic",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1680-D.json"
+    },
+    {
       "schemecode": "1682",
-      "amfiSchemeCode": 120754,
+      "amfiSchemeCode": 101758,
       "fundName": "ICICI Pru Short Term Fund(G)",
       "classification": "Debt : Short Duration",
       "firstDate": "2016-01-01",
@@ -3840,8 +4828,27 @@
       "path": "public/nav-history/1682.json"
     },
     {
+      "schemecode": "1682-D",
+      "amfiSchemeCode": 120754,
+      "fundName": "ICICI Pru Short Term Fund(G)",
+      "classification": "Debt : Short Duration",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1682-D.json"
+    },
+    {
       "schemecode": "1690",
-      "amfiSchemeCode": 120211,
+      "amfiSchemeCode": 103633,
       "fundName": "ICICI Pru Money Market Fund(G)",
       "classification": "Debt : Money Market",
       "firstDate": "2016-01-01",
@@ -3859,8 +4866,27 @@
       "path": "public/nav-history/1690.json"
     },
     {
+      "schemecode": "1690-D",
+      "amfiSchemeCode": 120211,
+      "fundName": "ICICI Pru Money Market Fund(G)",
+      "classification": "Debt : Money Market",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2671,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1690-D.json"
+    },
+    {
       "schemecode": "1694",
-      "amfiSchemeCode": 120592,
+      "amfiSchemeCode": 100354,
       "fundName": "ICICI Pru ELSS Tax Saver Fund(G)",
       "classification": "Equity : Tax Saving (ELSS)",
       "firstDate": "2016-01-01",
@@ -3878,8 +4904,27 @@
       "path": "public/nav-history/1694.json"
     },
     {
+      "schemecode": "1694-D",
+      "amfiSchemeCode": 120592,
+      "fundName": "ICICI Pru ELSS Tax Saver Fund(G)",
+      "classification": "Equity : Tax Saving (ELSS)",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1694-D.json"
+    },
+    {
       "schemecode": "1695",
-      "amfiSchemeCode": 120594,
+      "amfiSchemeCode": 100363,
       "fundName": "ICICI Pru Technology Fund(G)",
       "classification": "Equity : Sectoral - Technology",
       "firstDate": "2016-01-01",
@@ -3897,8 +4942,27 @@
       "path": "public/nav-history/1695.json"
     },
     {
+      "schemecode": "1695-D",
+      "amfiSchemeCode": 120594,
+      "fundName": "ICICI Pru Technology Fund(G)",
+      "classification": "Equity : Sectoral - Technology",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1695-D.json"
+    },
+    {
       "schemecode": "1701",
-      "amfiSchemeCode": 120313,
+      "amfiSchemeCode": 102139,
       "fundName": "ICICI Pru Income plus Arbitrage Omni FOF(G)",
       "classification": "FoFs : Domestic",
       "firstDate": "2016-01-01",
@@ -3916,8 +4980,27 @@
       "path": "public/nav-history/1701.json"
     },
     {
+      "schemecode": "1701-D",
+      "amfiSchemeCode": 120313,
+      "fundName": "ICICI Pru Income plus Arbitrage Omni FOF(G)",
+      "classification": "FoFs : Domestic",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1701-D.json"
+    },
+    {
       "schemecode": "1704",
-      "amfiSchemeCode": 120679,
+      "amfiSchemeCode": 102137,
       "fundName": "ICICI Pru Dynamic Asset Allocation Active FOF(G)",
       "classification": "FoFs : Domestic",
       "firstDate": "2016-01-01",
@@ -3935,8 +5018,27 @@
       "path": "public/nav-history/1704.json"
     },
     {
+      "schemecode": "1704-D",
+      "amfiSchemeCode": 120679,
+      "fundName": "ICICI Pru Dynamic Asset Allocation Active FOF(G)",
+      "classification": "FoFs : Domestic",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2547,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1704-D.json"
+    },
+    {
       "schemecode": "1706",
-      "amfiSchemeCode": 120700,
+      "amfiSchemeCode": 102135,
       "fundName": "ICICI Pru Aggressive Hybrid Active FOF(G)",
       "classification": "FoFs : Domestic",
       "firstDate": "2016-01-01",
@@ -3952,6 +5054,25 @@
         "5Y"
       ],
       "path": "public/nav-history/1706.json"
+    },
+    {
+      "schemecode": "1706-D",
+      "amfiSchemeCode": 120700,
+      "fundName": "ICICI Pru Aggressive Hybrid Active FOF(G)",
+      "classification": "FoFs : Domestic",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2563,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1706-D.json"
     },
     {
       "schemecode": "1713",
@@ -4069,7 +5190,7 @@
     },
     {
       "schemecode": "1909",
-      "amfiSchemeCode": 120406,
+      "amfiSchemeCode": 100234,
       "fundName": "JM Liquid Fund(G)",
       "classification": "Debt : Liquid",
       "firstDate": "2016-01-01",
@@ -4085,6 +5206,25 @@
         "5Y"
       ],
       "path": "public/nav-history/1909.json"
+    },
+    {
+      "schemecode": "1909-D",
+      "amfiSchemeCode": 120406,
+      "fundName": "JM Liquid Fund(G)",
+      "classification": "Debt : Liquid",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-21",
+      "points": 3255,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1909-D.json"
     },
     {
       "schemecode": "1956",
@@ -4126,7 +5266,7 @@
     },
     {
       "schemecode": "1962",
-      "amfiSchemeCode": 120152,
+      "amfiSchemeCode": 114458,
       "fundName": "Kotak Large Cap Fund(G)",
       "classification": "Equity : Large Cap",
       "firstDate": "2016-01-01",
@@ -4142,6 +5282,25 @@
         "5Y"
       ],
       "path": "public/nav-history/1962.json"
+    },
+    {
+      "schemecode": "1962-D",
+      "amfiSchemeCode": 120152,
+      "fundName": "Kotak Large Cap Fund(G)",
+      "classification": "Equity : Large Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1962-D.json"
     },
     {
       "schemecode": "1968",
@@ -4183,7 +5342,7 @@
     },
     {
       "schemecode": "1971",
-      "amfiSchemeCode": 119739,
+      "amfiSchemeCode": 101373,
       "fundName": "Kotak Bond Short Term Fund(G)",
       "classification": "Debt : Short Duration",
       "firstDate": "2016-01-01",
@@ -4199,6 +5358,25 @@
         "5Y"
       ],
       "path": "public/nav-history/1971.json"
+    },
+    {
+      "schemecode": "1971-D",
+      "amfiSchemeCode": 119739,
+      "fundName": "Kotak Bond Short Term Fund(G)",
+      "classification": "Debt : Short Duration",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1971-D.json"
     },
     {
       "schemecode": "1973",
@@ -4354,7 +5532,7 @@
     },
     {
       "schemecode": "1995",
-      "amfiSchemeCode": 119750,
+      "amfiSchemeCode": 102591,
       "fundName": "Kotak Savings Fund(G)",
       "classification": "Debt : Ultra Short Duration",
       "firstDate": "2016-01-01",
@@ -4372,8 +5550,27 @@
       "path": "public/nav-history/1995.json"
     },
     {
+      "schemecode": "1995-D",
+      "amfiSchemeCode": 119750,
+      "fundName": "Kotak Savings Fund(G)",
+      "classification": "Debt : Ultra Short Duration",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1995-D.json"
+    },
+    {
       "schemecode": "1999",
-      "amfiSchemeCode": 119746,
+      "amfiSchemeCode": 101893,
       "fundName": "Kotak Money Market Fund(G)",
       "classification": "Debt : Money Market",
       "firstDate": "2016-01-01",
@@ -4391,8 +5588,27 @@
       "path": "public/nav-history/1999.json"
     },
     {
+      "schemecode": "1999-D",
+      "amfiSchemeCode": 119746,
+      "fundName": "Kotak Money Market Fund(G)",
+      "classification": "Debt : Money Market",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2671,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/1999-D.json"
+    },
+    {
       "schemecode": "2044",
-      "amfiSchemeCode": 123693,
+      "amfiSchemeCode": 123690,
       "fundName": "Kotak Banking and PSU Debt Fund(G)",
       "classification": "Debt : Banking & PSU",
       "firstDate": "2016-01-01",
@@ -4410,8 +5626,27 @@
       "path": "public/nav-history/2044.json"
     },
     {
+      "schemecode": "2044-D",
+      "amfiSchemeCode": 123693,
+      "fundName": "Kotak Banking and PSU Debt Fund(G)",
+      "classification": "Debt : Banking & PSU",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2044-D.json"
+    },
+    {
       "schemecode": "2047",
-      "amfiSchemeCode": 119779,
+      "amfiSchemeCode": 106441,
       "fundName": "Kotak Global Emerging Market Overseas Equity Omni FOF(G)",
       "classification": "FoFs : Overseas",
       "firstDate": "2016-01-04",
@@ -4427,6 +5662,25 @@
         "5Y"
       ],
       "path": "public/nav-history/2047.json"
+    },
+    {
+      "schemecode": "2047-D",
+      "amfiSchemeCode": 119779,
+      "fundName": "Kotak Global Emerging Market Overseas Equity Omni FOF(G)",
+      "classification": "FoFs : Overseas",
+      "firstDate": "2016-01-04",
+      "lastDate": "2026-06-19",
+      "points": 2510,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2047-D.json"
     },
     {
       "schemecode": "2050",
@@ -4449,7 +5703,7 @@
     },
     {
       "schemecode": "2051",
-      "amfiSchemeCode": 120154,
+      "amfiSchemeCode": 114859,
       "fundName": "Kotak Debt Hybrid Fund(G)",
       "classification": "Hybrid : Conservative Hybrid",
       "firstDate": "2016-01-01",
@@ -4465,6 +5719,25 @@
         "5Y"
       ],
       "path": "public/nav-history/2051.json"
+    },
+    {
+      "schemecode": "2051-D",
+      "amfiSchemeCode": 120154,
+      "fundName": "Kotak Debt Hybrid Fund(G)",
+      "classification": "Hybrid : Conservative Hybrid",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2531,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2051-D.json"
     },
     {
       "schemecode": "2060",
@@ -4506,7 +5779,7 @@
     },
     {
       "schemecode": "2066",
-      "amfiSchemeCode": 120164,
+      "amfiSchemeCode": 102875,
       "fundName": "Kotak Small Cap Fund(G)",
       "classification": "Equity : Small Cap",
       "firstDate": "2016-01-01",
@@ -4522,6 +5795,25 @@
         "5Y"
       ],
       "path": "public/nav-history/2066.json"
+    },
+    {
+      "schemecode": "2066-D",
+      "amfiSchemeCode": 120164,
+      "fundName": "Kotak Small Cap Fund(G)",
+      "classification": "Equity : Small Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2066-D.json"
     },
     {
       "schemecode": "2069",
@@ -4563,7 +5855,7 @@
     },
     {
       "schemecode": "2075",
-      "amfiSchemeCode": 119773,
+      "amfiSchemeCode": 103339,
       "fundName": "Kotak ELSS Tax Saver Fund(G)",
       "classification": "Equity : Tax Saving (ELSS)",
       "firstDate": "2016-01-01",
@@ -4579,6 +5871,25 @@
         "5Y"
       ],
       "path": "public/nav-history/2075.json"
+    },
+    {
+      "schemecode": "2075-D",
+      "amfiSchemeCode": 119773,
+      "fundName": "Kotak ELSS Tax Saver Fund(G)",
+      "classification": "Equity : Tax Saving (ELSS)",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2075-D.json"
     },
     {
       "schemecode": "2085",
@@ -5076,7 +6387,7 @@
     },
     {
       "schemecode": "2240",
-      "amfiSchemeCode": 104488,
+      "amfiSchemeCode": 104486,
       "fundName": "Invesco India Liquid Fund(G)",
       "classification": "Debt : Liquid",
       "firstDate": "2016-01-01",
@@ -5114,7 +6425,7 @@
     },
     {
       "schemecode": "2253",
-      "amfiSchemeCode": 104728,
+      "amfiSchemeCode": 104726,
       "fundName": "Invesco India Low Duration Fund(G)",
       "classification": "Debt : Low Duration",
       "firstDate": "2016-01-01",
@@ -5380,7 +6691,7 @@
     },
     {
       "schemecode": "2321",
-      "amfiSchemeCode": 149601,
+      "amfiSchemeCode": 149599,
       "fundName": "Sundaram Aggressive Hybrid Fund(G)",
       "classification": "Hybrid : Aggressive Hybrid",
       "firstDate": "2022-01-03",
@@ -5397,8 +6708,26 @@
       "path": "public/nav-history/2321.json"
     },
     {
+      "schemecode": "2321-D",
+      "amfiSchemeCode": 149601,
+      "fundName": "Sundaram Aggressive Hybrid Fund(G)",
+      "classification": "Hybrid : Aggressive Hybrid",
+      "firstDate": "2022-01-03",
+      "lastDate": "2026-06-19",
+      "points": 1098,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y"
+      ],
+      "path": "public/nav-history/2321-D.json"
+    },
+    {
       "schemecode": "2323",
-      "amfiSchemeCode": 149664,
+      "amfiSchemeCode": 149661,
       "fundName": "Sundaram Liquid Fund(G)",
       "classification": "Debt : Liquid",
       "firstDate": "2022-01-01",
@@ -5415,8 +6744,26 @@
       "path": "public/nav-history/2323.json"
     },
     {
+      "schemecode": "2323-D",
+      "amfiSchemeCode": 149664,
+      "fundName": "Sundaram Liquid Fund(G)",
+      "classification": "Debt : Liquid",
+      "firstDate": "2022-01-01",
+      "lastDate": "2026-06-21",
+      "points": 1632,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y"
+      ],
+      "path": "public/nav-history/2323-D.json"
+    },
+    {
       "schemecode": "2337",
-      "amfiSchemeCode": 149700,
+      "amfiSchemeCode": 149697,
       "fundName": "Sundaram Dividend Yield Fund(G)",
       "classification": "Equity : Thematic - Dividend Yield",
       "firstDate": "2022-01-03",
@@ -5433,8 +6780,26 @@
       "path": "public/nav-history/2337.json"
     },
     {
+      "schemecode": "2337-D",
+      "amfiSchemeCode": 149700,
+      "fundName": "Sundaram Dividend Yield Fund(G)",
+      "classification": "Equity : Thematic - Dividend Yield",
+      "firstDate": "2022-01-03",
+      "lastDate": "2026-06-19",
+      "points": 1098,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y"
+      ],
+      "path": "public/nav-history/2337-D.json"
+    },
+    {
       "schemecode": "2370",
-      "amfiSchemeCode": 149669,
+      "amfiSchemeCode": 149667,
       "fundName": "Sundaram Multi Cap Fund(G)",
       "classification": "Equity : Multi Cap",
       "firstDate": "2022-01-03",
@@ -5451,8 +6816,26 @@
       "path": "public/nav-history/2370.json"
     },
     {
+      "schemecode": "2370-D",
+      "amfiSchemeCode": 149669,
+      "fundName": "Sundaram Multi Cap Fund(G)",
+      "classification": "Equity : Multi Cap",
+      "firstDate": "2022-01-03",
+      "lastDate": "2026-06-19",
+      "points": 1098,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y"
+      ],
+      "path": "public/nav-history/2370-D.json"
+    },
+    {
       "schemecode": "2390",
-      "amfiSchemeCode": 149533,
+      "amfiSchemeCode": 149532,
       "fundName": "Sundaram Focused Fund(G)",
       "classification": "Equity : Focused",
       "firstDate": "2022-01-03",
@@ -5469,8 +6852,26 @@
       "path": "public/nav-history/2390.json"
     },
     {
+      "schemecode": "2390-D",
+      "amfiSchemeCode": 149533,
+      "fundName": "Sundaram Focused Fund(G)",
+      "classification": "Equity : Focused",
+      "firstDate": "2022-01-03",
+      "lastDate": "2026-06-19",
+      "points": 1098,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y"
+      ],
+      "path": "public/nav-history/2390-D.json"
+    },
+    {
       "schemecode": "2393",
-      "amfiSchemeCode": 149679,
+      "amfiSchemeCode": 149674,
       "fundName": "Sundaram Equity Savings Fund(G)",
       "classification": "Hybrid : Equity Savings",
       "firstDate": "2022-01-03",
@@ -5485,6 +6886,24 @@
         "3Y"
       ],
       "path": "public/nav-history/2393.json"
+    },
+    {
+      "schemecode": "2393-D",
+      "amfiSchemeCode": 149679,
+      "fundName": "Sundaram Equity Savings Fund(G)",
+      "classification": "Hybrid : Equity Savings",
+      "firstDate": "2022-01-03",
+      "lastDate": "2026-06-19",
+      "points": 1098,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y"
+      ],
+      "path": "public/nav-history/2393-D.json"
     },
     {
       "schemecode": "2433",
@@ -5524,7 +6943,7 @@
     },
     {
       "schemecode": "2445",
-      "amfiSchemeCode": 118589,
+      "amfiSchemeCode": 101862,
       "fundName": "Nippon India Banking & Financial Services Fund(G)",
       "classification": "Equity : Sectoral - Financial Services",
       "firstDate": "2016-01-01",
@@ -5542,8 +6961,27 @@
       "path": "public/nav-history/2445.json"
     },
     {
+      "schemecode": "2445-D",
+      "amfiSchemeCode": 118589,
+      "fundName": "Nippon India Banking & Financial Services Fund(G)",
+      "classification": "Equity : Sectoral - Financial Services",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2445-D.json"
+    },
+    {
       "schemecode": "2452",
-      "amfiSchemeCode": 118763,
+      "amfiSchemeCode": 101262,
       "fundName": "Nippon India Power & Infra Fund(G)",
       "classification": "Equity : Sectoral - Energy / Power",
       "firstDate": "2016-01-01",
@@ -5561,8 +6999,27 @@
       "path": "public/nav-history/2452.json"
     },
     {
+      "schemecode": "2452-D",
+      "amfiSchemeCode": 118763,
+      "fundName": "Nippon India Power & Infra Fund(G)",
+      "classification": "Equity : Sectoral - Energy / Power",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2452-D.json"
+    },
+    {
       "schemecode": "2455",
-      "amfiSchemeCode": 118632,
+      "amfiSchemeCode": 106235,
       "fundName": "Nippon India Large Cap Fund(G)",
       "classification": "Equity : Large Cap",
       "firstDate": "2016-01-01",
@@ -5580,8 +7037,27 @@
       "path": "public/nav-history/2455.json"
     },
     {
+      "schemecode": "2455-D",
+      "amfiSchemeCode": 118632,
+      "fundName": "Nippon India Large Cap Fund(G)",
+      "classification": "Equity : Large Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2455-D.json"
+    },
+    {
       "schemecode": "2466",
-      "amfiSchemeCode": 118650,
+      "amfiSchemeCode": 101161,
       "fundName": "Nippon India Multi Cap Fund(G)",
       "classification": "Equity : Multi Cap",
       "firstDate": "2016-01-01",
@@ -5599,8 +7075,27 @@
       "path": "public/nav-history/2466.json"
     },
     {
+      "schemecode": "2466-D",
+      "amfiSchemeCode": 118650,
+      "fundName": "Nippon India Multi Cap Fund(G)",
+      "classification": "Equity : Multi Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2466-D.json"
+    },
+    {
       "schemecode": "2566",
-      "amfiSchemeCode": 118656,
+      "amfiSchemeCode": 102673,
       "fundName": "Nippon India Floater Fund(G)",
       "classification": "Debt : Floater",
       "firstDate": "2016-01-01",
@@ -5618,8 +7113,27 @@
       "path": "public/nav-history/2566.json"
     },
     {
+      "schemecode": "2566-D",
+      "amfiSchemeCode": 118656,
+      "fundName": "Nippon India Floater Fund(G)",
+      "classification": "Debt : Floater",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2566-D.json"
+    },
+    {
       "schemecode": "2573",
-      "amfiSchemeCode": 118668,
+      "amfiSchemeCode": 100377,
       "fundName": "Nippon India Growth Mid Cap Fund(G)",
       "classification": "Equity : Mid Cap",
       "firstDate": "2016-01-01",
@@ -5637,8 +7151,27 @@
       "path": "public/nav-history/2573.json"
     },
     {
+      "schemecode": "2573-D",
+      "amfiSchemeCode": 118668,
+      "fundName": "Nippon India Growth Mid Cap Fund(G)",
+      "classification": "Equity : Mid Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2573-D.json"
+    },
+    {
       "schemecode": "2615",
-      "amfiSchemeCode": 143494,
+      "amfiSchemeCode": 143493,
       "fundName": "Nippon India Ultra Short Duration Fund(G)",
       "classification": "Debt : Ultra Short Duration",
       "firstDate": "2018-05-21",
@@ -5656,8 +7189,27 @@
       "path": "public/nav-history/2615.json"
     },
     {
+      "schemecode": "2615-D",
+      "amfiSchemeCode": 143494,
+      "fundName": "Nippon India Ultra Short Duration Fund(G)",
+      "classification": "Debt : Ultra Short Duration",
+      "firstDate": "2018-05-21",
+      "lastDate": "2026-06-19",
+      "points": 1956,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2615-D.json"
+    },
+    {
       "schemecode": "2621",
-      "amfiSchemeCode": 118709,
+      "amfiSchemeCode": 111753,
       "fundName": "Nippon India Low Duration Fund(G)",
       "classification": "Debt : Low Duration",
       "firstDate": "2016-01-01",
@@ -5675,8 +7227,27 @@
       "path": "public/nav-history/2621.json"
     },
     {
+      "schemecode": "2621-D",
+      "amfiSchemeCode": 118709,
+      "fundName": "Nippon India Low Duration Fund(G)",
+      "classification": "Debt : Low Duration",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2621-D.json"
+    },
+    {
       "schemecode": "2628",
-      "amfiSchemeCode": 118719,
+      "amfiSchemeCode": 103048,
       "fundName": "Nippon India Money Market Fund(G)",
       "classification": "Debt : Money Market",
       "firstDate": "2016-01-01",
@@ -5694,8 +7265,27 @@
       "path": "public/nav-history/2628.json"
     },
     {
+      "schemecode": "2628-D",
+      "amfiSchemeCode": 118719,
+      "fundName": "Nippon India Money Market Fund(G)",
+      "classification": "Debt : Money Market",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2735,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2628-D.json"
+    },
+    {
       "schemecode": "2637",
-      "amfiSchemeCode": 118701,
+      "amfiSchemeCode": 100851,
       "fundName": "Nippon India Liquid Fund(G)",
       "classification": "Debt : Liquid",
       "firstDate": "2016-01-01",
@@ -5713,8 +7303,27 @@
       "path": "public/nav-history/2637.json"
     },
     {
+      "schemecode": "2637-D",
+      "amfiSchemeCode": 118701,
+      "fundName": "Nippon India Liquid Fund(G)",
+      "classification": "Debt : Liquid",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-21",
+      "points": 3732,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2637-D.json"
+    },
+    {
       "schemecode": "2641",
-      "amfiSchemeCode": 118692,
+      "amfiSchemeCode": 104637,
       "fundName": "Nippon India Focused Fund(G)",
       "classification": "Equity : Focused",
       "firstDate": "2016-01-01",
@@ -5732,8 +7341,27 @@
       "path": "public/nav-history/2641.json"
     },
     {
+      "schemecode": "2641-D",
+      "amfiSchemeCode": 118692,
+      "fundName": "Nippon India Focused Fund(G)",
+      "classification": "Equity : Focused",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2641-D.json"
+    },
+    {
       "schemecode": "2644",
-      "amfiSchemeCode": 118724,
+      "amfiSchemeCode": 102751,
       "fundName": "Nippon India Consumption Fund(G)",
       "classification": "Equity : Thematic - Consumption",
       "firstDate": "2016-01-01",
@@ -5751,8 +7379,27 @@
       "path": "public/nav-history/2644.json"
     },
     {
+      "schemecode": "2644-D",
+      "amfiSchemeCode": 118724,
+      "fundName": "Nippon India Consumption Fund(G)",
+      "classification": "Equity : Thematic - Consumption",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2644-D.json"
+    },
+    {
       "schemecode": "2646",
-      "amfiSchemeCode": 118814,
+      "amfiSchemeCode": 100856,
       "fundName": "Nippon India Corp Bond Fund(G)",
       "classification": "Debt : Corporate Bond",
       "firstDate": "2016-01-01",
@@ -5770,8 +7417,27 @@
       "path": "public/nav-history/2646.json"
     },
     {
+      "schemecode": "2646-D",
+      "amfiSchemeCode": 118814,
+      "fundName": "Nippon India Corp Bond Fund(G)",
+      "classification": "Debt : Corporate Bond",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2646-D.json"
+    },
+    {
       "schemecode": "2649",
-      "amfiSchemeCode": 118726,
+      "amfiSchemeCode": 102172,
       "fundName": "Nippon India Conservative Hybrid Fund(G)",
       "classification": "Hybrid : Conservative Hybrid",
       "firstDate": "2016-01-01",
@@ -5789,8 +7455,27 @@
       "path": "public/nav-history/2649.json"
     },
     {
+      "schemecode": "2649-D",
+      "amfiSchemeCode": 118726,
+      "fundName": "Nippon India Conservative Hybrid Fund(G)",
+      "classification": "Hybrid : Conservative Hybrid",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2649-D.json"
+    },
+    {
       "schemecode": "2654",
-      "amfiSchemeCode": 118736,
+      "amfiSchemeCode": 102846,
       "fundName": "Nippon India Balanced Advantage Fund(G)",
       "classification": "Hybrid : Dynamic Asset Allocation",
       "firstDate": "2016-01-01",
@@ -5808,8 +7493,27 @@
       "path": "public/nav-history/2654.json"
     },
     {
+      "schemecode": "2654-D",
+      "amfiSchemeCode": 118736,
+      "fundName": "Nippon India Balanced Advantage Fund(G)",
+      "classification": "Hybrid : Dynamic Asset Allocation",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2654-D.json"
+    },
+    {
       "schemecode": "2656",
-      "amfiSchemeCode": 118747,
+      "amfiSchemeCode": 102849,
       "fundName": "Nippon India Dynamic Bond Fund(G)",
       "classification": "Debt : Dynamic Bond",
       "firstDate": "2016-01-01",
@@ -5827,8 +7531,27 @@
       "path": "public/nav-history/2656.json"
     },
     {
+      "schemecode": "2656-D",
+      "amfiSchemeCode": 118747,
+      "fundName": "Nippon India Dynamic Bond Fund(G)",
+      "classification": "Debt : Dynamic Bond",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2656-D.json"
+    },
+    {
       "schemecode": "2659",
-      "amfiSchemeCode": 118759,
+      "amfiSchemeCode": 102431,
       "fundName": "Nippon India Pharma Fund(G)",
       "classification": "Equity : Sectoral - Pharma",
       "firstDate": "2016-01-01",
@@ -5846,8 +7569,27 @@
       "path": "public/nav-history/2659.json"
     },
     {
+      "schemecode": "2659-D",
+      "amfiSchemeCode": 118759,
+      "fundName": "Nippon India Pharma Fund(G)",
+      "classification": "Equity : Sectoral - Pharma",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2659-D.json"
+    },
+    {
       "schemecode": "2660",
-      "amfiSchemeCode": 118794,
+      "amfiSchemeCode": 112936,
       "fundName": "Nippon India Aggressive Hybrid Fund(G)",
       "classification": "Hybrid : Aggressive Hybrid",
       "firstDate": "2016-01-01",
@@ -5865,8 +7607,27 @@
       "path": "public/nav-history/2660.json"
     },
     {
+      "schemecode": "2660-D",
+      "amfiSchemeCode": 118794,
+      "fundName": "Nippon India Aggressive Hybrid Fund(G)",
+      "classification": "Hybrid : Aggressive Hybrid",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2660-D.json"
+    },
+    {
       "schemecode": "2661",
-      "amfiSchemeCode": 118780,
+      "amfiSchemeCode": 112938,
       "fundName": "Nippon India Credit Risk Fund(G)",
       "classification": "Debt : Credit Risk",
       "firstDate": "2016-01-01",
@@ -5884,8 +7645,27 @@
       "path": "public/nav-history/2661.json"
     },
     {
+      "schemecode": "2661-D",
+      "amfiSchemeCode": 118780,
+      "fundName": "Nippon India Credit Risk Fund(G)",
+      "classification": "Debt : Credit Risk",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2661-D.json"
+    },
+    {
       "schemecode": "2662",
-      "amfiSchemeCode": 118784,
+      "amfiSchemeCode": 103085,
       "fundName": "Nippon India Value Fund(G)",
       "classification": "Equity : Value / Contra",
       "firstDate": "2016-01-01",
@@ -5903,8 +7683,27 @@
       "path": "public/nav-history/2662.json"
     },
     {
+      "schemecode": "2662-D",
+      "amfiSchemeCode": 118784,
+      "fundName": "Nippon India Value Fund(G)",
+      "classification": "Equity : Value / Contra",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2662-D.json"
+    },
+    {
       "schemecode": "2664",
-      "amfiSchemeCode": 118796,
+      "amfiSchemeCode": 101665,
       "fundName": "Nippon India Short Duration Fund(G)",
       "classification": "Debt : Short Duration",
       "firstDate": "2016-01-01",
@@ -5922,8 +7721,27 @@
       "path": "public/nav-history/2664.json"
     },
     {
+      "schemecode": "2664-D",
+      "amfiSchemeCode": 118796,
+      "fundName": "Nippon India Short Duration Fund(G)",
+      "classification": "Debt : Short Duration",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2664-D.json"
+    },
+    {
       "schemecode": "2667",
-      "amfiSchemeCode": 118803,
+      "amfiSchemeCode": 103196,
       "fundName": "Nippon India ELSS Tax Saver Fund(G)",
       "classification": "Equity : Tax Saving (ELSS)",
       "firstDate": "2016-01-01",
@@ -5941,8 +7759,27 @@
       "path": "public/nav-history/2667.json"
     },
     {
+      "schemecode": "2667-D",
+      "amfiSchemeCode": 118803,
+      "fundName": "Nippon India ELSS Tax Saver Fund(G)",
+      "classification": "Equity : Tax Saving (ELSS)",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2667-D.json"
+    },
+    {
       "schemecode": "2669",
-      "amfiSchemeCode": 118678,
+      "amfiSchemeCode": 100380,
       "fundName": "Nippon India Vision Large & Mid Cap Fund(G)",
       "classification": "Equity : Large & Mid Cap",
       "firstDate": "2016-01-01",
@@ -5958,6 +7795,25 @@
         "5Y"
       ],
       "path": "public/nav-history/2669.json"
+    },
+    {
+      "schemecode": "2669-D",
+      "amfiSchemeCode": 118678,
+      "fundName": "Nippon India Vision Large & Mid Cap Fund(G)",
+      "classification": "Equity : Large & Mid Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/2669-D.json"
     },
     {
       "schemecode": "2709",
@@ -8070,7 +9926,7 @@
     },
     {
       "schemecode": "3361",
-      "amfiSchemeCode": 118506,
+      "amfiSchemeCode": 101357,
       "fundName": "Franklin India Money Market Fund(G)",
       "classification": "Debt : Money Market",
       "firstDate": "2016-01-01",
@@ -8088,8 +9944,27 @@
       "path": "public/nav-history/3361.json"
     },
     {
+      "schemecode": "3361-D",
+      "amfiSchemeCode": 118506,
+      "fundName": "Franklin India Money Market Fund(G)",
+      "classification": "Debt : Money Market",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/3361-D.json"
+    },
+    {
       "schemecode": "3367",
-      "amfiSchemeCode": 118527,
+      "amfiSchemeCode": 103679,
       "fundName": "Franklin India Dividend Yield Fund(G)",
       "classification": "Equity : Thematic - Dividend Yield",
       "firstDate": "2016-01-01",
@@ -8107,8 +9982,27 @@
       "path": "public/nav-history/3367.json"
     },
     {
+      "schemecode": "3367-D",
+      "amfiSchemeCode": 118527,
+      "fundName": "Franklin India Dividend Yield Fund(G)",
+      "classification": "Equity : Thematic - Dividend Yield",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2576,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/3367-D.json"
+    },
+    {
       "schemecode": "3379",
-      "amfiSchemeCode": 118494,
+      "amfiSchemeCode": 100496,
       "fundName": "Templeton India Value Fund(G)",
       "classification": "Equity : Value / Contra",
       "firstDate": "2016-01-01",
@@ -8124,6 +10018,25 @@
         "5Y"
       ],
       "path": "public/nav-history/3379.json"
+    },
+    {
+      "schemecode": "3379-D",
+      "amfiSchemeCode": 118494,
+      "fundName": "Templeton India Value Fund(G)",
+      "classification": "Equity : Value / Contra",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/3379-D.json"
     },
     {
       "schemecode": "3435",
@@ -9096,7 +11009,7 @@
     },
     {
       "schemecode": "3728",
-      "amfiSchemeCode": 118961,
+      "amfiSchemeCode": 106841,
       "fundName": "HDFC Floating Rate Debt Fund(G)",
       "classification": "Debt : Floater",
       "firstDate": "2016-01-01",
@@ -9112,6 +11025,25 @@
         "5Y"
       ],
       "path": "public/nav-history/3728.json"
+    },
+    {
+      "schemecode": "3728-D",
+      "amfiSchemeCode": 118961,
+      "fundName": "HDFC Floating Rate Debt Fund(G)",
+      "classification": "Debt : Floater",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2532,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/3728-D.json"
     },
     {
       "schemecode": "3790",
@@ -9153,7 +11085,7 @@
     },
     {
       "schemecode": "3813",
-      "amfiSchemeCode": 118559,
+      "amfiSchemeCode": 106979,
       "fundName": "Franklin Asian Equity Fund(G)",
       "classification": "Equity : International",
       "firstDate": "2016-01-01",
@@ -9171,8 +11103,27 @@
       "path": "public/nav-history/3813.json"
     },
     {
+      "schemecode": "3813-D",
+      "amfiSchemeCode": 118559,
+      "fundName": "Franklin Asian Equity Fund(G)",
+      "classification": "Equity : International",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/3813-D.json"
+    },
+    {
       "schemecode": "4186",
-      "amfiSchemeCode": 149539,
+      "amfiSchemeCode": 149535,
       "fundName": "Sundaram Ultra Short Duration Fund(G)",
       "classification": "Debt : Ultra Short Duration",
       "firstDate": "2022-01-03",
@@ -9187,6 +11138,24 @@
         "3Y"
       ],
       "path": "public/nav-history/4186.json"
+    },
+    {
+      "schemecode": "4186-D",
+      "amfiSchemeCode": 149539,
+      "fundName": "Sundaram Ultra Short Duration Fund(G)",
+      "classification": "Debt : Ultra Short Duration",
+      "firstDate": "2022-01-03",
+      "lastDate": "2026-06-19",
+      "points": 1079,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y"
+      ],
+      "path": "public/nav-history/4186-D.json"
     },
     {
       "schemecode": "4228",
@@ -9209,7 +11178,7 @@
     },
     {
       "schemecode": "4253",
-      "amfiSchemeCode": 118979,
+      "amfiSchemeCode": 107524,
       "fundName": "HDFC Infrastructure Fund(G)",
       "classification": "Equity : Sectoral - Infrastructure",
       "firstDate": "2016-01-01",
@@ -9225,6 +11194,25 @@
         "5Y"
       ],
       "path": "public/nav-history/4253.json"
+    },
+    {
+      "schemecode": "4253-D",
+      "amfiSchemeCode": 118979,
+      "fundName": "HDFC Infrastructure Fund(G)",
+      "classification": "Equity : Sectoral - Infrastructure",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/4253-D.json"
     },
     {
       "schemecode": "4256",
@@ -9532,7 +11520,7 @@
     },
     {
       "schemecode": "4637",
-      "amfiSchemeCode": 119544,
+      "amfiSchemeCode": 107745,
       "fundName": "Aditya Birla SL ELSS Tax Saver Fund(G)",
       "classification": "Equity : Tax Saving (ELSS)",
       "firstDate": "2016-01-01",
@@ -9550,8 +11538,27 @@
       "path": "public/nav-history/4637.json"
     },
     {
+      "schemecode": "4637-D",
+      "amfiSchemeCode": 119544,
+      "fundName": "Aditya Birla SL ELSS Tax Saver Fund(G)",
+      "classification": "Equity : Tax Saving (ELSS)",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/4637-D.json"
+    },
+    {
       "schemecode": "4980",
-      "amfiSchemeCode": 120586,
+      "amfiSchemeCode": 108466,
       "fundName": "ICICI Pru Large Cap Fund(G)",
       "classification": "Equity : Large Cap",
       "firstDate": "2016-01-01",
@@ -9567,6 +11574,25 @@
         "5Y"
       ],
       "path": "public/nav-history/4980.json"
+    },
+    {
+      "schemecode": "4980-D",
+      "amfiSchemeCode": 120586,
+      "fundName": "ICICI Pru Large Cap Fund(G)",
+      "classification": "Equity : Large Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/4980-D.json"
     },
     {
       "schemecode": "5144",
@@ -9760,7 +11786,7 @@
     },
     {
       "schemecode": "5736",
-      "amfiSchemeCode": 120244,
+      "amfiSchemeCode": 109445,
       "fundName": "ICICI Pru Banking & Fin Serv Fund(G)",
       "classification": "Equity : Sectoral - Financial Services",
       "firstDate": "2016-01-01",
@@ -9776,6 +11802,25 @@
         "5Y"
       ],
       "path": "public/nav-history/5736.json"
+    },
+    {
+      "schemecode": "5736-D",
+      "amfiSchemeCode": 120244,
+      "fundName": "ICICI Pru Banking & Fin Serv Fund(G)",
+      "classification": "Equity : Sectoral - Financial Services",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/5736-D.json"
     },
     {
       "schemecode": "5742",
@@ -9931,7 +11976,7 @@
     },
     {
       "schemecode": "6197",
-      "amfiSchemeCode": 120619,
+      "amfiSchemeCode": 109740,
       "fundName": "ICICI Pru Bond Fund(G)",
       "classification": "Debt : Medium to Long Duration",
       "firstDate": "2016-01-01",
@@ -9949,8 +11994,27 @@
       "path": "public/nav-history/6197.json"
     },
     {
+      "schemecode": "6197-D",
+      "amfiSchemeCode": 120619,
+      "fundName": "ICICI Pru Bond Fund(G)",
+      "classification": "Debt : Medium to Long Duration",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/6197-D.json"
+    },
+    {
       "schemecode": "6291",
-      "amfiSchemeCode": 118672,
+      "amfiSchemeCode": 109720,
       "fundName": "Nippon India Gilt Fund(G)",
       "classification": "Debt : Gilt",
       "firstDate": "2016-01-01",
@@ -9966,6 +12030,25 @@
         "5Y"
       ],
       "path": "public/nav-history/6291.json"
+    },
+    {
+      "schemecode": "6291-D",
+      "amfiSchemeCode": 118672,
+      "fundName": "Nippon India Gilt Fund(G)",
+      "classification": "Debt : Gilt",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/6291-D.json"
     },
     {
       "schemecode": "6305",
@@ -10406,7 +12489,7 @@
     },
     {
       "schemecode": "7747",
-      "amfiSchemeCode": 120722,
+      "amfiSchemeCode": 111957,
       "fundName": "ICICI Pru Focused Equity Fund(G)",
       "classification": "Equity : Focused",
       "firstDate": "2016-01-01",
@@ -10422,6 +12505,25 @@
         "5Y"
       ],
       "path": "public/nav-history/7747.json"
+    },
+    {
+      "schemecode": "7747-D",
+      "amfiSchemeCode": 120722,
+      "fundName": "ICICI Pru Focused Equity Fund(G)",
+      "classification": "Equity : Focused",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/7747-D.json"
     },
     {
       "schemecode": "7785",
@@ -10463,7 +12565,7 @@
     },
     {
       "schemecode": "7864",
-      "amfiSchemeCode": 118557,
+      "amfiSchemeCode": 112092,
       "fundName": "Franklin Build India Fund(G)",
       "classification": "Equity : Sectoral - Infrastructure",
       "firstDate": "2016-01-01",
@@ -10479,6 +12581,25 @@
         "5Y"
       ],
       "path": "public/nav-history/7864.json"
+    },
+    {
+      "schemecode": "7864-D",
+      "amfiSchemeCode": 118557,
+      "fundName": "Franklin Build India Fund(G)",
+      "classification": "Equity : Sectoral - Infrastructure",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/7864-D.json"
     },
     {
       "schemecode": "7869",
@@ -10558,7 +12679,7 @@
     },
     {
       "schemecode": "7874",
-      "amfiSchemeCode": 120166,
+      "amfiSchemeCode": 112090,
       "fundName": "Kotak Flexicap Fund(G)",
       "classification": "Equity : Flexi Cap",
       "firstDate": "2016-01-01",
@@ -10574,6 +12695,25 @@
         "5Y"
       ],
       "path": "public/nav-history/7874.json"
+    },
+    {
+      "schemecode": "7874-D",
+      "amfiSchemeCode": 120166,
+      "fundName": "Kotak Flexicap Fund(G)",
+      "classification": "Equity : Flexi Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/7874-D.json"
     },
     {
       "schemecode": "7876",
@@ -10767,7 +12907,7 @@
     },
     {
       "schemecode": "7925",
-      "amfiSchemeCode": 120692,
+      "amfiSchemeCode": 111987,
       "fundName": "ICICI Pru Corp Bond Fund(G)",
       "classification": "Debt : Corporate Bond",
       "firstDate": "2016-01-01",
@@ -10785,8 +12925,27 @@
       "path": "public/nav-history/7925.json"
     },
     {
+      "schemecode": "7925-D",
+      "amfiSchemeCode": 120692,
+      "fundName": "ICICI Pru Corp Bond Fund(G)",
+      "classification": "Debt : Corporate Bond",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/7925-D.json"
+    },
+    {
       "schemecode": "7934",
-      "amfiSchemeCode": 112120,
+      "amfiSchemeCode": 112123,
       "fundName": "Invesco India Money Market Fund(G)",
       "classification": "Debt : Money Market",
       "firstDate": "2016-01-01",
@@ -10938,7 +13097,7 @@
     },
     {
       "schemecode": "8080",
-      "amfiSchemeCode": 120256,
+      "amfiSchemeCode": 112342,
       "fundName": "ICICI Pru Banking & PSU Debt Fund(G)",
       "classification": "Debt : Banking & PSU",
       "firstDate": "2016-01-01",
@@ -10954,6 +13113,25 @@
         "5Y"
       ],
       "path": "public/nav-history/8080.json"
+    },
+    {
+      "schemecode": "8080-D",
+      "amfiSchemeCode": 120256,
+      "fundName": "ICICI Pru Banking & PSU Debt Fund(G)",
+      "classification": "Debt : Banking & PSU",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/8080-D.json"
     },
     {
       "schemecode": "8136",
@@ -11033,7 +13211,7 @@
     },
     {
       "schemecode": "8241",
-      "amfiSchemeCode": 118987,
+      "amfiSchemeCode": 113070,
       "fundName": "HDFC Corp Bond Fund(G)",
       "classification": "Debt : Corporate Bond",
       "firstDate": "2016-01-01",
@@ -11049,6 +13227,25 @@
         "5Y"
       ],
       "path": "public/nav-history/8241.json"
+    },
+    {
+      "schemecode": "8241-D",
+      "amfiSchemeCode": 118987,
+      "fundName": "HDFC Corp Bond Fund(G)",
+      "classification": "Debt : Corporate Bond",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2531,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/8241-D.json"
     },
     {
       "schemecode": "8250",
@@ -11221,7 +13418,7 @@
     },
     {
       "schemecode": "8472",
-      "amfiSchemeCode": 119741,
+      "amfiSchemeCode": 117716,
       "fundName": "Kotak Credit Risk Fund(G)",
       "classification": "Debt : Credit Risk",
       "firstDate": "2016-01-01",
@@ -11237,6 +13434,25 @@
         "5Y"
       ],
       "path": "public/nav-history/8472.json"
+    },
+    {
+      "schemecode": "8472-D",
+      "amfiSchemeCode": 119741,
+      "fundName": "Kotak Credit Risk Fund(G)",
+      "classification": "Debt : Credit Risk",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/8472-D.json"
     },
     {
       "schemecode": "8484",
@@ -11316,7 +13532,7 @@
     },
     {
       "schemecode": "8499",
-      "amfiSchemeCode": 120603,
+      "amfiSchemeCode": 112096,
       "fundName": "ICICI Pru All Seasons Bond Fund(G)",
       "classification": "Debt : Dynamic Bond",
       "firstDate": "2016-01-01",
@@ -11332,6 +13548,25 @@
         "5Y"
       ],
       "path": "public/nav-history/8499.json"
+    },
+    {
+      "schemecode": "8499-D",
+      "amfiSchemeCode": 120603,
+      "fundName": "ICICI Pru All Seasons Bond Fund(G)",
+      "classification": "Debt : Dynamic Bond",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/8499-D.json"
     },
     {
       "schemecode": "8564",
@@ -11392,7 +13627,7 @@
     },
     {
       "schemecode": "8812",
-      "amfiSchemeCode": 138528,
+      "amfiSchemeCode": 138523,
       "fundName": "PGIM India Global Equity Opp FoF(G)",
       "classification": "FoFs : Overseas",
       "firstDate": "2016-03-08",
@@ -11408,6 +13643,25 @@
         "5Y"
       ],
       "path": "public/nav-history/8812.json"
+    },
+    {
+      "schemecode": "8812-D",
+      "amfiSchemeCode": 138528,
+      "fundName": "PGIM India Global Equity Opp FoF(G)",
+      "classification": "FoFs : Overseas",
+      "firstDate": "2016-03-08",
+      "lastDate": "2026-06-18",
+      "points": 2494,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/8812-D.json"
     },
     {
       "schemecode": "9078",
@@ -11525,7 +13779,7 @@
     },
     {
       "schemecode": "11889",
-      "amfiSchemeCode": 120684,
+      "amfiSchemeCode": 112957,
       "fundName": "ICICI Pru Nifty Next 50 Index Fund(G)",
       "classification": "Equity : Index Funds",
       "firstDate": "2016-01-01",
@@ -11543,8 +13797,27 @@
       "path": "public/nav-history/11889.json"
     },
     {
+      "schemecode": "11889-D",
+      "amfiSchemeCode": 120684,
+      "fundName": "ICICI Pru Nifty Next 50 Index Fund(G)",
+      "classification": "Equity : Index Funds",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/11889-D.json"
+    },
+    {
       "schemecode": "11925",
-      "amfiSchemeCode": 119016,
+      "amfiSchemeCode": 113047,
       "fundName": "HDFC Short Term Debt Fund(G)",
       "classification": "Debt : Short Duration",
       "firstDate": "2016-01-01",
@@ -11560,6 +13833,25 @@
         "5Y"
       ],
       "path": "public/nav-history/11925.json"
+    },
+    {
+      "schemecode": "11925-D",
+      "amfiSchemeCode": 119016,
+      "fundName": "HDFC Short Term Debt Fund(G)",
+      "classification": "Debt : Short Duration",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2531,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/11925-D.json"
     },
     {
       "schemecode": "12319",
@@ -11639,7 +13931,7 @@
     },
     {
       "schemecode": "12454",
-      "amfiSchemeCode": 120676,
+      "amfiSchemeCode": 115092,
       "fundName": "ICICI Pru Ultra Short Term Fund Fund(G)",
       "classification": "Debt : Ultra Short Duration",
       "firstDate": "2016-01-01",
@@ -11657,8 +13949,27 @@
       "path": "public/nav-history/12454.json"
     },
     {
+      "schemecode": "12454-D",
+      "amfiSchemeCode": 120676,
+      "fundName": "ICICI Pru Ultra Short Term Fund Fund(G)",
+      "classification": "Debt : Ultra Short Duration",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/12454-D.json"
+    },
+    {
       "schemecode": "12456",
-      "amfiSchemeCode": 120711,
+      "amfiSchemeCode": 114239,
       "fundName": "ICICI Pru Credit Risk Fund(G)",
       "classification": "Debt : Credit Risk",
       "firstDate": "2016-01-01",
@@ -11674,6 +13985,25 @@
         "5Y"
       ],
       "path": "public/nav-history/12456.json"
+    },
+    {
+      "schemecode": "12456-D",
+      "amfiSchemeCode": 120711,
+      "fundName": "ICICI Pru Credit Risk Fund(G)",
+      "classification": "Debt : Credit Risk",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/12456-D.json"
     },
     {
       "schemecode": "12459",
@@ -11772,7 +14102,7 @@
     },
     {
       "schemecode": "12758",
-      "amfiSchemeCode": 118778,
+      "amfiSchemeCode": 113177,
       "fundName": "Nippon India Small Cap Fund(G)",
       "classification": "Equity : Small Cap",
       "firstDate": "2016-01-01",
@@ -11788,6 +14118,25 @@
         "5Y"
       ],
       "path": "public/nav-history/12758.json"
+    },
+    {
+      "schemecode": "12758-D",
+      "amfiSchemeCode": 118778,
+      "fundName": "Nippon India Small Cap Fund(G)",
+      "classification": "Equity : Small Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/12758-D.json"
     },
     {
       "schemecode": "12811",
@@ -11810,7 +14159,7 @@
     },
     {
       "schemecode": "12860",
-      "amfiSchemeCode": 118741,
+      "amfiSchemeCode": 113296,
       "fundName": "Nippon India Index Fund-Nifty 50 Plan(G)",
       "classification": "Equity : Index Funds",
       "firstDate": "2016-01-01",
@@ -11828,8 +14177,27 @@
       "path": "public/nav-history/12860.json"
     },
     {
+      "schemecode": "12860-D",
+      "amfiSchemeCode": 118741,
+      "fundName": "Nippon India Index Fund-Nifty 50 Plan(G)",
+      "classification": "Equity : Index Funds",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/12860-D.json"
+    },
+    {
       "schemecode": "12865",
-      "amfiSchemeCode": 118791,
+      "amfiSchemeCode": 113269,
       "fundName": "Nippon India Index Fund-BSE Sensex Plan(G)",
       "classification": "Equity : Index Funds",
       "firstDate": "2016-01-01",
@@ -11847,8 +14215,27 @@
       "path": "public/nav-history/12865.json"
     },
     {
+      "schemecode": "12865-D",
+      "amfiSchemeCode": 118791,
+      "fundName": "Nippon India Index Fund-BSE Sensex Plan(G)",
+      "classification": "Equity : Index Funds",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/12865-D.json"
+    },
+    {
       "schemecode": "12938",
-      "amfiSchemeCode": 118585,
+      "amfiSchemeCode": 113345,
       "fundName": "Nippon India Arbitrage Fund(G)",
       "classification": "Hybrid : Arbitrage",
       "firstDate": "2016-01-01",
@@ -11864,6 +14251,25 @@
         "5Y"
       ],
       "path": "public/nav-history/12938.json"
+    },
+    {
+      "schemecode": "12938-D",
+      "amfiSchemeCode": 118585,
+      "fundName": "Nippon India Arbitrage Fund(G)",
+      "classification": "Hybrid : Arbitrage",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/12938-D.json"
     },
     {
       "schemecode": "13017",
@@ -12032,7 +14438,7 @@
     },
     {
       "schemecode": "13366",
-      "amfiSchemeCode": 149717,
+      "amfiSchemeCode": 149715,
       "fundName": "Sundaram Balanced Advantage Fund(G)",
       "classification": "Hybrid : Dynamic Asset Allocation",
       "firstDate": "2022-01-03",
@@ -12047,6 +14453,24 @@
         "3Y"
       ],
       "path": "public/nav-history/13366.json"
+    },
+    {
+      "schemecode": "13366-D",
+      "amfiSchemeCode": 149717,
+      "fundName": "Sundaram Balanced Advantage Fund(G)",
+      "classification": "Hybrid : Dynamic Asset Allocation",
+      "firstDate": "2022-01-03",
+      "lastDate": "2026-06-19",
+      "points": 1098,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y"
+      ],
+      "path": "public/nav-history/13366-D.json"
     },
     {
       "schemecode": "13397",
@@ -12126,7 +14550,7 @@
     },
     {
       "schemecode": "13656",
-      "amfiSchemeCode": 134547,
+      "amfiSchemeCode": 134545,
       "fundName": "Nippon India Banking and PSU Fund(G)",
       "classification": "Debt : Banking & PSU",
       "firstDate": "2016-01-01",
@@ -12144,8 +14568,27 @@
       "path": "public/nav-history/13656.json"
     },
     {
+      "schemecode": "13656-D",
+      "amfiSchemeCode": 134547,
+      "fundName": "Nippon India Banking and PSU Fund(G)",
+      "classification": "Debt : Banking & PSU",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/13656-D.json"
+    },
+    {
       "schemecode": "14108",
-      "amfiSchemeCode": 118663,
+      "amfiSchemeCode": 114616,
       "fundName": "Nippon India Gold Savings Fund(G)",
       "classification": "Metal : MFs",
       "firstDate": "2016-01-01",
@@ -12163,8 +14606,27 @@
       "path": "public/nav-history/14108.json"
     },
     {
+      "schemecode": "14108-D",
+      "amfiSchemeCode": 118663,
+      "fundName": "Nippon India Gold Savings Fund(G)",
+      "classification": "Metal : MFs",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/14108-D.json"
+    },
+    {
       "schemecode": "14148",
-      "amfiSchemeCode": 119781,
+      "amfiSchemeCode": 114758,
       "fundName": "Kotak Gold Fund(G)",
       "classification": "Metal : MFs",
       "firstDate": "2016-01-01",
@@ -12180,6 +14642,25 @@
         "5Y"
       ],
       "path": "public/nav-history/14148.json"
+    },
+    {
+      "schemecode": "14148-D",
+      "amfiSchemeCode": 119781,
+      "fundName": "Kotak Gold Fund(G)",
+      "classification": "Metal : MFs",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2545,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/14148-D.json"
     },
     {
       "schemecode": "14314",
@@ -12259,7 +14740,7 @@
     },
     {
       "schemecode": "14561",
-      "amfiSchemeCode": 119303,
+      "amfiSchemeCode": 115398,
       "fundName": "Union Liquid Fund(G)",
       "classification": "Debt : Liquid",
       "firstDate": "2016-01-01",
@@ -12275,6 +14756,25 @@
         "5Y"
       ],
       "path": "public/nav-history/14561.json"
+    },
+    {
+      "schemecode": "14561-D",
+      "amfiSchemeCode": 119303,
+      "fundName": "Union Liquid Fund(G)",
+      "classification": "Debt : Liquid",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-21",
+      "points": 3824,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/14561-D.json"
     },
     {
       "schemecode": "14666",
@@ -12354,7 +14854,7 @@
     },
     {
       "schemecode": "14885",
-      "amfiSchemeCode": 120685,
+      "amfiSchemeCode": 115833,
       "fundName": "ICICI Pru Gold ETF FOF(G)",
       "classification": "FoFs : Domestic",
       "firstDate": "2016-01-01",
@@ -12372,8 +14872,27 @@
       "path": "public/nav-history/14885.json"
     },
     {
+      "schemecode": "14885-D",
+      "amfiSchemeCode": 120685,
+      "fundName": "ICICI Pru Gold ETF FOF(G)",
+      "classification": "FoFs : Domestic",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2533,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/14885-D.json"
+    },
+    {
       "schemecode": "14893",
-      "amfiSchemeCode": 119307,
+      "amfiSchemeCode": 116051,
       "fundName": "Union ELSS Tax Saver Fund(G)",
       "classification": "Equity : Tax Saving (ELSS)",
       "firstDate": "2016-01-01",
@@ -12389,6 +14908,25 @@
         "5Y"
       ],
       "path": "public/nav-history/14893.json"
+    },
+    {
+      "schemecode": "14893-D",
+      "amfiSchemeCode": 119307,
+      "fundName": "Union ELSS Tax Saver Fund(G)",
+      "classification": "Equity : Tax Saving (ELSS)",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/14893-D.json"
     },
     {
       "schemecode": "15304",
@@ -12580,7 +15118,7 @@
     },
     {
       "schemecode": "15655",
-      "amfiSchemeCode": 120186,
+      "amfiSchemeCode": 117620,
       "fundName": "ICICI Pru US Bluechip Equity Fund(G)",
       "classification": "Equity : International",
       "firstDate": "2016-01-04",
@@ -12596,6 +15134,25 @@
         "5Y"
       ],
       "path": "public/nav-history/15655.json"
+    },
+    {
+      "schemecode": "15655-D",
+      "amfiSchemeCode": 120186,
+      "fundName": "ICICI Pru US Bluechip Equity Fund(G)",
+      "classification": "Equity : International",
+      "firstDate": "2016-01-04",
+      "lastDate": "2026-06-18",
+      "points": 2493,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/15655-D.json"
     },
     {
       "schemecode": "15687",
@@ -12825,7 +15382,7 @@
     },
     {
       "schemecode": "17164",
-      "amfiSchemeCode": 133568,
+      "amfiSchemeCode": 133565,
       "fundName": "Nippon India Retirement Fund-Wealth Creation(G)",
       "classification": "Equity : Flexi Cap",
       "firstDate": "2016-01-01",
@@ -12841,6 +15398,25 @@
         "5Y"
       ],
       "path": "public/nav-history/17164.json"
+    },
+    {
+      "schemecode": "17164-D",
+      "amfiSchemeCode": 133568,
+      "fundName": "Nippon India Retirement Fund-Wealth Creation(G)",
+      "classification": "Equity : Flexi Cap",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/17164-D.json"
     },
     {
       "schemecode": "17168",
@@ -12990,7 +15566,7 @@
     },
     {
       "schemecode": "17588",
-      "amfiSchemeCode": 129312,
+      "amfiSchemeCode": 129310,
       "fundName": "ICICI Pru Dividend Yield Equity Fund(G)",
       "classification": "Equity : Thematic - Dividend Yield",
       "firstDate": "2016-01-01",
@@ -13006,6 +15582,25 @@
         "5Y"
       ],
       "path": "public/nav-history/17588.json"
+    },
+    {
+      "schemecode": "17588-D",
+      "amfiSchemeCode": 129312,
+      "fundName": "ICICI Pru Dividend Yield Equity Fund(G)",
+      "classification": "Equity : Thematic - Dividend Yield",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/17588-D.json"
     },
     {
       "schemecode": "17625",
@@ -13102,7 +15697,7 @@
     },
     {
       "schemecode": "19246",
-      "amfiSchemeCode": 134923,
+      "amfiSchemeCode": 134922,
       "fundName": "Nippon India US Equity Opp Fund(G)",
       "classification": "Equity : International",
       "firstDate": "2016-01-04",
@@ -13118,6 +15713,25 @@
         "5Y"
       ],
       "path": "public/nav-history/19246.json"
+    },
+    {
+      "schemecode": "19246-D",
+      "amfiSchemeCode": 134923,
+      "fundName": "Nippon India US Equity Opp Fund(G)",
+      "classification": "Equity : International",
+      "firstDate": "2016-01-04",
+      "lastDate": "2026-06-18",
+      "points": 2500,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/19246-D.json"
     },
     {
       "schemecode": "19247",
@@ -13387,7 +16001,7 @@
     },
     {
       "schemecode": "21538",
-      "amfiSchemeCode": 128051,
+      "amfiSchemeCode": 128053,
       "fundName": "HDFC Credit Risk Debt Fund-(G)",
       "classification": "Debt : Credit Risk",
       "firstDate": "2016-01-01",
@@ -13403,6 +16017,25 @@
         "5Y"
       ],
       "path": "public/nav-history/21538.json"
+    },
+    {
+      "schemecode": "21538-D",
+      "amfiSchemeCode": 128051,
+      "fundName": "HDFC Credit Risk Debt Fund-(G)",
+      "classification": "Debt : Credit Risk",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2531,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/21538-D.json"
     },
     {
       "schemecode": "21651",
@@ -13594,7 +16227,7 @@
     },
     {
       "schemecode": "22514",
-      "amfiSchemeCode": 128006,
+      "amfiSchemeCode": 128009,
       "fundName": "Kotak Medium Term Fund(G)",
       "classification": "Debt : Medium Duration",
       "firstDate": "2016-01-01",
@@ -13610,6 +16243,25 @@
         "5Y"
       ],
       "path": "public/nav-history/22514.json"
+    },
+    {
+      "schemecode": "22514-D",
+      "amfiSchemeCode": 128006,
+      "fundName": "Kotak Medium Term Fund(G)",
+      "classification": "Debt : Medium Duration",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/22514-D.json"
     },
     {
       "schemecode": "22533",
@@ -13917,7 +16569,7 @@
     },
     {
       "schemecode": "25667",
-      "amfiSchemeCode": 146349,
+      "amfiSchemeCode": 146346,
       "fundName": "ICICI Pru Retirement Fund-Pure Equity Plan(G)",
       "classification": "Equity : Flexi Cap",
       "firstDate": "2019-02-28",
@@ -13935,8 +16587,27 @@
       "path": "public/nav-history/25667.json"
     },
     {
+      "schemecode": "25667-D",
+      "amfiSchemeCode": 146349,
+      "fundName": "ICICI Pru Retirement Fund-Pure Equity Plan(G)",
+      "classification": "Equity : Flexi Cap",
+      "firstDate": "2019-02-28",
+      "lastDate": "2026-06-19",
+      "points": 1797,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/25667-D.json"
+    },
+    {
       "schemecode": "25669",
-      "amfiSchemeCode": 146721,
+      "amfiSchemeCode": 146722,
       "fundName": "ICICI Pru Retirement Fund-Hybrid Aggressive Plan(G)",
       "classification": "Hybrid : Aggressive Hybrid",
       "firstDate": "2019-02-28",
@@ -13952,6 +16623,25 @@
         "5Y"
       ],
       "path": "public/nav-history/25669.json"
+    },
+    {
+      "schemecode": "25669-D",
+      "amfiSchemeCode": 146721,
+      "fundName": "ICICI Pru Retirement Fund-Hybrid Aggressive Plan(G)",
+      "classification": "Hybrid : Aggressive Hybrid",
+      "firstDate": "2019-02-28",
+      "lastDate": "2026-06-19",
+      "points": 1797,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/25669-D.json"
     },
     {
       "schemecode": "25872",
@@ -14578,7 +17268,7 @@
     },
     {
       "schemecode": "30426",
-      "amfiSchemeCode": 131061,
+      "amfiSchemeCode": 131051,
       "fundName": "ICICI Pru Constant Maturity Gilt Fund(G)",
       "classification": "Debt : Gilt (10 Yr Constant Duration)",
       "firstDate": "2016-01-01",
@@ -14594,6 +17284,25 @@
         "5Y"
       ],
       "path": "public/nav-history/30426.json"
+    },
+    {
+      "schemecode": "30426-D",
+      "amfiSchemeCode": 131061,
+      "fundName": "ICICI Pru Constant Maturity Gilt Fund(G)",
+      "classification": "Debt : Gilt (10 Yr Constant Duration)",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2530,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/30426-D.json"
     },
     {
       "schemecode": "30671",
@@ -14825,7 +17534,7 @@
     },
     {
       "schemecode": "30963",
-      "amfiSchemeCode": 134594,
+      "amfiSchemeCode": 134593,
       "fundName": "Nippon India Equity Savings Fund(G)",
       "classification": "Hybrid : Equity Savings",
       "firstDate": "2016-01-01",
@@ -14841,6 +17550,25 @@
         "5Y"
       ],
       "path": "public/nav-history/30963.json"
+    },
+    {
+      "schemecode": "30963-D",
+      "amfiSchemeCode": 134594,
+      "fundName": "Nippon India Equity Savings Fund(G)",
+      "classification": "Hybrid : Equity Savings",
+      "firstDate": "2016-01-01",
+      "lastDate": "2026-06-19",
+      "points": 2577,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/30963-D.json"
     },
     {
       "schemecode": "31014",
@@ -15203,7 +17931,7 @@
     },
     {
       "schemecode": "32077",
-      "amfiSchemeCode": 145075,
+      "amfiSchemeCode": 145077,
       "fundName": "ICICI Pru Manufacturing Fund(G)",
       "classification": "Equity : Thematic",
       "firstDate": "2018-10-12",
@@ -15219,6 +17947,25 @@
         "5Y"
       ],
       "path": "public/nav-history/32077.json"
+    },
+    {
+      "schemecode": "32077-D",
+      "amfiSchemeCode": 145075,
+      "fundName": "ICICI Pru Manufacturing Fund(G)",
+      "classification": "Equity : Thematic",
+      "firstDate": "2018-10-12",
+      "lastDate": "2026-06-19",
+      "points": 1891,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/32077-D.json"
     },
     {
       "schemecode": "32097",
@@ -16180,7 +18927,7 @@
     },
     {
       "schemecode": "35207",
-      "amfiSchemeCode": 143704,
+      "amfiSchemeCode": 143702,
       "fundName": "Nippon India Nivesh Lakshya Long Duration Fund(G)",
       "classification": "Debt : Long Duration",
       "firstDate": "2018-07-09",
@@ -16196,6 +18943,25 @@
         "5Y"
       ],
       "path": "public/nav-history/35207.json"
+    },
+    {
+      "schemecode": "35207-D",
+      "amfiSchemeCode": 143704,
+      "fundName": "Nippon India Nivesh Lakshya Long Duration Fund(G)",
+      "classification": "Debt : Long Duration",
+      "firstDate": "2018-07-09",
+      "lastDate": "2026-06-19",
+      "points": 1921,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/35207-D.json"
     },
     {
       "schemecode": "35242",
@@ -17899,7 +20665,7 @@
     },
     {
       "schemecode": "39645",
-      "amfiSchemeCode": 144466,
+      "amfiSchemeCode": 144461,
       "fundName": "Franklin India Equity Savings Fund(G)",
       "classification": "Hybrid : Equity Savings",
       "firstDate": "2018-08-27",
@@ -17915,6 +20681,25 @@
         "5Y"
       ],
       "path": "public/nav-history/39645.json"
+    },
+    {
+      "schemecode": "39645-D",
+      "amfiSchemeCode": 144466,
+      "fundName": "Franklin India Equity Savings Fund(G)",
+      "classification": "Hybrid : Equity Savings",
+      "firstDate": "2018-08-27",
+      "lastDate": "2026-06-19",
+      "points": 1918,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/39645-D.json"
     },
     {
       "schemecode": "39893",
@@ -18556,7 +21341,7 @@
     },
     {
       "schemecode": "41653",
-      "amfiSchemeCode": 145536,
+      "amfiSchemeCode": 145535,
       "fundName": "ICICI Pru Overnight Fund(G)",
       "classification": "Debt : Overnight",
       "firstDate": "2018-11-15",
@@ -18572,6 +21357,25 @@
         "5Y"
       ],
       "path": "public/nav-history/41653.json"
+    },
+    {
+      "schemecode": "41653-D",
+      "amfiSchemeCode": 145536,
+      "fundName": "ICICI Pru Overnight Fund(G)",
+      "classification": "Debt : Overnight",
+      "firstDate": "2018-11-15",
+      "lastDate": "2026-06-21",
+      "points": 2481,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/41653-D.json"
     },
     {
       "schemecode": "41798",
@@ -18841,7 +21645,7 @@
     },
     {
       "schemecode": "41965",
-      "amfiSchemeCode": 147346,
+      "amfiSchemeCode": 147345,
       "fundName": "ICICI Pru MNC Fund(G)",
       "classification": "Equity : Thematic - MNC",
       "firstDate": "2019-06-18",
@@ -18857,6 +21661,25 @@
         "5Y"
       ],
       "path": "public/nav-history/41965.json"
+    },
+    {
+      "schemecode": "41965-D",
+      "amfiSchemeCode": 147346,
+      "fundName": "ICICI Pru MNC Fund(G)",
+      "classification": "Equity : Thematic - MNC",
+      "firstDate": "2019-06-18",
+      "lastDate": "2026-06-19",
+      "points": 1726,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/41965-D.json"
     },
     {
       "schemecode": "41999",
@@ -18993,7 +21816,7 @@
     },
     {
       "schemecode": "42140",
-      "amfiSchemeCode": 145897,
+      "amfiSchemeCode": 145896,
       "fundName": "ICICI Pru India Opp Fund(G)",
       "classification": "Equity : Thematic",
       "firstDate": "2019-01-16",
@@ -19009,6 +21832,25 @@
         "5Y"
       ],
       "path": "public/nav-history/42140.json"
+    },
+    {
+      "schemecode": "42140-D",
+      "amfiSchemeCode": 145897,
+      "fundName": "ICICI Pru India Opp Fund(G)",
+      "classification": "Equity : Thematic",
+      "firstDate": "2019-01-16",
+      "lastDate": "2026-06-19",
+      "points": 1828,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/42140-D.json"
     },
     {
       "schemecode": "42211",
@@ -19582,7 +22424,7 @@
     },
     {
       "schemecode": "43438",
-      "amfiSchemeCode": 147214,
+      "amfiSchemeCode": 147213,
       "fundName": "Franklin India Overnight Fund(G)",
       "classification": "Debt : Overnight",
       "firstDate": "2019-05-08",
@@ -19598,6 +22440,25 @@
         "5Y"
       ],
       "path": "public/nav-history/43438.json"
+    },
+    {
+      "schemecode": "43438-D",
+      "amfiSchemeCode": 147214,
+      "fundName": "Franklin India Overnight Fund(G)",
+      "classification": "Debt : Overnight",
+      "firstDate": "2019-05-08",
+      "lastDate": "2026-06-21",
+      "points": 2436,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/43438-D.json"
     },
     {
       "schemecode": "43784",
@@ -20233,7 +23094,7 @@
     },
     {
       "schemecode": "44087",
-      "amfiSchemeCode": 148516,
+      "amfiSchemeCode": 148517,
       "fundName": "ICICI Pru ESG Exclusionary Strategy Fund(G)",
       "classification": "Equity : Thematic",
       "firstDate": "2020-10-12",
@@ -20251,8 +23112,27 @@
       "path": "public/nav-history/44087.json"
     },
     {
+      "schemecode": "44087-D",
+      "amfiSchemeCode": 148516,
+      "fundName": "ICICI Pru ESG Exclusionary Strategy Fund(G)",
+      "classification": "Equity : Thematic",
+      "firstDate": "2020-10-12",
+      "lastDate": "2026-06-19",
+      "points": 1401,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/44087-D.json"
+    },
+    {
       "schemecode": "44146",
-      "amfiSchemeCode": 148651,
+      "amfiSchemeCode": 148653,
       "fundName": "ICICI Pru Business Cycle Fund(G)",
       "classification": "Equity : Thematic",
       "firstDate": "2021-01-19",
@@ -20268,6 +23148,25 @@
         "5Y"
       ],
       "path": "public/nav-history/44146.json"
+    },
+    {
+      "schemecode": "44146-D",
+      "amfiSchemeCode": 148651,
+      "fundName": "ICICI Pru Business Cycle Fund(G)",
+      "classification": "Equity : Thematic",
+      "firstDate": "2021-01-19",
+      "lastDate": "2026-06-19",
+      "points": 1333,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/44146-D.json"
     },
     {
       "schemecode": "44147",
@@ -22419,7 +25318,7 @@
     },
     {
       "schemecode": "45389",
-      "amfiSchemeCode": 149158,
+      "amfiSchemeCode": 149157,
       "fundName": "ICICI Pru Nifty Alpha Low - Volatility 30 ETF FOF(G)",
       "classification": "FoFs : Domestic",
       "firstDate": "2021-09-21",
@@ -22434,6 +25333,24 @@
         "3Y"
       ],
       "path": "public/nav-history/45389.json"
+    },
+    {
+      "schemecode": "45389-D",
+      "amfiSchemeCode": 149158,
+      "fundName": "ICICI Pru Nifty Alpha Low - Volatility 30 ETF FOF(G)",
+      "classification": "FoFs : Domestic",
+      "firstDate": "2021-09-21",
+      "lastDate": "2026-06-19",
+      "points": 1168,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y"
+      ],
+      "path": "public/nav-history/45389-D.json"
     },
     {
       "schemecode": "45412",
@@ -22513,7 +25430,7 @@
     },
     {
       "schemecode": "45443",
-      "amfiSchemeCode": 148822,
+      "amfiSchemeCode": 148821,
       "fundName": "ICICI Pru Nifty 100 Low Volatility 30 ETF FOF(G)",
       "classification": "Equity : ETFs",
       "firstDate": "2021-04-13",
@@ -22529,6 +25446,25 @@
         "5Y"
       ],
       "path": "public/nav-history/45443.json"
+    },
+    {
+      "schemecode": "45443-D",
+      "amfiSchemeCode": 148822,
+      "fundName": "ICICI Pru Nifty 100 Low Volatility 30 ETF FOF(G)",
+      "classification": "Equity : ETFs",
+      "firstDate": "2021-04-13",
+      "lastDate": "2026-06-19",
+      "points": 1277,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y",
+        "5Y"
+      ],
+      "path": "public/nav-history/45443-D.json"
     },
     {
       "schemecode": "45451",
@@ -22646,7 +25582,7 @@
     },
     {
       "schemecode": "45492",
-      "amfiSchemeCode": 148990,
+      "amfiSchemeCode": 148989,
       "fundName": "ICICI Pru Flexicap Fund(G)",
       "classification": "Equity : Flexi Cap",
       "firstDate": "2021-07-19",
@@ -22661,6 +25597,24 @@
         "3Y"
       ],
       "path": "public/nav-history/45492.json"
+    },
+    {
+      "schemecode": "45492-D",
+      "amfiSchemeCode": 148990,
+      "fundName": "ICICI Pru Flexicap Fund(G)",
+      "classification": "Equity : Flexi Cap",
+      "firstDate": "2021-07-19",
+      "lastDate": "2026-06-19",
+      "points": 1211,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y"
+      ],
+      "path": "public/nav-history/45492-D.json"
     },
     {
       "schemecode": "45496",
@@ -22996,7 +25950,7 @@
     },
     {
       "schemecode": "45683",
-      "amfiSchemeCode": 149219,
+      "amfiSchemeCode": 149218,
       "fundName": "ICICI Pru NASDAQ 100 Index Fund(G)",
       "classification": "Equity : International",
       "firstDate": "2021-10-19",
@@ -23013,8 +25967,26 @@
       "path": "public/nav-history/45683.json"
     },
     {
+      "schemecode": "45683-D",
+      "amfiSchemeCode": 149219,
+      "fundName": "ICICI Pru NASDAQ 100 Index Fund(G)",
+      "classification": "Equity : International",
+      "firstDate": "2021-10-19",
+      "lastDate": "2026-06-18",
+      "points": 1109,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y"
+      ],
+      "path": "public/nav-history/45683-D.json"
+    },
+    {
       "schemecode": "45684",
-      "amfiSchemeCode": 149283,
+      "amfiSchemeCode": 149281,
       "fundName": "ICICI Pru Nifty Smallcap 250 Index Fund(G)",
       "classification": "Equity : Index Funds",
       "firstDate": "2021-11-03",
@@ -23029,6 +26001,24 @@
         "3Y"
       ],
       "path": "public/nav-history/45684.json"
+    },
+    {
+      "schemecode": "45684-D",
+      "amfiSchemeCode": 149283,
+      "fundName": "ICICI Pru Nifty Smallcap 250 Index Fund(G)",
+      "classification": "Equity : Index Funds",
+      "firstDate": "2021-11-03",
+      "lastDate": "2026-06-19",
+      "points": 1138,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y"
+      ],
+      "path": "public/nav-history/45684-D.json"
     },
     {
       "schemecode": "45685",
@@ -24846,7 +27836,7 @@
     },
     {
       "schemecode": "46215",
-      "amfiSchemeCode": 149775,
+      "amfiSchemeCode": 149777,
       "fundName": "ICICI Pru Silver ETF FOF(G)",
       "classification": "FoFs : Domestic",
       "firstDate": "2022-02-02",
@@ -24861,6 +27851,24 @@
         "3Y"
       ],
       "path": "public/nav-history/46215.json"
+    },
+    {
+      "schemecode": "46215-D",
+      "amfiSchemeCode": 149775,
+      "fundName": "ICICI Pru Silver ETF FOF(G)",
+      "classification": "FoFs : Domestic",
+      "firstDate": "2022-02-02",
+      "lastDate": "2026-06-19",
+      "points": 1061,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M",
+        "1Y",
+        "3Y"
+      ],
+      "path": "public/nav-history/46215-D.json"
     },
     {
       "schemecode": "46223",
@@ -33408,7 +36416,7 @@
     },
     {
       "schemecode": "50269",
-      "amfiSchemeCode": 153942,
+      "amfiSchemeCode": 153943,
       "fundName": "Franklin India Multi-Factor Fund(G)",
       "classification": "Equity : Thematic",
       "firstDate": "2025-11-28",
@@ -33421,6 +36429,22 @@
         "6M"
       ],
       "path": "public/nav-history/50269.json"
+    },
+    {
+      "schemecode": "50269-D",
+      "amfiSchemeCode": 153942,
+      "fundName": "Franklin India Multi-Factor Fund(G)",
+      "classification": "Equity : Thematic",
+      "firstDate": "2025-11-28",
+      "lastDate": "2026-06-19",
+      "points": 136,
+      "available": true,
+      "availablePeriods": [
+        "1M",
+        "3M",
+        "6M"
+      ],
+      "path": "public/nav-history/50269-D.json"
     },
     {
       "schemecode": "50296",
