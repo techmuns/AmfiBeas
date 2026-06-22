@@ -45,8 +45,8 @@ const NAV_URLS = [
 const USER_AGENT =
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
-const MANIFEST_PATH = path.resolve(process.cwd(), "src/data/snapshots/mf-history-manifest.json");
-const LATEST_PATH = path.resolve(process.cwd(), "src/data/snapshots/mf-latest-nav.json");
+const MANIFEST_PATH = path.resolve(process.cwd(), "public/nav-data/mf-history-manifest.json");
+const LATEST_PATH = path.resolve(process.cwd(), "public/nav-data/mf-latest-nav.json");
 
 // Catastrophic-fetch floor: a healthy NAVAll.txt has ~10k+ scheme rows.
 const MIN_FEED_ROWS = 1000;

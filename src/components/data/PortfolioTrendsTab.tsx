@@ -12,10 +12,6 @@ import {
   type PeerRankRow,
 } from "@/components/data/TrendsPeerTable";
 import { fmtBps } from "@/lib/units";
-import mfLatestNav from "@/data/snapshots/mf-latest-nav.json";
-import mfReturns from "@/data/snapshots/mf-returns.json";
-import mfCategoryReturns from "@/data/snapshots/mf-category-returns.json";
-import mfHistoryManifest from "@/data/snapshots/mf-history-manifest.json";
 // Phase 3.10A: tiny bundled index of available daily index histories.
 // The per-index series itself is fetched at runtime, mirroring how fund
 // history is fetched (not bundled).
@@ -151,37 +147,49 @@ interface IndexHistoryManifestShape {
 // then frozen for the lifetime of the page.)
 // ---------------------------------------------------------------------------
 
-const latestByCode = new Map(
-  (mfLatestNav as unknown as LatestSnapshot).funds.map((f) => [f.schemecode, f]),
-);
-const returnsByCode = new Map(
-  (mfReturns as unknown as ReturnsSnapshot).funds.map((f) => [f.schemecode, f]),
-);
-const manifestByCode = new Map(
-  (mfHistoryManifest as unknown as ManifestSnapshot).funds.map((f) => [f.schemecode, f]),
-);
-const HISTORY_STAGE = (mfHistoryManifest as unknown as ManifestSnapshot).stage;
-
-// Phase 3.10A: pluck the default benchmark from the bundled index manifest.
-// Null when the manifest doesn't list it — the UI degrades silently to the
-// pre-benchmark single-line behavior in that case.
+// Phase 3.10A: pluck the default benchmark from the bundled index manifest
+// (tiny, stays bundled). Null when the manifest doesn't list it — the UI
+// degrades silently to the pre-benchmark single-line behavior in that case.
 const INDEX_MANIFEST = indexHistoryManifest as unknown as IndexHistoryManifestShape;
 const DEFAULT_BENCHMARK_ENTRY: IndexHistoryManifestEntry | null =
   INDEX_MANIFEST?.indices?.find((i) => i.indexId === DEFAULT_BENCHMARK_ID) ?? null;
-const categoryByCode = new Map(
-  (mfCategoryReturns as unknown as CategorySnapshot).fundRanks.map((f) => [f.schemecode, f]),
-);
-// Cohort key → all PeerRankRows in that cohort.
-const categoryByCohort = (() => {
-  const m = new Map<string, CategoryFundRank[]>();
-  for (const f of (mfCategoryReturns as unknown as CategorySnapshot).fundRanks) {
+
+// The four NAV snapshots are large (~9 MB) and would blow the Cloudflare
+// Worker's 3 MiB size limit if imported/bundled, so they're served from
+// public/nav-data and fetched at runtime, then resolved into the lookup maps
+// below.
+interface TrendsData {
+  latestByCode: Map<string, LatestFund>;
+  returnsByCode: Map<string, ReturnsFund>;
+  manifestByCode: Map<string, ManifestFund>;
+  categoryByCode: Map<string, CategoryFundRank>;
+  categoryByCohort: Map<string, CategoryFundRank[]>;
+  historyStage: number;
+  feedDate: string;
+}
+function buildTrendsData(
+  latest: LatestSnapshot,
+  returns: ReturnsSnapshot,
+  category: CategorySnapshot,
+  manifest: ManifestSnapshot,
+): TrendsData {
+  const categoryByCohort = new Map<string, CategoryFundRank[]>();
+  for (const f of category.fundRanks) {
     const k = cohortKey(f.classification, f.plan, f.option);
-    let arr = m.get(k);
-    if (!arr) { arr = []; m.set(k, arr); }
+    let arr = categoryByCohort.get(k);
+    if (!arr) { arr = []; categoryByCohort.set(k, arr); }
     arr.push(f);
   }
-  return m;
-})();
+  return {
+    latestByCode: new Map(latest.funds.map((f) => [f.schemecode, f])),
+    returnsByCode: new Map(returns.funds.map((f) => [f.schemecode, f])),
+    manifestByCode: new Map(manifest.funds.map((f) => [f.schemecode, f])),
+    categoryByCode: new Map(category.fundRanks.map((f) => [f.schemecode, f])),
+    categoryByCohort,
+    historyStage: manifest.stage,
+    feedDate: latest.feedDate,
+  };
+}
 
 function cohortKey(
   classification: string | null,
@@ -204,7 +212,92 @@ export interface PortfolioTrendsTabProps {
 // Component
 // ---------------------------------------------------------------------------
 
-export function PortfolioTrendsTab({ schemecode, fundName }: PortfolioTrendsTabProps) {
+/** Public entry: fetches the (large, un-bundled) NAV snapshots from
+ *  public/nav-data at runtime, then renders the tab once they're resolved. */
+export function PortfolioTrendsTab(props: PortfolioTrendsTabProps) {
+  const [data, setData] = useState<TrendsData | null>(null);
+  const [errored, setErrored] = useState(false);
+  const [nonce, setNonce] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const getJson = (url: string) =>
+      fetch(url).then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      });
+    Promise.all([
+      getJson("/nav-data/mf-latest-nav.json"),
+      getJson("/nav-data/mf-returns.json"),
+      getJson("/nav-data/mf-category-returns.json"),
+      getJson("/nav-data/mf-history-manifest.json"),
+    ])
+      .then(([latest, returns, category, manifest]) => {
+        if (cancelled) return;
+        setData(
+          buildTrendsData(
+            latest as LatestSnapshot,
+            returns as ReturnsSnapshot,
+            category as CategorySnapshot,
+            manifest as ManifestSnapshot,
+          ),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setErrored(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [nonce]);
+
+  if (errored) {
+    return (
+      <section className="space-y-3">
+        <Header fundName={props.fundName} subtitleLine={null} freshness={null} />
+        <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-md border border-dashed text-sm text-muted-foreground">
+          <span className="text-negative">Couldn&apos;t load performance data.</span>
+          <button
+            type="button"
+            onClick={() => {
+              setErrored(false);
+              setNonce((n) => n + 1);
+            }}
+            className="rounded-md border px-3 py-1 text-xs hover:bg-accent"
+          >
+            Retry
+          </button>
+        </div>
+      </section>
+    );
+  }
+  if (!data) {
+    return (
+      <section className="space-y-3">
+        <Header fundName={props.fundName} subtitleLine={null} freshness={null} />
+        <div className="flex h-40 items-center justify-center gap-2 rounded-md border bg-card text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Loading performance data…
+        </div>
+      </section>
+    );
+  }
+  return <TrendsTabInner {...props} data={data} />;
+}
+
+function TrendsTabInner({
+  schemecode,
+  fundName,
+  data,
+}: PortfolioTrendsTabProps & { data: TrendsData }) {
+  const {
+    latestByCode,
+    returnsByCode,
+    manifestByCode,
+    categoryByCode,
+    categoryByCohort,
+    historyStage,
+  } = data;
   // Regular vs Direct plan. Each plan is its own snapshot entry, keyed
   // "{schemecode}" (Regular / primary) and "{schemecode}-D" (Direct). NAV,
   // returns, ranking and the chart all swap with the toggle; the other tabs
@@ -216,7 +309,7 @@ export function PortfolioTrendsTab({ schemecode, fundName }: PortfolioTrendsTabP
     const directKey = `${schemecode}-D`;
     if (returnsByCode.has(directKey)) keys.direct = directKey;
     return keys;
-  }, [schemecode]);
+  }, [schemecode, returnsByCode]);
   const availablePlans = useMemo(
     () => (["regular", "direct"] as const).filter((p) => planKeys[p]),
     [planKeys],
@@ -346,7 +439,7 @@ export function PortfolioTrendsTab({ schemecode, fundName }: PortfolioTrendsTabP
     return categoryByCohort.get(
       cohortKey(returnRow.classification, returnRow.plan, returnRow.option),
     ) ?? [];
-  }, [returnRow]);
+  }, [returnRow, categoryByCohort]);
 
   // Chart points for the selected timeframe — fund series rebased to 100,
   // optionally merged with the benchmark rebased to 100 at the same start
@@ -431,7 +524,8 @@ export function PortfolioTrendsTab({ schemecode, fundName }: PortfolioTrendsTabP
 
   const subtitleLine = cohortLabel;
   const freshnessLine = buildFreshnessLine(
-    (mfLatestNav as unknown as LatestSnapshot).feedDate,
+    data.feedDate,
+    historyStage,
     manifestRow,
     historyAvailable,
     benchmarkLoaded,
@@ -564,6 +658,7 @@ function buildCohortLabel(
 
 function buildFreshnessLine(
   feedDate: string,
+  historyStage: number,
   manifestRow: ManifestFund | undefined,
   historyAvailable: boolean,
   benchmarkLoaded: IndexHistoryFile | null,
@@ -571,10 +666,10 @@ function buildFreshnessLine(
   const parts: string[] = [`NAV as of ${formatDMY(feedDate)}`];
   if (historyAvailable && manifestRow?.firstDate && manifestRow.lastDate) {
     parts.push(
-      `History ${formatIsoDate(manifestRow.firstDate)} → ${formatIsoDate(manifestRow.lastDate)} (Stage-${HISTORY_STAGE}, ${manifestRow.points} pts)`,
+      `History ${formatIsoDate(manifestRow.firstDate)} → ${formatIsoDate(manifestRow.lastDate)} (Stage-${historyStage}, ${manifestRow.points} pts)`,
     );
   } else {
-    parts.push(`History: pending Stage-${HISTORY_STAGE} backfill for this fund`);
+    parts.push(`History: pending Stage-${historyStage} backfill for this fund`);
   }
   // Phase 3.10A: benchmark coverage. Only added when the benchmark loaded
   // and reports a lastDate — silently dropped otherwise so the banner

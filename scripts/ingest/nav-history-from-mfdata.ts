@@ -56,8 +56,8 @@ import type { SchemeNav } from "../../src/data/snapshots/types";
 
 const MF_DATA_DIR = path.resolve(process.cwd(), "mf-data");
 const HISTORY_DIR = path.resolve(process.cwd(), "public/nav-history");
-const MANIFEST_PATH = path.resolve(process.cwd(), "src/data/snapshots/mf-history-manifest.json");
-const LATEST_PATH = path.resolve(process.cwd(), "src/data/snapshots/mf-latest-nav.json");
+const MANIFEST_PATH = path.resolve(process.cwd(), "public/nav-data/mf-history-manifest.json");
+const LATEST_PATH = path.resolve(process.cwd(), "public/nav-data/mf-latest-nav.json");
 
 const STAGE = 3; // 5Y-capable; the UI gates nothing further on stage.
 const RULE_VERSION = 1;
