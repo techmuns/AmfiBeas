@@ -263,7 +263,8 @@ function detectPlan(lower: string): Plan {
 }
 function detectOption(lower: string): Option {
   if (/\b(idcw|dividend|div(\b|idend))/.test(lower)) return "idcw";
-  if (/\((g|growth)\)/.test(lower) || /\bgrowth\b/.test(lower)) return "growth";
+  // ICICI (and a few others) label the growth option "Cumulative".
+  if (/\((g|growth)\)/.test(lower) || /\bgrowth\b/.test(lower) || /\bcumulative\b/.test(lower)) return "growth";
   return "unknown";
 }
 function detectEtf(lower: string): boolean { return /\b(etf|exchange traded)\b/.test(lower); }

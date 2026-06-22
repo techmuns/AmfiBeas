@@ -1,0 +1,85 @@
+name: NAV daily refresh (mf-data forward)
+
+# Daily forward NAV refresh over the mf-data historical base.
+#
+# Fetches AMFI's "Complete NAV Report" (NAVAll.txt — the file the
+# amfiindia.com/net-asset-value/nav-download page serves), appends each
+# tracked plan-series' latest NAV when newer, then regenerates the returns +
+# category-rank snapshots, and commits the changes.
+#
+# Supersedes the old nav-latest + nav-history-forward pair: this one is
+# Regular + Direct plan aware and sources from the mf-data base rather than
+# the live AMFI history API.
+#
+# Safety: nav-daily-refresh keeps-last-good (non-zero exit on a failed/empty
+# fetch or a feed below the row floor), and the returns/category scripts have
+# their own guardrails. The commit step only runs after every step SUCCEEDS,
+# and is a no-op when nothing changed (e.g. a weekend run where no equity fund
+# advanced).
+
+on:
+  # Daily 20:00 UTC = 01:30 IST (next day). SEBI requires AMCs to upload NAV to
+  # AMFI by ~23:00 IST on each business day, so 01:30 IST captures the day's
+  # NAV with comfortable margin.
+  schedule:
+    - cron: "0 20 * * *"
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: "Commit the refreshed snapshots? (false = run only, no commit)"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nav-daily-refresh-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  nav-daily-refresh:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      # Sparse checkout: the daily refresh only touches public/nav-history +
+      # src/data/snapshots; it does NOT need the ~2.7 GB mf-data/ historical
+      # CSVs, so we leave them out of the working tree. Cone mode also brings
+      # in the root files (package.json, tsconfig, …).
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            public
+            src
+            scripts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Daily NAV forward refresh (NAVAll.txt)
+        run: npm run ingest:nav:daily
+      - name: Recompute returns
+        run: npm run ingest:nav:returns
+      - name: Recompute category ranks
+        run: npm run ingest:nav:category-returns
+      - name: Commit refreshed snapshots
+        # Only after every prior step SUCCEEDED (a keep-last-good non-zero exit
+        # skips this). Scheduled runs always commit; manual runs honour the
+        # toggle. No-op when nothing changed.
+        if: ${{ github.event_name == 'schedule' || inputs.commit == 'true' }}
+        run: |
+          if [ -z "$(git status --porcelain public/nav-history src/data/snapshots)" ]; then
+            echo "No NAV changes — nothing to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/nav-history src/data/snapshots
+          git commit -m "chore(data): daily NAV refresh ($(date -u +%Y-%m-%d))"
+          git push
