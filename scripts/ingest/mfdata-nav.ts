@@ -15,7 +15,7 @@ import type { SchemeNav } from "../../src/data/snapshots/types";
 
 export type Plan = "direct" | "regular" | "unknown";
 export type Option = "growth" | "idcw" | "unknown";
-export type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y";
+export type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y" | "10Y";
 
 // ---------------------------------------------------------------------------
 // Dates
@@ -199,6 +199,7 @@ const PERIODS: Array<{ key: PeriodKey; months: number; years: number; cagr: bool
   { key: "1Y", months: 0, years: 1, cagr: false },
   { key: "3Y", months: 0, years: 3, cagr: true },
   { key: "5Y", months: 0, years: 5, cagr: true },
+  { key: "10Y", months: 0, years: 10, cagr: true },
 ];
 export function availablePeriods(series: Array<[string, number]>): PeriodKey[] {
   const out: PeriodKey[] = [];

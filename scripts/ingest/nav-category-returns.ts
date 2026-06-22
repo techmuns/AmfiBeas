@@ -51,7 +51,7 @@ const MIN_PEER_COUNT = 5;
 // (CAGR values produced by Phases 3.6A / 3.8A). We do NOT recompute
 // fund-level returns here; this script only ranks/aggregates what
 // mf-returns has already produced.
-const PERIODS = ["1M", "3M", "6M", "1Y", "3Y", "5Y"] as const;
+const PERIODS = ["1M", "3M", "6M", "1Y", "3Y", "5Y", "10Y"] as const;
 type PeriodKey = (typeof PERIODS)[number];
 
 // ---------------------------------------------------------------------------
@@ -397,12 +397,12 @@ async function main(): Promise<void> {
   // ---------------------------------------------------------------------------
   // 5. Coverage summary.
   // ---------------------------------------------------------------------------
-  const cohortsWithStatsByPeriod: Record<PeriodKey, number> = { "1M": 0, "3M": 0, "6M": 0, "1Y": 0, "3Y": 0, "5Y": 0 };
+  const cohortsWithStatsByPeriod: Record<PeriodKey, number> = { "1M": 0, "3M": 0, "6M": 0, "1Y": 0, "3Y": 0, "5Y": 0, "10Y": 0 };
   for (const [, stats] of cohortPeriodStats) for (const p of PERIODS) if (stats[p]) cohortsWithStatsByPeriod[p] += 1;
 
-  const fundsWithRankByPeriod: Record<PeriodKey, number> = { "1M": 0, "3M": 0, "6M": 0, "1Y": 0, "3Y": 0, "5Y": 0 };
-  const fundsWithoutStatsByPeriod: Record<PeriodKey, number> = { "1M": 0, "3M": 0, "6M": 0, "1Y": 0, "3Y": 0, "5Y": 0 };
-  const reasonCounts: Record<PeriodKey, Map<string, number>> = { "1M": new Map(), "3M": new Map(), "6M": new Map(), "1Y": new Map(), "3Y": new Map(), "5Y": new Map() };
+  const fundsWithRankByPeriod: Record<PeriodKey, number> = { "1M": 0, "3M": 0, "6M": 0, "1Y": 0, "3Y": 0, "5Y": 0, "10Y": 0 };
+  const fundsWithoutStatsByPeriod: Record<PeriodKey, number> = { "1M": 0, "3M": 0, "6M": 0, "1Y": 0, "3Y": 0, "5Y": 0, "10Y": 0 };
+  const reasonCounts: Record<PeriodKey, Map<string, number>> = { "1M": new Map(), "3M": new Map(), "6M": new Map(), "1Y": new Map(), "3Y": new Map(), "5Y": new Map(), "10Y": new Map() };
   for (const fr of fundRanks) {
     for (const p of PERIODS) {
       const e = fr.periodRanks[p];
@@ -416,7 +416,7 @@ async function main(): Promise<void> {
       }
     }
   }
-  const fundsWithoutStatsTopReasonsByPeriod: Record<PeriodKey, Array<{ reason: string; count: number }>> = { "1M": [], "3M": [], "6M": [], "1Y": [], "3Y": [], "5Y": [] };
+  const fundsWithoutStatsTopReasonsByPeriod: Record<PeriodKey, Array<{ reason: string; count: number }>> = { "1M": [], "3M": [], "6M": [], "1Y": [], "3Y": [], "5Y": [], "10Y": [] };
   for (const p of PERIODS) {
     fundsWithoutStatsTopReasonsByPeriod[p] = Array.from(reasonCounts[p].entries())
       .map(([reason, count]) => ({ reason, count }))
