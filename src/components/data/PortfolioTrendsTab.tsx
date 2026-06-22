@@ -205,10 +205,38 @@ export interface PortfolioTrendsTabProps {
 // ---------------------------------------------------------------------------
 
 export function PortfolioTrendsTab({ schemecode, fundName }: PortfolioTrendsTabProps) {
-  const returnRow = returnsByCode.get(schemecode);
-  const latestRow = latestByCode.get(schemecode);
-  const manifestRow = manifestByCode.get(schemecode);
-  const categoryRow = categoryByCode.get(schemecode);
+  // Regular vs Direct plan. Each plan is its own snapshot entry, keyed
+  // "{schemecode}" (Regular / primary) and "{schemecode}-D" (Direct). NAV,
+  // returns, ranking and the chart all swap with the toggle; the other tabs
+  // (holdings) are unaffected — they stay on the RupeeVest schemecode.
+  const planKeys = useMemo<Partial<Record<"regular" | "direct", string>>>(() => {
+    const keys: Partial<Record<"regular" | "direct", string>> = {};
+    const primary = returnsByCode.get(schemecode);
+    if (primary) keys[primary.plan === "direct" ? "direct" : "regular"] = schemecode;
+    const directKey = `${schemecode}-D`;
+    if (returnsByCode.has(directKey)) keys.direct = directKey;
+    return keys;
+  }, [schemecode]);
+  const availablePlans = useMemo(
+    () => (["regular", "direct"] as const).filter((p) => planKeys[p]),
+    [planKeys],
+  );
+  const [plan, setPlan] = useState<"regular" | "direct">(
+    () => (planKeys.regular ? "regular" : "direct"),
+  );
+  // On fund change: keep the chosen plan if the new fund offers it, else fall
+  // back to Regular (or whichever single plan the new fund has).
+  const [prevSchemecodeForPlan, setPrevSchemecodeForPlan] = useState(schemecode);
+  if (prevSchemecodeForPlan !== schemecode) {
+    setPrevSchemecodeForPlan(schemecode);
+    if (!planKeys[plan]) setPlan(planKeys.regular ? "regular" : "direct");
+  }
+  const dataKey = planKeys[plan] ?? schemecode;
+
+  const returnRow = returnsByCode.get(dataKey);
+  const latestRow = latestByCode.get(dataKey);
+  const manifestRow = manifestByCode.get(dataKey);
+  const categoryRow = categoryByCode.get(dataKey);
 
   // Timeframe state. Default to 1Y, falling back to 6M → 3M → 1M based on
   // what's available in the returns snapshot; auto-fallback on fund change.
@@ -224,12 +252,12 @@ export function PortfolioTrendsTab({ schemecode, fundName }: PortfolioTrendsTabP
   //   - if previously on 5Y: FALLBACK_FROM_5Y (3Y → 1Y → 6M → 3M → 1M)
   //   - otherwise: DEFAULT_ORDER (1Y → 6M → 3M → 1M)
   // Either way, fresh-load default never auto-selects 3Y or 5Y.
-  const [prevSchemecode, setPrevSchemecode] = useState(schemecode);
-  if (prevSchemecode !== schemecode) {
-    setPrevSchemecode(schemecode);
+  const [prevDataKey, setPrevDataKey] = useState(dataKey);
+  if (prevDataKey !== dataKey) {
+    setPrevDataKey(dataKey);
     const stillAvailable = period && returnRow?.dataAvailability[period];
     if (stillAvailable) {
-      // Keep the current period.
+      // Keep the current period across the fund/plan change.
     } else {
       const order = period === "5Y" ? FALLBACK_FROM_5Y : DEFAULT_ORDER;
       setPeriod(firstAvailableFromOrder(returnRow, order));
@@ -248,28 +276,28 @@ export function PortfolioTrendsTab({ schemecode, fundName }: PortfolioTrendsTabP
   const [benchmark, setBenchmark] = useState<IndexHistoryFile | null | "errored">(null);
 
   const historyAvailable = Boolean(manifestRow?.available);
-  const historyLoaded = history[schemecode];
-  const historyErrored = historyErr[schemecode];
+  const historyLoaded = history[dataKey];
+  const historyErrored = historyErr[dataKey];
   const historyLoading =
     historyAvailable && !historyLoaded && !historyErrored;
 
   useEffect(() => {
     if (!historyAvailable) return;
-    if (history[schemecode] || historyErr[schemecode]) return;
+    if (history[dataKey] || historyErr[dataKey]) return;
     const ctrl = new AbortController();
-    fetch(`/nav-history/${schemecode}.json`, { signal: ctrl.signal })
+    fetch(`/nav-history/${dataKey}.json`, { signal: ctrl.signal })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json() as Promise<HistoryFile>;
       })
-      .then((data) => setHistory((prev) => ({ ...prev, [schemecode]: data })))
+      .then((data) => setHistory((prev) => ({ ...prev, [dataKey]: data })))
       .catch((e: unknown) => {
         if ((e as Error).name === "AbortError") return;
-        setHistoryErr((prev) => ({ ...prev, [schemecode]: true }));
+        setHistoryErr((prev) => ({ ...prev, [dataKey]: true }));
       });
     return () => ctrl.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schemecode, historyAvailable, reloadNonce]);
+  }, [dataKey, historyAvailable, reloadNonce]);
 
   // Benchmark fetcher — runs once on mount when the manifest lists a path.
   // Idempotent (state guard prevents refetch).
@@ -296,7 +324,7 @@ export function PortfolioTrendsTab({ schemecode, fundName }: PortfolioTrendsTabP
   function retryHistory() {
     setHistoryErr((prev) => {
       const next = { ...prev };
-      delete next[schemecode];
+      delete next[dataKey];
       return next;
     });
     setReloadNonce((n) => n + 1);
@@ -417,6 +445,14 @@ export function PortfolioTrendsTab({ schemecode, fundName }: PortfolioTrendsTabP
         freshness={freshnessLine}
       />
 
+      <PlanToggle
+        plan={returnRow.plan}
+        planKeys={planKeys}
+        selected={plan}
+        onPick={setPlan}
+        showToggle={availablePlans.length > 1}
+      />
+
       <KpiRow
         returnRow={returnRow}
         categoryRow={categoryRow}
@@ -466,7 +502,7 @@ export function PortfolioTrendsTab({ schemecode, fundName }: PortfolioTrendsTabP
 
       <TrendsPeerTable
         rows={peers}
-        selectedSchemecode={schemecode}
+        selectedSchemecode={dataKey}
         period={period ?? "1Y"}
         cohortLabel={cohortLabel}
       />
@@ -704,6 +740,65 @@ function ReturnKpiCard({
         </div>
       )}
       {benchSubLine}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Plan toggle (Regular / Direct)
+// ---------------------------------------------------------------------------
+
+function PlanToggle({
+  plan,
+  planKeys,
+  selected,
+  onPick,
+  showToggle,
+}: {
+  plan: "direct" | "regular" | "unknown";
+  planKeys: Partial<Record<"regular" | "direct", string>>;
+  selected: "regular" | "direct";
+  onPick: (p: "regular" | "direct") => void;
+  showToggle: boolean;
+}) {
+  if (!showToggle) {
+    // Single-plan fund — just label which plan the NAV / returns reflect.
+    const label =
+      plan === "direct" ? "Direct plan" : plan === "regular" ? "Regular plan" : null;
+    if (!label) return null;
+    return (
+      <div className="text-xs text-muted-foreground">
+        NAV &amp; returns:{" "}
+        <span className="font-medium text-foreground">{label}</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-muted-foreground">Plan</span>
+      <div
+        className="inline-flex rounded-md border bg-card p-0.5 text-xs"
+        role="group"
+        aria-label="NAV plan"
+      >
+        {(["regular", "direct"] as const).map((p) => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => onPick(p)}
+            disabled={!planKeys[p]}
+            aria-pressed={selected === p}
+            className={cn(
+              "rounded px-3 py-1 font-medium capitalize transition-colors disabled:cursor-not-allowed disabled:opacity-40",
+              selected === p
+                ? "bg-accent text-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {p}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

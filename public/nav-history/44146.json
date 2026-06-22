@@ -11,287 +11,252 @@
     "option": "growth",
     "isEtf": false,
     "isFof": false,
-    "firstDate": "2021-04-15",
+    "firstDate": "2021-01-19",
     "lastDate": "2026-06-19",
-    "points": 1276,
+    "points": 1333,
     "stage": 3,
     "ruleVersion": 1,
-    "parserVersion": 1,
-    "generatedAt": "2026-05-31T13:53:00.710Z",
-    "lastForwardAppendAt": "2026-06-20T21:21:08.543Z",
+    "parserVersion": 2,
+    "generatedAt": "2026-06-22T10:31:32.643Z",
+    "lastForwardAppendAt": null,
     "provenance": {
-      "backfillSource": "AMFI DownloadNAVHistoryReport_Po.aspx",
-      "backfillWindows": [
-        {
-          "from": "16-Apr-2023",
-          "to": "30-May-2023",
-          "fetchedAt": "2026-05-31T07:41:41.411Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "31-May-2023",
-          "to": "16-Jul-2023",
-          "fetchedAt": "2026-05-31T07:41:52.677Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "17-Jul-2023",
-          "to": "29-Sep-2023",
-          "fetchedAt": "2026-05-31T07:42:01.188Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "30-Sep-2023",
-          "to": "13-Dec-2023",
-          "fetchedAt": "2026-05-31T07:42:12.673Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "14-Dec-2023",
-          "to": "26-Feb-2024",
-          "fetchedAt": "2026-05-31T07:42:23.129Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "27-Feb-2024",
-          "to": "11-May-2024",
-          "fetchedAt": "2026-05-31T07:42:33.802Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "12-May-2024",
-          "to": "25-Jul-2024",
-          "fetchedAt": "2026-05-31T07:42:44.863Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "26-Jul-2024",
-          "to": "08-Oct-2024",
-          "fetchedAt": "2026-05-31T07:42:55.916Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "09-Oct-2024",
-          "to": "22-Dec-2024",
-          "fetchedAt": "2026-05-31T07:43:07.367Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "23-Dec-2024",
-          "to": "07-Mar-2025",
-          "fetchedAt": "2026-05-31T07:43:19.219Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "08-Mar-2025",
-          "to": "21-May-2025",
-          "fetchedAt": "2026-05-31T07:43:31.950Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "22-May-2025",
-          "to": "04-Aug-2025",
-          "fetchedAt": "2026-05-31T07:43:43.032Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "05-Aug-2025",
-          "to": "18-Oct-2025",
-          "fetchedAt": "2026-05-31T07:43:55.321Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "19-Oct-2025",
-          "to": "01-Jan-2026",
-          "fetchedAt": "2026-05-31T07:44:07.354Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "02-Jan-2026",
-          "to": "17-Mar-2026",
-          "fetchedAt": "2026-05-31T07:44:19.168Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "18-Mar-2026",
-          "to": "31-May-2026",
-          "fetchedAt": "2026-05-31T07:44:32.467Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "15-Apr-2021",
-          "to": "28-Jun-2021",
-          "fetchedAt": "2026-05-31T13:53:00.720Z",
-          "role": "stage3-older"
-        },
-        {
-          "from": "29-Jun-2021",
-          "to": "11-Sep-2021",
-          "fetchedAt": "2026-05-31T13:53:15.159Z",
-          "role": "stage3-older"
-        },
-        {
-          "from": "12-Sep-2021",
-          "to": "25-Nov-2021",
-          "fetchedAt": "2026-05-31T13:53:27.516Z",
-          "role": "stage3-older"
-        },
-        {
-          "from": "26-Nov-2021",
-          "to": "08-Feb-2022",
-          "fetchedAt": "2026-05-31T13:53:39.059Z",
-          "role": "stage3-older"
-        },
-        {
-          "from": "09-Feb-2022",
-          "to": "24-Apr-2022",
-          "fetchedAt": "2026-05-31T13:53:50.888Z",
-          "role": "stage3-older"
-        },
-        {
-          "from": "25-Apr-2022",
-          "to": "08-Jul-2022",
-          "fetchedAt": "2026-05-31T13:54:02.420Z",
-          "role": "stage3-older"
-        },
-        {
-          "from": "09-Jul-2022",
-          "to": "21-Sep-2022",
-          "fetchedAt": "2026-05-31T13:54:13.292Z",
-          "role": "stage3-older"
-        },
-        {
-          "from": "22-Sep-2022",
-          "to": "05-Dec-2022",
-          "fetchedAt": "2026-05-31T13:54:23.749Z",
-          "role": "stage3-older"
-        },
-        {
-          "from": "06-Dec-2022",
-          "to": "18-Feb-2023",
-          "fetchedAt": "2026-05-31T13:54:34.416Z",
-          "role": "stage3-older"
-        },
-        {
-          "from": "19-Feb-2023",
-          "to": "15-Apr-2023",
-          "fetchedAt": "2026-05-31T13:54:44.995Z",
-          "role": "stage3-older"
-        }
-      ],
-      "forwardSource": "AMFI NAVAll.txt (via scripts/ingest/nav-latest.ts → mf-latest-nav.json)",
-      "parser": "scripts/ingest/nav-history-backfill.ts:parseHistoricalInto",
-      "parserVersion": 1,
-      "stage3": {
-        "olderFetchFrom": "2021-04-15",
-        "olderFetchTo": "2023-04-15",
-        "stage3MergeAt": "2026-05-31T13:53:00.710Z",
-        "baseStage": 2,
-        "baseFirstDate": "2023-04-17"
-      },
-      "forwardAppends": [
-        {
-          "navDate": "2026-06-01",
-          "nav": 25.49,
-          "feedDate": "02-Jun-2026",
-          "appendedAt": "2026-06-02T22:25:00.660Z",
-          "latestSnapshotGeneratedAt": "2026-06-02T22:23:46.560Z"
-        },
-        {
-          "navDate": "2026-06-02",
-          "nav": 25.5,
-          "feedDate": "03-Jun-2026",
-          "appendedAt": "2026-06-03T22:30:14.402Z",
-          "latestSnapshotGeneratedAt": "2026-06-03T22:29:22.807Z"
-        },
-        {
-          "navDate": "2026-06-04",
-          "nav": 25.49,
-          "feedDate": "05-Jun-2026",
-          "appendedAt": "2026-06-05T21:28:12.342Z",
-          "latestSnapshotGeneratedAt": "2026-06-05T21:27:17.740Z"
-        },
-        {
-          "navDate": "2026-06-05",
-          "nav": 25.44,
-          "feedDate": "05-Jun-2026",
-          "appendedAt": "2026-06-06T21:07:13.555Z",
-          "latestSnapshotGeneratedAt": "2026-06-06T21:06:25.503Z"
-        },
-        {
-          "navDate": "2026-06-08",
-          "nav": 25.11,
-          "feedDate": "09-Jun-2026",
-          "appendedAt": "2026-06-09T21:49:48.783Z",
-          "latestSnapshotGeneratedAt": "2026-06-09T21:48:48.078Z"
-        },
-        {
-          "navDate": "2026-06-09",
-          "nav": 25.31,
-          "feedDate": "10-Jun-2026",
-          "appendedAt": "2026-06-10T22:05:15.756Z",
-          "latestSnapshotGeneratedAt": "2026-06-10T22:04:16.109Z"
-        },
-        {
-          "navDate": "2026-06-10",
-          "nav": 25.22,
-          "feedDate": "11-Jun-2026",
-          "appendedAt": "2026-06-11T22:04:58.470Z",
-          "latestSnapshotGeneratedAt": "2026-06-11T22:03:55.647Z"
-        },
-        {
-          "navDate": "2026-06-11",
-          "nav": 25.19,
-          "feedDate": "12-Jun-2026",
-          "appendedAt": "2026-06-12T21:47:16.473Z",
-          "latestSnapshotGeneratedAt": "2026-06-12T21:46:10.384Z"
-        },
-        {
-          "navDate": "2026-06-12",
-          "nav": 25.8,
-          "feedDate": "12-Jun-2026",
-          "appendedAt": "2026-06-13T21:18:38.101Z",
-          "latestSnapshotGeneratedAt": "2026-06-13T21:17:38.239Z"
-        },
-        {
-          "navDate": "2026-06-15",
-          "nav": 26.22,
-          "feedDate": "16-Jun-2026",
-          "appendedAt": "2026-06-16T22:14:11.961Z",
-          "latestSnapshotGeneratedAt": "2026-06-16T22:13:02.592Z"
-        },
-        {
-          "navDate": "2026-06-16",
-          "nav": 26.34,
-          "feedDate": "17-Jun-2026",
-          "appendedAt": "2026-06-17T22:03:33.407Z",
-          "latestSnapshotGeneratedAt": "2026-06-17T22:02:39.464Z"
-        },
-        {
-          "navDate": "2026-06-17",
-          "nav": 26.42,
-          "feedDate": "18-Jun-2026",
-          "appendedAt": "2026-06-18T22:11:21.906Z",
-          "latestSnapshotGeneratedAt": "2026-06-18T22:10:18.316Z"
-        },
-        {
-          "navDate": "2026-06-18",
-          "nav": 26.57,
-          "feedDate": "19-Jun-2026",
-          "appendedAt": "2026-06-19T21:12:38.248Z",
-          "latestSnapshotGeneratedAt": "2026-06-19T21:11:43.599Z"
-        },
-        {
-          "navDate": "2026-06-19",
-          "nav": 26.47,
-          "feedDate": "19-Jun-2026",
-          "appendedAt": "2026-06-20T21:21:08.543Z",
-          "latestSnapshotGeneratedAt": "2026-06-20T21:20:13.644Z"
-        }
-      ]
+      "backfillSource": "AMFI bulk CSV (mf-data/YYYY/MM/DD.csv)",
+      "source": "mf-data",
+      "parser": "scripts/ingest/nav-history-from-mfdata.ts",
+      "parserVersion": 2,
+      "firstFile": "mf-data/2016/01/01.csv",
+      "lastFile": "mf-data/2026/06/21.csv"
     }
   },
   "series": [
+    [
+      "2021-01-19",
+      10.01
+    ],
+    [
+      "2021-01-20",
+      10.02
+    ],
+    [
+      "2021-01-21",
+      10.01
+    ],
+    [
+      "2021-01-22",
+      9.96
+    ],
+    [
+      "2021-01-25",
+      9.95
+    ],
+    [
+      "2021-01-27",
+      9.89
+    ],
+    [
+      "2021-01-28",
+      9.92
+    ],
+    [
+      "2021-01-29",
+      9.89
+    ],
+    [
+      "2021-02-01",
+      10.17
+    ],
+    [
+      "2021-02-02",
+      10.36
+    ],
+    [
+      "2021-02-03",
+      10.42
+    ],
+    [
+      "2021-02-04",
+      10.49
+    ],
+    [
+      "2021-02-05",
+      10.47
+    ],
+    [
+      "2021-02-08",
+      10.61
+    ],
+    [
+      "2021-02-09",
+      10.63
+    ],
+    [
+      "2021-02-10",
+      10.61
+    ],
+    [
+      "2021-02-11",
+      10.65
+    ],
+    [
+      "2021-02-12",
+      10.62
+    ],
+    [
+      "2021-02-15",
+      10.75
+    ],
+    [
+      "2021-02-16",
+      10.79
+    ],
+    [
+      "2021-02-17",
+      10.81
+    ],
+    [
+      "2021-02-18",
+      10.83
+    ],
+    [
+      "2021-02-19",
+      10.69
+    ],
+    [
+      "2021-02-22",
+      10.53
+    ],
+    [
+      "2021-02-23",
+      10.65
+    ],
+    [
+      "2021-02-24",
+      10.82
+    ],
+    [
+      "2021-02-25",
+      10.97
+    ],
+    [
+      "2021-02-26",
+      10.66
+    ],
+    [
+      "2021-03-01",
+      10.77
+    ],
+    [
+      "2021-03-02",
+      10.86
+    ],
+    [
+      "2021-03-03",
+      11.05
+    ],
+    [
+      "2021-03-04",
+      10.96
+    ],
+    [
+      "2021-03-05",
+      10.86
+    ],
+    [
+      "2021-03-08",
+      10.94
+    ],
+    [
+      "2021-03-09",
+      10.92
+    ],
+    [
+      "2021-03-10",
+      10.96
+    ],
+    [
+      "2021-03-12",
+      10.89
+    ],
+    [
+      "2021-03-15",
+      10.84
+    ],
+    [
+      "2021-03-16",
+      10.79
+    ],
+    [
+      "2021-03-17",
+      10.59
+    ],
+    [
+      "2021-03-18",
+      10.53
+    ],
+    [
+      "2021-03-19",
+      10.65
+    ],
+    [
+      "2021-03-22",
+      10.64
+    ],
+    [
+      "2021-03-23",
+      10.68
+    ],
+    [
+      "2021-03-24",
+      10.46
+    ],
+    [
+      "2021-03-25",
+      10.33
+    ],
+    [
+      "2021-03-26",
+      10.47
+    ],
+    [
+      "2021-03-30",
+      10.6
+    ],
+    [
+      "2021-03-31",
+      10.58
+    ],
+    [
+      "2021-04-01",
+      10.74
+    ],
+    [
+      "2021-04-05",
+      10.57
+    ],
+    [
+      "2021-04-06",
+      10.56
+    ],
+    [
+      "2021-04-07",
+      10.66
+    ],
+    [
+      "2021-04-08",
+      10.71
+    ],
+    [
+      "2021-04-09",
+      10.63
+    ],
+    [
+      "2021-04-12",
+      10.2
+    ],
+    [
+      "2021-04-13",
+      10.42
+    ],
     [
       "2021-04-15",
       10.47
@@ -4433,10 +4398,6 @@
       25.67
     ],
     [
-      "2025-06-26",
-      25.91
-    ],
-    [
       "2025-06-27",
       26.07
     ],
@@ -5347,6 +5308,10 @@
     [
       "2026-06-02",
       25.5
+    ],
+    [
+      "2026-06-03",
+      25.46
     ],
     [
       "2026-06-04",

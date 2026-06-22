@@ -45,7 +45,11 @@ const RULE_VERSION = 1;
 // drop floor) — it doesn't track period eligibility, so it's not
 // manifest-derived.
 const GUARD = {
-  expectedFundCount: 1036,
+  // Catastrophic-drop floor (universe-size sanity). Exact per-fund counts are
+  // validated relationally against the manifest (file count == totalFunds and
+  // rows == totalFunds), so this is only a floor — the absolute number grew
+  // when Regular + Direct plan-series were both ingested from mf-data.
+  minFundCount: 1000,
 };
 
 // ---------------------------------------------------------------------------
@@ -318,8 +322,8 @@ async function main(): Promise<void> {
   if (dirEntries.length !== manifest.totalFunds) {
     validationFailures.push(`history file count ${dirEntries.length} != manifest.totalFunds ${manifest.totalFunds}`);
   }
-  if (manifest.totalFunds !== GUARD.expectedFundCount) {
-    validationFailures.push(`manifest.totalFunds ${manifest.totalFunds} != expected ${GUARD.expectedFundCount}`);
+  if (manifest.totalFunds < GUARD.minFundCount) {
+    validationFailures.push(`manifest.totalFunds ${manifest.totalFunds} below floor ${GUARD.minFundCount}`);
   }
 
   // Load + validate + compute per fund. Sort manifest funds by schemecode
@@ -392,8 +396,8 @@ async function main(): Promise<void> {
   }
 
   // --- Guardrails ----------------------------------------------------------
-  if (rows.length !== GUARD.expectedFundCount) {
-    validationFailures.push(`rows.length ${rows.length} != expected ${GUARD.expectedFundCount}`);
+  if (rows.length !== manifest.totalFunds) {
+    validationFailures.push(`rows.length ${rows.length} != manifest.totalFunds ${manifest.totalFunds}`);
   }
   // Phase 3.9B: manifest-derived per-period coverage. Required: this run's
   // counts equal manifest.periodCoverage exactly for every period the

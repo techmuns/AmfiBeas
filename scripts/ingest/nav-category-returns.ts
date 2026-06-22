@@ -436,7 +436,7 @@ async function main(): Promise<void> {
   // ---------------------------------------------------------------------------
   const failures: string[] = [];
   if (fundRanks.length !== returnsFile.funds.length) failures.push(`fundRanks.length ${fundRanks.length} != input ${returnsFile.funds.length}`);
-  if (fundRanks.length !== 1036) failures.push(`fundRanks.length ${fundRanks.length} != expected 1036`);
+  if (fundRanks.length < 1000) failures.push(`fundRanks.length ${fundRanks.length} below floor 1000`);
 
   // Reconcile per-period coverage vs mf-returns periodCoverage. The fundsWith
   // a rank in a period must be ≤ the funds with a return for that period, and
