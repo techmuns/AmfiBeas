@@ -22,10 +22,10 @@ import indexHistoryManifest from "@/data/snapshots/index-history-manifest.json";
 // benchmark drops in without UI plumbing changes.
 const DEFAULT_BENCHMARK_ID = "NIFTY_500";
 
-type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y";
+type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y" | "10Y";
 // All selectable periods, smallest → largest. Order is also the render
 // order of KPI cards and timeframe buttons.
-const PERIODS: PeriodKey[] = ["1M", "3M", "6M", "1Y", "3Y", "5Y"];
+const PERIODS: PeriodKey[] = ["1M", "3M", "6M", "1Y", "3Y", "5Y", "10Y"];
 // 3Y went live in Phase 3.6C; 5Y went live in Phase 3.8C. No periods are
 // gated as placeholder buttons any more — kept as an empty array so the
 // renderer below stays parameterized for any future addition.
@@ -39,6 +39,8 @@ const DEFAULT_ORDER: ReadonlyArray<PeriodKey> = ["1Y", "6M", "3M", "1M"];
 // 1M) just use DEFAULT_ORDER when their selected period becomes
 // unavailable — matches the Phase 3.6C behavior.
 const FALLBACK_FROM_5Y: ReadonlyArray<PeriodKey> = ["3Y", "1Y", "6M", "3M", "1M"];
+// 10Y falls back to the next-longest CAGR first (5Y → 3Y → …).
+const FALLBACK_FROM_10Y: ReadonlyArray<PeriodKey> = ["5Y", "3Y", "1Y", "6M", "3M", "1M"];
 
 // ---------------------------------------------------------------------------
 // Snapshot types (subsetting the committed JSONs)
@@ -352,7 +354,12 @@ function TrendsTabInner({
     if (stillAvailable) {
       // Keep the current period across the fund/plan change.
     } else {
-      const order = period === "5Y" ? FALLBACK_FROM_5Y : DEFAULT_ORDER;
+      const order =
+        period === "10Y"
+          ? FALLBACK_FROM_10Y
+          : period === "5Y"
+            ? FALLBACK_FROM_5Y
+            : DEFAULT_ORDER;
       setPeriod(firstAvailableFromOrder(returnRow, order));
     }
   }
@@ -703,7 +710,7 @@ function KpiRow({
   benchmarkLabel: string | null;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
       <NavKpiCard returnRow={returnRow} latestRow={latestRow} />
       {PERIODS.map((p) => (
         <ReturnKpiCard
@@ -770,7 +777,7 @@ function ReturnKpiCard({
         : value < 0
           ? "text-negative"
           : "";
-  const isCagr = period === "3Y" || period === "5Y";
+  const isCagr = period === "3Y" || period === "5Y" || period === "10Y";
   // Phase 3.10A: excess in percentage points = fund return − benchmark return.
   // Computed on the same start/end anchors (with CAGR sharing the fund row's
   // `years`), so subtraction is apples-to-apples. Null when the fund has no
@@ -917,7 +924,7 @@ function TimeframeSelector({
       {PERIODS.map((p) => {
         const avail = availability[p];
         const active = period === p;
-        const isCagr = p === "3Y" || p === "5Y";
+        const isCagr = p === "3Y" || p === "5Y" || p === "10Y";
         const unavailableTitle = `Not enough ${p} history for this fund.`;
         return (
           <button
@@ -1087,7 +1094,7 @@ function CategoryStrip({
     NonNullable<typeof fundEntry>,
     { statsAvailable: true }
   >;
-  const periodLabel = period === "3Y" || period === "5Y" ? `${period} CAGR` : period;
+  const periodLabel = period === "3Y" || period === "5Y" || period === "10Y" ? `${period} CAGR` : period;
   return (
     <div className="rounded-lg border bg-card px-4 py-3 text-sm">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 tabular">

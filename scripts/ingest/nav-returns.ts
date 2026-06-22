@@ -84,7 +84,7 @@ interface ManifestFile {
   // periodCoverage in the on-disk manifest includes "3Y" on Stage-2 builds
   // and adds "5Y" on Stage-3 builds. We tolerate either shape and read each
   // optional key if present.
-  periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y"?: number; "5Y"?: number };
+  periodCoverage: { "1M": number; "3M": number; "6M": number; "1Y": number; "3Y"?: number; "5Y"?: number; "10Y"?: number };
   ruleVersion: number;
   parserVersion: number;
   funds: ManifestFund[];
@@ -114,7 +114,7 @@ interface HistoryFile {
   series: Array<[string, number]>; // ascending [isoDate, nav]
 }
 
-type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y";
+type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y" | "10Y";
 
 // Phase 3.6A/3.8A: 1M/3M/6M/1Y stay simple. 3Y and 5Y are annualized
 // (CAGR) using the actual elapsed years between the selected start and end
@@ -195,7 +195,8 @@ function elapsedYears(startIso: string, endIso: string): number {
 type PeriodSpec =
   | { key: "1M" | "3M" | "6M" | "1Y"; months: number; years: number; kind: "simple" }
   | { key: "3Y"; months: 0; years: 3; kind: "cagr" }
-  | { key: "5Y"; months: 0; years: 5; kind: "cagr" };
+  | { key: "5Y"; months: 0; years: 5; kind: "cagr" }
+  | { key: "10Y"; months: 0; years: 10; kind: "cagr" };
 
 const PERIODS: PeriodSpec[] = [
   { key: "1M", months: 1, years: 0, kind: "simple" },
@@ -204,11 +205,12 @@ const PERIODS: PeriodSpec[] = [
   { key: "1Y", months: 0, years: 1, kind: "simple" },
   { key: "3Y", months: 0, years: 3, kind: "cagr" },
   { key: "5Y", months: 0, years: 5, kind: "cagr" },
+  { key: "10Y", months: 0, years: 10, kind: "cagr" },
 ];
 
 function computeReturns(series: SeriesPoint[]): { returns: Partial<Record<PeriodKey, ReturnCell>>; availability: Record<PeriodKey, boolean> } {
   const returns: Partial<Record<PeriodKey, ReturnCell>> = {};
-  const availability: Record<PeriodKey, boolean> = { "1M": false, "3M": false, "6M": false, "1Y": false, "3Y": false, "5Y": false };
+  const availability: Record<PeriodKey, boolean> = { "1M": false, "3M": false, "6M": false, "1Y": false, "3Y": false, "5Y": false, "10Y": false };
   if (series.length < 2) return { returns, availability };
   const end = series[series.length - 1];
   const firstDate = series[0].date;
@@ -336,7 +338,7 @@ async function main(): Promise<void> {
   });
 
   const rows: ReturnRow[] = [];
-  let availability1M = 0, availability3M = 0, availability6M = 0, availability1Y = 0, availability3Y = 0, availability5Y = 0;
+  let availability1M = 0, availability3M = 0, availability6M = 0, availability1Y = 0, availability3Y = 0, availability5Y = 0, availability10Y = 0;
 
   for (const mFund of sortedManifestFunds) {
     const filePath = path.resolve(process.cwd(), mFund.path);
@@ -355,7 +357,7 @@ async function main(): Promise<void> {
     const { returns, availability } = computeReturns(series);
 
     // Sanity-check the computed return values are finite numbers.
-    for (const k of ["1M", "3M", "6M", "1Y", "3Y", "5Y"] as PeriodKey[]) {
+    for (const k of ["1M", "3M", "6M", "1Y", "3Y", "5Y", "10Y"] as PeriodKey[]) {
       const r = returns[k];
       if (r && (!Number.isFinite(r.value) || !Number.isFinite(r.startNav) || !Number.isFinite(r.endNav))) {
         issues.push({ schemecode: mFund.schemecode, reason: `${k} computed non-finite values` });
@@ -375,6 +377,7 @@ async function main(): Promise<void> {
     if (availability["1Y"]) availability1Y += 1;
     if (availability["3Y"]) availability3Y += 1;
     if (availability["5Y"]) availability5Y += 1;
+    if (availability["10Y"]) availability10Y += 1;
 
     rows.push({
       schemecode: mFund.schemecode,
@@ -408,9 +411,9 @@ async function main(): Promise<void> {
   // a partial fetch leaves the snapshot out of sync with the manifest.
   const availabilityCounts: Record<PeriodKey, number> = {
     "1M": availability1M, "3M": availability3M, "6M": availability6M,
-    "1Y": availability1Y, "3Y": availability3Y, "5Y": availability5Y,
+    "1Y": availability1Y, "3Y": availability3Y, "5Y": availability5Y, "10Y": availability10Y,
   };
-  for (const k of ["1M", "3M", "6M", "1Y", "3Y", "5Y"] as PeriodKey[]) {
+  for (const k of ["1M", "3M", "6M", "1Y", "3Y", "5Y", "10Y"] as PeriodKey[]) {
     const expected = manifest.periodCoverage[k];
     if (expected === undefined) continue; // older manifest didn't carry this period
     if (availabilityCounts[k] !== expected) {
@@ -453,6 +456,7 @@ async function main(): Promise<void> {
       "1Y": availability1Y,
       "3Y": availability3Y,
       "5Y": availability5Y,
+      "10Y": availability10Y,
     },
     funds: rows,
   };
@@ -463,8 +467,8 @@ async function main(): Promise<void> {
 
   info("================ MF RETURNS SNAPSHOT SUMMARY ================");
   info(`asOfDate: ${asOfDate ?? "?"}  ·  rows: ${rows.length}  ·  historyStage: ${manifest.stage}`);
-  info(`Period coverage: 1M=${availability1M} 3M=${availability3M} 6M=${availability6M} 1Y=${availability1Y} 3Y=${availability3Y} 5Y=${availability5Y}`);
-  info(`Manifest expected: 1M=${manifest.periodCoverage["1M"]} 3M=${manifest.periodCoverage["3M"]} 6M=${manifest.periodCoverage["6M"]} 1Y=${manifest.periodCoverage["1Y"]} 3Y=${manifest.periodCoverage["3Y"] ?? "(absent)"} 5Y=${manifest.periodCoverage["5Y"] ?? "(absent)"}`);
+  info(`Period coverage: 1M=${availability1M} 3M=${availability3M} 6M=${availability6M} 1Y=${availability1Y} 3Y=${availability3Y} 5Y=${availability5Y} 10Y=${availability10Y}`);
+  info(`Manifest expected: 1M=${manifest.periodCoverage["1M"]} 3M=${manifest.periodCoverage["3M"]} 6M=${manifest.periodCoverage["6M"]} 1Y=${manifest.periodCoverage["1Y"]} 3Y=${manifest.periodCoverage["3Y"] ?? "(absent)"} 5Y=${manifest.periodCoverage["5Y"] ?? "(absent)"} 10Y=${manifest.periodCoverage["10Y"] ?? "(absent)"}`);
   info(`Guardrails: PASS`);
   info("============================================================");
 }

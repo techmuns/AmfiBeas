@@ -267,7 +267,7 @@ async function main(): Promise<void> {
 
   const manifestFunds: ManifestFund[] = [];
   const latestFunds: Array<Record<string, unknown>> = [];
-  const periodCoverage: Record<PeriodKey, number> = { "1M": 0, "3M": 0, "6M": 0, "1Y": 0, "3Y": 0, "5Y": 0 };
+  const periodCoverage: Record<PeriodKey, number> = { "1M": 0, "3M": 0, "6M": 0, "1Y": 0, "3Y": 0, "5Y": 0, "10Y": 0 };
   let written = 0;
   let maxLastDate = "";
   let minFirstDate = "9999-12-31";
@@ -388,7 +388,7 @@ async function main(): Promise<void> {
   info("================ NAV HISTORY (mf-data) SUMMARY ================");
   info(`reference: ${path.relative(process.cwd(), referenceFile)} · feedDate ${latest.feedDate}`);
   info(`history files written: ${written} (Regular + Direct plan-series)`);
-  info(`period coverage: 1M=${periodCoverage["1M"]} 3M=${periodCoverage["3M"]} 6M=${periodCoverage["6M"]} 1Y=${periodCoverage["1Y"]} 3Y=${periodCoverage["3Y"]} 5Y=${periodCoverage["5Y"]}`);
+  info(`period coverage: 1M=${periodCoverage["1M"]} 3M=${periodCoverage["3M"]} 6M=${periodCoverage["6M"]} 1Y=${periodCoverage["1Y"]} 3Y=${periodCoverage["3Y"]} 5Y=${periodCoverage["5Y"]} 10Y=${periodCoverage["10Y"]}`);
   info(`wrote ${path.relative(process.cwd(), MANIFEST_PATH)} + ${path.relative(process.cwd(), LATEST_PATH)}`);
   info("Next: npm run ingest:nav:returns && npm run ingest:nav:category-returns");
   info("==============================================================");

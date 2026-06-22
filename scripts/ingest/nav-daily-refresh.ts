@@ -127,7 +127,7 @@ async function main(): Promise<void> {
   //    series. History files are rewritten only when they actually advance.
   const newManifestFunds: ManifestFund[] = [];
   const latestFunds: Array<Record<string, unknown>> = [];
-  const periodCoverage: Record<PeriodKey, number> = { "1M": 0, "3M": 0, "6M": 0, "1Y": 0, "3Y": 0, "5Y": 0 };
+  const periodCoverage: Record<PeriodKey, number> = { "1M": 0, "3M": 0, "6M": 0, "1Y": 0, "3Y": 0, "5Y": 0, "10Y": 0 };
   let advanced = 0;
   let maxLastDate = "";
   const issues: string[] = [];

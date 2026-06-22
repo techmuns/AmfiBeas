@@ -5,7 +5,7 @@ import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
 import { fmtBps, ppToBps } from "@/lib/units";
 
-type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y";
+type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y" | "10Y";
 
 export interface PeerRankRow {
   schemecode: string;
@@ -58,7 +58,7 @@ export function TrendsPeerTable({
   period,
   cohortLabel,
 }: Props) {
-  const periodLabel = period === "3Y" || period === "5Y" ? `${period} CAGR` : `${period} return`;
+  const periodLabel = period === "3Y" || period === "5Y" || period === "10Y" ? `${period} CAGR` : `${period} return`;
   if (rows.length === 0) {
     return (
       <section className="space-y-2">
