@@ -28,9 +28,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { info, nowIso, warn } from "./utils";
 
-const MANIFEST_PATH = path.resolve(process.cwd(), "src/data/snapshots/mf-history-manifest.json");
+const MANIFEST_PATH = path.resolve(process.cwd(), "public/nav-data/mf-history-manifest.json");
 const HISTORY_DIR = path.resolve(process.cwd(), "public/nav-history");
-const OUTPUT_PATH = path.resolve(process.cwd(), "src/data/snapshots/mf-returns.json");
+const OUTPUT_PATH = path.resolve(process.cwd(), "public/nav-data/mf-returns.json");
 
 const RULE_VERSION = 1;
 

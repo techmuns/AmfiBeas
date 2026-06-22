@@ -42,8 +42,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { info, nowIso, warn } from "./utils";
 
-const RETURNS_PATH = path.resolve(process.cwd(), "src/data/snapshots/mf-returns.json");
-const OUTPUT_PATH = path.resolve(process.cwd(), "src/data/snapshots/mf-category-returns.json");
+const RETURNS_PATH = path.resolve(process.cwd(), "public/nav-data/mf-returns.json");
+const OUTPUT_PATH = path.resolve(process.cwd(), "public/nav-data/mf-category-returns.json");
 
 const RULE_VERSION = 1;
 const MIN_PEER_COUNT = 5;
