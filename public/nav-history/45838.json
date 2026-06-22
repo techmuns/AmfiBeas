@@ -16,286 +16,16 @@
     "points": 1171,
     "stage": 3,
     "ruleVersion": 1,
-    "parserVersion": 1,
-    "generatedAt": "2026-05-31T13:53:00.710Z",
-    "lastForwardAppendAt": "2026-06-19T21:12:38.248Z",
+    "parserVersion": 2,
+    "generatedAt": "2026-06-22T10:31:32.643Z",
+    "lastForwardAppendAt": null,
     "provenance": {
-      "backfillSource": "AMFI DownloadNAVHistoryReport_Po.aspx",
-      "backfillWindows": [
-        {
-          "from": "16-Apr-2023",
-          "to": "30-May-2023",
-          "fetchedAt": "2026-05-31T07:41:41.411Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "31-May-2023",
-          "to": "16-Jul-2023",
-          "fetchedAt": "2026-05-31T07:41:52.677Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "17-Jul-2023",
-          "to": "29-Sep-2023",
-          "fetchedAt": "2026-05-31T07:42:01.188Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "30-Sep-2023",
-          "to": "13-Dec-2023",
-          "fetchedAt": "2026-05-31T07:42:12.673Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "14-Dec-2023",
-          "to": "26-Feb-2024",
-          "fetchedAt": "2026-05-31T07:42:23.129Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "27-Feb-2024",
-          "to": "11-May-2024",
-          "fetchedAt": "2026-05-31T07:42:33.802Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "12-May-2024",
-          "to": "25-Jul-2024",
-          "fetchedAt": "2026-05-31T07:42:44.863Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "26-Jul-2024",
-          "to": "08-Oct-2024",
-          "fetchedAt": "2026-05-31T07:42:55.916Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "09-Oct-2024",
-          "to": "22-Dec-2024",
-          "fetchedAt": "2026-05-31T07:43:07.367Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "23-Dec-2024",
-          "to": "07-Mar-2025",
-          "fetchedAt": "2026-05-31T07:43:19.219Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "08-Mar-2025",
-          "to": "21-May-2025",
-          "fetchedAt": "2026-05-31T07:43:31.950Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "22-May-2025",
-          "to": "04-Aug-2025",
-          "fetchedAt": "2026-05-31T07:43:43.032Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "05-Aug-2025",
-          "to": "18-Oct-2025",
-          "fetchedAt": "2026-05-31T07:43:55.321Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "19-Oct-2025",
-          "to": "01-Jan-2026",
-          "fetchedAt": "2026-05-31T07:44:07.354Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "02-Jan-2026",
-          "to": "17-Mar-2026",
-          "fetchedAt": "2026-05-31T07:44:19.168Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "18-Mar-2026",
-          "to": "31-May-2026",
-          "fetchedAt": "2026-05-31T07:44:32.467Z",
-          "role": "stage2-base"
-        },
-        {
-          "from": "15-Apr-2021",
-          "to": "28-Jun-2021",
-          "fetchedAt": "2026-05-31T13:53:00.720Z",
-          "role": "stage3-older"
-        },
-        {
-          "from": "29-Jun-2021",
-          "to": "11-Sep-2021",
-          "fetchedAt": "2026-05-31T13:53:15.159Z",
-          "role": "stage3-older"
-        },
-        {
-          "from": "12-Sep-2021",
-          "to": "25-Nov-2021",
-          "fetchedAt": "2026-05-31T13:53:27.516Z",
-          "role": "stage3-older"
-        },
-        {
-          "from": "26-Nov-2021",
-          "to": "08-Feb-2022",
-          "fetchedAt": "2026-05-31T13:53:39.059Z",
-          "role": "stage3-older"
-        },
-        {
-          "from": "09-Feb-2022",
-          "to": "24-Apr-2022",
-          "fetchedAt": "2026-05-31T13:53:50.888Z",
-          "role": "stage3-older"
-        },
-        {
-          "from": "25-Apr-2022",
-          "to": "08-Jul-2022",
-          "fetchedAt": "2026-05-31T13:54:02.420Z",
-          "role": "stage3-older"
-        },
-        {
-          "from": "09-Jul-2022",
-          "to": "21-Sep-2022",
-          "fetchedAt": "2026-05-31T13:54:13.292Z",
-          "role": "stage3-older"
-        },
-        {
-          "from": "22-Sep-2022",
-          "to": "05-Dec-2022",
-          "fetchedAt": "2026-05-31T13:54:23.749Z",
-          "role": "stage3-older"
-        },
-        {
-          "from": "06-Dec-2022",
-          "to": "18-Feb-2023",
-          "fetchedAt": "2026-05-31T13:54:34.416Z",
-          "role": "stage3-older"
-        },
-        {
-          "from": "19-Feb-2023",
-          "to": "15-Apr-2023",
-          "fetchedAt": "2026-05-31T13:54:44.995Z",
-          "role": "stage3-older"
-        }
-      ],
-      "forwardSource": "AMFI NAVAll.txt (via scripts/ingest/nav-latest.ts → mf-latest-nav.json)",
-      "parser": "scripts/ingest/nav-history-backfill.ts:parseHistoricalInto",
-      "parserVersion": 1,
-      "stage3": {
-        "olderFetchFrom": "2021-04-15",
-        "olderFetchTo": "2023-04-15",
-        "stage3MergeAt": "2026-05-31T13:53:00.710Z",
-        "baseStage": 2,
-        "baseFirstDate": "2023-04-17"
-      },
-      "forwardAppends": [
-        {
-          "navDate": "2026-05-31",
-          "nav": 18.85,
-          "feedDate": "29-May-2026",
-          "appendedAt": "2026-05-31T17:22:58.908Z",
-          "latestSnapshotGeneratedAt": "2026-05-30T20:59:38.974Z"
-        },
-        {
-          "navDate": "2026-06-01",
-          "nav": 18.64,
-          "feedDate": "01-Jun-2026",
-          "appendedAt": "2026-06-01T22:34:58.111Z",
-          "latestSnapshotGeneratedAt": "2026-06-01T22:34:05.142Z"
-        },
-        {
-          "navDate": "2026-06-02",
-          "nav": 18.72,
-          "feedDate": "02-Jun-2026",
-          "appendedAt": "2026-06-02T22:25:00.660Z",
-          "latestSnapshotGeneratedAt": "2026-06-02T22:23:46.560Z"
-        },
-        {
-          "navDate": "2026-06-03",
-          "nav": 18.68,
-          "feedDate": "03-Jun-2026",
-          "appendedAt": "2026-06-03T22:30:14.402Z",
-          "latestSnapshotGeneratedAt": "2026-06-03T22:29:22.807Z"
-        },
-        {
-          "navDate": "2026-06-05",
-          "nav": 18.69,
-          "feedDate": "05-Jun-2026",
-          "appendedAt": "2026-06-05T21:28:12.342Z",
-          "latestSnapshotGeneratedAt": "2026-06-05T21:27:17.740Z"
-        },
-        {
-          "navDate": "2026-06-08",
-          "nav": 18.48,
-          "feedDate": "08-Jun-2026",
-          "appendedAt": "2026-06-08T21:52:10.462Z",
-          "latestSnapshotGeneratedAt": "2026-06-08T21:51:10.243Z"
-        },
-        {
-          "navDate": "2026-06-09",
-          "nav": 18.66,
-          "feedDate": "09-Jun-2026",
-          "appendedAt": "2026-06-09T21:49:48.783Z",
-          "latestSnapshotGeneratedAt": "2026-06-09T21:48:48.078Z"
-        },
-        {
-          "navDate": "2026-06-10",
-          "nav": 18.51,
-          "feedDate": "10-Jun-2026",
-          "appendedAt": "2026-06-10T22:05:15.756Z",
-          "latestSnapshotGeneratedAt": "2026-06-10T22:04:16.109Z"
-        },
-        {
-          "navDate": "2026-06-11",
-          "nav": 18.46,
-          "feedDate": "11-Jun-2026",
-          "appendedAt": "2026-06-11T22:04:58.470Z",
-          "latestSnapshotGeneratedAt": "2026-06-11T22:03:55.647Z"
-        },
-        {
-          "navDate": "2026-06-12",
-          "nav": 18.82,
-          "feedDate": "12-Jun-2026",
-          "appendedAt": "2026-06-12T21:47:16.473Z",
-          "latestSnapshotGeneratedAt": "2026-06-12T21:46:10.384Z"
-        },
-        {
-          "navDate": "2026-06-15",
-          "nav": 19.05,
-          "feedDate": "15-Jun-2026",
-          "appendedAt": "2026-06-15T22:21:48.225Z",
-          "latestSnapshotGeneratedAt": "2026-06-15T22:20:42.154Z"
-        },
-        {
-          "navDate": "2026-06-16",
-          "nav": 19.1,
-          "feedDate": "16-Jun-2026",
-          "appendedAt": "2026-06-16T22:14:11.961Z",
-          "latestSnapshotGeneratedAt": "2026-06-16T22:13:02.592Z"
-        },
-        {
-          "navDate": "2026-06-17",
-          "nav": 19.19,
-          "feedDate": "17-Jun-2026",
-          "appendedAt": "2026-06-17T22:03:33.407Z",
-          "latestSnapshotGeneratedAt": "2026-06-17T22:02:39.464Z"
-        },
-        {
-          "navDate": "2026-06-18",
-          "nav": 19.23,
-          "feedDate": "18-Jun-2026",
-          "appendedAt": "2026-06-18T22:11:21.906Z",
-          "latestSnapshotGeneratedAt": "2026-06-18T22:10:18.316Z"
-        },
-        {
-          "navDate": "2026-06-19",
-          "nav": 19.25,
-          "feedDate": "19-Jun-2026",
-          "appendedAt": "2026-06-19T21:12:38.248Z",
-          "latestSnapshotGeneratedAt": "2026-06-19T21:11:43.599Z"
-        }
-      ]
+      "backfillSource": "AMFI bulk CSV (mf-data/YYYY/MM/DD.csv)",
+      "source": "mf-data",
+      "parser": "scripts/ingest/nav-history-from-mfdata.ts",
+      "parserVersion": 2,
+      "firstFile": "mf-data/2016/01/01.csv",
+      "lastFile": "mf-data/2026/06/21.csv"
     }
   },
   "series": [
@@ -4000,10 +3730,6 @@
       18.36
     ],
     [
-      "2025-06-26",
-      18.54
-    ],
-    [
       "2025-06-27",
       18.61
     ],
@@ -4938,6 +4664,10 @@
     [
       "2026-06-03",
       18.68
+    ],
+    [
+      "2026-06-04",
+      18.7
     ],
     [
       "2026-06-05",

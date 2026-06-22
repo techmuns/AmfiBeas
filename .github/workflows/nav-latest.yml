@@ -12,12 +12,16 @@ name: NAV latest snapshot (daily)
 # commit step, so a degraded snapshot can never be committed.
 
 on:
-  # Daily 20:00 UTC = 01:30 IST (next day). SEBI requires AMCs to upload NAV to
-  # AMFI by ~23:00 IST on each business day, so 01:30 IST captures the day's
-  # NAV with comfortable margin (and absorbs GitHub's scheduler delay). Offset
-  # from the weekly ingest cron (Mon 02:30 UTC) so the two never collide.
-  schedule:
-    - cron: "0 20 * * *"
+  # PAUSED: NAV now comes from the mf-data bulk CSVs (built by
+  # scripts/ingest/nav-history-from-mfdata.ts), which emit BOTH the Regular
+  # and Direct plan series. This live-AMFI daily refresh writes only a
+  # single-plan mf-latest-nav.json, so leaving it scheduled would clobber the
+  # mf-data snapshots and break the Trends plan toggle. The daily-update path
+  # will be re-pointed at the new source separately; until then this runs on
+  # manual dispatch only (and nav-history-forward, which chains off this
+  # workflow's completion, no longer auto-runs either).
+  # schedule:
+  #   - cron: "0 20 * * *"
   workflow_dispatch:
     inputs:
       commit:
