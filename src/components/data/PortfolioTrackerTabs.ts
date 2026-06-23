@@ -11,7 +11,7 @@ export const TRACKER_TABS = [
   // "Peers" and "AMC Mix" moved to the Fund-wise view (both are fund-house
   // level concepts; AMC Mix is now "Allocation mix" there).
   { id: "head-to-head", label: "Head-to-head" },
-  { id: "trends", label: "Trends" },
+  { id: "trends", label: "Returns & Ranking" },
 ] as const satisfies readonly DashboardTabDef[];
 
 export type TrackerTabId = (typeof TRACKER_TABS)[number]["id"];
