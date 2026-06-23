@@ -79,6 +79,11 @@ export function FundwisePortfolioView({
   const [holdingQuery, setHoldingQuery] = useState("");
   // Client-requested sector filter for "top conviction ideas" within a house.
   const [sectorFilter, setSectorFilter] = useState("");
+  // Sortable holdings table (mirrors the scheme-wise view): null = default
+  // (latest month's % of book, descending).
+  const [holdingSort, setHoldingSort] = useState<
+    { slug: string; field: "pct" | "shares"; dir: "asc" | "desc" } | null
+  >(null);
   const [tab, setTab] = useState<FundwiseTab>("holdings");
 
   const [loaded, setLoaded] = useState<Record<string, FundHousePortfolio>>({});
@@ -161,6 +166,32 @@ export function FundwisePortfolioView({
         (!sectorFilter || classifySector(r.fincode, r.company_name) === sectorFilter)
     );
   }, [portfolio, holdingQuery, sectorFilter]);
+
+  // Sort by the chosen month-column (default: latest month's % of book,
+  // descending). Clicking a "% of book" / "Shares" header re-sorts.
+  const sortSlug = holdingSort?.slug ?? slugs[0] ?? "";
+  const sortField = holdingSort?.field ?? "pct";
+  const sortDir = holdingSort?.dir ?? "desc";
+  const sortValue = (r: (typeof holdings)[number]): number | null => {
+    const c = r.months[sortSlug];
+    const v = sortField === "pct" ? c?.aum_pct_num : c?.shares_num;
+    return typeof v === "number" && Number.isFinite(v) ? v : null;
+  };
+  const sortedHoldings = [...holdings].sort((a, b) => {
+    const av = sortValue(a);
+    const bv = sortValue(b);
+    if (av === null && bv === null) return 0;
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    return sortDir === "desc" ? bv - av : av - bv;
+  });
+  const onSortHolding = (slug: string, field: "pct" | "shares") => {
+    setHoldingSort((prev) =>
+      prev && prev.slug === slug && prev.field === field
+        ? { slug, field, dir: prev.dir === "desc" ? "asc" : "desc" }
+        : { slug, field, dir: "desc" },
+    );
+  };
 
   // Month-over-month read: biggest weight add / trim and the top-10
   // concentration shift, in percentage points of the AMC's equity book.
@@ -459,8 +490,15 @@ export function FundwisePortfolioView({
                       ))}
                     </tr>
                     <tr className="bg-muted/60 text-[11px] uppercase tracking-wide text-muted-foreground">
-                      {months.map((m) => (
-                        <SubHead key={m.label} />
+                      {months.map((m, i) => (
+                        <SubHead
+                          key={m.label}
+                          slug={slugs[i]}
+                          sortSlug={sortSlug}
+                          sortField={sortField}
+                          sortDir={sortDir}
+                          onSort={onSortHolding}
+                        />
                       ))}
                     </tr>
                   </thead>
@@ -475,7 +513,7 @@ export function FundwisePortfolioView({
                         </td>
                       </tr>
                     ) : (
-                      holdings.map((row) => (
+                      sortedHoldings.map((row) => (
                         <tr
                           key={row.fincode || row.company_name}
                           className="border-b last:border-0 hover:bg-accent/40"
@@ -1030,13 +1068,34 @@ function FundHousePeers({
   );
 }
 
-function SubHead() {
+function SubHead({
+  slug,
+  sortSlug,
+  sortField,
+  sortDir,
+  onSort,
+}: {
+  slug: string;
+  sortSlug: string;
+  sortField: "pct" | "shares";
+  sortDir: "asc" | "desc";
+  onSort: (slug: string, field: "pct" | "shares") => void;
+}) {
+  const indicator = (field: "pct" | "shares") =>
+    sortSlug === slug && sortField === field ? (sortDir === "desc" ? " ▼" : " ▲") : "";
+  const btn = "ml-auto inline-flex items-center whitespace-nowrap hover:text-foreground";
   return (
     <>
       <th className="border-b border-l px-3 py-1.5 text-right font-medium">
-        % of book
+        <button type="button" onClick={() => onSort(slug, "pct")} className={btn}>
+          % of book{indicator("pct")}
+        </button>
       </th>
-      <th className="border-b px-3 py-1.5 text-right font-medium">Shares</th>
+      <th className="border-b px-3 py-1.5 text-right font-medium">
+        <button type="button" onClick={() => onSort(slug, "shares")} className={btn}>
+          Shares{indicator("shares")}
+        </button>
+      </th>
     </>
   );
 }
@@ -1059,7 +1118,7 @@ function Cells({
         {formatPctSafe(cell?.aum_pct_num, 1)}
       </td>
       <td className="px-3 py-2.5 text-right tabular">
-        <span className="inline-flex items-center justify-end gap-1">
+        <span className="inline-flex items-center justify-end gap-1 whitespace-nowrap">
           {formatSharesIndian(cell?.shares_num)} <ArrowMark arrow={arrow} />
         </span>
       </td>
