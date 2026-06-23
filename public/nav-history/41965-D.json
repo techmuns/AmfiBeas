@@ -12,19 +12,19 @@
     "isEtf": false,
     "isFof": false,
     "firstDate": "2019-06-18",
-    "lastDate": "2026-06-19",
-    "points": 1726,
+    "lastDate": "2026-06-22",
+    "points": 1727,
     "stage": 3,
     "ruleVersion": 1,
     "parserVersion": 2,
     "generatedAt": "2026-06-22T12:31:30.123Z",
-    "lastForwardAppendAt": null,
+    "lastForwardAppendAt": "2026-06-23T21:45:25.890Z",
     "provenance": {
       "backfillSource": "AMFI bulk CSV (mf-data/YYYY/MM/DD.csv)",
       "source": "mf-data",
       "parser": "scripts/ingest/nav-history-from-mfdata.ts",
       "parserVersion": 2,
-      "forwardSource": "AMFI NAVAll.txt (scripts/ingest/nav-daily-refresh.ts)",
+      "forwardSource": "AMFI NAVAll.txt (nav-daily-refresh.ts)",
       "firstFile": "mf-data/2016/01/01.csv",
       "lastFile": "mf-data/2026/06/21.csv"
     }
@@ -6933,6 +6933,10 @@
     [
       "2026-06-19",
       32.56
+    ],
+    [
+      "2026-06-22",
+      32.87
     ]
   ]
 }
