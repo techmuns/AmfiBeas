@@ -30,12 +30,17 @@ export interface SectorShiftStock {
   company: string;
   netCr: number;
   amcs: string[];
+  /** Top schemes (fund names) that bought/sold this stock — for the zoom. */
+  schemes?: SectorShiftScheme[];
 }
-/** A scheme that bought/sold the most in a sector this month (signed net ₹ Cr). */
+/** A scheme that bought/sold a sector or stock this month. `netCr` is the pure
+ *  trade flow (Σ share change × price); `valueChgCr` is the holding-value change
+ *  (incl. price moves). Both signed (+ bought). */
 export interface SectorShiftScheme {
   fund: string;
   amc: string;
   netCr: number;
+  valueChgCr: number;
 }
 /** One sector whose share of active-equity MF AUM moved notably this month. */
 export interface SectorShiftRow {
@@ -47,7 +52,7 @@ export interface SectorShiftRow {
   /** Change in that share, in percentage points (signed). */
   changePp: number;
   stocks: SectorShiftStock[];
-  /** Top schemes (not just AMCs) that drove the move — for the per-sector zoom. */
+  /** Top schemes (not just AMCs) that drove the sector move — for the zoom. */
   schemes?: SectorShiftScheme[];
 }
 export interface SectorShifts {
