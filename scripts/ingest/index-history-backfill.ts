@@ -12,9 +12,12 @@
  *   • src/data/snapshots/index-history-manifest.json
  *       — tiny per-index index (mirrors mf-history-manifest.json).
  *
- * CSV format (NSE export):
- *   UTF-8 BOM, header  Date,Open,High,Low,Close,Shares Traded,Turnover
- *   Rows                31-MAR-2020,6938.05,7041.65,6808.75,6996.75,...
+ * CSV format — HEADER-DRIVEN (Date + Close located by column name), so both
+ * manual sources parse:
+ *   • nseindia.com export:  Date,Open,High,Low,Close,Shares Traded,Turnover
+ *                           31-MAR-2020,6938.05,...            (UTF-8 BOM)
+ *   • niftyindices.com PR:  "Index Name","Date","Open","High","Low","Close"
+ *                           "NIFTY 500","31 Mar 2017",...,"7995.05"
  *
  * Validation rules — any failure rejects THAT row (not the whole run):
  *   • Date must parse from DD-MMM-YYYY to ISO YYYY-MM-DD
@@ -49,9 +52,10 @@ const MONTH_ABBR: Record<string, number> = {
 
 interface RawRow { date: string; close: number }
 
-/** Parse "31-MAR-2020" → "2020-03-31". Returns null on bad input. */
-function parseNseDate(raw: string): string | null {
-  const m = raw.trim().match(/^(\d{1,2})-([A-Z]{3})-(\d{4})$/i);
+/** Parse a date in either the nseindia.com ("31-MAR-2020") or niftyindices.com
+ *  ("31 Mar 2017") style → ISO "YYYY-MM-DD". Null on bad input. */
+function parseIndexDate(raw: string): string | null {
+  const m = raw.trim().match(/^(\d{1,2})[-\s]([A-Za-z]{3})[-\s](\d{4})$/);
   if (!m) return null;
   const day = Number(m[1]);
   const month = MONTH_ABBR[m[2].toUpperCase()];
@@ -60,10 +64,22 @@ function parseNseDate(raw: string): string | null {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-/** Parse one CSV body → ordered list of [isoDate, close] rows. Strips
- *  the BOM, skips the header (column names contain "Date" / "Close"),
- *  trims whitespace. Same shape as scripts/ingest/market-indices.ts so
- *  the two stay format-consistent. */
+/** Strip surrounding double-quotes (niftyindices quotes every field) + trim. */
+function unquote(s: string): string {
+  const t = s.trim();
+  return t.length >= 2 && t.startsWith('"') && t.endsWith('"') ? t.slice(1, -1).trim() : t;
+}
+
+/**
+ * Parse one CSV body → ordered list of [isoDate, close] rows. HEADER-DRIVEN
+ * (Date + Close columns located by name), so it handles BOTH manual sources:
+ *   • nseindia.com export:  Date,Open,High,Low,Close,Shares Traded,Turnover…
+ *                           rows  "31-MAR-2020,6938.05,…"   (Close at col 4)
+ *   • niftyindices.com PR:  "Index Name","Date","Open","High","Low","Close"
+ *                           rows  "…","31 Mar 2017","…","…","…","7995.05"
+ * Strips the BOM + surrounding quotes; trims whitespace. Fields never contain
+ * an embedded comma in either source, so a plain comma split is safe.
+ */
 function parseCsv(text: string): RawRow[] {
   const out: RawRow[] = [];
   const lines = text
@@ -71,12 +87,16 @@ function parseCsv(text: string): RawRow[] {
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter((l) => l.length > 0);
-  if (lines.length === 0) return out;
+  if (lines.length < 2) return out;
+  const header = lines[0].split(",").map((c) => unquote(c).toLowerCase());
+  const dateIdx = header.findIndex((c) => c === "date");
+  const closeIdx = header.findIndex((c) => c === "close");
+  if (dateIdx < 0 || closeIdx < 0) return out;
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(",").map((c) => c.trim());
-    if (cols.length < 5) continue;
-    const date = parseNseDate(cols[0]);
-    const close = Number(cols[4]);
+    const cols = lines[i].split(",").map((c) => unquote(c));
+    if (cols.length <= Math.max(dateIdx, closeIdx)) continue;
+    const date = parseIndexDate(cols[dateIdx]);
+    const close = Number(cols[closeIdx]);
     if (!date || !Number.isFinite(close) || close <= 0) continue;
     out.push({ date, close });
   }
@@ -135,6 +155,22 @@ async function main(): Promise<void> {
     info(`   ${f}: parsed=${rows.length} skipped=${skipped} range=${dates[0] ?? "-"}..${dates[dates.length - 1] ?? "-"}`);
   }
 
+  // Preserve dates the prior snapshot has BEYOND the CSV coverage — e.g. the
+  // recent days appended by the live index forward-refresh, which the manual
+  // financial-year CSVs don't include yet. The CSVs stay authoritative for the
+  // dates they DO cover (we only fill gaps), so re-running this backfill never
+  // regresses the forward-appended tail.
+  try {
+    const prev = JSON.parse(
+      await fs.readFile(path.join(HISTORY_DIR, `${INDEX_ID}.json`), "utf8"),
+    ) as { series?: Array<[string, number]> };
+    let preserved = 0;
+    for (const [d, c] of prev.series ?? []) {
+      if (!byDate.has(d) && Number.isFinite(c) && c > 0) { byDate.set(d, c); preserved += 1; }
+    }
+    if (preserved > 0) info(`preserved ${preserved} date(s) from the prior snapshot beyond CSV coverage`);
+  } catch { /* no prior snapshot — first run */ }
+
   // Validate the aggregate before writing.
   const dates = Array.from(byDate.keys()).sort();
   if (dates.length < 2) {
@@ -164,7 +200,7 @@ async function main(): Promise<void> {
     meta: {
       indexId: INDEX_ID,
       name: INDEX_NAME,
-      source: "NSE historical CSV",
+      source: "NSE (nseindia.com) + niftyindices.com historical CSV",
       stage: "csv-backfill",
       generatedAt,
       firstDate,
