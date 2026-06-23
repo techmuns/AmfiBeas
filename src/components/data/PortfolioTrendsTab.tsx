@@ -628,7 +628,7 @@ function Header({
     <div className="space-y-1">
       <div>
         <h2 className="text-base font-semibold tracking-tight">
-          Trends — <span className="text-foreground">{fundName}</span>
+          Returns &amp; Ranking — <span className="text-foreground">{fundName}</span>
         </h2>
         {subtitleLine && (
           <p className="text-xs text-muted-foreground">{subtitleLine}</p>
