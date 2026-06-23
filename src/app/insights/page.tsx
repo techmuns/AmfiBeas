@@ -500,6 +500,7 @@ export default function InsightsPage() {
                       direction={r.direction}
                       month={rotation.month}
                       schemes={r.schemes ?? []}
+                      stocks={r.stocks}
                     />
                   }
                 >

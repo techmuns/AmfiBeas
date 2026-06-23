@@ -3,33 +3,39 @@
 import { useEffect, useState } from "react";
 import { Maximize2, X } from "lucide-react";
 import { cn } from "@/lib/cn";
-import type { SectorShiftScheme } from "@/data/cap-flows";
+import type { SectorShiftScheme, SectorShiftStock } from "@/data/cap-flows";
 
 /** ₹ Cr, Indian-grouped, negatives in brackets (mirrors the insights tables). */
 function fmtCr(v: number): string {
   const abs = Math.abs(Math.round(v)).toLocaleString("en-IN");
   return v < 0 ? `(${abs})` : abs;
 }
+function cleanCompany(s: string): string {
+  return s.replace(/\s+(Ltd\.?|Limited)$/i, "");
+}
 
 /**
- * Per-sector "zoom": a small button that opens a modal listing the specific
- * schemes (not just AMCs) that bought/sold the most in a rotating sector, and
- * by how much (net ₹ Cr). Top 5. Client-only — embedded in the server-rendered
- * sector card via the Card `action` slot.
+ * Per-sector "zoom": a button that opens a modal with the scheme-level detail
+ * behind a rotating sector — the top schemes (with net traded vs holding-value
+ * change), and for each driving stock, the specific schemes that bought/sold it.
+ * Client-only — embedded in the server-rendered sector card via the Card action.
  */
 export function SectorZoom({
   sector,
   direction,
   month,
   schemes,
+  stocks,
 }: {
   sector: string;
   direction: "up" | "down";
   month: string;
   schemes: SectorShiftScheme[];
+  stocks: SectorShiftStock[];
 }) {
   const [open, setOpen] = useState(false);
   const up = direction === "up";
+  const toneCls = up ? "text-positive" : "text-negative";
 
   useEffect(() => {
     if (!open) return;
@@ -40,7 +46,7 @@ export function SectorZoom({
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
-  if (schemes.length === 0) return null;
+  if (schemes.length === 0 && stocks.every((s) => !s.schemes?.length)) return null;
 
   return (
     <>
@@ -63,7 +69,7 @@ export function SectorZoom({
           onClick={() => setOpen(false)}
         >
           <div
-            className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-lg border bg-card p-4 shadow-xl"
+            className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-lg border bg-card p-4 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
@@ -83,46 +89,92 @@ export function SectorZoom({
               </button>
             </div>
 
-            <div className="mt-3 overflow-hidden rounded-md border">
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr className="bg-muted/60 text-xs text-muted-foreground">
-                    <th className="px-3 py-2 text-left font-medium">Scheme</th>
-                    <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
-                      Net ₹ Cr
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {schemes.map((s) => (
-                    <tr key={s.fund} className="border-b last:border-0">
-                      <td className="px-3 py-2">
-                        <span className="font-medium">{s.fund}</span>
-                        {s.amc && (
-                          <span className="ml-1.5 text-[11px] text-muted-foreground">
-                            {s.amc}
-                          </span>
-                        )}
-                      </td>
-                      <td
-                        className={cn(
-                          "whitespace-nowrap px-3 py-2 text-right tabular",
-                          up ? "text-positive" : "text-negative"
-                        )}
-                      >
-                        {fmtCr(s.netCr)}
-                      </td>
+            {/* 1. Sector-level top schemes — trade flow vs value change. */}
+            {schemes.length > 0 && (
+              <div className="mt-3 overflow-hidden rounded-md border">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-muted/60 text-xs text-muted-foreground">
+                      <th className="px-3 py-2 text-left font-medium">Scheme</th>
+                      <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
+                        Net traded
+                      </th>
+                      <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
+                        Value Δ
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
-              Top {schemes.length} schemes by net ₹ {up ? "bought" : "sold"} in{" "}
-              {sector} ({month}). Net = Σ(month-over-month share change × trade
-              price) across the sector&rsquo;s stocks.
+                  </thead>
+                  <tbody>
+                    {schemes.map((s) => (
+                      <tr key={s.fund} className="border-b last:border-0">
+                        <td className="px-3 py-2">
+                          <span className="font-medium">{s.fund}</span>
+                          {s.amc && (
+                            <span className="ml-1.5 text-[11px] text-muted-foreground">
+                              {s.amc}
+                            </span>
+                          )}
+                        </td>
+                        <td className={cn("whitespace-nowrap px-3 py-2 text-right tabular", toneCls)}>
+                          {fmtCr(s.netCr)}
+                        </td>
+                        <td className={cn("whitespace-nowrap px-3 py-2 text-right tabular", toneCls)}>
+                          {fmtCr(s.valueChgCr)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
+              <span className="font-medium">Net traded</span> = Σ(month-over-month
+              share change × trade price), the pure buy/sell flow.{" "}
+              <span className="font-medium">Value Δ</span> = change in the
+              schemes&rsquo; holding value (includes price moves). ₹ Cr.
             </p>
+
+            {/* 2. Per-stock breakdown — which schemes drove each name. */}
+            {stocks.some((s) => s.schemes?.length) && (
+              <div className="mt-4">
+                <p className="mb-1.5 text-xs font-medium text-foreground">
+                  By stock — schemes that {up ? "bought" : "sold"} each name
+                </p>
+                <div className="space-y-2.5">
+                  {stocks.map((st) => (
+                    <div key={st.company} className="rounded-md border px-3 py-2">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-[13px] font-medium">
+                          {cleanCompany(st.company)}
+                        </span>
+                        <span className={cn("shrink-0 text-[13px] tabular", toneCls)}>
+                          {fmtCr(st.netCr)}
+                        </span>
+                      </div>
+                      {st.schemes && st.schemes.length > 0 ? (
+                        <ul className="mt-1 space-y-0.5">
+                          {st.schemes.map((sc) => (
+                            <li
+                              key={sc.fund}
+                              className="flex items-baseline justify-between gap-2 text-[11px] text-muted-foreground"
+                            >
+                              <span className="truncate">{sc.fund}</span>
+                              <span className={cn("shrink-0 tabular", toneCls)}>
+                                {fmtCr(sc.netCr)}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="mt-0.5 text-[11px] text-muted-foreground/70">
+                          No scheme-level detail.
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

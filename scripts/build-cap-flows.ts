@@ -115,9 +115,10 @@ function main() {
   let curSlug = "";
   let prevSlug = "";
   let fundCount = 0;
-  // Per-scheme net share delta by fincode — for the sector zoom (which schemes
-  // bought/sold the most in each rotating sector). Keyed by full scheme name.
-  const schemeFlow = new Map<string, Map<string, number>>();
+  // Per-scheme net flow by fincode — for the sector zoom. Tracks BOTH the net
+  // share delta (→ pure trade flow = shares × price) and the net value delta
+  // (valCur − valPrev, which includes price moves). Keyed by full scheme name.
+  const schemeFlow = new Map<string, Map<string, { sh: number; val: number }>>();
   // Trade price per fincode, populated for the fincodes that pass the row
   // filters below (so the scheme zoom only counts real, de-noised trades).
   const priceByFincode = new Map<string, number>();
@@ -159,11 +160,15 @@ function main() {
       a.valCur += vC;
       a.valPrev += vP;
       const d = shC - shP;
-      if (d !== 0) {
-        a.amc.set(amc, (a.amc.get(amc) ?? 0) + d);
+      const dv = vC - vP;
+      if (d !== 0 || dv !== 0) {
+        if (d !== 0) a.amc.set(amc, (a.amc.get(amc) ?? 0) + d);
         let sf = schemeFlow.get(j.meta.fund);
         if (!sf) { sf = new Map(); schemeFlow.set(j.meta.fund, sf); }
-        sf.set(r.fincode, (sf.get(r.fincode) ?? 0) + d);
+        const e = sf.get(r.fincode) ?? { sh: 0, val: 0 };
+        e.sh += d;
+        e.val += dv;
+        sf.set(r.fincode, e);
       }
     }
   }
@@ -300,48 +305,71 @@ function main() {
   // Net-flow movers per sector (from the filtered rows; signed netCr).
   const secMovers = new Map<
     string,
-    { company: string; netCr: number; amcs: string[] }[]
+    { company: string; fincode: string; netCr: number; amcs: string[] }[]
   >();
   for (const r of rows) {
     const sector = classifySector(r.fincode, r.company);
     if (NON_SECTORS.has(sector)) continue;
     const arr = secMovers.get(sector) ?? [];
-    arr.push({ company: r.company, netCr: r.netCr, amcs: r.netCr >= 0 ? r.buyers : r.sellers });
+    arr.push({ company: r.company, fincode: r.fincode, netCr: r.netCr, amcs: r.netCr >= 0 ? r.buyers : r.sellers });
     secMovers.set(sector, arr);
   }
+  const cleanScheme = (s: string) =>
+    s
+      .replace(/\([^)]*\)\s*$/, "")
+      .replace(/\s*[-–]\s*(Reg|Dir|Direct|Regular)\s*$/i, "")
+      .replace(/[\s-–]+$/, "")
+      .trim();
+
+  // Per-scheme net flow, accumulated per sector AND per stock. trade =
+  // Σ(share delta × price) [pure trade]; value = Σ(valCur − valPrev) [includes
+  // price moves]. Drives the per-sector zoom: top schemes for the sector, plus
+  // the schemes behind each individual stock.
+  const schemeSectorFlow = new Map<string, Map<string, { trade: number; value: number }>>();
+  const stockSchemes = new Map<string, { scheme: string; trade: number; value: number }[]>();
+  for (const [scheme, byFin] of schemeFlow) {
+    for (const [fincode, e] of byFin) {
+      const price = priceByFincode.get(fincode);
+      if (price === undefined) continue; // filtered out (noise / corporate action)
+      const trade = e.sh * price;
+      const value = e.val;
+      const tradeOk = Number.isFinite(trade) && trade !== 0;
+      const valueOk = Number.isFinite(value) && value !== 0;
+      if (!tradeOk && !valueOk) continue;
+      const sa = stockSchemes.get(fincode) ?? [];
+      sa.push({ scheme, trade, value });
+      stockSchemes.set(fincode, sa);
+      const a = agg.get(fincode);
+      if (!a) continue;
+      const sector = classifySector(fincode, pickName(a.names));
+      if (NON_SECTORS.has(sector)) continue;
+      let m = schemeSectorFlow.get(sector);
+      if (!m) { m = new Map(); schemeSectorFlow.set(sector, m); }
+      const cur = m.get(scheme) ?? { trade: 0, value: 0 };
+      cur.trade += trade;
+      cur.value += value;
+      m.set(scheme, cur);
+    }
+  }
+  // Top schemes behind a single stock (ranked by trade flow, signed by dir).
+  const stockTopSchemes = (fincode: string, dir: "up" | "down") =>
+    (stockSchemes.get(fincode) ?? [])
+      .filter((s) => (dir === "up" ? s.trade > 0 : s.trade < 0))
+      .sort((x, y) => (dir === "up" ? y.trade - x.trade : x.trade - y.trade))
+      .slice(0, 4)
+      .map((s) => ({ fund: cleanScheme(s.scheme), amc: amcOf(s.scheme), netCr: Math.round(s.trade), valueChgCr: Math.round(s.value) }));
   const pickStocks = (sector: string, dir: "up" | "down") =>
     (secMovers.get(sector) ?? [])
       .filter((m) => (dir === "up" ? m.netCr > 0 : m.netCr < 0))
       .sort((x, y) => (dir === "up" ? y.netCr - x.netCr : x.netCr - y.netCr))
       .slice(0, 5)
-      .map((m) => ({ company: m.company, netCr: m.netCr, amcs: m.amcs }));
-  // Per-scheme net ₹ flow by sector — Σ(scheme's net share delta × trade price)
-  // over the sector's de-noised fincodes. Drives the per-sector zoom (which
-  // specific schemes bought/sold the most, and by how much).
-  const schemeSectorFlow = new Map<string, Map<string, number>>(); // sector -> scheme -> netCr
-  for (const [scheme, byFin] of schemeFlow) {
-    for (const [fincode, shareDelta] of byFin) {
-      const price = priceByFincode.get(fincode);
-      if (price === undefined) continue; // filtered out (noise / corporate action)
-      const a = agg.get(fincode);
-      if (!a) continue;
-      const sector = classifySector(fincode, pickName(a.names));
-      if (NON_SECTORS.has(sector)) continue;
-      const netCr = shareDelta * price;
-      if (!Number.isFinite(netCr) || netCr === 0) continue;
-      let m = schemeSectorFlow.get(sector);
-      if (!m) { m = new Map(); schemeSectorFlow.set(sector, m); }
-      m.set(scheme, (m.get(scheme) ?? 0) + netCr);
-    }
-  }
-  const cleanScheme = (s: string) =>
-    s.replace(/\([^)]*\)\s*$/, "").replace(/\s*[-–]\s*(Reg|Dir|Direct|Regular)\s*$/i, "").trim();
+      .map((m) => ({ company: m.company, netCr: m.netCr, amcs: m.amcs, schemes: stockTopSchemes(m.fincode, dir) }));
   const pickSchemes = (sector: string, dir: "up" | "down") =>
     [...(schemeSectorFlow.get(sector)?.entries() ?? [])]
-      .filter(([, net]) => (dir === "up" ? net > 0 : net < 0))
-      .sort((x, y) => (dir === "up" ? y[1] - x[1] : x[1] - y[1]))
+      .filter(([, f]) => (dir === "up" ? f.trade > 0 : f.trade < 0))
+      .sort((x, y) => (dir === "up" ? y[1].trade - x[1].trade : x[1].trade - y[1].trade))
       .slice(0, 5)
-      .map(([scheme, net]) => ({ fund: cleanScheme(scheme), amc: amcOf(scheme), netCr: Math.round(net) }));
+      .map(([scheme, f]) => ({ fund: cleanScheme(scheme), amc: amcOf(scheme), netCr: Math.round(f.trade), valueChgCr: Math.round(f.value) }));
 
   const r2 = (v: number) => Math.round(v * 100) / 100;
   const secStats = [...secVal.entries()]
