@@ -41,10 +41,10 @@ interface DailyRow {
   close: number;
 }
 
-/** Parse "31-MAR-2020" → "2020-03-31". Returns null on bad input. */
-function parseNseDate(raw: string): string | null {
-  const trimmed = raw.trim();
-  const m = trimmed.match(/^(\d{1,2})-([A-Z]{3})-(\d{4})$/i);
+/** Parse a date in either the nseindia.com ("31-MAR-2020") or niftyindices.com
+ *  ("31 Mar 2017") style → ISO "YYYY-MM-DD". Null on bad input. */
+function parseIndexDate(raw: string): string | null {
+  const m = raw.trim().match(/^(\d{1,2})[-\s]([A-Za-z]{3})[-\s](\d{4})$/);
   if (!m) return null;
   const day = Number(m[1]);
   const month = MONTH_ABBR[m[2].toUpperCase()];
@@ -53,8 +53,19 @@ function parseNseDate(raw: string): string | null {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-/** Strip leading BOM, split CSV rows (no embedded quotes / commas in
- *  this file format), and skip the header. */
+/** Strip surrounding double-quotes (niftyindices quotes every field) + trim. */
+function unquote(s: string): string {
+  const t = s.trim();
+  return t.length >= 2 && t.startsWith('"') && t.endsWith('"') ? t.slice(1, -1).trim() : t;
+}
+
+/**
+ * Strip the BOM, then parse rows HEADER-DRIVEN (Date + Close columns located
+ * by name) so both manual sources work: the nseindia.com export
+ * (Date,Open,High,Low,Close,…; "31-MAR-2020") and the niftyindices.com PR
+ * export ("Index Name","Date",…,"Close"; "31 Mar 2017"). Fields never contain
+ * an embedded comma in either, so a plain comma split is safe.
+ */
 function parseCsv(text: string): { date: string; close: number }[] {
   const out: { date: string; close: number }[] = [];
   const lines = text
@@ -62,27 +73,31 @@ function parseCsv(text: string): { date: string; close: number }[] {
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter((l) => l.length > 0);
-  if (lines.length === 0) return out;
-  // Skip header row (column names contain "Date" / "Close").
+  if (lines.length < 2) return out;
+  const header = lines[0].split(",").map((c) => unquote(c).toLowerCase());
+  const dateIdx = header.findIndex((c) => c === "date");
+  const closeIdx = header.findIndex((c) => c === "close");
+  if (dateIdx < 0 || closeIdx < 0) return out;
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(",").map((c) => c.trim());
-    if (cols.length < 5) continue;
-    const date = parseNseDate(cols[0]);
-    const close = Number(cols[4]);
+    const cols = lines[i].split(",").map((c) => unquote(c));
+    if (cols.length <= Math.max(dateIdx, closeIdx)) continue;
+    const date = parseIndexDate(cols[dateIdx]);
+    const close = Number(cols[closeIdx]);
     if (!date || !Number.isFinite(close) || close <= 0) continue;
     out.push({ date, close });
   }
   return out;
 }
 
-/** Extract a canonical index id from the filename. NSE export
- *  filenames look like `NIFTY 500-DD-MM-YYYY-to-DD-MM-YYYY.csv`. */
+/** Extract a canonical index id from the filename, for both manual sources:
+ *    nseindia.com:     `NIFTY 500-DD-MM-YYYY-to-DD-MM-YYYY.csv`
+ *    niftyindices.com: `NIFTY 500_Historical_PR_DDMMYYYYtoDDMMYYYY.csv`
+ *  The index name is whatever precedes the first date / "_Historical_" token. */
 function indexIdFromFilename(filename: string): string | null {
-  // Strip directory + extension.
   const base = path.basename(filename, ".csv");
-  // The first date in the filename always starts with `DD-MM-YYYY`,
-  // so anything before that pattern is the index name.
-  const m = base.match(/^(.+?)-\d{2}-\d{2}-\d{4}-to-/);
+  const m =
+    base.match(/^(.+?)-\d{2}-\d{2}-\d{4}-to-/) ??
+    base.match(/^(.+?)_Historical_/i);
   if (!m) return null;
   return m[1].trim().replace(/\s+/g, "_").toUpperCase();
 }
