@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
+import { SectorZoom } from "@/components/data/SectorZoom";
 import type { CsvColumn } from "@/lib/csv";
 import { cn } from "@/lib/cn";
 import {
@@ -493,8 +494,16 @@ export default function InsightsPage() {
                 <Card
                   key={r.sector}
                   title={`${r.sector} — AUM share ${fmtBpsFromPp(r.changePp)} (${rotation.month})`}
+                  action={
+                    <SectorZoom
+                      sector={r.sector}
+                      direction={r.direction}
+                      month={rotation.month}
+                      schemes={r.schemes ?? []}
+                    />
+                  }
                 >
-                  <p className="mb-3 text-[13px] leading-snug text-muted-foreground">
+                  <p className="mb-3 min-h-[2.5rem] text-[13px] leading-snug text-muted-foreground">
                     {r.sector}&rsquo;s share of active-equity MF AUM{" "}
                     {up ? "rose" : "fell"} from{" "}
                     <span className="font-medium text-foreground">
@@ -511,7 +520,9 @@ export default function InsightsPage() {
                       <thead>
                         <tr className="bg-muted/60 text-xs text-muted-foreground">
                           <th className="px-3 py-2 text-left font-medium">Company</th>
-                          <th className="px-3 py-2 text-right font-medium">Net ₹ Cr</th>
+                          <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
+                            Net ₹ Cr
+                          </th>
                           <th className="px-3 py-2 text-left font-medium">
                             {up ? "Lead buyers" : "Lead sellers"}
                           </th>
@@ -530,19 +541,21 @@ export default function InsightsPage() {
                         ) : (
                           r.stocks.map((s) => (
                             <tr key={s.company} className="border-b last:border-0">
-                              <td className="px-3 py-2 font-medium">
-                                {s.company.replace(/\s+(Ltd\.?|Limited)$/i, "")}
+                              <td className="h-11 px-3 align-middle font-medium">
+                                <span className="line-clamp-2">
+                                  {s.company.replace(/\s+(Ltd\.?|Limited)$/i, "")}
+                                </span>
                               </td>
                               <td
                                 className={cn(
-                                  "px-3 py-2 text-right tabular",
+                                  "h-11 whitespace-nowrap px-3 text-right align-middle tabular",
                                   up ? "text-positive" : "text-negative"
                                 )}
                               >
                                 {fmtINR(s.netCr)}
                               </td>
-                              <td className="px-3 py-2 text-muted-foreground">
-                                {s.amcs.join(", ")}
+                              <td className="h-11 px-3 align-middle text-muted-foreground">
+                                <span className="line-clamp-2">{s.amcs.join(", ")}</span>
                               </td>
                             </tr>
                           ))

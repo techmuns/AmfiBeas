@@ -115,6 +115,12 @@ function main() {
   let curSlug = "";
   let prevSlug = "";
   let fundCount = 0;
+  // Per-scheme net share delta by fincode — for the sector zoom (which schemes
+  // bought/sold the most in each rotating sector). Keyed by full scheme name.
+  const schemeFlow = new Map<string, Map<string, number>>();
+  // Trade price per fincode, populated for the fincodes that pass the row
+  // filters below (so the scheme zoom only counts real, de-noised trades).
+  const priceByFincode = new Map<string, number>();
 
   const slugMonth = (l: string) =>
     l.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
@@ -153,7 +159,12 @@ function main() {
       a.valCur += vC;
       a.valPrev += vP;
       const d = shC - shP;
-      if (d !== 0) a.amc.set(amc, (a.amc.get(amc) ?? 0) + d);
+      if (d !== 0) {
+        a.amc.set(amc, (a.amc.get(amc) ?? 0) + d);
+        let sf = schemeFlow.get(j.meta.fund);
+        if (!sf) { sf = new Map(); schemeFlow.set(j.meta.fund, sf); }
+        sf.set(r.fincode, (sf.get(r.fincode) ?? 0) + d);
+      }
     }
   }
 
@@ -223,6 +234,7 @@ function main() {
     const buyers = byAmc.filter(([, d]) => d > 0).sort((x, y) => y[1] - x[1]).slice(0, 3).map((e) => e[0]);
     const sellers = byAmc.filter(([, d]) => d < 0).sort((x, y) => x[1] - y[1]).slice(0, 3).map((e) => e[0]);
 
+    priceByFincode.set(fincode, price);
     rows.push({
       company: pickName(a.names),
       fincode,
@@ -303,6 +315,34 @@ function main() {
       .sort((x, y) => (dir === "up" ? y.netCr - x.netCr : x.netCr - y.netCr))
       .slice(0, 5)
       .map((m) => ({ company: m.company, netCr: m.netCr, amcs: m.amcs }));
+  // Per-scheme net ₹ flow by sector — Σ(scheme's net share delta × trade price)
+  // over the sector's de-noised fincodes. Drives the per-sector zoom (which
+  // specific schemes bought/sold the most, and by how much).
+  const schemeSectorFlow = new Map<string, Map<string, number>>(); // sector -> scheme -> netCr
+  for (const [scheme, byFin] of schemeFlow) {
+    for (const [fincode, shareDelta] of byFin) {
+      const price = priceByFincode.get(fincode);
+      if (price === undefined) continue; // filtered out (noise / corporate action)
+      const a = agg.get(fincode);
+      if (!a) continue;
+      const sector = classifySector(fincode, pickName(a.names));
+      if (NON_SECTORS.has(sector)) continue;
+      const netCr = shareDelta * price;
+      if (!Number.isFinite(netCr) || netCr === 0) continue;
+      let m = schemeSectorFlow.get(sector);
+      if (!m) { m = new Map(); schemeSectorFlow.set(sector, m); }
+      m.set(scheme, (m.get(scheme) ?? 0) + netCr);
+    }
+  }
+  const cleanScheme = (s: string) =>
+    s.replace(/\([^)]*\)\s*$/, "").replace(/\s*[-–]\s*(Reg|Dir|Direct|Regular)\s*$/i, "").trim();
+  const pickSchemes = (sector: string, dir: "up" | "down") =>
+    [...(schemeSectorFlow.get(sector)?.entries() ?? [])]
+      .filter(([, net]) => (dir === "up" ? net > 0 : net < 0))
+      .sort((x, y) => (dir === "up" ? y[1] - x[1] : x[1] - y[1]))
+      .slice(0, 5)
+      .map(([scheme, net]) => ({ fund: cleanScheme(scheme), amc: amcOf(scheme), netCr: Math.round(net) }));
+
   const r2 = (v: number) => Math.round(v * 100) / 100;
   const secStats = [...secVal.entries()]
     .filter(([sector, v]) => !NON_SECTORS.has(sector) && (v.cur > 0 || v.prev > 0))
@@ -329,6 +369,7 @@ function main() {
         pctPrev: r2(s.pctPrev),
         changePp: r2(s.changePp),
         stocks: pickStocks(s.sector, direction),
+        schemes: pickSchemes(s.sector, direction),
       };
     }),
   };
