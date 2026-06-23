@@ -11,6 +11,19 @@ import {
   TrendsPeerTable,
   type PeerRankRow,
 } from "@/components/data/TrendsPeerTable";
+import {
+  RollingReturnChart,
+  type RollingChartPoint,
+} from "@/components/data/RollingReturnChart";
+import {
+  ROLLING_WINDOWS,
+  rollingReturns,
+  rollingStats,
+  isRollingCagr,
+  type RollingWindow,
+  type RollingPoint,
+  type RollingStats,
+} from "@/lib/rolling";
 import { fmtBps } from "@/lib/units";
 // Phase 3.10A: tiny bundled index of available daily index histories.
 // The per-index series itself is fetched at runtime, mirroring how fund
@@ -26,6 +39,12 @@ type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y" | "10Y";
 // All selectable periods, smallest → largest. Order is also the render
 // order of KPI cards and timeframe buttons.
 const PERIODS: PeriodKey[] = ["1M", "3M", "6M", "1Y", "3Y", "5Y", "10Y"];
+// Minimum number of rolling windows for a window to be offered (so the
+// average/consistency reflect a meaningful sample, not 1–2 windows).
+const MIN_ROLLING_WINDOWS = 30;
+const ALL_FALSE_AVAIL: Record<PeriodKey, boolean> = {
+  "1M": false, "3M": false, "6M": false, "1Y": false, "3Y": false, "5Y": false, "10Y": false,
+};
 // 3Y went live in Phase 3.6C; 5Y went live in Phase 3.8C. No periods are
 // gated as placeholder buttons any more — kept as an empty array so the
 // renderer below stays parameterized for any future addition.
@@ -341,28 +360,11 @@ function TrendsTabInner({
   );
   const [period, setPeriod] = useState<PeriodKey | null>(defaultPeriod);
 
-  // On fund change: keep the user's current period if the new fund still
-  // supports it (so a 5Y or 3Y selection persists when switching between
-  // two funds that both have the same period). Otherwise fall back to:
-  //   - if previously on 5Y: FALLBACK_FROM_5Y (3Y → 1Y → 6M → 3M → 1M)
-  //   - otherwise: DEFAULT_ORDER (1Y → 6M → 3M → 1M)
-  // Either way, fresh-load default never auto-selects 3Y or 5Y.
-  const [prevDataKey, setPrevDataKey] = useState(dataKey);
-  if (prevDataKey !== dataKey) {
-    setPrevDataKey(dataKey);
-    const stillAvailable = period && returnRow?.dataAvailability[period];
-    if (stillAvailable) {
-      // Keep the current period across the fund/plan change.
-    } else {
-      const order =
-        period === "10Y"
-          ? FALLBACK_FROM_10Y
-          : period === "5Y"
-            ? FALLBACK_FROM_5Y
-            : DEFAULT_ORDER;
-      setPeriod(firstAvailableFromOrder(returnRow, order));
-    }
-  }
+  // NAV (rebased) vs Rolling-returns view. Rolling offers 6M/1Y/3Y/5Y only;
+  // 1M/3M are too noisy and 10Y has too few windows over ~10 years. The
+  // period-validity check (which keeps `period` legal for the active fund +
+  // mode) lives after the rolling memos below, since it needs them.
+  const [mode, setMode] = useState<"nav" | "rolling">("nav");
 
   // On-demand history fetch, cached at component scope. Cache by schemecode.
   const [history, setHistory] = useState<Record<string, HistoryFile>>({});
@@ -420,6 +422,83 @@ function TrendsTabInner({
   }, []);
   const benchmarkLoaded: IndexHistoryFile | null =
     benchmark && benchmark !== "errored" ? benchmark : null;
+
+  // ---- Rolling returns (computed client-side from the fetched daily series) -
+  const rolling = useMemo(() => {
+    if (!historyLoaded) return null;
+    const fundByWindow = {} as Record<RollingWindow, RollingPoint[]>;
+    const benchByWindow = {} as Record<RollingWindow, RollingPoint[]>;
+    for (const w of ROLLING_WINDOWS) {
+      fundByWindow[w] = rollingReturns(historyLoaded.series, w);
+      benchByWindow[w] = benchmarkLoaded ? rollingReturns(benchmarkLoaded.series, w) : [];
+    }
+    return { fundByWindow, benchByWindow };
+  }, [historyLoaded, benchmarkLoaded]);
+
+  const rollingFundStats = useMemo(() => {
+    const out = {} as Record<RollingWindow, RollingStats | null>;
+    for (const w of ROLLING_WINDOWS) out[w] = rolling ? rollingStats(rolling.fundByWindow[w]) : null;
+    return out;
+  }, [rolling]);
+  const rollingBenchStats = useMemo(() => {
+    const out = {} as Record<RollingWindow, RollingStats | null>;
+    for (const w of ROLLING_WINDOWS) out[w] = rolling ? rollingStats(rolling.benchByWindow[w]) : null;
+    return out;
+  }, [rolling]);
+
+  // A rolling window is offered only with enough windows to be meaningful.
+  const rollingAvail = useMemo<Record<RollingWindow, boolean>>(() => {
+    const out = {} as Record<RollingWindow, boolean>;
+    for (const w of ROLLING_WINDOWS) {
+      const s = rollingFundStats[w];
+      out[w] = Boolean(s && s.count >= MIN_ROLLING_WINDOWS);
+    }
+    return out;
+  }, [rollingFundStats]);
+  const rollingReady = ROLLING_WINDOWS.some((w) => rollingAvail[w]);
+
+  // Timeframe availability for the active mode.
+  const modeAvailability: Record<PeriodKey, boolean> =
+    mode === "rolling"
+      ? {
+          "1M": false, "3M": false,
+          "6M": rollingAvail["6M"], "1Y": rollingAvail["1Y"],
+          "3Y": rollingAvail["3Y"], "5Y": rollingAvail["5Y"],
+          "10Y": false,
+        }
+      : returnRow?.dataAvailability ?? ALL_FALSE_AVAIL;
+
+  // Keep `period` valid for the current fund + plan + mode (once history is
+  // in). Replaces the old fund-only fallback; the key folds in mode and the
+  // history-loaded flag so rolling auto-selects a window after the fetch.
+  const validityKey = `${dataKey}|${mode}|${historyLoaded ? 1 : 0}`;
+  const [prevValidityKey, setPrevValidityKey] = useState(validityKey);
+  if (prevValidityKey !== validityKey) {
+    setPrevValidityKey(validityKey);
+    if (!(period && modeAvailability[period])) {
+      if (mode === "rolling") {
+        const next = (["1Y", "3Y", "5Y", "6M"] as RollingWindow[]).find((w) => rollingAvail[w]) ?? null;
+        setPeriod(next);
+      } else {
+        const order =
+          period === "10Y" ? FALLBACK_FROM_10Y : period === "5Y" ? FALLBACK_FROM_5Y : DEFAULT_ORDER;
+        setPeriod(firstAvailableFromOrder(returnRow, order));
+      }
+    }
+  }
+
+  // Rolling chart points for the selected window (fund + benchmark by date).
+  const rollingChartPoints = useMemo<RollingChartPoint[]>(() => {
+    if (mode !== "rolling" || !rolling || !period || !ROLLING_WINDOWS.includes(period as RollingWindow)) return [];
+    const w = period as RollingWindow;
+    const benchByDate = new Map<string, number>();
+    for (const b of rolling.benchByWindow[w]) benchByDate.set(b.date, b.value);
+    return rolling.fundByWindow[w].map((p) =>
+      benchByDate.has(p.date)
+        ? { date: p.date, fund: p.value, benchmark: benchByDate.get(p.date) }
+        : { date: p.date, fund: p.value },
+    );
+  }, [mode, rolling, period]);
 
   function retryHistory() {
     setHistoryErr((prev) => {
@@ -560,15 +639,35 @@ function TrendsTabInner({
         latestRow={latestRow}
         benchmarkReturnsByPeriod={benchmarkReturnsByPeriod}
         benchmarkLabel={DEFAULT_BENCHMARK_ENTRY?.name ?? null}
+        mode={mode}
+        rollingFundStats={rollingFundStats}
+        rollingBenchStats={rollingBenchStats}
+        rollingAvail={rollingAvail}
       />
 
-      <TimeframeSelector
-        period={period}
-        availability={returnRow.dataAvailability}
-        onPick={setPeriod}
-      />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <TimeframeSelector
+          period={period}
+          availability={modeAvailability}
+          onPick={setPeriod}
+          mode={mode}
+        />
+        <ModeToggle mode={mode} onPick={setMode} rollingReady={rollingReady} />
+      </div>
 
-      {period ? (
+      {mode === "rolling" ? (
+        <RollingChartSlot
+          period={period}
+          historyAvailable={historyAvailable}
+          historyLoading={historyLoading}
+          historyErrored={!!historyErrored}
+          onRetry={retryHistory}
+          points={rollingChartPoints}
+          stats={period && ROLLING_WINDOWS.includes(period as RollingWindow) ? rollingFundStats[period as RollingWindow] : null}
+          benchStats={period && ROLLING_WINDOWS.includes(period as RollingWindow) ? rollingBenchStats[period as RollingWindow] : null}
+          benchmarkLabel={benchmarkLoaded ? benchmarkLoaded.meta.name : DEFAULT_BENCHMARK_ENTRY?.name ?? null}
+        />
+      ) : period ? (
         <ChartSlot
           period={period}
           returnRow={returnRow}
@@ -589,24 +688,26 @@ function TrendsTabInner({
         />
       ) : (
         <div className="rounded-md border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">
-          No timeframe is available for this fund yet — Stage-1 history covers
-          ~15 months; longer periods come after future backfill.
+          No timeframe is available for this fund yet.
         </div>
       )}
 
-      {period && (
+      {/* Point-to-point peer ranking is NAV-mode only (no rolling ranks). */}
+      {mode === "nav" && period && (
         <CategoryStrip
           period={period}
           fundEntry={categoryRow?.periodRanks[period] ?? null}
         />
       )}
 
-      <TrendsPeerTable
-        rows={peers}
-        selectedSchemecode={dataKey}
-        period={period ?? "1Y"}
-        cohortLabel={cohortLabel}
-      />
+      {mode === "nav" && (
+        <TrendsPeerTable
+          rows={peers}
+          selectedSchemecode={dataKey}
+          period={period ?? "1Y"}
+          cohortLabel={cohortLabel}
+        />
+      )}
     </section>
   );
 }
@@ -702,13 +803,23 @@ function KpiRow({
   latestRow,
   benchmarkReturnsByPeriod,
   benchmarkLabel,
+  mode,
+  rollingFundStats,
+  rollingBenchStats,
+  rollingAvail,
 }: {
   returnRow: ReturnsFund;
   categoryRow: CategoryFundRank | undefined;
   latestRow: LatestFund | undefined;
   benchmarkReturnsByPeriod: Partial<Record<PeriodKey, number>>;
   benchmarkLabel: string | null;
+  mode: "nav" | "rolling";
+  rollingFundStats: Record<RollingWindow, RollingStats | null>;
+  rollingBenchStats: Record<RollingWindow, RollingStats | null>;
+  rollingAvail: Record<RollingWindow, boolean>;
 }) {
+  const isRolling = (p: PeriodKey): p is RollingWindow =>
+    (ROLLING_WINDOWS as readonly string[]).includes(p);
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
       <NavKpiCard returnRow={returnRow} latestRow={latestRow} />
@@ -716,10 +827,14 @@ function KpiRow({
         <ReturnKpiCard
           key={p}
           period={p}
+          mode={mode}
           returnRow={returnRow}
           fundRank={categoryRow}
           benchmarkReturn={benchmarkReturnsByPeriod[p]}
           benchmarkLabel={benchmarkLabel}
+          rollingStat={isRolling(p) ? rollingFundStats[p] : null}
+          rollingBenchStat={isRolling(p) ? rollingBenchStats[p] : null}
+          rollingAvailable={isRolling(p) && rollingAvail[p]}
         />
       ))}
     </div>
@@ -752,17 +867,62 @@ function NavKpiCard({
 
 function ReturnKpiCard({
   period,
+  mode,
   returnRow,
   fundRank,
   benchmarkReturn,
   benchmarkLabel,
+  rollingStat,
+  rollingBenchStat,
+  rollingAvailable,
 }: {
   period: PeriodKey;
+  mode: "nav" | "rolling";
   returnRow: ReturnsFund;
   fundRank: CategoryFundRank | undefined;
   benchmarkReturn: number | undefined;
   benchmarkLabel: string | null;
+  rollingStat: RollingStats | null;
+  rollingBenchStat: RollingStats | null;
+  rollingAvailable: boolean;
 }) {
+  if (mode === "rolling") {
+    // Average rolling return for the window; greyed for 1M/3M/10Y (not offered)
+    // or windows without enough history.
+    const cagrRoll = period === "3Y" || period === "5Y";
+    const avg = rollingAvailable && rollingStat ? rollingStat.avg : null;
+    const excess =
+      rollingAvailable && rollingStat && rollingBenchStat
+        ? rollingStat.avg - rollingBenchStat.avg
+        : null;
+    const tone =
+      avg === null ? "text-muted-foreground" : avg > 0 ? "text-positive" : avg < 0 ? "text-negative" : "";
+    return (
+      <div className={cn("rounded-lg border bg-card px-4 py-3", !rollingAvailable && "opacity-50")}>
+        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+          {period} rolling{cagrRoll ? " (CAGR)" : ""}
+        </div>
+        <div className={cn("mt-1 text-xl font-semibold tabular tracking-tight", tone)}>
+          {avg === null ? "—" : `${avg > 0 ? "+" : ""}${avg.toFixed(1)}%`}
+        </div>
+        <div className="mt-0.5 text-[10px] tabular text-muted-foreground/80">
+          {rollingAvailable && rollingStat ? `${rollingStat.pctPositive.toFixed(0)}% positive` : "—"}
+        </div>
+        {benchmarkLabel && (
+          <div className="mt-0.5 text-[10px] tabular text-muted-foreground/80">
+            vs {benchmarkLabel}:{" "}
+            {excess === null ? (
+              "—"
+            ) : (
+              <span className={excess > 0 ? "text-positive" : excess < 0 ? "text-negative" : ""}>
+                {fmtBps(excess)}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
   const r = returnRow.returns[period];
   const e = fundRank?.periodRanks[period];
   const stats = e?.statsAvailable
@@ -906,6 +1066,50 @@ function PlanToggle({
 }
 
 // ---------------------------------------------------------------------------
+// NAV ⇄ Rolling-returns view toggle
+// ---------------------------------------------------------------------------
+
+function ModeToggle({
+  mode,
+  onPick,
+  rollingReady,
+}: {
+  mode: "nav" | "rolling";
+  onPick: (m: "nav" | "rolling") => void;
+  rollingReady: boolean;
+}) {
+  return (
+    <div
+      className="inline-flex rounded-md border bg-card p-0.5 text-xs"
+      role="group"
+      aria-label="Returns view"
+    >
+      {([
+        ["nav", "NAV"],
+        ["rolling", "Rolling"],
+      ] as const).map(([id, label]) => (
+        <button
+          key={id}
+          type="button"
+          onClick={() => onPick(id)}
+          disabled={id === "rolling" && !rollingReady}
+          aria-pressed={mode === id}
+          className={cn(
+            "rounded px-3 py-1 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40",
+            mode === id
+              ? "bg-accent text-foreground"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+          title={id === "rolling" && !rollingReady ? "Not enough history for rolling returns." : undefined}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Timeframe selector
 // ---------------------------------------------------------------------------
 
@@ -913,11 +1117,14 @@ function TimeframeSelector({
   period,
   availability,
   onPick,
+  mode,
 }: {
   period: PeriodKey | null;
   availability: Record<PeriodKey, boolean>;
   onPick: (p: PeriodKey) => void;
+  mode: "nav" | "rolling";
 }) {
+  const rollingOnly = (["1M", "3M", "10Y"] as PeriodKey[]);
   return (
     <div className="flex flex-wrap items-center gap-2 text-xs">
       <span className="text-muted-foreground">Timeframe:</span>
@@ -925,7 +1132,10 @@ function TimeframeSelector({
         const avail = availability[p];
         const active = period === p;
         const isCagr = p === "3Y" || p === "5Y" || p === "10Y";
-        const unavailableTitle = `Not enough ${p} history for this fund.`;
+        const unavailableTitle =
+          mode === "rolling" && rollingOnly.includes(p)
+            ? `Rolling returns aren't offered for ${p}.`
+            : `Not enough ${p} history for this fund.`;
         return (
           <button
             key={p}
@@ -1059,6 +1269,100 @@ function ChartSlot({
           {benchmark.label} anchor {formatIsoDate(benchmark.anchorDate)} · {benchmark.anchorLevel.toFixed(2)} = 100
         </div>
       )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Rolling-returns chart slot
+// ---------------------------------------------------------------------------
+
+function RollingChartSlot({
+  period,
+  historyAvailable,
+  historyLoading,
+  historyErrored,
+  onRetry,
+  points,
+  stats,
+  benchStats,
+  benchmarkLabel,
+}: {
+  period: PeriodKey | null;
+  historyAvailable: boolean;
+  historyLoading: boolean;
+  historyErrored: boolean;
+  onRetry: () => void;
+  points: RollingChartPoint[];
+  stats: RollingStats | null;
+  benchStats: RollingStats | null;
+  benchmarkLabel: string | null;
+}) {
+  if (!historyAvailable) {
+    return (
+      <div className="rounded-md border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">
+        NAV history is not yet available for this fund.
+      </div>
+    );
+  }
+  if (historyLoading) {
+    return (
+      <div className="flex h-72 items-center justify-center gap-2 rounded-md border bg-card text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Loading NAV history…
+      </div>
+    );
+  }
+  if (historyErrored) {
+    return (
+      <div className="flex h-72 flex-col items-center justify-center gap-2 rounded-md border border-dashed text-sm text-muted-foreground">
+        <span className="text-negative">Couldn&apos;t load NAV history for this fund.</span>
+        <button type="button" onClick={onRetry} className="rounded-md border px-3 py-1 text-xs hover:bg-accent">
+          Retry
+        </button>
+      </div>
+    );
+  }
+  if (!period || !ROLLING_WINDOWS.includes(period as RollingWindow) || !stats || points.length === 0) {
+    return (
+      <div className="rounded-md border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">
+        Not enough history for {period ?? "this"} rolling returns.
+      </div>
+    );
+  }
+  const w = period as RollingWindow;
+  const cagr = isRollingCagr(w);
+  const excess = benchStats ? stats.avg - benchStats.avg : null;
+  return (
+    <div className="rounded-lg border bg-card px-3 py-3">
+      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2 px-1">
+        <p className="text-xs text-muted-foreground">
+          Rolling {w} return{cagr ? " (CAGR)" : ""} ·{" "}
+          {stats.count.toLocaleString("en-IN")} windows
+        </p>
+        <p className="text-xs tabular text-muted-foreground">
+          avg{" "}
+          <span className={stats.avg >= 0 ? "text-positive" : "text-negative"}>
+            {signed(stats.avg)}%
+          </span>{" "}
+          · {stats.pctPositive.toFixed(0)}% positive
+        </p>
+      </div>
+      <RollingReturnChart data={points} windowLabel={w} benchmarkLabel={benchmarkLabel} />
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[11px] tabular text-muted-foreground">
+        <Stat label="Avg" value={`${signed(stats.avg)}%`} tone={toneOf(stats.avg)} />
+        <Stat label="Median" value={`${signed(stats.median)}%`} />
+        <Stat label="Min" value={`${signed(stats.min)}%`} tone={toneOf(stats.min)} />
+        <Stat label="Max" value={`${signed(stats.max)}%`} tone={toneOf(stats.max)} />
+        <Stat label="Positive" value={`${stats.pctPositive.toFixed(0)}%`} />
+        {benchStats && (
+          <Stat
+            label={`vs ${benchmarkLabel ?? "benchmark"}`}
+            value={excess === null ? "—" : fmtBps(excess)}
+            tone={excess === null ? "muted" : toneOf(excess)}
+          />
+        )}
+      </div>
     </div>
   );
 }
