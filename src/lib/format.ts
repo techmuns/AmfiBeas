@@ -11,6 +11,26 @@ export function formatPct(value: number, digits = 2) {
   return `${value.toFixed(digits)}%`;
 }
 
+/**
+ * Display name for a scheme — strips the trailing plan/option marker that the
+ * source feeds carry (e.g. "HDFC Flexi Cap Fund(G)" → "HDFC Flexi Cap Fund",
+ * "HDFC Mid Cap Fund-Reg(G)" → "HDFC Mid Cap Fund"). The plan (Regular/Direct)
+ * is surfaced separately by the plan toggle, and the option is always Growth in
+ * the tracker, so the suffix is redundant noise in the picker and headers.
+ * Strips a trailing "(…)" group, then a trailing "-Reg/-Dir/-Direct/-Regular",
+ * then any dangling separator. Returns the original string untouched when no
+ * suffix is present (e.g. "HDFC Childrens Fund", "Nippon India ETF Gold BeES").
+ */
+export function cleanSchemeName(name: string): string {
+  const cleaned = name
+    .replace(/\([^)]*\)\s*$/, "")
+    .replace(/\s*[-–]\s*(Reg|Dir|Direct|Regular)\s*$/i, "")
+    .replace(/[\s-–]+$/, "")
+    .trim();
+  // Never collapse to empty — fall back to the raw name if the strip ate it.
+  return cleaned || name;
+}
+
 export function formatBps(value: number) {
   return `${value.toFixed(0)} bps`;
 }

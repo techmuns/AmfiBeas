@@ -4,6 +4,7 @@ import { cn } from "@/lib/cn";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
 import { fmtBps, ppToBps } from "@/lib/units";
+import { cleanSchemeName } from "@/lib/format";
 
 type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y" | "10Y";
 
@@ -119,7 +120,7 @@ export function TrendsPeerTable({
       e && "return" in e && typeof e.return === "number" ? e.return : null;
     if (e && e.statsAvailable) {
       return {
-        fund: r.fundName,
+        fund: cleanSchemeName(r.fundName),
         classification: r.classification ?? "",
         ret,
         rank: e.rank,
@@ -203,7 +204,7 @@ export function TrendsPeerTable({
                   <td className="px-3 py-2.5 align-top">
                     <div className="flex flex-wrap items-center gap-x-2">
                       <span className={cn(isSelected && "font-semibold")}>
-                        {r.fundName}
+                        {cleanSchemeName(r.fundName)}
                       </span>
                       {isSelected && (
                         <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">

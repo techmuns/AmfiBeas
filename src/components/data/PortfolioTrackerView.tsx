@@ -19,6 +19,7 @@ import {
 import type { DashboardTabDef } from "@/components/layout/DashboardTabs";
 import type { TrackerTabId } from "@/components/data/PortfolioTrackerTabs";
 import {
+  cleanSchemeName,
   formatCompactCrSafe,
   formatPctSafe,
   formatSharesIndian,
@@ -96,7 +97,9 @@ export function PortfolioTrackerView({
   const [selectedCode, setSelectedCode] = useState(
     initialFund?.schemecode ?? ""
   );
-  const [query, setQuery] = useState(initialFund?.fund ?? "");
+  const [query, setQuery] = useState(
+    initialFund ? cleanSchemeName(initialFund.fund) : ""
+  );
   const [focused, setFocused] = useState(false);
   const [holdingQuery, setHoldingQuery] = useState("");
   // Client-requested filters: narrow the scheme picker to one fund house and
@@ -485,7 +488,7 @@ export function PortfolioTrackerView({
 
   function pick(f: FundDirectoryEntry) {
     setSelectedCode(f.schemecode);
-    setQuery(f.fund);
+    setQuery(cleanSchemeName(f.fund));
     setHoldingQuery("");
     setFocused(false);
   }
@@ -573,7 +576,7 @@ export function PortfolioTrackerView({
                     f.schemecode === selectedCode && "bg-accent/60"
                   )}
                 >
-                  <span>{f.fund}</span>
+                  <span>{cleanSchemeName(f.fund)}</span>
                   {f.classification && (
                     <span className="shrink-0 text-xs text-muted-foreground">
                       {f.classification}
@@ -633,7 +636,9 @@ export function PortfolioTrackerView({
               <div className="rounded-lg border bg-card px-5 py-4 text-sm">
                 <div>
                   Fund Name -{" "}
-                  <span className="font-semibold">{selectedEntry.fund}</span>
+                  <span className="font-semibold">
+                    {cleanSchemeName(selectedEntry.fund)}
+                  </span>
                 </div>
                 {selectedEntry.classification && (
                   <div className="mt-1 text-muted-foreground">
@@ -658,8 +663,8 @@ export function PortfolioTrackerView({
                 <KeyTakeaway
                   headline={
                     <>
-                      In {flowSummary.label}, {selectedEntry.fund} raised its
-                      weight most in{" "}
+                      In {flowSummary.label}, {cleanSchemeName(selectedEntry.fund)}{" "}
+                      raised its weight most in{" "}
                       <strong>{flowSummary.topAdd.name}</strong> (
                       <span className="text-positive">
                         {fmtBps(flowSummary.topAdd.d)}
@@ -709,7 +714,7 @@ export function PortfolioTrackerView({
                     </div>
                     <SectorAllocationChart
                       data={sectorVsCategory}
-                      fundName={selectedEntry.fund}
+                      fundName={cleanSchemeName(selectedEntry.fund)}
                       peerLabel={selectedEntry.classification}
                     />
                   </div>
@@ -889,7 +894,7 @@ export function PortfolioTrackerView({
           {activeTab === "trends" && (
             <PortfolioTrendsTab
               schemecode={selectedEntry.schemecode}
-              fundName={selectedEntry.fund}
+              fundName={cleanSchemeName(selectedEntry.fund)}
             />
           )}
         </>

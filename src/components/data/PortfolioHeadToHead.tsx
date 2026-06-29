@@ -3,7 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Search, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { formatCompactCrSafe, formatPctSafe } from "@/lib/format";
+import { cleanSchemeName, formatCompactCrSafe, formatPctSafe } from "@/lib/format";
 import {
   type FundDirectoryEntry,
   type FundPortfolio,
@@ -245,7 +245,7 @@ export function PortfolioHeadToHead({
   bCandidates,
   category,
 }: Props) {
-  const [bQuery, setBQuery] = useState(bEntry?.fund ?? "");
+  const [bQuery, setBQuery] = useState(bEntry ? cleanSchemeName(bEntry.fund) : "");
   const [bFocused, setBFocused] = useState(false);
   // Mutual (both funds hold) vs exclusive (only one holds) holdings. Default
   // mutual — the apples-to-apples weight comparison.
@@ -260,7 +260,7 @@ export function PortfolioHeadToHead({
   const [prevBSchemecode, setPrevBSchemecode] = useState(bSchemecode);
   if (prevBSchemecode !== bSchemecode) {
     setPrevBSchemecode(bSchemecode);
-    setBQuery(bEntry?.fund ?? "");
+    setBQuery(bEntry ? cleanSchemeName(bEntry.fund) : "");
   }
 
   const bSuggestions = useMemo(() => {
@@ -364,8 +364,8 @@ export function PortfolioHeadToHead({
   };
   const compareExportColumns: CsvColumn<XRow>[] = [
     { key: "company", header: "Company" },
-    { key: "a", header: `${aEntry.fund} (%)` },
-    { key: "b", header: bEntry ? `${bEntry.fund} (%)` : "Comparison fund (%)" },
+    { key: "a", header: `${cleanSchemeName(aEntry.fund)} (%)` },
+    { key: "b", header: bEntry ? `${cleanSchemeName(bEntry.fund)} (%)` : "Comparison fund (%)" },
     { key: "delta", header: `Δ ${aLabel} − ${bLabel} (bps)` },
     { key: "signal", header: "Signal" },
   ];
@@ -435,7 +435,7 @@ export function PortfolioHeadToHead({
                     onMouseDown={(e) => {
                       e.preventDefault();
                       onPickB(f.schemecode);
-                      setBQuery(f.fund);
+                      setBQuery(cleanSchemeName(f.fund));
                       setBFocused(false);
                     }}
                     className={cn(
@@ -443,7 +443,7 @@ export function PortfolioHeadToHead({
                       f.schemecode === bEntry?.schemecode && "bg-accent/60"
                     )}
                   >
-                    <span>{f.fund}</span>
+                    <span>{cleanSchemeName(f.fund)}</span>
                     <span className="shrink-0 text-xs text-muted-foreground">
                       {category}
                     </span>
@@ -457,9 +457,9 @@ export function PortfolioHeadToHead({
 
       {bEntry && (
         <p className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">{aEntry.fund}</span>
+          <span className="font-medium text-foreground">{cleanSchemeName(aEntry.fund)}</span>
           <span className="mx-2">vs</span>
-          <span className="font-medium text-foreground">{bEntry.fund}</span>
+          <span className="font-medium text-foreground">{cleanSchemeName(bEntry.fund)}</span>
           {latestMonth && (
             <span className="ml-2 text-xs">· Latest month: {latestMonth}</span>
           )}
@@ -501,12 +501,12 @@ export function PortfolioHeadToHead({
               <div className="grid gap-4 sm:grid-cols-2">
                 <SchemeSnapshotCard
                   title={aLabel}
-                  subtitle={aEntry.fund}
+                  subtitle={cleanSchemeName(aEntry.fund)}
                   snap={snapA}
                 />
                 <SchemeSnapshotCard
                   title={bLabel}
-                  subtitle={bEntry?.fund ?? "Comparison fund"}
+                  subtitle={bEntry ? cleanSchemeName(bEntry.fund) : "Comparison fund"}
                   snap={snapB}
                 />
               </div>
@@ -604,10 +604,10 @@ export function PortfolioHeadToHead({
                   <tr className="bg-muted/60 text-xs text-muted-foreground">
                     <th className="px-3 py-2 text-left font-medium">Company</th>
                     <th className="px-3 py-2 text-right font-medium">
-                      {aEntry.fund}
+                      {cleanSchemeName(aEntry.fund)}
                     </th>
                     <th className="px-3 py-2 text-right font-medium">
-                      {bEntry?.fund ?? "Comparison fund"}
+                      {bEntry ? cleanSchemeName(bEntry.fund) : "Comparison fund"}
                     </th>
                     <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
                       Δ {aLabel} − {bLabel}
@@ -663,7 +663,7 @@ function Header({
       <h2 className="text-base font-semibold tracking-tight">Head-to-head</h2>
       <p className="text-xs text-muted-foreground">
         Compare{" "}
-        <span className="font-medium text-foreground">{aEntry.fund}</span> with
+        <span className="font-medium text-foreground">{cleanSchemeName(aEntry.fund)}</span> with
         another fund in {category}.
       </p>
     </div>
