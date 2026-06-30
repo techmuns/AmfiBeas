@@ -798,7 +798,7 @@ function FundHouseCompare({
                       </span>
                     )}
                   </StatRow>
-                  <StatRow label="Biggest add">
+                  <StatRow label="Biggest buy">
                     {c.entry.biggestAdd ? (
                       <span>
                         <span className="text-positive">
@@ -812,7 +812,7 @@ function FundHouseCompare({
                       "—"
                     )}
                   </StatRow>
-                  <StatRow label="Biggest trim">
+                  <StatRow label="Biggest sell">
                     {c.entry.biggestTrim ? (
                       <span>
                         <span className="text-negative">
@@ -931,10 +931,10 @@ function FundHousePeers({
     { key: "equityBookCr", header: "Equity book (₹ Cr)" },
     { key: "top10Pct", header: "Top-10 concentration (%)" },
     { key: "top10DeltaPp", header: "Top-10 MoM (bps)" },
-    { key: "biggestAddPp", header: "Biggest add (bps MoM)" },
-    { key: "biggestAddName", header: "Biggest add — stock" },
-    { key: "biggestTrimPp", header: "Biggest trim (bps MoM)" },
-    { key: "biggestTrimName", header: "Biggest trim — stock" },
+    { key: "biggestAddPp", header: "Biggest buy (bps MoM)" },
+    { key: "biggestAddName", header: "Biggest buy — stock" },
+    { key: "biggestTrimPp", header: "Biggest sell (bps MoM)" },
+    { key: "biggestTrimName", header: "Biggest sell — stock" },
   ];
   const exportRows: XRow[] = rows.map((p) => ({
     fundHouse: p.amc,
@@ -981,10 +981,10 @@ function FundHousePeers({
                 Top-10 conc.
               </th>
               <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
-                Biggest add (bps MoM)
+                Biggest buy (bps MoM)
               </th>
               <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
-                Biggest trim (bps MoM)
+                Biggest sell (bps MoM)
               </th>
             </tr>
           </thead>

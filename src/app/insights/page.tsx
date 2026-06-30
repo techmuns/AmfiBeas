@@ -20,6 +20,7 @@ import {
   monthLong,
 } from "@/data/insights";
 import { fmtBps as fmtBpsFromPp } from "@/lib/units";
+import { shortenCompany } from "@/lib/stock-name";
 
 // Static: every insight is computed at build time from the bundled snapshots,
 // so the Worker serves a prerendered page (no per-request CPU; Error 1102).
@@ -435,7 +436,7 @@ export default function InsightsPage() {
                 {uniques.rows.map((u) => (
                   <tr key={u.company} className="border-b last:border-0">
                     <td className="px-3 py-2 font-medium">
-                      {u.company}
+                      {shortenCompany(u.company)}
                       {u.newThisMonth && (
                         <span className="ml-2 rounded-full border border-positive/40 bg-positive/10 px-1.5 py-0 text-[10px] uppercase tracking-wide text-positive">
                           New
@@ -544,7 +545,7 @@ export default function InsightsPage() {
                             <tr key={s.company} className="border-b last:border-0">
                               <td className="h-11 px-3 align-middle font-medium">
                                 <span className="line-clamp-2">
-                                  {s.company.replace(/\s+(Ltd\.?|Limited)$/i, "")}
+                                  {shortenCompany(s.company)}
                                 </span>
                               </td>
                               <td
@@ -593,7 +594,7 @@ export default function InsightsPage() {
               <tbody>
                 {moves.rows.map((r) => (
                   <tr key={r.company} className="border-b last:border-0">
-                    <td className="px-3 py-2 font-medium">{r.company}</td>
+                    <td className="px-3 py-2 font-medium">{shortenCompany(r.company)}</td>
                     <td className="px-3 py-2 text-muted-foreground">{r.sector}</td>
                     <td
                       className={cn(
