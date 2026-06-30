@@ -10,9 +10,7 @@ import {
   type TrackerHolding,
   monthSlug,
 } from "@/data/portfolio-tracker";
-import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
-import type { CsvColumn } from "@/lib/csv";
-import { fmtBps, ppToBps } from "@/lib/units";
+import { fmtBps } from "@/lib/units";
 import { amcOf } from "@/data/amc-name-map";
 import { classifyCap } from "@/data/cap-classification";
 import { classifySector, UNCLASSIFIED } from "@/data/sector-classification";
@@ -218,22 +216,6 @@ function shortFundLabel(fund: string): string {
     .join(" ");
 }
 
-/** Render an abstract signal with the two funds' short labels instead of A/B. */
-function signalLabel(signal: Signal, aLabel: string, bLabel: string): string {
-  switch (signal) {
-    case "A overweight":
-      return `${aLabel} overweight`;
-    case "A underweight":
-      return `${aLabel} underweight`;
-    case "Only A holds":
-      return `Only ${aLabel} holds`;
-    case "Only B holds":
-      return `Only ${bLabel} holds`;
-    default:
-      return "In line";
-  }
-}
-
 export function PortfolioHeadToHead({
   aEntry,
   aPortfolio,
@@ -378,27 +360,6 @@ export function PortfolioHeadToHead({
   const latestMonth = aPortfolio.meta.months[0]?.label ?? "";
   const totalRows = filteredViewRows.length;
   const displayRows = filteredViewRows.slice(0, MAX_COMPARE_ROWS);
-  type XRow = {
-    company: string;
-    a: number | null;
-    b: number | null;
-    delta: number;
-    signal: string;
-  };
-  const compareExportColumns: CsvColumn<XRow>[] = [
-    { key: "company", header: "Company" },
-    { key: "a", header: `${cleanSchemeName(aEntry.fund)} (%)` },
-    { key: "b", header: bEntry ? `${cleanSchemeName(bEntry.fund)} (%)` : "Comparison fund (%)" },
-    { key: "delta", header: `Δ ${aLabel} − ${bLabel} (bps)` },
-    { key: "signal", header: "Signal" },
-  ];
-  const compareExportRows: XRow[] = filteredViewRows.map((r) => ({
-    company: r.name,
-    a: r.a,
-    b: r.b,
-    delta: ppToBps(r.delta),
-    signal: signalLabel(r.signal, aLabel, bLabel),
-  }));
 
   if (bCandidates.length === 0) {
     return (
@@ -579,14 +540,6 @@ export function PortfolioHeadToHead({
                 ))}
               </select>
             </div>
-            {totalRows > 0 && (
-              <DownloadXlsxButton
-                rows={compareExportRows}
-                columns={compareExportColumns}
-                filename="portfolio-head-to-head.xlsx"
-                sheetName={`${aLabel} vs ${bLabel}`}
-              />
-            )}
           </div>
           {view === "mutuals"
             ? (headline.over || headline.under) && (

@@ -1,8 +1,6 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
-import type { CsvColumn } from "@/lib/csv";
 
 export interface SectorAllocationRow {
   label: string;
@@ -40,38 +38,8 @@ function tone(v: number | null): string {
 export function SectorAllocationChart({ data, fundName, peerLabel }: Props) {
   if (data.length === 0) return null;
 
-  type XRow = {
-    sector: string;
-    fund: number | null;
-    peerAvg: number | null;
-    delta: number | null;
-  };
-  const exportRows: XRow[] = data.map((r) => ({
-    sector: r.label,
-    fund: r.fund,
-    peerAvg: r.peerAvg,
-    delta:
-      r.fund !== null && r.peerAvg !== null
-        ? Math.round((r.fund - r.peerAvg) * 100)
-        : null,
-  }));
-  const exportColumns: CsvColumn<XRow>[] = [
-    { key: "sector", header: "Sector" },
-    { key: "fund", header: `${fundName} (%)` },
-    { key: "peerAvg", header: `${peerLabel} (%)` },
-    { key: "delta", header: "Δ vs peers (bps)" },
-  ];
-
   return (
     <div className="space-y-2">
-      <div className="flex justify-end">
-        <DownloadXlsxButton
-          rows={exportRows}
-          columns={exportColumns}
-          filename="sector-allocation.xlsx"
-          sheetName="Sector Allocation"
-        />
-      </div>
       <div className="overflow-x-auto rounded-lg border bg-card">
         <table className="w-full border-collapse text-sm tabular-nums">
           <thead>

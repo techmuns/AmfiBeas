@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
-import type { CsvColumn } from "@/lib/csv";
 import { fmtBps } from "@/lib/units";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
+import { PortfolioExportBar } from "@/components/data/PortfolioExportBar";
+import { exportStamp, slugifyName } from "@/lib/portfolio-export/filename";
 import {
   PortfolioHeadToHead,
   isLikelySameScheme,
@@ -380,18 +380,6 @@ export function PortfolioTrackerView({
     });
   };
 
-  type HoldingExportRow = Record<string, string | number | null>;
-  const holdingsExportColumns: CsvColumn<HoldingExportRow>[] = [
-    { key: "company", header: "Company" },
-    ...months.map((m) => ({ key: m.label, header: `${m.label} AUM %` })),
-  ];
-  const holdingsExportRows: HoldingExportRow[] = holdings.map((r) => {
-    const row: HoldingExportRow = { company: r.company_name };
-    slugs.forEach((slug, i) => {
-      row[months[i].label] = r.months[slug]?.aum_pct_num ?? null;
-    });
-    return row;
-  });
 
   // Month-over-month read for the selected fund: biggest weight add/trim
   // and the top-10 concentration shift, in percentage points of AUM.
@@ -493,6 +481,40 @@ export function PortfolioTrackerView({
     setFocused(false);
   }
 
+  // Master export — gathers the selected scheme's full profile (returns,
+  // ranking, ratios, holdings, sector allocation, peers) and builds a styled
+  // workbook / PDF. The heavy export modules are dynamically imported on click.
+  async function handleExcel() {
+    if (!selectedEntry) return;
+    const [{ gatherSchemeExport }, { downloadSchemeXlsx }] = await Promise.all([
+      import("@/lib/portfolio-export/gather"),
+      import("@/lib/portfolio-export/excel"),
+    ]);
+    const data = await gatherSchemeExport({
+      entry: selectedEntry,
+      amc: amcOf(selectedEntry.fund),
+      portfolio,
+      sectorRows: sectorVsCategory,
+      generatedAt: exportStamp(),
+    });
+    await downloadSchemeXlsx(data, `${slugifyName(cleanSchemeName(selectedEntry.fund))}.xlsx`);
+  }
+  async function handlePdf() {
+    if (!selectedEntry) return;
+    const [{ gatherSchemeExport }, { downloadSchemePdf }] = await Promise.all([
+      import("@/lib/portfolio-export/gather"),
+      import("@/lib/portfolio-export/pdf"),
+    ]);
+    const data = await gatherSchemeExport({
+      entry: selectedEntry,
+      amc: amcOf(selectedEntry.fund),
+      portfolio,
+      sectorRows: sectorVsCategory,
+      generatedAt: exportStamp(),
+    });
+    await downloadSchemePdf(data, `${slugifyName(cleanSchemeName(selectedEntry.fund))}.pdf`);
+  }
+
   const loaderUi = (
     <div className="flex h-40 items-center justify-center gap-2 rounded-md border bg-card text-sm text-muted-foreground">
       <Loader2 className="h-4 w-4 animate-spin" />
@@ -517,6 +539,19 @@ export function PortfolioTrackerView({
 
   return (
     <div className="space-y-5">
+      {/* Master export — one Excel + one PDF for the whole selected scheme. */}
+      <PortfolioExportBar
+        title="Download this scheme"
+        hint={
+          selectedEntry
+            ? `${cleanSchemeName(selectedEntry.fund)} — profile, returns & ranking, risk ratios, holdings, sector mix & peers`
+            : "Select a scheme to export its full profile"
+        }
+        onExcel={handleExcel}
+        onPdf={handlePdf}
+        disabled={!selectedEntry}
+      />
+
       {/* Global fund picker + AMC filter — visible above the tab strip. */}
       <div className="flex max-w-3xl flex-wrap items-center gap-3">
         <select
@@ -765,14 +800,6 @@ export function PortfolioTrackerView({
                   )}
                 </div>
                 </div>
-                {portfolio && holdingsExportRows.length > 0 && (
-                  <DownloadXlsxButton
-                    rows={holdingsExportRows}
-                    columns={holdingsExportColumns}
-                    filename="fund-holdings.xlsx"
-                    sheetName="Holdings"
-                  />
-                )}
               </div>
 
               {loading ? (
