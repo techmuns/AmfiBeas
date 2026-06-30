@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Search, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
-import type { CsvColumn } from "@/lib/csv";
-import { fmtBps, ppToBps } from "@/lib/units";
+import { fmtBps } from "@/lib/units";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
+import { PortfolioExportBar } from "@/components/data/PortfolioExportBar";
+import { exportStamp, slugifyName } from "@/lib/portfolio-export/filename";
 import {
   formatCompactCrSafe,
   formatPctSafe,
@@ -224,26 +224,42 @@ export function FundwisePortfolioView({
     };
   }, [portfolio]);
 
-  type ExportRow = Record<string, string | number | null>;
-  const exportColumns: CsvColumn<ExportRow>[] = [
-    { key: "company", header: "Company" },
-    ...months.map((m) => ({ key: m.label, header: `${m.label} % of book` })),
-    ...months.map((m) => ({ key: `${m.label} shares`, header: `${m.label} shares` })),
-  ];
-  const exportRows: ExportRow[] = holdings.map((r) => {
-    const row: ExportRow = { company: r.company_name };
-    slugs.forEach((slug, i) => {
-      row[months[i].label] = r.months[slug]?.aum_pct_num ?? null;
-      row[`${months[i].label} shares`] = r.months[slug]?.shares_num ?? null;
-    });
-    return row;
-  });
-
   function pick(f: FundHouseEntry) {
     setSelectedSlug(f.slug);
     setQuery(f.amc);
     setHoldingQuery("");
     setFocused(false);
+  }
+
+  // Master export — the whole fund house: profile, market-cap & sector mix,
+  // aggregated holdings and the peer table. Heavy modules load on click.
+  async function handleExcel() {
+    if (!selected) return;
+    const [{ gatherFundHouseExport }, { downloadFundHouseXlsx }] = await Promise.all([
+      import("@/lib/portfolio-export/gather"),
+      import("@/lib/portfolio-export/excel"),
+    ]);
+    const data = await gatherFundHouseExport({
+      entry: selected,
+      fundHouses,
+      portfolio,
+      generatedAt: exportStamp(),
+    });
+    await downloadFundHouseXlsx(data, `${slugifyName(selected.amc)}-fund-house.xlsx`);
+  }
+  async function handlePdf() {
+    if (!selected) return;
+    const [{ gatherFundHouseExport }, { downloadFundHousePdf }] = await Promise.all([
+      import("@/lib/portfolio-export/gather"),
+      import("@/lib/portfolio-export/pdf"),
+    ]);
+    const data = await gatherFundHouseExport({
+      entry: selected,
+      fundHouses,
+      portfolio,
+      generatedAt: exportStamp(),
+    });
+    await downloadFundHousePdf(data, `${slugifyName(selected.amc)}-fund-house.pdf`);
   }
 
   const loaderUi = (
@@ -255,6 +271,19 @@ export function FundwisePortfolioView({
 
   return (
     <div className="space-y-5">
+      {/* Master export — one Excel + one PDF for the whole fund house. */}
+      <PortfolioExportBar
+        title="Download this fund house"
+        hint={
+          selected
+            ? `${selected.amc} — profile, market-cap & sector mix, aggregated holdings & peers`
+            : "Select a fund house to export its full profile"
+        }
+        onExcel={handleExcel}
+        onPdf={handlePdf}
+        disabled={!selected}
+      />
+
       {/* Fund-house picker */}
       <div className="relative max-w-xl">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -455,14 +484,6 @@ export function FundwisePortfolioView({
                       </button>
                     )}
                   </div>
-                  {exportRows.length > 0 && (
-                    <DownloadXlsxButton
-                      rows={exportRows}
-                      columns={exportColumns}
-                      filename={`${selected.slug}-fundwise-holdings.xlsx`}
-                      sheetName="Holdings"
-                    />
-                  )}
                 </div>
               </div>
 
@@ -664,67 +685,19 @@ function FundHouseCompare({
   const setSlot = (i: number, slug: string) =>
     setSlots((prev) => prev.map((s, idx) => (idx === i ? slug : s)));
 
-  // Excel: scalar stats + cap split, one column per selected house.
-  type XRow = Record<string, string | number>;
-  const exportRows: XRow[] = (() => {
-    if (cols.length === 0) return [];
-    const metric = (label: string, get: (c: CompareCol) => string | number): XRow => {
-      const row: XRow = { metric: label };
-      cols.forEach((c) => {
-        row[c.entry.amc] = get(c);
-      });
-      return row;
-    };
-    return [
-      metric("Equity book (₹ Cr)", (c) => c.entry.equityValueCr),
-      metric("Schemes", (c) => c.entry.schemeCount),
-      metric("Distinct holdings", (c) => c.entry.holdingsCount),
-      metric("Top-10 concentration (%)", (c) => c.entry.top10Pct),
-      metric("Top-10 MoM (bps)", (c) =>
-        c.entry.top10DeltaPp === null ? "" : ppToBps(c.entry.top10DeltaPp)
-      ),
-      metric("Large-cap (%)", (c) => {
-        const s = capSplit(c.portfolio);
-        return s ? Number(s.large.toFixed(1)) : "";
-      }),
-      metric("Mid-cap (%)", (c) => {
-        const s = capSplit(c.portfolio);
-        return s ? Number(s.mid.toFixed(1)) : "";
-      }),
-      metric("Small-cap (%)", (c) => {
-        const s = capSplit(c.portfolio);
-        return s ? Number(s.small.toFixed(1)) : "";
-      }),
-    ];
-  })();
-  const exportColumns: CsvColumn<XRow>[] = [
-    { key: "metric", header: "Metric" },
-    ...cols.map((c) => ({ key: c.entry.amc, header: c.entry.amc })),
-  ];
-
   const latestMonth = cols[0]?.entry.latestMonth;
 
   return (
     <section className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h2 className="text-base font-semibold tracking-tight">
-            Compare fund houses
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            Pick up to {MAX_COMPARE} fund houses to compare their latest-month
-            profile side by side.
-            {latestMonth && <span className="ml-1">As of {latestMonth}.</span>}
-          </p>
-        </div>
-        {cols.length > 0 && (
-          <DownloadXlsxButton
-            rows={exportRows}
-            columns={exportColumns}
-            filename="fund-house-compare.xlsx"
-            sheetName="Compare"
-          />
-        )}
+      <div>
+        <h2 className="text-base font-semibold tracking-tight">
+          Compare fund houses
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          Pick up to {MAX_COMPARE} fund houses to compare their latest-month
+          profile side by side.
+          {latestMonth && <span className="ml-1">As of {latestMonth}.</span>}
+        </p>
       </div>
 
       {/* Slot selectors */}
@@ -798,7 +771,7 @@ function FundHouseCompare({
                       </span>
                     )}
                   </StatRow>
-                  <StatRow label="Biggest add">
+                  <StatRow label="Biggest buy">
                     {c.entry.biggestAdd ? (
                       <span>
                         <span className="text-positive">
@@ -812,7 +785,7 @@ function FundHouseCompare({
                       "—"
                     )}
                   </StatRow>
-                  <StatRow label="Biggest trim">
+                  <StatRow label="Biggest sell">
                     {c.entry.biggestTrim ? (
                       <span>
                         <span className="text-negative">
@@ -914,60 +887,18 @@ function FundHousePeers({
   const rows = [...fundHouses].sort((a, b) => b.equityValueCr - a.equityValueCr);
   const latestMonth = fundHouses.find((f) => f.slug === selectedSlug)?.latestMonth;
 
-  type XRow = {
-    fundHouse: string;
-    schemes: number;
-    equityBookCr: number;
-    top10Pct: number;
-    top10DeltaPp: number | null;
-    biggestAddPp: number | null;
-    biggestAddName: string;
-    biggestTrimPp: number | null;
-    biggestTrimName: string;
-  };
-  const exportColumns: CsvColumn<XRow>[] = [
-    { key: "fundHouse", header: "Fund house" },
-    { key: "schemes", header: "Schemes" },
-    { key: "equityBookCr", header: "Equity book (₹ Cr)" },
-    { key: "top10Pct", header: "Top-10 concentration (%)" },
-    { key: "top10DeltaPp", header: "Top-10 MoM (bps)" },
-    { key: "biggestAddPp", header: "Biggest add (bps MoM)" },
-    { key: "biggestAddName", header: "Biggest add — stock" },
-    { key: "biggestTrimPp", header: "Biggest trim (bps MoM)" },
-    { key: "biggestTrimName", header: "Biggest trim — stock" },
-  ];
-  const exportRows: XRow[] = rows.map((p) => ({
-    fundHouse: p.amc,
-    schemes: p.schemeCount,
-    equityBookCr: p.equityValueCr,
-    top10Pct: p.top10Pct,
-    top10DeltaPp: p.top10DeltaPp === null ? null : ppToBps(p.top10DeltaPp),
-    biggestAddPp: p.biggestAdd == null ? null : ppToBps(p.biggestAdd.pp),
-    biggestAddName: p.biggestAdd?.company ?? "",
-    biggestTrimPp: p.biggestTrim == null ? null : ppToBps(p.biggestTrim.pp),
-    biggestTrimName: p.biggestTrim?.company ?? "",
-  }));
-
   return (
     <section className="space-y-2">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h2 className="text-base font-semibold tracking-tight">
-            Peer fund houses
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            Every fund house compared on equity-book scale, concentration and
-            the month&apos;s biggest weight shifts — aggregated across all of
-            each house&apos;s schemes.
-            {latestMonth && <span className="ml-1">As of {latestMonth}.</span>}
-          </p>
-        </div>
-        <DownloadXlsxButton
-          rows={exportRows}
-          columns={exportColumns}
-          filename="fund-house-peers.xlsx"
-          sheetName="Fund-house Peers"
-        />
+      <div>
+        <h2 className="text-base font-semibold tracking-tight">
+          Peer fund houses
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          Every fund house compared on equity-book scale, concentration and
+          the month&apos;s biggest weight shifts — aggregated across all of
+          each house&apos;s schemes.
+          {latestMonth && <span className="ml-1">As of {latestMonth}.</span>}
+        </p>
       </div>
       <div className="overflow-x-auto rounded-md border bg-card">
         <table className="w-full border-collapse text-sm">
@@ -981,10 +912,10 @@ function FundHousePeers({
                 Top-10 conc.
               </th>
               <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
-                Biggest add (bps MoM)
+                Biggest buy (bps MoM)
               </th>
               <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
-                Biggest trim (bps MoM)
+                Biggest sell (bps MoM)
               </th>
             </tr>
           </thead>

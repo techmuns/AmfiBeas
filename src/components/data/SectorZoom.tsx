@@ -4,14 +4,12 @@ import { useEffect, useState } from "react";
 import { Maximize2, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { SectorShiftScheme, SectorShiftStock } from "@/data/cap-flows";
+import { shortenCompany } from "@/lib/stock-name";
 
 /** ₹ Cr, Indian-grouped, negatives in brackets (mirrors the insights tables). */
 function fmtCr(v: number): string {
   const abs = Math.abs(Math.round(v)).toLocaleString("en-IN");
   return v < 0 ? `(${abs})` : abs;
-}
-function cleanCompany(s: string): string {
-  return s.replace(/\s+(Ltd\.?|Limited)$/i, "");
 }
 
 /**
@@ -145,7 +143,7 @@ export function SectorZoom({
                     <div key={st.company} className="rounded-md border px-3 py-2">
                       <div className="flex items-baseline justify-between gap-2">
                         <span className="text-[13px] font-medium">
-                          {cleanCompany(st.company)}
+                          {shortenCompany(st.company)}
                         </span>
                         <span className={cn("shrink-0 text-[13px] tabular", toneCls)}>
                           {fmtCr(st.netCr)}

@@ -134,6 +134,44 @@ interface HistoryFile {
   series: Array<[string, number]>;
 }
 
+// MF risk/return ratios (public/nav-data/mf-ratios.json). Computed from each
+// plan-key's trailing-36-month returns vs the Nifty 500; keyed by schemecode.
+interface RatioCell {
+  value: number;
+  categoryAverage: number;
+  rank: number;
+  count: number;
+  percentile: number;
+}
+interface RatiosFund {
+  schemecode: string;
+  fundName: string;
+  classification: string | null;
+  plan: "direct" | "regular" | "unknown";
+  option: "growth" | "idcw" | "unknown";
+  cohortKey: string;
+  monthsUsed: number;
+  stdDev: RatioCell;
+  beta: RatioCell;
+  sharpe: RatioCell;
+  sortino: RatioCell;
+  alpha: RatioCell;
+}
+interface RatiosSnapshot {
+  asOfMonth: string;
+  benchmark: string;
+  windowMonths: number;
+  params: { riskFreeRate: number; marketReturn: number };
+  funds: Record<string, RatiosFund>;
+}
+interface RatiosMeta {
+  asOfMonth: string;
+  benchmark: string;
+  windowMonths: number;
+  riskFreeRate: number;
+  marketReturn: number;
+}
+
 // Phase 3.10A: shape of the daily index history file at
 // public/index-history/{indexId}.json — same [date, close] tuple series
 // as fund history, with index-flavoured meta.
@@ -185,6 +223,8 @@ interface TrendsData {
   manifestByCode: Map<string, ManifestFund>;
   categoryByCode: Map<string, CategoryFundRank>;
   categoryByCohort: Map<string, CategoryFundRank[]>;
+  ratiosByCode: Map<string, RatiosFund>;
+  ratiosMeta: RatiosMeta | null;
   historyStage: number;
   feedDate: string;
 }
@@ -193,6 +233,7 @@ function buildTrendsData(
   returns: ReturnsSnapshot,
   category: CategorySnapshot,
   manifest: ManifestSnapshot,
+  ratios: RatiosSnapshot | null,
 ): TrendsData {
   const categoryByCohort = new Map<string, CategoryFundRank[]>();
   for (const f of category.fundRanks) {
@@ -207,6 +248,16 @@ function buildTrendsData(
     manifestByCode: new Map(manifest.funds.map((f) => [f.schemecode, f])),
     categoryByCode: new Map(category.fundRanks.map((f) => [f.schemecode, f])),
     categoryByCohort,
+    ratiosByCode: new Map(ratios ? Object.entries(ratios.funds) : []),
+    ratiosMeta: ratios
+      ? {
+          asOfMonth: ratios.asOfMonth,
+          benchmark: ratios.benchmark,
+          windowMonths: ratios.windowMonths,
+          riskFreeRate: ratios.params.riskFreeRate,
+          marketReturn: ratios.params.marketReturn,
+        }
+      : null,
     historyStage: manifest.stage,
     feedDate: latest.feedDate,
   };
@@ -252,8 +303,11 @@ export function PortfolioTrendsTab(props: PortfolioTrendsTabProps) {
       getJson("/nav-data/mf-returns.json"),
       getJson("/nav-data/mf-category-returns.json"),
       getJson("/nav-data/mf-history-manifest.json"),
+      // Ratios are an enhancement — a missing/old snapshot must not break the
+      // tab, so this one fetch degrades to null rather than rejecting.
+      getJson("/nav-data/mf-ratios.json").catch(() => null),
     ])
-      .then(([latest, returns, category, manifest]) => {
+      .then(([latest, returns, category, manifest, ratios]) => {
         if (cancelled) return;
         setData(
           buildTrendsData(
@@ -261,6 +315,7 @@ export function PortfolioTrendsTab(props: PortfolioTrendsTabProps) {
             returns as ReturnsSnapshot,
             category as CategorySnapshot,
             manifest as ManifestSnapshot,
+            ratios as RatiosSnapshot | null,
           ),
         );
       })
@@ -351,6 +406,7 @@ function TrendsTabInner({
   const latestRow = latestByCode.get(dataKey);
   const manifestRow = manifestByCode.get(dataKey);
   const categoryRow = categoryByCode.get(dataKey);
+  const ratiosRow = data.ratiosByCode.get(dataKey);
 
   // Timeframe state. Default to 1Y, falling back to 6M → 3M → 1M based on
   // what's available in the returns snapshot; auto-fallback on fund change.
@@ -707,6 +763,11 @@ function TrendsTabInner({
           period={period ?? "1Y"}
           cohortLabel={cohortLabel}
         />
+      )}
+
+      {/* Risk/return ratios — point-in-time (trailing 3Y), so NAV-mode only. */}
+      {mode === "nav" && (
+        <RatiosTable row={ratiosRow ?? null} meta={data.ratiosMeta} cohortLabel={cohortLabel} />
       )}
     </section>
   );
@@ -1422,6 +1483,138 @@ function CategoryStrip({
         <Stat label="Quartile" value={stats.quartile} />
         <Stat label="Percentile" value={stats.percentile.toFixed(0)} />
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Risk/return ratios table
+// ---------------------------------------------------------------------------
+
+type RatioKey = "stdDev" | "beta" | "sharpe" | "sortino" | "alpha";
+interface RatioColumn {
+  key: RatioKey;
+  label: string;
+  /** true → higher is better (fund beats category when value > avg). */
+  higherBetter: boolean;
+  fmt: (v: number) => string;
+}
+const RATIO_COLUMNS: RatioColumn[] = [
+  { key: "stdDev", label: "Std Dev", higherBetter: false, fmt: (v) => `${v.toFixed(2)}%` },
+  { key: "beta", label: "Beta", higherBetter: false, fmt: (v) => v.toFixed(2) },
+  { key: "sharpe", label: "Sharpe", higherBetter: true, fmt: (v) => v.toFixed(2) },
+  { key: "sortino", label: "Sortino", higherBetter: true, fmt: (v) => v.toFixed(2) },
+  { key: "alpha", label: "Alpha", higherBetter: true, fmt: (v) => `${v > 0 ? "+" : ""}${v.toFixed(2)}%` },
+];
+
+/** Trailing-3Y risk/return ratios for the selected plan-key, with the cohort
+ *  average, rank-within-category, and category size for each. Transposed so
+ *  the five ratios are columns (matching the client's reference layout). */
+function RatiosTable({
+  row,
+  meta,
+  cohortLabel,
+}: {
+  row: RatiosFund | null;
+  meta: RatiosMeta | null;
+  cohortLabel: string;
+}) {
+  if (!row) {
+    return (
+      <div className="rounded-lg border bg-card px-4 py-3">
+        <h3 className="text-sm font-semibold tracking-tight">Risk ratios</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Risk ratios aren&apos;t available for this plan yet — they need at
+          least {meta?.windowMonths ?? 36} months of NAV history and a category
+          of 5+ comparable funds.
+        </p>
+      </div>
+    );
+  }
+  const rf = meta ? `${(meta.riskFreeRate * 100).toFixed(1)}%` : "6.5%";
+  const rm = meta ? `${(meta.marketReturn * 100).toFixed(0)}%` : "11%";
+  const bench = meta?.benchmark === "NIFTY_500" ? "Nifty 500" : meta?.benchmark ?? "Nifty 500";
+  const windowYears = meta ? Math.round(meta.windowMonths / 12) : 3;
+
+  return (
+    <div className="overflow-hidden rounded-lg border bg-card">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 px-4 pt-3">
+        <h3 className="text-sm font-semibold tracking-tight">Risk ratios</h3>
+        <p className="text-[11px] text-muted-foreground">
+          Trailing {windowYears}Y monthly · vs {bench} · {cohortLabel}
+        </p>
+      </div>
+      <div className="mt-2 overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-y bg-muted/50 text-xs text-muted-foreground">
+              <th className="px-4 py-2 text-left font-medium" />
+              {RATIO_COLUMNS.map((c) => (
+                <th key={c.key} className="whitespace-nowrap px-3 py-2 text-right font-medium">
+                  {c.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {/* Fund row — coloured vs its category average per ratio direction. */}
+            <tr className="border-b">
+              <td className="px-4 py-2 font-medium">Fund</td>
+              {RATIO_COLUMNS.map((c) => {
+                const cell = row[c.key];
+                const better = c.higherBetter
+                  ? cell.value > cell.categoryAverage
+                  : cell.value < cell.categoryAverage;
+                const worse = c.higherBetter
+                  ? cell.value < cell.categoryAverage
+                  : cell.value > cell.categoryAverage;
+                return (
+                  <td
+                    key={c.key}
+                    className={cn(
+                      "whitespace-nowrap px-3 py-2 text-right font-semibold tabular",
+                      better ? "text-positive" : worse ? "text-negative" : "",
+                    )}
+                  >
+                    {c.fmt(cell.value)}
+                  </td>
+                );
+              })}
+            </tr>
+            <tr className="border-b">
+              <td className="px-4 py-2 text-muted-foreground">Category average</td>
+              {RATIO_COLUMNS.map((c) => (
+                <td key={c.key} className="whitespace-nowrap px-3 py-2 text-right tabular text-muted-foreground">
+                  {c.fmt(row[c.key].categoryAverage)}
+                </td>
+              ))}
+            </tr>
+            <tr className="border-b">
+              <td className="px-4 py-2 text-muted-foreground">Rank within category</td>
+              {RATIO_COLUMNS.map((c) => (
+                <td key={c.key} className="whitespace-nowrap px-3 py-2 text-right tabular">
+                  {row[c.key].rank}
+                  <span className="text-muted-foreground"> / {row[c.key].count}</span>
+                </td>
+              ))}
+            </tr>
+            <tr>
+              <td className="px-4 py-2 text-muted-foreground">Funds in category</td>
+              {RATIO_COLUMNS.map((c) => (
+                <td key={c.key} className="whitespace-nowrap px-3 py-2 text-right tabular text-muted-foreground">
+                  {row[c.key].count}
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p className="px-4 pb-3 pt-2 text-[11px] leading-snug text-muted-foreground">
+        Annualised from {row.monthsUsed} monthly returns. Risk-free rate {rf}{" "}
+        (India 1Y T-bill), assumed market return {rm}. Beta &amp; Alpha measured
+        against {bench}. Lower Std Dev / Beta and higher Sharpe / Sortino / Alpha
+        rank better; green/red marks the fund above/below its category average.
+      </p>
     </div>
   );
 }

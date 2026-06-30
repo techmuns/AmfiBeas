@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
-import type { CsvColumn } from "@/lib/csv";
 import { fmtBps } from "@/lib/units";
 import { KeyTakeaway } from "@/components/ui/KeyTakeaway";
+import { PortfolioExportBar } from "@/components/data/PortfolioExportBar";
+import { exportStamp, slugifyName } from "@/lib/portfolio-export/filename";
 import {
   PortfolioHeadToHead,
   isLikelySameScheme,
@@ -19,6 +19,7 @@ import {
 import type { DashboardTabDef } from "@/components/layout/DashboardTabs";
 import type { TrackerTabId } from "@/components/data/PortfolioTrackerTabs";
 import {
+  cleanSchemeName,
   formatCompactCrSafe,
   formatPctSafe,
   formatSharesIndian,
@@ -96,7 +97,9 @@ export function PortfolioTrackerView({
   const [selectedCode, setSelectedCode] = useState(
     initialFund?.schemecode ?? ""
   );
-  const [query, setQuery] = useState(initialFund?.fund ?? "");
+  const [query, setQuery] = useState(
+    initialFund ? cleanSchemeName(initialFund.fund) : ""
+  );
   const [focused, setFocused] = useState(false);
   const [holdingQuery, setHoldingQuery] = useState("");
   // Client-requested filters: narrow the scheme picker to one fund house and
@@ -377,18 +380,6 @@ export function PortfolioTrackerView({
     });
   };
 
-  type HoldingExportRow = Record<string, string | number | null>;
-  const holdingsExportColumns: CsvColumn<HoldingExportRow>[] = [
-    { key: "company", header: "Company" },
-    ...months.map((m) => ({ key: m.label, header: `${m.label} AUM %` })),
-  ];
-  const holdingsExportRows: HoldingExportRow[] = holdings.map((r) => {
-    const row: HoldingExportRow = { company: r.company_name };
-    slugs.forEach((slug, i) => {
-      row[months[i].label] = r.months[slug]?.aum_pct_num ?? null;
-    });
-    return row;
-  });
 
   // Month-over-month read for the selected fund: biggest weight add/trim
   // and the top-10 concentration shift, in percentage points of AUM.
@@ -485,9 +476,43 @@ export function PortfolioTrackerView({
 
   function pick(f: FundDirectoryEntry) {
     setSelectedCode(f.schemecode);
-    setQuery(f.fund);
+    setQuery(cleanSchemeName(f.fund));
     setHoldingQuery("");
     setFocused(false);
+  }
+
+  // Master export — gathers the selected scheme's full profile (returns,
+  // ranking, ratios, holdings, sector allocation, peers) and builds a styled
+  // workbook / PDF. The heavy export modules are dynamically imported on click.
+  async function handleExcel() {
+    if (!selectedEntry) return;
+    const [{ gatherSchemeExport }, { downloadSchemeXlsx }] = await Promise.all([
+      import("@/lib/portfolio-export/gather"),
+      import("@/lib/portfolio-export/excel"),
+    ]);
+    const data = await gatherSchemeExport({
+      entry: selectedEntry,
+      amc: amcOf(selectedEntry.fund),
+      portfolio,
+      sectorRows: sectorVsCategory,
+      generatedAt: exportStamp(),
+    });
+    await downloadSchemeXlsx(data, `${slugifyName(cleanSchemeName(selectedEntry.fund))}.xlsx`);
+  }
+  async function handlePdf() {
+    if (!selectedEntry) return;
+    const [{ gatherSchemeExport }, { downloadSchemePdf }] = await Promise.all([
+      import("@/lib/portfolio-export/gather"),
+      import("@/lib/portfolio-export/pdf"),
+    ]);
+    const data = await gatherSchemeExport({
+      entry: selectedEntry,
+      amc: amcOf(selectedEntry.fund),
+      portfolio,
+      sectorRows: sectorVsCategory,
+      generatedAt: exportStamp(),
+    });
+    await downloadSchemePdf(data, `${slugifyName(cleanSchemeName(selectedEntry.fund))}.pdf`);
   }
 
   const loaderUi = (
@@ -514,6 +539,19 @@ export function PortfolioTrackerView({
 
   return (
     <div className="space-y-5">
+      {/* Master export — one Excel + one PDF for the whole selected scheme. */}
+      <PortfolioExportBar
+        title="Download this scheme"
+        hint={
+          selectedEntry
+            ? `${cleanSchemeName(selectedEntry.fund)} — profile, returns & ranking, risk ratios, holdings, sector mix & peers`
+            : "Select a scheme to export its full profile"
+        }
+        onExcel={handleExcel}
+        onPdf={handlePdf}
+        disabled={!selectedEntry}
+      />
+
       {/* Global fund picker + AMC filter — visible above the tab strip. */}
       <div className="flex max-w-3xl flex-wrap items-center gap-3">
         <select
@@ -573,7 +611,7 @@ export function PortfolioTrackerView({
                     f.schemecode === selectedCode && "bg-accent/60"
                   )}
                 >
-                  <span>{f.fund}</span>
+                  <span>{cleanSchemeName(f.fund)}</span>
                   {f.classification && (
                     <span className="shrink-0 text-xs text-muted-foreground">
                       {f.classification}
@@ -633,7 +671,9 @@ export function PortfolioTrackerView({
               <div className="rounded-lg border bg-card px-5 py-4 text-sm">
                 <div>
                   Fund Name -{" "}
-                  <span className="font-semibold">{selectedEntry.fund}</span>
+                  <span className="font-semibold">
+                    {cleanSchemeName(selectedEntry.fund)}
+                  </span>
                 </div>
                 {selectedEntry.classification && (
                   <div className="mt-1 text-muted-foreground">
@@ -658,8 +698,8 @@ export function PortfolioTrackerView({
                 <KeyTakeaway
                   headline={
                     <>
-                      In {flowSummary.label}, {selectedEntry.fund} raised its
-                      weight most in{" "}
+                      In {flowSummary.label}, {cleanSchemeName(selectedEntry.fund)}{" "}
+                      raised its weight most in{" "}
                       <strong>{flowSummary.topAdd.name}</strong> (
                       <span className="text-positive">
                         {fmtBps(flowSummary.topAdd.d)}
@@ -709,7 +749,7 @@ export function PortfolioTrackerView({
                     </div>
                     <SectorAllocationChart
                       data={sectorVsCategory}
-                      fundName={selectedEntry.fund}
+                      fundName={cleanSchemeName(selectedEntry.fund)}
                       peerLabel={selectedEntry.classification}
                     />
                   </div>
@@ -760,14 +800,6 @@ export function PortfolioTrackerView({
                   )}
                 </div>
                 </div>
-                {portfolio && holdingsExportRows.length > 0 && (
-                  <DownloadXlsxButton
-                    rows={holdingsExportRows}
-                    columns={holdingsExportColumns}
-                    filename="fund-holdings.xlsx"
-                    sheetName="Holdings"
-                  />
-                )}
               </div>
 
               {loading ? (
@@ -889,7 +921,7 @@ export function PortfolioTrackerView({
           {activeTab === "trends" && (
             <PortfolioTrendsTab
               schemecode={selectedEntry.schemecode}
-              fundName={selectedEntry.fund}
+              fundName={cleanSchemeName(selectedEntry.fund)}
             />
           )}
         </>

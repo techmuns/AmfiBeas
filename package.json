@@ -16,6 +16,7 @@
     "ingest:nav:latest": "tsx scripts/ingest/nav-latest.ts",
     "ingest:nav:returns": "tsx scripts/ingest/nav-returns.ts",
     "ingest:nav:category-returns": "tsx scripts/ingest/nav-category-returns.ts",
+    "ingest:nav:ratios": "tsx scripts/ingest/nav-ratios.ts",
     "ingest:nav:forward": "tsx scripts/ingest/nav-history-forward.ts",
     "ingest:amfi-pdf": "tsx scripts/ingest/amfi-monthly-pdf.ts",
     "ingest:amfi-quarterly-pdf": "tsx scripts/ingest/amfi-quarterly-pdf.ts",
@@ -43,13 +44,16 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "jspdf": "^2.5.2",
+    "jspdf-autotable": "^3.8.4",
     "lucide-react": "^0.469.0",
     "next": "^16.2.4",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "recharts": "^2.15.0",
     "tailwind-merge": "^2.6.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "xlsx-js-style": "^1.2.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
