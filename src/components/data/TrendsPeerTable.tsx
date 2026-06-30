@@ -112,9 +112,6 @@ export function TrendsPeerTable({
               <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
                 Rank
               </th>
-              <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
-                Percentile
-              </th>
               <th className="whitespace-nowrap px-3 py-2 text-center font-medium">
                 Quartile
               </th>
@@ -184,13 +181,6 @@ export function TrendsPeerTable({
                           /{stats.peerCount}
                         </span>
                       </>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2.5 text-right tabular align-top">
-                    {stats ? (
-                      `${stats.percentile.toFixed(0)}`
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
