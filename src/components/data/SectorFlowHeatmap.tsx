@@ -1,21 +1,27 @@
 "use client";
 
-import {
-  sectorFlowMonths,
-  sectorFlowRows,
-  sectorFlowTotals,
-} from "@/data/sector-flows";
+import sectorGrossFlows from "@/data/portfolio-tracker/sector-gross-flows.json";
+import { UNCLASSIFIED } from "@/data/sector-classification";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
 
 /**
  * Monthly NET sector flows in a red→yellow→green heatmap — whether money is
- * actually entering or leaving each sector across the 13-month research-snapshot
- * history (Apr-25 → Apr-26).
+ * actually entering or leaving each sector. Computed live from the MFs Portfolio
+ * Tracker equity holdings (scripts/build-sector-gross-flows.ts): for every
+ * month-over-month pair, net = Σ(share change × implied price) across all
+ * active-equity schemes, bucketed by the tracker's classifySector. Refreshes
+ * with the holdings, so the newest month tracks the latest available portfolios.
  *
  * Cell colour is an Excel-style 3-colour scale computed at render time from the
  * values (clamped at the 5th/95th percentile).
  */
+
+interface SectorGrossFlows {
+  meta: { generatedAt: string; months: string[]; funds: number; note: string };
+  rows: { sector: string; grossBuy: number[]; grossSell: number[]; net: number[] }[];
+  totals: { grossBuy: number[]; grossSell: number[]; net: number[] };
+}
 
 const RED = [248, 105, 107];
 const YELLOW = [255, 235, 132];
@@ -60,18 +66,31 @@ interface View {
 }
 
 function buildView(): View {
-  return {
-    months: sectorFlowMonths,
-    rows: sectorFlowRows.map((r) => ({
+  const data = sectorGrossFlows as SectorGrossFlows;
+  // The JSON stores months newest → oldest; the heatmap reads oldest → newest.
+  const months = [...data.meta.months].reverse();
+  const rows: ViewRow[] = data.rows
+    .map((r) => ({
       sector: r.sector,
-      monthly: r.monthly.map((v) => v * 100), // Rs bn → ₹ Cr
-      total: r.ytd * 100,
-    })),
-    totals: sectorFlowTotals.monthly.map((v) => v * 100),
-    totalsTotal: sectorFlowTotals.ytd * 100,
-    totalLabel: "CY26 YTD",
-    caption:
-      "Net flows — whether money is actually entering or leaving each sector. 13-month research-snapshot history.",
+      monthly: [...r.net].reverse(),
+      total: r.net.reduce((s, v) => s + v, 0),
+    }))
+    // Biggest net inflows on top; Unclassified sinks to the bottom.
+    .sort(
+      (a, b) =>
+        (a.sector === UNCLASSIFIED ? 1 : 0) - (b.sector === UNCLASSIFIED ? 1 : 0) ||
+        b.total - a.total,
+    );
+  const latestMonth = months[months.length - 1] ?? "";
+  return {
+    months,
+    rows,
+    totals: [...data.totals.net].reverse(),
+    totalsTotal: data.totals.net.reduce((s, v) => s + v, 0),
+    totalLabel: "Net total",
+    caption: `Net flows — whether money is actually entering or leaving each sector, computed from MFs Portfolio Tracker holdings across ${data.meta.funds.toLocaleString(
+      "en-IN",
+    )} active-equity schemes (latest ${latestMonth}). Sectors use the tracker's classification; net = month-over-month share change × price (buys − sells), ₹ Cr.`,
   };
 }
 
