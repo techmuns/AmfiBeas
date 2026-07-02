@@ -45,19 +45,28 @@ interface Props {
   selectedSchemecode: string;
   period: PeriodKey;
   cohortLabel: string;
+  /** "nav" ranks by point-to-point return; "rolling" by the average rolling
+   *  return over the window (from mf-rolling-ranks). Only the labels differ. */
+  variant?: "nav" | "rolling";
 }
 
-/** Same-cohort peer table for the Trends tab. Reads from the precomputed
- *  mf-category-returns.fundRanks (no recomputation here). Selected row is
- *  highlighted; sorted by rank ascending when stats are available, else by
- *  return descending where return exists, else by fund name. */
+/** Same-cohort peer table for the Trends tab. Reads from a precomputed ranks
+ *  snapshot (mf-category-returns in NAV mode, mf-rolling-ranks in Rolling mode)
+ *  — no recomputation here. Selected row is highlighted; sorted by rank
+ *  ascending when stats are available, else by return descending, else name. */
 export function TrendsPeerTable({
   rows,
   selectedSchemecode,
   period,
   cohortLabel,
+  variant = "nav",
 }: Props) {
-  const periodLabel = period === "3Y" || period === "5Y" || period === "10Y" ? `${period} CAGR` : `${period} return`;
+  const rolling = variant === "rolling";
+  const periodLabel = rolling
+    ? `${period} rolling avg`
+    : period === "3Y" || period === "5Y" || period === "10Y"
+      ? `${period} CAGR`
+      : `${period} return`;
   if (rows.length === 0) {
     return (
       <section className="space-y-2">
@@ -97,8 +106,9 @@ export function TrendsPeerTable({
       <div>
         <h2 className="text-base font-semibold tracking-tight">Peer ranking</h2>
         <p className="text-xs text-muted-foreground">
-          Same-cohort comparison · {cohortLabel} · sorted by {period} rank ·{" "}
-          {sorted.length} fund{sorted.length === 1 ? "" : "s"}
+          Same-cohort comparison · {cohortLabel} · sorted by {period}{" "}
+          {rolling ? "rolling-avg rank" : "rank"} · {sorted.length} fund
+          {sorted.length === 1 ? "" : "s"}
         </p>
       </div>
       <div className="overflow-x-auto rounded-md border bg-card">

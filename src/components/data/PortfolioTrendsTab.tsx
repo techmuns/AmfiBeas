@@ -223,10 +223,22 @@ interface TrendsData {
   manifestByCode: Map<string, ManifestFund>;
   categoryByCode: Map<string, CategoryFundRank>;
   categoryByCohort: Map<string, CategoryFundRank[]>;
+  rollingByCode: Map<string, CategoryFundRank>;
+  rollingByCohort: Map<string, CategoryFundRank[]>;
   ratiosByCode: Map<string, RatiosFund>;
   ratiosMeta: RatiosMeta | null;
   historyStage: number;
   feedDate: string;
+}
+function buildCohortMap(fundRanks: CategoryFundRank[]): Map<string, CategoryFundRank[]> {
+  const byCohort = new Map<string, CategoryFundRank[]>();
+  for (const f of fundRanks) {
+    const k = cohortKey(f.classification, f.plan, f.option);
+    let arr = byCohort.get(k);
+    if (!arr) { arr = []; byCohort.set(k, arr); }
+    arr.push(f);
+  }
+  return byCohort;
 }
 function buildTrendsData(
   latest: LatestSnapshot,
@@ -234,20 +246,17 @@ function buildTrendsData(
   category: CategorySnapshot,
   manifest: ManifestSnapshot,
   ratios: RatiosSnapshot | null,
+  rolling: CategorySnapshot | null,
 ): TrendsData {
-  const categoryByCohort = new Map<string, CategoryFundRank[]>();
-  for (const f of category.fundRanks) {
-    const k = cohortKey(f.classification, f.plan, f.option);
-    let arr = categoryByCohort.get(k);
-    if (!arr) { arr = []; categoryByCohort.set(k, arr); }
-    arr.push(f);
-  }
+  const rollingRanks = rolling?.fundRanks ?? [];
   return {
     latestByCode: new Map(latest.funds.map((f) => [f.schemecode, f])),
     returnsByCode: new Map(returns.funds.map((f) => [f.schemecode, f])),
     manifestByCode: new Map(manifest.funds.map((f) => [f.schemecode, f])),
     categoryByCode: new Map(category.fundRanks.map((f) => [f.schemecode, f])),
-    categoryByCohort,
+    categoryByCohort: buildCohortMap(category.fundRanks),
+    rollingByCode: new Map(rollingRanks.map((f) => [f.schemecode, f])),
+    rollingByCohort: buildCohortMap(rollingRanks),
     ratiosByCode: new Map(ratios ? Object.entries(ratios.funds) : []),
     ratiosMeta: ratios
       ? {
@@ -303,11 +312,12 @@ export function PortfolioTrendsTab(props: PortfolioTrendsTabProps) {
       getJson("/nav-data/mf-returns.json"),
       getJson("/nav-data/mf-category-returns.json"),
       getJson("/nav-data/mf-history-manifest.json"),
-      // Ratios are an enhancement — a missing/old snapshot must not break the
-      // tab, so this one fetch degrades to null rather than rejecting.
+      // Ratios and rolling ranks are enhancements — a missing/old snapshot must
+      // not break the tab, so these fetches degrade to null rather than reject.
       getJson("/nav-data/mf-ratios.json").catch(() => null),
+      getJson("/nav-data/mf-rolling-ranks.json").catch(() => null),
     ])
-      .then(([latest, returns, category, manifest, ratios]) => {
+      .then(([latest, returns, category, manifest, ratios, rolling]) => {
         if (cancelled) return;
         setData(
           buildTrendsData(
@@ -316,6 +326,7 @@ export function PortfolioTrendsTab(props: PortfolioTrendsTabProps) {
             category as CategorySnapshot,
             manifest as ManifestSnapshot,
             ratios as RatiosSnapshot | null,
+            rolling as CategorySnapshot | null,
           ),
         );
       })
@@ -582,6 +593,14 @@ function TrendsTabInner({
       cohortKey(returnRow.classification, returnRow.plan, returnRow.option),
     ) ?? [];
   }, [returnRow, categoryByCohort]);
+  // Rolling-mode peer ranks (avg rolling return per cohort) — mirrors `peers`.
+  const rollingCategoryRow = data.rollingByCode.get(dataKey);
+  const rollingPeers: PeerRankRow[] = useMemo(() => {
+    if (!returnRow) return [];
+    return data.rollingByCohort.get(
+      cohortKey(returnRow.classification, returnRow.plan, returnRow.option),
+    ) ?? [];
+  }, [returnRow, data.rollingByCohort]);
 
   // Chart points for the selected timeframe — fund series rebased to 100,
   // optionally merged with the benchmark rebased to 100 at the same start
@@ -748,20 +767,36 @@ function TrendsTabInner({
         </div>
       )}
 
-      {/* Point-to-point peer ranking is NAV-mode only (no rolling ranks). */}
-      {mode === "nav" && period && (
-        <CategoryStrip
-          period={period}
-          fundEntry={categoryRow?.periodRanks[period] ?? null}
-        />
-      )}
+      {/* Category comparison strip — point-to-point in NAV mode, average
+          rolling-return in Rolling mode (from the mf-rolling-ranks snapshot). */}
+      {period &&
+        (mode === "nav" ? (
+          <CategoryStrip
+            period={period}
+            fundEntry={categoryRow?.periodRanks[period] ?? null}
+          />
+        ) : ROLLING_WINDOWS.includes(period as RollingWindow) ? (
+          <CategoryStrip
+            period={period}
+            fundEntry={rollingCategoryRow?.periodRanks[period] ?? null}
+            variant="rolling"
+          />
+        ) : null)}
 
-      {mode === "nav" && (
+      {mode === "nav" ? (
         <TrendsPeerTable
           rows={peers}
           selectedSchemecode={dataKey}
           period={period ?? "1Y"}
           cohortLabel={cohortLabel}
+        />
+      ) : (
+        <TrendsPeerTable
+          rows={rollingPeers}
+          selectedSchemecode={dataKey}
+          period={period && ROLLING_WINDOWS.includes(period as RollingWindow) ? period : "1Y"}
+          cohortLabel={cohortLabel}
+          variant="rolling"
         />
       )}
 
@@ -1435,14 +1470,17 @@ function RollingChartSlot({
 function CategoryStrip({
   period,
   fundEntry,
+  variant = "nav",
 }: {
   period: PeriodKey;
   fundEntry: CategoryFundRank["periodRanks"][PeriodKey] | null;
+  variant?: "nav" | "rolling";
 }) {
+  const rolling = variant === "rolling";
   if (!fundEntry) {
     return (
       <div className="rounded-md border border-dashed bg-card px-4 py-3 text-xs text-muted-foreground">
-        Category comparison unavailable for {period}.
+        {rolling ? "Rolling" : "Category"} comparison unavailable for {period}.
       </div>
     );
   }
@@ -1451,7 +1489,7 @@ function CategoryStrip({
     const reason = (fundEntry as { reason: string }).reason;
     return (
       <div className="rounded-md border bg-card px-4 py-3 text-xs text-muted-foreground">
-        Category comparison ({period}): {reason} ({peerCount} peers · need 5).
+        {rolling ? "Rolling" : "Category"} comparison ({period}): {reason} ({peerCount} peers · need 5).
       </div>
     );
   }
@@ -1459,11 +1497,13 @@ function CategoryStrip({
     NonNullable<typeof fundEntry>,
     { statsAvailable: true }
   >;
-  const periodLabel = period === "3Y" || period === "5Y" || period === "10Y" ? `${period} CAGR` : period;
+  const fundLabel = rolling
+    ? `${period} rolling avg`
+    : `${period === "3Y" || period === "5Y" || period === "10Y" ? `${period} CAGR` : period} fund`;
   return (
     <div className="rounded-lg border bg-card px-4 py-3 text-sm">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 tabular">
-        <Stat label={`${periodLabel} fund`} value={`${signed(stats.return)}%`} tone={toneOf(stats.return)} />
+        <Stat label={fundLabel} value={`${signed(stats.return)}%`} tone={toneOf(stats.return)} />
         <Stat label="Avg" value={`${signed(stats.categoryAverage)}%`} />
         <Stat label="Median" value={`${signed(stats.categoryMedian)}%`} />
         <Stat

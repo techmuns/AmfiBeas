@@ -68,6 +68,10 @@ jobs:
         run: npm run ingest:nav:returns
       - name: Recompute category ranks
         run: npm run ingest:nav:category-returns
+      - name: Recompute risk ratios
+        run: npm run ingest:nav:ratios
+      - name: Recompute rolling-return peer ranks
+        run: npm run ingest:nav:rolling-ranks
       - name: Commit refreshed snapshots
         # Only after every prior step SUCCEEDED (a keep-last-good non-zero exit
         # skips this). Scheduled runs always commit; manual runs honour the
