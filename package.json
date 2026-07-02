@@ -17,6 +17,7 @@
     "ingest:nav:returns": "tsx scripts/ingest/nav-returns.ts",
     "ingest:nav:category-returns": "tsx scripts/ingest/nav-category-returns.ts",
     "ingest:nav:ratios": "tsx scripts/ingest/nav-ratios.ts",
+    "ingest:nav:rolling-ranks": "NODE_OPTIONS=--max-old-space-size=4096 tsx scripts/ingest/nav-rolling-ranks.ts",
     "ingest:nav:forward": "tsx scripts/ingest/nav-history-forward.ts",
     "ingest:amfi-pdf": "tsx scripts/ingest/amfi-monthly-pdf.ts",
     "ingest:amfi-quarterly-pdf": "tsx scripts/ingest/amfi-quarterly-pdf.ts",
