@@ -51,18 +51,25 @@ export const AMC_FACTSHEET_SOURCES: AmcFactsheetSource[] = [
     sourceUrl:
       "https://mf.nipponindiaim.com/investor-service/downloads/factsheet-portfolio-and-other-disclosures",
     kind: "portfolio-disclosure",
-    access: "browser",
+    access: "http",
     status: "pilot",
-    notes: "Plain GET → 403 (bot-protected); portfolio files load via client-side JS.",
+    notes:
+      "SOLVED. Complete monthly portfolio at a templated URL: " +
+      "InvestorServices/FactsheetsDocuments/NIMF-MONTHLY-PORTFOLIO-<DD>-<Mon>-<YY>.xls " +
+      "(one sheet per scheme; cols ISIN/Name/Industry/Qty/MktValue-Lac/%toNAV as a FRACTION). " +
+      "Landing page 403s to curl but the file URL is directly fetchable with a Referer header.",
   },
   {
     amc: "SBI",
     slug: "sbi",
     sourceUrl: "https://www.sbimf.com/portfolios",
     kind: "portfolio-disclosure",
-    access: "browser",
+    access: "http",
     status: "pilot",
-    notes: "Page shell loads; monthly portfolio files are populated by a client-side API.",
+    notes:
+      "SOLVED. Complete all-schemes monthly portfolio at a templated URL: " +
+      "docs/default-source/scheme-portfolios/all-schemes-monthly-portfolio---as-on-<Nth>-<month>-<year>.xlsx " +
+      "(one sheet per scheme; cols Name/ISIN/Industry/Qty/MktValue-Lakh/%toAUM). Fetch via curl + backward month-probe.",
   },
   {
     amc: "ICICI Prudential",
@@ -72,7 +79,9 @@ export const AMC_FACTSHEET_SOURCES: AmcFactsheetSource[] = [
     kind: "mixed",
     access: "browser",
     status: "pilot",
-    notes: "Downloads center; monthly portfolio disclosure must be selected from the tabs.",
+    notes:
+      "TODO. Downloads page renders (200) but the monthly disclosure files sit behind tab/filter " +
+      "clicks — recon found no direct file link. Needs a click-through scraper (or the private API).",
   },
   {
     amc: "HDFC",
@@ -81,7 +90,9 @@ export const AMC_FACTSHEET_SOURCES: AmcFactsheetSource[] = [
     kind: "mixed",
     access: "browser",
     status: "pilot",
-    notes: "Plain GET → 403 (bot-protected); JS-rendered factsheet + disclosure listing.",
+    notes:
+      "HARD. Returns 403 'Access Denied' even to a real headless browser (strong bot protection). " +
+      "Needs a stealth/undetected browser or an alternate disclosure host.",
   },
   {
     amc: "Kotak",
@@ -90,6 +101,9 @@ export const AMC_FACTSHEET_SOURCES: AmcFactsheetSource[] = [
     kind: "mixed",
     access: "browser",
     status: "pilot",
-    notes: "Month-directory URL (…/<month>_<year>/) — path is likely month-templated.",
+    notes:
+      "PARTIAL. The factsheet PDF is templated at factsheet/<month>_<year>/Kotak MF Factsheet <Month> <Year>.pdf " +
+      "— but that's the marketing factsheet (top-10 only), NOT complete holdings. Still need Kotak's monthly " +
+      "portfolio-disclosure XLS (published separately).",
   },
 ];
