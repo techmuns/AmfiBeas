@@ -76,12 +76,15 @@ export const AMC_FACTSHEET_SOURCES: AmcFactsheetSource[] = [
     slug: "icici-pru",
     sourceUrl:
       "https://www.icicipruamc.com/media-center/downloads?currentTabFilter=HistoricalFactsheets",
-    kind: "mixed",
-    access: "browser",
+    kind: "portfolio-disclosure",
+    access: "http",
     status: "pilot",
     notes:
-      "TODO. Downloads page renders (200) but the monthly disclosure files sit behind tab/filter " +
-      "clicks — recon found no direct file link. Needs a click-through scraper (or the private API).",
+      "NEARLY SOLVED via open JSON API (no token). Headers: 'env: api' + 'requestapiid: <uuid>'. " +
+      "POST https://apimf.icicipruamc.com/nms/v1/downloads/files  body { categoryId: " +
+      "'26a073d7-08d2-4a95-95fa-f83a4ee51e40' (Monthly Portfolio Disclosures leaf under 'Other Scheme " +
+      "Disclosures'), userType:'Investor', page/size (number strings), fileType, filter:[{key:'FINANCIAL_YEAR', " +
+      "filterValue:[...]}] }. Remaining: capture the exact fileType + filter payload from one browser POST.",
   },
   {
     amc: "HDFC",
@@ -91,8 +94,9 @@ export const AMC_FACTSHEET_SOURCES: AmcFactsheetSource[] = [
     access: "browser",
     status: "pilot",
     notes:
-      "HARD. Returns 403 'Access Denied' even to a real headless browser (strong bot protection). " +
-      "Needs a stealth/undetected browser or an alternate disclosure host.",
+      "HARD. 403 'Access Denied' (Akamai) even to a real browser WITH stealth (webdriver spoof, " +
+      "automation flags off, en-IN). Recon2 could not get past it. Options: undetected-chromedriver / a " +
+      "residential-proxy fetch, or source HDFC's monthly portfolio from an alternate host (e.g. its CDN).",
   },
   {
     amc: "Kotak",
@@ -102,8 +106,8 @@ export const AMC_FACTSHEET_SOURCES: AmcFactsheetSource[] = [
     access: "browser",
     status: "pilot",
     notes:
-      "PARTIAL. The factsheet PDF is templated at factsheet/<month>_<year>/Kotak MF Factsheet <Month> <Year>.pdf " +
-      "— but that's the marketing factsheet (top-10 only), NOT complete holdings. Still need Kotak's monthly " +
-      "portfolio-disclosure XLS (published separately).",
+      "PARTIAL. Factsheet PDF (top-10 only) is NOT complete holdings. The real monthly portfolio " +
+      "disclosure lives under https://www.kotakmf.com/Information/statutory-disclosure (JS-rendered SPA). " +
+      "Next: a click-through recon of that page to capture the monthly-portfolio file URL/API.",
   },
 ];
