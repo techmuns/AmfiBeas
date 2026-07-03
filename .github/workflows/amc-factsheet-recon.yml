@@ -35,13 +35,25 @@ jobs:
         run: npm ci
       - name: Install Chromium for Playwright
         run: npx playwright install --with-deps chromium
-      - name: Run AMC recon
+      - name: Run AMC recon (landing pages)
+        continue-on-error: true
         run: npx tsx scripts/ingest/amc-factsheets/recon.ts
+      - name: Run AMC recon v2 (ICICI/Kotak/HDFC deep)
+        continue-on-error: true
+        run: npx tsx scripts/ingest/amc-factsheets/recon2.ts
       - name: Upload recon artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: amc-recon
           path: amc-recon-out/
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Upload recon v2 artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: amc-recon2
+          path: amc-recon2-out/
           if-no-files-found: warn
           retention-days: 7
