@@ -49,19 +49,18 @@ async function icici(ctx: BrowserContext, dir: string) {
     await page.goto("https://www.icicipruamc.com/media-center/downloads?currentTabFilter=HistoricalFactsheets", { waitUntil: "domcontentloaded", timeout: 60_000 });
     await page.waitForLoadState("networkidle", { timeout: 25_000 }).catch(() => {});
     await page.waitForTimeout(3500);
-    await clickText(page, ["Other Scheme Disclosures"], log);
-    await page.waitForTimeout(1500);
-    await clickText(page, ["Document Type"], log); // open the dropdown
-    await clickText(page, ["Monthly Portfolio Disclosures"], log); // select chip
-    await clickText(page, ["Financial Year"], log); // open FY dropdown
-    // pick the first FY-looking option (e.g. "2026 - 2027")
-    const fyEls = await page.$$("button, span, div, li, label, [role=option]");
-    for (const el of fyEls) {
-      const tx = ((await el.textContent().catch(() => "")) || "").trim();
-      if (/^20\d\d\s*-\s*20\d\d$/.test(tx)) { try { await el.click({ timeout: 2000 }); log.push(`FY "${tx}"`); break; } catch { /* */ } }
-    }
-    await page.waitForTimeout(800);
-    await clickText(page, ["APPLY", "Apply"], log);
+    // Precise, exact-text targeting (the earlier fuzzy match hit combined nodes
+    // like "Clear AllAPPLY").
+    const tap = async (label: string, fn: () => Promise<void>) => {
+      try { await fn(); log.push(label); await page.waitForTimeout(1200); } catch (e) { log.push(`${label} MISS ${(e as Error).message.slice(0, 40)}`); }
+    };
+    await tap("tab Other Scheme Disclosures", () => page.getByText("Other Scheme Disclosures", { exact: true }).first().click({ timeout: 5000 }));
+    await page.waitForTimeout(1200);
+    await tap("open Document Type", () => page.getByText(/^Document Type/).first().click({ timeout: 4000 }));
+    await tap("chip Monthly Portfolio Disclosures", () => page.getByText("Monthly Portfolio Disclosures", { exact: true }).first().click({ timeout: 4000 }));
+    await tap("open Financial Year", () => page.getByText("Financial Year", { exact: true }).first().click({ timeout: 4000 }));
+    await tap("pick FY", () => page.getByText(/^\s*20\d\d\s*-\s*20\d\d\s*$/).first().click({ timeout: 4000 }));
+    await tap("APPLY", () => page.getByRole("button", { name: /^\s*APPLY\s*$/ }).first().click({ timeout: 4000 }));
     await page.waitForLoadState("networkidle", { timeout: 15_000 }).catch(() => {});
     await page.waitForTimeout(3000);
     await fs.writeFile(path.join(dir, "dom.html"), await page.content(), "utf8");
