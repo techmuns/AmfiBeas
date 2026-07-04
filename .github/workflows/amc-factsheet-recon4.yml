@@ -1,0 +1,40 @@
+name: AMC factsheet recon v4
+
+# Lean, targeted recon for the last-mile ICICI + Kotak capture (precise UI
+# interaction). Runs only recon4 so it's fast (~4 min). Uploads amc-recon4.
+
+on:
+  push:
+    branches: [claude/vibrant-bell-9wycx4]
+    paths:
+      - scripts/ingest/amc-factsheets/recon4.ts
+      - .github/workflows/amc-factsheet-recon4.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recon4:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Run AMC recon v4
+        run: npx tsx scripts/ingest/amc-factsheets/recon4.ts
+      - name: Upload recon v4 artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: amc-recon4
+          path: amc-recon4-out/
+          if-no-files-found: warn
+          retention-days: 7

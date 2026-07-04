@@ -13,8 +13,9 @@ on:
   push:
     branches: [claude/vibrant-bell-9wycx4]
     paths:
-      - scripts/ingest/amc-factsheets/**
-      - scripts/ingest/amc-factsheet-sources.ts
+      - scripts/ingest/amc-factsheets/recon.ts
+      - scripts/ingest/amc-factsheets/recon2.ts
+      - scripts/ingest/amc-factsheets/recon3.ts
       - .github/workflows/amc-factsheet-recon.yml
   workflow_dispatch:
 
