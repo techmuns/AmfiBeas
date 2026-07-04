@@ -24,6 +24,7 @@ const OUT = path.resolve(process.cwd(), "public/amc-holdings");
 const SOLVED: Record<string, AmcParseOptions> = {
   sbi: { pctScale: 1, valueToCr: 100 },
   nippon: { pctScale: 100, valueToCr: 100 },
+  kotak: { pctScale: 1, valueToCr: 100 },
 };
 
 interface IndexEntry {

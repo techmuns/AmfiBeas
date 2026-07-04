@@ -102,12 +102,13 @@ export const AMC_FACTSHEET_SOURCES: AmcFactsheetSource[] = [
     amc: "Kotak",
     slug: "kotak",
     sourceUrl: "https://www.kotakmf.com/factsheet/may_2026/",
-    kind: "mixed",
-    access: "browser",
+    kind: "portfolio-disclosure",
+    access: "http",
     status: "pilot",
     notes:
-      "PARTIAL. Factsheet PDF (top-10 only) is NOT complete holdings. The real monthly portfolio " +
-      "disclosure lives under https://www.kotakmf.com/Information/statutory-disclosure (JS-rendered SPA). " +
-      "Next: a click-through recon of that page to capture the monthly-portfolio file URL/API.",
+      "SOLVED. Complete consolidated monthly portfolio on Kotak's S3 at a templated URL: " +
+      "https://vatseelabs-s3.kotakmf.com/FAD/Portfolios/Consolidated-Portfolio-as-on-<Month>-<DD>,-<YYYY>/" +
+      "ConsolidatedSEBIPortfolio<Month><YYYY>.xlsx (one sheet per scheme; cols Name/ISIN/Industry/Qty/" +
+      "MktValue-Lac/%toNetAssets). The factsheet PDF at the given landing URL is only a top-10 summary.",
   },
 ];

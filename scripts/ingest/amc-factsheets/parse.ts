@@ -78,7 +78,13 @@ function findSchemeName(rows: Row[]): string {
   for (let i = 0; i < Math.min(rows.length, 4); i++) {
     for (const cell of rows[i]) {
       const t = s(cell);
-      if (/\bfund\b/i.test(t) && t.length > 6) return t.replace(/\s*\(.*$/, "").trim();
+      if (/\bfund\b/i.test(t) && t.length > 6) {
+        return t
+          .replace(/^portfolio of\s+/i, "") // Kotak: "Portfolio of X Fund as on …"
+          .replace(/\s+as on.*$/i, "")
+          .replace(/\s*\(.*$/, "")
+          .trim();
+      }
     }
   }
   return "";
@@ -111,9 +117,20 @@ function parseScheme(name: string, rows: Row[], opts: AmcParseOptions): AmcSchem
     if (!ISIN_RE.test(isinRaw)) continue; // only real securities
     const value = num(r[cols.value]);
     const pct = num(r[cols.pct]);
+    // Name: usually cols.name, but some AMCs (Kotak) merge the "Name of
+    // Instrument" header across cells while the value sits a column or two
+    // over — fall forward to the first non-empty, non-ISIN text cell.
+    let name = s(r[cols.name]);
+    if (!name) {
+      for (let c = cols.name + 1; c <= Math.min(cols.name + 3, r.length - 1); c++) {
+        if (c === cols.isin) continue;
+        const v = s(r[c]);
+        if (v && !ISIN_RE.test(v.toUpperCase().replace(/\s+/g, ""))) { name = v; break; }
+      }
+    }
     holdings.push({
       isin: isinRaw,
-      name: s(r[cols.name]),
+      name,
       industry: cols.industry >= 0 ? s(r[cols.industry]) || null : null,
       quantity: num(r[cols.qty]),
       marketValueCr: value == null ? null : Math.round((value / opts.valueToCr) * 100) / 100,

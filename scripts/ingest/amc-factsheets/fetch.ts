@@ -48,6 +48,14 @@ export function candidateUrls(slug: string, year: number, month1: number): strin
       `${base}-${day}-${MON_FULL_TC[month1 - 1]}-${yy}.xls`,
     ];
   }
+  if (slug === "kotak") {
+    // Consolidated (complete) monthly portfolio on Kotak's S3, e.g.
+    // .../Consolidated-Portfolio-as-on-May-31,-2026/ConsolidatedSEBIPortfolioMay2026.xlsx
+    const mon = MON_FULL_TC[month1 - 1];
+    return [
+      `https://vatseelabs-s3.kotakmf.com/FAD/Portfolios/Consolidated-Portfolio-as-on-${mon}-${day},-${year}/ConsolidatedSEBIPortfolio${mon}${year}.xlsx`,
+    ];
+  }
   return [];
 }
 
