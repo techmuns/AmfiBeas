@@ -14,24 +14,10 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import { chromium, type BrowserContext, type Page } from "playwright";
+import { chromium, type BrowserContext } from "playwright";
 
 const OUT = path.resolve(process.cwd(), "amc-recon4-out");
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-
-async function clickText(page: Page, texts: string[], log: string[]): Promise<boolean> {
-  for (const t of texts) {
-    const els = await page.$$("button, a, span, div, li, p, h3, h4, label, [role=tab], [role=button], [role=option]");
-    for (const el of els) {
-      const tx = ((await el.textContent().catch(() => "")) || "").trim();
-      if (!tx || tx.length > 48) continue;
-      if (tx.toLowerCase() === t.toLowerCase() || tx.toLowerCase().includes(t.toLowerCase())) {
-        try { await el.click({ timeout: 2500 }); log.push(`click "${tx}"`); await page.waitForTimeout(1200); return true; } catch { /* */ }
-      }
-    }
-  }
-  return false;
-}
 
 async function icici(ctx: BrowserContext, dir: string) {
   const posts: Array<Record<string, unknown>> = [];
