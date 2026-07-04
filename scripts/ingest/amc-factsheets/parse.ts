@@ -55,7 +55,12 @@ function findColumns(rows: Row[]): { headerIdx: number; cols: ColMap } | null {
     const name = r.findIndex((c) => c.includes("name of the instrument") || c.includes("instrument") || c.includes("issuer"));
     const industry = r.findIndex((c) => c.includes("industry") || c.includes("rating"));
     const qty = r.findIndex((c) => c.includes("quantity"));
-    const value = r.findIndex((c) => c.includes("market") || c.includes("fair value") || c.includes("market value"));
+    const value = r.findIndex((c) => {
+      const t = c.replace(/[.\s]/g, "");
+      // "Market value" / "Fair value" (SBI, Nippon, Kotak) and the abbreviated
+      // "MKT VAL(Rs. Lacs)" (Tata) — same column, different wording.
+      return c.includes("market") || c.includes("fair value") || t.includes("mktval") || t.includes("marketval");
+    });
     if (name < 0 || qty < 0 || value < 0) continue;
     return { headerIdx: i, cols: { name, isin, industry, qty, value, pct } };
   }

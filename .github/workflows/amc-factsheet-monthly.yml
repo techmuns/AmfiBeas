@@ -1,10 +1,12 @@
 name: AMC monthly portfolio fetch
 
-# Direct-from-AMC monthly portfolio disclosures → public/amc-holdings/.
+# AMC monthly portfolio disclosures → public/amc-holdings/, via the AdvisorKhoj
+# aggregator (one curl-able code path for all ~50 AMCs; see run-monthly.ts).
 # Runs once a day on the 9th–12th of each month (the window in which most AMCs
-# publish the prior month's disclosure), plus manual dispatch. Fetches +
-# parses every SOLVED AMC (SBI, Nippon today); AMCs still in recon are skipped
-# safely. Commits the refreshed snapshots.
+# publish the prior month's disclosure), plus manual dispatch. Every AMC with a
+# directly-downloadable disclosure (~21/50, incl. the largest funds) is fetched
+# + parsed; AMCs behind a JS landing page / bot wall are recorded in index.json
+# with a non-ok status rather than dropped silently. Commits refreshed snapshots.
 
 on:
   schedule:
@@ -21,7 +23,7 @@ concurrency:
 jobs:
   fetch:
     runs-on: ubuntu-22.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

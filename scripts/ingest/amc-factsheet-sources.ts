@@ -1,22 +1,28 @@
 /**
  * AMC factsheet / monthly-portfolio-disclosure source registry.
  *
- * Direct-from-AMC replacement for the RupeeVest holdings feed. Each entry points
- * at the public page where an AMC publishes its SEBI-mandated MONTHLY PORTFOLIO
- * DISCLOSURE (the complete scheme-by-scheme holdings) alongside its factsheet.
- * The monthly auto-fetch job reads this registry, resolves the latest month's
- * file for each AMC, parses the complete holdings, and feeds the MFs Portfolio
- * Tracker "Holdings" tab.
+ * Direct-from-AMC replacement for the RupeeVest holdings feed.
+ *
+ * PRIMARY SOURCE (as of the AdvisorKhoj switch): the monthly job no longer
+ * scrapes each AMC's own SPA. It uses the AdvisorKhoj aggregator
+ * (scripts/ingest/amc-factsheets/advisorkhoj.ts), which lists every AMC's SEBI
+ * monthly portfolio disclosure on one server-rendered page per AMC — a single
+ * curl-able code path covering ~21/50 AMCs with a DIRECT downloadable file,
+ * including the largest AUM names and 8 of the tracker's current 10 AMCs
+ * (all except HDFC + Mirae). The remaining AMCs expose only a JS-rendered
+ * landing page (Mirae, PGIM, WhiteOak, Union…), a per-scheme file list that
+ * needs an HTML scrape (Canara Robeco, HSBC), or a bot wall / stale path
+ * (HDFC = Akamai 403, Edelweiss 403, Motilal 404) and still need a targeted
+ * per-AMC fallback.
+ *
+ * This registry is retained as (a) the DIRECT-URL fallback for the three AMCs
+ * with a stable templatable file URL (SBI, Nippon, Kotak — see fetch.ts), and
+ * (b) documentation of the known-hard AMCs. The per-AMC `access`/`notes` below
+ * predate the AdvisorKhoj switch and describe the old bespoke-scraper strategy.
  *
  * Fetch cadence: once a day on the 9th–12th of each month — the window in which
  * most AMCs publish the prior month's disclosure. Encoded in
  * AMC_FACTSHEET_FETCH_WINDOW and enforced by the scheduling workflow.
- *
- * NOTE on access: every one of these pages is a JavaScript-rendered SPA and
- * several sit behind bot protection (plain HTTP GET returns 403 / an empty
- * shell), so the monthly file must be resolved with a real (headless) browser
- * or via each AMC's underlying data API — not a simple fetch. `access` records
- * which applies so the fetcher can pick the right strategy.
  */
 
 export interface AmcFactsheetSource {
