@@ -3,10 +3,12 @@ name: AMC monthly portfolio fetch
 # AMC monthly portfolio disclosures → public/amc-holdings/, via the AdvisorKhoj
 # aggregator (one curl-able code path for all ~50 AMCs; see run-monthly.ts).
 # Runs once a day on the 9th–12th of each month (the window in which most AMCs
-# publish the prior month's disclosure), plus manual dispatch. Every AMC with a
-# directly-downloadable disclosure (~21/50, incl. the largest funds) is fetched
-# + parsed; AMCs behind a JS landing page / bot wall are recorded in index.json
-# with a non-ok status rather than dropped silently. Commits refreshed snapshots.
+# publish the prior month's disclosure), plus manual dispatch. AMCs with a
+# directly-downloadable disclosure are fetched with plain curl; AMCs behind a
+# JS landing page or Akamai bot wall fall through to a headless-Chromium tier
+# (browser-fallback.ts), which needs Playwright's browser installed. Any AMC
+# still unresolved is recorded in index.json with a non-ok status rather than
+# dropped silently. Commits refreshed snapshots.
 
 on:
   schedule:
@@ -23,7 +25,7 @@ concurrency:
 jobs:
   fetch:
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,6 +34,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Install Playwright Chromium (browser fallback tier)
+        run: npx playwright install --with-deps chromium
       - name: Fetch + parse AMC monthly portfolios
         run: npx tsx scripts/ingest/amc-factsheets/run-monthly.ts
       - name: Commit refreshed AMC holdings

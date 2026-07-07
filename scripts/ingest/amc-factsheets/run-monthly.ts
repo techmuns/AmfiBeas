@@ -32,6 +32,10 @@ import {
 } from "./advisorkhoj";
 import { fetchLatest } from "./fetch";
 import { parseAmcWorkbook } from "./parse";
+import { launchBrowser } from "./browser";
+import { browserFetchAmc, monthFloor, monthCeil } from "./browser-fallback";
+import { BROWSER_CONFIG } from "./browser-hints";
+import type { Browser } from "playwright";
 import type { AmcParseOptions, AmcPortfolioSnapshot, AmcScheme } from "./types";
 
 const OUT = path.resolve(process.cwd(), "public/amc-holdings");
@@ -70,7 +74,7 @@ interface IndexEntry {
   slug: string;
   amc: string;
   status: Status;
-  source: "advisorkhoj" | "direct" | null;
+  source: "advisorkhoj" | "direct" | "browser" | null;
   asOfMonth: string | null;
   schemes: number;
   holdings: number;
@@ -80,6 +84,31 @@ interface IndexEntry {
 
 function countHoldings(schemes: AmcScheme[]): number {
   return schemes.reduce((s, x) => s + x.holdings.length, 0);
+}
+
+const MON3 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** Human month label from the modal per-scheme "as on" date, else a fallback.
+ *  Future-dated `asOf` cells (seen in a few AMC workbooks, e.g. a "2030" typo)
+ *  are ignored so they can't produce a nonsensical label. */
+function monthLabelFromSchemes(schemes: AmcScheme[], fallback: string | null): string {
+  const now = new Date();
+  const ceilYm = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 2).padStart(2, "0")}`; // now+1 month
+  const counts = new Map<string, number>();
+  for (const s of schemes) {
+    if (!s.asOf) continue;
+    const key = s.asOf.slice(0, 7); // YYYY-MM
+    if (key > ceilYm) continue; // ignore implausible future dates
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  let modal: string | null = null;
+  let best = -1;
+  for (const [k, c] of counts) if (c > best || (c === best && k > (modal ?? ""))) { best = c; modal = k; }
+  if (modal) {
+    const [y, m] = modal.split("-");
+    return `${MON3[+m - 1]} ${y}`;
+  }
+  return fallback ?? "latest";
 }
 
 async function writeSnapshot(
@@ -103,7 +132,7 @@ async function writeSnapshot(
   return { file, holdings: countHoldings(normalized) };
 }
 
-async function processAmc(amc: string, year: number): Promise<IndexEntry> {
+async function processAmc(amc: string, year: number, browser: Browser | null): Promise<IndexEntry> {
   const slug = slugFor(amc);
   const base: IndexEntry = {
     slug, amc, status: "no-link", source: null, asOfMonth: null,
@@ -136,6 +165,26 @@ async function processAmc(amc: string, year: number): Promise<IndexEntry> {
     }
   }
 
+  // 3) Browser fallback — clears Akamai bot-walls (HDFC, …) and runs JS-rendered
+  //    disclosure pages (Mirae, …) that plain curl can't. Explicit config URLs
+  //    (no-link AMCs) are tried before the AdvisorKhoj-resolved links.
+  if (browser) {
+    const cfg = BROWSER_CONFIG[slug] ?? {};
+    // Explicit config URLs (no-link AMCs) + the resolved disclosure page. Older
+    // months resolve to the same landing page, so one AdvisorKhoj link is enough.
+    const urls = [...(cfg.urls ?? []), links[0]?.url].filter((u): u is string => !!u);
+    if (urls.length > 0) {
+      const now = new Date();
+      const hints = { floorScore: monthFloor(now), ceilScore: monthCeil(now), ...cfg.hints };
+      const r = await browserFetchAmc(browser, urls, GENERIC, hints);
+      if (r.schemes.length > 0) {
+        const label = monthLabelFromSchemes(r.schemes, base.asOfMonth);
+        const w = await writeSnapshot(slug, amc, r.usedUrl ?? urls[0], label, r.schemes);
+        return { ...base, status: "ok", source: "browser", asOfMonth: label, schemes: r.schemes.length, holdings: w.holdings, file: w.file };
+      }
+    }
+  }
+
   return base;
 }
 
@@ -150,20 +199,36 @@ async function main() {
   }
   console.log(`Fetching ${amcs.length} AMCs via AdvisorKhoj (year ${year})…\n`);
 
-  const index: IndexEntry[] = [];
-  for (const amc of amcs) {
+  // Browser is the tier-3 fallback for bot-walled / JS-rendered AMCs. Launch it
+  // once and reuse across AMCs; degrade to curl-only if it can't start (or when
+  // AMC_SKIP_BROWSER is set for a fast curl-only run).
+  let browser: Browser | null = null;
+  if (!process.env.AMC_SKIP_BROWSER) {
     try {
-      const e = await processAmc(amc, year);
-      index.push(e);
-      const mark = e.status === "ok" ? "✓" : "✗";
-      const detail = e.status === "ok"
-        ? `${e.asOfMonth}  schemes=${String(e.schemes).padStart(4)} holdings=${String(e.holdings).padStart(6)}  [${e.source}]`
-        : e.status;
-      console.log(`${mark} ${e.slug.padEnd(16)} ${detail}`);
+      browser = await launchBrowser();
     } catch (err) {
-      console.log(`✗ ${slugFor(amc).padEnd(16)} ERROR ${(err as Error).message.slice(0, 80)}`);
-      index.push({ slug: slugFor(amc), amc, status: "empty", source: null, asOfMonth: null, schemes: 0, holdings: 0, file: null, updatedAt: new Date().toISOString() });
+      console.log(`(browser fallback unavailable: ${(err as Error).message.slice(0, 80)})`);
     }
+  }
+
+  const index: IndexEntry[] = [];
+  try {
+    for (const amc of amcs) {
+      try {
+        const e = await processAmc(amc, year, browser);
+        index.push(e);
+        const mark = e.status === "ok" ? "✓" : "✗";
+        const detail = e.status === "ok"
+          ? `${e.asOfMonth}  schemes=${String(e.schemes).padStart(4)} holdings=${String(e.holdings).padStart(6)}  [${e.source}]`
+          : e.status;
+        console.log(`${mark} ${e.slug.padEnd(16)} ${detail}`);
+      } catch (err) {
+        console.log(`✗ ${slugFor(amc).padEnd(16)} ERROR ${(err as Error).message.slice(0, 80)}`);
+        index.push({ slug: slugFor(amc), amc, status: "empty", source: null, asOfMonth: null, schemes: 0, holdings: 0, file: null, updatedAt: new Date().toISOString() });
+      }
+    }
+  } finally {
+    if (browser) await browser.close();
   }
 
   index.sort((a, b) => a.slug.localeCompare(b.slug));
