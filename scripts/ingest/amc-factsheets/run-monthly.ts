@@ -27,7 +27,7 @@ import {
   discoverAmcs,
   slugFor,
   listPortfolioLinks,
-  downloadAndParse,
+  downloadFirstParsable,
   normalizeSchemePct,
 } from "./advisorkhoj";
 import { fetchLatest } from "./fetch";
@@ -110,17 +110,18 @@ async function processAmc(amc: string, year: number): Promise<IndexEntry> {
     schemes: 0, holdings: 0, file: null, updatedAt: new Date().toISOString(),
   };
 
-  // 1) AdvisorKhoj (primary).
+  // 1) AdvisorKhoj (primary). Try the newest links first, falling back to the
+  //    prior month when the freshest link is a dead/unpublished URL.
   const links = listPortfolioLinks(amc, year);
   if (links.length > 0) {
-    const latest = links[0];
-    const res = downloadAndParse(latest.url, GENERIC);
+    const res = downloadFirstParsable(links, GENERIC);
+    const used = res.link ?? links[0];
     if (res.schemes.length > 0) {
-      const w = await writeSnapshot(slug, amc, latest.url, latest.label, res.schemes);
-      return { ...base, status: "ok", source: "advisorkhoj", asOfMonth: latest.label, schemes: res.schemes.length, holdings: w.holdings, file: w.file };
+      const w = await writeSnapshot(slug, amc, used.url, used.label, res.schemes);
+      return { ...base, status: "ok", source: "advisorkhoj", asOfMonth: used.label, schemes: res.schemes.length, holdings: w.holdings, file: w.file };
     }
     base.status = res.kind === "blocked" ? "blocked" : res.kind === "empty" ? "empty" : "parse-empty";
-    base.asOfMonth = latest.label;
+    base.asOfMonth = used.label;
   }
 
   // 2) Direct-URL fallback for the three AMCs that have one.

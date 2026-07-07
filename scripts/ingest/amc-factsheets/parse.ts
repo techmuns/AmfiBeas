@@ -48,9 +48,14 @@ interface ColMap { name: number; isin: number; industry: number; qty: number; va
 /** Find the holdings header row + column indices in the first ~15 rows. */
 function findColumns(rows: Row[]): { headerIdx: number; cols: ColMap } | null {
   for (let i = 0; i < Math.min(rows.length, 15); i++) {
-    const r = rows[i].map(low);
+    // Collapse internal whitespace runs so headers like "%  to Net Assets" or
+    // "Name of  Instrument" (AMCs pad with double spaces) match the same way as
+    // their single-spaced siblings.
+    const r = rows[i].map((c) => low(c).replace(/\s+/g, " "));
     const isin = r.findIndex((c) => c === "isin" || c.includes("isin"));
-    const pct = r.findIndex((c) => c.includes("% to") || c.includes("%to") || (c.includes("%") && (c.includes("nav") || c.includes("aum"))));
+    // "% to NAV/AUM" (SBI, Nippon, …) and the spelled-out "% to Net Assets"
+    // (Shriram) name the same weight column.
+    const pct = r.findIndex((c) => c.includes("% to") || c.includes("%to") || (c.includes("%") && (c.includes("nav") || c.includes("aum") || c.includes("net asset"))));
     if (isin < 0 || pct < 0) continue;
     const name = r.findIndex((c) => c.includes("name of the instrument") || c.includes("instrument") || c.includes("issuer"));
     const industry = r.findIndex((c) => c.includes("industry") || c.includes("rating"));
@@ -96,7 +101,9 @@ function findSchemeName(rows: Row[]): string {
 }
 
 function findAsOf(rows: Row[]): string | null {
-  for (let i = 0; i < Math.min(rows.length, 8); i++) {
+  // Scan through the header-row band: some AMCs (Shriram) print "Portfolio
+  // Statement as on <date>" on the line just above the column header at row ~11.
+  for (let i = 0; i < Math.min(rows.length, 15); i++) {
     for (let j = 0; j < rows[i].length; j++) {
       const cell = rows[i][j];
       if (/as on|statement as|portfolio statement/i.test(s(cell))) {

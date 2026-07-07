@@ -231,6 +231,33 @@ export function downloadAndParse(url: string, opts: AmcParseOptions): DownloadRe
   return { schemes: [], kind: "empty", bytes: buf.length };
 }
 
+export interface ResolvedDownload extends DownloadResult {
+  link: PortfolioLink | null;
+}
+
+/**
+ * Try the resolved links newest-first and return the first that actually
+ * downloads AND parses. AdvisorKhoj sometimes lists the newest month before the
+ * AMC has published its file (a dead/404 link) while the prior month is live —
+ * e.g. Motilal, whose per-month filenames aren't templatable — so falling back
+ * to the next-newest link recovers the freshest available portfolio instead of
+ * giving up. Capped at `maxAttempts` so genuinely walled hosts (every month on
+ * the same Akamai host) fail fast rather than probing the whole year.
+ */
+export function downloadFirstParsable(
+  links: PortfolioLink[],
+  opts: AmcParseOptions,
+  maxAttempts = 3,
+): ResolvedDownload {
+  let firstAttempt: ResolvedDownload | null = null;
+  for (const link of links.slice(0, maxAttempts)) {
+    const res = downloadAndParse(link.url, opts);
+    if (res.schemes.length > 0) return { ...res, link };
+    firstAttempt ??= { ...res, link };
+  }
+  return firstAttempt ?? { schemes: [], kind: "blocked", bytes: 0, link: null };
+}
+
 /**
  * Normalize a scheme's `pctToNav` to whole-percent units in place.
  *
