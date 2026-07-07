@@ -48,11 +48,12 @@
       "union": "May 2026",
       "uti": "May 2026",
       "whiteoak-capital": "May 2026",
-      "zerodha": "May 2026"
+      "zerodha": "May 2026",
+      "quantum": "Jun 2026"
     },
     "coverage": {
       "total": 50,
-      "ok": 34,
+      "ok": 35,
       "needsFallback": [
         {
           "slug": "bandhan",
@@ -85,10 +86,6 @@
         {
           "slug": "pgim-india",
           "status": "empty"
-        },
-        {
-          "slug": "quantum",
-          "status": "no-link"
         },
         {
           "slug": "samco",
@@ -521,13 +518,13 @@
     {
       "slug": "quantum",
       "amc": "Quantum Mutual Fund",
-      "status": "no-link",
-      "source": null,
-      "asOfMonth": null,
-      "schemes": 0,
-      "holdings": 0,
-      "file": null,
-      "updatedAt": "2026-07-07T10:46:11.289Z"
+      "status": "ok",
+      "source": "browser",
+      "asOfMonth": "Jun 2026",
+      "schemes": 13,
+      "holdings": 362,
+      "file": "quantum.json",
+      "updatedAt": "2026-07-07T10:59:18.623Z"
     },
     {
       "slug": "samco",
