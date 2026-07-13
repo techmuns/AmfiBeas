@@ -149,20 +149,36 @@ function classifyHolding(h: AmcHolding): AssetClass {
   return "Other";
 }
 
-// ---- per-scheme panel payload ----------------------------------------------
-interface AllocationSlice {
-  class: AssetClass;
-  pct: number;
+// ---- per-scheme panel payload (month-over-month) ---------------------------
+const MAX_MONTHS = 12;
+const MON: Record<string, number> = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+
+interface AllocationSlice { class: AssetClass; pct: number }
+interface PanelHolding { name: string; isin: string | null; industry: string | null; assetClass: AssetClass; pctToNav: number | null; marketValueCr: number | null }
+interface MonthMeta { key: string; label: string; coveragePct: number; fetchedAt: string; allocation: AllocationSlice[] }
+interface PanelRow { name: string; isin: string | null; industry: string | null; assetClass: AssetClass; months: Record<string, { pctToNav: number | null; marketValueCr: number | null }> }
+interface PanelBase { schemecode: string; amc: string; amcSlug: string; amcSchemeName: string; amcSchemeCode: string; sourceUrl: string; confidence: Confidence }
+interface Panel extends PanelBase { months: MonthMeta[]; rows: PanelRow[] }
+
+/** YYYY-MM key + human label for a scheme's disclosure month. */
+function monthKeyOf(scheme: AmcScheme, snap: AmcPortfolioSnapshot): { key: string; label: string } {
+  const label = snap.asOfMonth || scheme.asOf || "latest";
+  if (scheme.asOf && /^\d{4}-\d{2}/.test(scheme.asOf)) return { key: scheme.asOf.slice(0, 7), label };
+  const m = /([A-Za-z]{3,})[\s-]*'?(\d{2,4})/.exec(snap.asOfMonth || "");
+  if (m) {
+    const mo = MON[m[1].slice(0, 3).toLowerCase()];
+    const y = +m[2] < 100 ? 2000 + +m[2] : +m[2];
+    if (mo) return { key: `${y}-${String(mo).padStart(2, "0")}`, label };
+  }
+  return { key: "unknown", label };
 }
-interface PanelHolding {
-  name: string;
-  isin: string | null;
-  industry: string | null;
-  assetClass: AssetClass;
-  pctToNav: number | null;
-  marketValueCr: number | null;
+/** Row identity across months — ISIN when present, else normalized name. */
+function rowKeyOf(h: { isin: string | null; name: string }): string {
+  return h.isin ? h.isin.toUpperCase().replace(/\s+/g, "") : "n:" + h.name.toLowerCase().replace(/\s+/g, " ").trim();
 }
-function buildPanel(schemecode: string, snap: AmcPortfolioSnapshot, scheme: AmcScheme) {
+
+/** One month's allocation + holdings for a scheme. */
+function buildMonth(snap: AmcPortfolioSnapshot, scheme: AmcScheme): { meta: MonthMeta; holdings: PanelHolding[] } {
   const alloc = new Map<AssetClass, number>();
   const holdings: PanelHolding[] = [];
   let coverage = 0;
@@ -173,24 +189,37 @@ function buildPanel(schemecode: string, snap: AmcPortfolioSnapshot, scheme: AmcS
     coverage += pct;
     holdings.push({ name: h.name, isin: h.isin, industry: h.industry, assetClass: cls, pctToNav: h.pctToNav, marketValueCr: h.marketValueCr });
   }
-  holdings.sort((a, b) => (b.pctToNav ?? 0) - (a.pctToNav ?? 0));
-  const allocation: AllocationSlice[] = ASSET_ORDER
-    .map((c) => ({ class: c, pct: Math.round((alloc.get(c) ?? 0) * 100) / 100 }))
-    .filter((s) => s.pct > 0.005);
-  return {
-    schemecode,
-    amc: snap.amc,
-    amcSlug: snap.amcSlug,
-    amcSchemeName: cleanDisplayName(scheme.schemeName),
-    amcSchemeCode: scheme.schemeCode,
-    sourceUrl: snap.sourceUrl,
-    asOfMonth: snap.asOfMonth,
-    asOf: scheme.asOf,
-    fetchedAt: snap.fetchedAt,
-    coveragePct: Math.round(coverage * 100) / 100,
-    allocation,
-    holdings,
-  };
+  const allocation = ASSET_ORDER.map((c) => ({ class: c, pct: Math.round((alloc.get(c) ?? 0) * 100) / 100 })).filter((s) => s.pct > 0.005);
+  const { key, label } = monthKeyOf(scheme, snap);
+  return { meta: { key, label, coveragePct: Math.round(coverage * 100) / 100, fetchedAt: snap.fetchedAt, allocation }, holdings };
+}
+
+/** Merge a freshly-fetched month into the scheme's existing panel (history grows
+ *  forward, newest-first, capped at MAX_MONTHS; re-fetching a month replaces it).
+ *  Rows are aligned by ISIN/name so the same instrument reads left-to-right. */
+function mergePanel(existing: Panel | null, base: PanelBase, meta: MonthMeta, holdings: PanelHolding[]): Panel {
+  const months = [meta, ...(existing?.months ?? []).filter((m) => m.key !== meta.key)]
+    .sort((a, b) => (a.key < b.key ? 1 : -1))
+    .slice(0, MAX_MONTHS);
+  const keptKeys = new Set(months.map((m) => m.key));
+
+  const rowMap = new Map<string, PanelRow>();
+  for (const r of existing?.rows ?? []) rowMap.set(rowKeyOf(r), { ...r, months: { ...r.months } });
+  for (const h of holdings) {
+    const k = rowKeyOf(h);
+    const r = rowMap.get(k) ?? { name: h.name, isin: h.isin, industry: h.industry, assetClass: h.assetClass, months: {} };
+    r.name = h.name; r.isin = h.isin; r.industry = h.industry; r.assetClass = h.assetClass; // latest descriptors
+    r.months[meta.key] = { pctToNav: h.pctToNav, marketValueCr: h.marketValueCr };
+    rowMap.set(k, r);
+  }
+  const rows: PanelRow[] = [];
+  for (const r of rowMap.values()) {
+    for (const mk of Object.keys(r.months)) if (!keptKeys.has(mk)) delete r.months[mk];
+    if (Object.keys(r.months).length) rows.push(r);
+  }
+  const latest = months[0].key;
+  rows.sort((a, b) => (b.months[latest]?.pctToNav ?? -1) - (a.months[latest]?.pctToNav ?? -1));
+  return { ...base, months, rows };
 }
 
 // ---- main ------------------------------------------------------------------
@@ -225,7 +254,8 @@ function main() {
     ? (JSON.parse(fs.readFileSync(OVERRIDES, "utf8")).overrides ?? {})
     : {};
 
-  fs.rmSync(OUT_DIR, { recursive: true, force: true });
+  // Do NOT wipe OUT_DIR — per-scheme panels accumulate month-over-month history
+  // across runs. Stale panels (schemes no longer matched) are pruned at the end.
   fs.mkdirSync(OUT_DIR, { recursive: true });
 
   const entries: Record<string, { amcSlug: string; amcSchemeName: string; asOfMonth: string; holdings: number; confidence: Confidence }> = {};
@@ -278,15 +308,43 @@ function main() {
     if (confidence === "low") { skippedLow++; continue; } // too risky to surface a portfolio on
     counts[confidence]++;
     stat.matched++;
-    const panel = buildPanel(f.schemecode, bucket.snap, scheme);
-    fs.writeFileSync(path.join(OUT_DIR, `${f.schemecode}.json`), JSON.stringify(panel) + "\n", "utf8");
+    const { meta, holdings } = buildMonth(bucket.snap, scheme);
+    const file = path.join(OUT_DIR, `${f.schemecode}.json`);
+    let existing: Panel | null = null;
+    try {
+      const prev = JSON.parse(fs.readFileSync(file, "utf8"));
+      if (Array.isArray(prev.months)) existing = prev as Panel; // ignore the pre-history single-month shape
+    } catch { /* no existing panel */ }
+    const base: PanelBase = {
+      schemecode: f.schemecode, amc: bucket.snap.amc, amcSlug: bucket.snap.amcSlug,
+      amcSchemeName: cleanDisplayName(scheme.schemeName), amcSchemeCode: scheme.schemeCode,
+      sourceUrl: bucket.snap.sourceUrl, confidence,
+    };
+    fs.writeFileSync(file, JSON.stringify(mergePanel(existing, base, meta, holdings)) + "\n", "utf8");
     entries[f.schemecode] = {
       amcSlug: bucket.snap.amcSlug,
-      amcSchemeName: cleanDisplayName(scheme.schemeName),
-      asOfMonth: bucket.snap.asOfMonth,
-      holdings: scheme.holdings.length,
+      amcSchemeName: base.amcSchemeName,
+      asOfMonth: meta.label,
+      holdings: holdings.length,
       confidence,
     };
+  }
+
+  // Prune stale panels — but ONLY for AMCs we actually refreshed this run. If an
+  // AMC's monthly fetch transiently failed (no bucket loaded), its panels are
+  // kept untouched so their accumulated month-over-month history survives the
+  // outage rather than being wiped and having to rebuild from one month again.
+  const refreshedSlugs = new Set(bySlug.keys());
+  for (const file of fs.readdirSync(OUT_DIR)) {
+    if (!file.endsWith(".json")) continue;
+    const code = file.slice(0, -5);
+    if (entries[code]) continue; // matched this run — keep
+    const fp = path.join(OUT_DIR, file);
+    let amcSlug: string | null = null;
+    try { amcSlug = JSON.parse(fs.readFileSync(fp, "utf8")).amcSlug ?? null; } catch { /* unreadable */ }
+    // Delete only when this AMC was refreshed (scheme genuinely gone), or the
+    // panel is unreadable/unattributable; preserve history through fetch failures.
+    if (!amcSlug || refreshedSlugs.has(amcSlug)) fs.rmSync(fp);
   }
 
   const matched = Object.keys(entries).length;

@@ -32,16 +32,27 @@ export interface AmcDisclosureAllocation {
   pct: number;
 }
 
-export interface AmcDisclosureHolding {
+/** One disclosure month's header meta (newest-first in `months`). */
+export interface AmcDisclosureMonth {
+  key: string; // YYYY-MM
+  label: string; // human month, e.g. "May 2026"
+  coveragePct: number; // Σ %-to-NAV of the itemised rows
+  fetchedAt: string;
+  allocation: AmcDisclosureAllocation[];
+}
+
+/** One instrument's per-month weight — aligned across months by ISIN/name. */
+export interface AmcDisclosureRow {
   name: string;
   isin: string | null;
   industry: string | null;
   assetClass: AmcAssetClass;
-  pctToNav: number | null;
-  marketValueCr: number | null;
+  months: Record<string, { pctToNav: number | null; marketValueCr: number | null }>;
 }
 
-/** Shape of a per-scheme /amc-portfolio/<schemecode>.json payload. */
+/** Shape of a per-scheme /amc-portfolio/<schemecode>.json payload — a
+ *  month-over-month history that grows forward as disclosures accrue, mirroring
+ *  the RupeeVest equity view's side-by-side months. */
 export interface AmcSchemePortfolio {
   schemecode: string;
   amc: string;
@@ -49,12 +60,9 @@ export interface AmcSchemePortfolio {
   amcSchemeName: string;
   amcSchemeCode: string;
   sourceUrl: string;
-  asOfMonth: string;
-  asOf: string | null;
-  fetchedAt: string;
-  coveragePct: number;
-  allocation: AmcDisclosureAllocation[];
-  holdings: AmcDisclosureHolding[];
+  confidence: AmcMatchConfidence;
+  months: AmcDisclosureMonth[];
+  rows: AmcDisclosureRow[];
 }
 
 interface Crosswalk {
