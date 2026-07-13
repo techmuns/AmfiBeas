@@ -47,9 +47,13 @@ const OUT = path.resolve(process.cwd(), "public/amc-holdings");
 // quoted in ₹ Lakhs by the SEBI format, so valueToCr = 100.
 const GENERIC: AmcParseOptions = { pctScale: 1, valueToCr: 100 };
 
-// AMCs with a stable, templatable direct file URL — used only if AdvisorKhoj
-// fails to resolve/download for them.
-const DIRECT_FALLBACK = new Set(["sbi", "nippon", "kotak"]);
+// AMCs with a stable, templatable direct file URL to their OWN site. Tried
+// BEFORE AdvisorKhoj (which aggregates with a ~1-month lag): the AMC publishes
+// each month's complete SEBI portfolio on its own host within the 9th–12th
+// window, so the direct file is the freshest and most complete source (e.g.
+// SBI's consolidated workbook carries all ~116 schemes). Falls through to
+// AdvisorKhoj if the direct URL for the latest month isn't up yet.
+const DIRECT_PREFERRED = new Set(["sbi", "nippon", "kotak"]);
 
 // Safety net if AdvisorKhoj's AMC list can't be fetched (transient network).
 const FALLBACK_AMCS = [
@@ -167,6 +171,21 @@ async function processAmc(amc: string, year: number, browser: Browser | null): P
     }
   }
 
+  // 0c) Direct-URL tier for AMCs with a templatable file on their own site.
+  //     Tried before AdvisorKhoj so we get the freshest month (AdvisorKhoj lags
+  //     ~1 month); fetchLatest probes newest-first and returns null if the
+  //     latest month isn't published yet, letting us fall through cleanly.
+  if (DIRECT_PREFERRED.has(slug)) {
+    const f = fetchLatest(slug);
+    if (f) {
+      const schemes = parseAmcWorkbook(f.buf, GENERIC);
+      if (schemes.length > 0) {
+        const w = await writeSnapshot(slug, amc, f.url, f.asOfMonth, schemes);
+        return { ...base, status: "ok", source: "direct", asOfMonth: f.asOfMonth, schemes: schemes.length, holdings: w.holdings, file: w.file };
+      }
+    }
+  }
+
   // 1) AdvisorKhoj (primary). Try the newest links first, falling back to the
   //    prior month when the freshest link is a dead/unpublished URL.
   const links = listPortfolioLinks(amc, year);
@@ -179,18 +198,6 @@ async function processAmc(amc: string, year: number, browser: Browser | null): P
     }
     base.status = res.kind === "blocked" ? "blocked" : res.kind === "empty" ? "empty" : "parse-empty";
     base.asOfMonth = used.label;
-  }
-
-  // 2) Direct-URL fallback for the three AMCs that have one.
-  if (DIRECT_FALLBACK.has(slug)) {
-    const f = fetchLatest(slug);
-    if (f) {
-      const schemes = parseAmcWorkbook(f.buf, GENERIC);
-      if (schemes.length > 0) {
-        const w = await writeSnapshot(slug, amc, f.url, f.asOfMonth, schemes);
-        return { ...base, status: "ok", source: "direct", asOfMonth: f.asOfMonth, schemes: schemes.length, holdings: w.holdings, file: w.file };
-      }
-    }
   }
 
   // 3) Browser fallback — clears Akamai bot-walls (HDFC, …) and runs JS-rendered
