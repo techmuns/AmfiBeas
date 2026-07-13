@@ -161,16 +161,43 @@ interface PanelBase { schemecode: string; amc: string; amcSlug: string; amcSchem
 interface Panel extends PanelBase { months: MonthMeta[]; rows: PanelRow[] }
 
 /** YYYY-MM key + human label for a scheme's disclosure month. */
+const MON3 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MAX_PLAUSIBLE_YEAR = new Date().getUTCFullYear() + 1;
+/** Parse a "Mon YYYY" / "Mon-YY" / "Mon 'YY" label → YYYY-MM, else null. */
+function labelToKey(s: string | null | undefined): string | null {
+  const m = /([A-Za-z]{3,})[\s-]*'?(\d{2,4})/.exec(s || "");
+  if (!m) return null;
+  const mo = MON[m[1].slice(0, 3).toLowerCase()];
+  if (!mo) return null;
+  const y = +m[2] < 100 ? 2000 + +m[2] : +m[2];
+  return `${y}-${String(mo).padStart(2, "0")}`;
+}
+/** A disclosure month is plausible only within [2015, this year + 1]; anything
+ *  outside is a mis-parsed per-holding date (bond maturity, index reset). */
+function plausibleKey(key: string | null): key is string {
+  if (!key) return false;
+  const y = +key.slice(0, 4);
+  return y >= 2015 && y <= MAX_PLAUSIBLE_YEAR;
+}
+/** Canonical "Mon YYYY" from a YYYY-MM key, so a direct-tier "Jun-26" and a
+ *  page-scrape "Jun 2026" render identically in the month-over-month header. */
+function labelFromKey(key: string, fallback: string): string {
+  const m = /^(\d{4})-(\d{2})$/.exec(key);
+  return m ? `${MON3[+m[2] - 1]} ${m[1]}` : fallback;
+}
 function monthKeyOf(scheme: AmcScheme, snap: AmcPortfolioSnapshot): { key: string; label: string } {
-  const label = snap.asOfMonth || scheme.asOf || "latest";
-  if (scheme.asOf && /^\d{4}-\d{2}/.test(scheme.asOf)) return { key: scheme.asOf.slice(0, 7), label };
-  const m = /([A-Za-z]{3,})[\s-]*'?(\d{2,4})/.exec(snap.asOfMonth || "");
-  if (m) {
-    const mo = MON[m[1].slice(0, 3).toLowerCase()];
-    const y = +m[2] < 100 ? 2000 + +m[2] : +m[2];
-    if (mo) return { key: `${y}-${String(mo).padStart(2, "0")}`, label };
-  }
-  return { key: "unknown", label };
+  const raw = snap.asOfMonth || scheme.asOf || "latest";
+  // The disclosure month is authoritative at the snapshot level (an AMC files
+  // one as-on month for every scheme); a per-scheme asOf is only a fallback,
+  // because the generic parser sometimes reads a holding's maturity / index
+  // date (Kotak index funds, JM) as the as-on and lands decades away.
+  const snapKey = labelToKey(snap.asOfMonth);
+  const schemeKey = scheme.asOf && /^\d{4}-\d{2}/.test(scheme.asOf) ? scheme.asOf.slice(0, 7) : null;
+  const key =
+    (plausibleKey(snapKey) && snapKey) ||
+    (plausibleKey(schemeKey) && schemeKey) ||
+    snapKey || schemeKey || "unknown";
+  return { key, label: labelFromKey(key, raw) };
 }
 /** Row identity across months — ISIN when present, else normalized name. */
 function rowKeyOf(h: { isin: string | null; name: string }): string {
@@ -198,13 +225,36 @@ function buildMonth(snap: AmcPortfolioSnapshot, scheme: AmcScheme): { meta: Mont
  *  forward, newest-first, capped at MAX_MONTHS; re-fetching a month replaces it).
  *  Rows are aligned by ISIN/name so the same instrument reads left-to-right. */
 function mergePanel(existing: Panel | null, base: PanelBase, meta: MonthMeta, holdings: PanelHolding[]): Panel {
-  const months = [meta, ...(existing?.months ?? []).filter((m) => m.key !== meta.key)]
+  // Migrate legacy months written before month keys were derived from the
+  // authoritative disclosure month: prefer the label-derived key, and drop a
+  // month whose key AND label are both implausible (a mis-parsed per-scheme
+  // date, e.g. Kotak → "Nov 2117"). Row data is remapped to the corrected keys.
+  const remap = new Map<string, string>();
+  const dropped = new Set<string>();
+  const exMonths: MonthMeta[] = [];
+  for (const m of existing?.months ?? []) {
+    const lk = labelToKey(m.label);
+    const nk = plausibleKey(lk) ? lk : plausibleKey(m.key) ? m.key : null;
+    if (!nk) { dropped.add(m.key); continue; }
+    if (nk !== m.key) remap.set(m.key, nk);
+    exMonths.push(nk === m.key ? m : { ...m, key: nk });
+  }
+  const exRows: PanelRow[] = (existing?.rows ?? []).map((r) => {
+    const mm: PanelRow["months"] = {};
+    for (const [k, v] of Object.entries(r.months)) {
+      if (dropped.has(k)) continue;
+      mm[remap.get(k) ?? k] = v;
+    }
+    return { ...r, months: mm };
+  });
+
+  const months = [meta, ...exMonths.filter((m) => m.key !== meta.key)]
     .sort((a, b) => (a.key < b.key ? 1 : -1))
     .slice(0, MAX_MONTHS);
   const keptKeys = new Set(months.map((m) => m.key));
 
   const rowMap = new Map<string, PanelRow>();
-  for (const r of existing?.rows ?? []) rowMap.set(rowKeyOf(r), { ...r, months: { ...r.months } });
+  for (const r of exRows) rowMap.set(rowKeyOf(r), { ...r, months: { ...r.months } });
   for (const h of holdings) {
     const k = rowKeyOf(h);
     const r = rowMap.get(k) ?? { name: h.name, isin: h.isin, industry: h.industry, assetClass: h.assetClass, months: {} };
