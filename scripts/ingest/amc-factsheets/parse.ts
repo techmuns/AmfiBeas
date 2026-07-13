@@ -72,28 +72,81 @@ function findColumns(rows: Row[]): { headerIdx: number; cols: ColMap } | null {
   return null;
 }
 
-/** Scheme name: first non-empty cell in the top rows that looks like a fund
- *  name ("… Fund"), else the cell after a "SCHEME NAME" label, else the first
- *  longish text cell. */
+// A cell that is exactly the fund HOUSE name ("<AMC> Mutual Fund", optionally
+// behind a "Name of Mutual Fund :" label) — the banner that tops each scheme
+// sheet for many AMCs. It is NOT a scheme name and must never be returned as
+// one; it's the reason every ICICI/quant/Invesco scheme used to share a name.
+const HOUSE_RE = /(^|:\s*)[a-z][a-z0-9 .&'-]*\bmutual fund\b\s*(\(.*\))?\s*$/i;
+
+/** Tidy a raw title cell: drop a "Portfolio of" prefix, an "as on …" tail, and
+ *  a trailing "(An open-ended …)" scheme-type qualifier. Only a *trailing*
+ *  descriptor parenthetical is removed — a mid-name token like the "(FMP)" in
+ *  "SBI Fixed Maturity Plan (FMP)- Series 34" must survive so those 19 series
+ *  don't collapse to one name. */
+function cleanSchemeName(t: string): string {
+  let out = t
+    .replace(/^portfolio of\s+/i, "") // Kotak: "Portfolio of X Fund as on …"
+    .replace(/\s+as on\b.*$/i, "") // "… as on May 31, 2026"
+    .trim();
+  const m = out.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
+  if (m && (m[2].length > 15 || /\b(scheme|open[\s-]?end|investing|fund|risk)\b/i.test(m[2]))) {
+    out = m[1]; // a trailing category descriptor, e.g. "(An Open Ended … Scheme)"
+  }
+  return out.replace(/\s+/g, " ").trim();
+}
+
+/** Does a top-row cell read like an actual scheme title (vs. a house header,
+ *  column header, banner, bullet, or one-line scheme-type description)? */
+function looksLikeSchemeName(t: string): boolean {
+  if (t.length < 5) return false;
+  if (t.endsWith(":")) return false; // a label ("SCHEME NAME :")
+  if (HOUSE_RE.test(t)) return false; // the fund-house name
+  if (/^[•\-*·]/.test(t)) return false; // bullet / note line
+  // Column headers and top-of-sheet banners.
+  if (/^(isin|coupon|quantity|rating|industry|% to|exposure|market|fair value|yield|sr\.?\s*no|serial|s\.?\s*no|company|issuer|instrument|name of the|portfolio|monthly portfolio|portfolio statement|scheme name|as on|as at|note|product labelling|disclaimer|back to index|index|derivative)\b/i.test(t)) return false;
+  // A one-line scheme-type description ("An open ended scheme investing in …").
+  if (/^(an?|the)\s+open[\s-]?end/i.test(t) || /\b(scheme|fund)\s+(investing|predominantly|that)\b/i.test(t) || /risk[\s-]?o[\s-]?meter/i.test(t)) return false;
+  // A bare sheet-code with no words (e.g. "RLMF001") — real names have a space
+  // or an asset-class word.
+  if (!/\s/.test(t) && !/fund|etf|plan|scheme/i.test(t)) return false;
+  return true;
+}
+
+/** Scheme name, in priority order:
+ *   1. the cell after an explicit "SCHEME NAME :" label (SBI);
+ *   2. the first scheme-like line directly below the "<AMC> Mutual Fund" house
+ *      header that tops the sheet (ICICI, quant, Invesco, Bank of India, …) —
+ *      this is what fixes the "every scheme shares the house name" bug and also
+ *      catches ETFs whose name has no "Fund" in it (e.g. "BHARAT 22 ETF");
+ *   3. the first "… Fund" cell that is not itself the house name (Nippon, …). */
 function findSchemeName(rows: Row[]): string {
+  // 1) Explicit label.
   for (let i = 0; i < Math.min(rows.length, 6); i++) {
     for (let j = 0; j < rows[i].length; j++) {
       const cell = s(rows[i][j]);
-      if (/scheme name/i.test(cell)) {
+      if (/^scheme name\b/i.test(cell)) {
         const next = s(rows[i][j + 1]) || s(rows[i + 1]?.[j]);
-        if (next) return next;
+        if (next && !HOUSE_RE.test(next)) return cleanSchemeName(next);
       }
     }
   }
+  // 2) House-anchored: the title sits just under the fund-house banner.
+  for (let i = 0; i < Math.min(rows.length, 4); i++) {
+    if (!rows[i].some((c) => HOUSE_RE.test(s(c)))) continue;
+    for (let k = i + 1; k <= Math.min(i + 3, rows.length - 1); k++) {
+      for (const cell of rows[k]) {
+        const t = s(cell);
+        if (looksLikeSchemeName(t)) return cleanSchemeName(t);
+      }
+    }
+    break; // found the house banner; don't fall through and re-grab it below
+  }
+  // 3) Fallback: first "… Fund" cell that isn't the house name.
   for (let i = 0; i < Math.min(rows.length, 4); i++) {
     for (const cell of rows[i]) {
       const t = s(cell);
-      if (/\bfund\b/i.test(t) && t.length > 6) {
-        return t
-          .replace(/^portfolio of\s+/i, "") // Kotak: "Portfolio of X Fund as on …"
-          .replace(/\s+as on.*$/i, "")
-          .replace(/\s*\(.*$/, "")
-          .trim();
+      if (/\bfund\b/i.test(t) && t.length > 6 && !HOUSE_RE.test(t)) {
+        return cleanSchemeName(t);
       }
     }
   }
