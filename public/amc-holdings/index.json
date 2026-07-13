@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-07-07T10:50:24.635Z",
+    "generatedAt": "2026-07-13T10:53:33.141Z",
     "source": "AdvisorKhoj monthly portfolio disclosures (per-AMC, latest month)",
     "latestMonthByAmc": {
       "360-one": "May 2026",
@@ -37,23 +37,24 @@
       "old-bridge": "October 2025",
       "ppfas": "May 2026",
       "quant": "May 2026",
-      "samco": "May 2026",
+      "quantum": "Jun 2026",
+      "samco": "Jun 2026",
       "sbi": "May 2026",
       "shriram": "May 2026",
+      "sundaram": "May 2026",
       "tata": "May 2026",
-      "taurus": "May 2026",
+      "taurus": "Jun 2026",
       "the-wealth-company": "May 2026",
       "trust": "May 2026",
       "unifi": "May 2026",
       "union": "May 2026",
       "uti": "May 2026",
       "whiteoak-capital": "May 2026",
-      "zerodha": "May 2026",
-      "quantum": "Jun 2026"
+      "zerodha": "May 2026"
     },
     "coverage": {
       "total": 50,
-      "ok": 35,
+      "ok": 38,
       "needsFallback": [
         {
           "slug": "bandhan",
@@ -85,18 +86,6 @@
         },
         {
           "slug": "pgim-india",
-          "status": "empty"
-        },
-        {
-          "slug": "samco",
-          "status": "blocked"
-        },
-        {
-          "slug": "sundaram",
-          "status": "no-link"
-        },
-        {
-          "slug": "taurus",
           "status": "empty"
         },
         {
@@ -529,13 +518,13 @@
     {
       "slug": "samco",
       "amc": "Samco Mutual Fund",
-      "status": "blocked",
-      "source": null,
-      "asOfMonth": "May 2026",
-      "schemes": 0,
-      "holdings": 0,
-      "file": null,
-      "updatedAt": "2026-07-07T10:46:24.613Z"
+      "status": "ok",
+      "source": "page-scrape",
+      "asOfMonth": "Jun 2026",
+      "schemes": 12,
+      "holdings": 588,
+      "file": "samco.json",
+      "updatedAt": "2026-07-13T10:52:25.523Z"
     },
     {
       "slug": "sbi",
@@ -562,13 +551,13 @@
     {
       "slug": "sundaram",
       "amc": "Sundaram Mutual Fund",
-      "status": "no-link",
-      "source": null,
-      "asOfMonth": null,
-      "schemes": 0,
-      "holdings": 0,
-      "file": null,
-      "updatedAt": "2026-07-07T10:48:11.848Z"
+      "status": "ok",
+      "source": "page-scrape",
+      "asOfMonth": "May 2026",
+      "schemes": 39,
+      "holdings": 1953,
+      "file": "sundaram.json",
+      "updatedAt": "2026-07-13T10:52:58.625Z"
     },
     {
       "slug": "tata",
@@ -584,13 +573,13 @@
     {
       "slug": "taurus",
       "amc": "Taurus Mutual Fund",
-      "status": "empty",
-      "source": null,
-      "asOfMonth": "May 2026",
-      "schemes": 0,
-      "holdings": 0,
-      "file": null,
-      "updatedAt": "2026-07-07T10:48:19.348Z"
+      "status": "ok",
+      "source": "page-scrape",
+      "asOfMonth": "Jun 2026",
+      "schemes": 8,
+      "holdings": 310,
+      "file": "taurus.json",
+      "updatedAt": "2026-07-13T10:53:08.409Z"
     },
     {
       "slug": "the-wealth-company",

@@ -32,6 +32,7 @@ import {
 } from "./advisorkhoj";
 import { fetchLatest } from "./fetch";
 import { parseAmcWorkbook } from "./parse";
+import { PAGE_SCRAPE_CONFIG, pageScrapeAmc } from "./page-scrape";
 import { launchBrowser } from "./browser";
 import { browserFetchAmc, monthFloor, monthCeil } from "./browser-fallback";
 import { BROWSER_CONFIG } from "./browser-hints";
@@ -74,7 +75,7 @@ interface IndexEntry {
   slug: string;
   amc: string;
   status: Status;
-  source: "advisorkhoj" | "direct" | "browser" | null;
+  source: "advisorkhoj" | "direct" | "browser" | "page-scrape" | null;
   asOfMonth: string | null;
   schemes: number;
   holdings: number;
@@ -138,6 +139,20 @@ async function processAmc(amc: string, year: number, browser: Browser | null): P
     slug, amc, status: "no-link", source: null, asOfMonth: null,
     schemes: 0, holdings: 0, file: null, updatedAt: new Date().toISOString(),
   };
+
+  // 0) Page-scrape (curl) tier — for AMCs whose monthly portfolio sits on a
+  //    non-walled, server-rendered page or embedded page JSON (SAMCO, Taurus,
+  //    Sundaram, …). Cheaper than the browser and works in the sandbox, so try
+  //    it first when configured.
+  const scrapeCfg = PAGE_SCRAPE_CONFIG[slug];
+  if (scrapeCfg) {
+    const res = pageScrapeAmc(scrapeCfg, GENERIC, new Date());
+    if (res.schemes.length > 0) {
+      const label = monthLabelFromSchemes(res.schemes, null);
+      const w = await writeSnapshot(slug, amc, res.usedUrl ?? "", label, res.schemes);
+      return { ...base, status: "ok", source: "page-scrape", asOfMonth: label, schemes: res.schemes.length, holdings: w.holdings, file: w.file };
+    }
+  }
 
   // 1) AdvisorKhoj (primary). Try the newest links first, falling back to the
   //    prior month when the freshest link is a dead/unpublished URL.
@@ -240,22 +255,33 @@ async function main() {
     if (browser) await browser.close();
   }
 
-  index.sort((a, b) => a.slug.localeCompare(b.slug));
+  // Merge into any existing index so a filtered (AMC_ONLY) run updates only its
+  // AMCs and preserves every other AMC's entry — a partial run must never drop
+  // AMCs it didn't process. A full run overlays them all, so behaviour is
+  // unchanged there.
+  const bySlug = new Map<string, IndexEntry>();
+  try {
+    const prev = JSON.parse(await fs.readFile(path.join(OUT, "index.json"), "utf8")) as { amcs?: IndexEntry[] };
+    for (const e of prev.amcs ?? []) bySlug.set(e.slug, e);
+  } catch { /* no existing index yet */ }
+  for (const e of index) bySlug.set(e.slug, e);
+  const merged = [...bySlug.values()].sort((a, b) => a.slug.localeCompare(b.slug));
+
   const meta = {
     generatedAt: new Date().toISOString(),
     source: "AdvisorKhoj monthly portfolio disclosures (per-AMC, latest month)",
-    latestMonthByAmc: Object.fromEntries(index.filter((e) => e.asOfMonth).map((e) => [e.slug, e.asOfMonth])),
+    latestMonthByAmc: Object.fromEntries(merged.filter((e) => e.asOfMonth).map((e) => [e.slug, e.asOfMonth])),
     coverage: {
-      total: index.length,
-      ok: index.filter((e) => e.status === "ok").length,
-      needsFallback: index.filter((e) => e.status !== "ok").map((e) => ({ slug: e.slug, status: e.status })),
+      total: merged.length,
+      ok: merged.filter((e) => e.status === "ok").length,
+      needsFallback: merged.filter((e) => e.status !== "ok").map((e) => ({ slug: e.slug, status: e.status })),
     },
   };
-  await fs.writeFile(path.join(OUT, "index.json"), JSON.stringify({ meta, amcs: index }, null, 2) + "\n", "utf8");
+  await fs.writeFile(path.join(OUT, "index.json"), JSON.stringify({ meta, amcs: merged }, null, 2) + "\n", "utf8");
 
-  const ok = meta.coverage.ok;
+  const ok = index.filter((e) => e.status === "ok").length;
   const holdings = index.reduce((s, e) => s + e.holdings, 0);
-  console.log(`\nAdvisorKhoj monthly fetch: ${ok}/${index.length} AMCs OK, ${holdings.toLocaleString()} holdings total.`);
+  console.log(`\nAdvisorKhoj monthly fetch: ${ok}/${index.length} processed AMCs OK, ${holdings.toLocaleString()} holdings total.`);
   const gaps = meta.coverage.needsFallback;
   if (gaps.length) console.log(`Needs fallback (${gaps.length}): ${gaps.map((g) => `${g.slug}(${g.status})`).join(", ")}`);
 }

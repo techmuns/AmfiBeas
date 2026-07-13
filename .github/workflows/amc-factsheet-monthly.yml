@@ -51,13 +51,14 @@ jobs:
           AMC_ONLY: ${{ inputs.amcs }}
         run: npx tsx scripts/ingest/amc-factsheets/run-monthly.ts
       - name: Rebuild AMC→tracker portfolio crosswalk (2A Holdings-tab panel)
-        # Skip on a filtered/test run — the crosswalk needs the full index.json.
-        if: ${{ github.event_name == 'schedule' || (inputs.commit != 'false' && inputs.amcs == '') }}
+        # Safe after a filtered run too: run-monthly MERGES index.json, so it
+        # stays complete; the crosswalk reads all committed amc-holdings files.
+        if: ${{ github.event_name == 'schedule' || inputs.commit != 'false' }}
         run: npm run build:amc-crosswalk
       - name: Commit refreshed AMC holdings + crosswalk
-        # Only full runs commit — a filtered (AMC_ONLY) run writes a partial
-        # index.json and must stay test-only.
-        if: ${{ github.event_name == 'schedule' || (inputs.commit != 'false' && inputs.amcs == '') }}
+        # commit=false → test run (fetch + log only). A filtered run commits
+        # safely because index.json is merged, not overwritten.
+        if: ${{ github.event_name == 'schedule' || inputs.commit != 'false' }}
         run: |
           PATHS="public/amc-holdings public/amc-portfolio src/data/portfolio-tracker/amc-portfolio-crosswalk.json"
           if [ -z "$(git status --porcelain $PATHS)" ]; then

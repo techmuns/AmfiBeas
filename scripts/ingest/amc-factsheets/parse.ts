@@ -104,6 +104,8 @@ function looksLikeSchemeName(t: string): boolean {
   if (/^[•\-*·]/.test(t)) return false; // bullet / note line
   // Column headers and top-of-sheet banners.
   if (/^(isin|coupon|quantity|rating|industry|% to|exposure|market|fair value|yield|sr\.?\s*no|serial|s\.?\s*no|company|issuer|instrument|name of the|portfolio|monthly portfolio|portfolio statement|scheme name|as on|as at|note|product labelling|disclaimer|back to index|index|derivative)\b/i.test(t)) return false;
+  // Asset-class SECTION headers inside the holdings table, not scheme names.
+  if (/\b(equity\s*&\s*equity\s*related|listed\s*\/\s*awaiting|debt\s+instruments?\b|money\s+market\b|cash\s*&\s*(cash\s*)?equiv|net\s+(current\s+asset|receivabl|payabl))/i.test(t)) return false;
   // A one-line scheme-type description ("An open ended scheme investing in …").
   if (/^(an?|the)\s+open[\s-]?end/i.test(t) || /\b(scheme|fund)\s+(investing|predominantly|that)\b/i.test(t) || /risk[\s-]?o[\s-]?meter/i.test(t)) return false;
   // A bare sheet-code with no words (e.g. "RLMF001") — real names have a space
@@ -128,6 +130,14 @@ function findSchemeName(rows: Row[]): string {
         const next = s(rows[i][j + 1]) || s(rows[i + 1]?.[j]);
         if (next && !HOUSE_RE.test(next)) return cleanSchemeName(next);
       }
+    }
+  }
+  // 1b) "(Monthly) Portfolio Statement of <Scheme> as on <date>" names the scheme
+  //      inline (SAMCO, LIC, …). Grab it before the banner is rejected below.
+  for (let i = 0; i < Math.min(rows.length, 6); i++) {
+    for (const cell of rows[i]) {
+      const m = s(cell).match(/portfolio(?:\s+statement)?\s+of\s+(.+?)\s+(?:as\s+on|as\s+at|for\s+the\b)/i);
+      if (m && m[1] && /\b(fund|etf|plan|scheme)\b/i.test(m[1]) && !HOUSE_RE.test(m[1])) return cleanSchemeName(m[1]);
     }
   }
   // 2) House-anchored: the title sits just under the fund-house banner.
