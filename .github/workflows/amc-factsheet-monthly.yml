@@ -38,14 +38,17 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Fetch + parse AMC monthly portfolios
         run: npx tsx scripts/ingest/amc-factsheets/run-monthly.ts
-      - name: Commit refreshed AMC holdings
+      - name: Rebuild AMC→tracker portfolio crosswalk (2A Holdings-tab panel)
+        run: npm run build:amc-crosswalk
+      - name: Commit refreshed AMC holdings + crosswalk
         run: |
-          if [ -z "$(git status --porcelain public/amc-holdings)" ]; then
-            echo "No AMC holdings changes — nothing to commit."
+          PATHS="public/amc-holdings public/amc-portfolio src/data/portfolio-tracker/amc-portfolio-crosswalk.json"
+          if [ -z "$(git status --porcelain $PATHS)" ]; then
+            echo "No AMC holdings / crosswalk changes — nothing to commit."
             exit 0
           fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/amc-holdings
+          git add $PATHS
           git commit -m "chore(data): AMC monthly portfolio fetch ($(date -u +%Y-%m-%d))"
           git push

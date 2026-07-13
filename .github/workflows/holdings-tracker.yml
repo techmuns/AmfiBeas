@@ -96,6 +96,7 @@ jobs:
           npm run build:sector-gross
           npm run build:amc-aggregation
           npm run build:amc-allocations
+          npm run build:amc-crosswalk
 
       - name: Commit refreshed holdings
         # Scheduled runs always commit (no inputs on cron); manual runs honour
@@ -104,13 +105,14 @@ jobs:
         # exit) skips the commit entirely.
         if: ${{ github.event_name == 'schedule' || (inputs.mode == 'full' && inputs.commit == 'true') }}
         run: |
-          git add public/holdings public/fundwise \
+          git add public/holdings public/fundwise public/amc-portfolio \
             src/data/portfolio-tracker/index.json \
             src/data/portfolio-tracker/cap-flows.json \
             src/data/portfolio-tracker/fundwise-index.json \
             src/data/portfolio-tracker/insights-holdings.json \
             src/data/portfolio-tracker/sector-gross-flows.json \
             src/data/portfolio-tracker/amc-allocations.json \
+            src/data/portfolio-tracker/amc-portfolio-crosswalk.json \
             src/data/snapshots/amc-portfolio-aggregation.json
           if git diff --cached --quiet; then
             echo "No holdings changes."

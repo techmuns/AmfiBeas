@@ -12,6 +12,7 @@ import {
   isLikelySameScheme,
 } from "@/components/data/PortfolioHeadToHead";
 import { PortfolioTrendsTab } from "@/components/data/PortfolioTrendsTab";
+import { AmcDisclosurePanel } from "@/components/data/AmcDisclosurePanel";
 import {
   SectorAllocationChart,
   type SectorAllocationRow,
@@ -882,6 +883,8 @@ export function PortfolioTrackerView({
                   </p>
                 </>
               ) : null}
+
+              <AmcDisclosurePanel schemecode={selectedCode} />
             </div>
           )}
 
