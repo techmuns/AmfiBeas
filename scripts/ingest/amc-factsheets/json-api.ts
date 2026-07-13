@@ -44,6 +44,7 @@ interface BandhanItem { title?: string; sub_category?: string; acf_fields?: { di
 interface PgimTab { content?: { pdfPath?: string; dateMonthYear?: string; title?: string }[] }
 interface ChoiceRow { reports?: { report_date?: string; file_path?: string }[] }
 interface WoItem { attributes?: { scheme_name?: string; published_date?: string; doc_file?: { data?: { attributes?: { url?: string } }; url?: string } } }
+interface UnionItem { Title?: string; Extension?: string; Url?: string }
 
 /** year*12+month for the "<DD> <Month> <YYYY>" date in a string, else 0. */
 function dateScore(s: string | undefined): number {
@@ -158,6 +159,23 @@ function discoverLic(now: Date): HarvestedLink[] {
   return links;
 }
 
+// ---- Union: Sitefinity OData — newest documents, filtered to monthly portfolio ----
+function discoverUnion(): HarvestedLink[] {
+  // One query for the newest docs across all folders; the monthly-portfolio
+  // .xlsx among them are the latest month (Union publishes ~32/month). The Url
+  // field carries the required ?sfvrsn version token. (Avoids scraping the
+  // per-month folder GUIDs from the page — one of which is a 900+ doc catch-all.)
+  const d = json("https://www.unionmf.com/api/downloads/documents?$orderby=PublicationDate%20desc&$top=100"); // 100 is the endpoint's max
+  const items = ((d?.value ?? []) as UnionItem[]).filter(
+    (it) => (it.Extension || "").toLowerCase() === ".xlsx" && /monthly portfolio/i.test(it.Title || "") && it.Url,
+  );
+  if (!items.length) return [];
+  // "… 30-06-2026" in the Title → year*12+month; keep only the latest month.
+  const monthOf = (t: string) => { const m = /\b(\d{1,2})-(\d{1,2})-(\d{4})\b/.exec(t); return m ? +m[3] * 12 + +m[2] : 0; };
+  const best = Math.max(...items.map((it) => monthOf(it.Title || "")));
+  return items.filter((it) => monthOf(it.Title || "") === best).map((it) => ({ url: `https://www.unionmf.com${it.Url}`, text: it.Title || "" }));
+}
+
 export type ApiDiscoverer = (now: Date) => HarvestedLink[];
 interface ApiConfig { discover: ApiDiscoverer; referer?: string; page: string }
 export const JSON_API_CONFIG: Record<string, ApiConfig> = {
@@ -166,6 +184,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   choice: { discover: () => discoverChoice(), referer: "https://www.choicemf.com/", page: "https://www.choicemf.com/disclosures/monthly-portfolio" },
   "whiteoak-capital": { discover: () => discoverWhiteoak(), page: "https://mf.whiteoakamc.com/regulatory-disclosures/scheme-portfolios" },
   lic: { discover: (now) => discoverLic(now), referer: "https://www.licmf.com/", page: "https://www.licmf.com/downloads/monthly-portfolio" },
+  union: { discover: () => discoverUnion(), referer: "https://www.unionmf.com/", page: "https://www.unionmf.com/about-us/downloads" },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }
