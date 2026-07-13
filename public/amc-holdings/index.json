@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-07-13T10:53:33.141Z",
+    "generatedAt": "2026-07-13T12:43:41.680Z",
     "source": "AdvisorKhoj monthly portfolio disclosures (per-AMC, latest month)",
     "latestMonthByAmc": {
       "360-one": "May 2026",
@@ -9,7 +9,7 @@
       "angel-one": "Mar 2026",
       "axis": "May 2026",
       "bajaj-finserv": "May 2026",
-      "bandhan": "May 2026",
+      "bandhan": "Jun 2026",
       "bank-of-india": "May 2026",
       "baroda-bnp-paribas": "May 2026",
       "canara-robeco": "May 2026",
@@ -28,6 +28,7 @@
       "jio-blackrock": "May 2026",
       "jm-financial": "May 2026",
       "kotak": "May 2026",
+      "lic": "Jun 2026",
       "mahindra": "May 2026",
       "mirae": "May 2026",
       "motilal-oswal": "April 2026",
@@ -35,6 +36,7 @@
       "nippon": "May 2026",
       "nj": "May 2026",
       "old-bridge": "October 2025",
+      "pgim-india": "Jun 2026",
       "ppfas": "May 2026",
       "quant": "May 2026",
       "quantum": "Jun 2026",
@@ -49,21 +51,13 @@
       "unifi": "May 2026",
       "union": "May 2026",
       "uti": "May 2026",
-      "whiteoak-capital": "May 2026",
+      "whiteoak-capital": "Jun 2026",
       "zerodha": "May 2026"
     },
     "coverage": {
       "total": 50,
-      "ok": 38,
+      "ok": 43,
       "needsFallback": [
-        {
-          "slug": "bandhan",
-          "status": "blocked"
-        },
-        {
-          "slug": "choice",
-          "status": "blocked"
-        },
         {
           "slug": "edelweiss",
           "status": "blocked"
@@ -77,16 +71,8 @@
           "status": "blocked"
         },
         {
-          "slug": "lic",
-          "status": "no-link"
-        },
-        {
           "slug": "navi",
           "status": "blocked"
-        },
-        {
-          "slug": "pgim-india",
-          "status": "empty"
         },
         {
           "slug": "the-wealth-company",
@@ -94,10 +80,6 @@
         },
         {
           "slug": "union",
-          "status": "blocked"
-        },
-        {
-          "slug": "whiteoak-capital",
           "status": "blocked"
         },
         {
@@ -177,13 +159,13 @@
     {
       "slug": "bandhan",
       "amc": "Bandhan Mutual Fund",
-      "status": "blocked",
-      "source": null,
-      "asOfMonth": "May 2026",
-      "schemes": 0,
-      "holdings": 0,
-      "file": null,
-      "updatedAt": "2026-07-07T10:40:06.759Z"
+      "status": "ok",
+      "source": "json-api",
+      "asOfMonth": "Jun 2026",
+      "schemes": 73,
+      "holdings": 4737,
+      "file": "bandhan.json",
+      "updatedAt": "2026-07-13T12:36:48.562Z"
     },
     {
       "slug": "bank-of-india",
@@ -232,13 +214,13 @@
     {
       "slug": "choice",
       "amc": "Choice Mutual Fund",
-      "status": "blocked",
-      "source": null,
+      "status": "ok",
+      "source": "json-api",
       "asOfMonth": "May 2026",
-      "schemes": 0,
-      "holdings": 0,
-      "file": null,
-      "updatedAt": "2026-07-07T10:41:23.477Z"
+      "schemes": 2,
+      "holdings": 104,
+      "file": "choice.json",
+      "updatedAt": "2026-07-13T12:40:18.823Z"
     },
     {
       "slug": "dsp",
@@ -386,13 +368,13 @@
     {
       "slug": "lic",
       "amc": "LIC Mutual Fund",
-      "status": "no-link",
-      "source": null,
-      "asOfMonth": null,
-      "schemes": 0,
-      "holdings": 0,
-      "file": null,
-      "updatedAt": "2026-07-07T10:44:46.437Z"
+      "status": "ok",
+      "source": "json-api",
+      "asOfMonth": "Jun 2026",
+      "schemes": 43,
+      "holdings": 1862,
+      "file": "lic.json",
+      "updatedAt": "2026-07-13T12:40:22.317Z"
     },
     {
       "slug": "mahindra",
@@ -474,13 +456,13 @@
     {
       "slug": "pgim-india",
       "amc": "PGIM India Mutual Fund",
-      "status": "empty",
-      "source": null,
-      "asOfMonth": null,
-      "schemes": 0,
-      "holdings": 0,
-      "file": null,
-      "updatedAt": "2026-07-07T10:46:03.266Z"
+      "status": "ok",
+      "source": "json-api",
+      "asOfMonth": "Jun 2026",
+      "schemes": 22,
+      "holdings": 1177,
+      "file": "pgim-india.json",
+      "updatedAt": "2026-07-13T12:42:36.991Z"
     },
     {
       "slug": "ppfas",
@@ -639,13 +621,13 @@
     {
       "slug": "whiteoak-capital",
       "amc": "WhiteOak Capital Mutual Fund",
-      "status": "blocked",
-      "source": null,
-      "asOfMonth": "May 2026",
-      "schemes": 0,
-      "holdings": 0,
-      "file": null,
-      "updatedAt": "2026-07-07T10:49:55.307Z"
+      "status": "ok",
+      "source": "json-api",
+      "asOfMonth": "Jun 2026",
+      "schemes": 21,
+      "holdings": 2145,
+      "file": "whiteoak-capital.json",
+      "updatedAt": "2026-07-13T12:43:12.036Z"
     },
     {
       "slug": "zerodha",

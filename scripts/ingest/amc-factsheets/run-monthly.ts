@@ -33,6 +33,7 @@ import {
 import { fetchLatest } from "./fetch";
 import { parseAmcWorkbook } from "./parse";
 import { PAGE_SCRAPE_CONFIG, pageScrapeAmc } from "./page-scrape";
+import { JSON_API_CONFIG, jsonApiAmc } from "./json-api";
 import { launchBrowser } from "./browser";
 import { browserFetchAmc, monthFloor, monthCeil } from "./browser-fallback";
 import { BROWSER_CONFIG } from "./browser-hints";
@@ -75,7 +76,7 @@ interface IndexEntry {
   slug: string;
   amc: string;
   status: Status;
-  source: "advisorkhoj" | "direct" | "browser" | "page-scrape" | null;
+  source: "advisorkhoj" | "direct" | "browser" | "page-scrape" | "json-api" | null;
   asOfMonth: string | null;
   schemes: number;
   holdings: number;
@@ -151,6 +152,18 @@ async function processAmc(amc: string, year: number, browser: Browser | null): P
       const label = monthLabelFromSchemes(res.schemes, null);
       const w = await writeSnapshot(slug, amc, res.usedUrl ?? "", label, res.schemes);
       return { ...base, status: "ok", source: "page-scrape", asOfMonth: label, schemes: res.schemes.length, holdings: w.holdings, file: w.file };
+    }
+  }
+
+  // 0b) JSON-API (curl) tier — AMCs whose complete portfolio is behind a public
+  //     JSON/REST API (LIC, Bandhan, PGIM India, WhiteOak, Choice).
+  const apiCfg = JSON_API_CONFIG[slug];
+  if (apiCfg) {
+    const res = jsonApiAmc(slug, GENERIC, new Date());
+    if (res.schemes.length > 0) {
+      const label = monthLabelFromSchemes(res.schemes, null);
+      const w = await writeSnapshot(slug, amc, res.usedUrl ?? "", label, res.schemes);
+      return { ...base, status: "ok", source: "json-api", asOfMonth: label, schemes: res.schemes.length, holdings: w.holdings, file: w.file };
     }
   }
 

@@ -40,7 +40,7 @@ function curlText(url: string, referer?: string): string | null {
   }
 }
 
-function curlBuffer(url: string, referer?: string): Buffer | null {
+export function curlBuffer(url: string, referer?: string): Buffer | null {
   try {
     const args = ["-fsL", "--max-time", "120", "-A", UA];
     if (referer) args.push("-H", `Referer: ${referer}`);
@@ -84,6 +84,34 @@ export function extractFileLinks(html: string, pageUrl: string): HarvestedLink[]
   return out;
 }
 
+/** Download a set of resolved workbook links → parsed, normalized schemes.
+ *  Shared by the page-scrape and json-api tiers. Dedupes primary-host vs CDN
+ *  mirrors by filename, and any remaining dup by scheme code + as-of month. */
+export function downloadAndParse(links: HarvestedLink[], opts: AmcParseOptions, referer?: string): { schemes: AmcScheme[]; fileCount: number } {
+  const byFile = new Map<string, HarvestedLink>();
+  for (const l of links) {
+    const name = decodeURIComponent(l.url.split(/[?#]/)[0].split("/").pop() ?? l.url).toLowerCase();
+    if (!byFile.has(name)) byFile.set(name, l);
+  }
+  const schemes: AmcScheme[] = [];
+  const seen = new Set<string>();
+  for (const l of byFile.values()) {
+    const buf = curlBuffer(l.url, referer);
+    if (!buf) continue;
+    const head = buf.subarray(0, 64).toString("latin1").trimStart().toLowerCase();
+    if (head.startsWith("<!doctype") || head.startsWith("<html")) continue; // walled/HTML
+    try {
+      for (const sc of parseAmcWorkbook(buf, opts).map(normalizeSchemePct)) {
+        const key = `${sc.schemeCode}|${sc.asOf}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        schemes.push(sc);
+      }
+    } catch { /* skip bad file */ }
+  }
+  return { schemes, fileCount: byFile.size };
+}
+
 export interface PageScrapeResult {
   schemes: AmcScheme[];
   usedUrl: string | null;
@@ -104,30 +132,8 @@ export function pageScrapeAmc(cfg: PageScrapeConfig, opts: AmcParseOptions, now:
     if (links.length === 0) continue;
     const picked = selectLatestMonthFiles(links, 200, floorScore, ceilScore);
     if (picked.length === 0) continue;
-    // Some pages list the same workbook on a primary host + a CDN mirror (SAMCO):
-    // dedupe by filename so a scheme isn't parsed and emitted twice.
-    const byFile = new Map<string, HarvestedLink>();
-    for (const l of picked) {
-      const name = decodeURIComponent(l.url.split(/[?#]/)[0].split("/").pop() ?? l.url).toLowerCase();
-      if (!byFile.has(name)) byFile.set(name, l);
-    }
-    const schemes: AmcScheme[] = [];
-    const seen = new Set<string>();
-    for (const l of byFile.values()) {
-      const buf = curlBuffer(l.url, cfg.referer ?? pageUrl);
-      if (!buf) continue;
-      const head = buf.subarray(0, 64).toString("latin1").trimStart().toLowerCase();
-      if (head.startsWith("<!doctype") || head.startsWith("<html")) continue; // walled/HTML
-      try {
-        for (const sc of parseAmcWorkbook(buf, opts).map(normalizeSchemePct)) {
-          const key = `${sc.schemeCode}|${sc.asOf}`; // guard against any remaining dup
-          if (seen.has(key)) continue;
-          seen.add(key);
-          schemes.push(sc);
-        }
-      } catch { /* skip bad file */ }
-    }
-    if (schemes.length > 0) return { schemes, usedUrl: pageUrl, fileCount: byFile.size };
+    const { schemes, fileCount } = downloadAndParse(picked, opts, cfg.referer ?? pageUrl);
+    if (schemes.length > 0) return { schemes, usedUrl: pageUrl, fileCount };
   }
   return { schemes: [], usedUrl: null, fileCount: 0 };
 }

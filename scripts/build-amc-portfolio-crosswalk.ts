@@ -57,7 +57,7 @@ function normTokens(raw: string): Set<string> {
     // the tracker's abbreviation for the "Sun Life" the disclosure spells out).
     // NB: strip "reg" (the tracker's plan abbreviation) but KEEP "regular" — it
     // is a scheme word ("Regular Savings Fund"), distinct from "Savings Fund".
-    .replace(/\b(reg|dir|direct|growth|idcw|payout|reinvest(ment)?|plan|option|mutual|fund|scheme|open|ended|end|sl|an|the|of|for)\b/g, " ")
+    .replace(/\b(reg|dir|direct|growth|idcw|payout|reinvest(ment)?|plan|option|mutual|fund|scheme|open|ended|end|sl|woc|an|the|of|for)\b/g, " ")
     .replace(/\s+/g, " ")
     .trim();
   // Fold synonyms + cap-family compounds so "opp"~"opportunities" and
@@ -121,6 +121,7 @@ const LABEL_TO_SLUG_ALIASES: Record<string, string> = {
   "Aditya Birla": "absl",
   "Franklin Templeton": "franklin-templeton",
   "Mahindra Manulife": "mahindra",
+  "LIC MF": "lic",
 };
 
 // ---- asset-class classifier ------------------------------------------------
