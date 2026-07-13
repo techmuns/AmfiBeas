@@ -1,0 +1,51 @@
+name: AMC monthly portfolio fetch
+
+# AMC monthly portfolio disclosures → public/amc-holdings/, via the AdvisorKhoj
+# aggregator (one curl-able code path for all ~50 AMCs; see run-monthly.ts).
+# Runs once a day on the 9th–12th of each month (the window in which most AMCs
+# publish the prior month's disclosure), plus manual dispatch. AMCs with a
+# directly-downloadable disclosure are fetched with plain curl; AMCs behind a
+# JS landing page or Akamai bot wall fall through to a headless-Chromium tier
+# (browser-fallback.ts), which needs Playwright's browser installed. Any AMC
+# still unresolved is recorded in index.json with a non-ok status rather than
+# dropped silently. Commits refreshed snapshots.
+
+on:
+  schedule:
+    - cron: "0 7 9-12 * *" # 07:00 UTC, days 9–12, every month
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: amc-monthly-fetch
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Chromium (browser fallback tier)
+        run: npx playwright install --with-deps chromium
+      - name: Fetch + parse AMC monthly portfolios
+        run: npx tsx scripts/ingest/amc-factsheets/run-monthly.ts
+      - name: Commit refreshed AMC holdings
+        run: |
+          if [ -z "$(git status --porcelain public/amc-holdings)" ]; then
+            echo "No AMC holdings changes — nothing to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/amc-holdings
+          git commit -m "chore(data): AMC monthly portfolio fetch ($(date -u +%Y-%m-%d))"
+          git push

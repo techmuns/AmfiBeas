@@ -1,0 +1,71 @@
+name: AMC factsheet recon
+
+# One-off / on-demand reconnaissance for the direct-from-AMC holdings pipeline.
+# Renders each AMC's disclosure landing page in a real browser (which the dev
+# sandbox can't do through its proxy), captures the network calls + candidate
+# file links + sample downloads, and uploads them as an artifact. The per-AMC
+# scraper adapters are then written from that captured evidence.
+#
+# Runs on push to the working branch when the recon code changes, and on manual
+# dispatch. Does NOT deploy anything.
+
+on:
+  push:
+    branches: [claude/vibrant-bell-9wycx4]
+    paths:
+      - scripts/ingest/amc-factsheets/recon.ts
+      - scripts/ingest/amc-factsheets/recon2.ts
+      - scripts/ingest/amc-factsheets/recon3.ts
+      - .github/workflows/amc-factsheet-recon.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recon:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Run AMC recon (landing pages)
+        continue-on-error: true
+        run: npx tsx scripts/ingest/amc-factsheets/recon.ts
+      - name: Run AMC recon v2 (ICICI/Kotak/HDFC deep)
+        continue-on-error: true
+        run: npx tsx scripts/ingest/amc-factsheets/recon2.ts
+      - name: Run AMC recon v3 (ICICI/Kotak targeted)
+        continue-on-error: true
+        run: npx tsx scripts/ingest/amc-factsheets/recon3.ts
+      - name: Upload recon artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: amc-recon
+          path: amc-recon-out/
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Upload recon v2 artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: amc-recon2
+          path: amc-recon2-out/
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Upload recon v3 artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: amc-recon3
+          path: amc-recon3-out/
+          if-no-files-found: warn
+          retention-days: 7

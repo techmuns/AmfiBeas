@@ -1,0 +1,673 @@
+{
+  "meta": {
+    "generatedAt": "2026-07-07T10:50:24.635Z",
+    "source": "AdvisorKhoj monthly portfolio disclosures (per-AMC, latest month)",
+    "latestMonthByAmc": {
+      "360-one": "May 2026",
+      "abakkus": "May 2026",
+      "absl": "May 2026",
+      "angel-one": "Mar 2026",
+      "axis": "May 2026",
+      "bajaj-finserv": "May 2026",
+      "bandhan": "May 2026",
+      "bank-of-india": "May 2026",
+      "baroda-bnp-paribas": "May 2026",
+      "canara-robeco": "May 2026",
+      "capitalmind": "May 2026",
+      "choice": "May 2026",
+      "dsp": "May 2026",
+      "edelweiss": "May 2026",
+      "franklin-templeton": "May 2026",
+      "groww": "May 2026",
+      "hdfc": "May 2026",
+      "helios": "Mar 2026",
+      "hsbc": "May 2026",
+      "icici-pru": "May 2026",
+      "invesco": "May 2026",
+      "iti": "May 2026",
+      "jio-blackrock": "May 2026",
+      "jm-financial": "May 2026",
+      "kotak": "May 2026",
+      "mahindra": "May 2026",
+      "mirae": "May 2026",
+      "motilal-oswal": "April 2026",
+      "navi": "May 2026",
+      "nippon": "May 2026",
+      "nj": "May 2026",
+      "old-bridge": "October 2025",
+      "ppfas": "May 2026",
+      "quant": "May 2026",
+      "samco": "May 2026",
+      "sbi": "May 2026",
+      "shriram": "May 2026",
+      "tata": "May 2026",
+      "taurus": "May 2026",
+      "the-wealth-company": "May 2026",
+      "trust": "May 2026",
+      "unifi": "May 2026",
+      "union": "May 2026",
+      "uti": "May 2026",
+      "whiteoak-capital": "May 2026",
+      "zerodha": "May 2026",
+      "quantum": "Jun 2026"
+    },
+    "coverage": {
+      "total": 50,
+      "ok": 35,
+      "needsFallback": [
+        {
+          "slug": "bandhan",
+          "status": "blocked"
+        },
+        {
+          "slug": "choice",
+          "status": "blocked"
+        },
+        {
+          "slug": "edelweiss",
+          "status": "blocked"
+        },
+        {
+          "slug": "hsbc",
+          "status": "blocked"
+        },
+        {
+          "slug": "jio-blackrock",
+          "status": "blocked"
+        },
+        {
+          "slug": "lic",
+          "status": "no-link"
+        },
+        {
+          "slug": "navi",
+          "status": "blocked"
+        },
+        {
+          "slug": "pgim-india",
+          "status": "empty"
+        },
+        {
+          "slug": "samco",
+          "status": "blocked"
+        },
+        {
+          "slug": "sundaram",
+          "status": "no-link"
+        },
+        {
+          "slug": "taurus",
+          "status": "empty"
+        },
+        {
+          "slug": "the-wealth-company",
+          "status": "blocked"
+        },
+        {
+          "slug": "union",
+          "status": "blocked"
+        },
+        {
+          "slug": "whiteoak-capital",
+          "status": "blocked"
+        },
+        {
+          "slug": "zerodha",
+          "status": "blocked"
+        }
+      ]
+    }
+  },
+  "amcs": [
+    {
+      "slug": "360-one",
+      "amc": "360 ONE Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 10,
+      "holdings": 553,
+      "file": "360-one.json",
+      "updatedAt": "2026-07-07T10:39:23.505Z"
+    },
+    {
+      "slug": "abakkus",
+      "amc": "Abakkus Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 3,
+      "holdings": 143,
+      "file": "abakkus.json",
+      "updatedAt": "2026-07-07T10:39:27.446Z"
+    },
+    {
+      "slug": "absl",
+      "amc": "Aditya Birla Sun Life Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 97,
+      "holdings": 5467,
+      "file": "absl.json",
+      "updatedAt": "2026-07-07T10:39:32.077Z"
+    },
+    {
+      "slug": "angel-one",
+      "amc": "Angel One Mutual Fund",
+      "status": "ok",
+      "source": "browser",
+      "asOfMonth": "Mar 2026",
+      "schemes": 14,
+      "holdings": 3308,
+      "file": "angel-one.json",
+      "updatedAt": "2026-07-07T10:39:41.269Z"
+    },
+    {
+      "slug": "axis",
+      "amc": "Axis Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 81,
+      "holdings": 4857,
+      "file": "axis.json",
+      "updatedAt": "2026-07-07T10:40:00.848Z"
+    },
+    {
+      "slug": "bajaj-finserv",
+      "amc": "Bajaj Finserv Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 24,
+      "holdings": 1166,
+      "file": "bajaj-finserv.json",
+      "updatedAt": "2026-07-07T10:40:03.635Z"
+    },
+    {
+      "slug": "bandhan",
+      "amc": "Bandhan Mutual Fund",
+      "status": "blocked",
+      "source": null,
+      "asOfMonth": "May 2026",
+      "schemes": 0,
+      "holdings": 0,
+      "file": null,
+      "updatedAt": "2026-07-07T10:40:06.759Z"
+    },
+    {
+      "slug": "bank-of-india",
+      "amc": "Bank of India Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 24,
+      "holdings": 1151,
+      "file": "bank-of-india.json",
+      "updatedAt": "2026-07-07T10:40:32.754Z"
+    },
+    {
+      "slug": "baroda-bnp-paribas",
+      "amc": "Baroda BNP Paribas Mutual Fund",
+      "status": "ok",
+      "source": "browser",
+      "asOfMonth": "May 2026",
+      "schemes": 51,
+      "holdings": 2389,
+      "file": "baroda-bnp-paribas.json",
+      "updatedAt": "2026-07-07T10:40:37.665Z"
+    },
+    {
+      "slug": "canara-robeco",
+      "amc": "Canara Robeco Mutual Fund",
+      "status": "ok",
+      "source": "browser",
+      "asOfMonth": "May 2026",
+      "schemes": 19,
+      "holdings": 923,
+      "file": "canara-robeco.json",
+      "updatedAt": "2026-07-07T10:40:55.594Z"
+    },
+    {
+      "slug": "capitalmind",
+      "amc": "Capitalmind Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 1,
+      "holdings": 42,
+      "file": "capitalmind.json",
+      "updatedAt": "2026-07-07T10:41:19.486Z"
+    },
+    {
+      "slug": "choice",
+      "amc": "Choice Mutual Fund",
+      "status": "blocked",
+      "source": null,
+      "asOfMonth": "May 2026",
+      "schemes": 0,
+      "holdings": 0,
+      "file": null,
+      "updatedAt": "2026-07-07T10:41:23.477Z"
+    },
+    {
+      "slug": "dsp",
+      "amc": "DSP Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 78,
+      "holdings": 4333,
+      "file": "dsp.json",
+      "updatedAt": "2026-07-07T10:41:36.899Z"
+    },
+    {
+      "slug": "edelweiss",
+      "amc": "Edelweiss Mutual Fund",
+      "status": "blocked",
+      "source": null,
+      "asOfMonth": "May 2026",
+      "schemes": 0,
+      "holdings": 0,
+      "file": null,
+      "updatedAt": "2026-07-07T10:41:48.679Z"
+    },
+    {
+      "slug": "franklin-templeton",
+      "amc": "Franklin Templeton Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 39,
+      "holdings": 1586,
+      "file": "franklin-templeton.json",
+      "updatedAt": "2026-07-07T10:41:56.115Z"
+    },
+    {
+      "slug": "groww",
+      "amc": "Groww Mutual Fund",
+      "status": "ok",
+      "source": "browser",
+      "asOfMonth": "May 2026",
+      "schemes": 112,
+      "holdings": 5963,
+      "file": "groww.json",
+      "updatedAt": "2026-07-07T10:42:00.171Z"
+    },
+    {
+      "slug": "hdfc",
+      "amc": "HDFC Mutual Fund",
+      "status": "ok",
+      "source": "browser",
+      "asOfMonth": "May 2026",
+      "schemes": 98,
+      "holdings": 7877,
+      "file": "hdfc.json",
+      "updatedAt": "2026-07-07T10:42:11.954Z"
+    },
+    {
+      "slug": "helios",
+      "amc": "Helios Mutual Fund",
+      "status": "ok",
+      "source": "browser",
+      "asOfMonth": "Mar 2026",
+      "schemes": 14,
+      "holdings": 692,
+      "file": "helios.json",
+      "updatedAt": "2026-07-07T10:42:38.694Z"
+    },
+    {
+      "slug": "hsbc",
+      "amc": "HSBC Mutual Fund",
+      "status": "blocked",
+      "source": null,
+      "asOfMonth": "May 2026",
+      "schemes": 0,
+      "holdings": 0,
+      "file": null,
+      "updatedAt": "2026-07-07T10:42:55.358Z"
+    },
+    {
+      "slug": "icici-pru",
+      "amc": "ICICI Prudential Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 134,
+      "holdings": 8569,
+      "file": "icici-pru.json",
+      "updatedAt": "2026-07-07T10:43:15.905Z"
+    },
+    {
+      "slug": "invesco",
+      "amc": "Invesco Mutual Fund",
+      "status": "ok",
+      "source": "browser",
+      "asOfMonth": "May 2026",
+      "schemes": 17,
+      "holdings": 786,
+      "file": "invesco.json",
+      "updatedAt": "2026-07-07T10:43:21.050Z"
+    },
+    {
+      "slug": "iti",
+      "amc": "ITI Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 19,
+      "holdings": 999,
+      "file": "iti.json",
+      "updatedAt": "2026-07-07T10:43:58.185Z"
+    },
+    {
+      "slug": "jio-blackrock",
+      "amc": "Jio BlackRock Mutual Fund",
+      "status": "blocked",
+      "source": null,
+      "asOfMonth": "May 2026",
+      "schemes": 0,
+      "holdings": 0,
+      "file": null,
+      "updatedAt": "2026-07-07T10:44:03.515Z"
+    },
+    {
+      "slug": "jm-financial",
+      "amc": "JM Financial Mutual Fund",
+      "status": "ok",
+      "source": "browser",
+      "asOfMonth": "May 2026",
+      "schemes": 4,
+      "holdings": 93,
+      "file": "jm-financial.json",
+      "updatedAt": "2026-07-07T10:44:26.702Z"
+    },
+    {
+      "slug": "kotak",
+      "amc": "Kotak Mahindra Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 109,
+      "holdings": 6092,
+      "file": "kotak.json",
+      "updatedAt": "2026-07-07T10:44:43.552Z"
+    },
+    {
+      "slug": "lic",
+      "amc": "LIC Mutual Fund",
+      "status": "no-link",
+      "source": null,
+      "asOfMonth": null,
+      "schemes": 0,
+      "holdings": 0,
+      "file": null,
+      "updatedAt": "2026-07-07T10:44:46.437Z"
+    },
+    {
+      "slug": "mahindra",
+      "amc": "Mahindra Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 26,
+      "holdings": 1333,
+      "file": "mahindra.json",
+      "updatedAt": "2026-07-07T10:44:50.399Z"
+    },
+    {
+      "slug": "mirae",
+      "amc": "Mirae Asset Mutual Fund",
+      "status": "ok",
+      "source": "browser",
+      "asOfMonth": "May 2026",
+      "schemes": 8,
+      "holdings": 303,
+      "file": "mirae.json",
+      "updatedAt": "2026-07-07T10:44:55.420Z"
+    },
+    {
+      "slug": "motilal-oswal",
+      "amc": "Motilal Oswal Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "April 2026",
+      "schemes": 78,
+      "holdings": 5288,
+      "file": "motilal-oswal.json",
+      "updatedAt": "2026-07-07T10:45:11.774Z"
+    },
+    {
+      "slug": "navi",
+      "amc": "Navi Mutual Fund",
+      "status": "blocked",
+      "source": null,
+      "asOfMonth": "May 2026",
+      "schemes": 0,
+      "holdings": 0,
+      "file": null,
+      "updatedAt": "2026-07-07T10:45:17.459Z"
+    },
+    {
+      "slug": "nippon",
+      "amc": "Nippon India Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 100,
+      "holdings": 5884,
+      "file": "nippon.json",
+      "updatedAt": "2026-07-07T10:45:32.072Z"
+    },
+    {
+      "slug": "nj",
+      "amc": "NJ Mutual Fund",
+      "status": "ok",
+      "source": "browser",
+      "asOfMonth": "May 2026",
+      "schemes": 4,
+      "holdings": 291,
+      "file": "nj.json",
+      "updatedAt": "2026-07-07T10:45:35.783Z"
+    },
+    {
+      "slug": "old-bridge",
+      "amc": "Old Bridge Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "October 2025",
+      "schemes": 1,
+      "holdings": 24,
+      "file": "old-bridge.json",
+      "updatedAt": "2026-07-07T10:45:51.153Z"
+    },
+    {
+      "slug": "pgim-india",
+      "amc": "PGIM India Mutual Fund",
+      "status": "empty",
+      "source": null,
+      "asOfMonth": null,
+      "schemes": 0,
+      "holdings": 0,
+      "file": null,
+      "updatedAt": "2026-07-07T10:46:03.266Z"
+    },
+    {
+      "slug": "ppfas",
+      "amc": "PPFAS Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 7,
+      "holdings": 597,
+      "file": "ppfas.json",
+      "updatedAt": "2026-07-07T10:46:03.266Z"
+    },
+    {
+      "slug": "quant",
+      "amc": "Quant Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 28,
+      "holdings": 835,
+      "file": "quant.json",
+      "updatedAt": "2026-07-07T10:46:06.017Z"
+    },
+    {
+      "slug": "quantum",
+      "amc": "Quantum Mutual Fund",
+      "status": "ok",
+      "source": "browser",
+      "asOfMonth": "Jun 2026",
+      "schemes": 13,
+      "holdings": 362,
+      "file": "quantum.json",
+      "updatedAt": "2026-07-07T10:59:18.623Z"
+    },
+    {
+      "slug": "samco",
+      "amc": "Samco Mutual Fund",
+      "status": "blocked",
+      "source": null,
+      "asOfMonth": "May 2026",
+      "schemes": 0,
+      "holdings": 0,
+      "file": null,
+      "updatedAt": "2026-07-07T10:46:24.613Z"
+    },
+    {
+      "slug": "sbi",
+      "amc": "SBI Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 119,
+      "holdings": 5735,
+      "file": "sbi.json",
+      "updatedAt": "2026-07-07T10:48:02.856Z"
+    },
+    {
+      "slug": "shriram",
+      "amc": "Shriram Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 6,
+      "holdings": 416,
+      "file": "shriram.json",
+      "updatedAt": "2026-07-07T10:48:09.383Z"
+    },
+    {
+      "slug": "sundaram",
+      "amc": "Sundaram Mutual Fund",
+      "status": "no-link",
+      "source": null,
+      "asOfMonth": null,
+      "schemes": 0,
+      "holdings": 0,
+      "file": null,
+      "updatedAt": "2026-07-07T10:48:11.848Z"
+    },
+    {
+      "slug": "tata",
+      "amc": "Tata Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 53,
+      "holdings": 2870,
+      "file": "tata.json",
+      "updatedAt": "2026-07-07T10:48:15.615Z"
+    },
+    {
+      "slug": "taurus",
+      "amc": "Taurus Mutual Fund",
+      "status": "empty",
+      "source": null,
+      "asOfMonth": "May 2026",
+      "schemes": 0,
+      "holdings": 0,
+      "file": null,
+      "updatedAt": "2026-07-07T10:48:19.348Z"
+    },
+    {
+      "slug": "the-wealth-company",
+      "amc": "The Wealth Company Mutual Fund",
+      "status": "blocked",
+      "source": null,
+      "asOfMonth": "May 2026",
+      "schemes": 0,
+      "holdings": 0,
+      "file": null,
+      "updatedAt": "2026-07-07T10:48:38.615Z"
+    },
+    {
+      "slug": "trust",
+      "amc": "Trust Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 11,
+      "holdings": 412,
+      "file": "trust.json",
+      "updatedAt": "2026-07-07T10:49:09.881Z"
+    },
+    {
+      "slug": "unifi",
+      "amc": "Unifi Mutual Fund",
+      "status": "ok",
+      "source": "browser",
+      "asOfMonth": "May 2026",
+      "schemes": 1,
+      "holdings": 127,
+      "file": "unifi.json",
+      "updatedAt": "2026-07-07T10:49:15.334Z"
+    },
+    {
+      "slug": "union",
+      "amc": "Union Mutual Fund",
+      "status": "blocked",
+      "source": null,
+      "asOfMonth": "May 2026",
+      "schemes": 0,
+      "holdings": 0,
+      "file": null,
+      "updatedAt": "2026-07-07T10:49:26.243Z"
+    },
+    {
+      "slug": "uti",
+      "amc": "UTI Mutual Fund",
+      "status": "ok",
+      "source": "advisorkhoj",
+      "asOfMonth": "May 2026",
+      "schemes": 1,
+      "holdings": 4540,
+      "file": "uti.json",
+      "updatedAt": "2026-07-07T10:49:50.646Z"
+    },
+    {
+      "slug": "whiteoak-capital",
+      "amc": "WhiteOak Capital Mutual Fund",
+      "status": "blocked",
+      "source": null,
+      "asOfMonth": "May 2026",
+      "schemes": 0,
+      "holdings": 0,
+      "file": null,
+      "updatedAt": "2026-07-07T10:49:55.307Z"
+    },
+    {
+      "slug": "zerodha",
+      "amc": "Zerodha Mutual Fund",
+      "status": "blocked",
+      "source": null,
+      "asOfMonth": "May 2026",
+      "schemes": 0,
+      "holdings": 0,
+      "file": null,
+      "updatedAt": "2026-07-07T10:50:08.241Z"
+    }
+  ]
+}
