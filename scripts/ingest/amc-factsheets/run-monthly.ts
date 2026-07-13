@@ -197,6 +197,15 @@ async function main() {
     console.log(`AdvisorKhoj AMC discovery returned ${amcs.length}; using the built-in list.`);
     amcs = FALLBACK_AMCS;
   }
+  // AMC_ONLY=<slug,slug,…> restricts the run to those AMCs — used for fast CI
+  // iteration on the browser-fallback AMCs without a full ~50-AMC run. NOTE: a
+  // filtered run writes a filtered index.json, so pair it with a no-commit test
+  // dispatch (see amc-factsheet-monthly.yml) and keep index.json commits to full runs.
+  const only = process.env.AMC_ONLY?.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  if (only?.length) {
+    amcs = amcs.filter((a) => only.includes(slugFor(a)));
+    console.log(`AMC_ONLY set — restricting to ${amcs.length} AMC(s): ${amcs.map(slugFor).join(", ") || "(none matched)"}`);
+  }
   console.log(`Fetching ${amcs.length} AMCs via AdvisorKhoj (year ${year})…\n`);
 
   // Browser is the tier-3 fallback for bot-walled / JS-rendered AMCs. Launch it

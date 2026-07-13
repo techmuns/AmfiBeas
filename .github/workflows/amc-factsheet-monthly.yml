@@ -14,6 +14,16 @@ on:
   schedule:
     - cron: "0 7 9-12 * *" # 07:00 UTC, days 9–12, every month
   workflow_dispatch:
+    inputs:
+      amcs:
+        description: "Comma-separated AMC slugs to fetch (blank = all). Sets AMC_ONLY for targeted iteration."
+        required: false
+        type: string
+      commit:
+        description: "Commit results. Set to 'false' for a test run (fetch + log only; never commits a filtered index.json)."
+        required: false
+        default: "true"
+        type: string
 
 permissions:
   contents: write
@@ -37,10 +47,17 @@ jobs:
       - name: Install Playwright Chromium (browser fallback tier)
         run: npx playwright install --with-deps chromium
       - name: Fetch + parse AMC monthly portfolios
+        env:
+          AMC_ONLY: ${{ inputs.amcs }}
         run: npx tsx scripts/ingest/amc-factsheets/run-monthly.ts
       - name: Rebuild AMC→tracker portfolio crosswalk (2A Holdings-tab panel)
+        # Skip on a filtered/test run — the crosswalk needs the full index.json.
+        if: ${{ github.event_name == 'schedule' || (inputs.commit != 'false' && inputs.amcs == '') }}
         run: npm run build:amc-crosswalk
       - name: Commit refreshed AMC holdings + crosswalk
+        # Only full runs commit — a filtered (AMC_ONLY) run writes a partial
+        # index.json and must stay test-only.
+        if: ${{ github.event_name == 'schedule' || (inputs.commit != 'false' && inputs.amcs == '') }}
         run: |
           PATHS="public/amc-holdings public/amc-portfolio src/data/portfolio-tracker/amc-portfolio-crosswalk.json"
           if [ -z "$(git status --porcelain $PATHS)" ]; then
