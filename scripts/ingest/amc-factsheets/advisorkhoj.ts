@@ -181,8 +181,9 @@ function walkFiles(dir: string): string[] {
   return out;
 }
 
-/** A downloaded .zip of per-scheme workbooks → merged schemes. */
-function parseZip(buf: Buffer, opts: AmcParseOptions): AmcScheme[] {
+/** A downloaded .zip of per-scheme workbooks → merged schemes. Shared with the
+ *  page-scrape tier (DSP ships its monthly disclosure as a zip of workbooks). */
+export function parseZip(buf: Buffer, opts: AmcParseOptions): AmcScheme[] {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "akzip-"));
   const zipPath = path.join(tmp, "download.zip");
   const merged: AmcScheme[] = [];

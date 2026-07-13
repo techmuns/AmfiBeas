@@ -12,8 +12,8 @@
  */
 import { execFileSync } from "node:child_process";
 import { parseAmcWorkbook } from "./parse";
-import { normalizeSchemePct } from "./advisorkhoj";
-import { selectLatestMonthFiles, monthFloor, monthCeil, type HarvestedLink } from "./browser-fallback";
+import { normalizeSchemePct, parseZip } from "./advisorkhoj";
+import { selectLatestMonthFiles, monthScore, monthFloor, monthCeil, type HarvestedLink } from "./browser-fallback";
 import type { AmcParseOptions, AmcScheme } from "./types";
 
 const UA =
@@ -42,10 +42,15 @@ function curlText(url: string, referer?: string): string | null {
 
 export function curlBuffer(url: string, referer?: string): Buffer | null {
   try {
-    const args = ["-fsL", "--max-time", "120", "-A", UA];
+    // -g/--globoff: don't treat [ ] { } in a filename as curl globs (we no
+    // longer percent-encode them, unlike the old encodeURI path).
+    const args = ["-fsL", "-g", "--max-time", "120", "-A", UA];
     if (referer) args.push("-H", `Referer: ${referer}`);
-    // encodeURI so filenames with spaces (Zerodha) fetch; leaves %-escapes intact.
-    const out = execFileSync("curl", [...args, encodeURI(url)], { maxBuffer: 256 * 1024 * 1024 });
+    // Encode literal spaces + any lone '%' (not already part of a %XX escape)
+    // without double-encoding: Tata ships %20-encoded filenames (encodeURI would
+    // turn %20 into %2520 → 404), Zerodha ships literal spaces. This handles both.
+    const safe = url.replace(/%(?![0-9A-Fa-f]{2})/g, "%25").replace(/ /g, "%20");
+    const out = execFileSync("curl", [...args, safe], { maxBuffer: 256 * 1024 * 1024 });
     return out.length > 500 ? out : null;
   } catch {
     return null;
@@ -100,14 +105,19 @@ export function downloadAndParse(links: HarvestedLink[], opts: AmcParseOptions, 
     if (!buf) continue;
     const head = buf.subarray(0, 64).toString("latin1").trimStart().toLowerCase();
     if (head.startsWith("<!doctype") || head.startsWith("<html")) continue; // walled/HTML
-    try {
-      for (const sc of parseAmcWorkbook(buf, opts).map(normalizeSchemePct)) {
-        const key = `${sc.schemeCode}|${sc.asOf}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        schemes.push(sc);
-      }
-    } catch { /* skip bad file */ }
+    // One multi-sheet workbook (most AMCs), falling back to a zip-of-workbooks
+    // (DSP ships the monthly disclosure as a .zip of per-asset-class workbooks).
+    let parsed: AmcScheme[] = [];
+    try { parsed = parseAmcWorkbook(buf, opts); } catch { /* maybe a zip */ }
+    if (parsed.length === 0) {
+      try { parsed = parseZip(buf, opts); } catch { /* skip bad file */ }
+    }
+    for (const sc of parsed.map(normalizeSchemePct)) {
+      const key = `${sc.schemeCode}|${sc.asOf}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      schemes.push(sc);
+    }
   }
   return { schemes, fileCount: byFile.size };
 }
@@ -116,6 +126,20 @@ export interface PageScrapeResult {
   schemes: AmcScheme[];
   usedUrl: string | null;
   fileCount: number;
+}
+
+/** Override every scheme's as-on date with the disclosure month taken from the
+ *  selected file's name — authoritative, and immune to a workbook whose
+ *  per-holding dates (maturities, Tata's layout) the generic parser would
+ *  otherwise mistake for the as-on date. No-op if the filename carries no month. */
+function stampAsOfFromFilename(schemes: AmcScheme[], picked: HarvestedLink[]): void {
+  const best = Math.max(0, ...picked.map((l) => monthScore(`${decodeURIComponent(l.url)} ${l.text}`)));
+  if (best <= 0) return;
+  const year = Math.floor((best - 1) / 12);
+  const month1 = ((best - 1) % 12) + 1;
+  const lastDay = new Date(Date.UTC(year, month1, 0)).getUTCDate();
+  const iso = `${year}-${String(month1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+  for (const s of schemes) s.asOf = iso;
 }
 
 /** Scrape an AMC's monthly portfolio via curl: for each candidate page, harvest
@@ -133,7 +157,10 @@ export function pageScrapeAmc(cfg: PageScrapeConfig, opts: AmcParseOptions, now:
     const picked = selectLatestMonthFiles(links, 200, floorScore, ceilScore);
     if (picked.length === 0) continue;
     const { schemes, fileCount } = downloadAndParse(picked, opts, cfg.referer ?? pageUrl);
-    if (schemes.length > 0) return { schemes, usedUrl: pageUrl, fileCount };
+    if (schemes.length > 0) {
+      stampAsOfFromFilename(schemes, picked);
+      return { schemes, usedUrl: pageUrl, fileCount };
+    }
   }
   return { schemes: [], usedUrl: null, fileCount: 0 };
 }
@@ -165,6 +192,21 @@ export const PAGE_SCRAPE_CONFIG: Record<string, PageScrapeConfig> = {
     urls: ["https://www.advisorkhoj.com/form-download-centre/Mutual/Sundaram-Mutual-Fund/Monthly-Portfolio-Disclosures"],
     include: /monthly.?portfolio/i,
     referer: "https://www.advisorkhoj.com/",
+  },
+  // Kirby CMS listing; every disclosure is an <a href> to a hash-prefixed media
+  // path. The complete monthly file is the "monthend-portfolio(s)" ZIP (a zip of
+  // an equity+FOF and a debt workbook) — the half-yearly / debt-fortnightly /
+  // fund-performance files on the same page don't start with that stem.
+  dsp: {
+    urls: ["https://www.dspim.com/mandatory-disclosures/portfolio-disclosures"],
+    include: /monthend[-_]portfolios?[-_]/i,
+  },
+  // Next.js page; per-month consolidated workbook URLs are embedded in the
+  // streaming __next_f JSON (field_media_document) on the betacms file host.
+  // Filenames aren't templatable (human-entered), so scrape + pick newest month.
+  tata: {
+    urls: ["https://www.tatamutualfund.com/schemes-related/portfolio"],
+    include: /monthly.{0,4}portfolio|portfolio.{0,4}as.{0,4}on/i,
   },
 };
 

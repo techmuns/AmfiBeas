@@ -45,6 +45,10 @@ interface PgimTab { content?: { pdfPath?: string; dateMonthYear?: string; title?
 interface ChoiceRow { reports?: { report_date?: string; file_path?: string }[] }
 interface WoItem { attributes?: { scheme_name?: string; published_date?: string; doc_file?: { data?: { attributes?: { url?: string } }; url?: string } } }
 interface UnionItem { Title?: string; Extension?: string; Url?: string }
+interface AbslItem { pdfUrl?: string; ResourceLink?: string }
+interface AxisDoc { documentName?: string; docuementURL?: string }
+interface FrkCat { id?: string; dataRecords?: { linkdata?: FrkItem[] } }
+interface FrkItem { frkReferenceDate?: string; dctermsTitle?: string; literatureHref?: string }
 
 /** year*12+month for the "<DD> <Month> <YYYY>" date in a string, else 0. */
 function dateScore(s: string | undefined): number {
@@ -176,6 +180,60 @@ function discoverUnion(): HarvestedLink[] {
   return items.filter((it) => monthOf(it.Title || "") === best).map((it) => ({ url: `https://www.unionmf.com${it.Url}`, text: it.Title || "" }));
 }
 
+// ---- ABSL: Sitecore accordion API — newest-first list, one ZIP per month ----
+function discoverAbsl(): HarvestedLink[] {
+  // month=%20 (a space) and year=0 are required, else the endpoint 500s.
+  const api =
+    "https://mutualfund.adityabirlacapital.com/postlogin/CustomApi/Resources/FactsheetAccordionById" +
+    "?id=3ccab227-9de5-4494-b78d-2b4f7c0c054a" +
+    "&ctype=%2Fsitecore%2Fcontent%2FRoot%2FBSL%2FLibrary%2FLists%2FFAQ%2FCustomer%20Types%2FIndividual" +
+    "&month=%20&year=0";
+  const d = json(api);
+  const list = (d?.AccordionList ?? []) as AbslItem[];
+  const top = list[0]; // newest first
+  const u = top?.pdfUrl;
+  if (typeof u !== "string" || !/\.zip(\?|$)/i.test(u)) return [];
+  // The pdfUrl points at abcscprod.azureedge.net (unreachable via the sandbox
+  // proxy); the same media path is mirrored on the main domain.
+  const url = u.replace(/^https:\/\/abcscprod\.azureedge\.net/i, "https://mutualfund.adityabirlacapital.com");
+  return [{ url, text: top.ResourceLink || "" }]; // ResourceLink: "Monthly Portfolios as on June 30, 2026"
+}
+
+// ---- Axis: Strapi CMS — POST for the month's docs, one consolidated workbook ----
+// The bearer is a fixed public token the SPA fetches from /cms/token and echoes;
+// hard-coded here (the file download itself needs no auth).
+const AXIS_TOKEN =
+  "Bearer c060dc4235de5fefc8fe5da8ef2b64d59fdf4f46c8ebeddb394a47daeac8c67c083d602ed9d4133d32b50ce33241fbedb6240c94cc801279292b3f301ae1ef6f713e38c38d778f9a7ec84bd4c094c0b5fa3cd8b3c5e9d5ae43b9a47ddcfe60b6339fe8395818d3f21ffaaaca455fe03e48b47a5079bf4a2eb86fece310b253ff";
+const MON_FULL_TC = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+function discoverAxis(now: Date): HarvestedLink[] {
+  for (const [yy, mm] of monthsToTry(now)) {
+    const d = json("https://www.axismf.com/cms/get-scheme-documents", {
+      method: "POST",
+      body: JSON.stringify({ sdType: "yearMonthSchemeDocs", sdID: "sdMonthSchemePortfolio", schemeTypeID: "ALL", year: String(yy), month: MON_FULL_TC[mm - 1] }),
+      headers: { "Content-Type": "application/json", Authorization: AXIS_TOKEN },
+    });
+    const docs = (d?.data?.documentList ?? []) as AxisDoc[];
+    // The all-schemes consolidated workbook is "Monthly Portfolio-DD MM YY"
+    // (schemeID null); the other ~86 entries are per-scheme .xls files.
+    const consolidated = docs.find((x) => /^Monthly Portfolio-\d/i.test(x.documentName || "") && x.docuementURL);
+    if (consolidated?.docuementURL) return [{ url: consolidated.docuementURL, text: `Monthly Portfolio as on ${MON_FULL_TC[mm - 1]} ${yy}` }];
+  }
+  return [];
+}
+
+// ---- Franklin Templeton: Bloomreach literature catalog — one workbook/month ----
+function discoverFranklin(): HarvestedLink[] {
+  const d = json("https://www.franklintempletonindia.com/api/literature/v1/responseLitJson?type=report", { headers: { Accept: "application/json" } });
+  const cat = ((d?.FirstDropDown ?? []) as FrkCat[]).find((c) => c.id === "MONTHLY-PORTFOLIO-DSCLR");
+  const items = (cat?.dataRecords?.linkdata ?? []) as FrkItem[];
+  const maxDate = items.map((i) => i.frkReferenceDate || "").sort().pop();
+  if (!maxDate) return [];
+  // The raw /en-in/ href returns the SPA shell; the file is under /download.
+  return items
+    .filter((i) => (i.frkReferenceDate || "") === maxDate && i.literatureHref)
+    .map((i) => ({ url: "https://www.franklintempletonindia.com/download" + i.literatureHref, text: i.dctermsTitle || i.frkReferenceDate || "" }));
+}
+
 export type ApiDiscoverer = (now: Date) => HarvestedLink[];
 interface ApiConfig { discover: ApiDiscoverer; referer?: string; page: string }
 export const JSON_API_CONFIG: Record<string, ApiConfig> = {
@@ -185,6 +243,9 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   "whiteoak-capital": { discover: () => discoverWhiteoak(), page: "https://mf.whiteoakamc.com/regulatory-disclosures/scheme-portfolios" },
   lic: { discover: (now) => discoverLic(now), referer: "https://www.licmf.com/", page: "https://www.licmf.com/downloads/monthly-portfolio" },
   union: { discover: () => discoverUnion(), referer: "https://www.unionmf.com/", page: "https://www.unionmf.com/about-us/downloads" },
+  absl: { discover: () => discoverAbsl(), referer: "https://mutualfund.adityabirlacapital.com/", page: "https://mutualfund.adityabirlacapital.com/forms-and-downloads/portfolio" },
+  axis: { discover: (now) => discoverAxis(now), referer: "https://www.axismf.com/", page: "https://www.axismf.com/statutory-disclosures/monthly-portfolio" },
+  "franklin-templeton": { discover: () => discoverFranklin(), referer: "https://www.franklintempletonindia.com/", page: "https://www.franklintempletonindia.com/reports" },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }

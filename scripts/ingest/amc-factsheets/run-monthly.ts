@@ -29,6 +29,7 @@ import {
   listPortfolioLinks,
   downloadFirstParsable,
   normalizeSchemePct,
+  parseZip,
 } from "./advisorkhoj";
 import { fetchLatest } from "./fetch";
 import { parseAmcWorkbook } from "./parse";
@@ -53,7 +54,7 @@ const GENERIC: AmcParseOptions = { pctScale: 1, valueToCr: 100 };
 // window, so the direct file is the freshest and most complete source (e.g.
 // SBI's consolidated workbook carries all ~116 schemes). Falls through to
 // AdvisorKhoj if the direct URL for the latest month isn't up yet.
-const DIRECT_PREFERRED = new Set(["sbi", "nippon", "kotak"]);
+const DIRECT_PREFERRED = new Set(["sbi", "nippon", "kotak", "icici-pru"]);
 
 // Safety net if AdvisorKhoj's AMC list can't be fetched (transient network).
 const FALLBACK_AMCS = [
@@ -178,7 +179,11 @@ async function processAmc(amc: string, year: number, browser: Browser | null): P
   if (DIRECT_PREFERRED.has(slug)) {
     const f = fetchLatest(slug);
     if (f) {
-      const schemes = parseAmcWorkbook(f.buf, GENERIC);
+      // One workbook (SBI/Nippon/Kotak) or a zip of per-scheme workbooks (ICICI);
+      // a zip makes parseAmcWorkbook throw, so fall through to parseZip.
+      let schemes: AmcScheme[] = [];
+      try { schemes = parseAmcWorkbook(f.buf, GENERIC); } catch { /* maybe a zip */ }
+      if (schemes.length === 0) schemes = parseZip(f.buf, GENERIC);
       if (schemes.length > 0) {
         const w = await writeSnapshot(slug, amc, f.url, f.asOfMonth, schemes);
         return { ...base, status: "ok", source: "direct", asOfMonth: f.asOfMonth, schemes: schemes.length, holdings: w.holdings, file: w.file };

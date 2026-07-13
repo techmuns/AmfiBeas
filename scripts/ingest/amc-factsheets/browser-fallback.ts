@@ -60,10 +60,12 @@ export interface HarvestedLink {
   text: string;
 }
 
-/** year*12+month for the newest "<Mon> <YYYY>" token in a string, else 0. */
-function monthScore(sTr: string): number {
+/** year*12+month for the newest "<Mon> <YYYY>" token in a string, else 0. An
+ *  optional day may sit between the month and year (e.g. DSP's
+ *  "…-february-28-2026.zip"), which must not defeat the match. */
+export function monthScore(sTr: string): number {
   let best = 0;
-  const re = /([A-Za-z]{3,9})[^A-Za-z0-9]{0,4}(\d{4})/g;
+  const re = /([A-Za-z]{3,9})[^A-Za-z0-9]{0,4}(?:\d{1,2}(?:st|nd|rd|th)?[^A-Za-z0-9]{0,4})?(\d{4})/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(sTr))) {
     const mo = MON[m[1].slice(0, 3).toLowerCase()];

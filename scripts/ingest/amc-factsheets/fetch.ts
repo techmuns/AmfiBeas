@@ -48,6 +48,16 @@ export function candidateUrls(slug: string, year: number, month1: number): strin
       `${base}-${day}-${MON_FULL_TC[month1 - 1]}-${yy}.xls`,
     ];
   }
+  if (slug === "icici-pru") {
+    // One monthly ZIP of per-scheme workbooks on ICICI's own (un-walled) blob
+    // host. Filename uses the full month name; the path folder is the 3-letter
+    // abbreviation EXCEPT June & July, which use the full name (verified).
+    const full = MON_FULL_TC[month1 - 1];
+    const folder = month1 === 6 || month1 === 7 ? full : MON3[month1 - 1];
+    return [
+      `https://www.icicipruamc.com/blob/downloads/Files/Monthly%20Portfolio%20Disclosures/${year}/${folder}/Monthly-Portfolio-Disclosure-${full}-${year}.zip`,
+    ];
+  }
   if (slug === "kotak") {
     // Consolidated (complete) monthly portfolio on Kotak's S3, e.g.
     // .../Consolidated-Portfolio-as-on-May-31,-2026/ConsolidatedSEBIPortfolioMay2026.xlsx
