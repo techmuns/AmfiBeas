@@ -167,7 +167,6 @@ const RATIO_DEFS: Array<{
   { key: "beta", label: "Beta", unit: "", higherBetter: false, signed: false },
   { key: "sharpe", label: "Sharpe", unit: "", higherBetter: true, signed: false },
   { key: "sortino", label: "Sortino", unit: "", higherBetter: true, signed: false },
-  { key: "alpha", label: "Alpha", unit: "%", higherBetter: true, signed: true },
 ];
 
 export async function gatherSchemeExport(args: {
@@ -262,17 +261,24 @@ export async function gatherSchemeExport(args: {
       break;
     }
   }
+  // Show every period at least one peer has a return for (drop all-empty columns);
+  // ranked by `peerPeriod`, but each fund's return is listed across all horizons.
+  const peerPeriods: PeriodKey[] = PERIODS.filter((p) =>
+    cohortFunds.some((f) => typeof f.periodRanks[p]?.return === "number")
+  );
+  const primaryIdx = peerPeriods.indexOf(peerPeriod);
   const peers: PeerRow[] = cohortFunds
     .map((f) => {
       const e = f.periodRanks[peerPeriod];
       const stats = e?.statsAvailable ? e : null;
-      const ret = e && typeof e.return === "number" ? e.return : null;
       return {
         fund: cleanSchemeName(f.fundName),
-        ret,
+        returns: peerPeriods.map((p) => {
+          const pe = f.periodRanks[p];
+          return pe && typeof pe.return === "number" ? pe.return : null;
+        }),
         rank: stats?.rank ?? null,
         peerCount: stats?.peerCount ?? null,
-        percentile: stats?.percentile ?? null,
         quartile: stats?.quartile ?? null,
         vsMedianBps:
           stats && typeof stats.excessVsMedian === "number"
@@ -285,7 +291,9 @@ export async function gatherSchemeExport(args: {
       const ar = a.rank ?? Number.POSITIVE_INFINITY;
       const br = b.rank ?? Number.POSITIVE_INFINITY;
       if (ar !== br) return ar - br;
-      return (b.ret ?? -Infinity) - (a.ret ?? -Infinity);
+      const av = primaryIdx >= 0 ? a.returns[primaryIdx] : null;
+      const bv = primaryIdx >= 0 ? b.returns[primaryIdx] : null;
+      return (bv ?? -Infinity) - (av ?? -Infinity);
     });
 
   const sectors: SectorRow[] = sectorRows.map((s) => ({
@@ -326,6 +334,7 @@ export async function gatherSchemeExport(args: {
     sectors,
     peerCohortLabel: peerCohortParts.join(" · "),
     peerPeriod,
+    peerPeriods,
     peers,
     holdings: holdingsData.rows,
     holdingsSource: portfolio?.meta.source ?? "RupeeVest Portfolio Tracker",

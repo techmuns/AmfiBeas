@@ -247,7 +247,7 @@ function holdingsSheet(
 function schemeSummarySheet(XLSX: XlsxModule, data: SchemeExport) {
   const grid: (SCell | null)[][] = [];
   const merges: Merge[] = [];
-  const W = 7; // working width
+  const W = 6; // working width
 
   const span = (r: number) => merges.push({ s: { r, c: 0 }, e: { r, c: W - 1 } });
   const pushSpan = (cell: SCell) => {
@@ -281,7 +281,6 @@ function schemeSummarySheet(XLSX: XlsxModule, data: SchemeExport) {
       hCell("Rank", "right"),
       hCell("Peers", "right"),
       hCell("Quartile", "center"),
-      hCell("Percentile", "right"),
     ]);
     plan.returns.forEach((r: ReturnRow, i) => {
       const zebra = i % 2 === 1;
@@ -292,7 +291,6 @@ function schemeSummarySheet(XLSX: XlsxModule, data: SchemeExport) {
         r.rank != null ? numCell(r.rank, FMT.rank, { zebra }) : dash(zebra),
         r.peerCount != null ? numCell(r.peerCount, FMT.rank, { zebra }) : dash(zebra),
         quartileCell(r.quartile, zebra),
-        r.percentile != null ? numCell(r.percentile, FMT.rank, { zebra }) : dash(zebra),
       ]);
     });
     grid.push(Array(W).fill(null));
@@ -335,9 +333,7 @@ function schemeSummarySheet(XLSX: XlsxModule, data: SchemeExport) {
       titleCell(
         `Ratios: trailing ${data.ratiosMeta.windowMonths} monthly returns vs ${prettyBench(
           data.ratiosMeta.benchmark
-        )}; risk-free ${(data.ratiosMeta.riskFreeRate * 100).toFixed(1)}% (India 1Y T-bill), assumed market ${(
-          data.ratiosMeta.marketReturn * 100
-        ).toFixed(0)}%.`,
+        )}; risk-free ${(data.ratiosMeta.riskFreeRate * 100).toFixed(1)}% (India 1Y T-bill).`,
         8,
         HEX.mutedText,
         false
@@ -345,7 +341,7 @@ function schemeSummarySheet(XLSX: XlsxModule, data: SchemeExport) {
     );
   }
 
-  const widths = [20, 12, 14, 9, 9, 11, 11];
+  const widths = [20, 12, 14, 9, 9, 11];
   return buildWorksheet(XLSX, grid, widths, { merges, rowHeights: { 0: 22 } });
 }
 
@@ -376,17 +372,22 @@ function schemeSectorSheet(XLSX: XlsxModule, data: SchemeExport) {
 function schemePeerSheet(XLSX: XlsxModule, data: SchemeExport) {
   const grid: (SCell | null)[][] = [];
   const merges: Merge[] = [];
-  const W = 6;
-  grid.push([titleCell(`Peer Ranking — ${data.peerPeriod}`, 14), ...Array(W - 1).fill(null)]);
+  const periods = data.peerPeriods;
+  const periodHeader = (p: string) => (/^(3Y|5Y|10Y)$/.test(p) ? `${p} CAGR` : p);
+  // Fund + one return column per period + Rank / Quartile / vs-median (peerPeriod).
+  const W = 1 + periods.length + 3;
+  grid.push([titleCell(`Peer Ranking — trailing returns`, 14), ...Array(W - 1).fill(null)]);
   merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: W - 1 } });
-  grid.push([titleCell(data.peerCohortLabel, 9, HEX.mutedText, false), ...Array(W - 1).fill(null)]);
+  grid.push([
+    titleCell(`${data.peerCohortLabel}  ·  ranked by ${data.peerPeriod}`, 9, HEX.mutedText, false),
+    ...Array(W - 1).fill(null),
+  ]);
   merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: W - 1 } });
   grid.push(Array(W).fill(null));
   grid.push([
     hCell("Fund", "left"),
-    hCell(`${data.peerPeriod} return`, "right"),
+    ...periods.map((p) => hCell(periodHeader(p), "right")),
     hCell("Rank", "right"),
-    hCell("Percentile", "right"),
     hCell("Quartile", "center"),
     hCell("vs median", "right"),
   ]);
@@ -405,16 +406,16 @@ function schemePeerSheet(XLSX: XlsxModule, data: SchemeExport) {
       : textCell(p.fund, "left", zebra);
     grid.push([
       nameCell,
-      numCell(p.ret, FMT.pct1Signed, { tone: p.ret, zebra }),
+      ...p.returns.map((r) => numCell(r, FMT.pct1Signed, { tone: r, zebra })),
       p.rank != null && p.peerCount != null
         ? textCell(`${p.rank} / ${p.peerCount}`, "right", zebra)
         : dash(zebra),
-      p.percentile != null ? numCell(p.percentile, FMT.rank, { zebra }) : dash(zebra),
       quartileCell(p.quartile, zebra),
       numCell(p.vsMedianBps, FMT.bpsSigned, { tone: p.vsMedianBps, zebra }),
     ]);
   });
-  return buildWorksheet(XLSX, grid, [34, 13, 11, 11, 10, 13], { merges, rowHeights: { 0: 20 } });
+  const widths = [34, ...periods.map(() => 10), 11, 10, 13];
+  return buildWorksheet(XLSX, grid, widths, { merges, rowHeights: { 0: 20 } });
 }
 
 export async function downloadSchemeXlsx(data: SchemeExport, filename: string): Promise<void> {

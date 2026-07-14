@@ -57,10 +57,10 @@ export interface SectorRow {
 
 export interface PeerRow {
   fund: string;
-  ret: number | null;
+  /** Trailing return per period, aligned to SchemeExport.peerPeriods. */
+  returns: (number | null)[];
   rank: number | null;
   peerCount: number | null;
-  percentile: number | null;
   quartile: string | null;
   vsMedianBps: number | null;
   selected: boolean;
@@ -86,7 +86,10 @@ export interface SchemeExport {
   } | null;
   sectors: SectorRow[];
   peerCohortLabel: string;
+  /** The period the peer set is ranked by (drives Rank / Quartile / vs-median). */
   peerPeriod: string;
+  /** All periods shown as return columns in the peer table (empty ones dropped). */
+  peerPeriods: string[];
   peers: PeerRow[];
   holdings: HoldingExportRow[];
   holdingsSource: string;

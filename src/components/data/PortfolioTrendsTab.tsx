@@ -1544,7 +1544,6 @@ const RATIO_COLUMNS: RatioColumn[] = [
   { key: "beta", label: "Beta", higherBetter: false, fmt: (v) => v.toFixed(2) },
   { key: "sharpe", label: "Sharpe", higherBetter: true, fmt: (v) => v.toFixed(2) },
   { key: "sortino", label: "Sortino", higherBetter: true, fmt: (v) => v.toFixed(2) },
-  { key: "alpha", label: "Alpha", higherBetter: true, fmt: (v) => `${v > 0 ? "+" : ""}${v.toFixed(2)}%` },
 ];
 
 /** Trailing-3Y risk/return ratios for the selected plan-key, with the cohort
@@ -1572,7 +1571,6 @@ function RatiosTable({
     );
   }
   const rf = meta ? `${(meta.riskFreeRate * 100).toFixed(1)}%` : "6.5%";
-  const rm = meta ? `${(meta.marketReturn * 100).toFixed(0)}%` : "11%";
   const bench = meta?.benchmark === "NIFTY_500" ? "Nifty 500" : meta?.benchmark ?? "Nifty 500";
   const windowYears = meta ? Math.round(meta.windowMonths / 12) : 3;
 
@@ -1651,9 +1649,9 @@ function RatiosTable({
       </div>
       <p className="px-4 pb-3 pt-2 text-[11px] leading-snug text-muted-foreground">
         Annualised from {row.monthsUsed} monthly returns. Risk-free rate {rf}{" "}
-        (India 1Y T-bill), assumed market return {rm}. Beta &amp; Alpha measured
-        against {bench}. Lower Std Dev / Beta and higher Sharpe / Sortino / Alpha
-        rank better; green/red marks the fund above/below its category average.
+        (India 1Y T-bill). Beta measured against {bench}. Lower Std Dev / Beta
+        and higher Sharpe / Sortino rank better; green/red marks the fund
+        above/below its category average.
       </p>
     </div>
   );

@@ -104,7 +104,7 @@ export async function downloadSchemePdf(data: SchemeExport, filename: string): P
     autoTable(doc, {
       ...base,
       startY: y,
-      head: [["Period", "Fund", "Category avg", "Rank", "Peers", "Quartile", "Percentile"]],
+      head: [["Period", "Fund", "Category avg", "Rank", "Peers", "Quartile"]],
       body: plan.returns.map((r): RowInput => [
         { content: `${r.period}${r.cagr ? " CAGR" : ""}`, styles: { fontStyle: "bold", halign: "left" } },
         { ...signedPctCell(r.fundPct), styles: { ...signedPctCell(r.fundPct).styles, fontStyle: "bold" } },
@@ -112,7 +112,6 @@ export async function downloadSchemePdf(data: SchemeExport, filename: string): P
         r.rank != null ? `${r.rank}` : "—",
         r.peerCount != null ? `${r.peerCount}` : "—",
         quartileCell(r.quartile),
-        r.percentile != null ? `${r.percentile}` : "—",
       ]),
       columnStyles: { 0: { halign: "left" }, 1: { halign: "right" }, 2: { halign: "right" } },
     });
@@ -162,9 +161,7 @@ export async function downloadSchemePdf(data: SchemeExport, filename: string): P
       doc,
       `Ratios annualised from ${data.ratiosMeta.windowMonths} monthly returns vs ${prettyBench(
         data.ratiosMeta.benchmark
-      )}; risk-free ${(data.ratiosMeta.riskFreeRate * 100).toFixed(1)}% (India 1Y T-bill), assumed market ${(
-        data.ratiosMeta.marketReturn * 100
-      ).toFixed(0)}%.`,
+      )}; risk-free ${(data.ratiosMeta.riskFreeRate * 100).toFixed(1)}% (India 1Y T-bill).`,
       y,
       pageW
     );
@@ -191,28 +188,31 @@ export async function downloadSchemePdf(data: SchemeExport, filename: string): P
     y = afterTable(doc);
   }
 
-  // Peer ranking.
+  // Peer ranking — trailing returns for every peer across all periods, ranked by
+  // the primary period (Rank / Quartile / vs-median refer to that period).
   if (data.peers.length) {
     y = ensure(doc, y, 90);
-    y = heading(doc, `Peer Ranking — ${data.peerPeriod}  ·  ${data.peerCohortLabel}`, y, pageW);
+    y = heading(doc, `Peer Ranking — trailing returns  ·  ranked by ${data.peerPeriod}`, y, pageW);
+    const periodHeader = (p: string) => (/^(3Y|5Y|10Y)$/.test(p) ? `${p} CAGR` : p);
     autoTable(doc, {
       ...base,
       startY: y,
-      head: [["Fund", `${data.peerPeriod} ret`, "Rank", "Pctile", "Quartile", "vs median"]],
+      styles: { ...base.styles, fontSize: 7 },
+      headStyles: { ...base.headStyles, fontSize: 7 },
+      head: [["Fund", ...data.peerPeriods.map(periodHeader), "Rank", "Quartile", "vs median"]],
       body: data.peers.map((p): RowInput => {
         const name: CellDef = p.selected
           ? { content: `★ ${p.fund}`, styles: { fontStyle: "bold", fillColor: rgb(HEX.accent), textColor: rgb(HEX.accentInk), halign: "left" } }
           : { content: p.fund, styles: { halign: "left" } };
         return [
           name,
-          signedPctCell(p.ret),
+          ...p.returns.map((r) => signedPctCell(r)),
           p.rank != null && p.peerCount != null ? `${p.rank} / ${p.peerCount}` : "—",
-          p.percentile != null ? `${p.percentile}` : "—",
           quartileCell(p.quartile),
           bpsCell(p.vsMedianBps),
         ];
       }),
-      columnStyles: { 0: { halign: "left", cellWidth: 200 } },
+      columnStyles: { 0: { halign: "left", cellWidth: 118 } },
     });
     y = afterTable(doc);
   }
