@@ -113,6 +113,24 @@ export function downloadAndParse(links: HarvestedLink[], opts: AmcParseOptions, 
       try { parsed = parseZip(buf, opts); } catch { /* skip bad file */ }
     }
     for (const sc of parsed.map(normalizeSchemePct)) {
+      // Single-scheme workbooks (one file per fund: JM, Canara) whose header the
+      // generic parser can't read leave the scheme name as a column label ("Name
+      // of Instrument"), a stray code ("IN", "ET"), or the document banner
+      // ("Monthly Portfolio Statement for the period ended …"), and the code as a
+      // sheet name that may collide across funds. The harvested link text is the
+      // fund name from the disclosure listing — trust it whenever it reads like a
+      // scheme name and the parsed name doesn't. A "scheme name" is a multi-word
+      // label (or one carrying fund/scheme/etf/plan) that isn't a document banner —
+      // this admits "Canara Robeco Infrastructure" and "…ELSS Tax Saver", which
+      // carry no literal "Fund". Use it for both display name and stable code.
+      const looksNamed = (n: string) =>
+        n.trim().length >= 6 && /[a-z]/i.test(n) &&
+        (/\s/.test(n.trim()) || /\b(fund|scheme|etf|plan)\b/i.test(n)) &&
+        !/name of instrument|portfolio statement|period ended|monthly\s*portfolio/i.test(n);
+      if (parsed.length === 1 && l.text && looksNamed(l.text) && !looksNamed(sc.schemeName)) {
+        sc.schemeName = l.text;
+        sc.schemeCode = l.text;
+      }
       const key = `${sc.schemeCode}|${sc.asOf}`;
       if (seen.has(key)) continue;
       seen.add(key);

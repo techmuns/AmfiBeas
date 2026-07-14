@@ -8,6 +8,7 @@
  * All curl-based, so testable in the dev sandbox and identical on CI.
  */
 import { execFileSync } from "node:child_process";
+import crypto from "node:crypto";
 import { downloadAndParse } from "./page-scrape";
 import type { HarvestedLink } from "./browser-fallback";
 import type { AmcParseOptions, AmcScheme } from "./types";
@@ -158,11 +159,26 @@ function canaraCode(t: string): string | null {
   const m = /^\s*([A-Za-z]{2})[\s\-_]/.exec(t.replace(/%E2%80%93/g, "-"));
   return m ? m[1].toUpperCase() : null;
 }
+// Disclosure titles read "IN – Canara Robeco Income Fund – May 2026": strip the
+// leading 2-letter code and the trailing month so the link text is a clean fund
+// name (used as the scheme name when the workbook's own header is unreadable).
+function canaraCleanName(title: string): string {
+  return (title || "")
+    .replace(/%E2%80%93/g, "-").replace(/&#8211;|&#8212;|&ndash;|&mdash;/gi, "-").replace(/[–—]/g, "-")
+    .replace(/^\s*[A-Za-z]{2}\s*-\s*/, "")
+    // trailing "- June-2026" / "- May 2026" / "- 30th June-2026" (any space/hyphen/comma between day/month/year)
+    .replace(/\s*-\s*(?:\d{1,2}(?:st|nd|rd|th)?[\s-]+)?[A-Za-z]{3,9}\.?[\s,-]*\d{4}\s*$/i, "")
+    .replace(/\s*-\s*$/, "").replace(/\s+/g, " ").trim();
+}
 function canaraMonthOnce(yy: number, mm: number): { links: HarvestedLink[]; expected: number } {
   const monthTok = `${CANARA_MON[mm - 1]} ${yy}`; // "may 2026"
   let fy = yy, fm = mm + 1; if (fm === 13) { fm = 1; fy++; } // portfolio month M → uploads/YYYY/(M+1)/
   const folder = `${fy}/${String(fm).padStart(2, "0")}`;
   // Step 1: which schemes are the monthly portfolio this month (+ their codes).
+  // One page of 100 (date-desc, retried against the truncating WP cache) spans
+  // ~3.5 months, so it already enumerates a back-month's full ~27-scheme set —
+  // the coverage limit for older months is step 2 (the media list only surfaces
+  // the newest ~100 uploads), not this listing.
   const dm = canaraFull("https://www.canararobeco.com/wp-json/wp/v2/disclosure_media?disclosure_category=98&orderby=date&order=desc&_fields=id,date,title", 1);
   const codes = new Map<string, string>();
   for (const p of dm) {
@@ -172,18 +188,25 @@ function canaraMonthOnce(yy: number, mm: number): { links: HarvestedLink[]; expe
     if (c && !codes.has(c)) codes.set(c, title);
   }
   if (!codes.size) return { links: [], expected: 0 };
-  // Step 2: all .xlsx in the target upload folder (newest-first pages, retried).
+  // Step 2: all .xlsx in the target upload folder. The media list is date-desc,
+  // but the WP cache ignores &page (every page returns the newest ~100 uploads) —
+  // so for the current month that's the whole folder, but for a back-month those
+  // uploads are half-buried. Union two views: the newest ~100 (complete for the
+  // latest month) and a slice scoped to the folder's own upload month via
+  // after/before (recovers a back-month's uploads the newest list has since
+  // pushed out). Non-regressive — the newest view alone is what worked before.
   const files = new Set<string>();
-  for (let page = 1; page <= 8; page++) {
-    const d = canaraFull("https://www.canararobeco.com/wp-json/wp/v2/media?orderby=date&order=desc&_fields=source_url,date", page);
-    let newest = "";
+  const collect = (d: Array<{ source_url?: string }>) => {
     for (const u of d) {
       const su: string = u?.source_url ?? "";
       if (su.includes(`/uploads/${folder}/`) && /\.xlsx$/i.test(su)) files.add(su);
-      if ((u?.date ?? "") > newest) newest = u?.date ?? "";
     }
-    if (newest && newest.slice(0, 7).replace("-", "/") < folder) break; // past the folder month
-  }
+  };
+  collect(canaraFull("https://www.canararobeco.com/wp-json/wp/v2/media?orderby=date&order=desc&_fields=source_url,date", 1));
+  let ny = fy, nm = fm + 1; if (nm === 13) { nm = 1; ny++; }
+  const after = `${fy}-${String(fm).padStart(2, "0")}-01T00:00:00`;
+  const before = `${ny}-${String(nm).padStart(2, "0")}-01T00:00:00`;
+  collect(canaraFull(`https://www.canararobeco.com/wp-json/wp/v2/media?orderby=date&order=desc&after=${after}&before=${before}&_fields=source_url,date`, 1));
   // Step 3: match each monthly scheme to its file by leading code, skipping the
   // half-yearly "…30th-Month" collisions that share a code in the same folder.
   const links: HarvestedLink[] = [];
@@ -193,7 +216,7 @@ function canaraMonthOnce(yy: number, mm: number): { links: HarvestedLink[]; expe
       const base = (f.split("/").pop() ?? "").replace(/%E2%80%93/g, "-");
       return !/30th/i.test(base) && canaraCode(base) === code;
     });
-    if (hit) links.push({ url: hit, text: title });
+    if (hit) links.push({ url: hit, text: canaraCleanName(title) });
   }
   return { links, expected: codes.size };
 }
@@ -215,6 +238,57 @@ function canaraMonth(yy: number, mm: number): HarvestedLink[] {
 function discoverCanara(now: Date): HarvestedLink[] {
   for (const [yy, mm] of monthsToTry(now)) { const l = canaraMonth(yy, mm); if (l.length) return l; }
   return [];
+}
+
+// ---- JM Financial: React SPA over an AES-encrypted download API ----
+// The Portfolio-Disclosure page reads jmmfapi.jmfinancialmf.com; responses are
+// AES-256-CBC ciphertext the app decrypts client-side (key+IV are static in the
+// JS bundle). Category 2 / sub 4 = "Monthly Portfolio of Schemes", one .xlsx per
+// scheme. The file's own header often can't be parsed for the scheme name, so we
+// carry the API Title as the name (see downloadAndParse's fallback).
+const JM_KEY = Buffer.from("6fa979f20126cb08aa645a8f495f6d85", "utf8"); // AES-256 key (32 bytes)
+const JM_IV = Buffer.from("I8zyA4lVhMCaJ5Kg", "utf8");
+interface JmItem { DocumentDate?: string; Title?: string; FileName?: string; FileEXT?: string }
+function jmDecrypt(b64: string): JmItem[] {
+  const d = crypto.createDecipheriv("aes-256-cbc", JM_KEY, JM_IV);
+  const out = Buffer.concat([d.update(Buffer.from(b64, "base64")), d.final()]);
+  return JSON.parse(out.toString("latin1"));
+}
+function jmMonthlyItems(): JmItem[] {
+  const raw = curl("https://jmmfapi.jmfinancialmf.com/api/GetDownloadNew", {
+    method: "POST",
+    body: JSON.stringify({ IICategoryID: 2, IISubCategoryID: 4, IVsearch: "" }),
+    headers: { "Content-Type": "application/json", Origin: "https://www.jmfinancialmf.com" },
+  });
+  if (!raw) return [];
+  try { return jmDecrypt(JSON.parse(raw).data) ?? []; } catch { return []; }
+}
+/** "Monthly Portfolio - JM Value Fund - June 30, 2026" → "JM Value Fund". */
+function jmCleanName(title: string): string {
+  return (title || "")
+    .replace(/^\s*Monthly\s+Portfolio\s*-?\s*/i, "")
+    .replace(/\s*-?\s*[A-Za-z]{3,9}\.?\s*\d{1,2},?\s*\d{4}\s*$/, "")
+    .trim();
+}
+function jmHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  for (const it of jmMonthlyItems()) {
+    if ((it.FileEXT || "").toLowerCase() !== ".xlsx" || !it.FileName || !it.DocumentDate) continue;
+    // DocumentDate is the upload month = data month + 1.
+    let y = +it.DocumentDate.slice(0, 4), m = +it.DocumentDate.slice(5, 7) - 1;
+    if (m === 0) { m = 12; y--; }
+    const ym = `${y}-${String(m).padStart(2, "0")}`;
+    if (!inWin(ym, now, back)) continue;
+    const url = "https://www.jmfinancialmf.com/" + it.FileName.split("/").map(encodeURIComponent).join("/");
+    if (!out.has(ym)) out.set(ym, []);
+    out.get(ym)!.push({ url, text: jmCleanName(it.Title || "") });
+  }
+  return out;
+}
+function discoverJm(now: Date): HarvestedLink[] {
+  const h = jmHistory(now, 1);
+  const ym = [...h.keys()].sort().pop();
+  return ym ? h.get(ym)! : [];
 }
 
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
@@ -455,6 +529,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   lic: (n, b) => licHistory(n, b),
   union: (n, b) => unionHistory(n, b),
   "canara-robeco": (n, b) => loopMonths(n, b, canaraMonth),
+  "jm-financial": (n, b) => jmHistory(n, b),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -508,6 +583,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   axis: { discover: (now) => discoverAxis(now), referer: "https://www.axismf.com/", page: "https://www.axismf.com/statutory-disclosures/monthly-portfolio" },
   "franklin-templeton": { discover: () => discoverFranklin(), referer: "https://www.franklintempletonindia.com/", page: "https://www.franklintempletonindia.com/reports" },
   "canara-robeco": { discover: (now) => discoverCanara(now), referer: "https://www.canararobeco.com/", page: "https://www.canararobeco.com/statutory-disclosures/scheme-dashboard/scheme-monthly-portfolio" },
+  "jm-financial": { discover: (now) => discoverJm(now), referer: "https://www.jmfinancialmf.com/", page: "https://www.jmfinancialmf.com/downloads/Portfolio-Disclosure" },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }
