@@ -314,16 +314,37 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   axis: (n, b) => loopMonths(n, b, axisMonth),
   "pgim-india": (n, b) => loopMonths(n, b, pgimMonth),
 };
+/** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
+ *  Lets us key a month by the file CONTENT rather than the listing's date, which
+ *  for WhiteOak is a publish date (~10 days into the next month). */
+function contentYm(schemes: AmcScheme[]): string | null {
+  const counts = new Map<string, number>();
+  for (const s of schemes) {
+    if (!s.asOf || !/^\d{4}-\d{2}/.test(s.asOf)) continue;
+    const k = s.asOf.slice(0, 7);
+    counts.set(k, (counts.get(k) ?? 0) + 1);
+  }
+  let best: string | null = null, bc = 0;
+  for (const [k, c] of counts) if (c > bc) { bc = c; best = k; }
+  return best;
+}
 /** Backfill: download+parse the last `back` disclosure months for a JSON-API AMC
- *  that exposes history, keyed "YYYY-MM", schemes normalized and as-on-stamped. */
+ *  that exposes history, keyed "YYYY-MM" by as-on month, schemes normalized and
+ *  as-on-stamped. */
 export function jsonApiAmcMonths(slug: string, opts: AmcParseOptions, now: Date, back = 6): Map<string, AmcScheme[]> {
   const hist = JSON_API_HISTORY[slug];
   const cfg = JSON_API_CONFIG[slug];
   const out = new Map<string, AmcScheme[]>();
   if (!hist || !cfg) return out;
-  for (const [ym, links] of hist(now, back)) {
+  for (const [listYm, links] of hist(now, back)) {
     const { schemes } = downloadAndParse(links, opts, cfg.referer);
     if (!schemes.length) continue;
+    // Prefer the file's own as-on month when it's plausible and not LATER than
+    // the listing month (WhiteOak lists a publish date one month ahead); this
+    // is a no-op for the others, whose listing month is already the as-on month.
+    const cy = contentYm(schemes);
+    const ym = cy && cy <= listYm && inWin(cy, now, back + 1) ? cy : listYm;
+    if (out.has(ym)) continue;
     const [y, m] = ym.split("-").map(Number);
     const iso = `${ym}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, "0")}`;
     for (const sc of schemes) sc.asOf = iso;
