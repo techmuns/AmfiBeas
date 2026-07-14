@@ -53,11 +53,13 @@ function normTokens(raw: string): Set<string> {
     .replace(/\(.*?\)/g, " ") // "(An open ended … scheme)" etc.
     .replace(/&/g, " and ")
     .replace(/[^a-z0-9 ]+/g, " ")
-    // plan / option / house words that never distinguish two schemes ("sl" is
-    // the tracker's abbreviation for the "Sun Life" the disclosure spells out).
+    // plan / option / house words that never distinguish two schemes. "sl" is
+    // the tracker's abbreviation for the "Sun Life" the disclosure spells out;
+    // "rob" likewise abbreviates "Robeco" (tracker "Canara Rob …" vs disclosure
+    // "CANARA ROBECO …"); "woc" abbreviates "WhiteOak Capital".
     // NB: strip "reg" (the tracker's plan abbreviation) but KEEP "regular" — it
     // is a scheme word ("Regular Savings Fund"), distinct from "Savings Fund".
-    .replace(/\b(reg|dir|direct|growth|idcw|payout|reinvest(ment)?|plan|option|mutual|fund|scheme|open|ended|end|sl|woc|an|the|of|for)\b/g, " ")
+    .replace(/\b(reg|dir|direct|growth|idcw|payout|reinvest(ment)?|plan|option|mutual|fund|scheme|open|ended|end|sl|woc|rob|an|the|of|for)\b/g, " ")
     .replace(/\s+/g, " ")
     .trim();
   // Fold synonyms + cap-family compounds so "opp"~"opportunities" and
@@ -288,9 +290,15 @@ function main() {
     if (!file.endsWith(".json") || file === "index.json") continue;
     const snap = JSON.parse(fs.readFileSync(path.join(HOLDINGS_DIR, file), "utf8")) as AmcPortfolioSnapshot;
     if (!snap.schemes?.length) continue;
-    const brand = brandTokens(snap.schemes);
+    // Dedup by the AMC's own scheme code — the browser tier can parse a file
+    // twice (its <a href> plus the same URL captured on the wire), which would
+    // otherwise leave two identical schemes under one name key and demote an
+    // exact match to a fuzzy one.
+    const seenCode = new Set<string>();
+    const schemes = snap.schemes.filter((sc) => (seenCode.has(sc.schemeCode) ? false : seenCode.add(sc.schemeCode) && true));
+    const brand = brandTokens(schemes);
     const byNorm = new Map<string, AmcScheme[]>();
-    for (const sc of snap.schemes) {
+    for (const sc of schemes) {
       const key = [...minus(normTokens(sc.schemeName), brand)].sort().join(" ");
       if (!byNorm.has(key)) byNorm.set(key, []);
       byNorm.get(key)!.push(sc);
@@ -302,7 +310,7 @@ function main() {
       for (const sc of h.schemes) if (!byCode.has(sc.schemeCode)) byCode.set(sc.schemeCode, sc);
       history.push({ asOfMonth: h.asOfMonth, fetchedAt: snap.fetchedAt, byCode });
     }
-    bySlug.set(snap.amcSlug, { snap, byNorm, schemes: snap.schemes, brand, history });
+    bySlug.set(snap.amcSlug, { snap, byNorm, schemes, brand, history });
     labelToSlug.set(amcOf(snap.amc), snap.amcSlug);
   }
   for (const [label, slug] of Object.entries(LABEL_TO_SLUG_ALIASES)) labelToSlug.set(label, slug);
