@@ -135,6 +135,88 @@ function discoverWhiteoak(): HarvestedLink[] {
   return links;
 }
 
+// ---- Canara Robeco: WordPress REST — enumerate all schemes, resolve file URLs ----
+// The scheme-monthly-portfolio filter page is capped at 10 results with broken
+// paging; the REST API exposes all ~27 schemes. Its cache is buggy (a call
+// intermittently returns a truncated 2-item body), so retry until the page is
+// full. The disclosure_media category-98 list is authoritative for WHICH schemes
+// are the monthly portfolio (vs. half-yearly collisions in the same folder); the
+// per-scheme .xlsx URLs live only in the media library, keyed by a 2-letter code.
+const CANARA_MON = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function canaraFull(baseUrl: string, page: number, perPage = 100, tries = 20): any[] {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let best: any[] = [];
+  for (let i = 0; i < tries; i++) {
+    const d = json(`${baseUrl}&per_page=${perPage}&page=${page}`);
+    if (Array.isArray(d) && d.length > best.length) best = d;
+    if (best.length >= perPage) break;
+  }
+  return best;
+}
+function canaraCode(t: string): string | null {
+  const m = /^\s*([A-Za-z]{2})[\s\-_]/.exec(t.replace(/%E2%80%93/g, "-"));
+  return m ? m[1].toUpperCase() : null;
+}
+function canaraMonthOnce(yy: number, mm: number): { links: HarvestedLink[]; expected: number } {
+  const monthTok = `${CANARA_MON[mm - 1]} ${yy}`; // "may 2026"
+  let fy = yy, fm = mm + 1; if (fm === 13) { fm = 1; fy++; } // portfolio month M → uploads/YYYY/(M+1)/
+  const folder = `${fy}/${String(fm).padStart(2, "0")}`;
+  // Step 1: which schemes are the monthly portfolio this month (+ their codes).
+  const dm = canaraFull("https://www.canararobeco.com/wp-json/wp/v2/disclosure_media?disclosure_category=98&orderby=date&order=desc&_fields=id,date,title", 1);
+  const codes = new Map<string, string>();
+  for (const p of dm) {
+    const title: string = p?.title?.rendered ?? "";
+    if (!title.toLowerCase().replace(/-/g, " ").includes(monthTok)) continue;
+    const c = canaraCode(title);
+    if (c && !codes.has(c)) codes.set(c, title);
+  }
+  if (!codes.size) return { links: [], expected: 0 };
+  // Step 2: all .xlsx in the target upload folder (newest-first pages, retried).
+  const files = new Set<string>();
+  for (let page = 1; page <= 8; page++) {
+    const d = canaraFull("https://www.canararobeco.com/wp-json/wp/v2/media?orderby=date&order=desc&_fields=source_url,date", page);
+    let newest = "";
+    for (const u of d) {
+      const su: string = u?.source_url ?? "";
+      if (su.includes(`/uploads/${folder}/`) && /\.xlsx$/i.test(su)) files.add(su);
+      if ((u?.date ?? "") > newest) newest = u?.date ?? "";
+    }
+    if (newest && newest.slice(0, 7).replace("-", "/") < folder) break; // past the folder month
+  }
+  // Step 3: match each monthly scheme to its file by leading code, skipping the
+  // half-yearly "…30th-Month" collisions that share a code in the same folder.
+  const links: HarvestedLink[] = [];
+  const list = [...files];
+  for (const [code, title] of codes) {
+    const hit = list.find((f) => {
+      const base = (f.split("/").pop() ?? "").replace(/%E2%80%93/g, "-");
+      return !/30th/i.test(base) && canaraCode(base) === code;
+    });
+    if (hit) links.push({ url: hit, text: title });
+  }
+  return { links, expected: codes.size };
+}
+// Canara's WP cache intermittently truncates responses, so a single pass may
+// resolve only some schemes. Retry the whole month until every enumerated scheme
+// is matched (or a few rounds elapse); a good round returns all ~27.
+function canaraMonth(yy: number, mm: number): HarvestedLink[] {
+  let best: HarvestedLink[] = [];
+  let expected = 0;
+  for (let round = 0; round < 6; round++) {
+    const r = canaraMonthOnce(yy, mm);
+    expected = Math.max(expected, r.expected);
+    if (r.links.length > best.length) best = r.links;
+    if (expected === 0) { if (round >= 1) break; continue; } // no monthly posts this month
+    if (best.length >= expected) break;
+  }
+  return best;
+}
+function discoverCanara(now: Date): HarvestedLink[] {
+  for (const [yy, mm] of monthsToTry(now)) { const l = canaraMonth(yy, mm); if (l.length) return l; }
+  return [];
+}
+
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
 const LIC_FORM = { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" };
 function licSchemeList(): { code: string; name: string }[] {
@@ -372,6 +454,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   bandhan: (n, b) => bandhanHistory(n, b),
   lic: (n, b) => licHistory(n, b),
   union: (n, b) => unionHistory(n, b),
+  "canara-robeco": (n, b) => loopMonths(n, b, canaraMonth),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -424,6 +507,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   absl: { discover: () => discoverAbsl(), referer: "https://mutualfund.adityabirlacapital.com/", page: "https://mutualfund.adityabirlacapital.com/forms-and-downloads/portfolio" },
   axis: { discover: (now) => discoverAxis(now), referer: "https://www.axismf.com/", page: "https://www.axismf.com/statutory-disclosures/monthly-portfolio" },
   "franklin-templeton": { discover: () => discoverFranklin(), referer: "https://www.franklintempletonindia.com/", page: "https://www.franklintempletonindia.com/reports" },
+  "canara-robeco": { discover: (now) => discoverCanara(now), referer: "https://www.canararobeco.com/", page: "https://www.canararobeco.com/statutory-disclosures/scheme-dashboard/scheme-monthly-portfolio" },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }
