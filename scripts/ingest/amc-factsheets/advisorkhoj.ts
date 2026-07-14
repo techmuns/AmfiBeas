@@ -236,6 +236,27 @@ export interface ResolvedDownload extends DownloadResult {
   link: PortfolioLink | null;
 }
 
+/** Backfill: download+parse the last `backMonths` disclosure months AdvisorKhoj
+ *  lists for an AMC, keyed "YYYY-MM", schemes normalized and as-on-stamped. The
+ *  long-tail history source for the ~27 AMCs without a direct/API adapter. */
+export function advisorkhojMonths(displayName: string, year: number, now: Date, opts: AmcParseOptions, backMonths = 6): Map<string, AmcScheme[]> {
+  const out = new Map<string, AmcScheme[]>();
+  const nowScore = now.getUTCFullYear() * 12 + (now.getUTCMonth() + 1);
+  for (const link of listPortfolioLinks(displayName, year)) {
+    const s = link.year * 12 + link.month;
+    if (s > nowScore || s < nowScore - backMonths) continue;
+    const ym = `${link.year}-${String(link.month).padStart(2, "0")}`;
+    if (out.has(ym)) continue;
+    const { schemes } = downloadAndParse(link.url, opts);
+    if (!schemes.length) continue;
+    const iso = `${ym}-${String(new Date(Date.UTC(link.year, link.month, 0)).getUTCDate()).padStart(2, "0")}`;
+    const norm = schemes.map(normalizeSchemePct);
+    for (const sc of norm) sc.asOf = iso;
+    out.set(ym, norm);
+  }
+  return out;
+}
+
 /**
  * Try the resolved links newest-first and return the first that actually
  * downloads AND parses. AdvisorKhoj sometimes lists the newest month before the

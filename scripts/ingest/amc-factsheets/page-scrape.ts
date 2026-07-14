@@ -165,6 +165,40 @@ export function pageScrapeAmc(cfg: PageScrapeConfig, opts: AmcParseOptions, now:
   return { schemes: [], usedUrl: null, fileCount: 0 };
 }
 
+/** Backfill: harvest the last `backMonths` disclosure months from the listing
+ *  page in one fetch, keyed "YYYY-MM" (newest-first insertion). Reuses the same
+ *  extraction/parse as the latest-only path; each month's schemes get that
+ *  month's as-on date stamped. */
+export function pageScrapeAmcMonths(cfg: PageScrapeConfig, opts: AmcParseOptions, now: Date, backMonths = 6): Map<string, AmcScheme[]> {
+  const out = new Map<string, AmcScheme[]>();
+  const urls = typeof cfg.urls === "function" ? cfg.urls(now) : cfg.urls;
+  const nowScore = now.getUTCFullYear() * 12 + (now.getUTCMonth() + 1);
+  for (const pageUrl of urls) {
+    const html = curlText(pageUrl, cfg.referer);
+    if (!html) continue;
+    let links = extractFileLinks(html, pageUrl);
+    if (cfg.include) links = links.filter((l) => cfg.include!.test(`${l.url} ${l.text}`));
+    const byScore = new Map<number, HarvestedLink[]>();
+    for (const l of links) {
+      const s = monthScore(`${decodeURIComponent(l.url)} ${l.text}`);
+      if (s <= 0 || s > nowScore || s < nowScore - backMonths) continue;
+      if (!byScore.has(s)) byScore.set(s, []);
+      byScore.get(s)!.push(l);
+    }
+    for (const [s, mlinks] of [...byScore.entries()].sort((a, b) => b[0] - a[0])) {
+      const { schemes } = downloadAndParse(mlinks, opts, cfg.referer ?? pageUrl);
+      if (!schemes.length) continue;
+      const y = Math.floor((s - 1) / 12);
+      const m1 = ((s - 1) % 12) + 1;
+      const iso = `${y}-${String(m1).padStart(2, "0")}-${String(new Date(Date.UTC(y, m1, 0)).getUTCDate()).padStart(2, "0")}`;
+      for (const sc of schemes) sc.asOf = iso;
+      out.set(`${y}-${String(m1).padStart(2, "0")}`, schemes);
+    }
+    if (out.size) return out;
+  }
+  return out;
+}
+
 /**
  * Per-AMC page-scrape config. Each AMC below publishes its complete SEBI monthly
  * portfolio as per-scheme .xlsx workbooks on a non-walled, server-rendered page.

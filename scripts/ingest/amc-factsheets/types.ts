@@ -26,6 +26,13 @@ export interface AmcScheme {
   holdings: AmcHolding[];
 }
 
+/** One older disclosure month, as seeded by the one-time history backfill. */
+export interface AmcMonthSnapshot {
+  asOfMonth: string;
+  asOf: string | null;
+  schemes: AmcScheme[];
+}
+
 export interface AmcPortfolioSnapshot {
   amc: string;
   amcSlug: string;
@@ -34,6 +41,10 @@ export interface AmcPortfolioSnapshot {
   asOfMonth: string;
   fetchedAt: string;
   schemes: AmcScheme[];
+  /** Older months (any order) seeded by the history backfill so the crosswalk
+   *  can build several months at once; `schemes`/`asOfMonth` stay the latest so
+   *  the normal single-month monthly run is unaffected. Absent outside backfill. */
+  history?: AmcMonthSnapshot[];
 }
 
 /** Per-AMC parsing options (the file layouts differ only in a few axes). */

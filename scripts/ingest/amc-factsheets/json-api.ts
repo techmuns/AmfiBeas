@@ -83,26 +83,27 @@ function discoverBandhan(): HarvestedLink[] {
 }
 
 // ---- PGIM India: Angular SPA's REST API, POST per tab ----
-function discoverPgim(now: Date): HarvestedLink[] {
-  for (const [yy, mm] of monthsToTry(now)) {
-    const links: HarvestedLink[] = [];
-    for (const tabId of [12, 13, 14]) { // Equity / Debt / Fund of Funds
-      const d = json("https://www.pgimindia.com/api/v1/brochure/published/disclosure", {
-        method: "POST",
-        body: JSON.stringify({ sectionId: "SECTION_747960037", tabId, month: mm, year: yy }),
-        headers: { "Content-Type": "application/json" },
-      });
-      for (const tab of (d?.data ?? []) as PgimTab[]) {
-        for (const c of tab.content ?? []) {
-          const p: string = c.pdfPath || "";
-          if (/\.xlsx(\?|$)/i.test(p) && dateScore(c.dateMonthYear) === yy * 12 + mm) {
-            links.push({ url: p, text: c.title || "" });
-          }
+function pgimMonth(yy: number, mm: number): HarvestedLink[] {
+  const links: HarvestedLink[] = [];
+  for (const tabId of [12, 13, 14]) { // Equity / Debt / Fund of Funds
+    const d = json("https://www.pgimindia.com/api/v1/brochure/published/disclosure", {
+      method: "POST",
+      body: JSON.stringify({ sectionId: "SECTION_747960037", tabId, month: mm, year: yy }),
+      headers: { "Content-Type": "application/json" },
+    });
+    for (const tab of (d?.data ?? []) as PgimTab[]) {
+      for (const c of tab.content ?? []) {
+        const p: string = c.pdfPath || "";
+        if (/\.xlsx(\?|$)/i.test(p) && dateScore(c.dateMonthYear) === yy * 12 + mm) {
+          links.push({ url: p, text: c.title || "" });
         }
       }
     }
-    if (links.length) return links;
   }
+  return links;
+}
+function discoverPgim(now: Date): HarvestedLink[] {
+  for (const [yy, mm] of monthsToTry(now)) { const l = pgimMonth(yy, mm); if (l.length) return l; }
   return [];
 }
 
@@ -181,14 +182,14 @@ function discoverUnion(): HarvestedLink[] {
 }
 
 // ---- ABSL: Sitecore accordion API — newest-first list, one ZIP per month ----
+// month=%20 (a space) and year=0 are required, else the endpoint 500s.
+const ABSL_API =
+  "https://mutualfund.adityabirlacapital.com/postlogin/CustomApi/Resources/FactsheetAccordionById" +
+  "?id=3ccab227-9de5-4494-b78d-2b4f7c0c054a" +
+  "&ctype=%2Fsitecore%2Fcontent%2FRoot%2FBSL%2FLibrary%2FLists%2FFAQ%2FCustomer%20Types%2FIndividual" +
+  "&month=%20&year=0";
 function discoverAbsl(): HarvestedLink[] {
-  // month=%20 (a space) and year=0 are required, else the endpoint 500s.
-  const api =
-    "https://mutualfund.adityabirlacapital.com/postlogin/CustomApi/Resources/FactsheetAccordionById" +
-    "?id=3ccab227-9de5-4494-b78d-2b4f7c0c054a" +
-    "&ctype=%2Fsitecore%2Fcontent%2FRoot%2FBSL%2FLibrary%2FLists%2FFAQ%2FCustomer%20Types%2FIndividual" +
-    "&month=%20&year=0";
-  const d = json(api);
+  const d = json(ABSL_API);
   const list = (d?.AccordionList ?? []) as AbslItem[];
   const top = list[0]; // newest first
   const u = top?.pdfUrl;
@@ -205,19 +206,20 @@ function discoverAbsl(): HarvestedLink[] {
 const AXIS_TOKEN =
   "Bearer c060dc4235de5fefc8fe5da8ef2b64d59fdf4f46c8ebeddb394a47daeac8c67c083d602ed9d4133d32b50ce33241fbedb6240c94cc801279292b3f301ae1ef6f713e38c38d778f9a7ec84bd4c094c0b5fa3cd8b3c5e9d5ae43b9a47ddcfe60b6339fe8395818d3f21ffaaaca455fe03e48b47a5079bf4a2eb86fece310b253ff";
 const MON_FULL_TC = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+function axisMonth(yy: number, mm: number): HarvestedLink[] {
+  const d = json("https://www.axismf.com/cms/get-scheme-documents", {
+    method: "POST",
+    body: JSON.stringify({ sdType: "yearMonthSchemeDocs", sdID: "sdMonthSchemePortfolio", schemeTypeID: "ALL", year: String(yy), month: MON_FULL_TC[mm - 1] }),
+    headers: { "Content-Type": "application/json", Authorization: AXIS_TOKEN },
+  });
+  const docs = (d?.data?.documentList ?? []) as AxisDoc[];
+  // The all-schemes consolidated workbook is "Monthly Portfolio-DD MM YY"
+  // (schemeID null); the other ~86 entries are per-scheme .xls files.
+  const consolidated = docs.find((x) => /^Monthly Portfolio-\d/i.test(x.documentName || "") && x.docuementURL);
+  return consolidated?.docuementURL ? [{ url: consolidated.docuementURL, text: `Monthly Portfolio as on ${MON_FULL_TC[mm - 1]} ${yy}` }] : [];
+}
 function discoverAxis(now: Date): HarvestedLink[] {
-  for (const [yy, mm] of monthsToTry(now)) {
-    const d = json("https://www.axismf.com/cms/get-scheme-documents", {
-      method: "POST",
-      body: JSON.stringify({ sdType: "yearMonthSchemeDocs", sdID: "sdMonthSchemePortfolio", schemeTypeID: "ALL", year: String(yy), month: MON_FULL_TC[mm - 1] }),
-      headers: { "Content-Type": "application/json", Authorization: AXIS_TOKEN },
-    });
-    const docs = (d?.data?.documentList ?? []) as AxisDoc[];
-    // The all-schemes consolidated workbook is "Monthly Portfolio-DD MM YY"
-    // (schemeID null); the other ~86 entries are per-scheme .xls files.
-    const consolidated = docs.find((x) => /^Monthly Portfolio-\d/i.test(x.documentName || "") && x.docuementURL);
-    if (consolidated?.docuementURL) return [{ url: consolidated.docuementURL, text: `Monthly Portfolio as on ${MON_FULL_TC[mm - 1]} ${yy}` }];
-  }
+  for (const [yy, mm] of monthsToTry(now)) { const l = axisMonth(yy, mm); if (l.length) return l; }
   return [];
 }
 
@@ -232,6 +234,102 @@ function discoverFranklin(): HarvestedLink[] {
   return items
     .filter((i) => (i.frkReferenceDate || "") === maxDate && i.literatureHref)
     .map((i) => ({ url: "https://www.franklintempletonindia.com/download" + i.literatureHref, text: i.dctermsTitle || i.frkReferenceDate || "" }));
+}
+
+// ---- History (backfill): the last N disclosure months, keyed "YYYY-MM" ----
+function ymOf(s: string | undefined | null): string | null {
+  if (!s) return null;
+  let m = /(\d{4})-(\d{2})-\d{2}/.exec(s); // ISO date
+  if (m) return `${m[1]}-${m[2]}`;
+  m = /\b(\d{1,2})-(\d{1,2})-(\d{4})\b/.exec(s); // DD-MM-YYYY
+  if (m) return `${m[3]}-${m[2].padStart(2, "0")}`;
+  const t = /([A-Za-z]{3,})[a-z]*\.?\s+\d{0,2},?\s*(\d{4})/.exec(s); // "June 30, 2026"
+  if (t) { const mo = MONTH_NUM[t[1].slice(0, 3).toLowerCase()]; if (mo) return `${t[2]}-${String(mo).padStart(2, "0")}`; }
+  return null;
+}
+function lastNMonths(now: Date, back: number): { yy: number; mm: number }[] {
+  const out: { yy: number; mm: number }[] = [];
+  let y = now.getUTCFullYear(), m = now.getUTCMonth() + 1;
+  for (let i = 0; i <= back; i++) { out.push({ yy: y, mm: m }); m--; if (m === 0) { m = 12; y--; } }
+  return out;
+}
+function inWin(ym: string | null, now: Date, back: number): ym is string {
+  if (!ym) return false;
+  const s = +ym.slice(0, 4) * 12 + +ym.slice(5, 7);
+  const n = now.getUTCFullYear() * 12 + (now.getUTCMonth() + 1);
+  return s <= n && s >= n - back;
+}
+function abslHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  const d = json(ABSL_API);
+  for (const it of (d?.AccordionList ?? []) as AbslItem[]) {
+    const ym = ymOf(it.ResourceLink);
+    if (!inWin(ym, now, back) || out.has(ym)) continue;
+    const u = it.pdfUrl;
+    if (typeof u !== "string" || !/\.zip(\?|$)/i.test(u)) continue;
+    out.set(ym, [{ url: u.replace(/^https:\/\/abcscprod\.azureedge\.net/i, "https://mutualfund.adityabirlacapital.com"), text: it.ResourceLink || "" }]);
+  }
+  return out;
+}
+function franklinHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  const d = json("https://www.franklintempletonindia.com/api/literature/v1/responseLitJson?type=report", { headers: { Accept: "application/json" } });
+  const cat = ((d?.FirstDropDown ?? []) as FrkCat[]).find((c) => c.id === "MONTHLY-PORTFOLIO-DSCLR");
+  for (const i of (cat?.dataRecords?.linkdata ?? []) as FrkItem[]) {
+    const ym = ymOf(i.frkReferenceDate);
+    if (!inWin(ym, now, back) || out.has(ym) || !i.literatureHref) continue;
+    out.set(ym, [{ url: "https://www.franklintempletonindia.com/download" + i.literatureHref, text: i.dctermsTitle || "" }]);
+  }
+  return out;
+}
+function whiteoakHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  const d = json("https://cms.whiteoakamc.com/api/scheme-portfolios?filters[period][$eq]=Monthly&populate=*&sort=published_date:desc&pagination[pageSize]=200");
+  for (const it of (d?.data ?? []) as WoItem[]) {
+    const a = it.attributes;
+    const ym = ymOf(a?.published_date);
+    if (!inWin(ym, now, back)) continue;
+    const f = a?.doc_file?.data?.attributes?.url ?? a?.doc_file?.url;
+    if (typeof f !== "string" || !/\.xlsx?(\?|$)/i.test(f)) continue;
+    if (!out.has(ym)) out.set(ym, []);
+    out.get(ym)!.push({ url: f.startsWith("http") ? f : `https://content.whiteoakamc.com${f}`, text: a?.scheme_name || "" });
+  }
+  return out;
+}
+function loopMonths(now: Date, back: number, fetchMonth: (yy: number, mm: number) => HarvestedLink[]): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  for (const { yy, mm } of lastNMonths(now, back)) {
+    const ym = `${yy}-${String(mm).padStart(2, "0")}`;
+    if (out.has(ym)) continue;
+    const l = fetchMonth(yy, mm);
+    if (l.length) out.set(ym, l);
+  }
+  return out;
+}
+type HistoryDiscoverer = (now: Date, back: number) => Map<string, HarvestedLink[]>;
+const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
+  absl: (n, b) => abslHistory(n, b),
+  "franklin-templeton": (n, b) => franklinHistory(n, b),
+  "whiteoak-capital": (n, b) => whiteoakHistory(n, b),
+  axis: (n, b) => loopMonths(n, b, axisMonth),
+  "pgim-india": (n, b) => loopMonths(n, b, pgimMonth),
+};
+/** Backfill: download+parse the last `back` disclosure months for a JSON-API AMC
+ *  that exposes history, keyed "YYYY-MM", schemes normalized and as-on-stamped. */
+export function jsonApiAmcMonths(slug: string, opts: AmcParseOptions, now: Date, back = 6): Map<string, AmcScheme[]> {
+  const hist = JSON_API_HISTORY[slug];
+  const cfg = JSON_API_CONFIG[slug];
+  const out = new Map<string, AmcScheme[]>();
+  if (!hist || !cfg) return out;
+  for (const [ym, links] of hist(now, back)) {
+    const { schemes } = downloadAndParse(links, opts, cfg.referer);
+    if (!schemes.length) continue;
+    const [y, m] = ym.split("-").map(Number);
+    const iso = `${ym}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, "0")}`;
+    for (const sc of schemes) sc.asOf = iso;
+    out.set(ym, schemes);
+  }
+  return out;
 }
 
 export type ApiDiscoverer = (now: Date) => HarvestedLink[];

@@ -97,6 +97,17 @@ export interface FetchedFile {
   buf: Buffer;
 }
 
+/** Fetch a specific (year, 1-based month) directly from the AMC's own host, or
+ *  null if that month isn't published. Used by the one-time history backfill. */
+export function fetchMonth(slug: string, year: number, month1: number): FetchedFile | null {
+  const ref = referer(slug);
+  for (const url of candidateUrls(slug, year, month1)) {
+    const buf = curlBuffer(url, ref);
+    if (buf) return { slug, url, year, month1, asOfMonth: monthLabel(year, month1), buf };
+  }
+  return null;
+}
+
 /** Probe the last `lookback` months (newest first) and return the first file
  *  that exists. `asOf` lets tests pin "now"; defaults to the current date. */
 export function fetchLatest(slug: string, lookback = 4, asOf = new Date()): FetchedFile | null {

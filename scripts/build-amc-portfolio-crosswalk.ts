@@ -277,7 +277,11 @@ function main() {
   // Load every AMC disclosure bucket, keyed by its own amc-holdings slug. A
   // label→slug map (from each file's display name, plus the abbreviation
   // aliases) resolves a tracker fund's amcOf() label to the right bucket.
-  type Bucket = { snap: AmcPortfolioSnapshot; byNorm: Map<string, AmcScheme[]>; schemes: AmcScheme[]; brand: Set<string> };
+  // Each historical month, indexed by the AMC's own scheme code (stable across
+  // months) so a tracker scheme matched once via the latest month can pull its
+  // holdings for every backfilled month.
+  type MonthBucket = { asOfMonth: string; fetchedAt: string; byCode: Map<string, AmcScheme> };
+  type Bucket = { snap: AmcPortfolioSnapshot; byNorm: Map<string, AmcScheme[]>; schemes: AmcScheme[]; brand: Set<string>; history: MonthBucket[] };
   const bySlug = new Map<string, Bucket>();
   const labelToSlug = new Map<string, string>();
   for (const file of fs.readdirSync(HOLDINGS_DIR)) {
@@ -291,7 +295,14 @@ function main() {
       if (!byNorm.has(key)) byNorm.set(key, []);
       byNorm.get(key)!.push(sc);
     }
-    bySlug.set(snap.amcSlug, { snap, byNorm, schemes: snap.schemes, brand });
+    const history: MonthBucket[] = [];
+    for (const h of snap.history ?? []) {
+      if (!h.schemes?.length) continue;
+      const byCode = new Map<string, AmcScheme>();
+      for (const sc of h.schemes) if (!byCode.has(sc.schemeCode)) byCode.set(sc.schemeCode, sc);
+      history.push({ asOfMonth: h.asOfMonth, fetchedAt: snap.fetchedAt, byCode });
+    }
+    bySlug.set(snap.amcSlug, { snap, byNorm, schemes: snap.schemes, brand, history });
     labelToSlug.set(amcOf(snap.amc), snap.amcSlug);
   }
   for (const [label, slug] of Object.entries(LABEL_TO_SLUG_ALIASES)) labelToSlug.set(label, slug);
@@ -358,7 +369,6 @@ function main() {
     if (confidence === "low") { skippedLow++; continue; } // too risky to surface a portfolio on
     counts[confidence]++;
     stat.matched++;
-    const { meta, holdings } = buildMonth(bucket.snap, scheme);
     const file = path.join(OUT_DIR, `${f.schemecode}.json`);
     let existing: Panel | null = null;
     try {
@@ -370,12 +380,31 @@ function main() {
       amcSchemeName: cleanDisplayName(scheme.schemeName), amcSchemeCode: scheme.schemeCode,
       sourceUrl: bucket.snap.sourceUrl, confidence,
     };
-    fs.writeFileSync(file, JSON.stringify(mergePanel(existing, base, meta, holdings)) + "\n", "utf8");
+    // Build every available month for this scheme — the backfilled history
+    // (matched by the AMC's stable scheme code) plus the latest — and merge them
+    // oldest→newest so the newest month's descriptors win and columns order right.
+    const monthly: { snap: AmcPortfolioSnapshot; sc: AmcScheme }[] = [];
+    for (const h of bucket.history) {
+      const sc = h.byCode.get(scheme.schemeCode);
+      if (sc) monthly.push({ snap: { ...bucket.snap, asOfMonth: h.asOfMonth }, sc });
+    }
+    monthly.push({ snap: bucket.snap, sc: scheme });
+    monthly.sort((a, b) => (monthKeyOf(a.sc, a.snap).key < monthKeyOf(b.sc, b.snap).key ? -1 : 1));
+    let panel = existing;
+    let latestMeta = "";
+    let latestHoldings = 0;
+    for (const mm of monthly) {
+      const { meta, holdings } = buildMonth(mm.snap, mm.sc);
+      panel = mergePanel(panel, base, meta, holdings);
+      latestMeta = meta.label;
+      latestHoldings = holdings.length;
+    }
+    fs.writeFileSync(file, JSON.stringify(panel) + "\n", "utf8");
     entries[f.schemecode] = {
       amcSlug: bucket.snap.amcSlug,
       amcSchemeName: base.amcSchemeName,
-      asOfMonth: meta.label,
-      holdings: holdings.length,
+      asOfMonth: latestMeta,
+      holdings: latestHoldings,
       confidence,
     };
   }
