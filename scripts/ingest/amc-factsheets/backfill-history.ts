@@ -18,12 +18,15 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { discoverAmcs, slugFor, advisorkhojMonths, normalizeSchemePct } from "./advisorkhoj";
+import { discoverAmcs, slugFor, advisorkhojMonths, normalizeSchemePct, listPortfolioLinks, parseZip } from "./advisorkhoj";
 import { parseAmcWorkbook } from "./parse";
 import { fetchMonth } from "./fetch";
-import { PAGE_SCRAPE_CONFIG, pageScrapeAmcMonths, downloadAndParse } from "./page-scrape";
+import { PAGE_SCRAPE_CONFIG, pageScrapeAmcMonths } from "./page-scrape";
 import { JSON_API_CONFIG, jsonApiAmcMonths } from "./json-api";
-import { parseZip } from "./advisorkhoj";
+import { launchBrowser } from "./browser";
+import { browserFetchAmc } from "./browser-fallback";
+import { BROWSER_CONFIG } from "./browser-hints";
+import type { Browser } from "playwright";
 import type { AmcMonthSnapshot, AmcParseOptions, AmcPortfolioSnapshot, AmcScheme } from "./types";
 
 const OUT = path.resolve(process.cwd(), "public/amc-holdings");
@@ -91,18 +94,49 @@ function collectMonths(slug: string, amc: string): Map<string, AmcScheme[]> {
   return advisorkhojMonths(amc, now.getUTCFullYear(), now, GENERIC, BACK_MONTHS);
 }
 
-function main(): void {
+/** Browser tier (opt-in, BACKFILL_BROWSER=1): for AMCs whose monthly portfolio
+ *  sits behind a JS-rendered filter page (Canara, Invesco, Mirae, …) that curl
+ *  can't read. AdvisorKhoj lists each month's filter-page URL; render each in a
+ *  headless browser and harvest that month's workbooks. */
+async function browserMonths(browser: Browser, amc: string): Promise<Map<string, AmcScheme[]>> {
+  const out = new Map<string, AmcScheme[]>();
+  const nowScore = now.getUTCFullYear() * 12 + (now.getUTCMonth() + 1);
+  const cfg = BROWSER_CONFIG[slugFor(amc)] ?? {};
+  for (const link of listPortfolioLinks(amc, now.getUTCFullYear())) {
+    const s = link.year * 12 + link.month;
+    if (s > nowScore || s < nowScore - BACK_MONTHS) continue;
+    const ym = `${link.year}-${String(link.month).padStart(2, "0")}`;
+    if (out.has(ym)) continue;
+    const r = await browserFetchAmc(browser, [link.url], GENERIC, cfg.hints);
+    if (r.schemes.length) {
+      const iso = isoLastDay(ym);
+      for (const sc of r.schemes) sc.asOf = iso;
+      out.set(ym, r.schemes);
+    }
+  }
+  return out;
+}
+
+async function main(): Promise<void> {
   let amcs = discoverAmcs();
   if (amcs.length < 10) amcs = FALLBACK_AMCS;
   const only = process.env.AMC_ONLY?.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
   if (only?.length) amcs = amcs.filter((a) => only.includes(slugFor(a)));
+
+  let browser: Browser | null = null;
+  if (process.env.BACKFILL_BROWSER) {
+    try { browser = await launchBrowser(); } catch (e) { console.log(`(browser unavailable: ${(e as Error).message.slice(0, 60)})`); }
+  }
 
   console.log(`Backfilling ${BACK_MONTHS} months for ${amcs.length} AMC(s)…\n`);
   let ok = 0;
   for (const amc of amcs) {
     const slug = slugFor(amc);
     let months: Map<string, AmcScheme[]>;
-    try { months = collectMonths(slug, amc); } catch (e) { console.log(`✗ ${slug.padEnd(20)} ERROR ${(e as Error).message.slice(0, 60)}`); continue; }
+    try { months = collectMonths(slug, amc); } catch (e) { console.log(`✗ ${slug.padEnd(20)} ERROR ${(e as Error).message.slice(0, 60)}`); months = new Map(); }
+    if (months.size === 0 && browser) {
+      try { months = await browserMonths(browser, amc); } catch (e) { console.log(`  (browser ${slug}: ${(e as Error).message.slice(0, 40)})`); }
+    }
     if (months.size === 0) { console.log(`· ${slug.padEnd(20)} no history`); continue; }
 
     const yms = [...months.keys()].sort().reverse(); // newest first
@@ -124,7 +158,8 @@ function main(): void {
     ok++;
     console.log(`✓ ${slug.padEnd(20)} ${yms.length} months: ${yms.join(" ")}`);
   }
+  if (browser) await browser.close();
   console.log(`\nBackfilled ${ok}/${amcs.length} AMCs.`);
 }
 
-main();
+main().catch((e) => { console.error(e); process.exit(1); });

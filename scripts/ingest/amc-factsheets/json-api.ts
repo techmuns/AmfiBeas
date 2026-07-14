@@ -137,7 +137,7 @@ function discoverWhiteoak(): HarvestedLink[] {
 
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
 const LIC_FORM = { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" };
-function discoverLic(now: Date): HarvestedLink[] {
+function licSchemeList(): { code: string; name: string }[] {
   const schemes: { code: string; name: string }[] = [];
   for (const cat of ["Equity", "Hybrid", "ETFs & Index Funds", "Debt", "Solution Oriented Funds"]) {
     const html = curl("https://www.licmf.com/downloads/portfolio-filter-options", { method: "POST", body: `fund_category=${encodeURIComponent(cat)}&filter=category`, headers: LIC_FORM });
@@ -148,6 +148,20 @@ function discoverLic(now: Date): HarvestedLink[] {
       if (code && !/select|scheme name/i.test(name)) schemes.push({ code, name });
     }
   }
+  return schemes;
+}
+/** All schemes' monthly-portfolio files for one (year, month). */
+function licMonth(schemes: { code: string; name: string }[], yy: number, mm: number): HarvestedLink[] {
+  const links: HarvestedLink[] = [];
+  for (const s of schemes) {
+    const html = curl("https://www.licmf.com/downloads/portfolio-files", { method: "POST", body: `scheme_code=${encodeURIComponent(s.code)}&fund_name=${encodeURIComponent(s.name)}&type=monthly_portfolio&month=${mm}&year=${yy}`, headers: LIC_FORM });
+    const m = html && /href=['"]([^'"]*\/assets\/downloads\/portfolio\/[^'"]*\.xlsx)['"]/i.exec(html);
+    if (m) links.push({ url: m[1].startsWith("http") ? m[1] : `https://www.licmf.com${m[1]}`, text: s.name });
+  }
+  return links;
+}
+function discoverLic(now: Date): HarvestedLink[] {
+  const schemes = licSchemeList();
   const links: HarvestedLink[] = [];
   let month: [number, number] | null = null; // lock onto the first month that resolves
   for (const s of schemes) {
@@ -306,6 +320,48 @@ function loopMonths(now: Date, back: number, fetchMonth: (yy: number, mm: number
   }
   return out;
 }
+function bandhanHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  const d = json("https://cmsnew.bandhanmutual.com/wp-json/finance-api/v1/posts/scheme-portfolios?bypass_pagination=true", { headers: { Accept: "application/json" } });
+  for (const i of (d?.data ?? []) as BandhanItem[]) {
+    if (!/monthly/i.test(i.sub_category || "")) continue;
+    const s = dateScore(i.title); // year*12+month
+    if (!s) continue;
+    const ym = `${Math.floor((s - 1) / 12)}-${String(((s - 1) % 12) + 1).padStart(2, "0")}`;
+    if (!inWin(ym, now, back)) continue;
+    for (const df of i.acf_fields?.disclosure_files ?? []) {
+      const u = df?.document_link?.url;
+      if (typeof u !== "string" || !/\.xlsx?(\?|$)/i.test(u)) continue;
+      if (!out.has(ym)) out.set(ym, []);
+      out.get(ym)!.push({ url: u, text: df.document_name || i.title || "" });
+    }
+  }
+  return out;
+}
+function licHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
+  const schemes = licSchemeList(); // category cascade once, then query each month
+  const out = new Map<string, HarvestedLink[]>();
+  for (const { yy, mm } of lastNMonths(now, back)) {
+    const l = licMonth(schemes, yy, mm);
+    if (l.length) out.set(`${yy}-${String(mm).padStart(2, "0")}`, l);
+  }
+  return out;
+}
+function unionHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  // $filter surfaces monthly-portfolio docs beyond the newest month (the plain
+  // $top=100 is dominated by daily/other docs → only the latest month).
+  const d = json("https://www.unionmf.com/api/downloads/documents?$filter=contains(Title,'Monthly%20Portfolio')&$orderby=PublicationDate%20desc&$top=100");
+  const monthOf = (t: string) => { const m = /\b(\d{1,2})-(\d{1,2})-(\d{4})\b/.exec(t); return m ? `${m[3]}-${m[2].padStart(2, "0")}` : null; };
+  for (const it of (d?.value ?? []) as UnionItem[]) {
+    if ((it.Extension || "").toLowerCase() !== ".xlsx" || !/monthly portfolio/i.test(it.Title || "") || !it.Url) continue;
+    const ym = monthOf(it.Title || "");
+    if (!inWin(ym, now, back)) continue;
+    if (!out.has(ym)) out.set(ym, []);
+    out.get(ym)!.push({ url: `https://www.unionmf.com${it.Url}`, text: it.Title || "" });
+  }
+  return out;
+}
 type HistoryDiscoverer = (now: Date, back: number) => Map<string, HarvestedLink[]>;
 const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   absl: (n, b) => abslHistory(n, b),
@@ -313,6 +369,9 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   "whiteoak-capital": (n, b) => whiteoakHistory(n, b),
   axis: (n, b) => loopMonths(n, b, axisMonth),
   "pgim-india": (n, b) => loopMonths(n, b, pgimMonth),
+  bandhan: (n, b) => bandhanHistory(n, b),
+  lic: (n, b) => licHistory(n, b),
+  union: (n, b) => unionHistory(n, b),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
