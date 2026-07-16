@@ -492,6 +492,35 @@ function discoverUnifi(now: Date): HarvestedLink[] {
   return [];
 }
 
+// ---- Mirae Asset: per-scheme portfolio files keyed by a fixed scheme code ----
+// /docs/default-source/portfolios/<code>-<monthname><year>.xlsx. Codes are
+// human-assigned per scheme (harvested from the portfolio page's rendered links);
+// the ETF workbooks name only the tracked index, so carry the fund name as link
+// text for downloadAndParse's fallback.
+const MIRAE_SCHEMES: [string, string][] = [
+  ["mafcf", "Mirae Asset Flexi Cap Fund"],
+  ["maonf", "Mirae Asset Overnight Fund"],
+  ["200ewfof", "Mirae Asset BSE 200 Equal Weight ETF Fund of Fund"],
+  ["smqetf", "Mirae Asset Nifty Smallcap 250 Momentum Quality 100 ETF"],
+  ["psubetf", "Mirae Asset Nifty PSU Bank ETF"],
+  ["b2cetfof", "Mirae Asset Nifty India New Age Consumption ETF Fund of Fund"],
+  ["mamcf", "Mirae Asset Midcap Fund"],
+  ["mabff", "Mirae Asset Banking and Financial Services Fund"],
+  ["ipofof", "Mirae Asset BSE Select IPO ETF Fund of Fund"],
+  ["tm750", "Mirae Asset Nifty Total Market Index Fund"],
+];
+function miraeMonth(yy: number, mm: number): HarvestedLink[] {
+  const suf = `${MONTH_FULL[mm - 1].toLowerCase()}${yy}`; // "june2026"
+  return MIRAE_SCHEMES.map(([code, name]) => ({ url: `https://www.miraeassetmf.co.in/docs/default-source/portfolios/${code}-${suf}.xlsx`, text: name }));
+}
+function discoverMirae(now: Date): HarvestedLink[] {
+  for (const [yy, mm] of monthsToTry(now)) {
+    const suf = `${MONTH_FULL[mm - 1].toLowerCase()}${yy}`;
+    if (curl(`https://www.miraeassetmf.co.in/docs/default-source/portfolios/mafcf-${suf}.xlsx`)) return miraeMonth(yy, mm);
+  }
+  return [];
+}
+
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
 const LIC_FORM = { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" };
 function licSchemeList(): { code: string; name: string }[] {
@@ -739,6 +768,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   "motilal-oswal": (n, b) => loopMonths(n, b, motilalMonth),
   mahindra: (n, b) => loopMonths(n, b, mahMonth),
   unifi: (n, b) => loopMonths(n, b, unifiMonth),
+  mirae: (n, b) => loopMonths(n, b, miraeMonth),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -801,6 +831,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   "motilal-oswal": { discover: (now) => discoverMotilal(now), referer: "https://www.motilaloswalmf.com/", page: "https://www.motilaloswalmf.com/downloads/scheme-portfolio-details" },
   mahindra: { discover: (now) => discoverMahindra(now), referer: "https://www.mahindramanulife.com/", page: "https://www.mahindramanulife.com/downloads" },
   unifi: { discover: (now) => discoverUnifi(now), referer: "https://unifimf.com/", page: "https://unifimf.com/statutorydocuments/" },
+  mirae: { discover: (now) => discoverMirae(now), referer: "https://www.miraeassetmf.co.in/", page: "https://www.miraeassetmf.co.in/downloads/portfolio" },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }

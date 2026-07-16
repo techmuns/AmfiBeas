@@ -126,7 +126,9 @@ export function downloadAndParse(links: HarvestedLink[], opts: AmcParseOptions, 
       const looksNamed = (n: string) =>
         n.trim().length >= 6 && /[a-z]/i.test(n) &&
         (/\s/.test(n.trim()) || /\b(fund|scheme|etf|plan)\b/i.test(n)) &&
-        !/name of instrument|portfolio statement|period ended|monthly\s*portfolio/i.test(n);
+        !/name of instrument|portfolio statement|period ended|monthly\s*portfolio/i.test(n) &&
+        // a scheme-type description, not a name (Mirae's ETF sheets lead with these)
+        !/^\s*\(|open[\s-]?ended?\s+(scheme|fund)/i.test(n);
       if (parsed.length === 1 && l.text && looksNamed(l.text) && !looksNamed(sc.schemeName)) {
         sc.schemeName = l.text;
         sc.schemeCode = l.text;
