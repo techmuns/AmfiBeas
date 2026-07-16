@@ -291,6 +291,42 @@ function discoverJm(now: Date): HarvestedLink[] {
   return ym ? h.get(ym)! : [];
 }
 
+// ---- Invesco: ASP.NET Web API — per-classification scheme list w/ monthly URLs ----
+// ClassificationCompleteMonthlyHoldings lists the fund classes; CompleteMonthlyHoldings
+// returns each scheme with a <Mon>Url .xlsx for every month of the queried year. One
+// file per scheme; the workbook header is often unreadable, so the scheme name comes
+// from the API "Name" via downloadAndParse's link-text fallback.
+const INVESCO_API = "https://www.invescomutualfund.com/api";
+const INVESCO_HDR = {
+  "X-Requested-With": "XMLHttpRequest",
+  Referer: "https://www.invescomutualfund.com/literature-and-form?tab=Complete",
+};
+function invescoMonth(yy: number, mm: number): HarvestedLink[] {
+  const classes = json(`${INVESCO_API}/ClassificationCompleteMonthlyHoldings?page=Holding&year=${yy}&month=${mm}`, { headers: INVESCO_HDR });
+  if (!Array.isArray(classes)) return [];
+  const mon = MON3[mm - 1];
+  const field = `${mon[0].toUpperCase()}${mon.slice(1)}Url`; // e.g. "JunUrl"
+  const links: HarvestedLink[] = [];
+  const seen = new Set<string>();
+  for (const c of classes) {
+    const cv: string | undefined = c?.FunClassificationValue;
+    if (!cv) continue;
+    const schemes = json(`${INVESCO_API}/CompleteMonthlyHoldings?year=${yy}&month=${mm}&classification=${encodeURIComponent(cv)}`, { headers: INVESCO_HDR });
+    if (!Array.isArray(schemes)) continue;
+    for (const s of schemes) {
+      const url: string = (s?.[field] || "").trim();
+      if (!url || seen.has(url)) continue;
+      seen.add(url);
+      links.push({ url, text: (s?.Name || "").trim() });
+    }
+  }
+  return links;
+}
+function discoverInvesco(now: Date): HarvestedLink[] {
+  for (const [yy, mm] of monthsToTry(now)) { const l = invescoMonth(yy, mm); if (l.length) return l; }
+  return [];
+}
+
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
 const LIC_FORM = { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" };
 function licSchemeList(): { code: string; name: string }[] {
@@ -530,6 +566,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   union: (n, b) => unionHistory(n, b),
   "canara-robeco": (n, b) => loopMonths(n, b, canaraMonth),
   "jm-financial": (n, b) => jmHistory(n, b),
+  invesco: (n, b) => loopMonths(n, b, invescoMonth),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -584,6 +621,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   "franklin-templeton": { discover: () => discoverFranklin(), referer: "https://www.franklintempletonindia.com/", page: "https://www.franklintempletonindia.com/reports" },
   "canara-robeco": { discover: (now) => discoverCanara(now), referer: "https://www.canararobeco.com/", page: "https://www.canararobeco.com/statutory-disclosures/scheme-dashboard/scheme-monthly-portfolio" },
   "jm-financial": { discover: (now) => discoverJm(now), referer: "https://www.jmfinancialmf.com/", page: "https://www.jmfinancialmf.com/downloads/Portfolio-Disclosure" },
+  invesco: { discover: (now) => discoverInvesco(now), referer: "https://www.invescomutualfund.com/", page: "https://www.invescomutualfund.com/literature-and-form?tab=Complete" },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }
