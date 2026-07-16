@@ -73,6 +73,18 @@ export function monthScore(sTr: string): number {
     const score = +m[2] * 12 + mo;
     if (score > best) best = score;
   }
+  // Numeric DD-MM-YYYY dates (Indian AMC filenames, e.g. Baroda BNP's
+  // "…_30-06-2026_…xlsx") carry no month name — parse them too. Day-first per
+  // Indian convention; the month/day validity check rejects US MM-DD ordering.
+  // Bound with digit-lookarounds (not \b) so an underscore delimiter — a word
+  // char that would defeat \b — still counts as a separator.
+  const reNum = /(?<!\d)(\d{1,2})[-/.](\d{1,2})[-/.](20\d{2})(?!\d)/g;
+  while ((m = reNum.exec(sTr))) {
+    const d = +m[1], mo = +m[2], y = +m[3];
+    if (mo < 1 || mo > 12 || d < 1 || d > 31) continue;
+    const score = y * 12 + mo;
+    if (score > best) best = score;
+  }
   return best;
 }
 

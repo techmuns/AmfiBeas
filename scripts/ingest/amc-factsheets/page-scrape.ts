@@ -260,6 +260,27 @@ export const PAGE_SCRAPE_CONFIG: Record<string, PageScrapeConfig> = {
     urls: ["https://www.tatamutualfund.com/schemes-related/portfolio"],
     include: /monthly.{0,4}portfolio|portfolio.{0,4}as.{0,4}on/i,
   },
+  // Statutory-disclosure page links one consolidated monthly workbook per month
+  // on the assets CDN ("Monthly Portfolio- June 30, 2026.xlsx"), alongside the
+  // fortnightly ones — keep monthly. Replaces the AdvisorKhoj-routed browser tier.
+  groww: {
+    urls: ["https://www.growwmf.in/statutory-disclosure/portfolio"],
+    include: /monthly[_\s-]*portfolio/i,
+  },
+  // One consolidated "all funds" monthly workbook; the filename carries a numeric
+  // DD-MM-YYYY date ("BOBBNPMF_Monthly_Portfolio_30-06-2026_….xlsx") that
+  // monthScore now parses. Replaces the AdvisorKhoj-routed browser tier.
+  "baroda-bnp-paribas": {
+    urls: ["https://www.barodabnpparibasmf.in/downloads/monthly-portfolio-scheme"],
+    include: /monthly[_\s-]*portfolio/i,
+  },
+  // WordPress media host with per-scheme monthly workbooks ("…-Monthly-Portfolio-
+  // as-on-30th-June-2026.xlsx"); monthly + fortnightly live together, keep monthly.
+  // Per-scheme names come from the link text (downloadAndParse fallback).
+  helios: {
+    urls: ["https://www.heliosmf.in/portfolio-disclosure/"],
+    include: /monthly[_\s-]*portfolio/i,
+  },
 };
 
 // Taurus year taxonomy-term ids (from the site's exposed filter); month TID = 280 + month.
