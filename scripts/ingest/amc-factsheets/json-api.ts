@@ -521,6 +521,36 @@ function discoverMirae(now: Date): HarvestedLink[] {
   return [];
 }
 
+// ---- NJ Mutual Fund: server-rendered "Monthly Portfolio Disclosure" listing ----
+// downloads.njmutualfund.com/njmf_download.php?nme=127 lists per-scheme workbooks as
+// <a href="viewfile.php?file=NJ-MF-Monthly-Portfolio-<CODE>-<Month>-<Year>-<ts>.xlsx">.
+const NJ_NAMES: Record<string, string> = {
+  NJBAF: "NJ Balanced Advantage Fund", NJOVERFD: "NJ Overnight Fund", NJABF: "NJ Arbitrage Fund",
+  NJFCP: "NJ Flexi Cap Fund", NJELSTCH: "NJ ELSS Tax Saver Scheme",
+};
+function njMonth(yy: number, mm: number): HarvestedLink[] {
+  const html = curl("https://downloads.njmutualfund.com/njmf_download.php?nme=127");
+  if (!html) return [];
+  const mon = MONTH_FULL[mm - 1].toLowerCase();
+  const links: HarvestedLink[] = [];
+  const seen = new Set<string>();
+  const re = /viewfile\.php\?file=(NJ-MF-Monthly-Portfolio-([A-Za-z]+)-([A-Za-z]+)-(\d{4})-\d+\.xlsx)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html))) {
+    const [, file, code, month, year] = m;
+    if (month.toLowerCase() !== mon || +year !== yy) continue;
+    const url = `https://downloads.njmutualfund.com/viewfile.php?file=${file}`;
+    if (seen.has(url)) continue;
+    seen.add(url);
+    links.push({ url, text: NJ_NAMES[code.toUpperCase()] ?? `NJ ${code}` });
+  }
+  return links;
+}
+function discoverNj(now: Date): HarvestedLink[] {
+  for (const [yy, mm] of monthsToTry(now)) { const l = njMonth(yy, mm); if (l.length) return l; }
+  return [];
+}
+
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
 const LIC_FORM = { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" };
 function licSchemeList(): { code: string; name: string }[] {
@@ -769,6 +799,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   mahindra: (n, b) => loopMonths(n, b, mahMonth),
   unifi: (n, b) => loopMonths(n, b, unifiMonth),
   mirae: (n, b) => loopMonths(n, b, miraeMonth),
+  nj: (n, b) => loopMonths(n, b, njMonth),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -832,6 +863,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   mahindra: { discover: (now) => discoverMahindra(now), referer: "https://www.mahindramanulife.com/", page: "https://www.mahindramanulife.com/downloads" },
   unifi: { discover: (now) => discoverUnifi(now), referer: "https://unifimf.com/", page: "https://unifimf.com/statutorydocuments/" },
   mirae: { discover: (now) => discoverMirae(now), referer: "https://www.miraeassetmf.co.in/", page: "https://www.miraeassetmf.co.in/downloads/portfolio" },
+  nj: { discover: (now) => discoverNj(now), referer: "https://downloads.njmutualfund.com/", page: "https://downloads.njmutualfund.com/njmf_download.php?nme=127" },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }

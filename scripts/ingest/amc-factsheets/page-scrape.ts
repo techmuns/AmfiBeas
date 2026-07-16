@@ -95,7 +95,12 @@ export function extractFileLinks(html: string, pageUrl: string): HarvestedLink[]
 export function downloadAndParse(links: HarvestedLink[], opts: AmcParseOptions, referer?: string): { schemes: AmcScheme[]; fileCount: number } {
   const byFile = new Map<string, HarvestedLink>();
   for (const l of links) {
-    const name = decodeURIComponent(l.url.split(/[?#]/)[0].split("/").pop() ?? l.url).toLowerCase();
+    // Dedup key is the workbook filename. Most AMCs put it in the path, but some
+    // serve it through a script with the name in a `file=` query param (NJ's
+    // viewfile.php?file=…), where the path basename is a constant ("viewfile.php")
+    // that would collapse every scheme onto one — prefer the query filename then.
+    const q = /[?&]file=([^&]+)/i.exec(l.url);
+    const name = decodeURIComponent(q ? q[1] : (l.url.split(/[?#]/)[0].split("/").pop() ?? l.url)).toLowerCase();
     if (!byFile.has(name)) byFile.set(name, l);
   }
   const schemes: AmcScheme[] = [];
