@@ -327,6 +327,34 @@ function discoverInvesco(now: Date): HarvestedLink[] {
   return [];
 }
 
+// ---- Bajaj Finserv: WordPress wp-json media, per-scheme monthly workbooks ----
+// Files are "Bajaj-Finserv-<Scheme>_Monthly-Portfolio-as-on-30-Jun-2026.xls.xlsx".
+// Page the media list (date-desc), keep the target month by the filename's date
+// token; the scheme name is derived from the filename (downloadAndParse fallback).
+function bajajMonth(yy: number, mm: number): HarvestedLink[] {
+  const tok = `-${MON3[mm - 1]}-${yy}`; // "-jun-2026"
+  const links: HarvestedLink[] = [];
+  const seen = new Set<string>();
+  for (let page = 1; page <= 3; page++) {
+    const items = json(`https://www.bajajamc.com/wp-json/wp/v2/media?search=Monthly-Portfolio&per_page=100&page=${page}&orderby=date&order=desc&_fields=source_url`);
+    if (!Array.isArray(items) || !items.length) break;
+    for (const it of items) {
+      const url: string = it?.source_url ?? "";
+      const base = decodeURIComponent(url.split("/").pop() ?? "");
+      if (!/Monthly-Portfolio/i.test(base) || !base.toLowerCase().includes(tok)) continue;
+      if (seen.has(url)) continue;
+      seen.add(url);
+      const name = base.replace(/_Monthly-Portfolio.*$/i, "").replace(/[-_]+/g, " ").trim();
+      links.push({ url, text: name });
+    }
+  }
+  return links;
+}
+function discoverBajaj(now: Date): HarvestedLink[] {
+  for (const [yy, mm] of monthsToTry(now)) { const l = bajajMonth(yy, mm); if (l.length) return l; }
+  return [];
+}
+
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
 const LIC_FORM = { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" };
 function licSchemeList(): { code: string; name: string }[] {
@@ -567,6 +595,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   "canara-robeco": (n, b) => loopMonths(n, b, canaraMonth),
   "jm-financial": (n, b) => jmHistory(n, b),
   invesco: (n, b) => loopMonths(n, b, invescoMonth),
+  "bajaj-finserv": (n, b) => loopMonths(n, b, bajajMonth),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -622,6 +651,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   "canara-robeco": { discover: (now) => discoverCanara(now), referer: "https://www.canararobeco.com/", page: "https://www.canararobeco.com/statutory-disclosures/scheme-dashboard/scheme-monthly-portfolio" },
   "jm-financial": { discover: (now) => discoverJm(now), referer: "https://www.jmfinancialmf.com/", page: "https://www.jmfinancialmf.com/downloads/Portfolio-Disclosure" },
   invesco: { discover: (now) => discoverInvesco(now), referer: "https://www.invescomutualfund.com/", page: "https://www.invescomutualfund.com/literature-and-form?tab=Complete" },
+  "bajaj-finserv": { discover: (now) => discoverBajaj(now), referer: "https://www.bajajamc.com/", page: "https://www.bajajamc.com/downloads?portfolio=" },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }
