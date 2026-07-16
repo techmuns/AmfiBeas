@@ -465,6 +465,33 @@ function discoverMahindra(now: Date): HarvestedLink[] {
   return [];
 }
 
+// ---- Unifi: WordPress wp-json media, per-scheme monthly workbooks ----
+// Files are "MP-Unifi-<Scheme>-DDMMYYYY.xlsx". Keep the target month by the
+// filename's date suffix; the scheme name is derived from the filename. (Unifi's
+// host is Cloudflare-walled from the dev sandbox but reachable from the cron.)
+function unifiMonth(yy: number, mm: number): HarvestedLink[] {
+  const dateRe = new RegExp(`-\\d{2}${String(mm).padStart(2, "0")}${yy}\\.xlsx?$`, "i"); // "-30062026.xlsx"
+  const links: HarvestedLink[] = [];
+  const seen = new Set<string>();
+  for (let page = 1; page <= 2; page++) {
+    const items = json(`https://unifimf.com/wp-json/wp/v2/media?search=MP-Unifi&per_page=100&page=${page}&orderby=date&order=desc&_fields=source_url`);
+    if (!Array.isArray(items) || !items.length) break;
+    for (const it of items) {
+      const url: string = it?.source_url ?? "";
+      const base = decodeURIComponent(url.split("/").pop() ?? "");
+      if (!dateRe.test(base) || seen.has(url)) continue;
+      seen.add(url);
+      const name = base.replace(/\.xlsx?$/i, "").replace(/^MP-/i, "").replace(/-\d{8}$/, "").replace(/-+/g, " ").trim();
+      links.push({ url, text: name });
+    }
+  }
+  return links;
+}
+function discoverUnifi(now: Date): HarvestedLink[] {
+  for (const [yy, mm] of monthsToTry(now)) { const l = unifiMonth(yy, mm); if (l.length) return l; }
+  return [];
+}
+
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
 const LIC_FORM = { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" };
 function licSchemeList(): { code: string; name: string }[] {
@@ -711,6 +738,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   quant: (n, b) => loopMonths(n, b, quantMonth),
   "motilal-oswal": (n, b) => loopMonths(n, b, motilalMonth),
   mahindra: (n, b) => loopMonths(n, b, mahMonth),
+  unifi: (n, b) => loopMonths(n, b, unifiMonth),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -772,6 +800,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   quant: { discover: (now) => discoverQuant(now), referer: "https://quantmutual.com/", page: "https://quantmutual.com/statutory-disclosures" },
   "motilal-oswal": { discover: (now) => discoverMotilal(now), referer: "https://www.motilaloswalmf.com/", page: "https://www.motilaloswalmf.com/downloads/scheme-portfolio-details" },
   mahindra: { discover: (now) => discoverMahindra(now), referer: "https://www.mahindramanulife.com/", page: "https://www.mahindramanulife.com/downloads" },
+  unifi: { discover: (now) => discoverUnifi(now), referer: "https://unifimf.com/", page: "https://unifimf.com/statutorydocuments/" },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }
