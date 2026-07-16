@@ -421,6 +421,50 @@ function discoverMotilal(now: Date): HarvestedLink[] {
   return [];
 }
 
+// ---- Mahindra Manulife: AES-encrypted downloads API ----
+// investorapi returns {payload} = AES-256-CBC (CryptoJS; key/IV static in the JS
+// bundle) over the whole download tree. Decrypt, flatten to {title,fileUrl}, and
+// pick "Monthly Portfolio Disclosure - <Month>, <Year>" (one consolidated workbook).
+const MAH_KEY = Buffer.from("mahindra2024mahindra2024mahindra", "utf8");
+const MAH_IV = Buffer.from("hasnainsheikh202", "utf8");
+let mahCache: { title: string; url: string }[] | null = null;
+function mahLeaves(): { title: string; url: string }[] {
+  if (mahCache) return mahCache;
+  const raw = curl("https://investorapi.mahindramanulife.com/api/v1/web/preLogin/downloads", {
+    headers: { accept: "application/json", "x-client-id": "5dceebf9-845d-4519-b42f-f3279afafc00", platform: "web", origin: "https://mahindramanulife.com", Referer: "https://mahindramanulife.com/" },
+  });
+  const out: { title: string; url: string }[] = [];
+  if (raw) {
+    try {
+      const d = crypto.createDecipheriv("aes-256-cbc", MAH_KEY, MAH_IV);
+      const data = JSON.parse(Buffer.concat([d.update(Buffer.from(JSON.parse(raw).payload, "base64")), d.final()]).toString("utf8"));
+      const walk = (o: unknown): void => {
+        if (!o || typeof o !== "object") return;
+        const r = o as Record<string, unknown>;
+        if (typeof r.fileUrl === "string" && typeof r.title === "string") out.push({ title: r.title, url: r.fileUrl });
+        for (const v of Object.values(r)) if (v && typeof v === "object") walk(v);
+      };
+      walk(data);
+    } catch { /* decrypt/parse failed */ }
+  }
+  mahCache = out;
+  return out;
+}
+function mahMonth(yy: number, mm: number): HarvestedLink[] {
+  const mon = MONTH_FULL[mm - 1].toLowerCase();
+  for (const l of mahLeaves()) {
+    const t = l.title.toLowerCase();
+    if (!t.includes("monthly portfolio disclosure") || !t.includes(mon) || !t.includes(String(yy))) continue;
+    if (!/\.xlsx?(\?|$)/i.test(l.url)) continue;
+    return [{ url: l.url, text: "" }];
+  }
+  return [];
+}
+function discoverMahindra(now: Date): HarvestedLink[] {
+  for (const [yy, mm] of monthsToTry(now)) { const l = mahMonth(yy, mm); if (l.length) return l; }
+  return [];
+}
+
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
 const LIC_FORM = { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" };
 function licSchemeList(): { code: string; name: string }[] {
@@ -666,6 +710,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   "bank-of-india": (n, b) => loopMonths(n, b, boiMonth),
   quant: (n, b) => loopMonths(n, b, quantMonth),
   "motilal-oswal": (n, b) => loopMonths(n, b, motilalMonth),
+  mahindra: (n, b) => loopMonths(n, b, mahMonth),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -726,6 +771,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   "bank-of-india": { discover: (now) => discoverBoi(now), referer: "https://www.boimf.in/", page: "https://www.boimf.in/investor-corner" },
   quant: { discover: (now) => discoverQuant(now), referer: "https://quantmutual.com/", page: "https://quantmutual.com/statutory-disclosures" },
   "motilal-oswal": { discover: (now) => discoverMotilal(now), referer: "https://www.motilaloswalmf.com/", page: "https://www.motilaloswalmf.com/downloads/scheme-portfolio-details" },
+  mahindra: { discover: (now) => discoverMahindra(now), referer: "https://www.mahindramanulife.com/", page: "https://www.mahindramanulife.com/downloads" },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }
