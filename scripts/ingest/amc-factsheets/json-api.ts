@@ -355,6 +355,27 @@ function discoverBajaj(now: Date): HarvestedLink[] {
   return [];
 }
 
+// ---- UTI: JSON API returning one consolidated monthly ZIP of scheme workbooks ----
+const MONTH_FULL = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+function utiMonth(yy: number, mm: number): HarvestedLink[] {
+  const data = json(
+    `https://www.utimf.com/api/get-consolidate-portfolio-disclosure?year=${yy}&month=${MONTH_FULL[mm - 1]}`,
+    { headers: { accept: "*/*", Referer: "https://www.utimf.com/downloads/consolidate-all-portfolio-disclosure" } },
+  );
+  const rows = data?.rows;
+  if (!Array.isArray(rows)) return [];
+  const links: HarvestedLink[] = [];
+  for (const r of rows) {
+    const url: string = r?.url || r?.doc || "";
+    if (url) links.push({ url, text: r?.name || "" });
+  }
+  return links;
+}
+function discoverUti(now: Date): HarvestedLink[] {
+  for (const [yy, mm] of monthsToTry(now)) { const l = utiMonth(yy, mm); if (l.length) return l; }
+  return [];
+}
+
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
 const LIC_FORM = { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" };
 function licSchemeList(): { code: string; name: string }[] {
@@ -596,6 +617,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   "jm-financial": (n, b) => jmHistory(n, b),
   invesco: (n, b) => loopMonths(n, b, invescoMonth),
   "bajaj-finserv": (n, b) => loopMonths(n, b, bajajMonth),
+  uti: (n, b) => loopMonths(n, b, utiMonth),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -652,6 +674,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   "jm-financial": { discover: (now) => discoverJm(now), referer: "https://www.jmfinancialmf.com/", page: "https://www.jmfinancialmf.com/downloads/Portfolio-Disclosure" },
   invesco: { discover: (now) => discoverInvesco(now), referer: "https://www.invescomutualfund.com/", page: "https://www.invescomutualfund.com/literature-and-form?tab=Complete" },
   "bajaj-finserv": { discover: (now) => discoverBajaj(now), referer: "https://www.bajajamc.com/", page: "https://www.bajajamc.com/downloads?portfolio=" },
+  uti: { discover: (now) => discoverUti(now), referer: "https://www.utimf.com/", page: "https://www.utimf.com/downloads/consolidate-all-portfolio-disclosure" },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }

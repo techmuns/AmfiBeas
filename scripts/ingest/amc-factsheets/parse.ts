@@ -230,8 +230,25 @@ export function parseAmcWorkbook(buf: ArrayBuffer | Buffer, opts: AmcParseOption
     if (opts.skipSheets?.(sheetName)) continue;
     try {
       const rows = XLSX.utils.sheet_to_json<Row>(wb.Sheets[sheetName], { header: 1, blankrows: false, defval: null });
-      const scheme = parseScheme(sheetName, rows, opts);
-      if (scheme) out.push(scheme);
+      // Some AMCs (UTI) pack EVERY scheme into ONE sheet, each block introduced by
+      // a "SCHEME: <name>" row. Split on those markers so each fund parses on its
+      // own; with 0–1 markers, parse the whole sheet as before (no behaviour change
+      // for the one-scheme-per-sheet AMCs).
+      const marks: { i: number; name: string }[] = [];
+      for (let i = 0; i < rows.length; i++) {
+        const m = /^\s*scheme\s*[:\-]\s*(.+\S)/i.exec(s(rows[i]?.[0]));
+        if (m) marks.push({ i, name: m[1].replace(/[.\s]+$/, "").trim() });
+      }
+      if (marks.length >= 2) {
+        for (let k = 0; k < marks.length; k++) {
+          const seg = rows.slice(marks[k].i + 1, k + 1 < marks.length ? marks[k + 1].i : rows.length);
+          const scheme = parseScheme(marks[k].name, seg, opts);
+          if (scheme) out.push(scheme);
+        }
+      } else {
+        const scheme = parseScheme(sheetName, rows, opts);
+        if (scheme) out.push(scheme);
+      }
     } catch {
       /* skip unparseable sheet */
     }
