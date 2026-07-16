@@ -140,6 +140,18 @@ function findSchemeName(rows: Row[]): string {
       if (m && m[1] && /\b(fund|etf|plan|scheme)\b/i.test(m[1]) && !HOUSE_RE.test(m[1])) return cleanSchemeName(m[1]);
     }
   }
+  // 1c) The scheme name is the first scheme-like line after a "MONTHLY PORTFOLIO
+  //     STATEMENT AS ON <date>" banner (Motilal Oswal, whose sheets carry no
+  //     house banner ending in "Mutual Fund" and name the fund several rows down).
+  for (let i = 0; i < Math.min(rows.length, 10); i++) {
+    if (!rows[i].some((c) => /(monthly\s+)?portfolio\s+statement\b[\s\S]*\bas\s+on\b/i.test(s(c)))) continue;
+    for (let k = i + 1; k <= Math.min(i + 3, rows.length - 1); k++) {
+      for (const cell of rows[k]) {
+        if (looksLikeSchemeName(s(cell))) return cleanSchemeName(s(cell));
+      }
+    }
+    break;
+  }
   // 2) House-anchored: the title sits just under the fund-house banner.
   for (let i = 0; i < Math.min(rows.length, 4); i++) {
     if (!rows[i].some((c) => HOUSE_RE.test(s(c)))) continue;

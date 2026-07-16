@@ -375,6 +375,51 @@ function discoverUti(now: Date): HarvestedLink[] {
   for (const [yy, mm] of monthsToTry(now)) { const l = utiMonth(yy, mm); if (l.length) return l; }
   return [];
 }
+function lastDay(yy: number, mm: number): number { return new Date(Date.UTC(yy, mm, 0)).getUTCDate(); }
+
+// ---- Bank of India: templatable Sitecore monthly-portfolio URL (sfvrsn optional) ----
+function boiMonth(yy: number, mm: number): HarvestedLink[] {
+  const url = `https://www.boimf.in/docs/default-source/investorcorner/monthly-portfolio/monthly-portfolio---${lastDay(yy, mm)}-${MONTH_FULL[mm - 1].toLowerCase()}-${yy}.xlsx`;
+  return [{ url, text: "" }];
+}
+function discoverBoi(now: Date): HarvestedLink[] {
+  for (const [yy, mm] of monthsToTry(now)) { const l = boiMonth(yy, mm); if (l.length) return l; }
+  return [];
+}
+
+// ---- Quant: templatable Admin/disclouser URL ("…_june_30062026.xlsx") ----
+function quantMonth(yy: number, mm: number): HarvestedLink[] {
+  const dd = String(lastDay(yy, mm)).padStart(2, "0");
+  const url = `https://quantmutual.com/Admin/disclouser/monthly_portfolio_${MONTH_FULL[mm - 1].toLowerCase()}_${dd}${String(mm).padStart(2, "0")}${yy}.xlsx`;
+  return [{ url, text: "" }];
+}
+function discoverQuant(now: Date): HarvestedLink[] {
+  for (const [yy, mm] of monthsToTry(now)) { const l = quantMonth(yy, mm); if (l.length) return l; }
+  return [];
+}
+
+// ---- Motilal Oswal: AEM search API → the month-end "Scheme Portfolio Details" file ----
+function motilalMonth(yy: number, mm: number): HarvestedLink[] {
+  const data = json(
+    "https://www.motilaloswalmf.com/content/aem-cloud-dept-backend-motilal-oswal/api/search-documents.json?year=&category=month%20end%20portfolio&month=&type=mf",
+    { headers: { accept: "*/*", Referer: "https://www.motilaloswalmf.com/downloads/scheme-portfolio-details" } },
+  );
+  const results = data?.results;
+  if (!Array.isArray(results)) return [];
+  const tok = `${MONTH_FULL[mm - 1]} ${yy}`.toLowerCase(); // "june 2026"
+  for (const r of results) {
+    const title = String(r?.title ?? "").toLowerCase();
+    const path = String(r?.path ?? "");
+    if (!path || !/scheme portfolio details/.test(title) || !title.includes(tok)) continue;
+    const url = "https://www.motilaloswalmf.com" + path.split("/").map(encodeURIComponent).join("/");
+    return [{ url, text: (r?.title ?? "").trim() }];
+  }
+  return [];
+}
+function discoverMotilal(now: Date): HarvestedLink[] {
+  for (const [yy, mm] of monthsToTry(now)) { const l = motilalMonth(yy, mm); if (l.length) return l; }
+  return [];
+}
 
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
 const LIC_FORM = { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" };
@@ -618,6 +663,9 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   invesco: (n, b) => loopMonths(n, b, invescoMonth),
   "bajaj-finserv": (n, b) => loopMonths(n, b, bajajMonth),
   uti: (n, b) => loopMonths(n, b, utiMonth),
+  "bank-of-india": (n, b) => loopMonths(n, b, boiMonth),
+  quant: (n, b) => loopMonths(n, b, quantMonth),
+  "motilal-oswal": (n, b) => loopMonths(n, b, motilalMonth),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -675,6 +723,9 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   invesco: { discover: (now) => discoverInvesco(now), referer: "https://www.invescomutualfund.com/", page: "https://www.invescomutualfund.com/literature-and-form?tab=Complete" },
   "bajaj-finserv": { discover: (now) => discoverBajaj(now), referer: "https://www.bajajamc.com/", page: "https://www.bajajamc.com/downloads?portfolio=" },
   uti: { discover: (now) => discoverUti(now), referer: "https://www.utimf.com/", page: "https://www.utimf.com/downloads/consolidate-all-portfolio-disclosure" },
+  "bank-of-india": { discover: (now) => discoverBoi(now), referer: "https://www.boimf.in/", page: "https://www.boimf.in/investor-corner" },
+  quant: { discover: (now) => discoverQuant(now), referer: "https://quantmutual.com/", page: "https://quantmutual.com/statutory-disclosures" },
+  "motilal-oswal": { discover: (now) => discoverMotilal(now), referer: "https://www.motilaloswalmf.com/", page: "https://www.motilaloswalmf.com/downloads/scheme-portfolio-details" },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }
