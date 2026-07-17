@@ -38,4 +38,25 @@ export const BROWSER_CONFIG: Record<string, AmcBrowserConfig> = {
     urls: ["https://www.hdfcfund.com/statutory-disclosure/portfolio/monthly-portfolio"],
     hints: { include: /monthly/i },
   },
+
+  // Edelweiss is Akamai-walled to curl (403 everywhere) but renders in the browser.
+  // Its disclosures page loads the full document set and filters CLIENT-SIDE, so the
+  // per-scheme "EDEL_Portfolio_Monthly_Notes_<date>_<uploadstamp>.xlsx" links (whose
+  // upload-timestamp filenames can't be constructed) are captured on the wire /in the
+  // DOM regardless of the visible filter; `include` does the "Monthly Portfolio" pick
+  // on our side. Best-effort text clicks nudge the filter for good measure (fail soft).
+  edelweiss: {
+    urls: ["https://www.edelweissmf.com/literature/disclosures?productType=All"],
+    hints: { include: /monthly/i, clicks: ["text=Monthly Portfolio"], waitMs: 5000 },
+  },
+
+  // The Wealth Company's monthly-portfolio page is a React SPA whose download controls
+  // are event handlers (window.open) with no href — but the workbook URLs arrive in the
+  // page's data fetch, which the browser adapter captures on the wire (and from inline
+  // JSON). The /uploads/ host is open; filenames are opaque hashes, so this render is the
+  // only discovery path. `include` narrows to the monthly-portfolio workbooks.
+  "the-wealth-company": {
+    urls: ["https://www.wealthcompanyamc.in/monthly-portfolio/"],
+    hints: { include: /monthly.?portfolio/i, waitMs: 5000 },
+  },
 };
