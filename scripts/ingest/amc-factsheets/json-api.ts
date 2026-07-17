@@ -678,6 +678,56 @@ function itiHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
   return out;
 }
 
+// ---- 360 ONE (formerly IIFL) Mutual Fund: monthly portfolio S3 links on the page ----
+// The downloads SPA server-renders its full document catalog into the page's Next.js
+// flight data — "View Results" only filters already-rendered client data, it fires no
+// listing XHR. The "Monthly Portfolio <YYYY>" section maps each month to an OPAQUE S3
+// workbook URL whose filename is not templatable (random hash suffix + inconsistent
+// month spelling), so we discover from the page DOM itself: bound each year block by
+// the next "year" marker and pair month → fileUrl within it (so pairing can't cross a
+// year boundary). One consolidated workbook per month, holding all schemes.
+const ONE_PAGE = "https://www.360.one/asset/mutual-funds/downloads/";
+/** Every "Monthly Portfolio" workbook keyed by its as-on "YYYY-MM", newest wins. */
+function oneRows(): { ym: string; url: string }[] {
+  const html = curl(ONE_PAGE, { headers: { referer: "https://www.360.one/" } });
+  if (!html) return [];
+  const s = html.replace(/\\"/g, '"').replace(/\\\//g, "/"); // un-escape the embedded flight JSON
+  const yearMarks = [...s.matchAll(/"year":"/g)].map((m) => m.index ?? 0);
+  const out: { ym: string; url: string }[] = [];
+  const seen = new Set<string>();
+  for (const ymatch of s.matchAll(/"year":"Monthly Portfolio (\d{4})"/g)) {
+    const pos = ymatch.index ?? 0, year = ymatch[1];
+    const end = yearMarks.find((p) => p > pos) ?? s.length; // bound to this year block
+    for (const d of s.slice(pos, end).matchAll(/"month":"([A-Za-z]+)"[\s\S]*?"fileUrl":"(https:\/\/s3[^"]*IN_MF_MONTHLY_PORTFOLIO[^"]+\.xlsx?)"/g)) {
+      const mo = MONTH_NUM[d[1].slice(0, 3).toLowerCase()];
+      if (!mo) continue;
+      const ym = `${year}-${String(mo).padStart(2, "0")}`;
+      if (seen.has(ym)) continue;
+      seen.add(ym);
+      out.push({ ym, url: d[2] });
+    }
+  }
+  return out;
+}
+function discoverOne(now: Date): HarvestedLink[] {
+  const rows = oneRows();
+  for (const [yy, mm] of monthsToTry(now)) {
+    const hit = rows.find((r) => r.ym === `${yy}-${String(mm).padStart(2, "0")}`);
+    if (hit) return [{ url: hit.url, text: "" }];
+  }
+  const newest = rows.map((r) => r.ym).sort().pop(); // else the newest month present
+  const hit = newest ? rows.find((r) => r.ym === newest) : undefined;
+  return hit ? [{ url: hit.url, text: "" }] : [];
+}
+function oneHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  for (const { ym, url } of oneRows()) {
+    if (!inWin(ym, now, back + 1) || out.has(ym)) continue;
+    out.set(ym, [{ url, text: "" }]);
+  }
+  return out;
+}
+
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
 const LIC_FORM = { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" };
 function licSchemeList(): { code: string; name: string }[] {
@@ -930,6 +980,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   zerodha: (n, b) => loopMonths(n, b, zerodhaMonth),
   trust: (n, b) => trustHistory(n, b),
   iti: (n, b) => itiHistory(n, b),
+  "360-one": (n, b) => oneHistory(n, b),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -997,6 +1048,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   zerodha: { discover: (now) => discoverZerodha(now), referer: "https://www.zerodhafundhouse.com/", page: "https://www.zerodhafundhouse.com/resources/disclosures" },
   trust: { discover: (now) => discoverTrust(now), referer: "https://www.trustmf.com/", page: "https://www.trustmf.com/disclosures?activeTab=portfolio-disclosures" },
   iti: { discover: (now) => discoverIti(now), referer: "https://www.itiamc.com/", page: "https://www.itiamc.com/statuory-disclosure" },
+  "360-one": { discover: (now) => discoverOne(now), referer: "https://www.360.one/", page: ONE_PAGE },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }
