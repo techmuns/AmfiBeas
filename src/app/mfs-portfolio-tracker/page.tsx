@@ -5,7 +5,7 @@ import {
   TRACKER_TAB_IDS,
   type TrackerTabId,
 } from "@/components/data/PortfolioTrackerTabs";
-import { fundDirectory } from "@/data/portfolio-tracker";
+import { amcDirectFundDirectory } from "@/data/amc-direct-tracker";
 import { fundHouseDirectory } from "@/data/fundwise-tracker";
 import { resolveTab } from "@/lib/tabs";
 
@@ -39,7 +39,7 @@ export default async function MfsPortfolioTrackerPage({
         is updated each month once the latest portfolios are available.
       </p>
       <PortfolioTrackerSwitch
-        funds={fundDirectory}
+        funds={amcDirectFundDirectory}
         tabs={TRACKER_TABS}
         initialTab={activeTab}
         searchParams={sp}
