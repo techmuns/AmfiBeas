@@ -551,6 +551,28 @@ function discoverNj(now: Date): HarvestedLink[] {
   return [];
 }
 
+// ---- Zerodha Fund House: per-scheme monthly portfolio workbooks on the CDN ----
+// assets.zerodhafundhouse.com/statutory-reports/portfolio-disclosures/
+//   "<CODE> - Monthly Portfolio <Month> <Year>.xlsx" (spaces URL-encoded). Each
+// workbook is a single scheme whose name is a banner "MONTHLY PORTFOLIO STATEMENT
+// OF <name> FOR <Month> <Year>" (findSchemeName step 1b lifts <name>, so no code→
+// name map is needed). Codes cover equity/index/debt schemes; commodity ETFs
+// (gold/silver) hold no ISIN'd securities and parse to zero holdings — those are
+// dropped downstream, leaving the schemes that actually have a portfolio.
+const ZERODHA_CODES = ["ZBSEN", "ZE100", "ZE150", "ZELSS", "ZEN50", "ZESML", "ZGFOF", "ZGOLD", "ZLIQD", "ZLTGC", "ZMIDS", "ZMLTI", "ZN250", "ZNFTY", "ZNH73", "ZNSDG", "ZOVER", "ZSFOF", "ZSLVR"];
+function zerodhaUrl(code: string, yy: number, mm: number): string {
+  return `https://assets.zerodhafundhouse.com/statutory-reports/portfolio-disclosures/${encodeURIComponent(`${code} - Monthly Portfolio ${MONTH_FULL[mm - 1]} ${yy}`)}.xlsx`;
+}
+function zerodhaMonth(yy: number, mm: number): HarvestedLink[] {
+  return ZERODHA_CODES.map((code) => ({ url: zerodhaUrl(code, yy, mm), text: "" }));
+}
+function discoverZerodha(now: Date): HarvestedLink[] {
+  for (const [yy, mm] of monthsToTry(now)) {
+    if (curl(zerodhaUrl("ZNFTY", yy, mm))) return zerodhaMonth(yy, mm);
+  }
+  return [];
+}
+
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
 const LIC_FORM = { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" };
 function licSchemeList(): { code: string; name: string }[] {
@@ -800,6 +822,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   unifi: (n, b) => loopMonths(n, b, unifiMonth),
   mirae: (n, b) => loopMonths(n, b, miraeMonth),
   nj: (n, b) => loopMonths(n, b, njMonth),
+  zerodha: (n, b) => loopMonths(n, b, zerodhaMonth),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -864,6 +887,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   unifi: { discover: (now) => discoverUnifi(now), referer: "https://unifimf.com/", page: "https://unifimf.com/statutorydocuments/" },
   mirae: { discover: (now) => discoverMirae(now), referer: "https://www.miraeassetmf.co.in/", page: "https://www.miraeassetmf.co.in/downloads/portfolio" },
   nj: { discover: (now) => discoverNj(now), referer: "https://downloads.njmutualfund.com/", page: "https://downloads.njmutualfund.com/njmf_download.php?nme=127" },
+  zerodha: { discover: (now) => discoverZerodha(now), referer: "https://www.zerodhafundhouse.com/", page: "https://www.zerodhafundhouse.com/resources/disclosures" },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }

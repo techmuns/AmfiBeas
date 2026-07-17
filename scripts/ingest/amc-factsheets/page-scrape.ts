@@ -235,10 +235,6 @@ export const PAGE_SCRAPE_CONFIG: Record<string, PageScrapeConfig> = {
     include: /monthly[_\s-]*portfolio/i,
   },
   // Next.js page; per-scheme file URLs live in __NEXT_DATA__ JSON (spaces in names).
-  zerodha: {
-    urls: ["https://www.zerodhafundhouse.com/resources/disclosures"],
-    include: /monthly[_\s-]*portfolio/i,
-  },
   // Drupal exposed-filter view — the bare page lists nothing; the year+month TIDs
   // must be in the query string. Try the current then prior month (publish lag).
   taurus: {

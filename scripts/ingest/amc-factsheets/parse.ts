@@ -132,12 +132,13 @@ function findSchemeName(rows: Row[]): string {
       }
     }
   }
-  // 1b) "(Monthly) Portfolio Statement of <Scheme> as on <date>" names the scheme
-  //      inline (SAMCO, LIC, …). Grab it before the banner is rejected below.
+  // 1b) "(Monthly) Portfolio Statement of <Scheme> as on <date>" — or "… for
+  //      <Month> <Year>" (Zerodha) — names the scheme inline (SAMCO, LIC, …).
+  //      Grab it before the banner is rejected below.
   for (let i = 0; i < Math.min(rows.length, 6); i++) {
     for (const cell of rows[i]) {
-      const m = s(cell).match(/portfolio(?:\s+statement)?\s+of\s+(.+?)\s+(?:as\s+on|as\s+at|for\s+the\b)/i);
-      if (m && m[1] && /\b(fund|etf|plan|scheme)\b/i.test(m[1]) && !HOUSE_RE.test(m[1])) return cleanSchemeName(m[1]);
+      const m = s(cell).match(/portfolio(?:\s+statement)?\s+of\s+(.+?)\s+(?:as\s+on|as\s+at|for\s+the\b|(?:for\s+)?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{4}\b)/i);
+      if (m && m[1] && /\b(fund|fof|etf|plan|scheme)\b/i.test(m[1]) && !HOUSE_RE.test(m[1])) return cleanSchemeName(m[1]);
     }
   }
   // 1c) The scheme name is the first scheme-like line after a "MONTHLY PORTFOLIO
