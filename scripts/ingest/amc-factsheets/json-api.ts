@@ -962,6 +962,51 @@ function sundaramHistory(now: Date, back: number): Map<string, HarvestedLink[]> 
   return out;
 }
 
+// ---- JioBlackRock Mutual Fund: Next.js Server Action lists per-scheme workbooks ----
+// The disclosures page is a Next.js SPA; picking a month fires a Server Action POST to
+// the page URL (not a separate CMS XHR — the CMS call is server-side). The action
+// returns an RSC flight payload whose data[] rows carry {title, month, file.url}. The
+// file host (Azure CDN) is open but the filenames are opaque hashes, so this action is
+// the only discovery path. NOTE: the next-action id is baked into JioBlackRock's Next.js
+// build and changes when they redeploy — refresh JBR_NEXT_ACTION from the page's
+// month-select request if this ever stops returning rows (it fails soft to no-link).
+const JBR_ACTION = "https://www.jioblackrockamc.com/statutory-disclosure/disclosures/monthly-portfolio-disclosure";
+const JBR_NEXT_ACTION = "70db31784ed96088b0dc652fc7059d2263499a0b2d";
+const JBR_STATE_TREE = "%5B%22%22%2C%7B%22children%22%3A%5B%22(mf)%22%2C%7B%22children%22%3A%5B%22(public)%22%2C%7B%22children%22%3A%5B%22statutory-disclosure%22%2C%7B%22children%22%3A%5B%5B%22l1Id%22%2C%22disclosures%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%5B%22l2Id%22%2C%22monthly-portfolio-disclosure%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22__PAGE__%22%2C%7B%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%2Ctrue%5D";
+const JBR_HEADERS = {
+  accept: "text/x-component",
+  "content-type": "text/plain;charset=UTF-8",
+  "next-action": JBR_NEXT_ACTION,
+  "next-router-state-tree": JBR_STATE_TREE,
+  origin: "https://www.jioblackrockamc.com",
+  referer: JBR_ACTION,
+};
+/** Rows for a requested month, keyed by the reporting "YYYY-MM" parsed from each
+ *  title's "…-DD-MM-YYYY" suffix; the consolidated all-schemes workbook (titled just
+ *  "JioBlackRock Mutual Fund …") is dropped in favour of the clean per-scheme files. */
+function jbrRowsForMonth(monthName: string): { ym: string; name: string; url: string }[] {
+  const body = JSON.stringify(["monthly-portfolio-disclosure", { year: "$undefined", month: monthName, date: "$undefined" }, "MF"]);
+  const text = curl(JBR_ACTION, { method: "POST", body, headers: JBR_HEADERS });
+  if (!text) return [];
+  const out: { ym: string; name: string; url: string }[] = [];
+  for (const m of text.matchAll(/"title":"([^"]+?)"[\s\S]*?"file":\{"url":"(https:\/\/[^"]+?\.xlsx?)"/g)) {
+    const dm = /-(\d{2})-(\d{2})-(\d{4})\b/.exec(m[1]); // reporting date "…-30-06-2026"
+    if (!dm) continue;
+    const name = m[1].replace(/-Monthly-Portfolio-.*$/i, "").trim();
+    if (/^JioBlackRock Mutual Fund$/i.test(name)) continue; // consolidated dup
+    out.push({ ym: `${dm[3]}-${dm[2]}`, name, url: m[2] });
+  }
+  return out;
+}
+function jbrMonth(yy: number, mm: number): HarvestedLink[] {
+  const target = `${yy}-${String(mm).padStart(2, "0")}`;
+  return jbrRowsForMonth(MONTH_FULL[mm - 1]).filter((r) => r.ym === target).map((r) => ({ url: r.url, text: r.name }));
+}
+function discoverJbr(now: Date): HarvestedLink[] {
+  for (const [yy, mm] of monthsToTry(now)) { const l = jbrMonth(yy, mm); if (l.length) return l; }
+  return [];
+}
+
 // ---- Angel One Mutual Fund: monthly per-scheme workbooks on its downloads page ----
 // The downloads page server-renders a direct link per scheme:
 //   cms.angelonemf.com/…/formidable/<id>/Monthly-Portfolio-<Month>-<Year>-<Scheme>.xlsx
@@ -1342,6 +1387,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   sundaram: (n, b) => sundaramHistory(n, b),
   hsbc: (n, b) => hsbcHistory(n, b),
   "angel-one": (n, b) => angelOneHistory(n, b),
+  "jio-blackrock": (n, b) => loopMonths(n, b, jbrMonth),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -1418,6 +1464,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   sundaram: { discover: () => discoverSundaram(), referer: `${SUN_ORIGIN}/`, page: SUN_PAGE },
   hsbc: { discover: (now) => discoverHsbc(now), referer: `${HSBC_PAGE}`, page: HSBC_PAGE },
   "angel-one": { discover: (now) => discoverAngelOne(now), referer: `${AO_ORIGIN}/`, page: AO_PAGE },
+  "jio-blackrock": { discover: (now) => discoverJbr(now), referer: JBR_ACTION, page: JBR_ACTION },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }

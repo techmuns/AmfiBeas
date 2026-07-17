@@ -106,6 +106,10 @@ function looksLikeSchemeName(t: string): boolean {
   if (/^(isin|coupon|quantity|rating|industry|% to|exposure|market|fair value|yield|sr\.?\s*no|serial|s\.?\s*no|company|issuer|instrument|name of the|portfolio|monthly portfolio|portfolio statement|scheme name|as on|as at|notes?|product labelling|disclaimer|back to index|index|derivative)\b/i.test(t)) return false;
   // Asset-class SECTION headers inside the holdings table, not scheme names.
   if (/\b(equity\s*&\s*equity\s*related|listed\s*\/\s*awaiting|debt\s+instruments?\b|money\s+market\b|cash\s*&\s*(cash\s*)?equiv|net\s+(current\s+asset|receivabl|payabl))/i.test(t)) return false;
+  // Bare debt / money-market instrument-type headers that top each holdings block
+  // (JioBlackRock's debt sheets, …) — never a scheme name. Anchored to the whole
+  // cell so a real fund like "… Corporate Bond Fund" is untouched.
+  if (/^(certificate of deposits?|treasury bills?|commercial papers?|government securities|corporate (bond|debt)s?|tri[\s-]?party repo|treps|reverse repo|floating rate note|bonds?|debentures?)\s*$/i.test(t)) return false;
   // A one-line scheme-type description ("An open ended scheme investing in …").
   if (/^(an?|the)\s+open[\s-]?end/i.test(t) || /\b(scheme|fund)\s+(investing|predominantly|that)\b/i.test(t) || /risk[\s-]?o[\s-]?meter/i.test(t)) return false;
   // A bare sheet-code with no words (e.g. "RLMF001") — real names have a space
@@ -163,7 +167,11 @@ function findSchemeName(rows: Row[]): string {
     if (!rows[i].some((c) => /(monthly\s+)?portfolio\s+statement\b[\s\S]*\bas\s+on\b/i.test(s(c)))) continue;
     for (let k = i + 1; k <= Math.min(i + 3, rows.length - 1); k++) {
       for (const cell of rows[k]) {
-        if (looksLikeSchemeName(s(cell))) return cleanSchemeName(s(cell));
+        // Require a fund word: the rows just under this banner are the scheme title
+        // for AMCs that put it there (Motilal), but they are the first HOLDINGS for
+        // AMCs that title the sheet ABOVE the banner (JioBlackRock) — and a holding
+        // like "6.48% GOI 2035" must not be mistaken for the scheme name.
+        if (looksLikeSchemeName(s(cell)) && /\b(fund|fof|etf|plan|scheme)\b/i.test(s(cell))) return cleanSchemeName(s(cell));
       }
     }
     break;
