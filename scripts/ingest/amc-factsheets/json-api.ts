@@ -728,6 +728,55 @@ function oneHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
   return out;
 }
 
+// ---- Capitalmind Mutual Fund: per-scheme monthly workbooks on the disclosures page ----
+// The statutory-disclosures page renders each disclosure as
+// <span class="fs-16">Month Year</span><a href="/uploads/…xlsx"> inside per-scheme
+// accordions (only one open at a time in the browser, but all are in the DOM). The
+// /uploads/ filenames are opaque (Strapi hash suffix) and inconsistently spelled
+// (e.g. CMFLEXI_Portfolio_Disclosure_February_28_2026 has no "Monthly" token), so we
+// key off the rendered month LABEL, not the filename: keep pairs whose file is a
+// portfolio disclosure (excluding fortnightly + half-yearly) and whose label is a
+// bare "Month YYYY" (drops day-stamped fortnightly and "Apr to Sep" half-yearly rows).
+// One workbook per scheme, so a month yields several links (fewer for older months,
+// as Arbitrage/Multi-Asset launched later).
+const CM_PAGE = "https://capitalmindmf.com/statutory-disclosures.html";
+const CM_ORIGIN = "https://capitalmindmf.com";
+function cmRows(): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  const html = curl(CM_PAGE, { headers: { referer: `${CM_ORIGIN}/` } });
+  if (!html) return out;
+  for (const m of html.matchAll(/<span class="fs-16">([^<]+)<\/span>\s*<a\s+href="(\/uploads\/[^"]+\.xlsx?)"/g)) {
+    const f = m[2].toLowerCase();
+    if (!f.includes("portfolio") || f.includes("fortnight") || f.includes("half")) continue;
+    const lm = /^([A-Za-z]+)\s+(\d{4})$/.exec(m[1].trim()); // strict "Month YYYY" → monthly only
+    if (!lm) continue;
+    const mo = MONTH_NUM[lm[1].slice(0, 3).toLowerCase()];
+    if (!mo) continue;
+    const ym = `${lm[2]}-${String(mo).padStart(2, "0")}`;
+    const url = CM_ORIGIN + m[2];
+    if (!out.has(ym)) out.set(ym, []);
+    if (!out.get(ym)!.some((l) => l.url === url)) out.get(ym)!.push({ url, text: "" });
+  }
+  return out;
+}
+function discoverCm(now: Date): HarvestedLink[] {
+  const all = cmRows();
+  for (const [yy, mm] of monthsToTry(now)) {
+    const hit = all.get(`${yy}-${String(mm).padStart(2, "0")}`);
+    if (hit?.length) return hit;
+  }
+  const newest = [...all.keys()].sort().pop();
+  return newest ? all.get(newest)! : [];
+}
+function cmHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  for (const [ym, links] of cmRows()) {
+    if (!inWin(ym, now, back + 1)) continue;
+    out.set(ym, links);
+  }
+  return out;
+}
+
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
 const LIC_FORM = { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" };
 function licSchemeList(): { code: string; name: string }[] {
@@ -981,6 +1030,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   trust: (n, b) => trustHistory(n, b),
   iti: (n, b) => itiHistory(n, b),
   "360-one": (n, b) => oneHistory(n, b),
+  capitalmind: (n, b) => cmHistory(n, b),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -1049,6 +1099,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   trust: { discover: (now) => discoverTrust(now), referer: "https://www.trustmf.com/", page: "https://www.trustmf.com/disclosures?activeTab=portfolio-disclosures" },
   iti: { discover: (now) => discoverIti(now), referer: "https://www.itiamc.com/", page: "https://www.itiamc.com/statuory-disclosure" },
   "360-one": { discover: (now) => discoverOne(now), referer: "https://www.360.one/", page: ONE_PAGE },
+  capitalmind: { discover: (now) => discoverCm(now), referer: `${CM_ORIGIN}/`, page: CM_PAGE },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }
