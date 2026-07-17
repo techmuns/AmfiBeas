@@ -19,9 +19,8 @@ export const AMC_PREFIXES: [string, string][] = [
   ["Mahindra Manulife", "Mahindra Manulife"],
   ["Motilal Oswal", "Motilal Oswal"],
   ["Parag Parikh", "PPFAS"],
-  ["Franklin Build India", "Franklin Templeton"],
-  ["Franklin India", "Franklin Templeton"],
-  ["Templeton India", "Franklin Templeton"],
+  ["Franklin", "Franklin Templeton"],
+  ["Templeton", "Franklin Templeton"],
   ["ICICI Pru", "ICICI Pru"],
   ["Nippon India", "Nippon"],
   ["PGIM India", "PGIM"],
@@ -63,6 +62,7 @@ export const AMC_PREFIXES: [string, string][] = [
   ["Unifi", "Unifi"],
   ["Capitalmind", "Capitalmind"],
   ["Angel One", "Angel One"],
+  ["The Wealth Company", "The Wealth Company"],
 ];
 
 export function amcOf(fund: string): string {
@@ -71,4 +71,15 @@ export function amcOf(fund: string): string {
     if (f.toLowerCase().startsWith(pre.toLowerCase())) return label;
   }
   return f.split(/[\s(]/)[0]; // fallback: first token
+}
+
+/**
+ * Is this scheme a SEBI Specialized Investment Fund (SIF)? SIFs are a distinct
+ * product class from mutual-fund schemes and should be grouped apart in pickers.
+ * Every SIF launched to date is a "Long-Short" strategy (Edelweiss Altiva, SBI
+ * Magnum, ICICI iSIF, …) — a strategy no ordinary MF scheme carries — so the
+ * long-short marker in the name is a precise, brand-agnostic classifier.
+ */
+export function isSIF(fund: string): boolean {
+  return /\blong[\s-]?short\b/i.test(fund);
 }

@@ -32,7 +32,7 @@ import {
   monthSlug,
 } from "@/data/portfolio-tracker";
 import { classifySector, UNCLASSIFIED } from "@/data/sector-classification";
-import { amcOf } from "@/data/amc-name-map";
+import { amcOf, isSIF } from "@/data/amc-name-map";
 
 const MAX_SUGGESTIONS = 60;
 // Peer-average cohort cap. Top-N same-category peers by AUM are fetched
@@ -319,6 +319,22 @@ export function PortfolioTrackerView({
     [funds]
   );
 
+  // SIFs (Specialized Investment Funds) are a separate product class, not fund
+  // houses — split them out so the picker can group them under their own heading.
+  const sifLabels = useMemo(() => {
+    const s = new Set<string>();
+    for (const f of funds) if (isSIF(f.fund)) s.add(amcOf(f.fund));
+    return s;
+  }, [funds]);
+  const houseOptions = useMemo(
+    () => amcOptions.filter((a) => !sifLabels.has(a)),
+    [amcOptions, sifLabels]
+  );
+  const sifOptions = useMemo(
+    () => amcOptions.filter((a) => sifLabels.has(a)),
+    [amcOptions, sifLabels]
+  );
+
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase();
     const pool = amcFilter
@@ -565,11 +581,20 @@ export function PortfolioTrackerView({
           className="rounded-md border bg-card px-2 py-2.5 text-sm text-foreground focus:border-foreground focus:outline-none"
         >
           <option value="">All fund houses</option>
-          {amcOptions.map((a) => (
+          {houseOptions.map((a) => (
             <option key={a} value={a}>
               {a}
             </option>
           ))}
+          {sifOptions.length > 0 && (
+            <optgroup label="SIFs">
+              {sifOptions.map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))}
+            </optgroup>
+          )}
         </select>
       <div className="relative min-w-[16rem] flex-1">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
