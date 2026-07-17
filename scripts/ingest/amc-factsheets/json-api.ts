@@ -962,6 +962,83 @@ function sundaramHistory(now: Date, back: number): Map<string, HarvestedLink[]> 
   return out;
 }
 
+// ---- HSBC Mutual Fund: per-scheme workbooks on the open media host ----
+// The monthly-portfolio listing is a Sitecore SPA (not curl-able) and the
+// per-scheme workbooks appear on no server-rendered page, but the media host is
+// OPEN and the URL is fully determined by the reporting date:
+//   /-/media/…/portfolios/document-<DDMMYYYY>/hsbc-<slug>-<DD>-<month>-<YYYY>.xlsx
+// (folder AND filename both carry the month-end reporting date; the workbook is
+// per scheme). So enumerate HSBC's scheme universe against that host for the
+// latest published month-end — probe the current month, then the prior; a scheme
+// not filed for a month simply 404s and is skipped by downloadAndParse.
+const HSBC_MEDIA = "https://www.assetmanagement.hsbc.co.in/-/media/files/attachments/india/mutual-funds/portfolios";
+const HSBC_PAGE = "https://www.assetmanagement.hsbc.co.in/en/mutual-funds/investor-resources";
+// HSBC's scheme universe as name → URL slug (the marketing name slugified the way
+// HSBC publishes it). The live host is the source of truth — a wrong/retired slug
+// just 404s; a newly launched scheme is a one-line add here.
+const HSBC_SCHEMES: { name: string; slug: string }[] = [
+  { name: "HSBC Large Cap Fund", slug: "large-cap-fund" },
+  { name: "HSBC Small Cap Fund", slug: "small-cap-fund" },
+  { name: "HSBC Midcap Fund", slug: "midcap-fund" },
+  { name: "HSBC Flexi Cap Fund", slug: "flexi-cap-fund" },
+  { name: "HSBC Value Fund", slug: "value-fund" },
+  { name: "HSBC Focused Fund", slug: "focused-fund" },
+  { name: "HSBC ELSS Tax Saver Fund", slug: "elss-tax-saver-fund" },
+  { name: "HSBC Business Cycles Fund", slug: "business-cycles-fund" },
+  { name: "HSBC Multi Cap Fund", slug: "multi-cap-fund" },
+  { name: "HSBC Consumption Fund", slug: "consumption-fund" },
+  { name: "HSBC Infrastructure Fund", slug: "infrastructure-fund" },
+  { name: "HSBC Aggressive Hybrid Fund", slug: "aggressive-hybrid-fund" },
+  { name: "HSBC Balanced Advantage Fund", slug: "balanced-advantage-fund" },
+  { name: "HSBC Equity Savings Fund", slug: "equity-savings-fund" },
+  { name: "HSBC Arbitrage Fund", slug: "arbitrage-fund" },
+  { name: "HSBC Conservative Hybrid Fund", slug: "conservative-hybrid-fund" },
+  { name: "HSBC Multi Asset Allocation Fund", slug: "multi-asset-allocation-fund" },
+  { name: "HSBC Nifty 50 Index Fund", slug: "nifty-50-index-fund" },
+  { name: "HSBC Nifty Next 50 Index Fund", slug: "nifty-next-50-index-fund" },
+  { name: "HSBC Corporate Bond Fund", slug: "corporate-bond-fund" },
+  { name: "HSBC Banking and PSU Debt Fund", slug: "banking-and-psu-debt-fund" },
+  { name: "HSBC Short Duration Fund", slug: "short-duration-fund" },
+  { name: "HSBC Ultra Short Duration Fund", slug: "ultra-short-duration-fund" },
+  { name: "HSBC Low Duration Fund", slug: "low-duration-fund" },
+  { name: "HSBC Money Market Fund", slug: "money-market-fund" },
+  { name: "HSBC Overnight Fund", slug: "overnight-fund" },
+  { name: "HSBC Liquid Fund", slug: "liquid-fund" },
+  { name: "HSBC Gilt Fund", slug: "gilt-fund" },
+  { name: "HSBC Dynamic Bond Fund", slug: "dynamic-bond-fund" },
+  { name: "HSBC Credit Risk Fund", slug: "credit-risk-fund" },
+  { name: "HSBC Medium Duration Fund", slug: "medium-duration-fund" },
+  { name: "HSBC Brazil Fund", slug: "brazil-fund" },
+  { name: "HSBC Global Emerging Markets Fund", slug: "global-emerging-markets-fund" },
+];
+function hsbcUrl(slug: string, yy: number, mm: number): string {
+  const d = new Date(Date.UTC(yy, mm, 0)).getUTCDate(); // last day of month mm (1-based)
+  const folder = `document-${String(d).padStart(2, "0")}${String(mm).padStart(2, "0")}${yy}`;
+  const file = `hsbc-${slug}-${d}-${MONTH_FULL[mm - 1].toLowerCase()}-${yy}.xlsx`;
+  return `${HSBC_MEDIA}/${folder}/${file}`;
+}
+function hsbcLinksFor(yy: number, mm: number): HarvestedLink[] {
+  return HSBC_SCHEMES.map((s) => ({ url: hsbcUrl(s.slug, yy, mm), text: s.name }));
+}
+// The host blocks HEAD (403), so probe existence with the (small) Flexi Cap
+// workbook GET — it's always filed for a published month.
+function hsbcMonthPublished(yy: number, mm: number): boolean {
+  return curl(hsbcUrl("flexi-cap-fund", yy, mm), { headers: { referer: `${HSBC_PAGE}` } }) != null;
+}
+function discoverHsbc(now: Date): HarvestedLink[] {
+  for (const [yy, mm] of monthsToTry(now)) if (hsbcMonthPublished(yy, mm)) return hsbcLinksFor(yy, mm);
+  return [];
+}
+function hsbcHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  for (const { yy, mm } of lastNMonths(now, back + 1)) {
+    const ym = `${yy}-${String(mm).padStart(2, "0")}`;
+    if (out.has(ym) || !hsbcMonthPublished(yy, mm)) continue;
+    out.set(ym, hsbcLinksFor(yy, mm));
+  }
+  return out;
+}
+
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
 const LIC_FORM = { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" };
 function licSchemeList(): { code: string; name: string }[] {
@@ -1221,6 +1298,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   abakkus: (n, b) => monthRowsHistory(abakkusRows(), n, b),
   "old-bridge": (n, b) => obHistory(n, b),
   sundaram: (n, b) => sundaramHistory(n, b),
+  hsbc: (n, b) => hsbcHistory(n, b),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -1295,6 +1373,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   abakkus: { discover: (now) => latestMonthLinks(abakkusRows(), now), referer: `${ABAKKUS_ORIGIN}/`, page: ABAKKUS_PAGE },
   "old-bridge": { discover: (now) => discoverOb(now), referer: `${OB_ORIGIN}/`, page: OB_PAGE },
   sundaram: { discover: () => discoverSundaram(), referer: `${SUN_ORIGIN}/`, page: SUN_PAGE },
+  hsbc: { discover: (now) => discoverHsbc(now), referer: `${HSBC_PAGE}`, page: HSBC_PAGE },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }

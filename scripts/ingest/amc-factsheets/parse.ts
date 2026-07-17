@@ -55,7 +55,7 @@ function findColumns(rows: Row[]): { headerIdx: number; cols: ColMap } | null {
     const isin = r.findIndex((c) => c === "isin" || c.includes("isin"));
     // "% to NAV/AUM" (SBI, Nippon, …) and the spelled-out "% to Net Assets"
     // (Shriram) name the same weight column.
-    const pct = r.findIndex((c) => c.includes("% to") || c.includes("%to") || (c.includes("%") && (c.includes("nav") || c.includes("aum") || c.includes("net asset"))));
+    const pct = r.findIndex((c) => c.includes("% to") || c.includes("%to") || c.includes("percentage to") || (c.includes("%") && (c.includes("nav") || c.includes("aum") || c.includes("net asset"))));
     if (isin < 0 || pct < 0) continue;
     const name = r.findIndex((c) => c.includes("name of the instrument") || c.includes("instrument") || c.includes("issuer"));
     const industry = r.findIndex((c) => c.includes("industry") || c.includes("rating"));
@@ -130,6 +130,21 @@ function findSchemeName(rows: Row[]): string {
         const next = s(rows[i][j + 1]) || s(rows[i + 1]?.[j]);
         if (next && !HOUSE_RE.test(next)) return cleanSchemeName(next);
       }
+    }
+  }
+  // 1a) Some AMCs (HSBC) pack the house name, scheme name, a scheme-type
+  //     description and "Portfolio Statement as of <date>" into ONE multi-line
+  //     header cell. Only treat a multi-line cell as this title block when one of
+  //     its lines IS the "<AMC> Mutual Fund" banner (so a wrapped column header
+  //     like Sundaram's "Mkt Value\n(Rs Lacs)" is never mistaken for a title);
+  //     then take the first scheme-like line below it.
+  for (let i = 0; i < Math.min(rows.length, 4); i++) {
+    for (const cell of rows[i]) {
+      const raw = s(cell);
+      if (!/[\r\n]/.test(raw)) continue;
+      const lines = raw.split(/[\r\n]+/).map((l) => l.trim());
+      if (!lines.some((l) => HOUSE_RE.test(l))) continue;
+      for (const t of lines) if (looksLikeSchemeName(t)) return cleanSchemeName(t);
     }
   }
   // 1b) "(Monthly) Portfolio Statement of <Scheme> as on <date>" — or "… for
