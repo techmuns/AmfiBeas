@@ -617,6 +617,67 @@ function trustHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
   return out;
 }
 
+// ---- ITI Mutual Fund: AES-encrypted catalog API lists every monthly portfolio ----
+// The SPA reads itiamc.com/jeeth/api/v1/catalog; BOTH request and response wrap
+// their JSON in an `eData` field = AES-128-CBC ciphertext the app de/encrypts
+// client-side (key+IV are static in the main bundle). getPartnerDocumentByType
+// with {type:"Disclosure"} returns the whole disclosure catalog; the "Monthly
+// Portfolio - <Month> <Year>" rows each carry a single consolidated workbook
+// (all schemes). A row's own month/year is the PUBLISH month (data month + 1),
+// so key by the as-on month parsed from the fileName label instead.
+const ITI_API = "https://itiamc.com/jeeth/api/v1/catalog/getPartnerDocumentByType";
+const ITI_KEY = Buffer.from("aar6tzij8o1snaar", "utf8"); // AES-128 key (16 bytes)
+const ITI_IV = Buffer.from("0123456789ABCDEF", "utf8");
+const ITI_HEADERS = { "content-type": "application/json", origin: "https://www.itiamc.com", referer: "https://www.itiamc.com/" };
+function itiEnc(s: string): string {
+  const c = crypto.createCipheriv("aes-128-cbc", ITI_KEY, ITI_IV);
+  return Buffer.concat([c.update(Buffer.from(s, "utf8")), c.final()]).toString("base64");
+}
+function itiDec(b64: string): string {
+  const d = crypto.createDecipheriv("aes-128-cbc", ITI_KEY, ITI_IV);
+  return Buffer.concat([d.update(Buffer.from(b64, "base64")), d.final()]).toString("utf8");
+}
+interface ItiTopic { fileName?: string; url?: string }
+interface ItiEnvelope { data?: { typeList?: { subTypesList?: { topicsList?: ItiTopic[] }[] }[] } }
+/** Every "Monthly Portfolio - <Month> <Year>" workbook keyed by its as-on "YYYY-MM". */
+function itiRows(): { ym: string; url: string }[] {
+  const guid = crypto.randomBytes(16).toString("hex");
+  const payload = JSON.stringify({ type: "Disclosure", guid, timeStamp: Date.now() });
+  const body = JSON.stringify({ eData: itiEnc(payload) });
+  const raw = curl(ITI_API, { method: "POST", body, headers: ITI_HEADERS });
+  if (!raw) return [];
+  let obj: ItiEnvelope;
+  try { obj = JSON.parse(itiDec(JSON.parse(raw).eData)); } catch { return []; }
+  const out: { ym: string; url: string }[] = [];
+  for (const t of obj.data?.typeList ?? [])
+    for (const s of t.subTypesList ?? [])
+      for (const tp of s.topicsList ?? []) {
+        const m = /^\s*monthly portfolio\s*-\s*([A-Za-z]+)\s+(\d{4})/i.exec(tp.fileName ?? "");
+        if (!m || !tp.url || !/\.xlsx?(\?|$)/i.test(tp.url)) continue;
+        const mo = MONTH_NUM[m[1].slice(0, 3).toLowerCase()];
+        if (!mo) continue;
+        out.push({ ym: `${m[2]}-${String(mo).padStart(2, "0")}`, url: tp.url.replace(/ /g, "%20") });
+      }
+  return out;
+}
+function discoverIti(now: Date): HarvestedLink[] {
+  const rows = itiRows();
+  for (const [yy, mm] of monthsToTry(now)) {
+    const ym = `${yy}-${String(mm).padStart(2, "0")}`;
+    const hit = rows.find((r) => r.ym === ym);
+    if (hit) return [{ url: hit.url, text: "" }];
+  }
+  return rows.length ? [{ url: rows[0].url, text: "" }] : [];
+}
+function itiHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  for (const { ym, url } of itiRows()) {
+    if (!inWin(ym, now, back + 1) || out.has(ym)) continue;
+    out.set(ym, [{ url, text: "" }]);
+  }
+  return out;
+}
+
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
 const LIC_FORM = { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" };
 function licSchemeList(): { code: string; name: string }[] {
@@ -868,6 +929,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   nj: (n, b) => loopMonths(n, b, njMonth),
   zerodha: (n, b) => loopMonths(n, b, zerodhaMonth),
   trust: (n, b) => trustHistory(n, b),
+  iti: (n, b) => itiHistory(n, b),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -934,6 +996,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   nj: { discover: (now) => discoverNj(now), referer: "https://downloads.njmutualfund.com/", page: "https://downloads.njmutualfund.com/njmf_download.php?nme=127" },
   zerodha: { discover: (now) => discoverZerodha(now), referer: "https://www.zerodhafundhouse.com/", page: "https://www.zerodhafundhouse.com/resources/disclosures" },
   trust: { discover: (now) => discoverTrust(now), referer: "https://www.trustmf.com/", page: "https://www.trustmf.com/disclosures?activeTab=portfolio-disclosures" },
+  iti: { discover: (now) => discoverIti(now), referer: "https://www.itiamc.com/", page: "https://www.itiamc.com/statuory-disclosure" },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }
