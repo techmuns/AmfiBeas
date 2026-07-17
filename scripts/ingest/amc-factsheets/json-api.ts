@@ -962,6 +962,48 @@ function sundaramHistory(now: Date, back: number): Map<string, HarvestedLink[]> 
   return out;
 }
 
+// ---- Angel One Mutual Fund: monthly per-scheme workbooks on its downloads page ----
+// The downloads page server-renders a direct link per scheme:
+//   cms.angelonemf.com/…/formidable/<id>/Monthly-Portfolio-<Month>-<Year>-<Scheme>.xlsx
+// (a WordPress/Formidable upload). Harvest those, key by the month in the filename,
+// and group per month (one workbook per scheme; all-passive ETF/index/FoF range).
+// The "Half-Yearly-portfolio-…" files on the same page are excluded by the prefix.
+const AO_ORIGIN = "https://www.angelonemf.com";
+const AO_PAGE = "https://www.angelonemf.com/downloads";
+function aoRows(): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  const html = curl(AO_PAGE, { headers: { referer: `${AO_ORIGIN}/` } });
+  if (!html) return out;
+  const seen = new Set<string>();
+  for (const m of html.matchAll(/https:\/\/cms\.angelonemf\.com\/[^"' ]*?\/formidable\/\d+\/Monthly-Portfolio-([A-Za-z]+)-(\d{4})-([^"' ]+?\.xlsx?)/gi)) {
+    const mo = MONTH_NUM[m[1].slice(0, 3).toLowerCase()];
+    if (!mo || seen.has(m[0])) continue;
+    seen.add(m[0]);
+    const ym = `${m[2]}-${String(mo).padStart(2, "0")}`;
+    const name = `Angel One ${m[3].replace(/\.xlsx?$/i, "").replace(/-/g, " ").replace(/^Angel One /i, "").replace(/\s+\d+$/, "").trim()}`;
+    if (!out.has(ym)) out.set(ym, []);
+    out.get(ym)!.push({ url: m[0], text: name });
+  }
+  return out;
+}
+function discoverAngelOne(now: Date): HarvestedLink[] {
+  const all = aoRows();
+  for (const [yy, mm] of monthsToTry(now)) {
+    const hit = all.get(`${yy}-${String(mm).padStart(2, "0")}`);
+    if (hit?.length) return hit;
+  }
+  const newest = [...all.keys()].sort().pop();
+  return newest ? all.get(newest)! : [];
+}
+function angelOneHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  for (const [ym, links] of aoRows()) {
+    if (!inWin(ym, now, back + 1)) continue;
+    out.set(ym, links);
+  }
+  return out;
+}
+
 // ---- HSBC Mutual Fund: per-scheme workbooks on the open media host ----
 // The monthly-portfolio listing is a Sitecore SPA (not curl-able) and the
 // per-scheme workbooks appear on no server-rendered page, but the media host is
@@ -1299,6 +1341,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   "old-bridge": (n, b) => obHistory(n, b),
   sundaram: (n, b) => sundaramHistory(n, b),
   hsbc: (n, b) => hsbcHistory(n, b),
+  "angel-one": (n, b) => angelOneHistory(n, b),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -1374,6 +1417,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   "old-bridge": { discover: (now) => discoverOb(now), referer: `${OB_ORIGIN}/`, page: OB_PAGE },
   sundaram: { discover: () => discoverSundaram(), referer: `${SUN_ORIGIN}/`, page: SUN_PAGE },
   hsbc: { discover: (now) => discoverHsbc(now), referer: `${HSBC_PAGE}`, page: HSBC_PAGE },
+  "angel-one": { discover: (now) => discoverAngelOne(now), referer: `${AO_ORIGIN}/`, page: AO_PAGE },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }
