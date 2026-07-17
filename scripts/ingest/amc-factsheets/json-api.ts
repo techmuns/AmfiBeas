@@ -1049,6 +1049,50 @@ function angelOneHistory(now: Date, back: number): Map<string, HarvestedLink[]> 
   return out;
 }
 
+// ---- The Wealth Company Mutual Fund: document list inlined in the RSC payload ----
+// The monthly portfolio-documents page (Next.js App Router) streams its Strapi-backed
+// document list into the HTML as escaped JSON: {"uploadDate":"2026-06-30",…,"name":
+// "Monthly - The Wealth Company <scheme> - <Month DD, YYYY>",…,"attachment":{…,"url":
+// "/uploads/Monthly_Portfolio_<scheme>_<hash>.xlsx"}}. One workbook per scheme per
+// month, ~3 months deep, on an /uploads/ host open to plain curl — so this is a curl
+// adapter, no browser needed. (The former /monthly-portfolio/ page now 301s to the
+// homepage, which is why the old browser-tier config never harvested anything.)
+const TWC_ORIGIN = "https://www.wealthcompanyamc.in";
+const TWC_PAGE = `${TWC_ORIGIN}/literature-forms/portfolio-documents/monthly/`;
+function twcRows(): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  const html = curl(TWC_PAGE, { headers: { referer: `${TWC_ORIGIN}/` } });
+  if (!html) return out;
+  // Entries stream in one escaped-JSON string; the tempered gap (no crossing the
+  // next uploadDate) keys each attachment to ITS entry's as-on month.
+  const re = /\\"uploadDate\\":\\"(\d{4}-\d{2})-\d{2}\\"(?:(?!\\"uploadDate\\")[\s\S]){0,1500}?\\"attachment\\":\{[^{}]{0,400}?\\"url\\":\\"(\/uploads\/[^"\\]+?\.xlsx?)\\"/g;
+  for (const m of html.matchAll(re)) {
+    const ym = m[1];
+    const url = TWC_ORIGIN + m[2];
+    if (!out.has(ym)) out.set(ym, []);
+    const arr = out.get(ym)!;
+    if (!arr.some((l) => l.url === url)) arr.push({ url, text: "" });
+  }
+  return out;
+}
+function discoverTwc(now: Date): HarvestedLink[] {
+  const all = twcRows();
+  for (const [yy, mm] of monthsToTry(now)) {
+    const hit = all.get(`${yy}-${String(mm).padStart(2, "0")}`);
+    if (hit?.length) return hit;
+  }
+  const newest = [...all.keys()].sort().pop();
+  return newest ? all.get(newest)! : [];
+}
+function twcHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  for (const [ym, links] of twcRows()) {
+    if (!inWin(ym, now, back + 1)) continue;
+    out.set(ym, links);
+  }
+  return out;
+}
+
 // ---- HSBC Mutual Fund: per-scheme workbooks on the open media host ----
 // The monthly-portfolio listing is a Sitecore SPA (not curl-able) and the
 // per-scheme workbooks appear on no server-rendered page, but the media host is
@@ -1388,6 +1432,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   hsbc: (n, b) => hsbcHistory(n, b),
   "angel-one": (n, b) => angelOneHistory(n, b),
   "jio-blackrock": (n, b) => loopMonths(n, b, jbrMonth),
+  "the-wealth-company": (n, b) => twcHistory(n, b),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -1465,6 +1510,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   hsbc: { discover: (now) => discoverHsbc(now), referer: `${HSBC_PAGE}`, page: HSBC_PAGE },
   "angel-one": { discover: (now) => discoverAngelOne(now), referer: `${AO_ORIGIN}/`, page: AO_PAGE },
   "jio-blackrock": { discover: (now) => discoverJbr(now), referer: JBR_ACTION, page: JBR_ACTION },
+  "the-wealth-company": { discover: (now) => discoverTwc(now), referer: `${TWC_ORIGIN}/`, page: TWC_PAGE },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }

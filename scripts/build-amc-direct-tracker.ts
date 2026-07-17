@@ -64,6 +64,11 @@ function normName(raw: string): string {
     .replace(/[^a-z0-9 ]+/g, " ")
     .replace(/\b(reg|dir|direct|growth|idcw|payout|reinvest(ment)?|plan|option|mutual|fund|scheme|the|of)\b/g, " ")
     .replace(/\b(mid|large|small|flexi|multi|micro) cap\b/g, "$1cap")
+    // Workbook-title abbreviations vs the registry's full names (The Wealth
+    // Company's "MULTIASSET ALLOC" / "BALANCED ADVT") — expand for matching only.
+    .replace(/\badvt\b/g, "advantage")
+    .replace(/\balloc\b/g, "allocation")
+    .replace(/\bmulti\s+asset\b/g, "multiasset")
     .replace(/\s+/g, " ")
     .trim();
 }

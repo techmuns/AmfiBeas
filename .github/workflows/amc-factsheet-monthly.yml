@@ -24,6 +24,11 @@ on:
         required: false
         default: "true"
         type: string
+      debug:
+        description: "Set to 'true' to log browser-tier diagnostics (page titles, harvested links, per-download status) for bot-wall iteration."
+        required: false
+        default: "false"
+        type: string
 
 permissions:
   contents: write
@@ -49,6 +54,7 @@ jobs:
       - name: Fetch + parse AMC monthly portfolios
         env:
           AMC_ONLY: ${{ inputs.amcs }}
+          AMC_BROWSER_DEBUG: ${{ inputs.debug == 'true' && '1' || '' }}
         run: npx tsx scripts/ingest/amc-factsheets/run-monthly.ts
       - name: Rebuild AMC-direct tracker (universe + panels + crosswalk)
         # The MFs Portfolio Tracker is sourced entirely from AMC-direct filings

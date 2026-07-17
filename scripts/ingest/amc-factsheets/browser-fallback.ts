@@ -168,21 +168,61 @@ async function mapPool<T, R>(items: T[], n: number, fn: (t: T) => Promise<R>): P
   return out;
 }
 
+const DEBUG = !!process.env.AMC_BROWSER_DEBUG;
+function dbg(msg: string): void {
+  if (DEBUG) console.log(`    [browser] ${msg}`);
+}
+
+/** Fetch a file from INSIDE the page (Chromium's own network stack + session
+ *  cookies). Akamai-class walls that clear the rendered page often still 403
+ *  Playwright's request client, whose TLS fingerprint isn't Chrome's — an
+ *  in-page fetch presents exactly the fingerprint that already passed. */
+async function fetchViaPage(page: Page, url: string): Promise<Buffer | null> {
+  try {
+    const b64 = await page.evaluate(async (u: string) => {
+      const r = await fetch(u, { credentials: "include" });
+      if (!r.ok) return null;
+      const bytes = new Uint8Array(await r.arrayBuffer());
+      let s = "";
+      for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      return btoa(s);
+    }, url);
+    return b64 ? Buffer.from(b64, "base64") : null;
+  } catch {
+    return null;
+  }
+}
+
 async function downloadAndParseMany(
   ctx: BrowserContext,
   links: HarvestedLink[],
   opts: AmcParseOptions,
+  page?: Page,
 ): Promise<AmcScheme[]> {
   // AMCs publish per-scheme workbooks (HDFC ~95, Groww ~117), so download in
   // parallel — sequential fetches are the run's bottleneck.
   const perFile = await mapPool(links, 6, async (l): Promise<AmcScheme[]> => {
     try {
-      const resp = await ctx.request.get(l.url, { timeout: 45000 });
-      if (!resp.ok()) return [];
-      const buf = Buffer.from(await resp.body());
+      let buf: Buffer | null = null;
+      let status = 0;
+      try {
+        const resp = await ctx.request.get(l.url, { timeout: 45000 });
+        status = resp.status();
+        if (resp.ok()) buf = Buffer.from(await resp.body());
+      } catch { /* fall through to the in-page fetch */ }
+      const walled = buf && buf.subarray(0, 64).toString("latin1").trimStart().toLowerCase().match(/^<(!doctype|html)/);
+      if ((!buf || walled) && page && !page.isClosed()) {
+        dbg(`request client got ${walled ? "an HTML wall" : `HTTP ${status || "error"}`} for ${l.url.slice(0, 90)} — retrying in-page`);
+        buf = await fetchViaPage(page, l.url);
+      } else if (walled) {
+        buf = null;
+      }
+      if (!buf) { dbg(`download failed: ${l.url.slice(0, 110)}`); return []; }
       const head = buf.subarray(0, 64).toString("latin1").trimStart().toLowerCase();
-      if (head.startsWith("<!doctype") || head.startsWith("<html")) return []; // still a wall
-      return parseAmcWorkbook(buf, opts).map(normalizeSchemePct);
+      if (head.startsWith("<!doctype") || head.startsWith("<html")) { dbg(`still a wall: ${l.url.slice(0, 110)}`); return []; }
+      const schemes = parseAmcWorkbook(buf, opts).map(normalizeSchemePct);
+      dbg(`parsed ${schemes.length} scheme(s), ${buf.length}b: ${l.url.slice(0, 110)}`);
+      return schemes;
     } catch {
       return []; // skip a single bad file
     }
@@ -245,7 +285,8 @@ export async function browserFetchAmc(
           // Not a download after all (served inline / captured on the wire) —
           // fall through to harvest, which will include `captured`.
         } else {
-          await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
+          const nav = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
+          dbg(`goto ${url.slice(0, 90)} → HTTP ${nav?.status() ?? "?"}`);
         }
 
         // Case 2: disclosure page — settle, run interaction hints, harvest.
@@ -266,9 +307,17 @@ export async function browserFetchAmc(
           await page.waitForTimeout((hints.waitMs ?? 2500) + 2500);
           found = await harvestLinks(page, captured, hints.include);
         }
+        if (DEBUG) {
+          const title = await page.title().catch(() => "?");
+          const bodyText = await page.evaluate(() => document.body?.innerText.slice(0, 300) ?? "").catch(() => "");
+          dbg(`title="${title}" | net-captured=${captured.size} | harvested=${found.length}`);
+          if (found.length === 0) dbg(`body starts: ${JSON.stringify(bodyText.slice(0, 200))}`);
+          for (const l of found.slice(0, 8)) dbg(`  link: ${l.url.slice(0, 110)} "${l.text.slice(0, 40)}"`);
+        }
         const picked = selectLatestMonthFiles(found, hints.maxFiles, hints.floorScore, hints.ceilScore);
+        dbg(`picked ${picked.length}/${found.length} for the latest month`);
         if (picked.length) {
-          const schemes = await downloadAndParseMany(ctx, picked, opts);
+          const schemes = await downloadAndParseMany(ctx, picked, opts, page);
           if (schemes.length) return { schemes, usedUrl: url, fileCount: picked.length };
         }
       } finally {

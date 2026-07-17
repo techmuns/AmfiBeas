@@ -87,6 +87,10 @@ function cleanSchemeName(t: string): string {
   let out = t
     .replace(/^portfolio of\s+/i, "") // Kotak: "Portfolio of X Fund as on …"
     .replace(/\s+as on\b.*$/i, "") // "… as on May 31, 2026"
+    // A leading internal sheet code fused to the title (The Wealth Company's
+    // "WCLQ-THE WEALTH COMPANY LIQUID FUND") — drop it when a real multi-word
+    // title follows, so display names and registry matching see the true name.
+    .replace(/^[A-Z]{2,6}\d{0,3}\s*-\s*(?=\S+\s+\S{2,})/, "")
     .trim();
   const m = out.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
   if (m && (m[2].length > 15 || /\b(scheme|open[\s-]?end|investing|fund|risk)\b/i.test(m[2]))) {
@@ -194,6 +198,16 @@ function findSchemeName(rows: Row[]): string {
       if (/\bfund\b/i.test(t) && t.length > 6 && !HOUSE_RE.test(t)) {
         return cleanSchemeName(t);
       }
+    }
+  }
+  // 3b) ETF / FoF titles with no "Fund" word at all (The Wealth Company's
+  //     "WCGE-THE WEALTH COMPANY GOLD ETF"): the first scheme-like top-row cell
+  //     naming an ETF/FoF. looksLikeSchemeName keeps banners, column headers and
+  //     holdings rows (which can mention an ETF the scheme holds) out.
+  for (let i = 0; i < Math.min(rows.length, 4); i++) {
+    for (const cell of rows[i]) {
+      const t = s(cell);
+      if (/\b(etf|fof)\b/i.test(t) && looksLikeSchemeName(t)) return cleanSchemeName(t);
     }
   }
   return "";
