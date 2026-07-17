@@ -241,13 +241,8 @@ export const PAGE_SCRAPE_CONFIG: Record<string, PageScrapeConfig> = {
     urls: (now: Date) => taurusUrls(now),
     include: /monthly[_\s-]*portfolio|portfolio[_\s-]*report/i,
   },
-  // File host has no directory index and unguessable upload-timestamp names, but
-  // AdvisorKhoj's form-download page lists the two monthly workbooks with dated labels.
-  sundaram: {
-    urls: ["https://www.advisorkhoj.com/form-download-centre/Mutual/Sundaram-Mutual-Fund/Monthly-Portfolio-Disclosures"],
-    include: /monthly.?portfolio/i,
-    referer: "https://www.advisorkhoj.com/",
-  },
+  // Sundaram now sources direct from its own fund-card JSON — see the `sundaram`
+  // entry in json-api.ts (JSON_API_CONFIG). It previously scraped AdvisorKhoj here.
   // Kirby CMS listing; every disclosure is an <a href> to a hash-prefixed media
   // path. The complete monthly file is the "monthend-portfolio(s)" ZIP (a zip of
   // an equity+FOF and a debt workbook) — the half-yearly / debt-fortnightly /

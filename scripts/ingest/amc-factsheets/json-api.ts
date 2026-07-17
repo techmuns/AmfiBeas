@@ -915,6 +915,53 @@ function obHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
   return out;
 }
 
+// ---- Sundaram Mutual Fund: per-scheme workbooks via the fund-card JSON feed ----
+// The site has no directory index and its download buttons call DownloadExcel('<code>'),
+// which resolves the scheme's workbook from the live fund-card feed. That same feed
+// (Fund_Card_data.json) carries, for every scheme, PORTFOLIO_PATH — the exact per-scheme
+// workbook for the current reporting month at /Downloads_Pdf/Portfolio_Archives/<YYYY>/
+// <Mon>/<Equity|Fixed>/<CODE>.xlsx. So enumerate all Equity + Fixed Income files straight
+// from the feed (one workbook per scheme). History reuses each scheme's basename with the
+// month folder swapped (the path template is stable month-to-month).
+const SUN_ORIGIN = "https://www.sundarammutual.com";
+const SUN_CARDS = `${SUN_ORIGIN}/Upload/JSON/Fund_Card_data.json`;
+const SUN_PAGE = `${SUN_ORIGIN}/portfolio`;
+interface SunFund { name: string; path: string }
+const SUN_PATH_RE = /\/Portfolio_Archives\/(\d{4})\/([A-Za-z]{3})\/(?:Equity|Fixed)\/[^/]+\.xlsx?$/i;
+function sunFunds(): SunFund[] {
+  const j = json(SUN_CARDS, { headers: { referer: `${SUN_ORIGIN}/` } });
+  if (!Array.isArray(j)) return [];
+  const out: SunFund[] = [];
+  for (const f of j as { GROUP_NAME?: string; PORTFOLIO_PATH?: string }[]) {
+    const path = f.PORTFOLIO_PATH ?? "";
+    if (SUN_PATH_RE.test(path)) out.push({ name: f.GROUP_NAME ?? "", path });
+  }
+  return out;
+}
+function sunTitleMon(mm: number): string {
+  const m = MON3[mm - 1];
+  return m.charAt(0).toUpperCase() + m.slice(1); // "jun" → "Jun", matching the feed's casing
+}
+function discoverSundaram(): HarvestedLink[] {
+  // The live fund-card feed always carries the current reporting month for every scheme.
+  return sunFunds().map((f) => ({ url: SUN_ORIGIN + f.path, text: f.name }));
+}
+function sundaramHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
+  const funds = sunFunds();
+  const out = new Map<string, HarvestedLink[]>();
+  if (!funds.length) return out;
+  for (const { yy, mm } of lastNMonths(now, back + 1)) {
+    const ym = `${yy}-${String(mm).padStart(2, "0")}`;
+    if (out.has(ym)) continue;
+    const folder = `/Portfolio_Archives/${yy}/${sunTitleMon(mm)}/`;
+    out.set(ym, funds.map((f) => ({
+      url: SUN_ORIGIN + f.path.replace(/\/Portfolio_Archives\/\d{4}\/[A-Za-z]{3}\//, folder),
+      text: f.name,
+    })));
+  }
+  return out;
+}
+
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
 const LIC_FORM = { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" };
 function licSchemeList(): { code: string; name: string }[] {
@@ -1173,6 +1220,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   shriram: (n, b) => monthRowsHistory(shriramRows(), n, b),
   abakkus: (n, b) => monthRowsHistory(abakkusRows(), n, b),
   "old-bridge": (n, b) => obHistory(n, b),
+  sundaram: (n, b) => sundaramHistory(n, b),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -1246,6 +1294,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   shriram: { discover: (now) => latestMonthLinks(shriramRows(), now), referer: "https://www.shriramamc.in/", page: SHRIRAM_PAGE },
   abakkus: { discover: (now) => latestMonthLinks(abakkusRows(), now), referer: `${ABAKKUS_ORIGIN}/`, page: ABAKKUS_PAGE },
   "old-bridge": { discover: (now) => discoverOb(now), referer: `${OB_ORIGIN}/`, page: OB_PAGE },
+  sundaram: { discover: () => discoverSundaram(), referer: `${SUN_ORIGIN}/`, page: SUN_PAGE },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }
