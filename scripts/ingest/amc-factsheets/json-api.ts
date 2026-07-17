@@ -573,6 +573,50 @@ function discoverZerodha(now: Date): HarvestedLink[] {
   return [];
 }
 
+// ---- Trust Mutual Fund: GetData JSON API lists every monthly portfolio ----
+// POST api/api/Trust/GetData (no auth) returns resultSetArray of disclosure rows;
+// filter to matching_slugs "portfolio-monthly-disclosure". Each row's title carries
+// the as-on date ("… as on 30.06.2026") and fileurl the workbook — a single file
+// holding all schemes. The API returns fileurl on the bare trustmf.com host with
+// literal spaces; normalize to www + %20 so the fetch succeeds.
+const TRUST_API = "https://www.trustmf.com/api/api/Trust/GetData";
+const TRUST_BODY = JSON.stringify({ systemQueryFileName: "disclosuresweb.xml", tagName: "GetDisclosureByType", searchField: "", searchValue: "", sortField: "uploaddate", sortDirection: "DESC", replaceField: "_slug_", replaceValue: "portfolio-monthly-disclosure" });
+const TRUST_HEADERS = { "content-type": "application/json; charset=UTF-8", origin: "https://www.trustmf.com", referer: "https://www.trustmf.com/disclosures" };
+interface TrustRow { title?: string; fileurl?: string; matching_slugs?: string }
+function trustNormUrl(u: string): string {
+  return u.replace(/^https?:\/\/(?:www\.)?trustmf\.com/i, "https://www.trustmf.com").replace(/ /g, "%20");
+}
+/** Every monthly-portfolio row keyed by its as-on "YYYY-MM", newest first. */
+function trustRows(): { ym: string; url: string }[] {
+  const j = json(TRUST_API, { headers: TRUST_HEADERS, body: TRUST_BODY });
+  const arr = (j?.resultSetArray ?? []) as TrustRow[];
+  const out: { ym: string; url: string }[] = [];
+  for (const row of arr) {
+    if (!/portfolio-monthly-disclosure/i.test(row.matching_slugs ?? "") || !row.fileurl) continue;
+    const m = /as\s+on\s+(\d{2})\.(\d{2})\.(\d{4})/i.exec(row.title ?? "");
+    if (!m) continue;
+    out.push({ ym: `${m[3]}-${m[2]}`, url: trustNormUrl(row.fileurl) });
+  }
+  return out;
+}
+function discoverTrust(now: Date): HarvestedLink[] {
+  const rows = trustRows();
+  for (const [yy, mm] of monthsToTry(now)) {
+    const ym = `${yy}-${String(mm).padStart(2, "0")}`;
+    const hit = rows.find((r) => r.ym === ym);
+    if (hit) return [{ url: hit.url, text: "" }];
+  }
+  return rows.length ? [{ url: rows[0].url, text: "" }] : [];
+}
+function trustHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  for (const { ym, url } of trustRows()) {
+    if (!inWin(ym, now, back + 1) || out.has(ym)) continue;
+    out.set(ym, [{ url, text: "" }]);
+  }
+  return out;
+}
+
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
 const LIC_FORM = { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" };
 function licSchemeList(): { code: string; name: string }[] {
@@ -823,6 +867,7 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   mirae: (n, b) => loopMonths(n, b, miraeMonth),
   nj: (n, b) => loopMonths(n, b, njMonth),
   zerodha: (n, b) => loopMonths(n, b, zerodhaMonth),
+  trust: (n, b) => trustHistory(n, b),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -888,6 +933,7 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   mirae: { discover: (now) => discoverMirae(now), referer: "https://www.miraeassetmf.co.in/", page: "https://www.miraeassetmf.co.in/downloads/portfolio" },
   nj: { discover: (now) => discoverNj(now), referer: "https://downloads.njmutualfund.com/", page: "https://downloads.njmutualfund.com/njmf_download.php?nme=127" },
   zerodha: { discover: (now) => discoverZerodha(now), referer: "https://www.zerodhafundhouse.com/", page: "https://www.zerodhafundhouse.com/resources/disclosures" },
+  trust: { discover: (now) => discoverTrust(now), referer: "https://www.trustmf.com/", page: "https://www.trustmf.com/disclosures?activeTab=portfolio-disclosures" },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }

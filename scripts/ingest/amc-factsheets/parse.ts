@@ -103,7 +103,7 @@ function looksLikeSchemeName(t: string): boolean {
   if (HOUSE_RE.test(t)) return false; // the fund-house name
   if (/^[•\-*·]/.test(t)) return false; // bullet / note line
   // Column headers and top-of-sheet banners.
-  if (/^(isin|coupon|quantity|rating|industry|% to|exposure|market|fair value|yield|sr\.?\s*no|serial|s\.?\s*no|company|issuer|instrument|name of the|portfolio|monthly portfolio|portfolio statement|scheme name|as on|as at|note|product labelling|disclaimer|back to index|index|derivative)\b/i.test(t)) return false;
+  if (/^(isin|coupon|quantity|rating|industry|% to|exposure|market|fair value|yield|sr\.?\s*no|serial|s\.?\s*no|company|issuer|instrument|name of the|portfolio|monthly portfolio|portfolio statement|scheme name|as on|as at|notes?|product labelling|disclaimer|back to index|index|derivative)\b/i.test(t)) return false;
   // Asset-class SECTION headers inside the holdings table, not scheme names.
   if (/\b(equity\s*&\s*equity\s*related|listed\s*\/\s*awaiting|debt\s+instruments?\b|money\s+market\b|cash\s*&\s*(cash\s*)?equiv|net\s+(current\s+asset|receivabl|payabl))/i.test(t)) return false;
   // A one-line scheme-type description ("An open ended scheme investing in …").
