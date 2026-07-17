@@ -777,6 +777,144 @@ function cmHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
   return out;
 }
 
+// Shared discover/history for AMCs that publish ONE consolidated workbook per month
+// as an already-resolved {ym,url} list (PPFAS / Shriram / Abakkus below).
+function latestMonthLinks(rows: { ym: string; url: string }[], now: Date): HarvestedLink[] {
+  for (const [yy, mm] of monthsToTry(now)) {
+    const hit = rows.find((r) => r.ym === `${yy}-${String(mm).padStart(2, "0")}`);
+    if (hit) return [{ url: hit.url, text: "" }];
+  }
+  const newest = rows.map((r) => r.ym).sort().pop(); // else the newest month present
+  const hit = newest ? rows.find((r) => r.ym === newest) : undefined;
+  return hit ? [{ url: hit.url, text: "" }] : [];
+}
+function monthRowsHistory(rows: { ym: string; url: string }[], now: Date, back: number): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  for (const { ym, url } of rows) {
+    if (!inWin(ym, now, back + 1) || out.has(ym)) continue;
+    out.set(ym, [{ url, text: "" }]);
+  }
+  return out;
+}
+
+// ---- PPFAS (Parag Parikh) Mutual Fund: consolidated monthly report on the index ----
+// The portfolio-disclosure index lists, per month accordion, a consolidated all-schemes
+// workbook with NO scheme-code prefix (PPFAS_Monthly_Portfolio_Report_<Month>_<DD>_<YYYY>
+// .xls) alongside per-scheme breakouts (PPFCF_…, PPLF_…). Take the consolidated one; key
+// by the filename's month/year. Anchoring the match to "/<YEAR>/PPFAS_Monthly" excludes
+// the prefixed per-scheme files.
+const PPFAS_ORIGIN = "https://amc.ppfas.com";
+const PPFAS_PAGE = "https://amc.ppfas.com/downloads/portfolio-disclosure/";
+function ppfasRows(): { ym: string; url: string }[] {
+  const html = curl(PPFAS_PAGE, { headers: { referer: `${PPFAS_ORIGIN}/` } });
+  if (!html) return [];
+  const out: { ym: string; url: string }[] = [];
+  const seen = new Set<string>();
+  for (const m of html.matchAll(/href="(\/downloads\/portfolio-disclosure\/\d{4}\/PPFAS_Monthly_Portfolio_Report_([A-Za-z]+)_\d{1,2}_(\d{4})\.xls[^"]*)"/g)) {
+    const mo = MONTH_NUM[m[2].slice(0, 3).toLowerCase()];
+    if (!mo) continue;
+    const ym = `${m[3]}-${String(mo).padStart(2, "0")}`;
+    if (seen.has(ym)) continue;
+    seen.add(ym);
+    out.push({ ym, url: PPFAS_ORIGIN + m[1] });
+  }
+  return out;
+}
+
+// ---- Shriram Mutual Fund: consolidated monthly workbook on the CDN ----
+// The statutory-disclosures page links a consolidated all-schemes workbook per month
+// at cdn.shriramamc.in/…/Monthly-Portfolio-Shriram-Mutual-Fund-<Month>-<Year>.xls; the
+// path also carries fortnightly / AUM / complaint files, so anchor on that filename.
+const SHRIRAM_PAGE = "https://www.shriramamc.in/investor-statutory-disclosures";
+function shriramRows(): { ym: string; url: string }[] {
+  const html = curl(SHRIRAM_PAGE, { headers: { referer: "https://www.shriramamc.in/" } });
+  if (!html) return [];
+  const out: { ym: string; url: string }[] = [];
+  const seen = new Set<string>();
+  for (const m of html.matchAll(/(https:\/\/cdn\.shriramamc\.in\/uploads\/[^"'\s]*Monthly-Portfolio-Shriram-Mutual-Fund-([A-Za-z]+)-(\d{4})\.xlsx?)/g)) {
+    const mo = MONTH_NUM[m[2].slice(0, 3).toLowerCase()];
+    if (!mo) continue;
+    const ym = `${m[3]}-${String(mo).padStart(2, "0")}`;
+    if (seen.has(ym)) continue;
+    seen.add(ym);
+    out.push({ ym, url: m[1] });
+  }
+  return out;
+}
+
+// ---- Abakkus Mutual Fund: consolidated monthly workbook on the disclosures page ----
+// The /uploads/ filenames are opaque and wildly inconsistent (Abakkus_MF_MONTHLY…,
+// Abakkus_Mutual_Fund_31_05_2026, Monthly_Portfolio_Jun26_30_Jun…), so key off the
+// rendered <h4> label. Monthly rows read "<Month> <DD>, <YYYY>" (month-end); fortnightly
+// rows read "<DDth> <Month> <YYYY>" — so accept only the comma form with a month-end day.
+const ABAKKUS_ORIGIN = "https://www.abakkusmf.com";
+const ABAKKUS_PAGE = "https://www.abakkusmf.com/statutory-disclosures.html";
+function abakkusRows(): { ym: string; url: string }[] {
+  const html = curl(ABAKKUS_PAGE, { headers: { referer: `${ABAKKUS_ORIGIN}/` } });
+  if (!html) return [];
+  const out: { ym: string; url: string }[] = [];
+  const seen = new Set<string>();
+  for (const m of html.matchAll(/<h4 class="float-start fs-14 mb-0">([^<]+)<\/h4>\s*<a href="(\/uploads\/[^"]+\.xlsx?)"/g)) {
+    const lm = /^([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})$/.exec(m[1].trim());
+    if (!lm || +lm[2] < 28 || /fortnight/i.test(m[2])) continue; // month-end monthly only
+    const mo = MONTH_NUM[lm[1].slice(0, 3).toLowerCase()];
+    if (!mo) continue;
+    const ym = `${lm[3]}-${String(mo).padStart(2, "0")}`;
+    if (seen.has(ym)) continue;
+    seen.add(ym);
+    out.push({ ym, url: ABAKKUS_ORIGIN + m[2] });
+  }
+  return out;
+}
+
+// ---- Old Bridge Mutual Fund: per-scheme monthly workbooks on the disclosures page ----
+// Opaque /uploads/ filenames (June is just OBFX/OBAF/OBFE + a hash), so key off the DOM.
+// Each item renders <h2>Old Bridge <Scheme> - <Month> <Year></h2><a …xlsx>. Bound to the
+// "Monthly Portfolio" section (ends at the next non-FY section head, "Half Yearly …") so
+// half-yearly portfolios and financials with the same markup don't leak in. One workbook
+// per scheme → a month yields several links (fewer for older months; Focused launched later).
+const OB_ORIGIN = "https://oldbridgemf.com";
+const OB_PAGE = "https://oldbridgemf.com/statutory-disclosures.html";
+function obRows(): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  const html = curl(OB_PAGE, { headers: { referer: `${OB_ORIGIN}/` } });
+  if (!html) return out;
+  const heads = [...html.matchAll(/<div class="grey-head[^"]*"[^>]*>([^<]+)<\/div>/g)];
+  const startIdx = heads.findIndex((h) => h[1].trim() === "Monthly Portfolio");
+  if (startIdx < 0) return out;
+  const start = heads[startIdx].index ?? 0;
+  const endHead = heads.slice(startIdx + 1).find((h) => { const t = h[1].trim(); return t !== "" && !/^\d{4}\s*-\s*\d{2}$/.test(t); });
+  const seg = html.slice(start, endHead?.index ?? html.length);
+  for (const m of seg.matchAll(/<h2 class="float-start fs-16 mb-0">([^<]+)<\/h2>\s*<a href="(\/uploads\/[^"]+\.xlsx?)"/g)) {
+    const lm = /-\s*([A-Za-z]+)\s+(\d{4})\s*$/.exec(m[1]);
+    if (!lm) continue;
+    const mo = MONTH_NUM[lm[1].slice(0, 3).toLowerCase()];
+    if (!mo) continue;
+    const ym = `${lm[2]}-${String(mo).padStart(2, "0")}`;
+    const url = OB_ORIGIN + m[2];
+    if (!out.has(ym)) out.set(ym, []);
+    if (!out.get(ym)!.some((l) => l.url === url)) out.get(ym)!.push({ url, text: "" });
+  }
+  return out;
+}
+function discoverOb(now: Date): HarvestedLink[] {
+  const all = obRows();
+  for (const [yy, mm] of monthsToTry(now)) {
+    const hit = all.get(`${yy}-${String(mm).padStart(2, "0")}`);
+    if (hit?.length) return hit;
+  }
+  const newest = [...all.keys()].sort().pop();
+  return newest ? all.get(newest)! : [];
+}
+function obHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
+  const out = new Map<string, HarvestedLink[]>();
+  for (const [ym, links] of obRows()) {
+    if (!inWin(ym, now, back + 1)) continue;
+    out.set(ym, links);
+  }
+  return out;
+}
+
 // ---- LIC: cascade — categories → scheme codes → per-scheme monthly file ----
 const LIC_FORM = { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" };
 function licSchemeList(): { code: string; name: string }[] {
@@ -1031,6 +1169,10 @@ const JSON_API_HISTORY: Record<string, HistoryDiscoverer> = {
   iti: (n, b) => itiHistory(n, b),
   "360-one": (n, b) => oneHistory(n, b),
   capitalmind: (n, b) => cmHistory(n, b),
+  ppfas: (n, b) => monthRowsHistory(ppfasRows(), n, b),
+  shriram: (n, b) => monthRowsHistory(shriramRows(), n, b),
+  abakkus: (n, b) => monthRowsHistory(abakkusRows(), n, b),
+  "old-bridge": (n, b) => obHistory(n, b),
 };
 /** Modal plausible "YYYY-MM" from the parsed schemes' own as-on dates, else null.
  *  Lets us key a month by the file CONTENT rather than the listing's date, which
@@ -1100,6 +1242,10 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   iti: { discover: (now) => discoverIti(now), referer: "https://www.itiamc.com/", page: "https://www.itiamc.com/statuory-disclosure" },
   "360-one": { discover: (now) => discoverOne(now), referer: "https://www.360.one/", page: ONE_PAGE },
   capitalmind: { discover: (now) => discoverCm(now), referer: `${CM_ORIGIN}/`, page: CM_PAGE },
+  ppfas: { discover: (now) => latestMonthLinks(ppfasRows(), now), referer: `${PPFAS_ORIGIN}/`, page: PPFAS_PAGE },
+  shriram: { discover: (now) => latestMonthLinks(shriramRows(), now), referer: "https://www.shriramamc.in/", page: SHRIRAM_PAGE },
+  abakkus: { discover: (now) => latestMonthLinks(abakkusRows(), now), referer: `${ABAKKUS_ORIGIN}/`, page: ABAKKUS_PAGE },
+  "old-bridge": { discover: (now) => discoverOb(now), referer: `${OB_ORIGIN}/`, page: OB_PAGE },
 };
 
 export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }
