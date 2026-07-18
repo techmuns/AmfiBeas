@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch: # verify a branch (lint + typecheck + build) without opening a PR
 
 permissions:
   contents: read
