@@ -29,6 +29,14 @@ on:
         required: false
         default: "false"
         type: string
+      mode:
+        description: "monthly (default) = latest-month fetch (run-monthly.ts). backfill = last-6-months history seed (backfill-history.ts) — pair with `amcs` to target specific AMCs."
+        required: false
+        default: "monthly"
+        type: choice
+        options:
+          - monthly
+          - backfill
 
 permissions:
   contents: write
@@ -55,7 +63,13 @@ jobs:
         env:
           AMC_ONLY: ${{ inputs.amcs }}
           AMC_BROWSER_DEBUG: ${{ inputs.debug == 'true' && '1' || '' }}
-        run: npx tsx scripts/ingest/amc-factsheets/run-monthly.ts
+          BACKFILL_BROWSER: ${{ inputs.mode == 'backfill' && '1' || '' }}
+        run: |
+          if [ "${{ inputs.mode }}" = "backfill" ]; then
+            npx tsx scripts/ingest/amc-factsheets/backfill-history.ts 6
+          else
+            npx tsx scripts/ingest/amc-factsheets/run-monthly.ts
+          fi
       - name: Rebuild AMC-direct tracker (universe + panels + crosswalk)
         # The MFs Portfolio Tracker is sourced entirely from AMC-direct filings
         # (build-amc-direct-tracker.ts). Safe after a filtered run too:

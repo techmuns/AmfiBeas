@@ -26,6 +26,7 @@ import { JSON_API_CONFIG, jsonApiAmcMonths } from "./json-api";
 import { launchBrowser } from "./browser";
 import { browserFetchAmc } from "./browser-fallback";
 import { BROWSER_CONFIG } from "./browser-hints";
+import { waybackFetch, WAYBACK_FALLBACK } from "./wayback";
 import type { Browser } from "playwright";
 import type { AmcMonthSnapshot, AmcParseOptions, AmcPortfolioSnapshot, AmcScheme } from "./types";
 
@@ -94,6 +95,33 @@ function collectMonths(slug: string, amc: string): Map<string, AmcScheme[]> {
   return advisorkhojMonths(amc, now.getUTCFullYear(), now, GENERIC, BACK_MONTHS);
 }
 
+/** Internet Archive tier: months whose file URL on the AMC's own host (named by
+ *  AdvisorKhoj) is 403'd to every direct path — curl AND CI browser IPs — by an
+ *  Akamai edge (Edelweiss). archive.org's crawlers fetch from their own IP space;
+ *  we take the original bytes from the snapshot. CI-only (the sandbox's egress
+ *  policy blocks archive.org). Multiple files can share a month (the MF
+ *  consolidated workbook + a SIF strategy file) — merge them. */
+function waybackMonths(amc: string): Map<string, AmcScheme[]> {
+  const out = new Map<string, AmcScheme[]>();
+  const nowScore = now.getUTCFullYear() * 12 + (now.getUTCMonth() + 1);
+  for (const link of listPortfolioLinks(amc, now.getUTCFullYear())) {
+    const s = link.year * 12 + link.month;
+    if (s > nowScore || s < nowScore - BACK_MONTHS) continue;
+    const buf = waybackFetch(link.url);
+    if (!buf) continue;
+    let schemes: AmcScheme[] = [];
+    try { schemes = parseAmcWorkbook(buf, GENERIC); } catch { /* maybe a zip */ }
+    if (schemes.length === 0) schemes = parseZip(buf, GENERIC);
+    if (schemes.length === 0) continue;
+    const ym = `${link.year}-${String(link.month).padStart(2, "0")}`;
+    const iso = isoLastDay(ym);
+    const norm = schemes.map(normalizeSchemePct);
+    for (const sc of norm) sc.asOf = iso;
+    out.set(ym, [...(out.get(ym) ?? []), ...norm]);
+  }
+  return out;
+}
+
 /** Browser tier (opt-in, BACKFILL_BROWSER=1): for AMCs whose monthly portfolio
  *  sits behind a JS-rendered filter page (Canara, Invesco, Mirae, …) that curl
  *  can't read. AdvisorKhoj lists each month's filter-page URL; render each in a
@@ -136,6 +164,9 @@ async function main(): Promise<void> {
     try { months = collectMonths(slug, amc); } catch (e) { console.log(`✗ ${slug.padEnd(20)} ERROR ${(e as Error).message.slice(0, 60)}`); months = new Map(); }
     if (months.size === 0 && browser) {
       try { months = await browserMonths(browser, amc); } catch (e) { console.log(`  (browser ${slug}: ${(e as Error).message.slice(0, 40)})`); }
+    }
+    if (months.size === 0 && WAYBACK_FALLBACK.has(slug)) {
+      try { months = waybackMonths(amc); } catch (e) { console.log(`  (wayback ${slug}: ${(e as Error).message.slice(0, 40)})`); }
     }
     if (months.size === 0) { console.log(`· ${slug.padEnd(20)} no history`); continue; }
 
