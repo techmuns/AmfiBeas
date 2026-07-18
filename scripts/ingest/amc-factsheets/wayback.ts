@@ -19,6 +19,7 @@
  * tier only functions in CI, which is where the monthly fetch runs anyway.
  */
 import { execFileSync } from "node:child_process";
+import { gunzipSync } from "node:zlib";
 
 /** AMC slugs whose file host 403s all direct access — try the archive for these. */
 export const WAYBACK_FALLBACK = new Set(["edelweiss"]);
@@ -31,9 +32,17 @@ function dbg(msg: string): void {
 
 function curlRaw(url: string, maxTime: string): Buffer | null {
   try {
-    return execFileSync("curl", ["-fsSL", "--max-time", maxTime, "-A", UA, url], {
+    // --compressed: snapshots replay with the ORIGINAL response's
+    // Content-Encoding (the crawler asked for gzip) — without this the "bytes"
+    // we hand the workbook parser are the gzip stream, which parses to nothing.
+    const buf = execFileSync("curl", ["-fsSL", "--compressed", "--max-time", maxTime, "-A", UA, url], {
       maxBuffer: 256 * 1024 * 1024,
     });
+    // Belt and braces for a replay that ships gzip bytes without the header.
+    if (buf.length > 2 && buf[0] === 0x1f && buf[1] === 0x8b) {
+      try { return gunzipSync(buf); } catch { return buf; }
+    }
+    return buf;
   } catch {
     return null;
   }
@@ -52,23 +61,33 @@ function availableSnapshot(url: string): string | null {
   }
 }
 
-/** Ask Save Page Now to capture the URL fresh; the redirect chain ends at
- *  /web/<timestamp>/<url>, which names the new snapshot. Null on failure or
- *  rate-limit (unauthenticated SPN allows a modest burst — we request at most
- *  a handful of files per run). */
-function savePageNow(url: string): string | null {
+/** Ask Save Page Now to capture the URL fresh. Modern SPN doesn't redirect a
+ *  GET to the snapshot — it queues a capture job behind a progress page — so:
+ *  POST the save form, then poll the availability API until the new snapshot
+ *  appears (bounded). Returns the snapshot timestamp, else null. Even a null
+ *  here can still succeed LATER: a queued capture completes asynchronously and
+ *  the next run's availableSnapshot() will find it. */
+function savePageNow(url: string, before: string | null): string | null {
   try {
-    const effective = execFileSync(
+    execFileSync(
       "curl",
-      ["-sSL", "-o", "/dev/null", "-w", "%{url_effective}", "--max-time", "300", "-A", UA,
+      ["-sS", "-o", "/dev/null", "--max-time", "120", "-A", UA,
+        "-X", "POST", "--data-urlencode", `url=${url}`, "--data-urlencode", "capture_all=on",
         `https://web.archive.org/save/${url}`],
-      { maxBuffer: 1024 * 1024 },
-    ).toString("utf8");
-    const m = effective.match(/\/web\/(\d{14})/);
-    return m ? m[1] : null;
+      { maxBuffer: 4 * 1024 * 1024 },
+    );
   } catch {
+    dbg(`SPN request errored: ${url.slice(0, 100)}`);
     return null;
   }
+  // The capture runs async; poll until a snapshot newer than `before` shows up.
+  for (let i = 0; i < 8; i++) {
+    execFileSync("sleep", ["15"]);
+    const ts = availableSnapshot(url);
+    if (ts && ts !== before) return ts;
+  }
+  dbg(`SPN queued but no new snapshot within 2min (may land for a later run): ${url.slice(0, 100)}`);
+  return null;
 }
 
 /** Original bytes of a snapshot, or null when it is missing / an HTML page
@@ -84,7 +103,7 @@ function snapshotBytes(url: string, ts: string): Buffer | null {
     dbg(`snapshot ${ts} is an HTML page — the archive was walled too`);
     return null;
   }
-  dbg(`got ${buf.length}b from snapshot ${ts}`);
+  dbg(`got ${buf.length}b from snapshot ${ts} (magic ${buf.subarray(0, 4).toString("hex")})`);
   return buf;
 }
 
@@ -99,11 +118,7 @@ export function waybackFetch(url: string): Buffer | null {
   } else {
     dbg(`no snapshot yet: ${url.slice(0, 110)}`);
   }
-  const fresh = savePageNow(url);
-  if (!fresh) {
-    dbg(`Save Page Now failed: ${url.slice(0, 110)}`);
-    return null;
-  }
-  if (fresh === existing) return null; // SPN returned the same walled capture
+  const fresh = savePageNow(url, existing);
+  if (!fresh) return null;
   return snapshotBytes(url, fresh);
 }

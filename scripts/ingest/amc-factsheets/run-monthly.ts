@@ -237,6 +237,7 @@ async function processAmc(amc: string, year: number, browser: Browser | null): P
       let schemes: AmcScheme[] = [];
       try { schemes = parseAmcWorkbook(buf, GENERIC); } catch { /* maybe a zip */ }
       if (schemes.length === 0) schemes = parseZip(buf, GENERIC);
+      console.log(`  (wayback ${link.label}: ${buf.length}b → ${schemes.length} scheme(s))`);
       if (schemes.length === 0) continue;
       const w = await writeSnapshot(slug, amc, link.url, link.label, schemes);
       return { ...base, status: "ok", source: "wayback", asOfMonth: link.label, schemes: schemes.length, holdings: w.holdings, file: w.file };

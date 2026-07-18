@@ -112,6 +112,7 @@ function waybackMonths(amc: string): Map<string, AmcScheme[]> {
     let schemes: AmcScheme[] = [];
     try { schemes = parseAmcWorkbook(buf, GENERIC); } catch { /* maybe a zip */ }
     if (schemes.length === 0) schemes = parseZip(buf, GENERIC);
+    console.log(`  (wayback ${link.label}: ${buf.length}b → ${schemes.length} scheme(s))`);
     if (schemes.length === 0) continue;
     const ym = `${link.year}-${String(link.month).padStart(2, "0")}`;
     const iso = isoLastDay(ym);
