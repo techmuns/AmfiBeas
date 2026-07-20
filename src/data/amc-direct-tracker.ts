@@ -16,6 +16,7 @@ interface DirectFund {
   rowCount: number;
   file: string;
   amcSlug: string;
+  amc?: string;
 }
 
 export const amcDirectFundDirectory: FundDirectoryEntry[] = (
@@ -27,4 +28,7 @@ export const amcDirectFundDirectory: FundDirectoryEntry[] = (
   aumTotalCr: f.aumTotalCr,
   rowCount: f.rowCount,
   path: `/${f.file}`,
+  // Authoritative fund-house label (from the AMC's own filing), so the picker
+  // never has to guess the AMC from the scheme name.
+  amc: f.amc,
 }));

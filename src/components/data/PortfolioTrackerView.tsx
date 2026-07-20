@@ -277,8 +277,12 @@ export function PortfolioTrackerView({
     setReloadNonce((n) => n + 1);
   }
 
+  // Fund-house label: prefer the authoritative AMC from the filing (AMC-direct
+  // feed) and only fall back to guessing from the scheme name for legacy entries.
+  const amcLabel = (f: FundDirectoryEntry) => f.amc ?? amcOf(f.fund);
+
   const amcOptions = useMemo(
-    () => [...new Set(funds.map((f) => amcOf(f.fund)))].sort(),
+    () => [...new Set(funds.map(amcLabel))].sort(),
     [funds]
   );
 
@@ -286,7 +290,7 @@ export function PortfolioTrackerView({
   // houses — split them out so the picker can group them under their own heading.
   const sifLabels = useMemo(() => {
     const s = new Set<string>();
-    for (const f of funds) if (isSIF(f.fund)) s.add(amcOf(f.fund));
+    for (const f of funds) if (isSIF(f.fund)) s.add(amcLabel(f));
     return s;
   }, [funds]);
   const houseOptions = useMemo(
@@ -301,7 +305,7 @@ export function PortfolioTrackerView({
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase();
     const pool = amcFilter
-      ? funds.filter((f) => amcOf(f.fund) === amcFilter)
+      ? funds.filter((f) => amcLabel(f) === amcFilter)
       : funds;
     const matched = q
       ? pool.filter((f) => f.fund.toLowerCase().includes(q))
@@ -419,7 +423,7 @@ export function PortfolioTrackerView({
     ]);
     const data = await gatherSchemeExport({
       entry: selectedEntry,
-      amc: amcOf(selectedEntry.fund),
+      amc: amcLabel(selectedEntry),
       portfolio,
       sectorRows: sectorVsCategory,
       generatedAt: exportStamp(),
@@ -434,7 +438,7 @@ export function PortfolioTrackerView({
     ]);
     const data = await gatherSchemeExport({
       entry: selectedEntry,
-      amc: amcOf(selectedEntry.fund),
+      amc: amcLabel(selectedEntry),
       portfolio,
       sectorRows: sectorVsCategory,
       generatedAt: exportStamp(),
