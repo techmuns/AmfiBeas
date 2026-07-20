@@ -37,6 +37,7 @@
     "build:sector-gross": "tsx scripts/build-sector-gross-flows.ts",
     "build:amc-allocations": "tsx scripts/build-amc-allocations.ts",
     "build:amc-crosswalk": "tsx scripts/build-amc-portfolio-crosswalk.ts",
+    "build:amc-direct": "tsx scripts/build-amc-direct-tracker.ts",
     "build:amc-aggregation": "tsx scripts/ingest/amc-portfolio-aggregation.ts",
     "ingest:shares-outstanding": "tsx scripts/ingest/shares-outstanding.ts",
     "ingest:holdings": "tsx scripts/ingest/holdings-tracker.ts"

@@ -49,14 +49,7 @@ export const BROWSER_CONFIG: Record<string, AmcBrowserConfig> = {
     urls: ["https://www.edelweissmf.com/literature/disclosures?productType=All"],
     hints: { include: /monthly/i, clicks: ["text=Monthly Portfolio"], waitMs: 5000 },
   },
-
-  // The Wealth Company's monthly-portfolio page is a React SPA whose download controls
-  // are event handlers (window.open) with no href — but the workbook URLs arrive in the
-  // page's data fetch, which the browser adapter captures on the wire (and from inline
-  // JSON). The /uploads/ host is open; filenames are opaque hashes, so this render is the
-  // only discovery path. `include` narrows to the monthly-portfolio workbooks.
-  "the-wealth-company": {
-    urls: ["https://www.wealthcompanyamc.in/monthly-portfolio/"],
-    hints: { include: /monthly.?portfolio/i, waitMs: 5000 },
-  },
 };
+// (The Wealth Company moved to the curl JSON-API tier — its document list streams in
+// the RSC payload of /literature-forms/portfolio-documents/monthly/; see json-api.ts.
+// The old /monthly-portfolio/ page this registry pointed at now 301s to the homepage.)

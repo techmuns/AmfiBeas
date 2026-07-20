@@ -22,13 +22,10 @@ import type { TrackerTabId } from "@/components/data/PortfolioTrackerTabs";
 import {
   cleanSchemeName,
   formatCompactCrSafe,
-  formatPctSafe,
-  formatSharesIndian,
 } from "@/lib/format";
 import {
   type FundDirectoryEntry,
   type FundPortfolio,
-  type HoldingArrow,
   monthSlug,
 } from "@/data/portfolio-tracker";
 import { classifySector, UNCLASSIFIED } from "@/data/sector-classification";
@@ -39,30 +36,6 @@ const MAX_SUGGESTIONS = 60;
 // and averaged to compute the OW/UW chips in the Holdings tab. Bounds
 // the worst-case fetch (Thematic, n=91 → 20 fetches instead of 91).
 const MAX_PEER_AVG_PEERS = 20;
-
-function ArrowMark({ arrow }: { arrow: HoldingArrow }) {
-  if (arrow === "up")
-    return (
-      <span className="text-positive" aria-label="increased">
-        ▲
-      </span>
-    );
-  if (arrow === "down")
-    return (
-      <span className="text-negative" aria-label="decreased">
-        ▼
-      </span>
-    );
-  return null;
-}
-
-/** Coerce a TrackerMonth's aumCr (string | number | null) to a number-or-null
- *  for the shared formatCompactCrSafe helper. */
-function aumNum(aumCr: string | number | null): number | null {
-  if (aumCr === null || aumCr === "" || aumCr === "-") return null;
-  const n = typeof aumCr === "number" ? aumCr : Number(aumCr);
-  return Number.isFinite(n) ? n : null;
-}
 
 export function PortfolioTrackerView({
   funds,
@@ -102,18 +75,8 @@ export function PortfolioTrackerView({
     initialFund ? cleanSchemeName(initialFund.fund) : ""
   );
   const [focused, setFocused] = useState(false);
-  const [holdingQuery, setHoldingQuery] = useState("");
-  // Client-requested filters: narrow the scheme picker to one fund house and
-  // the holdings table to one sector — for surfacing "top conviction ideas".
+  // Narrow the scheme picker to one fund house.
   const [amcFilter, setAmcFilter] = useState("");
-  const [sectorFilter, setSectorFilter] = useState("");
-  // Holdings sort: which month-column + field, and direction. null = the
-  // default (latest month, % of AUM, descending — biggest weights on top).
-  const [holdingSort, setHoldingSort] = useState<{
-    slug: string;
-    field: "pct" | "shares";
-    dir: "asc" | "desc";
-  } | null>(null);
   // Head-to-head fund B — null means "use the variant-skipped default
   // for the current A". Cleared whenever A changes (see effect below).
   const [bUserPick, setBUserPick] = useState<string | null>(null);
@@ -346,58 +309,6 @@ export function PortfolioTrackerView({
     return matched.slice(0, MAX_SUGGESTIONS);
   }, [funds, query, amcFilter]);
 
-  const months = portfolio?.meta.months ?? [];
-  const slugs = months.map((m) => monthSlug(m.label));
-
-  const sectorOptions = useMemo(() => {
-    if (!portfolio) return [] as string[];
-    const set = new Set<string>();
-    for (const r of portfolio.rows) set.add(classifySector(r.fincode, r.company_name));
-    return [...set].sort(
-      (a, b) =>
-        (a === UNCLASSIFIED ? 1 : 0) - (b === UNCLASSIFIED ? 1 : 0) ||
-        a.localeCompare(b)
-    );
-  }, [portfolio]);
-
-  const holdings = useMemo(() => {
-    if (!portfolio) return [];
-    const q = holdingQuery.trim().toLowerCase();
-    return portfolio.rows.filter(
-      (r) =>
-        (!q || r.company_name.toLowerCase().includes(q)) &&
-        (!sectorFilter || classifySector(r.fincode, r.company_name) === sectorFilter)
-    );
-  }, [portfolio, holdingQuery, sectorFilter]);
-
-  // Sort the holdings by the chosen month-column (default: latest month's
-  // % of AUM, descending). Clicking a "% of AUM" / "Shares" header re-sorts.
-  const sortSlug = holdingSort?.slug ?? slugs[0] ?? "";
-  const sortField = holdingSort?.field ?? "pct";
-  const sortDir = holdingSort?.dir ?? "desc";
-  const sortValue = (r: (typeof holdings)[number]): number | null => {
-    const c = r.months[sortSlug];
-    const v = sortField === "pct" ? c?.aum_pct_num : c?.shares_num;
-    return typeof v === "number" && Number.isFinite(v) ? v : null;
-  };
-  const sortedHoldings = [...holdings].sort((a, b) => {
-    const av = sortValue(a);
-    const bv = sortValue(b);
-    if (av === null && bv === null) return 0;
-    if (av === null) return 1;
-    if (bv === null) return -1;
-    return sortDir === "desc" ? bv - av : av - bv;
-  });
-  const onSortHolding = (slug: string, field: "pct" | "shares") => {
-    setHoldingSort((prev) => {
-      if (prev && prev.slug === slug && prev.field === field) {
-        return { slug, field, dir: prev.dir === "desc" ? "asc" : "desc" };
-      }
-      return { slug, field, dir: "desc" };
-    });
-  };
-
-
   // Month-over-month read for the selected fund: biggest weight add/trim
   // and the top-10 concentration shift, in percentage points of AUM.
   const flowSummary = useMemo(() => {
@@ -494,7 +405,6 @@ export function PortfolioTrackerView({
   function pick(f: FundDirectoryEntry) {
     setSelectedCode(f.schemecode);
     setQuery(cleanSchemeName(f.fund));
-    setHoldingQuery("");
     setFocused(false);
   }
 
@@ -784,133 +694,10 @@ export function PortfolioTrackerView({
           )}
 
           {activeTab === "holdings" && (
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-base font-semibold tracking-tight">
-                  {portfolio?.meta.section || "Equity Holdings"}
-                </h2>
-                <div className="flex items-center gap-2">
-                <select
-                  value={sectorFilter}
-                  onChange={(e) => setSectorFilter(e.target.value)}
-                  aria-label="Filter holdings by sector"
-                  disabled={!portfolio}
-                  className="rounded-md border bg-card px-2 py-1.5 text-sm text-foreground focus:border-foreground focus:outline-none disabled:opacity-50"
-                >
-                  <option value="">All sectors</option>
-                  {sectorOptions.map((sec) => (
-                    <option key={sec} value={sec}>
-                      {sec}
-                    </option>
-                  ))}
-                </select>
-                <div className="relative">
-                  <input
-                    type="search"
-                    value={holdingQuery}
-                    onChange={(e) => setHoldingQuery(e.target.value)}
-                    placeholder="Search Here"
-                    aria-label="Search holdings by company"
-                    disabled={!portfolio}
-                    className="w-56 rounded-md border bg-background py-1.5 pl-3 pr-8 text-sm placeholder:text-muted-foreground focus:border-foreground focus:outline-none disabled:opacity-50"
-                  />
-                  {holdingQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setHoldingQuery("")}
-                      aria-label="Clear holdings filter"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-                </div>
-              </div>
-
-              {loading ? (
-                loaderUi
-              ) : hasError ? (
-                errorUi
-              ) : portfolio ? (
-                <>
-                  <div className="overflow-x-auto rounded-md border bg-card">
-                    <table className="w-full border-collapse text-sm">
-                      <thead>
-                        <tr className="bg-muted/60 text-xs">
-                          <th
-                            rowSpan={2}
-                            className="border-b border-r px-3 py-2 text-left font-medium align-bottom"
-                          >
-                            Company
-                          </th>
-                          {months.map((m) => (
-                            <th
-                              key={m.label}
-                              colSpan={2}
-                              className="border-b border-l px-3 py-2 text-center font-medium"
-                            >
-                              <div>{m.label}</div>
-                              <div className="text-[11px] font-normal text-muted-foreground">
-                                AUM: {formatCompactCrSafe(aumNum(m.aumCr))}
-                              </div>
-                            </th>
-                          ))}
-                        </tr>
-                        <tr className="bg-muted/60 text-[11px] uppercase tracking-wide text-muted-foreground">
-                          {months.map((m, i) => (
-                            <FragmentSubHead
-                              key={m.label}
-                              slug={slugs[i]}
-                              sortSlug={sortSlug}
-                              sortField={sortField}
-                              sortDir={sortDir}
-                              onSort={onSortHolding}
-                            />
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {holdings.length === 0 ? (
-                          <tr>
-                            <td
-                              colSpan={1 + months.length * 2}
-                              className="px-3 py-8 text-center text-muted-foreground"
-                            >
-                              No holdings match &ldquo;{holdingQuery}&rdquo;.
-                            </td>
-                          </tr>
-                        ) : (
-                          sortedHoldings.map((row) => (
-                            <tr
-                              key={row.fincode}
-                              className="border-b last:border-0 hover:bg-accent/40"
-                            >
-                              <td className="border-r px-3 py-2.5 font-medium">
-                                {row.company_name}
-                              </td>
-                              {slugs.map((slug) => {
-                                const cell = row.months[slug];
-                                return <Cells key={slug} cell={cell} />;
-                              })}
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <p className="text-xs text-muted-foreground">
-                    {portfolio.rows.length} equity holdings · arrows compare a
-                    month&apos;s share count to the next-older month (
-                    {months.map((m) => m.label).join(" → ")}); the oldest column
-                    shows no arrow. Source: {portfolio.meta.source}.
-                  </p>
-                </>
-              ) : null}
-
-              <AmcDisclosurePanel schemecode={selectedCode} />
-            </div>
+            // Holdings come straight from each AMC's own SEBI monthly disclosure
+            // (complete, all-asset-class, ISIN-level, month-over-month) — the
+            // RupeeVest equity table is retired in favour of this direct view.
+            <AmcDisclosurePanel schemecode={selectedCode} />
           )}
 
           {activeTab === "head-to-head" && (
@@ -958,72 +745,3 @@ export function PortfolioTrackerView({
   );
 }
 
-function FragmentSubHead({
-  slug,
-  sortSlug,
-  sortField,
-  sortDir,
-  onSort,
-}: {
-  slug: string;
-  sortSlug: string;
-  sortField: "pct" | "shares";
-  sortDir: "asc" | "desc";
-  onSort: (slug: string, field: "pct" | "shares") => void;
-}) {
-  const indicator = (field: "pct" | "shares") =>
-    sortSlug === slug && sortField === field
-      ? sortDir === "desc"
-        ? " ▼"
-        : " ▲"
-      : "";
-  const btn = "ml-auto inline-flex items-center hover:text-foreground";
-  return (
-    <>
-      <th className="border-b border-l px-3 py-1.5 text-right font-medium">
-        <button
-          type="button"
-          onClick={() => onSort(slug, "pct")}
-          className={btn}
-        >
-          % of AUM{indicator("pct")}
-        </button>
-      </th>
-      <th className="border-b px-3 py-1.5 text-right font-medium">
-        <button
-          type="button"
-          onClick={() => onSort(slug, "shares")}
-          className={btn}
-        >
-          Shares{indicator("shares")}
-        </button>
-      </th>
-    </>
-  );
-}
-
-function Cells({
-  cell,
-}: {
-  cell:
-    | {
-        aum_pct_num: number | null;
-        shares_num: number | null;
-        arrow: HoldingArrow;
-      }
-    | undefined;
-}) {
-  const arrow = cell ? cell.arrow : "missing";
-  return (
-    <>
-      <td className="border-l px-3 py-2.5 text-right tabular text-muted-foreground">
-        {formatPctSafe(cell?.aum_pct_num, 1)}
-      </td>
-      <td className="px-3 py-2.5 text-right tabular">
-        <span className="inline-flex items-center justify-end gap-1">
-          {formatSharesIndian(cell?.shares_num)} <ArrowMark arrow={arrow} />
-        </span>
-      </td>
-    </>
-  );
-}

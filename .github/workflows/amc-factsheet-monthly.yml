@@ -24,6 +24,19 @@ on:
         required: false
         default: "true"
         type: string
+      debug:
+        description: "Set to 'true' to log browser-tier diagnostics (page titles, harvested links, per-download status) for bot-wall iteration."
+        required: false
+        default: "false"
+        type: string
+      mode:
+        description: "monthly (default) = latest-month fetch (run-monthly.ts). backfill = last-6-months history seed (backfill-history.ts) — pair with `amcs` to target specific AMCs."
+        required: false
+        default: "monthly"
+        type: choice
+        options:
+          - monthly
+          - backfill
 
 permissions:
   contents: write
@@ -49,18 +62,27 @@ jobs:
       - name: Fetch + parse AMC monthly portfolios
         env:
           AMC_ONLY: ${{ inputs.amcs }}
-        run: npx tsx scripts/ingest/amc-factsheets/run-monthly.ts
-      - name: Rebuild AMC→tracker portfolio crosswalk (2A Holdings-tab panel)
-        # Safe after a filtered run too: run-monthly MERGES index.json, so it
-        # stays complete; the crosswalk reads all committed amc-holdings files.
+          AMC_BROWSER_DEBUG: ${{ inputs.debug == 'true' && '1' || '' }}
+          BACKFILL_BROWSER: ${{ inputs.mode == 'backfill' && '1' || '' }}
+        run: |
+          if [ "${{ inputs.mode }}" = "backfill" ]; then
+            npx tsx scripts/ingest/amc-factsheets/backfill-history.ts 6
+          else
+            npx tsx scripts/ingest/amc-factsheets/run-monthly.ts
+          fi
+      - name: Rebuild AMC-direct tracker (universe + panels + crosswalk)
+        # The MFs Portfolio Tracker is sourced entirely from AMC-direct filings
+        # (build-amc-direct-tracker.ts). Safe after a filtered run too:
+        # run-monthly MERGES index.json, and the builder reads ALL committed
+        # amc-holdings files, so the universe/crosswalk stay complete.
         if: ${{ github.event_name == 'schedule' || inputs.commit != 'false' }}
-        run: npm run build:amc-crosswalk
-      - name: Commit refreshed AMC holdings + crosswalk
+        run: npm run build:amc-direct
+      - name: Commit refreshed AMC holdings + tracker data
         # commit=false → test run (fetch + log only). A filtered run commits
         # safely because index.json is merged, not overwritten.
         if: ${{ github.event_name == 'schedule' || inputs.commit != 'false' }}
         run: |
-          PATHS="public/amc-holdings public/amc-portfolio src/data/portfolio-tracker/amc-portfolio-crosswalk.json"
+          PATHS="public/amc-holdings public/amc-portfolio public/holdings-direct src/data/portfolio-tracker/amc-portfolio-crosswalk.json src/data/portfolio-tracker/amc-direct-index.json"
           if [ -z "$(git status --porcelain $PATHS)" ]; then
             echo "No AMC holdings / crosswalk changes — nothing to commit."
             exit 0

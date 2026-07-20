@@ -38,6 +38,7 @@ import { JSON_API_CONFIG, jsonApiAmc } from "./json-api";
 import { launchBrowser } from "./browser";
 import { browserFetchAmc, monthFloor, monthCeil } from "./browser-fallback";
 import { BROWSER_CONFIG } from "./browser-hints";
+import { waybackFetch, WAYBACK_FALLBACK } from "./wayback";
 import type { Browser } from "playwright";
 import type { AmcParseOptions, AmcPortfolioSnapshot, AmcScheme } from "./types";
 
@@ -81,7 +82,7 @@ interface IndexEntry {
   slug: string;
   amc: string;
   status: Status;
-  source: "advisorkhoj" | "direct" | "browser" | "page-scrape" | "json-api" | null;
+  source: "advisorkhoj" | "direct" | "browser" | "page-scrape" | "json-api" | "wayback" | null;
   asOfMonth: string | null;
   schemes: number;
   holdings: number;
@@ -222,6 +223,24 @@ async function processAmc(amc: string, year: number, browser: Browser | null): P
         const w = await writeSnapshot(slug, amc, r.usedUrl ?? urls[0], label, r.schemes);
         return { ...base, status: "ok", source: "browser", asOfMonth: label, schemes: r.schemes.length, holdings: w.holdings, file: w.file };
       }
+    }
+  }
+
+  // 4) Internet Archive fallback — for hosts whose Akamai edge 403s BOTH curl
+  //    and CI's browser by IP (Edelweiss), fetch the AdvisorKhoj-named file URLs
+  //    on the AMC's own host through archive.org instead (see wayback.ts).
+  //    Newest month first; stop at the first month whose file parses.
+  if (WAYBACK_FALLBACK.has(slug)) {
+    for (const link of links.slice(0, 4)) {
+      const buf = waybackFetch(link.url);
+      if (!buf) continue;
+      let schemes: AmcScheme[] = [];
+      try { schemes = parseAmcWorkbook(buf, GENERIC); } catch { /* maybe a zip */ }
+      if (schemes.length === 0) schemes = parseZip(buf, GENERIC);
+      console.log(`  (wayback ${link.label}: ${buf.length}b → ${schemes.length} scheme(s))`);
+      if (schemes.length === 0) continue;
+      const w = await writeSnapshot(slug, amc, link.url, link.label, schemes);
+      return { ...base, status: "ok", source: "wayback", asOfMonth: link.label, schemes: schemes.length, holdings: w.holdings, file: w.file };
     }
   }
 
