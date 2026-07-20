@@ -15,12 +15,19 @@ import {
   type HoldingArrow,
 } from "@/data/portfolio-tracker";
 import type { FundHouseEntry, FundHousePortfolio } from "@/data/fundwise-tracker";
+import {
+  amcDisclosurePath,
+  type AmcSchemePortfolio,
+  type AmcAssetClass,
+} from "@/data/amc-scheme-portfolio";
 import { ppToBps } from "@/lib/units";
 import type {
   Arrow,
+  AssetMixRow,
   FundHouseExport,
   FundHousePeerRow,
   HoldingExportRow,
+  HoldingMonthCell,
   PeerRow,
   PlanProfile,
   RatioRow,
@@ -154,6 +161,66 @@ function buildHoldings(portfolio: FundPortfolio): {
   return { rows: withKey.map((w) => w.row), monthLabels, monthBooksCr };
 }
 
+/** Holdings for the scheme export, built from the AMC disclosure panel so the
+ *  export matches the Holdings tab exactly: ALL asset classes, with class,
+ *  industry/rating, and per-month % to NAV + market value (₹ Cr). */
+function buildPanelHoldings(panel: AmcSchemePortfolio): {
+  rows: HoldingExportRow[];
+  monthLabels: string[];
+  monthBooksCr: (number | null)[];
+  assetMix: AssetMixRow[];
+} {
+  const months = panel.months ?? [];
+  const monthKeys = months.map((m) => m.key);
+  const monthLabels = months.map((m) => m.label);
+  // Book per month = total market value across all classes.
+  const monthBooksCr = monthKeys.map((k) => {
+    let sum = 0;
+    let any = false;
+    for (const r of panel.rows) {
+      const mv = r.months[k]?.marketValueCr;
+      if (mv != null) { sum += mv; any = true; }
+    }
+    return any ? Math.round(sum * 100) / 100 : null;
+  });
+  const latestKey = monthKeys[0] ?? "";
+
+  const withKey = panel.rows.map((r) => {
+    const cells: HoldingMonthCell[] = monthKeys.map((k, i) => {
+      const cur = r.months[k]?.pctToNav ?? null;
+      const older = i + 1 < monthKeys.length ? r.months[monthKeys[i + 1]]?.pctToNav ?? null : null;
+      let arrow: Arrow = "none";
+      if (cur != null && older != null) arrow = cur > older ? "up" : cur < older ? "down" : "none";
+      return { label: monthLabels[i], aumPct: cur, shares: null, valueCr: r.months[k]?.marketValueCr ?? null, arrow };
+    });
+    return {
+      row: {
+        company: r.name,
+        assetClass: r.assetClass,
+        industry: r.industry ?? null,
+        months: cells,
+      } satisfies HoldingExportRow,
+      sortKey: r.months[latestKey]?.pctToNav ?? -1,
+    };
+  });
+  withKey.sort((a, b) => b.sortKey - a.sortKey);
+
+  // Latest-month asset mix (mirrors the Holdings tab): disclosed class weights
+  // + residual to 100% attributed to Cash & equivalents.
+  const CLASS_ORDER: AmcAssetClass[] = ["Equity", "Debt", "Cash & equiv", "Gold", "Silver", "Other"];
+  const alloc = new Map<AmcAssetClass, number>();
+  for (const a of months[0]?.allocation ?? []) alloc.set(a.class, (alloc.get(a.class) ?? 0) + a.pct);
+  const disclosed = [...alloc.values()].reduce((s, p) => s + p, 0);
+  const residual = Math.round((100 - disclosed) * 10) / 10;
+  if (residual > 0.05) alloc.set("Cash & equiv", (alloc.get("Cash & equiv") ?? 0) + residual);
+  const assetMix: AssetMixRow[] = CLASS_ORDER.filter((c) => (alloc.get(c) ?? 0) > 0.05).map((c) => ({
+    class: c,
+    pct: Math.round((alloc.get(c) ?? 0) * 10) / 10,
+  }));
+
+  return { rows: withKey.map((w) => w.row), monthLabels, monthBooksCr, assetMix };
+}
+
 // ---- Scheme export --------------------------------------------------------
 
 const RATIO_DEFS: Array<{
@@ -177,7 +244,7 @@ export async function gatherSchemeExport(args: {
   generatedAt: string;
 }): Promise<SchemeExport> {
   const { entry, amc, sectorRows, generatedAt } = args;
-  const [latest, returns, category, ratios, portfolio] = await Promise.all([
+  const [latest, returns, category, ratios, portfolio, panel] = await Promise.all([
     getJson<LatestSnapshot>("/nav-data/mf-latest-nav.json"),
     getJson<ReturnsSnapshot>("/nav-data/mf-returns.json"),
     getJson<CategorySnapshot>("/nav-data/mf-category-returns.json"),
@@ -185,6 +252,8 @@ export async function gatherSchemeExport(args: {
     args.portfolio
       ? Promise.resolve(args.portfolio)
       : getJson<FundPortfolio>(entry.path),
+    // The Holdings tab's source: the AMC disclosure panel (ALL asset classes).
+    getJson<AmcSchemePortfolio>(amcDisclosurePath(entry.schemecode)),
   ]);
 
   const returnsByCode = new Map((returns?.funds ?? []).map((f) => [f.schemecode, f]));
@@ -302,9 +371,17 @@ export async function gatherSchemeExport(args: {
     categoryAvgPct: s.peerAvg,
   }));
 
-  const holdingsData = portfolio
-    ? buildHoldings(portfolio)
-    : { rows: [], monthLabels: [], monthBooksCr: [] };
+  // Holdings mirror the Holdings tab: prefer the AMC disclosure panel (all asset
+  // classes, with class/industry/value); fall back to the equity feed only if
+  // the panel is unavailable.
+  const holdingsData = panel
+    ? buildPanelHoldings(panel)
+    : portfolio
+      ? { ...buildHoldings(portfolio), assetMix: [] as AssetMixRow[] }
+      : { rows: [], monthLabels: [], monthBooksCr: [], assetMix: [] as AssetMixRow[] };
+  const holdingsSource = panel
+    ? panel.sourceUrl || "AMC monthly portfolio disclosure"
+    : portfolio?.meta.source || "AMC monthly portfolio disclosure";
 
   const peerCohortParts: string[] = [];
   if (entry.classification) peerCohortParts.push(entry.classification);
@@ -322,6 +399,7 @@ export async function gatherSchemeExport(args: {
     generatedAt,
     monthLabels: holdingsData.monthLabels,
     monthBooksCr: holdingsData.monthBooksCr,
+    assetMix: holdingsData.assetMix,
     plans,
     ratiosMeta: ratios
       ? {
@@ -337,7 +415,7 @@ export async function gatherSchemeExport(args: {
     peerPeriods,
     peers,
     holdings: holdingsData.rows,
-    holdingsSource: portfolio?.meta.source ?? "RupeeVest Portfolio Tracker",
+    holdingsSource,
   };
 }
 

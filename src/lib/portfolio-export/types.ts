@@ -10,11 +10,23 @@ export interface HoldingMonthCell {
   label: string;
   aumPct: number | null;
   shares: number | null;
+  /** Market value in ₹ Cr (AMC-direct all-asset-class scheme export). */
+  valueCr?: number | null;
   arrow: Arrow;
 }
 export interface HoldingExportRow {
   company: string;
+  /** Asset class (AMC-direct all-class scheme export): Equity/Debt/Gold/… */
+  assetClass?: string | null;
+  /** AMC-disclosed industry (equity) or credit rating (debt). */
+  industry?: string | null;
   months: HoldingMonthCell[];
+}
+
+/** Latest-month asset-class weight (% of NAV), residual attributed to cash. */
+export interface AssetMixRow {
+  class: string;
+  pct: number;
 }
 
 export interface ReturnRow {
@@ -85,6 +97,8 @@ export interface SchemeExport {
     marketReturn: number;
   } | null;
   sectors: SectorRow[];
+  /** Latest-month asset-class mix for the holdings section (AMC-direct). */
+  assetMix: AssetMixRow[];
   peerCohortLabel: string;
   /** The period the peer set is ranked by (drives Rank / Quartile / vs-median). */
   peerPeriod: string;

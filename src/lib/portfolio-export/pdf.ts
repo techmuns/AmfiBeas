@@ -217,11 +217,17 @@ export async function downloadSchemePdf(data: SchemeExport, filename: string): P
     y = afterTable(doc);
   }
 
-  // Holdings (own page for breathing room).
+  // Holdings (own page for breathing room) — full portfolio, direct from AMC.
   if (data.holdings.length) {
     doc.addPage();
-    y = heading(doc, "Equity Holdings", 44, pageW);
-    holdingsTable(doc, autoTable, base, y, data.monthLabels, data.monthBooksCr, data.holdings, "% of AUM");
+    y = heading(doc, "Full portfolio — direct from AMC", 44, pageW);
+    if (data.assetMix.length) {
+      const mix = `Asset mix${data.monthLabels[0] ? ` · ${data.monthLabels[0]}` : ""}:  ${data.assetMix
+        .map((a) => `${a.class} ${a.pct.toFixed(1)}%`)
+        .join("   ·   ")}`;
+      y = note(doc, mix, y + 4, pageW);
+    }
+    schemeHoldingsTable(doc, autoTable, base, y, data.monthLabels, data.monthBooksCr, data.holdings);
   }
 
   footer(doc, pageW, `${data.fundName} · Source: ${data.holdingsSource} · Generated ${data.generatedAt}`);
@@ -433,6 +439,51 @@ function holdingsTable(
     styles: { ...base.styles, fontSize: 7 },
     headStyles: { ...base.headStyles, fontSize: 7, halign: "right" },
     columnStyles: { 0: { halign: "left", cellWidth: 150 } },
+  });
+}
+
+/** Scheme holdings — AMC-direct, all asset classes. Mirrors the Holdings tab:
+ *  Instrument · Class · Industry/Rating, then per month (% to NAV, Value ₹Cr). */
+function schemeHoldingsTable(
+  doc: jsPDF,
+  autoTable: AutoTableFn,
+  base: UserOptions,
+  y: number,
+  monthLabels: string[],
+  monthBooksCr: (number | null)[],
+  rows: SchemeExport["holdings"]
+) {
+  const head: string[] = ["Instrument", "Class", "Industry / Rating"];
+  monthLabels.forEach((label, i) => {
+    const book = monthBooksCr[i];
+    head.push(`${label} % to NAV`);
+    head.push(`${label} value${book != null ? ` (₹${Math.round(book).toLocaleString("en-IN")} Cr)` : " ₹Cr"}`);
+  });
+  const body: RowInput[] = rows.map((row) => {
+    const line: CellDef[] = [
+      { content: row.company, styles: { halign: "left" } },
+      { content: row.assetClass ?? "—", styles: { halign: "left" } },
+      { content: row.industry || "—", styles: { halign: "left" } },
+    ];
+    row.months.forEach((m) => {
+      const tcol = m.arrow === "up" ? rgb(HEX.positive) : m.arrow === "down" ? rgb(HEX.negative) : rgb(HEX.ink);
+      line.push({ content: fp1(m.aumPct), styles: { halign: "right", textColor: tcol } });
+      line.push({ content: fint(m.valueCr ?? null), styles: { halign: "right" } });
+    });
+    return line;
+  });
+  autoTable(doc, {
+    ...base,
+    startY: y,
+    head: [head],
+    body,
+    styles: { ...base.styles, fontSize: 7 },
+    headStyles: { ...base.headStyles, fontSize: 7, halign: "right" },
+    columnStyles: {
+      0: { halign: "left", cellWidth: 130 },
+      1: { halign: "left", cellWidth: 44 },
+      2: { halign: "left", cellWidth: 80 },
+    },
   });
 }
 
