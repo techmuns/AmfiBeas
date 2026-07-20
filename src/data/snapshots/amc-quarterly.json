@@ -1,8 +1,8 @@
 {
   "meta": {
-    "generatedAt": "2026-07-13T05:53:45.902Z",
+    "generatedAt": "2026-07-20T05:54:49.182Z",
     "source": "https://www.screener.in/company/{ticker}/consolidated/",
-    "notes": "Quarterly P&L for listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC, ICICIAMC standalone). ICICIAMC uses /company/ICICIAMC/ — the consolidated variant returned an annual/TTM layout. Sanity guards: MIN_QUARTERS_PER_AMC=4, REVENUE_REALIZATION ≤ 90 bps, OP_MARGIN ≤ 75 bps; failures preserve prior history. Source mapping: screener.in 'Sales' row → Revenue from Operations (excludes Other Income); 'Other Income' captured separately for display only; 'Operating Profit' and 'Net Profit' as labelled. revenueFromOperations is what feeds Revenue Realization (bps of MF QAAUM). avgAum not provided by this source. lastSuccessfulFetchAt=2026-07-13T05:53:45.902Z · slugsThisRun=[hdfc, nippon, absl, uti, icici-pru] · failedThisRun=[canara-robeco]. quartersCovered=13 (2023-Q1…2026-Q1) · rowCount=62 · fetchWindow=13."
+    "notes": "Quarterly P&L for listed Indian AMCs (HDFCAMC, NAM-INDIA, ABSLAMC, UTIAMC, ICICIAMC standalone). ICICIAMC uses /company/ICICIAMC/ — the consolidated variant returned an annual/TTM layout. Sanity guards: MIN_QUARTERS_PER_AMC=4, REVENUE_REALIZATION ≤ 90 bps, OP_MARGIN ≤ 75 bps; failures preserve prior history. Source mapping: screener.in 'Sales' row → Revenue from Operations (excludes Other Income); 'Other Income' captured separately for display only; 'Operating Profit' and 'Net Profit' as labelled. revenueFromOperations is what feeds Revenue Realization (bps of MF QAAUM). avgAum not provided by this source. lastSuccessfulFetchAt=2026-07-20T05:54:49.182Z · slugsThisRun=[hdfc, nippon, absl, uti, icici-pru] · failedThisRun=[canara-robeco]. quartersCovered=14 (2023-Q1…2026-Q2) · rowCount=64 · fetchWindow=14."
   },
   "rows": [
     {
@@ -61,8 +61,8 @@
       "revenue": 575,
       "revenueFromOperations": 575,
       "otherIncome": 0,
-      "operatingProfit": 429,
-      "pat": 478,
+      "operatingProfit": 428,
+      "pat": 477,
       "avgAum": 0
     },
     {
@@ -101,8 +101,8 @@
       "revenue": 643,
       "revenueFromOperations": 643,
       "otherIncome": 0,
-      "operatingProfit": 482,
-      "pat": 438,
+      "operatingProfit": 481,
+      "pat": 437,
       "avgAum": 0
     },
     {
@@ -141,8 +141,8 @@
       "revenue": 671,
       "revenueFromOperations": 671,
       "otherIncome": 0,
-      "operatingProfit": 511,
-      "pat": 490,
+      "operatingProfit": 509,
+      "pat": 488,
       "avgAum": 0
     },
     {
@@ -221,7 +221,7 @@
       "revenue": 775,
       "revenueFromOperations": 775,
       "otherIncome": 0,
-      "operatingProfit": 595,
+      "operatingProfit": 594,
       "pat": 604,
       "avgAum": 0
     },
@@ -261,7 +261,7 @@
       "revenue": 887,
       "revenueFromOperations": 887,
       "otherIncome": 0,
-      "operatingProfit": 704,
+      "operatingProfit": 703,
       "pat": 577,
       "avgAum": 0
     },
@@ -298,8 +298,8 @@
     {
       "amcSlug": "hdfc",
       "quarter": "2024-Q4",
-      "revenue": 934,
-      "revenueFromOperations": 934,
+      "revenue": 935,
+      "revenueFromOperations": 935,
       "otherIncome": 0,
       "operatingProfit": 764,
       "pat": 641,
@@ -351,8 +351,8 @@
       "revenue": 901,
       "revenueFromOperations": 901,
       "otherIncome": 0,
-      "operatingProfit": 731,
-      "pat": 639,
+      "operatingProfit": 730,
+      "pat": 638,
       "avgAum": 0
     },
     {
@@ -411,20 +411,19 @@
       "revenue": 968,
       "revenueFromOperations": 968,
       "otherIncome": 0,
-      "operatingProfit": 774,
+      "operatingProfit": 773,
       "pat": 748,
       "avgAum": 0
     },
     {
       "amcSlug": "icici-pru",
       "quarter": "2025-Q2",
-      "revenue": 1313.32,
-      "revenueFromOperations": 1313.32,
-      "otherIncome": 144.91,
-      "operatingProfit": 945.96,
-      "pat": 782.32,
-      "avgAum": 0,
-      "derivedFrom": "ICICI AMC 9M FY26 (Dec 2025) less Sep 2025 and Dec 2025 quarters. Operating Profit = PBT 1060.41 − Other Income 144.91 + Finance Cost 5.15 + Depreciation 25.31 = 945.96. Source: company financial results."
+      "revenue": 1331,
+      "revenueFromOperations": 1331,
+      "otherIncome": 0,
+      "operatingProfit": 946,
+      "pat": 784,
+      "avgAum": 0
     },
     {
       "amcSlug": "nippon",
@@ -469,8 +468,8 @@
     {
       "amcSlug": "hdfc",
       "quarter": "2025-Q3",
-      "revenue": 1026,
-      "revenueFromOperations": 1026,
+      "revenue": 1027,
+      "revenueFromOperations": 1027,
       "otherIncome": 0,
       "operatingProfit": 801,
       "pat": 718,
@@ -529,11 +528,11 @@
     {
       "amcSlug": "hdfc",
       "quarter": "2025-Q4",
-      "revenue": 1074,
-      "revenueFromOperations": 1074,
+      "revenue": 1075,
+      "revenueFromOperations": 1075,
       "otherIncome": 0,
-      "operatingProfit": 877,
-      "pat": 770,
+      "operatingProfit": 876,
+      "pat": 769,
       "avgAum": 0
     },
     {
@@ -589,21 +588,21 @@
     {
       "amcSlug": "hdfc",
       "quarter": "2026-Q1",
-      "revenue": 1050,
-      "revenueFromOperations": 1050,
+      "revenue": 1052,
+      "revenueFromOperations": 1052,
       "otherIncome": 0,
-      "operatingProfit": 846,
+      "operatingProfit": 845,
       "pat": 623,
       "avgAum": 0
     },
     {
       "amcSlug": "icici-pru",
       "quarter": "2026-Q1",
-      "revenue": 1517,
-      "revenueFromOperations": 1517,
+      "revenue": 1542,
+      "revenueFromOperations": 1542,
       "otherIncome": 0,
-      "operatingProfit": 1160,
-      "pat": 763,
+      "operatingProfit": 1168,
+      "pat": 769,
       "avgAum": 0
     },
     {
@@ -624,6 +623,26 @@
       "otherIncome": 0,
       "operatingProfit": -12,
       "pat": -51,
+      "avgAum": 0
+    },
+    {
+      "amcSlug": "hdfc",
+      "quarter": "2026-Q2",
+      "revenue": 1100,
+      "revenueFromOperations": 1100,
+      "otherIncome": 0,
+      "operatingProfit": 850,
+      "pat": 837,
+      "avgAum": 0
+    },
+    {
+      "amcSlug": "icici-pru",
+      "quarter": "2026-Q2",
+      "revenue": 1564,
+      "revenueFromOperations": 1564,
+      "otherIncome": 0,
+      "operatingProfit": 1133,
+      "pat": 965,
       "avgAum": 0
     }
   ]
