@@ -383,7 +383,6 @@ function TrendsTabInner({
     manifestByCode,
     categoryByCode,
     categoryByCohort,
-    historyStage,
   } = data;
   // Regular vs Direct plan. Each plan is its own snapshot entry, keyed
   // "{schemecode}" (Regular / primary) and "{schemecode}-D" (Direct). NAV,
@@ -684,20 +683,13 @@ function TrendsTabInner({
   }
 
   const subtitleLine = cohortLabel;
-  const freshnessLine = buildFreshnessLine(
-    data.feedDate,
-    historyStage,
-    manifestRow,
-    historyAvailable,
-    benchmarkLoaded,
-  );
 
   return (
     <section className="space-y-4">
       <Header
         fundName={fundName}
         subtitleLine={subtitleLine}
-        freshness={freshnessLine}
+        freshness={null}
       />
 
       <PlanToggle
@@ -857,35 +849,6 @@ function buildCohortLabel(
     if (option === "growth") parts.push("Growth");
     else if (option === "idcw") parts.push("IDCW");
   }
-  return parts.join(" · ");
-}
-
-function buildFreshnessLine(
-  feedDate: string,
-  historyStage: number,
-  manifestRow: ManifestFund | undefined,
-  historyAvailable: boolean,
-  benchmarkLoaded: IndexHistoryFile | null,
-): string {
-  const parts: string[] = [`NAV as of ${formatDMY(feedDate)}`];
-  if (historyAvailable && manifestRow?.firstDate && manifestRow.lastDate) {
-    parts.push(
-      `History ${formatIsoDate(manifestRow.firstDate)} → ${formatIsoDate(manifestRow.lastDate)} (Stage-${historyStage}, ${manifestRow.points} pts)`,
-    );
-  } else {
-    parts.push(`History: pending Stage-${historyStage} backfill for this fund`);
-  }
-  // Phase 3.10A: benchmark coverage. Only added when the benchmark loaded
-  // and reports a lastDate — silently dropped otherwise so the banner
-  // doesn't get noisy.
-  if (benchmarkLoaded?.meta.lastDate) {
-    parts.push(`${benchmarkLoaded.meta.name} through ${formatIsoDate(benchmarkLoaded.meta.lastDate)}`);
-  }
-  parts.push(
-    benchmarkLoaded
-      ? "Source: AMFI historical + AMFI latest NAV + NSE historical CSV"
-      : "Source: AMFI historical + AMFI latest NAV",
-  );
   return parts.join(" · ");
 }
 
