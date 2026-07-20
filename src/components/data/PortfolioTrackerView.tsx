@@ -286,11 +286,23 @@ export function PortfolioTrackerView({
     [funds]
   );
 
-  // SIFs (Specialized Investment Funds) are a separate product class, not fund
-  // houses — split them out so the picker can group them under their own heading.
+  // SIFs (Specialized Investment Funds) are a separate product class. Only a
+  // fund house whose ENTIRE line-up is SIFs belongs under the "SIFs" heading —
+  // an AMC that merely runs one long-short SIF alongside ordinary schemes
+  // (Aditya Birla Sun Life, Edelweiss, …) stays in the main list. In the current
+  // universe every SIF is parented to a mainstream AMC, so this set is empty and
+  // the SIF subsection is hidden entirely.
   const sifLabels = useMemo(() => {
+    const byAmc = new Map<string, { total: number; sif: number }>();
+    for (const f of funds) {
+      const a = amcLabel(f);
+      const rec = byAmc.get(a) ?? { total: 0, sif: 0 };
+      rec.total += 1;
+      if (isSIF(f.fund)) rec.sif += 1;
+      byAmc.set(a, rec);
+    }
     const s = new Set<string>();
-    for (const f of funds) if (isSIF(f.fund)) s.add(amcLabel(f));
+    for (const [a, rec] of byAmc) if (rec.total > 0 && rec.sif === rec.total) s.add(a);
     return s;
   }, [funds]);
   const houseOptions = useMemo(
