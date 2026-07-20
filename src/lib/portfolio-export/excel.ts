@@ -242,6 +242,70 @@ function holdingsSheet(
   });
 }
 
+// ---- Scheme holdings sheet (AMC-direct, all asset classes) -----------------
+// Mirrors the dashboard Holdings tab: Instrument · Class · Industry/Rating, then
+// per month (% to NAV, Value ₹Cr), preceded by the latest-month asset mix.
+
+function schemeHoldingsSheet(XLSX: XlsxModule, data: SchemeExport) {
+  const { monthLabels, monthBooksCr, holdings, assetMix } = data;
+  const grid: (SCell | null)[][] = [];
+  const merges: Merge[] = [];
+  const nCols = 3 + monthLabels.length * 2;
+
+  grid.push([titleCell("Full portfolio — direct from AMC", 14), ...Array(nCols - 1).fill(null)]);
+  merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: nCols - 1 } });
+
+  if (assetMix.length) {
+    const mix = `Asset mix${monthLabels[0] ? ` · ${monthLabels[0]}` : ""}:  ${assetMix
+      .map((a) => `${a.class} ${a.pct.toFixed(1)}%`)
+      .join("   ·   ")}`;
+    grid.push([titleCell(mix, 10, HEX.mutedText, false), ...Array(nCols - 1).fill(null)]);
+    merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: nCols - 1 } });
+  }
+  grid.push(Array(nCols).fill(null));
+
+  // Header row 1: Instrument / Class / Industry (merged down 2) + per-month label.
+  const headerTop = grid.length;
+  const h1: SCell[] = [hCell("Instrument", "left"), hCell("Class", "left"), hCell("Industry / Rating", "left")];
+  monthLabels.forEach((label, i) => {
+    const book = monthBooksCr[i];
+    const cap = book !== null ? `  (AUM ₹${Math.round(book).toLocaleString("en-IN")} Cr)` : "";
+    h1.push(hCell(`${label}${cap}`, "center"), hCell("", "center"));
+  });
+  grid.push(h1);
+  const h2: SCell[] = [hCell("", "left"), hCell("", "left"), hCell("", "left")];
+  monthLabels.forEach(() => {
+    h2.push(hCell("% to NAV", "right"), hCell("Value ₹Cr", "right"));
+  });
+  grid.push(h2);
+  for (let c = 0; c < 3; c++) merges.push({ s: { r: headerTop, c }, e: { r: headerTop + 1, c } });
+  monthLabels.forEach((_, i) => {
+    const c = 3 + i * 2;
+    merges.push({ s: { r: headerTop, c }, e: { r: headerTop, c: c + 1 } });
+  });
+
+  holdings.forEach((row, ri) => {
+    const zebra = ri % 2 === 1;
+    const line: SCell[] = [
+      textCell(row.company, "left", zebra),
+      textCell(row.assetClass ?? "—", "left", zebra),
+      textCell(row.industry || "—", "left", zebra),
+    ];
+    row.months.forEach((m) => {
+      const tone = m.arrow === "up" ? 1 : m.arrow === "down" ? -1 : 0;
+      line.push(numCell(m.aumPct, FMT.pct1, { zebra, tone }));
+      line.push(numCell(m.valueCr ?? null, FMT.intGrouped, { zebra }));
+    });
+    grid.push(line);
+  });
+
+  const widths = [34, 12, 22, ...monthLabels.flatMap(() => [11, 12])];
+  return buildWorksheet(XLSX, grid, widths, {
+    merges,
+    rowHeights: { 0: 20, [headerTop]: 18, [headerTop + 1]: 16 },
+  });
+}
+
 // ---- Scheme workbook ------------------------------------------------------
 
 function schemeSummarySheet(XLSX: XlsxModule, data: SchemeExport) {
@@ -428,7 +492,7 @@ export async function downloadSchemeXlsx(data: SchemeExport, filename: string): 
   if (data.holdings.length)
     XLSX.utils.book_append_sheet(
       wb,
-      holdingsSheet(XLSX, data.monthLabels, data.monthBooksCr, data.holdings, "% of AUM"),
+      schemeHoldingsSheet(XLSX, data),
       safeName("Holdings")
     );
   if (data.sectors.length)
