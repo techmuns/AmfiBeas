@@ -25,6 +25,9 @@ export interface TrackerMonthCell {
 export interface TrackerHolding {
   company_name: string;
   fincode: string;
+  /** AMC-disclosed sector/industry for the holding (AMC-direct feed). When
+   *  present, the sector views use it instead of the fincode→sector map. */
+  sector?: string | null;
   months: Record<string, TrackerMonthCell>;
 }
 

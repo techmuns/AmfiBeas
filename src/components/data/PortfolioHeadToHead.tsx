@@ -66,6 +66,7 @@ type Signal =
 interface CompareRow {
   fincode: string;
   name: string;
+  sector: string | null;
   a: number | null;
   b: number | null;
   delta: number;
@@ -110,6 +111,7 @@ function classify(
  *  weight add / trim, market-cap mix and the top-10 holdings. */
 interface SchemeSnapshot {
   equityCr: number | null;
+  holdingsCount: number;
   top10Pct: number;
   top10DeltaPp: number | null;
   biggestAdd: { company: string; pp: number } | null;
@@ -145,6 +147,11 @@ function schemeSnapshot(portfolio: FundPortfolio): SchemeSnapshot {
   const top10Pct = latestSlug ? round1(sumTop10(latestSlug)) : 0;
   const top10DeltaPp =
     latestSlug && prevSlug ? round1(top10Pct - sumTop10(prevSlug)) : null;
+
+  // Number of holdings actually held in the latest disclosed month.
+  const holdingsCount = latestSlug
+    ? portfolio.rows.filter((r) => pctOf(r, latestSlug) > 0).length
+    : portfolio.rows.length;
 
   // Biggest single-name weight add / trim, MoM (in pp of book).
   let biggestAdd: { company: string; pp: number } | null = null;
@@ -191,6 +198,7 @@ function schemeSnapshot(portfolio: FundPortfolio): SchemeSnapshot {
 
   return {
     equityCr: portfolio.meta.aumTotalCr,
+    holdingsCount,
     top10Pct,
     top10DeltaPp,
     biggestAdd,
@@ -268,13 +276,14 @@ export function PortfolioHeadToHead({
 
     const map = new Map<
       string,
-      { name: string; a: number | null; b: number | null }
+      { name: string; sector: string | null; a: number | null; b: number | null }
     >();
     for (const r of aPortfolio.rows) {
       const w = r.months[slugA]?.aum_pct_num ?? null;
       if (w === null) continue;
       map.set(r.fincode, {
         name: cleanCompanyName(r.company_name),
+        sector: (r.sector ?? "").trim() || null,
         a: w,
         b: null,
       });
@@ -283,19 +292,22 @@ export function PortfolioHeadToHead({
       const w = r.months[slugB]?.aum_pct_num ?? null;
       if (w === null) continue;
       const ex = map.get(r.fincode);
-      if (ex) ex.b = w;
-      else
+      if (ex) {
+        ex.b = w;
+        if (!ex.sector && (r.sector ?? "").trim()) ex.sector = r.sector!.trim();
+      } else
         map.set(r.fincode, {
           name: cleanCompanyName(r.company_name),
+          sector: (r.sector ?? "").trim() || null,
           a: null,
           b: w,
         });
     }
 
     const rows: CompareRow[] = [];
-    for (const [fincode, { name, a, b }] of map) {
+    for (const [fincode, { name, sector, a, b }] of map) {
       const { delta, signal } = classify(a, b);
-      rows.push({ fincode, name, a, b, delta, signal });
+      rows.push({ fincode, name, sector, a, b, delta, signal });
     }
     rows.sort((x, y) => Math.abs(y.delta) - Math.abs(x.delta));
     return rows;
@@ -324,10 +336,14 @@ export function PortfolioHeadToHead({
 
   // Sector options across the whole comparison (both views), so the dropdown
   // is stable when toggling Common/Unique. Unclassified sinks to the end.
-  const sectorOf = (r: CompareRow) => classifySector(r.fincode, r.name);
+  // Prefer the AMC-disclosed sector (AMC-direct feed); fall back to the
+  // fincode→sector map only for rows without one.
+  const sectorOf = (r: CompareRow) =>
+    (r.sector ?? "").trim() || classifySector(r.fincode, r.name);
   const sectorOptions = useMemo(() => {
     const set = new Set<string>();
-    for (const r of compareRows) set.add(classifySector(r.fincode, r.name));
+    for (const r of compareRows)
+      set.add((r.sector ?? "").trim() || classifySector(r.fincode, r.name));
     return [...set].sort(
       (a, b) =>
         (a === UNCLASSIFIED ? 1 : 0) - (b === UNCLASSIFIED ? 1 : 0) ||
@@ -705,6 +721,9 @@ function SchemeSnapshotCard({
       <dl className="space-y-1.5 text-sm">
         <SnapRow label="Equity book">
           {formatCompactCrSafe(snap.equityCr)}
+        </SnapRow>
+        <SnapRow label="No. of holdings">
+          {snap.holdingsCount > 0 ? snap.holdingsCount.toLocaleString("en-IN") : "—"}
         </SnapRow>
         <SnapRow label="Top-10 conc.">
           {snap.top10Pct.toFixed(1)}%
