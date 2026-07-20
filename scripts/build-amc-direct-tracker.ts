@@ -224,13 +224,16 @@ function main() {
       // A weight outside [0,100] is a mis-parsed cell (e.g. a market value that
       // landed in the %-to-NAV column) — drop it rather than surface garbage.
       const okPct = (p: number | null): number | null => (p != null && p >= 0 && p <= 100 ? p : null);
-      const rowMap = new Map<string, { company_name: string; fincode: string; byKey: Map<string, { pct: number | null; shares: number | null }> }>();
+      const rowMap = new Map<string, { company_name: string; fincode: string; sector: string | null; byKey: Map<string, { pct: number | null; shares: number | null }> }>();
       for (const m of months) {
         for (const h of m.holdings) {
           if (classifyHolding(h) !== "Equity") continue;
           const rk = h.isin ? h.isin.toUpperCase() : "n:" + h.name.toLowerCase().trim();
-          if (!rowMap.has(rk)) rowMap.set(rk, { company_name: h.name, fincode: h.isin || rk, byKey: new Map() });
-          rowMap.get(rk)!.byKey.set(m.monthKey, { pct: okPct(h.pctToNav), shares: h.quantity });
+          if (!rowMap.has(rk)) rowMap.set(rk, { company_name: h.name, fincode: h.isin || rk, sector: (h.industry ?? "").trim() || null, byKey: new Map() });
+          const row = rowMap.get(rk)!;
+          // Keep the AMC-disclosed sector/industry from whichever month has one.
+          if (!row.sector && (h.industry ?? "").trim()) row.sector = h.industry!.trim();
+          row.byKey.set(m.monthKey, { pct: okPct(h.pctToNav), shares: h.quantity });
         }
       }
       const rows = [...rowMap.values()].map((r) => {
@@ -249,7 +252,7 @@ function main() {
             arrow_raw: null,
           };
         });
-        return { company_name: r.company_name, fincode: r.fincode, months: monthsCell };
+        return { company_name: r.company_name, fincode: r.fincode, sector: r.sector, months: monthsCell };
       }).sort((a, b) => ((b.months[fpMonths[0].slug] as { aum_pct_num: number | null })?.aum_pct_num ?? -1) - ((a.months[fpMonths[0].slug] as { aum_pct_num: number | null })?.aum_pct_num ?? -1));
 
       const aumTotalCr = fpMonths[0].aumCr;

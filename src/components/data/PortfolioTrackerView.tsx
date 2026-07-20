@@ -382,7 +382,9 @@ export function PortfolioTrackerView({
       for (const r of data.rows) {
         const w = r.months[slug]?.aum_pct_num ?? 0;
         if (!w) continue;
-        const s = classifySector(r.fincode, r.company_name);
+        // Prefer the AMC-disclosed sector (AMC-direct feed); fall back to the
+        // fincode→sector map only for legacy rows without one.
+        const s = (r.sector ?? "").trim() || classifySector(r.fincode, r.company_name);
         m.set(s, (m.get(s) ?? 0) + w);
       }
       return m;
