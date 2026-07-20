@@ -669,6 +669,22 @@ export function PortfolioHeadToHead({
               </select>
             </div>
           </div>
+          {snapA && snapB && (
+            <p className="text-xs text-muted-foreground">
+              {aLabel} holds{" "}
+              <span className="font-medium text-foreground">{snapA.holdingsCount}</span>,{" "}
+              {bLabel} holds{" "}
+              <span className="font-medium text-foreground">{snapB.holdingsCount}</span>{" "}
+              (all asset classes) —{" "}
+              <span className="font-medium text-foreground">{mutualRows.length}</span> held by
+              both, <span className="font-medium text-foreground">{onlyACount}</span> only in{" "}
+              {aLabel}, <span className="font-medium text-foreground">{onlyBCount}</span> only in{" "}
+              {bLabel}. So {aLabel} = {mutualRows.length} + {onlyACount} = {snapA.holdingsCount},{" "}
+              {bLabel} = {mutualRows.length} + {onlyBCount} = {snapB.holdingsCount};{" "}
+              {mutualRows.length} + {exclusiveRows.length} = {mutualRows.length + exclusiveRows.length}{" "}
+              distinct across both.
+            </p>
+          )}
           {view === "mutuals"
             ? (headline.over || headline.under) && (
                 <p className="text-sm leading-snug text-foreground">
