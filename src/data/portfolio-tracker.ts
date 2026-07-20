@@ -57,6 +57,9 @@ export interface FundDirectoryEntry {
   rowCount: number;
   /** Public path to the full holdings JSON, e.g. "/holdings/1979-…json". */
   path: string;
+  /** Authoritative fund-house label from the AMC filing (AMC-direct feed only);
+   *  when present the picker uses it instead of guessing from the scheme name. */
+  amc?: string;
 }
 
 interface RawIndexEntry {

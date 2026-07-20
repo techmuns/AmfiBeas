@@ -94,6 +94,44 @@ function inferClassification(name: string): string | null {
   return null;
 }
 
+// Tokens that must keep their casing when title-casing an ALL-CAPS scheme name
+// (acronyms, product classes, index/series markers) — Title Case would wreck them.
+const KEEP_UPPER = new Set([
+  "ETF", "FOF", "FOFS", "BEES", "ELSS", "PSU", "NAV", "IDCW", "AMC", "SIP", "REIT",
+  "INVIT", "US", "UK", "RGESS", "NFO", "SDL", "GILT", "TRI", "BSE", "NSE", "AAA",
+  "AA", "A1", "II", "III", "IV", "IT", "FMCG", "G", "SEC", "PSE", "CPSE", "IPO", "AI",
+]);
+const KEEP_LOWER = new Set(["of", "the", "and", "for", "in", "an", "a", "to", "with", "cum"]);
+
+/** Standardize a scheme name for display. Leaves already-mixed-case names alone;
+ *  only an ALL-CAPS name (ADITYA BIRLA SUN LIFE …, NIPPON INDIA ETF …) is
+ *  Title-Cased, preserving known acronyms, pure numbers/alphanumerics (50, 22,
+ *  A1) and lowercase connectors. */
+function titleCaseSchemeName(raw: string): string {
+  const nm = raw.trim().replace(/\s+/g, " ");
+  const letters = nm.replace(/[^A-Za-z]/g, "");
+  if (!letters || letters !== letters.toUpperCase()) return nm; // already has lowercase → keep as authored
+  return nm
+    .split(" ")
+    .map((tok, i) => {
+      const bare = tok.replace(/[^A-Za-z0-9]/g, "");
+      if (!bare) return tok;
+      if (KEEP_UPPER.has(bare.toUpperCase())) return tok.toUpperCase();
+      if (/\d/.test(bare)) return tok; // 50, 22, A1, 500 — leave as-is
+      const lower = tok.toLowerCase();
+      if (i > 0 && KEEP_LOWER.has(bare.toLowerCase())) return lower;
+      return lower.replace(/([a-z])/, (c) => c.toUpperCase()); // capitalize first letter, keep rest lower
+    })
+    .join(" ");
+}
+
+/** Human AMC label for the fund-house picker, from the authoritative snapshot
+ *  `amc` field (never guessed from the scheme name) — "Groww Mutual Fund" →
+ *  "Groww", "Aditya Birla Sun Life Mutual Fund" → "Aditya Birla Sun Life". */
+function amcDisplay(amc: string): string {
+  return amc.replace(/\s+Mutual Fund\s*$/i, "").trim() || amc.trim();
+}
+
 const fmtIndian = (n: number): string => {
   const s = Math.round(n).toString();
   if (s.length <= 3) return s;
@@ -146,9 +184,16 @@ function main() {
     let localIdx = 0;
     for (const [schemeName, monthsRaw] of bySchemeName) {
       localIdx++;
-      // Skip schemes whose "name" is really an unparsed sheet code (e.g. BSLMTP,
-      // HDFCTS, NIFTYETF) — all-caps/alnum with no spaces. Not a human name.
-      if (/^[A-Z0-9]{3,}$/.test(schemeName.trim())) continue;
+      // Skip schemes whose "name" is really an unparsed sheet code — a bare token
+      // with no spaces and no fund-type word (Groww's "IB22", "2E", "EV", "XA";
+      // "BSLMTP", "EDEL", "CPSE", "FMP"). A real scheme name always has a space
+      // AND/OR a product keyword, so this can't drop a legitimate fund.
+      const nm = schemeName.trim();
+      if (!/\s/.test(nm) && !/\b(fund|etf|fof|plan|scheme)\b/i.test(nm)) continue;
+      if (/^[A-Z0-9]{2,}$/.test(nm)) continue;
+      // Display name: standardize ALL-CAPS titles to Title Case (matching keeps
+      // using the raw name via normName, which lowercases anyway).
+      const displayName = titleCaseSchemeName(schemeName);
       // Resolve a stable schemecode.
       const hit = byNorm.get(normName(schemeName));
       let code = hit?.code;
@@ -210,7 +255,7 @@ function main() {
       const aumTotalCr = fpMonths[0].aumCr;
       const fundPortfolio = {
         meta: {
-          fund: schemeName, schemecode: code, classification,
+          fund: displayName, schemecode: code, classification,
           aumTotalCr, aumAsOf: months[0].asOf, scrapedAt: snap.fetchedAt,
           source: snap.sourceUrl ?? "", section: "Equity Holdings",
           months: fpMonths.map((m) => ({ label: m.label, aumCr: m.aumCr })),
@@ -235,7 +280,7 @@ function main() {
         }
       }
       const panel = {
-        schemecode: code, amc: snap.amc, amcSlug: snap.amcSlug, amcSchemeName: schemeName,
+        schemecode: code, amc: snap.amc, amcSlug: snap.amcSlug, amcSchemeName: displayName,
         amcSchemeCode: "", sourceUrl: snap.sourceUrl ?? "", confidence: hit ? "exact" : "high",
         months: panelMonths,
         rows: [...panelRowMap.values()].sort((a, b) => (b.months[panelMonths[0].key]?.pctToNav ?? -1) - (a.months[panelMonths[0].key]?.pctToNav ?? -1)),
@@ -243,8 +288,8 @@ function main() {
       fs.writeFileSync(path.join(OUT_PANELS, `${code}.json`), JSON.stringify(panel) + "\n", "utf8");
 
       // ---- directory entry + crosswalk ref
-      dirFunds.push({ schemecode: code, name: schemeName, fundName: schemeName, classification, aumTotalCr, rowCount: rows.length, file: `holdings-direct/${code}.json`, amcSlug: snap.amcSlug });
-      crosswalkEntries[code] = { amcSlug: snap.amcSlug, amcSchemeName: schemeName, asOfMonth: months[0].monthLabel, holdings: panel.rows.length, confidence: hit ? "exact" : "high" };
+      dirFunds.push({ schemecode: code, name: displayName, fundName: displayName, classification, aumTotalCr, rowCount: rows.length, file: `holdings-direct/${code}.json`, amcSlug: snap.amcSlug, amc: amcDisplay(snap.amc) });
+      crosswalkEntries[code] = { amcSlug: snap.amcSlug, amcSchemeName: displayName, asOfMonth: months[0].monthLabel, holdings: panel.rows.length, confidence: hit ? "exact" : "high" };
       schemeCount++;
       amcSet.add(snap.amcSlug);
     }
