@@ -358,14 +358,6 @@ export function PortfolioTrackerView({
     };
   }, [portfolio]);
 
-  // K of N peers loaded — drives the chart subtitle and the peer-average
-  // denominator. Peers that haven't loaded yet are excluded from the average.
-  const peerAvgLoadedCount = useMemo(() => {
-    let n = 0;
-    for (const p of peerAvgRows) if (loaded[p.schemecode]) n++;
-    return n;
-  }, [peerAvgRows, loaded]);
-
   // Sector allocation of the selected fund vs the same-category peer average,
   // for the latest month. Each holding is bucketed via classifySector
   // (curated fincode map + name fallback); weights are summed per sector. The
@@ -693,13 +685,6 @@ export function PortfolioTrackerView({
                       <h2 className="text-base font-semibold tracking-tight">
                         Sector Allocation v/s Category Average
                       </h2>
-                      <p className="text-xs text-muted-foreground">
-                        Sector mix (% of AUM) for the selected fund vs the
-                        average across the top-{peerAvgRows.length} same-category
-                        peers by AUM ({peerAvgLoadedCount} of {peerAvgRows.length}{" "}
-                        loaded). Holdings outside the sector map show as
-                        Unclassified.
-                      </p>
                     </div>
                     <SectorAllocationChart
                       data={sectorVsCategory}
