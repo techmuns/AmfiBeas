@@ -492,7 +492,7 @@ export function PortfolioHeadToHead({
   if (bCandidates.length === 0) {
     return (
       <section className="space-y-2">
-        <Header aEntry={aEntry} category={category} />
+        <Header />
         <div className="rounded-md border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">
           No same-category peers available in {category}.
         </div>
@@ -502,7 +502,7 @@ export function PortfolioHeadToHead({
 
   return (
     <section className="space-y-3">
-      <Header aEntry={aEntry} category={category} />
+      <Header />
 
       <div className="space-y-1.5">
         <label
@@ -600,16 +600,7 @@ export function PortfolioHeadToHead({
         <>
           {snapA && snapB && (
             <div className="space-y-2">
-              <div>
-                <h3 className="text-sm font-semibold tracking-tight">
-                  Snapshot
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  {aLabel} vs {bLabel} at a glance — concentration, biggest
-                  moves, market-cap mix and top holdings.
-                  {latestMonth && <span className="ml-1">As of {latestMonth}.</span>}
-                </p>
-              </div>
+              <h3 className="text-sm font-semibold tracking-tight">Snapshot</h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 <SchemeSnapshotCard
                   title={aLabel}
@@ -669,22 +660,6 @@ export function PortfolioHeadToHead({
               </select>
             </div>
           </div>
-          {snapA && snapB && (
-            <p className="text-xs text-muted-foreground">
-              {aLabel} holds{" "}
-              <span className="font-medium text-foreground">{snapA.holdingsCount}</span>,{" "}
-              {bLabel} holds{" "}
-              <span className="font-medium text-foreground">{snapB.holdingsCount}</span>{" "}
-              (all asset classes) —{" "}
-              <span className="font-medium text-foreground">{mutualRows.length}</span> held by
-              both, <span className="font-medium text-foreground">{onlyACount}</span> only in{" "}
-              {aLabel}, <span className="font-medium text-foreground">{onlyBCount}</span> only in{" "}
-              {bLabel}. So {aLabel} = {mutualRows.length} + {onlyACount} = {snapA.holdingsCount},{" "}
-              {bLabel} = {mutualRows.length} + {onlyBCount} = {snapB.holdingsCount};{" "}
-              {mutualRows.length} + {exclusiveRows.length} = {mutualRows.length + exclusiveRows.length}{" "}
-              distinct across both.
-            </p>
-          )}
           {view === "mutuals"
             ? (headline.over || headline.under) && (
                 <p className="text-sm leading-snug text-foreground">
@@ -773,13 +748,9 @@ export function PortfolioHeadToHead({
             </div>
           )}
 
-          {totalRows > 0 && (
+          {totalRows > MAX_COMPARE_ROWS && (
             <p className="text-xs text-muted-foreground">
-              {totalRows > MAX_COMPARE_ROWS
-                ? `Showing top ${MAX_COMPARE_ROWS} of ${totalRows} ${view === "mutuals" ? "common" : "unique"} holdings by |Δ|`
-                : `${totalRows} ${view === "mutuals" ? "common" : "unique"} holding${totalRows === 1 ? "" : "s"}, sorted by |Δ|`}
-              {activeSector ? ` · ${activeSector}` : ""}
-              {latestMonth && ` · Latest month: ${latestMonth}`}.
+              Showing top {MAX_COMPARE_ROWS} of {totalRows}.
             </p>
           )}
         </>
@@ -788,21 +759,10 @@ export function PortfolioHeadToHead({
   );
 }
 
-function Header({
-  aEntry,
-  category,
-}: {
-  aEntry: FundDirectoryEntry;
-  category: string;
-}) {
+function Header() {
   return (
     <div>
       <h2 className="text-base font-semibold tracking-tight">Head-to-head</h2>
-      <p className="text-xs text-muted-foreground">
-        Compare{" "}
-        <span className="font-medium text-foreground">{cleanSchemeName(aEntry.fund)}</span> with
-        another fund in {category}.
-      </p>
     </div>
   );
 }
