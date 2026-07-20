@@ -28,6 +28,9 @@ export interface TrackerHolding {
   /** AMC-disclosed sector/industry for the holding (AMC-direct feed). When
    *  present, the sector views use it instead of the fincode→sector map. */
   sector?: string | null;
+  /** Asset class (AMC-direct all-class feed): Equity/Debt/Gold/Silver/… Present
+   *  only where a view is fed the full portfolio (e.g. head-to-head). */
+  assetClass?: string | null;
   months: Record<string, TrackerMonthCell>;
 }
 

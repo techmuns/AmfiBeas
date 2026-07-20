@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Search, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { cleanSchemeName, formatCompactCrSafe, formatPctSafe } from "@/lib/format";
@@ -8,13 +8,109 @@ import {
   type FundDirectoryEntry,
   type FundPortfolio,
   type TrackerHolding,
+  type TrackerMonthCell,
   monthSlug,
 } from "@/data/portfolio-tracker";
+import {
+  amcDisclosurePath,
+  type AmcSchemePortfolio,
+} from "@/data/amc-scheme-portfolio";
 import { fmtBps } from "@/lib/units";
 import { amcOf } from "@/data/amc-name-map";
 import { classifyCap } from "@/data/cap-classification";
 import { classifySector, UNCLASSIFIED } from "@/data/sector-classification";
 import { MarketCapBar, type CapMix } from "@/components/data/MarketCapBar";
+
+/**
+ * Convert an AMC disclosure panel (ALL asset classes) into the FundPortfolio
+ * shape the head-to-head logic already speaks, so the comparison spans the
+ * complete portfolio (equity + debt + gold + silver + cash …) rather than the
+ * equity-only holdings-direct feed. Rows keep their asset class; `aumTotalCr`
+ * is the fund's total AUM (all asset classes, latest month), so the scale
+ * metric reflects the whole portfolio being compared.
+ */
+function panelToPortfolio(panel: AmcSchemePortfolio): FundPortfolio {
+  const keyToSlug = new Map(panel.months.map((m) => [m.key, monthSlug(m.label)]));
+  const latestKey = panel.months[0]?.key ?? null;
+  let totalMv = 0;
+  const rows: TrackerHolding[] = panel.rows.map((r) => {
+    const months: Record<string, TrackerMonthCell> = {};
+    for (const [k, v] of Object.entries(r.months)) {
+      const slug = keyToSlug.get(k);
+      if (!slug) continue;
+      months[slug] = {
+        aum_pct_raw: v.pctToNav != null ? String(v.pctToNav) : "-",
+        aum_pct_num: v.pctToNav,
+        shares_raw: "-",
+        shares_num: null,
+        arrow: "flat/none",
+        arrow_raw: null,
+      };
+    }
+    if (latestKey) totalMv += r.months[latestKey]?.marketValueCr ?? 0;
+    return {
+      company_name: r.name,
+      fincode: r.isin ?? `n:${r.name.toLowerCase().trim()}`,
+      sector: (r.industry ?? "").trim() || null,
+      assetClass: r.assetClass,
+      months,
+    };
+  });
+  return {
+    meta: {
+      fund: panel.amcSchemeName,
+      schemecode: panel.schemecode,
+      classification: null,
+      aumTotalCr: totalMv > 0 ? Math.round(totalMv * 100) / 100 : null,
+      aumAsOf: null,
+      scrapedAt: "",
+      source: panel.sourceUrl ?? "",
+      section: "All holdings",
+      months: panel.months.map((m) => ({ label: m.label, aumCr: null })),
+    },
+    rows,
+  };
+}
+
+interface PanelState {
+  data: FundPortfolio | null;
+  loading: boolean;
+  errored: boolean;
+}
+
+/** Fetch a scheme's full (all-asset-class) disclosure panel and adapt it to a
+ *  FundPortfolio. `nonce` forces a refetch on retry. */
+function usePanelPortfolio(schemecode: string | null, nonce: number): PanelState {
+  const [byCode, setByCode] = useState<Record<string, FundPortfolio>>({});
+  const [errored, setErrored] = useState<Record<string, boolean>>({});
+  const byCodeRef = useRef(byCode);
+  const erroredRef = useRef(errored);
+  useEffect(() => { byCodeRef.current = byCode; }, [byCode]);
+  useEffect(() => { erroredRef.current = errored; }, [errored]);
+
+  useEffect(() => {
+    if (!schemecode) return;
+    const code = schemecode;
+    if (byCodeRef.current[code] || erroredRef.current[code]) return;
+    const ctrl = new AbortController();
+    fetch(amcDisclosurePath(code), { signal: ctrl.signal })
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json() as Promise<AmcSchemePortfolio>;
+      })
+      .then((json) => setByCode((prev) => ({ ...prev, [code]: panelToPortfolio(json) })))
+      .catch((e: unknown) => {
+        if ((e as Error).name === "AbortError") return;
+        setErrored((prev) => ({ ...prev, [code]: true }));
+      });
+    return () => ctrl.abort();
+  }, [schemecode, nonce]);
+
+  if (!schemecode) return { data: null, loading: false, errored: false };
+  const data = byCode[schemecode] ?? null;
+  const isErrored = Boolean(errored[schemecode]);
+  return { data, loading: !data && !isErrored, errored: isErrored };
+}
 
 const MAX_B_SUGGESTIONS = 60;
 const MAX_COMPARE_ROWS = 50;
@@ -110,7 +206,7 @@ function classify(
  *  compare card: scale, top-10 concentration (+ MoM move), the biggest single
  *  weight add / trim, market-cap mix and the top-10 holdings. */
 interface SchemeSnapshot {
-  equityCr: number | null;
+  aumCr: number | null;
   holdingsCount: number;
   top10Pct: number;
   top10DeltaPp: number | null;
@@ -166,11 +262,14 @@ function schemeSnapshot(portfolio: FundPortfolio): SchemeSnapshot {
   }
 
   // Market-cap mix (latest month, weighted by % of book, normalised to 100).
+  // Market-cap is an equity concept, so only equity holdings contribute (the
+  // all-class feed also carries debt/gold/silver/cash rows).
   let split: CapMix | null = null;
   if (latestSlug) {
     const raw = { large: 0, mid: 0, small: 0 };
     let total = 0;
     for (const r of portfolio.rows) {
+      if (r.assetClass && r.assetClass !== "Equity") continue;
       const w = pctOf(r, latestSlug);
       if (!w) continue;
       total += w;
@@ -197,7 +296,7 @@ function schemeSnapshot(portfolio: FundPortfolio): SchemeSnapshot {
     : [];
 
   return {
-    equityCr: portfolio.meta.aumTotalCr,
+    aumCr: portfolio.meta.aumTotalCr,
     holdingsCount,
     top10Pct,
     top10DeltaPp,
@@ -226,11 +325,7 @@ function shortFundLabel(fund: string): string {
 
 export function PortfolioHeadToHead({
   aEntry,
-  aPortfolio,
   bEntry,
-  bPortfolio,
-  bLoading,
-  bErrored,
   onPickB,
   onRetryB,
   bCandidates,
@@ -238,6 +333,20 @@ export function PortfolioHeadToHead({
 }: Props) {
   const [bQuery, setBQuery] = useState(bEntry ? cleanSchemeName(bEntry.fund) : "");
   const [bFocused, setBFocused] = useState(false);
+  // Full (all-asset-class) portfolios for A and B, from the AMC disclosure
+  // panels — same source as the Holdings tab — so the comparison spans equity,
+  // debt, gold, silver and cash, not just the equity book.
+  const [panelRetry, setPanelRetry] = useState(0);
+  const aPanel = usePanelPortfolio(aEntry.schemecode, panelRetry);
+  const bPanel = usePanelPortfolio(bEntry?.schemecode ?? null, panelRetry);
+  const aPortfolio = aPanel.data;
+  const bPortfolio = bPanel.data;
+  const bLoading = bPanel.loading;
+  const bErrored = bPanel.errored;
+  const retryB = () => {
+    setPanelRetry((n) => n + 1);
+    onRetryB();
+  };
   // Common (both funds hold) vs unique (only one holds) holdings. Default
   // common — the apples-to-apples weight comparison.
   const [view, setView] = useState<HoldingsView>("mutuals");
@@ -269,7 +378,7 @@ export function PortfolioHeadToHead({
   // in only one fund land with a null on the missing side; classify() then
   // maps to "Only A/B holds" / "A over/under-weight" / "In line".
   const compareRows = useMemo<CompareRow[]>(() => {
-    if (!bPortfolio) return [];
+    if (!aPortfolio || !bPortfolio) return [];
     const slugA = monthSlug(aPortfolio.meta.months[0]?.label ?? "");
     const slugB = monthSlug(bPortfolio.meta.months[0]?.label ?? "");
     if (!slugA || !slugB) return [];
@@ -314,7 +423,10 @@ export function PortfolioHeadToHead({
   }, [aPortfolio, bPortfolio]);
 
   // Per-scheme at-a-glance snapshots for the summary cards above the toggle.
-  const snapA = useMemo(() => schemeSnapshot(aPortfolio), [aPortfolio]);
+  const snapA = useMemo(
+    () => (aPortfolio ? schemeSnapshot(aPortfolio) : null),
+    [aPortfolio]
+  );
   const snapB = useMemo(
     () => (bPortfolio ? schemeSnapshot(bPortfolio) : null),
     [bPortfolio]
@@ -373,7 +485,7 @@ export function PortfolioHeadToHead({
   }
   const headline = { over: headlineOver, under: headlineUnder };
 
-  const latestMonth = aPortfolio.meta.months[0]?.label ?? "";
+  const latestMonth = aPortfolio?.meta.months[0]?.label ?? "";
   const totalRows = filteredViewRows.length;
   const displayRows = filteredViewRows.slice(0, MAX_COMPARE_ROWS);
 
@@ -466,27 +578,27 @@ export function PortfolioHeadToHead({
         </p>
       )}
 
-      {bErrored ? (
+      {bErrored || aPanel.errored ? (
         <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-md border border-dashed text-sm text-muted-foreground">
           <span className="text-negative">
-            Couldn&apos;t load holdings for the comparison fund.
+            Couldn&apos;t load holdings for the comparison.
           </span>
           <button
             type="button"
-            onClick={onRetryB}
+            onClick={retryB}
             className="rounded-md border px-3 py-1 text-xs hover:bg-accent"
           >
             Retry
           </button>
         </div>
-      ) : bLoading || !bPortfolio ? (
+      ) : bLoading || !bPortfolio || aPanel.loading || !aPortfolio ? (
         <div className="flex h-40 items-center justify-center gap-2 rounded-md border bg-card text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Loading comparison fund holdings…
+          Loading full portfolios…
         </div>
       ) : (
         <>
-          {snapB && (
+          {snapA && snapB && (
             <div className="space-y-2">
               <div>
                 <h3 className="text-sm font-semibold tracking-tight">
@@ -719,8 +831,8 @@ function SchemeSnapshotCard({
       </div>
 
       <dl className="space-y-1.5 text-sm">
-        <SnapRow label="Equity book">
-          {formatCompactCrSafe(snap.equityCr)}
+        <SnapRow label="Latest AUM">
+          {formatCompactCrSafe(snap.aumCr)}
         </SnapRow>
         <SnapRow label="No. of holdings">
           {snap.holdingsCount > 0 ? snap.holdingsCount.toLocaleString("en-IN") : "—"}
