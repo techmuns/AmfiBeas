@@ -54,13 +54,17 @@ export function AmcDisclosurePanel({ schemecode }: { schemecode: string }) {
   const [loaded, setLoaded] = useState<Record<string, AmcSchemePortfolio>>({});
   const [errored, setErrored] = useState<Record<string, boolean>>({});
   const [query, setQuery] = useState("");
+  const [assetClass, setAssetClass] = useState("");
+  const [sector, setSector] = useState("");
 
-  // Reset the holdings filter when the scheme changes — a render-phase adjust
+  // Reset the holdings filters when the scheme changes — a render-phase adjust
   // (not a setState-in-effect), matching the pattern used across this view.
   const [prevCode, setPrevCode] = useState(schemecode);
   if (prevCode !== schemecode) {
     setPrevCode(schemecode);
     setQuery("");
+    setAssetClass("");
+    setSector("");
   }
 
   // Ref mirrors let the fetch effect dedup without putting the maps in deps.
@@ -100,17 +104,40 @@ export function AmcDisclosurePanel({ schemecode }: { schemecode: string }) {
   const monthKeys = months.map((m) => m.key);
   const latest = months[0] ?? null;
 
+  // Asset-class options actually present, in a stable, meaningful order.
+  const CLASS_ORDER: AmcAssetClass[] = ["Equity", "Debt", "Cash & equiv", "Gold", "Silver", "Other"];
+  const assetClassOptions = useMemo(() => {
+    if (!data) return [] as AmcAssetClass[];
+    const present = new Set(data.rows.map((r) => r.assetClass));
+    return CLASS_ORDER.filter((c) => present.has(c));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
+
+  // Sector list is drawn from the AMC-disclosed industry of EQUITY holdings
+  // (debt rows carry a credit rating in that column, not a sector).
+  const sectorOptions = useMemo(() => {
+    if (!data) return [] as string[];
+    const s = new Set<string>();
+    for (const r of data.rows) {
+      if (r.assetClass === "Equity" && r.industry && r.industry.trim()) s.add(r.industry.trim());
+    }
+    return [...s].sort((a, b) => a.localeCompare(b));
+  }, [data]);
+
   const filtered = useMemo<AmcDisclosureRow[]>(() => {
     if (!data) return [];
     const q = query.trim().toLowerCase();
-    if (!q) return data.rows;
-    return data.rows.filter(
-      (r) =>
+    return data.rows.filter((r) => {
+      if (assetClass && r.assetClass !== assetClass) return false;
+      if (sector && (r.industry ?? "").trim() !== sector) return false;
+      if (!q) return true;
+      return (
         r.name.toLowerCase().includes(q) ||
         (r.industry ?? "").toLowerCase().includes(q) ||
         (r.isin ?? "").toLowerCase().includes(q)
-    );
-  }, [data, query]);
+      );
+    });
+  }, [data, query, assetClass, sector]);
 
   if (!ref) return null;
 
@@ -143,49 +170,57 @@ export function AmcDisclosurePanel({ schemecode }: { schemecode: string }) {
         </p>
       ) : (
         <>
-          {/* Allocation bar — latest disclosed month */}
-          {latest.allocation.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted">
-                {latest.allocation.map((a) => (
-                  <div
-                    key={a.class}
-                    className={cn("h-full", CLASS_COLOR[a.class])}
-                    style={{ width: `${a.pct}%` }}
-                    title={`${a.class}: ${a.pct.toFixed(1)}%`}
-                  />
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                {latest.allocation.map((a) => (
-                  <span key={a.class} className="inline-flex items-center gap-1.5">
-                    <span className={cn("h-2 w-2 rounded-full", CLASS_COLOR[a.class])} />
-                    {a.class} {a.pct.toFixed(1)}%
-                  </span>
-                ))}
-              </div>
+          {/* Filters: search + asset class + sector */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-full max-w-xs">
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Filter holdings…"
+                aria-label="Filter AMC holdings"
+                className="w-full rounded-md border bg-background py-1.5 pl-3 pr-8 text-sm placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  aria-label="Clear holdings filter"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
-          )}
 
-          {/* Holdings search */}
-          <div className="relative w-full max-w-xs">
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Filter holdings…"
-              aria-label="Filter AMC holdings"
-              className="w-full rounded-md border bg-background py-1.5 pl-3 pr-8 text-sm placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                aria-label="Clear holdings filter"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            <select
+              value={assetClass}
+              onChange={(e) => setAssetClass(e.target.value)}
+              aria-label="Filter by asset class"
+              className="rounded-md border bg-background px-2 py-1.5 text-sm text-foreground focus:border-foreground focus:outline-none"
+            >
+              <option value="">All asset classes</option>
+              {assetClassOptions.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+
+            {sectorOptions.length > 0 && (
+              <select
+                value={sector}
+                onChange={(e) => setSector(e.target.value)}
+                aria-label="Filter by sector"
+                className="max-w-[16rem] rounded-md border bg-background px-2 py-1.5 text-sm text-foreground focus:border-foreground focus:outline-none"
               >
-                <X className="h-3.5 w-3.5" />
-              </button>
+                <option value="">All sectors</option>
+                {sectorOptions.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
             )}
           </div>
 
@@ -193,7 +228,7 @@ export function AmcDisclosurePanel({ schemecode }: { schemecode: string }) {
           <div className="max-h-[32rem] overflow-auto rounded-md border">
             <table className="w-full border-collapse text-sm">
               <thead className="sticky top-0 z-10">
-                <tr className="bg-muted/80 text-[11px] uppercase tracking-wide text-muted-foreground">
+                <tr className="bg-muted text-[11px] uppercase tracking-wide text-muted-foreground">
                   <th rowSpan={2} className="border-b border-r px-3 py-2 text-left align-bottom font-medium">
                     Instrument
                   </th>
@@ -212,7 +247,7 @@ export function AmcDisclosurePanel({ schemecode }: { schemecode: string }) {
                     </th>
                   ))}
                 </tr>
-                <tr className="bg-muted/80 text-[10px] uppercase tracking-wide text-muted-foreground">
+                <tr className="bg-muted text-[10px] uppercase tracking-wide text-muted-foreground">
                   {months.map((m) => (
                     <FragmentSubHead key={m.key} />
                   ))}
@@ -222,7 +257,7 @@ export function AmcDisclosurePanel({ schemecode }: { schemecode: string }) {
                 {filtered.length === 0 ? (
                   <tr>
                     <td colSpan={3 + months.length * 2} className="px-3 py-8 text-center text-muted-foreground">
-                      No holdings match &ldquo;{query}&rdquo;.
+                      No holdings match the current filters.
                     </td>
                   </tr>
                 ) : (
