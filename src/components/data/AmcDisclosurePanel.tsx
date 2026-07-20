@@ -29,6 +29,9 @@ const CLASS_COLOR: Record<AmcAssetClass, string> = {
   Other: "bg-violet-500",
 };
 
+// Display order for asset classes (mix summary + class filter).
+const CLASS_ORDER: AmcAssetClass[] = ["Equity", "Debt", "Cash & equiv", "Gold", "Silver", "Other"];
+
 /** ▲/▼ vs the next-older month's weight (mirrors the RupeeVest arrows). */
 function Arrow({ cur, prev }: { cur: number | null; prev: number | null }) {
   if (cur == null || prev == null) return null;
@@ -105,13 +108,27 @@ export function AmcDisclosurePanel({ schemecode }: { schemecode: string }) {
   const latest = months[0] ?? null;
 
   // Asset-class options actually present, in a stable, meaningful order.
-  const CLASS_ORDER: AmcAssetClass[] = ["Equity", "Debt", "Cash & equiv", "Gold", "Silver", "Other"];
   const assetClassOptions = useMemo(() => {
     if (!data) return [] as AmcAssetClass[];
     const present = new Set(data.rows.map((r) => r.assetClass));
     return CLASS_ORDER.filter((c) => present.has(c));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
+
+  // Latest-month asset mix: each disclosed class's % of NAV, with the residual
+  // to 100% attributed to Cash & equivalents (cash, TREPS, net receivables and
+  // other un-itemised holdings — cash by default, per SEBI disclosure practice).
+  const assetMix = useMemo<{ class: AmcAssetClass; pct: number }[]>(() => {
+    if (!latest) return [];
+    const map = new Map<AmcAssetClass, number>();
+    for (const a of latest.allocation) map.set(a.class, (map.get(a.class) ?? 0) + a.pct);
+    const disclosed = [...map.values()].reduce((s, p) => s + p, 0);
+    const residual = Math.round((100 - disclosed) * 10) / 10;
+    if (residual > 0.05) map.set("Cash & equiv", (map.get("Cash & equiv") ?? 0) + residual);
+    return CLASS_ORDER.filter((c) => (map.get(c) ?? 0) > 0.05).map((c) => ({
+      class: c,
+      pct: Math.round((map.get(c) ?? 0) * 10) / 10,
+    }));
+  }, [latest]);
 
   // Sector list is drawn from the AMC-disclosed industry of EQUITY holdings
   // (debt rows carry a credit rating in that column, not a sector).
@@ -170,6 +187,22 @@ export function AmcDisclosurePanel({ schemecode }: { schemecode: string }) {
         </p>
       ) : (
         <>
+          {/* Latest-month asset mix (% of NAV), residual → Cash & equiv */}
+          {assetMix.length > 0 && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-md border bg-muted/40 px-3 py-2 text-xs">
+              <span className="font-medium text-muted-foreground">
+                Asset mix · {latest.label}
+              </span>
+              {assetMix.map((a) => (
+                <span key={a.class} className="inline-flex items-center gap-1.5">
+                  <span className={cn("h-2 w-2 rounded-full", CLASS_COLOR[a.class])} />
+                  <span className="font-medium text-foreground">{a.class}</span>
+                  <span className="tabular-nums text-muted-foreground">{a.pct.toFixed(1)}%</span>
+                </span>
+              ))}
+            </div>
+          )}
+
           {/* Filters: search + asset class + sector */}
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative w-full max-w-xs">
