@@ -6,8 +6,9 @@ import type { DashboardTabDef } from "@/components/layout/DashboardTabs";
  *  pass through unchanged. Adding/removing tabs here is the only
  *  place the IA changes. */
 export const TRACKER_TABS = [
+  // Holdings is merged into Overview (the full AMC-direct portfolio renders
+  // below the sector allocation), so there's no standalone Holdings tab.
   { id: "overview", label: "Overview" },
-  { id: "holdings", label: "Holdings" },
   // "Peers" and "AMC Mix" moved to the Fund-wise view (both are fund-house
   // level concepts; AMC Mix is now "Allocation mix" there).
   { id: "head-to-head", label: "Head-to-head" },

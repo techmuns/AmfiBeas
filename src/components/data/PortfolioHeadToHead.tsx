@@ -213,8 +213,22 @@ interface SchemeSnapshot {
   biggestAdd: { company: string; pp: number } | null;
   biggestTrim: { company: string; pp: number } | null;
   split: CapMix | null;
+  /** Latest-month asset-class mix (% of NAV), residual → Cash & equiv. */
+  assetMix: { label: string; pct: number }[];
+  /** Latest-month sector mix of the equity sleeve (% of NAV), top sectors. */
+  sectorMix: { label: string; pct: number }[];
   top: { name: string; pct: number }[];
 }
+
+const ASSET_CLASS_ORDER = ["Equity", "Debt", "Cash & equiv", "Gold", "Silver", "Other"];
+const ASSET_COLOR: Record<string, string> = {
+  Equity: "bg-emerald-500",
+  Debt: "bg-sky-500",
+  "Cash & equiv": "bg-slate-400",
+  Gold: "bg-amber-500",
+  Silver: "bg-zinc-400",
+  Other: "bg-violet-500",
+};
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
 
@@ -283,6 +297,45 @@ function schemeSnapshot(portfolio: FundPortfolio): SchemeSnapshot {
       };
   }
 
+  // Asset-class mix (latest month, % of NAV) with the residual to 100%
+  // attributed to Cash & equivalents — mirrors the Holdings-tab summary.
+  const assetMix: { label: string; pct: number }[] = [];
+  if (latestSlug) {
+    const byClass = new Map<string, number>();
+    for (const r of portfolio.rows) {
+      const w = pctOf(r, latestSlug);
+      if (!w) continue;
+      const c = (r.assetClass ?? "Other") || "Other";
+      byClass.set(c, (byClass.get(c) ?? 0) + w);
+    }
+    const disclosed = [...byClass.values()].reduce((s, p) => s + p, 0);
+    const residual = round1(100 - disclosed);
+    if (residual > 0.05) byClass.set("Cash & equiv", (byClass.get("Cash & equiv") ?? 0) + residual);
+    for (const label of ASSET_CLASS_ORDER) {
+      const pct = round1(byClass.get(label) ?? 0);
+      if (pct > 0.05) assetMix.push({ label, pct });
+    }
+  }
+
+  // Sector mix of the equity sleeve (latest month, % of NAV), top sectors.
+  const sectorMix: { label: string; pct: number }[] = [];
+  if (latestSlug) {
+    const bySector = new Map<string, number>();
+    for (const r of portfolio.rows) {
+      if (r.assetClass && r.assetClass !== "Equity") continue;
+      const w = pctOf(r, latestSlug);
+      if (!w) continue;
+      const s = (r.sector ?? "").trim() || "Unclassified";
+      bySector.set(s, (bySector.get(s) ?? 0) + w);
+    }
+    sectorMix.push(
+      ...[...bySector.entries()]
+        .map(([label, pct]) => ({ label, pct: round1(pct) }))
+        .sort((a, b) => b.pct - a.pct)
+        .slice(0, 8)
+    );
+  }
+
   // Top-10 holdings (latest % of book), largest first.
   const top = latestSlug
     ? portfolio.rows
@@ -303,6 +356,8 @@ function schemeSnapshot(portfolio: FundPortfolio): SchemeSnapshot {
     biggestAdd,
     biggestTrim,
     split,
+    assetMix,
+    sectorMix,
     top,
   };
 }
@@ -854,10 +909,47 @@ function SchemeSnapshotCard({
 
       <div>
         <div className="mb-1 text-xs font-medium text-muted-foreground">
+          Asset-class allocation
+        </div>
+        {snap.assetMix.length > 0 ? (
+          <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+            {snap.assetMix.map((a) => (
+              <li key={a.label} className="inline-flex items-center gap-1.5">
+                <span className={cn("h-2 w-2 rounded-full", ASSET_COLOR[a.label] ?? "bg-slate-400")} />
+                <span className="text-foreground">{a.label}</span>
+                <span className="tabular-nums text-muted-foreground">{a.pct.toFixed(1)}%</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="text-xs text-muted-foreground">—</div>
+        )}
+      </div>
+
+      <div>
+        <div className="mb-1 text-xs font-medium text-muted-foreground">
           Market-cap mix
         </div>
         {snap.split ? (
           <MarketCapBar split={snap.split} />
+        ) : (
+          <div className="text-xs text-muted-foreground">—</div>
+        )}
+      </div>
+
+      <div>
+        <div className="mb-1 text-xs font-medium text-muted-foreground">
+          Sector allocation
+        </div>
+        {snap.sectorMix.length > 0 ? (
+          <ul className="space-y-1 text-sm">
+            {snap.sectorMix.map((s) => (
+              <li key={s.label} className="flex items-baseline justify-between gap-2">
+                <span className="truncate text-muted-foreground">{s.label}</span>
+                <span className="tabular-nums">{s.pct.toFixed(1)}%</span>
+              </li>
+            ))}
+          </ul>
         ) : (
           <div className="text-xs text-muted-foreground">—</div>
         )}

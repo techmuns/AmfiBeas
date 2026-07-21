@@ -693,14 +693,12 @@ export function PortfolioTrackerView({
                     />
                   </div>
                 )}
-            </>
-          )}
 
-          {activeTab === "holdings" && (
-            // Holdings come straight from each AMC's own SEBI monthly disclosure
-            // (complete, all-asset-class, ISIN-level, month-over-month) — the
-            // RupeeVest equity table is retired in favour of this direct view.
-            <AmcDisclosurePanel schemecode={selectedCode} />
+              {/* Complete portfolio — merged in from the former Holdings tab.
+                  Straight from each AMC's SEBI monthly disclosure (all asset
+                  classes, ISIN-level, month-over-month). */}
+              <AmcDisclosurePanel schemecode={selectedCode} />
+            </>
           )}
 
           {activeTab === "head-to-head" && (
