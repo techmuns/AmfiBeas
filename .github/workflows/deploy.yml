@@ -1,9 +1,17 @@
 name: Deploy
 
-# Deploys the app to Cloudflare Workers via OpenNext.
-#   - Automatically on every push to `main` (i.e. when a PR merges).
-#   - Manually via "Run workflow" (workflow_dispatch) to redeploy the current
-#     `main` on demand, without needing a new commit.
+# Deploys the app to Cloudflare Workers via OpenNext, always publishing the
+# LATEST commit on `main` (checkout ref: main) so the live Worker never lags.
+#   - push to `main` — human/code merges (PRs).
+#   - workflow_run — after any data-refresh workflow COMPLETES. The daily NAV /
+#     index / holdings / AMFI workflows commit with the automatic GITHUB_TOKEN,
+#     and GitHub deliberately does NOT let a GITHUB_TOKEN push trigger another
+#     workflow's `push` event — so without this chain those data commits landed
+#     on main but were never deployed, leaving the dashboard on stale data. This
+#     re-deploys main whenever one of them finishes.
+#   - schedule — a daily backstop so anything the chain misses (a new/renamed
+#     data workflow, a manual backfill) still goes live within a day.
+#   - workflow_dispatch — redeploy current main on demand.
 #
 # Requires two repository secrets (Settings → Secrets and variables → Actions):
 #   - CLOUDFLARE_API_TOKEN   — a token with "Edit Cloudflare Workers" permission
@@ -13,6 +21,20 @@ name: Deploy
 on:
   push:
     branches: [main]
+  workflow_run:
+    workflows:
+      - "NAV latest snapshot (daily)"
+      - "NAV daily refresh (mf-data forward)"
+      - "NAV history forward refresh (daily)"
+      - "NIFTY 500 latest snapshot (daily)"
+      - "NIFTY 500 history forward refresh (daily)"
+      - "Schemewise holdings (monthly)"
+      - "AMC monthly portfolio fetch"
+      - "Shares outstanding (cap-flows %)"
+      - "Ingest data"
+    types: [completed]
+  schedule:
+    - cron: "30 3 * * *" # 03:30 UTC daily backstop
   workflow_dispatch:
     inputs:
       reason:
@@ -33,8 +55,17 @@ jobs:
   deploy:
     runs-on: ubuntu-22.04
     timeout-minutes: 20
+    # For a workflow_run trigger, only deploy when the data refresh SUCCEEDED
+    # (a failed/no-op refresh shouldn't publish); all other triggers always run.
+    if: >-
+      ${{ github.event_name != 'workflow_run' ||
+          github.event.workflow_run.conclusion == 'success' }}
     steps:
+      # Always publish the current tip of main, whatever triggered us — so the
+      # live Worker is the latest build regardless of who pushed.
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: 22
