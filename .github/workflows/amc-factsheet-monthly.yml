@@ -77,22 +77,25 @@ jobs:
         # amc-holdings files, so the universe/crosswalk stay complete.
         if: ${{ github.event_name == 'schedule' || inputs.commit != 'false' }}
         run: npm run build:amc-direct
-      - name: Rebuild Overview feeds from the refreshed AMC holdings
-        # The Overview "buying & selling" (cap-flows) and sector-flow heatmap now
-        # read public/holdings-direct — the same AMC filings this workflow just
-        # refreshed — so they must be rebuilt here to move to the new month.
-        # (% of o/s is attached from the committed shares-outstanding feed;
-        # shares-outstanding.yml re-scrapes any new names on its own schedule.)
+      - name: Rebuild Overview + Insights feeds from the refreshed AMC holdings
+        # The Overview "buying & selling" (cap-flows), the sector-flow heatmap and
+        # the Insights deep-read blocks (conviction ledger, contested stocks,
+        # churn, flows-vs-performance, persistence) all read public/holdings-direct
+        # — the same AMC filings this workflow just refreshed — so they must be
+        # rebuilt here to move to the new month. (% of o/s is attached from the
+        # committed shares-outstanding feed; shares-outstanding.yml re-scrapes any
+        # new names on its own schedule.)
         if: ${{ github.event_name == 'schedule' || inputs.commit != 'false' }}
         run: |
           npm run build:cap-flows
           npm run build:sector-gross
+          npm run build:insights-plus
       - name: Commit refreshed AMC holdings + tracker data
         # commit=false → test run (fetch + log only). A filtered run commits
         # safely because index.json is merged, not overwritten.
         if: ${{ github.event_name == 'schedule' || inputs.commit != 'false' }}
         run: |
-          PATHS="public/amc-holdings public/amc-portfolio public/holdings-direct src/data/portfolio-tracker/amc-portfolio-crosswalk.json src/data/portfolio-tracker/amc-direct-index.json src/data/portfolio-tracker/cap-flows.json src/data/portfolio-tracker/sector-gross-flows.json"
+          PATHS="public/amc-holdings public/amc-portfolio public/holdings-direct src/data/portfolio-tracker/amc-portfolio-crosswalk.json src/data/portfolio-tracker/amc-direct-index.json src/data/portfolio-tracker/cap-flows.json src/data/portfolio-tracker/sector-gross-flows.json src/data/portfolio-tracker/insights-plus.json"
           if [ -z "$(git status --porcelain $PATHS)" ]; then
             echo "No AMC holdings / crosswalk changes — nothing to commit."
             exit 0

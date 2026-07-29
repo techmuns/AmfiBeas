@@ -95,6 +95,7 @@ jobs:
           npm run build:cap-flows
           npm run build:fundwise
           npm run build:insights
+          npm run build:insights-plus
           npm run build:sector-gross
           npm run build:amc-aggregation
           npm run build:amc-allocations
@@ -111,6 +112,7 @@ jobs:
             src/data/portfolio-tracker/cap-flows.json \
             src/data/portfolio-tracker/fundwise-index.json \
             src/data/portfolio-tracker/insights-holdings.json \
+            src/data/portfolio-tracker/insights-plus.json \
             src/data/portfolio-tracker/sector-gross-flows.json \
             src/data/portfolio-tracker/amc-allocations.json \
             src/data/portfolio-tracker/amc-portfolio-crosswalk.json \

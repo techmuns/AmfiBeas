@@ -1,0 +1,1382 @@
+{
+  "meta": {
+    "generatedAt": "2026-07-29T13:36:03.886Z",
+    "monthCur": "Jun-26",
+    "monthPrev": "May-26",
+    "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
+    "anchoring": "Anchored to the latest month any fund disclosed; each fund is compared against its OWN previous disclosure. Funds that have not filed the latest month are excluded."
+  },
+  "convictionLedger": {
+    "monthCur": "Jun-26",
+    "monthPrev": "May-26",
+    "funds": 375,
+    "amcs": 38,
+    "quadrants": {
+      "new": {
+        "totalCr": 12504,
+        "positions": 293,
+        "companies": 214,
+        "byTier": {
+          "large": {
+            "valueCr": 2052,
+            "positions": 59,
+            "companies": 43
+          },
+          "mid": {
+            "valueCr": 6120,
+            "positions": 101,
+            "companies": 75
+          },
+          "small": {
+            "valueCr": 4333,
+            "positions": 133,
+            "companies": 96
+          }
+        },
+        "top": [
+          {
+            "company": "JSW Infrastructure",
+            "valueCr": 1913,
+            "amcs": [
+              "SBI",
+              "Axis",
+              "WhiteOak Capital"
+            ]
+          },
+          {
+            "company": "Vedanta Aluminium Metal",
+            "valueCr": 612,
+            "amcs": [
+              "UTI",
+              "HDFC",
+              "Tata"
+            ]
+          },
+          {
+            "company": "Bosch",
+            "valueCr": 600,
+            "amcs": [
+              "SBI",
+              "Aditya Birla Sun Life",
+              "DSP"
+            ]
+          },
+          {
+            "company": "Corona Remedies",
+            "valueCr": 572,
+            "amcs": [
+              "HDFC",
+              "Aditya Birla Sun Life"
+            ]
+          },
+          {
+            "company": "Billionbrains Garage Ventures",
+            "valueCr": 449,
+            "amcs": [
+              "Nippon India",
+              "Helios",
+              "Bajaj Finserv"
+            ]
+          },
+          {
+            "company": "AU Small Finance Bank",
+            "valueCr": 362,
+            "amcs": [
+              "HSBC"
+            ]
+          }
+        ]
+      },
+      "increased": {
+        "totalCr": 118152,
+        "positions": 2281,
+        "companies": 617,
+        "byTier": {
+          "large": {
+            "valueCr": 55236,
+            "positions": 725,
+            "companies": 96
+          },
+          "mid": {
+            "valueCr": 45111,
+            "positions": 925,
+            "companies": 209
+          },
+          "small": {
+            "valueCr": 17806,
+            "positions": 631,
+            "companies": 312
+          }
+        },
+        "top": [
+          {
+            "company": "HDFC Bank",
+            "valueCr": 6021,
+            "amcs": [
+              "SBI",
+              "Nippon India",
+              "Axis"
+            ]
+          },
+          {
+            "company": "Trent",
+            "valueCr": 3821,
+            "amcs": [
+              "Nippon India",
+              "Axis",
+              "Invesco"
+            ]
+          },
+          {
+            "company": "Adani Enterprises",
+            "valueCr": 2901,
+            "amcs": [
+              "SBI",
+              "Helios",
+              "JM Financial"
+            ]
+          },
+          {
+            "company": "ICICI Bank",
+            "valueCr": 2286,
+            "amcs": [
+              "SBI",
+              "HSBC",
+              "Nippon India"
+            ]
+          },
+          {
+            "company": "Infosys",
+            "valueCr": 2240,
+            "amcs": [
+              "Tata",
+              "PPFAS",
+              "ICICI Prudential"
+            ]
+          },
+          {
+            "company": "Acme Solar Holdings",
+            "valueCr": 2197,
+            "amcs": [
+              "HDFC",
+              "Nippon India",
+              "SBI"
+            ]
+          }
+        ]
+      },
+      "decreased": {
+        "totalCr": 80645,
+        "positions": 1740,
+        "companies": 585,
+        "byTier": {
+          "large": {
+            "valueCr": 42794,
+            "positions": 561,
+            "companies": 93
+          },
+          "mid": {
+            "valueCr": 28773,
+            "positions": 680,
+            "companies": 194
+          },
+          "small": {
+            "valueCr": 9078,
+            "positions": 499,
+            "companies": 298
+          }
+        },
+        "top": [
+          {
+            "company": "Tata Steel",
+            "valueCr": 2417,
+            "amcs": [
+              "SBI",
+              "Nippon India",
+              "HSBC"
+            ]
+          },
+          {
+            "company": "Bharti Airtel",
+            "valueCr": 1834,
+            "amcs": [
+              "Motilal Oswal",
+              "SBI",
+              "Nippon India"
+            ]
+          },
+          {
+            "company": "Multi Commodity Exchange of India",
+            "valueCr": 1702,
+            "amcs": [
+              "Axis",
+              "Motilal Oswal",
+              "Edelweiss"
+            ]
+          },
+          {
+            "company": "Reliance Industries",
+            "valueCr": 1693,
+            "amcs": [
+              "SBI",
+              "Axis",
+              "Motilal Oswal"
+            ]
+          },
+          {
+            "company": "Hindalco Industries",
+            "valueCr": 1671,
+            "amcs": [
+              "SBI",
+              "Axis",
+              "HSBC"
+            ]
+          },
+          {
+            "company": "HDFC Bank",
+            "valueCr": 1655,
+            "amcs": [
+              "ICICI Prudential",
+              "Motilal Oswal",
+              "Mahindra"
+            ]
+          }
+        ]
+      },
+      "exited": {
+        "totalCr": 5218,
+        "positions": 225,
+        "companies": 159,
+        "byTier": {
+          "large": {
+            "valueCr": 1879,
+            "positions": 61,
+            "companies": 39
+          },
+          "mid": {
+            "valueCr": 1648,
+            "positions": 64,
+            "companies": 49
+          },
+          "small": {
+            "valueCr": 1690,
+            "positions": 100,
+            "companies": 71
+          }
+        },
+        "top": [
+          {
+            "company": "Cholamandalam Investment and Finance Company",
+            "valueCr": 447,
+            "amcs": [
+              "Motilal Oswal",
+              "The Wealth Company"
+            ]
+          },
+          {
+            "company": "E2E Networks",
+            "valueCr": 312,
+            "amcs": [
+              "Bandhan",
+              "JM Financial"
+            ]
+          },
+          {
+            "company": "PB Fintech",
+            "valueCr": 279,
+            "amcs": [
+              "Helios",
+              "PGIM India"
+            ]
+          },
+          {
+            "company": "Hero MotoCorp",
+            "valueCr": 272,
+            "amcs": [
+              "Helios",
+              "360 ONE",
+              "Motilal Oswal"
+            ]
+          },
+          {
+            "company": "LTM",
+            "valueCr": 197,
+            "amcs": [
+              "Invesco",
+              "DSP"
+            ]
+          },
+          {
+            "company": "Kotak Mahindra Bank",
+            "valueCr": 153,
+            "amcs": [
+              "Helios"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "contested": {
+    "month": "Jun-26",
+    "monthPrev": "May-26",
+    "rows": [
+      {
+        "company": "Bharti Airtel",
+        "tier": "large",
+        "buyers": 13,
+        "sellers": 15,
+        "buyCr": 573,
+        "sellCr": 1834,
+        "netCr": -1261,
+        "grossCr": 2408,
+        "topBuyer": "PPFAS",
+        "topSeller": "Motilal Oswal"
+      },
+      {
+        "company": "Reliance Industries",
+        "tier": "large",
+        "buyers": 17,
+        "sellers": 12,
+        "buyCr": 1699,
+        "sellCr": 1693,
+        "netCr": 6,
+        "grossCr": 3393,
+        "topBuyer": "DSP",
+        "topSeller": "SBI"
+      },
+      {
+        "company": "Infosys",
+        "tier": "large",
+        "buyers": 13,
+        "sellers": 12,
+        "buyCr": 2240,
+        "sellCr": 812,
+        "netCr": 1428,
+        "grossCr": 3052,
+        "topBuyer": "Tata",
+        "topSeller": "HDFC"
+      },
+      {
+        "company": "State Bank of India",
+        "tier": "large",
+        "buyers": 16,
+        "sellers": 12,
+        "buyCr": 836,
+        "sellCr": 1206,
+        "netCr": -370,
+        "grossCr": 2042,
+        "topBuyer": "DSP",
+        "topSeller": "SBI"
+      },
+      {
+        "company": "Multi Commodity Exchange of India",
+        "tier": "mid",
+        "buyers": 11,
+        "sellers": 18,
+        "buyCr": 1950,
+        "sellCr": 1755,
+        "netCr": 195,
+        "grossCr": 3705,
+        "topBuyer": "SBI",
+        "topSeller": "Axis"
+      },
+      {
+        "company": "NTPC",
+        "tier": "large",
+        "buyers": 11,
+        "sellers": 12,
+        "buyCr": 508,
+        "sellCr": 1412,
+        "netCr": -905,
+        "grossCr": 1920,
+        "topBuyer": "DSP",
+        "topSeller": "SBI"
+      },
+      {
+        "company": "Kotak Mahindra Bank",
+        "tier": "large",
+        "buyers": 11,
+        "sellers": 13,
+        "buyCr": 800,
+        "sellCr": 979,
+        "netCr": -179,
+        "grossCr": 1779,
+        "topBuyer": "Bandhan",
+        "topSeller": "Motilal Oswal"
+      },
+      {
+        "company": "Maruti Suzuki India",
+        "tier": "large",
+        "buyers": 11,
+        "sellers": 10,
+        "buyCr": 779,
+        "sellCr": 1329,
+        "netCr": -550,
+        "grossCr": 2108,
+        "topBuyer": "Bandhan",
+        "topSeller": "ICICI Prudential"
+      },
+      {
+        "company": "Persistent Systems",
+        "tier": "mid",
+        "buyers": 11,
+        "sellers": 10,
+        "buyCr": 438,
+        "sellCr": 847,
+        "netCr": -409,
+        "grossCr": 1285,
+        "topBuyer": "Mirae Asset",
+        "topSeller": "Axis"
+      },
+      {
+        "company": "Tata Steel",
+        "tier": "large",
+        "buyers": 9,
+        "sellers": 13,
+        "buyCr": 1167,
+        "sellCr": 2417,
+        "netCr": -1250,
+        "grossCr": 3584,
+        "topBuyer": "ICICI Prudential",
+        "topSeller": "SBI"
+      },
+      {
+        "company": "ICICI Bank",
+        "tier": "large",
+        "buyers": 22,
+        "sellers": 9,
+        "buyCr": 2286,
+        "sellCr": 1262,
+        "netCr": 1023,
+        "grossCr": 3548,
+        "topBuyer": "SBI",
+        "topSeller": "Motilal Oswal"
+      },
+      {
+        "company": "InterGlobe Aviation",
+        "tier": "large",
+        "buyers": 15,
+        "sellers": 9,
+        "buyCr": 1667,
+        "sellCr": 974,
+        "netCr": 693,
+        "grossCr": 2641,
+        "topBuyer": "Motilal Oswal",
+        "topSeller": "ICICI Prudential"
+      },
+      {
+        "company": "Tata Consultancy Services",
+        "tier": "large",
+        "buyers": 9,
+        "sellers": 9,
+        "buyCr": 1533,
+        "sellCr": 1060,
+        "netCr": 473,
+        "grossCr": 2594,
+        "topBuyer": "Tata",
+        "topSeller": "Axis"
+      },
+      {
+        "company": "Larsen & Toubro",
+        "tier": "large",
+        "buyers": 16,
+        "sellers": 9,
+        "buyCr": 420,
+        "sellCr": 1439,
+        "netCr": -1018,
+        "grossCr": 1859,
+        "topBuyer": "Nippon India",
+        "topSeller": "ICICI Prudential"
+      },
+      {
+        "company": "PB Fintech",
+        "tier": "mid",
+        "buyers": 10,
+        "sellers": 9,
+        "buyCr": 932,
+        "sellCr": 431,
+        "netCr": 500,
+        "grossCr": 1363,
+        "topBuyer": "Tata",
+        "topSeller": "Helios"
+      }
+    ]
+  },
+  "churn": {
+    "month": "Jun-26",
+    "monthPrev": "May-26",
+    "minBookCr": 500,
+    "medianTurnoverPct": 3.74,
+    "rows": [
+      {
+        "amc": "Trust",
+        "turnoverPct": 16.62,
+        "buyCr": 1041,
+        "sellCr": 643,
+        "bookCr": 4177,
+        "schemes": 4,
+        "holdings": 132
+      },
+      {
+        "amc": "Samco",
+        "turnoverPct": 13.24,
+        "buyCr": 208,
+        "sellCr": 224,
+        "bookCr": 1586,
+        "schemes": 8,
+        "holdings": 182
+      },
+      {
+        "amc": "Jio BlackRock",
+        "turnoverPct": 9.26,
+        "buyCr": 428,
+        "sellCr": 351,
+        "bookCr": 3871,
+        "schemes": 4,
+        "holdings": 469
+      },
+      {
+        "amc": "LIC",
+        "turnoverPct": 8.63,
+        "buyCr": 932,
+        "sellCr": 912,
+        "bookCr": 10767,
+        "schemes": 9,
+        "holdings": 206
+      },
+      {
+        "amc": "Bajaj Finserv",
+        "turnoverPct": 7.85,
+        "buyCr": 1662,
+        "sellCr": 1200,
+        "bookCr": 15813,
+        "schemes": 7,
+        "holdings": 200
+      },
+      {
+        "amc": "Motilal Oswal",
+        "turnoverPct": 7.21,
+        "buyCr": 9063,
+        "sellCr": 6391,
+        "bookCr": 92875,
+        "schemes": 16,
+        "holdings": 424
+      },
+      {
+        "amc": "JM Financial",
+        "turnoverPct": 7.07,
+        "buyCr": 634,
+        "sellCr": 627,
+        "bookCr": 9018,
+        "schemes": 7,
+        "holdings": 246
+      },
+      {
+        "amc": "Edelweiss",
+        "turnoverPct": 6.35,
+        "buyCr": 4460,
+        "sellCr": 2518,
+        "bookCr": 41213,
+        "schemes": 14,
+        "holdings": 568
+      },
+      {
+        "amc": "Helios",
+        "turnoverPct": 5.9,
+        "buyCr": 1659,
+        "sellCr": 652,
+        "bookCr": 11789,
+        "schemes": 4,
+        "holdings": 136
+      },
+      {
+        "amc": "HSBC",
+        "turnoverPct": 5.86,
+        "buyCr": 5242,
+        "sellCr": 4080,
+        "bookCr": 71255,
+        "schemes": 11,
+        "holdings": 283
+      },
+      {
+        "amc": "Bandhan",
+        "turnoverPct": 5.55,
+        "buyCr": 6843,
+        "sellCr": 4549,
+        "bookCr": 84077,
+        "schemes": 17,
+        "holdings": 694
+      },
+      {
+        "amc": "Bank of India",
+        "turnoverPct": 5.51,
+        "buyCr": 481,
+        "sellCr": 512,
+        "bookCr": 8893,
+        "schemes": 9,
+        "holdings": 199
+      },
+      {
+        "amc": "ICICI Prudential",
+        "turnoverPct": 4.94,
+        "buyCr": 10944,
+        "sellCr": 8651,
+        "bookCr": 178168,
+        "schemes": 11,
+        "holdings": 602
+      },
+      {
+        "amc": "Mirae Asset",
+        "turnoverPct": 4.55,
+        "buyCr": 1291,
+        "sellCr": 1151,
+        "bookCr": 25722,
+        "schemes": 3,
+        "holdings": 139
+      },
+      {
+        "amc": "WhiteOak Capital",
+        "turnoverPct": 4.43,
+        "buyCr": 1638,
+        "sellCr": 921,
+        "bookCr": 21391,
+        "schemes": 6,
+        "holdings": 210
+      },
+      {
+        "amc": "Axis",
+        "turnoverPct": 4.08,
+        "buyCr": 8527,
+        "sellCr": 7287,
+        "bookCr": 182272,
+        "schemes": 17,
+        "holdings": 317
+      },
+      {
+        "amc": "Mahindra",
+        "turnoverPct": 4.08,
+        "buyCr": 1671,
+        "sellCr": 1104,
+        "bookCr": 27743,
+        "schemes": 12,
+        "holdings": 270
+      },
+      {
+        "amc": "Sundaram",
+        "turnoverPct": 4.01,
+        "buyCr": 2133,
+        "sellCr": 1772,
+        "bookCr": 45053,
+        "schemes": 14,
+        "holdings": 281
+      },
+      {
+        "amc": "Franklin Templeton",
+        "turnoverPct": 3.74,
+        "buyCr": 3982,
+        "sellCr": 3446,
+        "bookCr": 93315,
+        "schemes": 14,
+        "holdings": 282
+      },
+      {
+        "amc": "DSP",
+        "turnoverPct": 3.64,
+        "buyCr": 4866,
+        "sellCr": 3829,
+        "bookCr": 107385,
+        "schemes": 22,
+        "holdings": 552
+      },
+      {
+        "amc": "SBI",
+        "turnoverPct": 3.6,
+        "buyCr": 21489,
+        "sellCr": 13492,
+        "bookCr": 382781,
+        "schemes": 24,
+        "holdings": 556
+      },
+      {
+        "amc": "PGIM India",
+        "turnoverPct": 3.45,
+        "buyCr": 694,
+        "sellCr": 1154,
+        "bookCr": 20142,
+        "schemes": 7,
+        "holdings": 188
+      },
+      {
+        "amc": "ITI",
+        "turnoverPct": 3.43,
+        "buyCr": 428,
+        "sellCr": 315,
+        "bookCr": 9451,
+        "schemes": 8,
+        "holdings": 252
+      },
+      {
+        "amc": "Old Bridge",
+        "turnoverPct": 3.33,
+        "buyCr": 472,
+        "sellCr": 112,
+        "bookCr": 3611,
+        "schemes": 2,
+        "holdings": 50
+      },
+      {
+        "amc": "UTI",
+        "turnoverPct": 2.77,
+        "buyCr": 3162,
+        "sellCr": 2519,
+        "bookCr": 92067,
+        "schemes": 21,
+        "holdings": 398
+      },
+      {
+        "amc": "Nippon India",
+        "turnoverPct": 2.54,
+        "buyCr": 10383,
+        "sellCr": 7814,
+        "bookCr": 311936,
+        "schemes": 16,
+        "holdings": 437
+      },
+      {
+        "amc": "Tata",
+        "turnoverPct": 2.51,
+        "buyCr": 4989,
+        "sellCr": 1901,
+        "bookCr": 76667,
+        "schemes": 23,
+        "holdings": 489
+      },
+      {
+        "amc": "Aditya Birla Sun Life",
+        "turnoverPct": 2.37,
+        "buyCr": 2588,
+        "sellCr": 2056,
+        "bookCr": 87840,
+        "schemes": 8,
+        "holdings": 362
+      },
+      {
+        "amc": "Invesco",
+        "turnoverPct": 1.97,
+        "buyCr": 4068,
+        "sellCr": 1599,
+        "bookCr": 84098,
+        "schemes": 15,
+        "holdings": 230
+      },
+      {
+        "amc": "Abakkus",
+        "turnoverPct": 1.9,
+        "buyCr": 895,
+        "sellCr": 109,
+        "bookCr": 6327,
+        "schemes": 2,
+        "holdings": 85
+      },
+      {
+        "amc": "Zerodha",
+        "turnoverPct": 1.65,
+        "buyCr": 60,
+        "sellCr": 29,
+        "bookCr": 1763,
+        "schemes": 2,
+        "holdings": 250
+      },
+      {
+        "amc": "360 ONE",
+        "turnoverPct": 1.46,
+        "buyCr": 124,
+        "sellCr": 446,
+        "bookCr": 8470,
+        "schemes": 3,
+        "holdings": 91
+      },
+      {
+        "amc": "Groww",
+        "turnoverPct": 1.41,
+        "buyCr": 239,
+        "sellCr": 18,
+        "bookCr": 1401,
+        "schemes": 6,
+        "holdings": 476
+      },
+      {
+        "amc": "HDFC",
+        "turnoverPct": 0.83,
+        "buyCr": 8580,
+        "sellCr": 3247,
+        "bookCr": 399818,
+        "schemes": 20,
+        "holdings": 474
+      },
+      {
+        "amc": "PPFAS",
+        "turnoverPct": 0.25,
+        "buyCr": 5008,
+        "sellCr": 317,
+        "bookCr": 128206,
+        "schemes": 3,
+        "holdings": 136
+      },
+      {
+        "amc": "NJ",
+        "turnoverPct": 0.04,
+        "buyCr": 1,
+        "sellCr": 22,
+        "bookCr": 2835,
+        "schemes": 2,
+        "holdings": 57
+      }
+    ]
+  },
+  "flowsVsPerf": {
+    "month": "Jun-26",
+    "windowLabel": "Mar-26 → Jun-26",
+    "windowMonths": 3,
+    "period": "3Y",
+    "universe": 205,
+    "medianFlowPct": 11.8,
+    "quadrants": {
+      "winning": {
+        "count": 68,
+        "rows": [
+          {
+            "fund": "Bandhan Small Cap Fund",
+            "amc": "Bandhan",
+            "classification": "Equity : Small Cap",
+            "percentile": 100,
+            "quartile": "Q1",
+            "perfReturn": 25.9,
+            "bookGrowthPct": 49.4,
+            "navReturnPct": 5.6,
+            "impliedFlowPct": 43.7,
+            "bookCr": 26138,
+            "monthsBack": 3
+          },
+          {
+            "fund": "DSP Value Fund",
+            "amc": "DSP",
+            "classification": "Equity : Value / Contra",
+            "percentile": 83.3,
+            "quartile": "Q1",
+            "perfReturn": 16.6,
+            "bookGrowthPct": 42.1,
+            "navReturnPct": 2.6,
+            "impliedFlowPct": 39.5,
+            "bookCr": 1354,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Invesco India Smallcap Fund",
+            "amc": "Invesco",
+            "classification": "Equity : Small Cap",
+            "percentile": 91.3,
+            "quartile": "Q1",
+            "perfReturn": 22.1,
+            "bookGrowthPct": 45,
+            "navReturnPct": 10.2,
+            "impliedFlowPct": 34.8,
+            "bookCr": 13216,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Bandhan Large & Mid Cap Fund",
+            "amc": "Bandhan",
+            "classification": "Equity : Large & Mid Cap",
+            "percentile": 91.7,
+            "quartile": "Q1",
+            "perfReturn": 18.3,
+            "bookGrowthPct": 32.4,
+            "navReturnPct": 0.7,
+            "impliedFlowPct": 31.7,
+            "bookCr": 18012,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Invesco India Midcap Fund",
+            "amc": "Invesco",
+            "classification": "Equity : Mid Cap",
+            "percentile": 100,
+            "quartile": "Q1",
+            "perfReturn": 24.6,
+            "bookGrowthPct": 39.6,
+            "navReturnPct": 8.9,
+            "impliedFlowPct": 30.7,
+            "bookCr": 13680,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Motilal Oswal Large & Midcap Fund",
+            "amc": "Motilal Oswal",
+            "classification": "Equity : Large & Mid Cap",
+            "percentile": 95.8,
+            "quartile": "Q1",
+            "perfReturn": 21.3,
+            "bookGrowthPct": 31.3,
+            "navReturnPct": 2,
+            "impliedFlowPct": 29.4,
+            "bookCr": 18173,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Bank of India Small Cap Fund",
+            "amc": "Bank of India",
+            "classification": "Equity : Small Cap",
+            "percentile": 87,
+            "quartile": "Q1",
+            "perfReturn": 21.1,
+            "bookGrowthPct": 41.3,
+            "navReturnPct": 12.4,
+            "impliedFlowPct": 28.9,
+            "bookCr": 2432,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Axis Value Fund",
+            "amc": "Axis",
+            "classification": "Equity : Value / Contra",
+            "percentile": 88.9,
+            "quartile": "Q1",
+            "perfReturn": 16.8,
+            "bookGrowthPct": 30.8,
+            "navReturnPct": 4,
+            "impliedFlowPct": 26.8,
+            "bookCr": 1623,
+            "monthsBack": 3
+          }
+        ]
+      },
+      "coasting": {
+        "count": 36,
+        "rows": [
+          {
+            "fund": "Axis Quant Fund",
+            "amc": "Axis",
+            "classification": "Equity : Thematic",
+            "percentile": 7.9,
+            "quartile": "Q4",
+            "perfReturn": 8.7,
+            "bookGrowthPct": 32.5,
+            "navReturnPct": 2.7,
+            "impliedFlowPct": 29.7,
+            "bookCr": 806,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Tata Small Cap Fund",
+            "amc": "Tata",
+            "classification": "Equity : Small Cap",
+            "percentile": 4.4,
+            "quartile": "Q4",
+            "perfReturn": 11.3,
+            "bookGrowthPct": 34.2,
+            "navReturnPct": 9.3,
+            "impliedFlowPct": 25,
+            "bookCr": 11653,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Franklin India Small Cap Fund",
+            "amc": "Franklin Templeton",
+            "classification": "Equity : Small Cap",
+            "percentile": 30.4,
+            "quartile": "Q3",
+            "perfReturn": 14.4,
+            "bookGrowthPct": 26.9,
+            "navReturnPct": 3.7,
+            "impliedFlowPct": 23.2,
+            "bookCr": 14034,
+            "monthsBack": 3
+          },
+          {
+            "fund": "SBI Infrastructure Fund",
+            "amc": "SBI",
+            "classification": "Equity : Sectoral - Infrastructure",
+            "percentile": 29.4,
+            "quartile": "Q3",
+            "perfReturn": 15.9,
+            "bookGrowthPct": 23.3,
+            "navReturnPct": 0.3,
+            "impliedFlowPct": 23,
+            "bookCr": 4678,
+            "monthsBack": 3
+          },
+          {
+            "fund": "SBI Small Cap Fund",
+            "amc": "SBI",
+            "classification": "Equity : Small Cap",
+            "percentile": 13,
+            "quartile": "Q4",
+            "perfReturn": 11.9,
+            "bookGrowthPct": 29.1,
+            "navReturnPct": 6.5,
+            "impliedFlowPct": 22.7,
+            "bookCr": 37749,
+            "monthsBack": 3
+          },
+          {
+            "fund": "LIC MF Flexi Cap Fund",
+            "amc": "LIC",
+            "classification": "Equity : Flexi Cap",
+            "percentile": 43.2,
+            "quartile": "Q3",
+            "perfReturn": 11.4,
+            "bookGrowthPct": 30.5,
+            "navReturnPct": 8.6,
+            "impliedFlowPct": 21.9,
+            "bookCr": 1029,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Tata Mid Cap Fund",
+            "amc": "Tata",
+            "classification": "Equity : Mid Cap",
+            "percentile": 32.1,
+            "quartile": "Q3",
+            "perfReturn": 16.8,
+            "bookGrowthPct": 24.5,
+            "navReturnPct": 3.8,
+            "impliedFlowPct": 20.6,
+            "bookCr": 5825,
+            "monthsBack": 3
+          },
+          {
+            "fund": "SBI Midcap Fund",
+            "amc": "SBI",
+            "classification": "Equity : Mid Cap",
+            "percentile": 7.1,
+            "quartile": "Q4",
+            "perfReturn": 12.5,
+            "bookGrowthPct": 22.7,
+            "navReturnPct": 2.7,
+            "impliedFlowPct": 20,
+            "bookCr": 23939,
+            "monthsBack": 3
+          }
+        ]
+      },
+      "falling": {
+        "count": 67,
+        "rows": [
+          {
+            "fund": "Tata Digital India Fund",
+            "amc": "Tata",
+            "classification": "Equity : Sectoral - Technology",
+            "percentile": 40,
+            "quartile": "Q3",
+            "perfReturn": 6.1,
+            "bookGrowthPct": -2.6,
+            "navReturnPct": 4.1,
+            "impliedFlowPct": -6.7,
+            "bookCr": 8536,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Edelweiss Focused Fund",
+            "amc": "Edelweiss",
+            "classification": "Equity : Focused",
+            "percentile": 45.8,
+            "quartile": "Q3",
+            "perfReturn": 12,
+            "bookGrowthPct": -2.3,
+            "navReturnPct": 1.1,
+            "impliedFlowPct": -3.4,
+            "bookCr": 1012,
+            "monthsBack": 3
+          },
+          {
+            "fund": "HDFC MNC Fund",
+            "amc": "HDFC",
+            "classification": "Equity : Thematic - MNC",
+            "percentile": 20,
+            "quartile": "Q4",
+            "perfReturn": 6.6,
+            "bookGrowthPct": -0.4,
+            "navReturnPct": 2.3,
+            "impliedFlowPct": -2.7,
+            "bookCr": 533,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Edelweiss Large Cap Fund",
+            "amc": "Edelweiss",
+            "classification": "Equity : Large Cap",
+            "percentile": 37.5,
+            "quartile": "Q3",
+            "perfReturn": 9.3,
+            "bookGrowthPct": 0.8,
+            "navReturnPct": 1,
+            "impliedFlowPct": -0.2,
+            "bookCr": 1416,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Mirae Asset Midcap Fund",
+            "amc": "Mirae Asset",
+            "classification": "Equity : Mid Cap",
+            "percentile": 42.9,
+            "quartile": "Q3",
+            "perfReturn": 17.5,
+            "bookGrowthPct": 6.8,
+            "navReturnPct": 6.2,
+            "impliedFlowPct": 0.7,
+            "bookCr": 19274,
+            "monthsBack": 2
+          },
+          {
+            "fund": "Sundaram Dividend Yield Fund",
+            "amc": "Sundaram",
+            "classification": "Equity : Thematic - Dividend Yield",
+            "percentile": 25,
+            "quartile": "Q3",
+            "perfReturn": 10.3,
+            "bookGrowthPct": -0.9,
+            "navReturnPct": -1.7,
+            "impliedFlowPct": 0.8,
+            "bookCr": 786,
+            "monthsBack": 3
+          },
+          {
+            "fund": "DSP Quant Fund",
+            "amc": "DSP",
+            "classification": "Equity : Thematic",
+            "percentile": 5.3,
+            "quartile": "Q4",
+            "perfReturn": 6.6,
+            "bookGrowthPct": 2.3,
+            "navReturnPct": 1.4,
+            "impliedFlowPct": 0.9,
+            "bookCr": 725,
+            "monthsBack": 3
+          },
+          {
+            "fund": "DSP Healthcare Fund",
+            "amc": "DSP",
+            "classification": "Equity : Sectoral - Pharma",
+            "percentile": 37.5,
+            "quartile": "Q3",
+            "perfReturn": 20.1,
+            "bookGrowthPct": 16.1,
+            "navReturnPct": 14.2,
+            "impliedFlowPct": 1.9,
+            "bookCr": 2672,
+            "monthsBack": 3
+          }
+        ]
+      },
+      "undiscovered": {
+        "count": 34,
+        "rows": [
+          {
+            "fund": "Franklin India Technology Fund",
+            "amc": "Franklin Templeton",
+            "classification": "Equity : Sectoral - Technology",
+            "percentile": 100,
+            "quartile": "Q1",
+            "perfReturn": 10,
+            "bookGrowthPct": -2.3,
+            "navReturnPct": 2.2,
+            "impliedFlowPct": -4.5,
+            "bookCr": 1185,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Bank of India ELSS Tax Saver",
+            "amc": "Bank of India",
+            "classification": "Equity : Tax Saving (ELSS)",
+            "percentile": 70.4,
+            "quartile": "Q2",
+            "perfReturn": 12.9,
+            "bookGrowthPct": -4.5,
+            "navReturnPct": -1.4,
+            "impliedFlowPct": -3.2,
+            "bookCr": 1305,
+            "monthsBack": 2
+          },
+          {
+            "fund": "HSBC ELSS Tax saver Fund",
+            "amc": "HSBC",
+            "classification": "Equity : Tax Saving (ELSS)",
+            "percentile": 96.3,
+            "quartile": "Q1",
+            "perfReturn": 16.1,
+            "bookGrowthPct": 2,
+            "navReturnPct": 0.2,
+            "impliedFlowPct": 1.7,
+            "bookCr": 3987,
+            "monthsBack": 1
+          },
+          {
+            "fund": "HSBC Flexi Cap Fund",
+            "amc": "HSBC",
+            "classification": "Equity : Flexi Cap",
+            "percentile": 75.7,
+            "quartile": "Q1",
+            "perfReturn": 15.1,
+            "bookGrowthPct": 2.2,
+            "navReturnPct": -0.5,
+            "impliedFlowPct": 2.7,
+            "bookCr": 5556,
+            "monthsBack": 1
+          },
+          {
+            "fund": "HSBC Value Fund",
+            "amc": "HSBC",
+            "classification": "Equity : Value / Contra",
+            "percentile": 94.4,
+            "quartile": "Q1",
+            "perfReturn": 17.4,
+            "bookGrowthPct": 3.4,
+            "navReturnPct": -0.2,
+            "impliedFlowPct": 3.6,
+            "bookCr": 14575,
+            "monthsBack": 1
+          },
+          {
+            "fund": "Edelweiss Large & Mid Cap Fund",
+            "amc": "Edelweiss",
+            "classification": "Equity : Large & Mid Cap",
+            "percentile": 58.3,
+            "quartile": "Q2",
+            "perfReturn": 14.3,
+            "bookGrowthPct": 5.4,
+            "navReturnPct": 1.6,
+            "impliedFlowPct": 3.7,
+            "bookCr": 4590,
+            "monthsBack": 3
+          },
+          {
+            "fund": "HSBC Multi Cap Fund",
+            "amc": "HSBC",
+            "classification": "Equity : Multi Cap",
+            "percentile": 88.9,
+            "quartile": "Q1",
+            "perfReturn": 18.6,
+            "bookGrowthPct": 4,
+            "navReturnPct": 0.3,
+            "impliedFlowPct": 3.7,
+            "bookCr": 5818,
+            "monthsBack": 1
+          },
+          {
+            "fund": "Nippon India Consumption Fund",
+            "amc": "Nippon India",
+            "classification": "Equity : Thematic - Consumption",
+            "percentile": 71.4,
+            "quartile": "Q2",
+            "perfReturn": 10.7,
+            "bookGrowthPct": 9.3,
+            "navReturnPct": 4.9,
+            "impliedFlowPct": 4.4,
+            "bookCr": 2387,
+            "monthsBack": 3
+          }
+        ]
+      }
+    }
+  },
+  "persistence": {
+    "asOf": "2026-07-27",
+    "priorWindow": {
+      "from": "2020-07-27",
+      "to": "2023-07-27"
+    },
+    "recentWindow": {
+      "from": "2023-07-27",
+      "to": "2026-07-27"
+    },
+    "cohorts": 18,
+    "funds": 490,
+    "minCohort": 8,
+    "matrix": [
+      [
+        37,
+        26,
+        36,
+        28
+      ],
+      [
+        39,
+        30,
+        25,
+        25
+      ],
+      [
+        23,
+        42,
+        31,
+        29
+      ],
+      [
+        28,
+        21,
+        33,
+        37
+      ]
+    ],
+    "rowTotals": [
+      127,
+      119,
+      125,
+      119
+    ],
+    "q1StayPct": 29.1,
+    "q1ToBottomHalfPct": 50.4,
+    "topStayers": [
+      {
+        "fund": "Aditya Birla SL PSU Equity Fund",
+        "classification": "Equity : Thematic",
+        "prior": 33.8,
+        "recent": 23.8
+      },
+      {
+        "fund": "SBI Healthcare Opp Fund",
+        "classification": "Equity : Sectoral - Pharma",
+        "prior": 23.9,
+        "recent": 23.8
+      },
+      {
+        "fund": "DSP India T.I.G.E.R Fund",
+        "classification": "Equity : Sectoral - Infrastructure",
+        "prior": 39.9,
+        "recent": 23
+      },
+      {
+        "fund": "Motilal Oswal Large & Midcap Fund",
+        "classification": "Equity : Large & Mid Cap",
+        "prior": 30.3,
+        "recent": 22.8
+      },
+      {
+        "fund": "Aditya Birla SL PSU Equity Fund",
+        "classification": "Equity : Thematic",
+        "prior": 31.5,
+        "recent": 22.2
+      },
+      {
+        "fund": "Nippon India Growth Mid Cap Fund",
+        "classification": "Equity : Mid Cap",
+        "prior": 35.5,
+        "recent": 21.7
+      },
+      {
+        "fund": "ICICI Pru Manufacturing Fund",
+        "classification": "Equity : Thematic",
+        "prior": 32.9,
+        "recent": 21.6
+      },
+      {
+        "fund": "ICICI Pru Retirement Fund-Pure Equity Plan",
+        "classification": "Equity : Flexi Cap",
+        "prior": 31.2,
+        "recent": 21.5
+      }
+    ]
+  }
+}
