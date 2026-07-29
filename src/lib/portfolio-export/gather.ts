@@ -28,6 +28,8 @@ import type {
   FundHousePeerRow,
   HoldingExportRow,
   HoldingMonthCell,
+  PeerLeaderColumn,
+  PeerLeaderEntry,
   PeerRow,
   PlanProfile,
   RatioRow,
@@ -365,6 +367,29 @@ export async function gatherSchemeExport(args: {
       return (bv ?? -Infinity) - (av ?? -Infinity);
     });
 
+  // Per-period leaderboards: for each period, every peer with a numeric return,
+  // ranked best → worst independently (mirrors the dashboard Peer Ranking table
+  // showing all periods at once — the fund in a given row differs per column).
+  const peerLeaderboard: PeerLeaderColumn[] = peerPeriods.map((p) => ({
+    period: p,
+    cagr: CAGR_PERIODS.has(p),
+    entries: cohortFunds
+      .map((f): PeerLeaderEntry | null => {
+        const pe = f.periodRanks[p];
+        const ret = pe && typeof pe.return === "number" ? pe.return : null;
+        if (ret === null) return null;
+        return {
+          fund: cleanSchemeName(f.fundName),
+          ret,
+          selected:
+            f.schemecode === entry.schemecode ||
+            f.schemecode === `${entry.schemecode}-D`,
+        };
+      })
+      .filter((e): e is PeerLeaderEntry => e !== null)
+      .sort((a, b) => b.ret - a.ret || a.fund.localeCompare(b.fund)),
+  }));
+
   const sectors: SectorRow[] = sectorRows.map((s) => ({
     sector: s.label,
     fundPct: s.fund ?? 0,
@@ -414,6 +439,7 @@ export async function gatherSchemeExport(args: {
     peerPeriod,
     peerPeriods,
     peers,
+    peerLeaderboard,
     holdings: holdingsData.rows,
     holdingsSource,
   };
