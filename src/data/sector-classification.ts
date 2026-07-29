@@ -39,3 +39,35 @@ export function classifySector(fincode: string, companyName: string): string {
 }
 
 export const sectorMapMeta = sectorData.meta;
+
+// Acronyms that must stay upper-cased in a canonical sector label.
+const SECTOR_ACRONYMS = new Set(["it", "fmcg", "psu"]);
+
+/**
+ * Canonicalise an AMC-disclosed industry/sector label (SEBI taxonomy) into a
+ * single, dedupe-safe display string. AMC filings spell the same sector many
+ * ways — "IT - Software" vs "It - Software", "Pharmaceuticals & Biotechnology"
+ * vs "Pharmaceuticals and Biotechnology", stray spacing around & / -. We fold
+ * those variants together (lower-case key: unify " and " → " & ", normalise
+ * spacing) then title-case for display, keeping known acronyms upper-cased.
+ * Empty/whitespace → UNCLASSIFIED. Used by the Overview cap-flows + sector-flow
+ * builds so the same holding never splits into two rows.
+ */
+export function canonicalAmcSector(raw: string | null | undefined): string {
+  const key = String(raw ?? "")
+    .toLowerCase()
+    .replace(/\s+and\s+/g, " & ")
+    .replace(/\s*&\s*/g, " & ")
+    .replace(/\s*[-–]\s*/g, " - ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!key) return UNCLASSIFIED;
+  return key
+    .split(" ")
+    .map((w) => {
+      const alpha = w.replace(/[^a-z]/g, "");
+      if (SECTOR_ACRONYMS.has(alpha)) return w.toUpperCase();
+      return w.replace(/[a-z]/, (c) => c.toUpperCase());
+    })
+    .join(" ");
+}

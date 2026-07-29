@@ -1,9 +1,11 @@
 /**
- * Build the cap-bucketed MF buy/sell snapshot from the per-fund equity
- * holdings (public/holdings). For the latest month vs the prior month, across
- * ACTIVE EQUITY schemes only (excludes ETFs, index, international and all
- * hybrids), aggregate each company's net buying/selling and the AMCs driving
- * it, then bucket by Large/Mid/Small cap.
+ * Build the cap-bucketed MF buy/sell snapshot from the AMC-direct equity
+ * holdings (public/holdings-direct — the same portfolios that power the MFs
+ * Portfolio Tracker, sourced straight from each AMC's monthly disclosure, not
+ * RupeeVest). For the latest month vs the prior month, across ACTIVE EQUITY
+ * schemes only (excludes ETFs, index, international and all hybrids), aggregate
+ * each company's net buying/selling and the AMCs driving it, then bucket by
+ * Large/Mid/Small cap.
  *
  * Metric: NET Rs Cr BOUGHT/SOLD = (sharesCur - sharesPrev) x current price,
  * where price is the holdings-implied price (aggregate value / aggregate
@@ -20,13 +22,14 @@ import path from "node:path";
 import { classifyCapFromNames, type CapTier } from "../src/data/cap-classification";
 import {
   classifySector,
+  canonicalAmcSector,
   UNCLASSIFIED,
   OVERSEAS_EQUITY,
   MUTUAL_FUND,
 } from "../src/data/sector-classification";
 import { amcOf } from "../src/data/amc-name-map";
 
-const DIR = path.join(process.cwd(), "public", "holdings");
+const DIR = path.join(process.cwd(), "public", "holdings-direct");
 const OUT = path.join(process.cwd(), "src", "data", "portfolio-tracker", "cap-flows.json");
 // Shares-outstanding feed (keyed by fincode), populated out-of-band by
 // scripts/ingest/shares-outstanding.ts from screener.in. Optional — when a
@@ -84,6 +87,7 @@ interface Agg {
   valCur: number;
   valPrev: number;
   amc: Map<string, number>; // amc -> delta shares
+  sector: string; // AMC-disclosed industry (canonicalised), first non-empty
 }
 
 function pickName(names: Map<string, number>): string {
@@ -112,8 +116,6 @@ function main() {
   const agg = new Map<string, Agg>();
   let monthCurLabel = "";
   let monthPrevLabel = "";
-  let curSlug = "";
-  let prevSlug = "";
   let fundCount = 0;
   // Per-scheme net flow by fincode — for the sector zoom. Tracks BOTH the net
   // share delta (→ pure trade flow = shares × price) and the net value delta
@@ -126,33 +128,71 @@ function main() {
   const slugMonth = (l: string) =>
     l.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
 
+  // AMC filings do NOT share a common reporting month: most have filed the
+  // latest month, but some AMCs are a month behind (their newest disclosure is
+  // the prior month) and a few carry a gap (latest month present, the one
+  // before missing). We therefore anchor the snapshot to the LATEST month any
+  // fund has disclosed and compare every fund against ITS OWN previous
+  // disclosure. Funds whose newest month is not the latest (haven't filed yet)
+  // are skipped entirely — otherwise all their holdings would read as a phantom
+  // sell — and single-month funds contribute no (spurious) flow.
+  const MON3 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthOrder = (label: string): number => {
+    const m = String(label).trim().toLowerCase().match(/^([a-z]{3})[^0-9]*(\d{2,4})$/);
+    if (!m) return -1;
+    const mo = MON3.findIndex((x) => x.toLowerCase() === m[1]);
+    if (mo < 0) return -1;
+    let y = parseInt(m[2], 10);
+    if (y < 100) y += 2000;
+    return y * 12 + mo;
+  };
+  const labelOfOrder = (ord: number): string =>
+    `${MON3[((ord % 12) + 12) % 12]}-${String(Math.floor(ord / 12)).slice(-2)}`;
+
+  let latestOrder = -1;
+  for (const file of files) {
+    const j = JSON.parse(fs.readFileSync(path.join(DIR, file), "utf8"));
+    if (!isActiveEquity(j.meta?.classification ?? "")) continue;
+    const m0 = j.meta?.months?.[0]?.label;
+    if (!m0) continue;
+    const o = monthOrder(m0);
+    if (o > latestOrder) latestOrder = o;
+  }
+  monthCurLabel = latestOrder >= 0 ? labelOfOrder(latestOrder) : "";
+  monthPrevLabel = latestOrder >= 0 ? labelOfOrder(latestOrder - 1) : "";
+
   for (const file of files) {
     const j = JSON.parse(fs.readFileSync(path.join(DIR, file), "utf8"));
     if (!isActiveEquity(j.meta?.classification ?? "")) continue;
     const months = j.meta?.months ?? [];
     if (months.length < 2) continue;
-    if (!curSlug) {
-      monthCurLabel = months[0].label;
-      monthPrevLabel = months[1].label;
-      curSlug = slugMonth(months[0].label);
-      prevSlug = slugMonth(months[1].label);
-    }
+    // Only funds whose newest disclosure IS the latest month participate.
+    if (monthOrder(months[0].label) !== latestOrder) continue;
+    // Compare this fund against its OWN previous disclosure (usually the prior
+    // month; occasionally a month earlier when the fund skipped one).
+    const fCurSlug = slugMonth(months[0].label);
+    const fPrevSlug = slugMonth(months[1].label);
     const aumCur = num(months[0].aumCr);
     const aumPrev = num(months[1].aumCr);
     const amc = amcOf(j.meta.fund);
     fundCount++;
 
     for (const r of j.rows) {
-      const cur = r.months?.[curSlug];
-      const prev = r.months?.[prevSlug];
+      const cur = r.months?.[fCurSlug];
+      const prev = r.months?.[fPrevSlug];
       const shC = cur ? num(cur.shares_num) : 0;
       const shP = prev ? num(prev.shares_num) : 0;
       const vC = cur && cur.aum_pct_num != null ? (num(cur.aum_pct_num) / 100) * aumCur : 0;
       const vP = prev && prev.aum_pct_num != null ? (num(prev.aum_pct_num) / 100) * aumPrev : 0;
       let a = agg.get(r.fincode);
       if (!a) {
-        a = { names: new Map(), shCur: 0, shPrev: 0, valCur: 0, valPrev: 0, amc: new Map() };
+        a = { names: new Map(), shCur: 0, shPrev: 0, valCur: 0, valPrev: 0, amc: new Map(), sector: "" };
         agg.set(r.fincode, a);
+      }
+      // AMC-disclosed industry from the filing; keep the first non-empty one.
+      if (!a.sector) {
+        const canon = canonicalAmcSector(r.sector);
+        if (canon !== UNCLASSIFIED) a.sector = canon;
       }
       a.names.set(r.company_name, (a.names.get(r.company_name) ?? 0) + 1);
       a.shCur += shC;
@@ -289,6 +329,11 @@ function main() {
   // just moves between fincodes inside the same sector. We surface the 2 biggest
   // share gainers and 2 biggest losers, each with the names driving the move.
   const NON_SECTORS = new Set([UNCLASSIFIED, OVERSEAS_EQUITY, MUTUAL_FUND]);
+  // Prefer the AMC-disclosed industry captured off the filing; only fall back
+  // to name-based detection (overseas / MF units) when the filing left it blank
+  // — the ISIN fincode no longer matches the numeric fincode→sector map.
+  const sectorOf = (fincode: string, a: Agg | undefined): string =>
+    (a && a.sector) || classifySector(fincode, a ? pickName(a.names) : "");
   const secVal = new Map<string, { cur: number; prev: number }>();
   let secTotCur = 0;
   let secTotPrev = 0;
@@ -296,7 +341,7 @@ function main() {
     if (a.valCur <= 0 && a.valPrev <= 0) continue;
     secTotCur += a.valCur;
     secTotPrev += a.valPrev;
-    const sector = classifySector(fincode, pickName(a.names));
+    const sector = sectorOf(fincode, a);
     const e = secVal.get(sector) ?? { cur: 0, prev: 0 };
     e.cur += a.valCur;
     e.prev += a.valPrev;
@@ -308,7 +353,7 @@ function main() {
     { company: string; fincode: string; netCr: number; amcs: string[] }[]
   >();
   for (const r of rows) {
-    const sector = classifySector(r.fincode, r.company);
+    const sector = sectorOf(r.fincode, agg.get(r.fincode));
     if (NON_SECTORS.has(sector)) continue;
     const arr = secMovers.get(sector) ?? [];
     arr.push({ company: r.company, fincode: r.fincode, netCr: r.netCr, amcs: r.netCr >= 0 ? r.buyers : r.sellers });
@@ -341,7 +386,7 @@ function main() {
       stockSchemes.set(fincode, sa);
       const a = agg.get(fincode);
       if (!a) continue;
-      const sector = classifySector(fincode, pickName(a.names));
+      const sector = sectorOf(fincode, a);
       if (NON_SECTORS.has(sector)) continue;
       let m = schemeSectorFlow.get(sector);
       if (!m) { m = new Map(); schemeSectorFlow.set(sector, m); }

@@ -83,20 +83,21 @@ jobs:
 
       - name: Rebuild holdings-derived snapshots
         # Everything that reads public/holdings is regenerated here so the
-        # dashboard's Overview (cap-flows), Portfolio Tracker (fund-wise),
-        # Insights, Sector flows and AMC charts move to the new month with the
-        # holdings. Skipped in probe mode; runs only if the refresh succeeded
-        # (a global keep-last-good non-zero exit skips it). Order matters:
-        # insights reads the cap-flows / fund-wise outputs.
+        # dashboard's Portfolio Tracker (fund-wise), Insights and AMC charts move
+        # to the new month with the holdings. Skipped in probe mode; runs only if
+        # the refresh succeeded (a global keep-last-good non-zero exit skips it).
+        # Order matters: build:amc-direct rebuilds public/holdings-direct, and the
+        # Overview cap-flows + sector-flow feeds now read THAT (the AMC filings),
+        # so it must run BEFORE them; insights reads the cap-flows/fund-wise output.
         if: ${{ success() && inputs.mode != 'probe' }}
         run: |
+          npm run build:amc-direct
           npm run build:cap-flows
           npm run build:fundwise
           npm run build:insights
           npm run build:sector-gross
           npm run build:amc-aggregation
           npm run build:amc-allocations
-          npm run build:amc-direct
 
       - name: Commit refreshed holdings
         # Scheduled runs always commit (no inputs on cron); manual runs honour
