@@ -170,10 +170,6 @@ export function AmcDisclosurePanel({ schemecode }: { schemecode: string }) {
               AMC filing
             </span>
           </div>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {ref.amcSchemeName} · every asset class, as disclosed
-            {latest ? ` · latest ${latest.label}` : ` · ${ref.asOfMonth}`}
-          </p>
         </div>
       </div>
 
