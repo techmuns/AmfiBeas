@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/cn";
 import type { CapFlowRow, CapFlows } from "@/data/cap-flows";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
+import { CapFlowZoom } from "@/components/data/CapFlowZoom";
 import type { CsvColumn } from "@/lib/csv";
 
 type TopN = 5 | 10 | 20;
@@ -40,6 +41,7 @@ function FlowCard({
   rows,
   kind,
   rowSlots,
+  month,
 }: {
   title: string;
   rows: CapFlowRow[];
@@ -47,14 +49,18 @@ function FlowCard({
   /** Total data-row slots to render; short sides are padded with blank rows
    *  so both cards in a tier are exactly the same height. */
   rowSlots: number;
+  month: string;
 }) {
   const movers = kind === "bought" ? "Top MF Buyers" : "Top MF Sellers";
   const valHead = kind === "bought" ? "Bought (% of o/s)" : "Sold (% of o/s)";
   const blanks = Math.max(0, rowSlots - rows.length);
   return (
     <div className="overflow-hidden rounded-lg border bg-card">
-      <div className="border-b bg-muted/60 px-4 py-3 text-base font-bold tracking-tight text-foreground">
-        {title}
+      <div className="flex items-center justify-between gap-3 border-b bg-muted/60 px-4 py-3">
+        <span className="text-base font-bold tracking-tight text-foreground">
+          {title}
+        </span>
+        <CapFlowZoom title={title} kind={kind} month={month} rows={rows} />
       </div>
       <table className="w-full table-fixed border-collapse text-sm">
         <colgroup>
@@ -213,12 +219,14 @@ export function CapFlowsView({ flows }: { flows: CapFlows }) {
                 rows={bought}
                 kind="bought"
                 rowSlots={rowSlots}
+                month={meta.monthCur}
               />
               <FlowCard
                 title={`Top ${topN} ${t.label} names sold by MFs (${meta.monthCur})`}
                 rows={sold}
                 kind="sold"
                 rowSlots={rowSlots}
+                month={meta.monthCur}
               />
             </div>
           </div>

@@ -403,6 +403,19 @@ function main() {
       .sort((x, y) => (dir === "up" ? y.trade - x.trade : x.trade - y.trade))
       .slice(0, 4)
       .map((s) => ({ fund: cleanScheme(s.scheme), amc: amcOf(s.scheme), netCr: Math.round(s.trade), valueChgCr: Math.round(s.value) }));
+  // Schemes for the cap-flow card "zoom": every scheme that bought/sold the
+  // name this month (up to 12), ranked by trade flow — the AMC-level "Top MF
+  // Buyers/Sellers" expanded to the actual schemes behind each name.
+  const cardSchemes = (fincode: string, dir: "up" | "down") =>
+    (stockSchemes.get(fincode) ?? [])
+      .filter((s) => (dir === "up" ? s.trade > 0 : s.trade < 0))
+      .sort((x, y) => (dir === "up" ? y.trade - x.trade : x.trade - y.trade))
+      .slice(0, 12)
+      .map((s) => ({ fund: cleanScheme(s.scheme), amc: amcOf(s.scheme), netCr: Math.round(s.trade) }));
+  const attachSchemes = (c: ReturnType<typeof card>) => ({
+    bought: c.bought.map((r) => ({ ...r, schemes: cardSchemes(r.fincode, "up") })),
+    sold: c.sold.map((r) => ({ ...r, schemes: cardSchemes(r.fincode, "down") })),
+  });
   const pickStocks = (sector: string, dir: "up" | "down") =>
     (secMovers.get(sector) ?? [])
       .filter((m) => (dir === "up" ? m.netCr > 0 : m.netCr < 0))
@@ -458,9 +471,9 @@ function main() {
         "Net Rs Cr bought/sold = change in aggregate shares held x current implied price. Excludes corporate actions (split/bonus). pctOutstanding = net shares traded ÷ company shares outstanding x 100 (null until the screener feed covers the fincode).",
       topN: TOP_N,
     },
-    large: card("large"),
-    mid: card("mid"),
-    small: card("small"),
+    large: attachSchemes(card("large")),
+    mid: attachSchemes(card("mid")),
+    small: attachSchemes(card("small")),
     sectorShifts,
   };
   fs.writeFileSync(OUT, JSON.stringify(out, null, 2) + "\n");

@@ -19,6 +19,17 @@ export interface CapFlowRow {
    *  null when no shares-outstanding figure is available for the fincode. */
   pctOutstanding: number | null;
   amcs: string[];
+  /** Every scheme that bought/sold this name this month (ranked by net ₹ Cr
+   *  traded, + bought) — powers the per-card "which schemes" zoom. */
+  schemes?: CapFlowScheme[];
+}
+
+/** A single scheme's net trade in a cap-flow name. `netCr` is the pure trade
+ *  flow (Σ share change × price); signed + bought / − sold. */
+export interface CapFlowScheme {
+  fund: string;
+  amc: string;
+  netCr: number;
 }
 
 export interface CapFlowCard {
