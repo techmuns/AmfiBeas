@@ -23,7 +23,6 @@ interface SCell {
   v: string | number | boolean | null;
   s?: Style;
 }
-type Merge = { s: { r: number; c: number }; e: { r: number; c: number } };
 
 const FONT = { name: "Calibri", sz: 10 };
 
@@ -133,11 +132,14 @@ function quartileCell(q: string | null, zebra = false): SCell {
   };
 }
 
+// NOTE: worksheets are built WITHOUT any merged cells — every value lives in its
+// own cell so the download stays fully addressable by Excel formulas. Titles and
+// section headings simply overflow into the empty cells to their right.
 function buildWorksheet(
   XLSX: XlsxModule,
   rows: (SCell | null)[][],
   colWidths: number[],
-  opts: { merges?: Merge[]; rowHeights?: Record<number, number> } = {}
+  opts: { rowHeights?: Record<number, number> } = {}
 ) {
   const aoa = rows.map((r) => r.map((c) => (c ? c.v : null)));
   const ws = XLSX.utils.aoa_to_sheet(aoa);
@@ -158,7 +160,6 @@ function buildWorksheet(
     })
   );
   ws["!cols"] = colWidths.map((wch) => ({ wch }));
-  if (opts.merges) ws["!merges"] = opts.merges;
   const rowProps: { hpt: number }[] = [];
   if (opts.rowHeights) {
     const max = Math.max(...Object.keys(opts.rowHeights).map(Number));
@@ -194,35 +195,25 @@ function holdingsSheet(
   pctHeader: string
 ) {
   const grid: (SCell | null)[][] = [];
-  const merges: Merge[] = [];
   const nCols = 1 + monthLabels.length * 2;
 
-  // Title
   grid.push([titleCell("Equity Holdings", 14), ...Array(nCols - 1).fill(null)]);
-  merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: nCols - 1 } });
+  // Book-per-month caption (single cell, overflows to the right).
+  const bookParts = monthLabels
+    .map((l, i) => (monthBooksCr[i] !== null ? `${l} ₹${Math.round(monthBooksCr[i]!).toLocaleString("en-IN")} Cr` : null))
+    .filter(Boolean);
+  if (bookParts.length) {
+    grid.push([titleCell(`Book: ${bookParts.join("   ·   ")}`, 9, HEX.mutedText, false), ...Array(nCols - 1).fill(null)]);
+  }
   grid.push(Array(nCols).fill(null));
 
-  // Header row 1: Company (merged down 2) + per-month label (merged across 2).
-  const h1: SCell[] = [hCell("Company", "left")];
+  // Single header row — one explicit column per month/metric (no merges).
   const headerTop = grid.length;
-  monthLabels.forEach((label, i) => {
-    const book = monthBooksCr[i];
-    const cap = book !== null ? `  (Book ₹${Math.round(book).toLocaleString("en-IN")} Cr)` : "";
-    h1.push(hCell(`${label}${cap}`, "center"), hCell("", "center"));
+  const head: SCell[] = [hCell("Company", "left")];
+  monthLabels.forEach((label) => {
+    head.push(hCell(`${label} ${pctHeader}`, "right"), hCell(`${label} Shares`, "right"));
   });
-  grid.push(h1);
-  // Header row 2: blank under company + % / Shares.
-  const h2: SCell[] = [hCell("", "left")];
-  monthLabels.forEach(() => {
-    h2.push(hCell(pctHeader, "right"), hCell("Shares", "right"));
-  });
-  grid.push(h2);
-  // Merges: company across the two header rows; each month across its 2 cols.
-  merges.push({ s: { r: headerTop, c: 0 }, e: { r: headerTop + 1, c: 0 } });
-  monthLabels.forEach((_, i) => {
-    const c = 1 + i * 2;
-    merges.push({ s: { r: headerTop, c }, e: { r: headerTop, c: c + 1 } });
-  });
+  grid.push(head);
 
   rows.forEach((row, ri) => {
     const zebra = ri % 2 === 1;
@@ -235,10 +226,9 @@ function holdingsSheet(
     grid.push(line);
   });
 
-  const widths = [34, ...monthLabels.flatMap(() => [12, 14])];
+  const widths = [34, ...monthLabels.flatMap(() => [14, 14])];
   return buildWorksheet(XLSX, grid, widths, {
-    merges,
-    rowHeights: { 0: 20, [headerTop]: 18, [headerTop + 1]: 16 },
+    rowHeights: { 0: 20, [headerTop]: 26 },
   });
 }
 
@@ -249,40 +239,33 @@ function holdingsSheet(
 function schemeHoldingsSheet(XLSX: XlsxModule, data: SchemeExport) {
   const { monthLabels, monthBooksCr, holdings, assetMix } = data;
   const grid: (SCell | null)[][] = [];
-  const merges: Merge[] = [];
   const nCols = 3 + monthLabels.length * 2;
 
   grid.push([titleCell("Full portfolio — direct from AMC", 14), ...Array(nCols - 1).fill(null)]);
-  merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: nCols - 1 } });
 
   if (assetMix.length) {
     const mix = `Asset mix${monthLabels[0] ? ` · ${monthLabels[0]}` : ""}:  ${assetMix
       .map((a) => `${a.class} ${a.pct.toFixed(1)}%`)
       .join("   ·   ")}`;
     grid.push([titleCell(mix, 10, HEX.mutedText, false), ...Array(nCols - 1).fill(null)]);
-    merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: nCols - 1 } });
+  }
+  // AUM-per-month caption (single cell, overflows right).
+  const bookParts = monthLabels
+    .map((l, i) => (monthBooksCr[i] !== null ? `${l} ₹${Math.round(monthBooksCr[i]!).toLocaleString("en-IN")} Cr` : null))
+    .filter(Boolean);
+  if (bookParts.length) {
+    grid.push([titleCell(`AUM: ${bookParts.join("   ·   ")}`, 9, HEX.mutedText, false), ...Array(nCols - 1).fill(null)]);
   }
   grid.push(Array(nCols).fill(null));
 
-  // Header row 1: Instrument / Class / Industry (merged down 2) + per-month label.
+  // Single header row — explicit "<month> % to NAV" / "<month> Value ₹Cr" per
+  // month, plus Instrument / Class / Industry (no merged cells).
   const headerTop = grid.length;
-  const h1: SCell[] = [hCell("Instrument", "left"), hCell("Class", "left"), hCell("Industry / Rating", "left")];
-  monthLabels.forEach((label, i) => {
-    const book = monthBooksCr[i];
-    const cap = book !== null ? `  (AUM ₹${Math.round(book).toLocaleString("en-IN")} Cr)` : "";
-    h1.push(hCell(`${label}${cap}`, "center"), hCell("", "center"));
+  const head: SCell[] = [hCell("Instrument", "left"), hCell("Class", "left"), hCell("Industry / Rating", "left")];
+  monthLabels.forEach((label) => {
+    head.push(hCell(`${label} % to NAV`, "right"), hCell(`${label} Value ₹Cr`, "right"));
   });
-  grid.push(h1);
-  const h2: SCell[] = [hCell("", "left"), hCell("", "left"), hCell("", "left")];
-  monthLabels.forEach(() => {
-    h2.push(hCell("% to NAV", "right"), hCell("Value ₹Cr", "right"));
-  });
-  grid.push(h2);
-  for (let c = 0; c < 3; c++) merges.push({ s: { r: headerTop, c }, e: { r: headerTop + 1, c } });
-  monthLabels.forEach((_, i) => {
-    const c = 3 + i * 2;
-    merges.push({ s: { r: headerTop, c }, e: { r: headerTop, c: c + 1 } });
-  });
+  grid.push(head);
 
   holdings.forEach((row, ri) => {
     const zebra = ri % 2 === 1;
@@ -299,10 +282,9 @@ function schemeHoldingsSheet(XLSX: XlsxModule, data: SchemeExport) {
     grid.push(line);
   });
 
-  const widths = [34, 12, 22, ...monthLabels.flatMap(() => [11, 12])];
+  const widths = [34, 12, 22, ...monthLabels.flatMap(() => [13, 13])];
   return buildWorksheet(XLSX, grid, widths, {
-    merges,
-    rowHeights: { 0: 20, [headerTop]: 18, [headerTop + 1]: 16 },
+    rowHeights: { 0: 20, [headerTop]: 26 },
   });
 }
 
@@ -310,13 +292,11 @@ function schemeHoldingsSheet(XLSX: XlsxModule, data: SchemeExport) {
 
 function schemeSummarySheet(XLSX: XlsxModule, data: SchemeExport) {
   const grid: (SCell | null)[][] = [];
-  const merges: Merge[] = [];
   const W = 6; // working width
 
-  const span = (r: number) => merges.push({ s: { r, c: 0 }, e: { r, c: W - 1 } });
+  // Full-width lines are single cells that overflow to the right (no merges).
   const pushSpan = (cell: SCell) => {
     grid.push([cell, ...Array(W - 1).fill(null)]);
-    span(grid.length - 1);
   };
 
   pushSpan(titleCell(data.fundName, 16));
@@ -406,7 +386,7 @@ function schemeSummarySheet(XLSX: XlsxModule, data: SchemeExport) {
   }
 
   const widths = [20, 12, 14, 9, 9, 11];
-  return buildWorksheet(XLSX, grid, widths, { merges, rowHeights: { 0: 22 } });
+  return buildWorksheet(XLSX, grid, widths, { rowHeights: { 0: 22 } });
 }
 
 function prettyBench(id: string): string {
@@ -415,9 +395,7 @@ function prettyBench(id: string): string {
 
 function schemeSectorSheet(XLSX: XlsxModule, data: SchemeExport) {
   const grid: (SCell | null)[][] = [];
-  const merges: Merge[] = [];
   grid.push([titleCell("Sector Allocation v/s Category Average", 14), null, null]);
-  merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } });
   grid.push([null, null, null]);
   grid.push([hCell("Sector", "left"), hCell("Fund", "right"), hCell("Category avg", "right")]);
   data.sectors.forEach((s, i) => {
@@ -430,56 +408,63 @@ function schemeSectorSheet(XLSX: XlsxModule, data: SchemeExport) {
       numCell(s.categoryAvgPct, FMT.pct1, { zebra }),
     ]);
   });
-  return buildWorksheet(XLSX, grid, [28, 12, 14], { merges, rowHeights: { 0: 20 } });
+  return buildWorksheet(XLSX, grid, [28, 12, 14], { rowHeights: { 0: 20 } });
+}
+
+/** Highlighted name cell for the user's selected fund (no fill merges). */
+function selectedNameCell(name: string): SCell {
+  return {
+    v: `★ ${name}`,
+    s: {
+      font: { ...FONT, bold: true, color: { rgb: HEX.accentInk } },
+      fill: fill(HEX.accent),
+      alignment: { horizontal: "left", vertical: "center", wrapText: true },
+      border: border(),
+    },
+  };
 }
 
 function schemePeerSheet(XLSX: XlsxModule, data: SchemeExport) {
   const grid: (SCell | null)[][] = [];
-  const merges: Merge[] = [];
-  const periods = data.peerPeriods;
-  const periodHeader = (p: string) => (/^(3Y|5Y|10Y)$/.test(p) ? `${p} CAGR` : p);
-  // Fund + one return column per period + Rank / Quartile / vs-median (peerPeriod).
-  const W = 1 + periods.length + 3;
-  grid.push([titleCell(`Peer Ranking — trailing returns`, 14), ...Array(W - 1).fill(null)]);
-  merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: W - 1 } });
+  const cols = data.peerLeaderboard;
+  const periodHeader = (c: { period: string; cagr: boolean }) =>
+    c.cagr ? `${c.period} CAGR` : c.period;
+  // Layout: rank index + (Fund, Return) pair per period. Each period is ranked
+  // best → worst independently, so the fund in a given row differs per column —
+  // exactly the dashboard Peer Ranking table, and the table is period-agnostic.
+  const W = 1 + cols.length * 2;
+
+  grid.push([titleCell("Peer Ranking — trailing returns (all periods)", 14), ...Array(W - 1).fill(null)]);
   grid.push([
-    titleCell(`${data.peerCohortLabel}  ·  ranked by ${data.peerPeriod}`, 9, HEX.mutedText, false),
+    titleCell(`${data.peerCohortLabel}  ·  each period ranked best to worst`, 9, HEX.mutedText, false),
     ...Array(W - 1).fill(null),
   ]);
-  merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: W - 1 } });
   grid.push(Array(W).fill(null));
-  grid.push([
-    hCell("Fund", "left"),
-    ...periods.map((p) => hCell(periodHeader(p), "right")),
-    hCell("Rank", "right"),
-    hCell("Quartile", "center"),
-    hCell("vs median", "right"),
-  ]);
-  data.peers.forEach((p, i) => {
-    const zebra = i % 2 === 1;
-    const nameCell: SCell = p.selected
-      ? {
-          v: `★ ${p.fund}`,
-          s: {
-            font: { ...FONT, bold: true, color: { rgb: HEX.accentInk } },
-            fill: fill(HEX.accent),
-            alignment: { horizontal: "left", vertical: "center", wrapText: true },
-            border: border(),
-          },
-        }
-      : textCell(p.fund, "left", zebra);
-    grid.push([
-      nameCell,
-      ...p.returns.map((r) => numCell(r, FMT.pct1Signed, { tone: r, zebra })),
-      p.rank != null && p.peerCount != null
-        ? textCell(`${p.rank} / ${p.peerCount}`, "right", zebra)
-        : dash(zebra),
-      quartileCell(p.quartile, zebra),
-      numCell(p.vsMedianBps, FMT.bpsSigned, { tone: p.vsMedianBps, zebra }),
-    ]);
+
+  const head: SCell[] = [hCell("#", "right")];
+  cols.forEach((c) => {
+    head.push(hCell(`${periodHeader(c)} — Fund`, "left"), hCell(`${periodHeader(c)} — Return`, "right"));
   });
-  const widths = [34, ...periods.map(() => 10), 11, 10, 13];
-  return buildWorksheet(XLSX, grid, widths, { merges, rowHeights: { 0: 20 } });
+  grid.push(head);
+
+  const maxRows = cols.reduce((m, c) => Math.max(m, c.entries.length), 0);
+  for (let i = 0; i < maxRows; i++) {
+    const zebra = i % 2 === 1;
+    const line: SCell[] = [numCell(i + 1, FMT.rank, { zebra })];
+    cols.forEach((c) => {
+      const e = c.entries[i];
+      if (!e) {
+        line.push(textCell("", "left", zebra), dash(zebra));
+        return;
+      }
+      line.push(e.selected ? selectedNameCell(e.fund) : textCell(e.fund, "left", zebra));
+      line.push(numCell(e.ret, FMT.pct1Signed, { tone: e.ret, zebra, bold: e.selected }));
+    });
+    grid.push(line);
+  }
+
+  const widths = [5, ...cols.flatMap(() => [30, 11])];
+  return buildWorksheet(XLSX, grid, widths, { rowHeights: { 0: 20, 3: 22 } });
 }
 
 export async function downloadSchemeXlsx(data: SchemeExport, filename: string): Promise<void> {
@@ -497,7 +482,7 @@ export async function downloadSchemeXlsx(data: SchemeExport, filename: string): 
     );
   if (data.sectors.length)
     XLSX.utils.book_append_sheet(wb, schemeSectorSheet(XLSX, data), safeName("Sector Allocation"));
-  if (data.peers.length)
+  if (data.peerLeaderboard.length)
     XLSX.utils.book_append_sheet(wb, schemePeerSheet(XLSX, data), safeName("Peer Ranking"));
   const out = XLSX.write(wb, { bookType: "xlsx", type: "array" }) as ArrayBuffer;
   triggerDownload(
@@ -512,11 +497,9 @@ export async function downloadSchemeXlsx(data: SchemeExport, filename: string): 
 
 function fundHouseSummarySheet(XLSX: XlsxModule, data: FundHouseExport) {
   const grid: (SCell | null)[][] = [];
-  const merges: Merge[] = [];
   const W = 3;
   const pushSpan = (cell: SCell) => {
     grid.push([cell, ...Array(W - 1).fill(null)]);
-    merges.push({ s: { r: grid.length - 1, c: 0 }, e: { r: grid.length - 1, c: W - 1 } });
   };
   pushSpan(titleCell(data.amc, 16));
   pushSpan(
@@ -557,15 +540,13 @@ function fundHouseSummarySheet(XLSX: XlsxModule, data: FundHouseExport) {
     });
   }
 
-  return buildWorksheet(XLSX, grid, [26, 12, 4], { merges, rowHeights: { 0: 22 } });
+  return buildWorksheet(XLSX, grid, [26, 12, 4], { rowHeights: { 0: 22 } });
 }
 
 function fundHousePeerSheet(XLSX: XlsxModule, data: FundHouseExport) {
   const grid: (SCell | null)[][] = [];
-  const merges: Merge[] = [];
   const W = 6;
   grid.push([titleCell("Peer fund houses", 14), ...Array(W - 1).fill(null)]);
-  merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: W - 1 } });
   grid.push(Array(W).fill(null));
   grid.push([
     hCell("Fund house", "left"),
@@ -599,7 +580,7 @@ function fundHousePeerSheet(XLSX: XlsxModule, data: FundHouseExport) {
       textCell(p.biggestSellBps != null ? `${p.biggestSellBps} bps · ${sell}` : "—", "right", zebra),
     ]);
   });
-  return buildWorksheet(XLSX, grid, [20, 9, 16, 12, 26, 26], { merges, rowHeights: { 0: 20 } });
+  return buildWorksheet(XLSX, grid, [20, 9, 16, 12, 26, 26], { rowHeights: { 0: 20 } });
 }
 
 export async function downloadFundHouseXlsx(

@@ -23,8 +23,6 @@ const fp2 = (v: number | null) => (v == null || !Number.isFinite(v) ? "—" : `$
 const fp2s = (v: number | null) =>
   v == null || !Number.isFinite(v) ? "—" : `${v > 0 ? "+" : ""}${v.toFixed(2)}%`;
 const fn2 = (v: number | null) => (v == null || !Number.isFinite(v) ? "—" : v.toFixed(2));
-const fbps = (v: number | null) =>
-  v == null || !Number.isFinite(v) ? "—" : `${v > 0 ? "+" : ""}${Math.round(v).toLocaleString("en-IN")} bps`;
 const fint = (v: number | null) =>
   v == null || !Number.isFinite(v) ? "—" : Math.round(v).toLocaleString("en-IN");
 
@@ -39,9 +37,6 @@ function c(content: string, color: RGB, styles: Partial<Styles> = {}): CellDef {
 }
 function signedPctCell(v: number | null, two = false): CellDef {
   return c(two ? fp2s(v) : fp1s(v), tone(v));
-}
-function bpsCell(v: number | null): CellDef {
-  return c(fbps(v), tone(v));
 }
 const QUARTILE_TINT: Record<string, [string, string]> = {
   Q1: [HEX.positive, "FFFFFF"],
@@ -188,38 +183,9 @@ export async function downloadSchemePdf(data: SchemeExport, filename: string): P
     y = afterTable(doc);
   }
 
-  // Peer ranking — trailing returns for every peer across all periods, ranked by
-  // the primary period (Rank / Quartile / vs-median refer to that period).
-  if (data.peers.length) {
-    y = ensure(doc, y, 90);
-    y = heading(doc, `Peer Ranking — trailing returns  ·  ranked by ${data.peerPeriod}`, y, pageW);
-    const periodHeader = (p: string) => (/^(3Y|5Y|10Y)$/.test(p) ? `${p} CAGR` : p);
-    autoTable(doc, {
-      ...base,
-      startY: y,
-      styles: { ...base.styles, fontSize: 7 },
-      headStyles: { ...base.headStyles, fontSize: 7 },
-      head: [["Fund", ...data.peerPeriods.map(periodHeader), "Rank", "Quartile", "vs median"]],
-      body: data.peers.map((p): RowInput => {
-        const name: CellDef = p.selected
-          ? { content: `★ ${p.fund}`, styles: { fontStyle: "bold", fillColor: rgb(HEX.accent), textColor: rgb(HEX.accentInk), halign: "left" } }
-          : { content: p.fund, styles: { halign: "left" } };
-        return [
-          name,
-          ...p.returns.map((r) => signedPctCell(r)),
-          p.rank != null && p.peerCount != null ? `${p.rank} / ${p.peerCount}` : "—",
-          quartileCell(p.quartile),
-          bpsCell(p.vsMedianBps),
-        ];
-      }),
-      columnStyles: { 0: { halign: "left", cellWidth: 118 } },
-    });
-    y = afterTable(doc);
-  }
-
-  // Holdings (own page for breathing room) — full portfolio, direct from AMC.
+  // Holdings (own portrait page for breathing room) — full portfolio from AMC.
   if (data.holdings.length) {
-    doc.addPage();
+    doc.addPage("a4", "portrait");
     y = heading(doc, "Full portfolio — direct from AMC", 44, pageW);
     if (data.assetMix.length) {
       const mix = `Asset mix${data.monthLabels[0] ? ` · ${data.monthLabels[0]}` : ""}:  ${data.assetMix
@@ -230,7 +196,58 @@ export async function downloadSchemePdf(data: SchemeExport, filename: string): P
     schemeHoldingsTable(doc, autoTable, base, y, data.monthLabels, data.monthBooksCr, data.holdings);
   }
 
-  footer(doc, pageW, `${data.fundName} · Source: ${data.holdingsSource} · Generated ${data.generatedAt}`);
+  // Peer ranking — every period ranked best → worst INDEPENDENTLY (the fund in a
+  // given row differs per column), mirroring the dashboard Peer Ranking table.
+  // It's wide, so it gets its own landscape page(s) at the end.
+  if (data.peerLeaderboard.length) {
+    doc.addPage("a4", "landscape");
+    const landW = doc.internal.pageSize.getWidth();
+    const lBase = tableBase(landW);
+    let ly = heading(doc, "Peer Ranking — trailing returns (all periods)", 44, landW);
+    ly = note(doc, `${data.peerCohortLabel}  ·  each period ranked best to worst`, ly, landW);
+    const cols = data.peerLeaderboard;
+    const head: string[] = ["#"];
+    cols.forEach((col) => {
+      const ph = col.cagr ? `${col.period} CAGR` : col.period;
+      head.push(`${ph} — Fund`, `${ph} Ret`);
+    });
+    const maxRows = cols.reduce((m, col) => Math.max(m, col.entries.length), 0);
+    const body: RowInput[] = [];
+    for (let i = 0; i < maxRows; i++) {
+      const line: CellDef[] = [{ content: `${i + 1}`, styles: { halign: "right" } }];
+      cols.forEach((col) => {
+        const e = col.entries[i];
+        if (!e) {
+          line.push({ content: "", styles: { halign: "left" } }, { content: "—", styles: { halign: "right", textColor: rgb(HEX.mutedText) } });
+          return;
+        }
+        line.push(
+          e.selected
+            ? { content: `★ ${e.fund}`, styles: { fontStyle: "bold", fillColor: rgb(HEX.accent), textColor: rgb(HEX.accentInk), halign: "left" } }
+            : { content: e.fund, styles: { halign: "left" } },
+          { ...signedPctCell(e.ret), styles: { ...signedPctCell(e.ret).styles, fontStyle: e.selected ? "bold" : "normal" } },
+        );
+      });
+      body.push(line);
+    }
+    const fundW = Math.max(56, (landW - M * 2 - 20 - cols.length * 26) / cols.length);
+    const colStyles: Record<number, Partial<Styles>> = { 0: { halign: "right", cellWidth: 20 } };
+    cols.forEach((_, i) => {
+      colStyles[1 + i * 2] = { halign: "left", cellWidth: fundW };
+      colStyles[2 + i * 2] = { halign: "right", cellWidth: 26 };
+    });
+    autoTable(doc, {
+      ...lBase,
+      startY: ly,
+      styles: { ...lBase.styles, fontSize: 6.5, cellPadding: 2 },
+      headStyles: { ...lBase.headStyles, fontSize: 6.5, halign: "left" },
+      head: [head],
+      body,
+      columnStyles: colStyles,
+    });
+  }
+
+  footer(doc, `${data.fundName} · Source: ${data.holdingsSource} · Generated ${data.generatedAt}`);
   savePdf(doc, filename);
 }
 
@@ -325,7 +342,7 @@ export async function downloadFundHousePdf(data: FundHouseExport, filename: stri
     holdingsTable(doc, autoTable, base, y, data.monthLabels, data.monthBooksCr, data.holdings, "% of book");
   }
 
-  footer(doc, pageW, `${data.amc} · Source: ${data.holdingsSource} · Generated ${data.generatedAt}`);
+  footer(doc, `${data.amc} · Source: ${data.holdingsSource} · Generated ${data.generatedAt}`);
   savePdf(doc, filename);
 }
 
@@ -487,11 +504,13 @@ function schemeHoldingsTable(
   });
 }
 
-function footer(doc: Doc, pageW: number, line: string) {
+function footer(doc: Doc, line: string) {
   const pages = doc.getNumberOfPages();
-  const pageH = doc.internal.pageSize.getHeight();
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
+    // Per-page dimensions so the footer sits correctly on landscape pages too.
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.setTextColor(...rgb(HEX.mutedText));

@@ -78,6 +78,21 @@ export interface PeerRow {
   selected: boolean;
 }
 
+/** One fund's return in a single period column of the peer leaderboard. */
+export interface PeerLeaderEntry {
+  fund: string;
+  ret: number;
+  selected: boolean;
+}
+/** A single period's leaderboard: every peer with a return for that period,
+ *  ranked best → worst — mirrors the dashboard Peer Ranking table where each
+ *  period is ranked independently (the fund in a given row differs per column). */
+export interface PeerLeaderColumn {
+  period: string;
+  cagr: boolean;
+  entries: PeerLeaderEntry[];
+}
+
 export interface SchemeExport {
   kind: "scheme";
   fundName: string;
@@ -105,6 +120,9 @@ export interface SchemeExport {
   /** All periods shown as return columns in the peer table (empty ones dropped). */
   peerPeriods: string[];
   peers: PeerRow[];
+  /** Per-period leaderboards (each ranked best → worst) — the export mirror of
+   *  the dashboard Peer Ranking table showing every period at once. */
+  peerLeaderboard: PeerLeaderColumn[];
   holdings: HoldingExportRow[];
   holdingsSource: string;
 }
