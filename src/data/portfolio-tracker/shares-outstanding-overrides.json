@@ -1,15 +1,26 @@
 {
   "meta": {
-    "note": "Manual overrides for the shares-outstanding feed (scripts/ingest/shares-outstanding.ts), keyed by RupeeVest fincode. Two forms: (a) \"symbol\" forces a screener.in company slug, e.g. https://www.screener.in/company/HDFCBANK/ -> \"HDFCBANK\" (use when the autocomplete top-hit is wrong/ambiguous); (b) \"sharesOutstanding\" supplies the figure directly for names screener.in can't serve (e.g. foreign stocks), skipping the scrape."
+    "note": "Manual overrides for the shares-outstanding feed (scripts/ingest/shares-outstanding.ts), keyed by the security's ISIN (the join key cap-flows now carries, sourced from the AMC filings). Two forms: (a) \"symbol\" forces a screener.in company slug, e.g. https://www.screener.in/company/HDFCBANK/ -> \"HDFCBANK\" (use when the autocomplete top-hit is wrong/ambiguous); (b) \"sharesOutstanding\" supplies the figure directly for names screener.in can't serve (e.g. foreign stocks), skipping the scrape."
   },
   "companies": {
-    "249927": { "symbol": "GUJGASLTD", "note": "Gujarat Gas Ltd." },
-    "132757": { "symbol": "VOLTAMP", "note": "Voltamp Transformers Ltd." },
-    "132209": { "symbol": "J&KBANK", "note": "The Jammu & Kashmir Bank Ltd." },
-    "132702": { "symbol": "GSPL", "note": "Gujarat State Petronet Ltd." },
-    "279017": {
+    "INE423A01024": { "symbol": "ADANIENT", "note": "Adani Enterprises Ltd. (autocomplete misses the trailing 'Ltd.')" },
+    "INE067A01029": { "symbol": "CGPOWER", "note": "CG Power and Industrial Solutions Ltd." },
+    "INE742F01042": { "symbol": "ADANIPORTS", "note": "Adani Ports and Special Economic Zone Ltd." },
+    "INE053A01029": { "symbol": "INDHOTEL", "note": "The Indian Hotels Company Ltd." },
+    "INE575P01011": { "symbol": "STARHEALTH", "note": "Star Health and Allied Insurance Company Ltd." },
+    "INE330T01021": { "symbol": "HAPPYFORGE", "note": "Happy Forgings Ltd." },
+    "INE128S01021": { "symbol": "FIVESTAR", "note": "Five Star Business Finance Ltd." },
+    "INE126A01031": { "symbol": "EIDPARRY", "note": "EID Parry India Ltd." },
+    "INE501A01019": { "symbol": "DEEPAKFERT", "note": "Deepak Fertilizers and Petrochemicals Corporation Ltd." },
+    "INE02RE01045": { "symbol": "FIRSTCRY", "note": "Brainbees Solutions Ltd. (FirstCry)" },
+    "INE216P01012": { "symbol": "AAVAS", "note": "Aavas Financiers Ltd." },
+    "INE844O01030": { "symbol": "GUJGASLTD", "note": "Gujarat Gas Ltd." },
+    "INE540H01012": { "symbol": "VOLTAMP", "note": "Voltamp Transformers Ltd." },
+    "INE168A01041": { "symbol": "J&KBANK", "note": "The Jammu & Kashmir Bank Ltd." },
+    "INE246F01010": { "symbol": "GSPL", "note": "Gujarat State Petronet Ltd." },
+    "US02079K3059": {
       "sharesOutstanding": 5800000000,
-      "note": "Alphabet Inc Class A (GOOGL) - US stock, not on screener.in. Class A shares outstanding ~5.8B; foreign holding so % of o/s is ~0. Update if materially stale."
+      "note": "Alphabet Inc Class A (GOOGL) - US stock, not on screener.in. Class A shares outstanding ~5.8B; foreign holding so % of o/s is ~0. Only used if an international fund enters the universe."
     }
   }
 }
