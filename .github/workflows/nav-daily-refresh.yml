@@ -72,18 +72,24 @@ jobs:
         run: npm run ingest:nav:ratios
       - name: Recompute rolling-return peer ranks
         run: npm run ingest:nav:rolling-ranks
+      - name: Rebuild NAV-derived Insights blocks
+        # The Insights tab's flows-vs-performance and quartile-persistence blocks
+        # read the category-returns / returns snapshots and the NAV history this
+        # job just refreshed, so recompute them here to keep the tab in step.
+        run: npm run build:insights-plus
       - name: Commit refreshed snapshots
         # Only after every prior step SUCCEEDED (a keep-last-good non-zero exit
         # skips this). Scheduled runs always commit; manual runs honour the
         # toggle. No-op when nothing changed.
         if: ${{ github.event_name == 'schedule' || inputs.commit == 'true' }}
         run: |
-          if [ -z "$(git status --porcelain public/nav-history public/nav-data)" ]; then
+          PATHS="public/nav-history public/nav-data src/data/portfolio-tracker/insights-plus.json"
+          if [ -z "$(git status --porcelain $PATHS)" ]; then
             echo "No NAV changes — nothing to commit."
             exit 0
           fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/nav-history public/nav-data
+          git add $PATHS
           git commit -m "chore(data): daily NAV refresh ($(date -u +%Y-%m-%d))"
           git push
