@@ -360,6 +360,23 @@ export function passesGuards(rv: NormalizedName, am: NormalizedName): { ok: bool
   return { ok: true };
 }
 
+/** True when the fund-side name carries no plan AND no option marker — the case
+ *  for the AMC-direct disclosures, which name schemes plainly ("ICICI Prudential
+ *  Large Cap Fund") with no "-Reg(G)" suffix. */
+function isUnmarked(rv: NormalizedName): boolean {
+  return rv.plan === "unknown" && rv.option === "unknown";
+}
+
+/** For an unmarked fund name, AMFI's Regular/Direct × Growth/IDCW rows all tie.
+ *  Resolve to the canonical REGULAR + GROWTH row: that is exactly what a base
+ *  schemecode means everywhere else in the app (the Direct plan is looked up as
+ *  `<code>-D`), so this is a deterministic disambiguation, not a fuzzy guess.
+ *  Returns null unless it isolates exactly one candidate. */
+function pickRegularGrowth(cands: AmfiIndexed[]): AmfiIndexed | null {
+  const rg = cands.filter((a) => a.norm.plan !== "direct" && a.norm.option !== "idcw");
+  return rg.length === 1 ? rg[0] : null;
+}
+
 export function findBestMatch(rv: NormalizedName, amfi: AmfiIndexed[]): MatchOutcome {
   const exactKey = amfi.filter(
     (a) => a.norm.tokenKey === rv.tokenKey && planOptionCompatible(a.norm, rv)
@@ -375,6 +392,18 @@ export function findBestMatch(rv: NormalizedName, amfi: AmfiIndexed[]): MatchOut
     if (tighter.length === 1) {
       return { kind: "match", amfi: tighter[0], confidence: "exact", jaccard: 1, matchedBy: "exact tokens + strict plan + strict option" };
     }
+    if (isUnmarked(rv)) {
+      const pick = pickRegularGrowth(exactSafe);
+      if (pick) {
+        return {
+          kind: "match",
+          amfi: pick,
+          confidence: "high",
+          jaccard: 1,
+          matchedBy: "exact tokens + canonical Regular/Growth (fund name carries no plan marker)",
+        };
+      }
+    }
     return { kind: "ambiguous", amfi: exactSafe[0], jaccard: 1, reason: `${exactSafe.length} AMFI schemes share this normalized name` };
   }
 
@@ -382,6 +411,7 @@ export function findBestMatch(rv: NormalizedName, amfi: AmfiIndexed[]): MatchOut
   let bestJ = 0;
   let runnerJ = 0;
   let rejected: { am: AmfiIndexed; j: number; reason: string } | null = null;
+  const scored: { am: AmfiIndexed; j: number }[] = [];
 
   for (const a of amfi) {
     if (!planOptionCompatible(a.norm, rv)) continue;
@@ -392,6 +422,7 @@ export function findBestMatch(rv: NormalizedName, amfi: AmfiIndexed[]): MatchOut
       if (!rejected || j > rejected.j) rejected = { am: a, j, reason: g.reason! };
       continue;
     }
+    scored.push({ am: a, j });
     if (j > bestJ) { runnerJ = bestJ; bestJ = j; best = a; }
     else if (j > runnerJ) { runnerJ = j; }
   }
@@ -403,6 +434,21 @@ export function findBestMatch(rv: NormalizedName, amfi: AmfiIndexed[]): MatchOut
   }
 
   if (bestJ - runnerJ < 0.05 && runnerJ >= LOW_MIN) {
+    // An unmarked fund name ties across the same scheme's plan/option rows —
+    // resolve to Regular/Growth rather than discarding the fund entirely.
+    if (isUnmarked(rv)) {
+      const top = scored.filter((s) => bestJ - s.j < 0.05).map((s) => s.am);
+      const pick = pickRegularGrowth(top);
+      if (pick) {
+        return {
+          kind: "match",
+          amfi: pick,
+          confidence: bestJ >= MEDIUM_MIN ? "high" : "medium",
+          jaccard: bestJ,
+          matchedBy: `Jaccard ${bestJ.toFixed(3)} + canonical Regular/Growth (fund name carries no plan marker)`,
+        };
+      }
+    }
     return { kind: "ambiguous", amfi: best, jaccard: bestJ, reason: `near-tie with runner-up (Δ=${(bestJ - runnerJ).toFixed(3)})` };
   }
 

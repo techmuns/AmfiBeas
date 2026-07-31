@@ -369,7 +369,11 @@ function schemeSnapshot(portfolio: FundPortfolio): SchemeSnapshot {
   };
 }
 
-type HoldingsView = "mutuals" | "exclusive";
+type HoldingsView = "mutuals" | "exclusive" | "sectors";
+
+/** Sectors listed inside each snapshot card; the full breakdown for both funds
+ *  is one click away in the comparison toggle's "Sectors" view. */
+const SNAPSHOT_SECTORS = 8;
 
 /** A short, distinct fund label for same-AMC comparisons (e.g. "HDFC Flexi
  *  Cap" / "HDFC Mid-Cap") — the first few meaningful words, minus plan tokens. */
@@ -507,6 +511,28 @@ export function PortfolioHeadToHead({
   const onlyACount = exclusiveRows.filter((r) => r.signal === "Only A holds").length;
   const onlyBCount = exclusiveRows.length - onlyACount;
   const viewRows = view === "mutuals" ? mutualRows : exclusiveRows;
+
+  // Full sector-allocation comparison — the union of both funds' sectors with
+  // each side's weight and the gap between them. Lives in its own view so the
+  // snapshot cards can stay short while the complete breakdown is still one
+  // click away. Sorted by the biggest absolute gap (the actual story), with
+  // Unclassified pushed to the end.
+  const sectorCompareRows = useMemo(() => {
+    const a = new Map((snapA?.sectorMix ?? []).map((s) => [s.label, s.pct]));
+    const b = new Map((snapB?.sectorMix ?? []).map((s) => [s.label, s.pct]));
+    const labels = new Set([...a.keys(), ...b.keys()]);
+    return [...labels]
+      .map((label) => {
+        const av = a.get(label) ?? null;
+        const bv = b.get(label) ?? null;
+        return { label, a: av, b: bv, delta: (av ?? 0) - (bv ?? 0) };
+      })
+      .sort(
+        (x, y) =>
+          (x.label === "Unclassified" ? 1 : 0) - (y.label === "Unclassified" ? 1 : 0) ||
+          Math.abs(y.delta) - Math.abs(x.delta)
+      );
+  }, [snapA, snapB]);
 
   // Sector options across the whole comparison (both views), so the dropdown
   // is stable when toggling Common/Unique. Unclassified sinks to the end.
@@ -689,6 +715,7 @@ export function PortfolioHeadToHead({
                   [
                     { id: "mutuals", label: `Common holdings (${mutualRows.length})` },
                     { id: "exclusive", label: `Unique holdings (${exclusiveRows.length})` },
+                    { id: "sectors", label: `Sectors (${sectorCompareRows.length})` },
                   ] as const
                 ).map((opt) => (
                   <button
@@ -707,22 +734,46 @@ export function PortfolioHeadToHead({
                   </button>
                 ))}
               </div>
-              <select
-                value={activeSector}
-                onChange={(e) => setSectorFilter(e.target.value)}
-                aria-label="Filter comparison by sector"
-                className="rounded-md border bg-card px-2 py-1.5 text-xs text-foreground focus:border-foreground focus:outline-none"
-              >
-                <option value="">All sectors</option>
-                {sectorOptions.map((sec) => (
-                  <option key={sec} value={sec}>
-                    {sec}
-                  </option>
-                ))}
-              </select>
+              {/* The sector filter narrows the HOLDINGS tables; the Sectors view
+                  is itself the full sector breakdown, so it doesn't apply there. */}
+              {view !== "sectors" && (
+                <select
+                  value={activeSector}
+                  onChange={(e) => setSectorFilter(e.target.value)}
+                  aria-label="Filter comparison by sector"
+                  className="rounded-md border bg-card px-2 py-1.5 text-xs text-foreground focus:border-foreground focus:outline-none"
+                >
+                  <option value="">All sectors</option>
+                  {sectorOptions.map((sec) => (
+                    <option key={sec} value={sec}>
+                      {sec}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
-          {view === "mutuals"
+          {view === "sectors"
+            ? sectorCompareRows.length > 0 && (
+                <p className="text-sm leading-snug text-foreground">
+                  Across <strong>{sectorCompareRows.length}</strong> sectors held
+                  by either fund, <strong>{aLabel}</strong>&apos;s biggest tilt vs{" "}
+                  <strong>{bLabel}</strong> is{" "}
+                  <strong>{sectorCompareRows[0].label}</strong> (
+                  <span
+                    className={
+                      sectorCompareRows[0].delta >= 0
+                        ? "text-positive"
+                        : "text-negative"
+                    }
+                  >
+                    {sectorCompareRows[0].delta >= 0 ? "+" : ""}
+                    {sectorCompareRows[0].delta.toFixed(1)} pp
+                  </span>
+                  ).
+                </p>
+              )
+            : view === "mutuals"
             ? (headline.over || headline.under) && (
                 <p className="text-sm leading-snug text-foreground">
                   Among names both hold, <strong>{aLabel}</strong> is
@@ -762,7 +813,61 @@ export function PortfolioHeadToHead({
                 </p>
               )}
 
-          {totalRows === 0 ? (
+          {view === "sectors" ? (
+            sectorCompareRows.length === 0 ? (
+              <div className="rounded-md border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">
+                No sector allocation disclosed for {latestMonth || "the latest month"}.
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-md border bg-card">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-muted/60 text-xs text-muted-foreground">
+                      <th className="px-3 py-2 text-left font-medium">Sector</th>
+                      <th className="px-3 py-2 text-right font-medium">
+                        {cleanSchemeName(aEntry.fund)}
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium">
+                        {bEntry ? cleanSchemeName(bEntry.fund) : "Comparison fund"}
+                      </th>
+                      <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
+                        Δ {aLabel} − {bLabel}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sectorCompareRows.map((s) => (
+                      <tr
+                        key={s.label}
+                        className="border-b last:border-0 hover:bg-accent/40"
+                      >
+                        <td className="px-3 py-2.5 font-medium">{s.label}</td>
+                        <td className="px-3 py-2.5 text-right tabular text-muted-foreground">
+                          {s.a === null ? "—" : `${s.a.toFixed(1)}%`}
+                        </td>
+                        <td className="px-3 py-2.5 text-right tabular text-muted-foreground">
+                          {s.b === null ? "—" : `${s.b.toFixed(1)}%`}
+                        </td>
+                        <td
+                          className={cn(
+                            "px-3 py-2.5 text-right tabular font-medium",
+                            s.delta > 0
+                              ? "text-positive"
+                              : s.delta < 0
+                                ? "text-negative"
+                                : "text-muted-foreground"
+                          )}
+                        >
+                          {s.delta > 0 ? "+" : ""}
+                          {s.delta.toFixed(1)} pp
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          ) : totalRows === 0 ? (
             <div className="rounded-md border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">
               {view === "mutuals"
                 ? `No holdings ${aLabel} and ${bLabel} both hold`
@@ -947,19 +1052,19 @@ function SchemeSnapshotCard({
       <div>
         <div className="mb-1 flex items-baseline justify-between gap-2">
           <span className="text-xs font-medium text-muted-foreground">
-            Sector allocation
+            Top sectors
           </span>
-          {snap.sectorMix.length > 0 && (
+          {snap.sectorMix.length > SNAPSHOT_SECTORS && (
             <span className="text-[10px] text-muted-foreground/70">
-              {snap.sectorMix.length} sectors
+              of {snap.sectorMix.length}
             </span>
           )}
         </div>
         {snap.sectorMix.length > 0 ? (
-          // The full allocation can run to 30+ sectors, so it scrolls inside the
-          // card instead of stretching it past its neighbour.
-          <ul className="max-h-64 space-y-1 overflow-y-auto pr-1 text-sm">
-            {snap.sectorMix.map((s) => (
+          // Deliberately short: the COMPLETE breakdown for both funds lives in
+          // the "Sectors" view of the comparison toggle below.
+          <ul className="space-y-1 text-sm">
+            {snap.sectorMix.slice(0, SNAPSHOT_SECTORS).map((s) => (
               <li key={s.label} className="flex items-baseline justify-between gap-2">
                 <span className="truncate text-muted-foreground">{s.label}</span>
                 <span className="shrink-0 tabular-nums">{s.pct.toFixed(1)}%</span>
