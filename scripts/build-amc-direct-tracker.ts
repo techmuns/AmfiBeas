@@ -55,13 +55,32 @@ function classifyHolding(h: AmcHolding): AssetClass {
   return "Other";
 }
 
-/** Normalize a scheme name to comparable tokens for registry matching. */
+/** Normalize a scheme name to comparable tokens for registry matching.
+ *
+ *  The registry abbreviates fund-house brands ("ICICI Pru", "Aditya Birla SL",
+ *  "Canara Rob") while the AMC filings spell them out in full ("ICICI
+ *  Prudential", "Aditya Birla Sun Life", "Canara Robeco"). Without folding those
+ *  together, whole fund houses failed to resolve to a real schemecode and so
+ *  showed no returns/ranking anywhere in the app — ICICI alone matched 1 of 141
+ *  schemes. These are exact brand equivalences, not fuzzy matching: a wrong
+ *  match would attach another fund's performance, so nothing here guesses. */
 function normName(raw: string): string {
   return raw
     .toLowerCase()
+    // Filing-title noise carried into the scheme name by some AMCs.
+    .replace(/^\s*portfolio statement of\s+/, "")
+    // Groww prefixes each sheet with its internal code ("IB29-Groww Multicap").
+    .replace(/^\s*[a-z]{2}\d{1,3}\s*[-–]\s*/, "")
+    // "Fund of Fund(s)" ↔ the registry's "FOF" (must run before `fund`/`of` are
+    // stripped below, or the whole phrase would vanish).
+    .replace(/\bfund of funds?\b/g, "fof")
     .replace(/\(.*?\)/g, " ")
     .replace(/&/g, " and ")
     .replace(/[^a-z0-9 ]+/g, " ")
+    // Fund-house brand abbreviations used by the registry.
+    .replace(/\bprudential\b/g, "pru")
+    .replace(/\bsun life\b/g, "sl")
+    .replace(/\brobeco\b/g, "rob")
     .replace(/\b(reg|dir|direct|growth|idcw|payout|reinvest(ment)?|plan|option|mutual|fund|scheme|the|of)\b/g, " ")
     .replace(/\b(mid|large|small|flexi|multi|micro) cap\b/g, "$1cap")
     // Workbook-title abbreviations vs the registry's full names (The Wealth
@@ -191,6 +210,11 @@ function main() {
       const nm = schemeName.trim();
       if (!/\s/.test(nm) && !/\b(fund|etf|fof|plan|scheme)\b/i.test(nm)) continue;
       if (/^[A-Z0-9]{2,}$/.test(nm)) continue;
+      // Some filings put the SID's one-line product description in the scheme
+      // column ("An open ended fund for investment for children having a
+      // lock-in…"). Those aren't schemes — they'd become junk dropdown entries
+      // that can never resolve to a schemecode.
+      if (/^an\s+open[\s-]?ended\b/i.test(nm)) continue;
       // Display name: standardize ALL-CAPS titles to Title Case (matching keeps
       // using the raw name via normName, which lowercases anyway).
       const displayName = titleCaseSchemeName(schemeName);
@@ -301,7 +325,27 @@ function main() {
   dirFunds.sort((a, b) => (b.aumTotalCr as number ?? 0) - (a.aumTotalCr as number ?? 0));
   fs.writeFileSync(OUT_DIR_INDEX, JSON.stringify({ meta: { generatedAt: "static", source: "AMC-direct SEBI monthly disclosures", schemes: dirFunds.length }, funds: dirFunds }) + "\n", "utf8");
   fs.writeFileSync(OUT_CROSSWALK, JSON.stringify({ meta: { generatedAt: "static", source: "AMC-direct", trackerSchemes: schemeCount }, entries: crosswalkEntries }) + "\n", "utf8");
+
+  // Prune per-scheme files whose schemecode is no longer in the index. A scheme
+  // changes code whenever its registry match changes (a rename, or an improved
+  // normName), which would otherwise leave the OLD file behind: the index would
+  // ignore it, but every downstream build that SCANS these directories
+  // (cap-flows, sector-gross, insights-plus) would read both copies and
+  // double-count that fund. Must run after the index is written.
+  const liveCodes = new Set(dirFunds.map((f) => String(f.schemecode)));
+  let pruned = 0;
+  for (const dir of [OUT_HOLDINGS, OUT_PANELS]) {
+    if (!fs.existsSync(dir)) continue;
+    for (const file of fs.readdirSync(dir)) {
+      if (!file.endsWith(".json") || file === "index.json") continue;
+      if (liveCodes.has(file.slice(0, -5))) continue;
+      fs.unlinkSync(path.join(dir, file));
+      pruned++;
+    }
+  }
+
   console.log(`AMC-direct tracker: ${schemeCount} schemes across ${amcSet.size} AMCs → amc-direct-index.json + holdings-direct/ + amc-portfolio/ + crosswalk`);
+  if (pruned) console.log(`pruned ${pruned} stale per-scheme file(s) from holdings-direct/ + amc-portfolio/`);
 }
 
 main();

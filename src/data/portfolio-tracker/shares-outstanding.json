@@ -1,11 +1,20 @@
 {
   "meta": {
-    "generatedAt": "2026-07-29T11:19:54.130Z",
+    "generatedAt": "2026-07-31T13:18:43.852Z",
     "source": "screener.in (Market Cap ÷ Current Price)",
     "staleDays": 30,
     "note": "sharesOutstanding = marketCapCr·1e7 / priceInr. Keyed by RupeeVest fincode. Only companies surfacing in cap-flows.json are fetched. Fix bad symbol matches in shares-outstanding-overrides.json (fincode → screener symbol)."
   },
   "companies": {
+    "INE002A01018": {
+      "company": "Reliance Industries Limited",
+      "symbol": "RELIANCE",
+      "sharesOutstanding": 13514785933,
+      "marketCapCr": 1767734,
+      "priceInr": 1308,
+      "asOf": "2026-07-31T13:18:04.621Z",
+      "source": "https://www.screener.in/company/RELIANCE/consolidated/"
+    },
     "INE009A01021": {
       "company": "Infosys Limited",
       "symbol": "INFY",
@@ -69,6 +78,15 @@
       "asOf": "2026-07-29T11:14:04.266Z",
       "source": "https://www.screener.in/company/RECLTD/consolidated/"
     },
+    "INE021A01026": {
+      "company": "Asian Paints Limited",
+      "symbol": "ASIANPAINT",
+      "sharesOutstanding": 959057153,
+      "marketCapCr": 263453,
+      "priceInr": 2747,
+      "asOf": "2026-07-31T13:18:12.311Z",
+      "source": "https://www.screener.in/company/ASIANPAINT/consolidated/"
+    },
     "INE027H01010": {
       "company": "Max Healthcare Institute Limited",
       "symbol": "MAXHEALTH",
@@ -96,6 +114,15 @@
       "asOf": "2026-07-29T11:15:45.606Z",
       "source": "https://www.screener.in/company/CORONA/"
     },
+    "INE031B01049": {
+      "company": "Ajanta Pharma Limited",
+      "symbol": "AJANTPHARM",
+      "sharesOutstanding": 125206349,
+      "marketCapCr": 43384,
+      "priceInr": 3465,
+      "asOf": "2026-07-31T13:18:19.998Z",
+      "source": "https://www.screener.in/company/AJANTPHARM/consolidated/"
+    },
     "INE038A01020": {
       "company": "Hindalco Industries Limited",
       "symbol": "HINDALCO",
@@ -122,6 +149,15 @@
       "priceInr": 47.4,
       "asOf": "2026-07-29T11:13:41.678Z",
       "source": "https://www.screener.in/company/SUZLON/consolidated/"
+    },
+    "INE044A01036": {
+      "company": "Sun Pharmaceutical Industries Limited",
+      "symbol": "SUNPHARMA",
+      "sharesOutstanding": 2400175968,
+      "marketCapCr": 477395,
+      "priceInr": 1989,
+      "asOf": "2026-07-31T13:18:08.486Z",
+      "source": "https://www.screener.in/company/SUNPHARMA/consolidated/"
     },
     "INE045601023": {
       "company": "Paras Defence and Space Technologies Limited",
@@ -429,6 +465,15 @@
       "asOf": "2026-07-29T11:15:41.825Z",
       "source": "https://www.screener.in/company/PINELABS/consolidated/"
     },
+    "INE191B01025": {
+      "company": "Welspun Corp Limited",
+      "symbol": "WELCORP",
+      "sharesOutstanding": 263668281,
+      "marketCapCr": 43558,
+      "priceInr": 1652,
+      "asOf": "2026-07-31T13:18:31.469Z",
+      "source": "https://www.screener.in/company/WELCORP/consolidated/"
+    },
     "INE1TAE01010": {
       "company": "Tata Motors Ltd",
       "symbol": "TMCV",
@@ -609,6 +654,15 @@
       "asOf": "2026-07-29T11:15:30.503Z",
       "source": "https://www.screener.in/company/LGEINDIA/"
     },
+    "INE326A01037": {
+      "company": "Lupin Limited",
+      "symbol": "LUPIN",
+      "sharesOutstanding": 457631470,
+      "marketCapCr": 110518,
+      "priceInr": 2415,
+      "asOf": "2026-07-31T13:18:23.838Z",
+      "source": "https://www.screener.in/company/LUPIN/consolidated/"
+    },
     "INE330T01021": {
       "company": "Happy Forgings Ltd.",
       "symbol": "HAPPYFORGE",
@@ -735,6 +789,15 @@
       "asOf": "2026-07-29T11:11:37.675Z",
       "source": "https://www.screener.in/company/TCS/consolidated/"
     },
+    "INE481Y01014": {
+      "company": "General Insurance Corporation of India",
+      "symbol": "GICRE",
+      "sharesOutstanding": 1751456583,
+      "marketCapCr": 62527,
+      "priceInr": 357,
+      "asOf": "2026-07-31T13:18:16.149Z",
+      "source": "https://www.screener.in/company/GICRE/consolidated/"
+    },
     "INE491A01021": {
       "company": "City Union Bank Limited",
       "symbol": "CUB",
@@ -806,6 +869,15 @@
       "priceInr": 5282,
       "asOf": "2026-07-29T11:11:11.072Z",
       "source": "https://www.screener.in/company/INDIGO/consolidated/"
+    },
+    "INE663F01032": {
+      "company": "Info Edge (India) Limited",
+      "symbol": "NAUKRI",
+      "sharesOutstanding": 649306688,
+      "marketCapCr": 79605,
+      "priceInr": 1226,
+      "asOf": "2026-07-31T13:18:27.674Z",
+      "source": "https://www.screener.in/company/NAUKRI/consolidated/"
     },
     "INE669C01036": {
       "company": "Tech Mahindra Limited",
@@ -960,6 +1032,15 @@
       "asOf": "2026-07-29T11:13:03.726Z",
       "source": "https://www.screener.in/company/JSWINFRA/consolidated/"
     },
+    "INE891D01026": {
+      "company": "Redington Limited",
+      "symbol": "REDINGTON",
+      "sharesOutstanding": 780931677,
+      "marketCapCr": 25146,
+      "priceInr": 322,
+      "asOf": "2026-07-31T13:18:38.544Z",
+      "source": "https://www.screener.in/company/REDINGTON/consolidated/"
+    },
     "INE917I01010": {
       "company": "Bajaj Auto Limited",
       "symbol": "BAJAJ-AUTO",
@@ -1004,6 +1085,15 @@
       "priceInr": 222,
       "asOf": "2026-07-29T11:17:30.011Z",
       "source": "https://www.screener.in/company/V2RETAIL/"
+    },
+    "INE947N01017": {
+      "company": "Aequs Limited",
+      "symbol": "AEQUS",
+      "sharesOutstanding": 670655022,
+      "marketCapCr": 15358,
+      "priceInr": 229,
+      "asOf": "2026-07-31T13:18:42.350Z",
+      "source": "https://www.screener.in/company/AEQUS/consolidated/"
     },
     "INE949L01017": {
       "company": "AU Small Finance Bank Limited",

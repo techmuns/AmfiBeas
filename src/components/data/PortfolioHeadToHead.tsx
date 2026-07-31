@@ -317,7 +317,9 @@ function schemeSnapshot(portfolio: FundPortfolio): SchemeSnapshot {
     }
   }
 
-  // Sector mix of the equity sleeve (latest month, % of NAV), top sectors.
+  // Sector mix of the equity sleeve (latest month, % of NAV) — the COMPLETE
+  // allocation, every disclosed sector, so the two funds can be compared on
+  // their whole sector footprint rather than a truncated top-N.
   const sectorMix: { label: string; pct: number }[] = [];
   if (latestSlug) {
     const bySector = new Map<string, number>();
@@ -331,8 +333,13 @@ function schemeSnapshot(portfolio: FundPortfolio): SchemeSnapshot {
     sectorMix.push(
       ...[...bySector.entries()]
         .map(([label, pct]) => ({ label, pct: round1(pct) }))
-        .sort((a, b) => b.pct - a.pct)
-        .slice(0, 8)
+        // Unclassified last, then biggest weight first.
+        .sort(
+          (a, b) =>
+            (a.label === "Unclassified" ? 1 : 0) - (b.label === "Unclassified" ? 1 : 0) ||
+            b.pct - a.pct
+        )
+        .filter((s) => s.pct > 0)
     );
   }
 
@@ -938,15 +945,24 @@ function SchemeSnapshotCard({
       </div>
 
       <div>
-        <div className="mb-1 text-xs font-medium text-muted-foreground">
-          Sector allocation
+        <div className="mb-1 flex items-baseline justify-between gap-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            Sector allocation
+          </span>
+          {snap.sectorMix.length > 0 && (
+            <span className="text-[10px] text-muted-foreground/70">
+              {snap.sectorMix.length} sectors
+            </span>
+          )}
         </div>
         {snap.sectorMix.length > 0 ? (
-          <ul className="space-y-1 text-sm">
+          // The full allocation can run to 30+ sectors, so it scrolls inside the
+          // card instead of stretching it past its neighbour.
+          <ul className="max-h-64 space-y-1 overflow-y-auto pr-1 text-sm">
             {snap.sectorMix.map((s) => (
               <li key={s.label} className="flex items-baseline justify-between gap-2">
                 <span className="truncate text-muted-foreground">{s.label}</span>
-                <span className="tabular-nums">{s.pct.toFixed(1)}%</span>
+                <span className="shrink-0 tabular-nums">{s.pct.toFixed(1)}%</span>
               </li>
             ))}
           </ul>
