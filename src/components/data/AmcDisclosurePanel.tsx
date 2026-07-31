@@ -269,10 +269,7 @@ export function AmcDisclosurePanel({ schemecode }: { schemecode: string }) {
                   </th>
                   {months.map((m) => (
                     <th key={m.key} colSpan={2} className="border-b border-l px-3 py-2 text-center font-medium">
-                      <div className="normal-case">{m.label}</div>
-                      <div className="text-[10px] font-normal normal-case text-muted-foreground">
-                        {formatPctSafe(m.coveragePct)} of NAV itemised
-                      </div>
+                      <div className="whitespace-nowrap normal-case">{m.label}</div>
                     </th>
                   ))}
                 </tr>
@@ -345,12 +342,17 @@ export function AmcDisclosurePanel({ schemecode }: { schemecode: string }) {
   );
 }
 
-/** Per-month sub-header: "% to NAV" + "Value" (mirrors RupeeVest's two cols). */
+/** Per-month sub-header: "% NAV" + "Value". Both stay on ONE line — the labels
+ *  are short and `whitespace-nowrap`, so the header can't wrap mid-phrase. */
 function FragmentSubHead() {
   return (
     <>
-      <th className="border-b border-l px-3 py-1.5 text-right font-medium">% to NAV</th>
-      <th className="border-b px-3 py-1.5 text-right font-medium">Value</th>
+      <th className="whitespace-nowrap border-b border-l px-3 py-1.5 text-right font-medium">
+        % NAV
+      </th>
+      <th className="whitespace-nowrap border-b px-3 py-1.5 pr-4 text-right font-medium">
+        Value
+      </th>
     </>
   );
 }
@@ -366,12 +368,16 @@ function Cells({
 }) {
   return (
     <>
-      <td className="border-l px-3 py-2 text-right tabular-nums text-muted-foreground">
+      <td className="whitespace-nowrap border-l px-3 py-2 text-right tabular-nums text-muted-foreground">
         <span className="inline-flex items-center justify-end gap-1">
           {formatPctSafe(pct)} <Arrow cur={pct} prev={prevPct} />
         </span>
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">{formatCompactCrSafe(value)}</td>
+      {/* nowrap + a little right padding keeps "₹1,250 Cr" on a single line
+          instead of dropping the "Cr" onto the next one. */}
+      <td className="whitespace-nowrap px-3 py-2 pr-4 text-right tabular-nums">
+        {formatCompactCrSafe(value)}
+      </td>
     </>
   );
 }
