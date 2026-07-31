@@ -666,8 +666,11 @@ function TrendsTabInner({
   // ---- Render --------------------------------------------------------------
 
   if (!returnRow) {
-    // Fund is in the picker but absent from the returns snapshot (rare —
-    // a fund that was excluded from the crosswalk universe).
+    // The scheme's holdings parsed but AMFI publishes no NAV series we could
+    // resolve to it — typically a very recent launch, or a scheme AMFI lists
+    // under a name the crosswalk can't tie to this filing without guessing
+    // (a wrong tie would show another fund's returns). Say which, rather than a
+    // bare "not available".
     return (
       <section className="space-y-3">
         <Header
@@ -675,8 +678,16 @@ function TrendsTabInner({
           subtitleLine={null}
           freshness={null}
         />
-        <div className="rounded-md border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">
-          Performance data is not yet available for this fund.
+        <div className="rounded-md border border-dashed bg-card px-6 py-6 text-center text-sm text-muted-foreground">
+          <p className="text-foreground">
+            No NAV history is published for this scheme yet, so returns and peer
+            ranking can&apos;t be computed.
+          </p>
+          <p className="mx-auto mt-1.5 max-w-xl text-xs leading-snug">
+            Its holdings are shown in full on the Overview tab. This usually means
+            a recent launch — the performance view fills in automatically once
+            AMFI publishes a NAV series for it.
+          </p>
         </div>
       </section>
     );

@@ -120,6 +120,31 @@ async function main(): Promise<void> {
 
   info(`reading directory ${path.relative(process.cwd(), DEFAULT_INDEX_PATH)}`);
   const indexFile = JSON.parse(await fs.readFile(DEFAULT_INDEX_PATH, "utf8")) as IndexFile;
+
+  // The MFs Portfolio Tracker is sourced from the AMC-direct disclosures, whose
+  // universe is WIDER than this legacy RupeeVest directory. Anything missing
+  // here never got NAV history, so those schemes showed "performance data is not
+  // yet available" no matter how well their holdings parsed. Union the AMC-direct
+  // schemes in (by schemecode) so the AMFI crosswalk below covers them too — it
+  // matches on scheme NAME, so this also reaches schemes that never resolved to a
+  // registry code and carry a synthetic `d-<slug>-<n>` one.
+  const directPath = path.resolve(process.cwd(), "src/data/portfolio-tracker/amc-direct-index.json");
+  let addedFromDirect = 0;
+  try {
+    const direct = JSON.parse(await fs.readFile(directPath, "utf8")) as IndexFile;
+    const known = new Set(indexFile.funds.map((f) => String(f.schemecode)));
+    for (const f of direct.funds ?? []) {
+      const code = String(f.schemecode);
+      if (known.has(code)) continue;
+      known.add(code);
+      indexFile.funds.push(f);
+      addedFromDirect++;
+    }
+    info(`amc-direct union: +${addedFromDirect} schemes (total ${indexFile.funds.length})`);
+  } catch {
+    warn("amc-direct index unavailable — proceeding with the legacy directory only");
+  }
+
   const holdingsByCode = new Map<string, boolean>();
   for (const f of indexFile.funds) holdingsByCode.set(String(f.schemecode), Boolean(f.file));
 

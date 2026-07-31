@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "schemecode": "50822",
+    "amfiSchemeCode": 154382,
+    "isin": "INF2F0001560",
+    "fundName": "The Wealth Company Large & Mid Cap Fund",
+    "amfiSchemeName": "The Wealth Company Large & Mid Cap Fund Regular Growth",
+    "amfiAmcName": "The Wealth Company Mutual Fund",
+    "classification": "Equity : Mid Cap",
+    "plan": "regular",
+    "option": "growth",
+    "isEtf": false,
+    "isFof": false,
+    "firstDate": "2026-06-12",
+    "lastDate": "2026-07-30",
+    "points": 7,
+    "stage": 3,
+    "ruleVersion": 1,
+    "parserVersion": 2,
+    "generatedAt": "2026-07-31T13:58:46.158Z",
+    "lastForwardAppendAt": "2026-07-31T13:59:45.638Z",
+    "provenance": {
+      "backfillSource": "AMFI bulk CSV (mf-data/YYYY/MM/DD.csv)",
+      "source": "mf-data",
+      "parser": "scripts/ingest/nav-history-from-mfdata.ts",
+      "parserVersion": 2,
+      "forwardSource": "AMFI NAVAll.txt (nav-daily-refresh.ts)",
+      "firstFile": "mf-data/2016/01/01.csv",
+      "lastFile": "mf-data/2026/06/21.csv"
+    }
+  },
+  "series": [
+    [
+      "2026-06-12",
+      10.0401
+    ],
+    [
+      "2026-06-15",
+      10.0821
+    ],
+    [
+      "2026-06-16",
+      10.0929
+    ],
+    [
+      "2026-06-17",
+      10.1102
+    ],
+    [
+      "2026-06-18",
+      10.1529
+    ],
+    [
+      "2026-06-19",
+      10.1645
+    ],
+    [
+      "2026-07-30",
+      10.2174
+    ]
+  ]
+}

@@ -65,12 +65,10 @@ function classifyHolding(h: AmcHolding): AssetClass {
  *  schemes. These are exact brand equivalences, not fuzzy matching: a wrong
  *  match would attach another fund's performance, so nothing here guesses. */
 function normName(raw: string): string {
-  return raw
+  // Same noise-stripping the display name gets (SID descriptions, rename
+  // parentheticals, sheet-code prefixes, workbook titles).
+  return stripSchemeNoise(raw)
     .toLowerCase()
-    // Filing-title noise carried into the scheme name by some AMCs.
-    .replace(/^\s*portfolio statement of\s+/, "")
-    // Groww prefixes each sheet with its internal code ("IB29-Groww Multicap").
-    .replace(/^\s*[a-z]{2}\d{1,3}\s*[-–]\s*/, "")
     // "Fund of Fund(s)" ↔ the registry's "FOF" (must run before `fund`/`of` are
     // stripped below, or the whole phrase would vanish).
     .replace(/\bfund of funds?\b/g, "fof")
@@ -126,8 +124,30 @@ const KEEP_LOWER = new Set(["of", "the", "and", "for", "in", "an", "a", "to", "w
  *  only an ALL-CAPS name (ADITYA BIRLA SUN LIFE …, NIPPON INDIA ETF …) is
  *  Title-Cased, preserving known acronyms, pure numbers/alphanumerics (50, 22,
  *  A1) and lowercase connectors. */
+/** Strip filing noise that some AMCs carry inside the scheme-name cell: the
+ *  SID's product description ("… (An open ended debt scheme predominantly …)",
+ *  "360 ONE Focused Fund - An Open Ended Equity Scheme investing in …"), rename
+ *  parentheticals ("(Formerly known as …)"), sheet-code prefixes ("IB29-") and
+ *  workbook titles ("Portfolio Statement of …"). This is what the fund picker
+ *  shows AND what the AMFI NAV crosswalk matches on, so cleaning it here both
+ *  tidies the label and lets the scheme resolve to its NAV series. */
+function stripSchemeNoise(raw: string): string {
+  let s = raw.trim().replace(/\s+/g, " ");
+  s = s.replace(/^portfolio statement of\s+/i, "");
+  s = s.replace(/^[A-Za-z]{2}\d{1,3}\s*[-–]\s*/, "");
+  // The SID blurb often contains its own nested parentheses and may be
+  // truncated mid-sentence, so swallow everything from "(An open ended …" to the
+  // end rather than trying to balance brackets.
+  s = s.replace(/\s*\(\s*(?:an?\s+)?open[\s-]?ende?d[\s\S]*$/i, "");
+  s = s.replace(/\s*[-–]\s*(?:an?\s+)?open[\s-]?ende?d[\s\S]*$/i, "");
+  s = s.replace(/\s*\(\s*(?:formerly|erstwhile|previously)\b[\s\S]*$/i, "");
+  s = s.replace(/\s*[(,]\s*(?:formerly|previously)\s+known\s+as\b[\s\S]*$/i, "");
+  s = s.replace(/[\s,;:–-]+$/, "");
+  return s.trim() || raw.trim();
+}
+
 function titleCaseSchemeName(raw: string): string {
-  const nm = raw.trim().replace(/\s+/g, " ");
+  const nm = stripSchemeNoise(raw).replace(/\s+/g, " ");
   const letters = nm.replace(/[^A-Za-z]/g, "");
   if (!letters || letters !== letters.toUpperCase()) return nm; // already has lowercase → keep as authored
   return nm
