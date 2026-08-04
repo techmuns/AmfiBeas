@@ -204,7 +204,7 @@ export async function downloadSchemePdf(data: SchemeExport, filename: string): P
     const landW = doc.internal.pageSize.getWidth();
     const lBase = tableBase(landW);
     let ly = heading(doc, "Peer Ranking — returns & rank by period", 44, landW);
-    ly = note(doc, `${data.peerCohortLabel}  ·  ordered by ${data.peerPeriod} rank`, ly, landW);
+    ly = note(doc, `${data.peerCohortLabel}  ·  listed alphabetically`, ly, landW);
     const periods = data.peerPeriods;
     const ph = (p: string) => (/^(3Y|5Y|10Y)$/.test(p) ? `${p} CAGR` : p);
     // Two header rows: the period spanning its pair, then Returns / Ranking.
