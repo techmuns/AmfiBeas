@@ -171,6 +171,39 @@ function amcDisplay(amc: string): string {
   return amc.replace(/\s+Mutual Fund\s*$/i, "").trim() || amc.trim();
 }
 
+/** Prefix the fund house when the scheme name doesn't already identify it.
+ *  Detection is on the AMC's first distinctive token ("DSP", "Aditya", "ICICI"),
+ *  so an abbreviated-but-present brand ("Aditya Birla SL …" under the AMC
+ *  "Aditya Birla Sun Life") is left alone rather than doubled up. */
+// Words too generic to prove a fund house is named: articles, and the corporate
+// / geographic filler that appears in scheme names on its own merits.
+const AMC_GENERIC_TOKENS = new Set([
+  "the", "a", "an", "of", "and", "asset", "management", "managers", "mutual",
+  "fund", "funds", "capital", "india", "indian", "life", "sun", "one", "bank",
+  "financial", "finserv", "services", "investment", "investments", "trustee",
+  "company", "co", "ltd", "limited", "pvt", "private", "money", "global",
+]);
+
+function withAmcPrefix(name: string, amcLabel: string): string {
+  const label = amcLabel.trim();
+  if (!label) return name;
+  // Test EVERY distinctive token of the fund house, not just the first: the AMC
+  // label and the scheme name often lead with different parts of the same brand
+  // ("Franklin Templeton" filing a "Templeton India Value Fund"), and prefixing
+  // there would double the brand up and break the NAV match.
+  const tokens = label
+    .split(/\s+/)
+    .map((t) => t.replace(/[^A-Za-z0-9]/g, ""))
+    .filter((t) => t.length >= 3 && !AMC_GENERIC_TOKENS.has(t.toLowerCase()));
+  if (tokens.length === 0) return name; // nothing distinctive to test — leave as filed
+  // Word-START boundary only, no trailing one: brands are often run together
+  // ("JioBlackRock Liquid Fund"), and requiring a boundary after the token there
+  // would fail the test and double the brand up. Anchoring only at the start
+  // still avoids matching a token buried mid-word (the "lic" inside "Silicon").
+  if (tokens.some((t) => new RegExp(`\\b${t}`, "i").test(name))) return name;
+  return `${label} ${name}`.replace(/\s+/g, " ").trim();
+}
+
 const fmtIndian = (n: number): string => {
   const s = Math.round(n).toString();
   if (s.length <= 3) return s;
@@ -220,6 +253,7 @@ function main() {
       }
     }
 
+    const amcLabel = amcDisplay(snap.amc);
     let localIdx = 0;
     for (const [schemeName, monthsRaw] of bySchemeName) {
       localIdx++;
@@ -236,10 +270,20 @@ function main() {
       // that can never resolve to a schemecode.
       if (/^an\s+open[\s-]?ended\b/i.test(nm)) continue;
       // Display name: standardize ALL-CAPS titles to Title Case (matching keeps
-      // using the raw name via normName, which lowercases anyway).
-      const displayName = titleCaseSchemeName(schemeName);
-      // Resolve a stable schemecode.
-      const hit = byNorm.get(normName(schemeName));
+      // using the raw name via normName, which lowercases anyway), then ensure
+      // the fund house is named. Some AMCs list schemes without their own brand
+      // ("Nifty 50 ETF", "Income Plus Arbitrage FOF" in DSP's workbook), which
+      // is both ambiguous in the picker — every AMC has a Nifty 50 ETF — and
+      // impossible for the NAV crosswalk to identify. The AMC comes from the
+      // snapshot's authoritative `amc` field, so this states a known fact rather
+      // than guessing.
+      const displayName = withAmcPrefix(titleCaseSchemeName(schemeName), amcLabel);
+      // Resolve a stable schemecode. Try the name AS FILED first, then the
+      // brand-prefixed display name: some registry entries carry the fund house
+      // and some workbooks omit it, so checking both keeps every match either
+      // spelling would have found on its own.
+      const hit =
+        byNorm.get(normName(schemeName)) ?? byNorm.get(normName(displayName));
       let code = hit?.code;
       if (!code || usedCodes.has(code)) code = code && !usedCodes.has(code) ? code : `d-${snap.amcSlug}-${localIdx}`;
       usedCodes.add(code);
@@ -335,7 +379,7 @@ function main() {
       fs.writeFileSync(path.join(OUT_PANELS, `${code}.json`), JSON.stringify(panel) + "\n", "utf8");
 
       // ---- directory entry + crosswalk ref
-      dirFunds.push({ schemecode: code, name: displayName, fundName: displayName, classification, aumTotalCr, rowCount: rows.length, file: `holdings-direct/${code}.json`, amcSlug: snap.amcSlug, amc: amcDisplay(snap.amc) });
+      dirFunds.push({ schemecode: code, name: displayName, fundName: displayName, classification, aumTotalCr, rowCount: rows.length, file: `holdings-direct/${code}.json`, amcSlug: snap.amcSlug, amc: amcLabel });
       crosswalkEntries[code] = { amcSlug: snap.amcSlug, amcSchemeName: displayName, asOfMonth: months[0].monthLabel, holdings: panel.rows.length, confidence: hit ? "exact" : "high" };
       schemeCount++;
       amcSet.add(snap.amcSlug);

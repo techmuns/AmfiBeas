@@ -437,7 +437,7 @@ function schemePeerSheet(XLSX: XlsxModule, data: SchemeExport) {
 
   grid.push([titleCell("Peer Ranking — returns & rank by period", 14), ...Array(W - 1).fill(null)]);
   grid.push([
-    titleCell(`${data.peerCohortLabel}  ·  ordered by ${data.peerPeriod} rank`, 9, HEX.mutedText, false),
+    titleCell(`${data.peerCohortLabel}  ·  listed alphabetically`, 9, HEX.mutedText, false),
     ...Array(W - 1).fill(null),
   ]);
   grid.push(Array(W).fill(null));

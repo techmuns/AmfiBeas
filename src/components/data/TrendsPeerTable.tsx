@@ -45,9 +45,10 @@ interface Props {
   /** All rows in the selected fund's cohort, including the selected fund. */
   rows: PeerRankRow[];
   selectedSchemecode: string;
-  /** Drives the row ORDER (funds are ranked by this period, best first). Every
-   *  period's numbers stay visible whichever one is selected. */
-  period: PeriodKey;
+  /** Accepted for call-site symmetry with the rest of the tab; the table shows
+   *  every period at once and lists funds alphabetically, so it doesn't reorder
+   *  when the period filter changes. */
+  period?: PeriodKey;
   cohortLabel: string;
   /** "nav" ranks by point-to-point return; "rolling" by the average rolling
    *  return over the window (from mf-rolling-ranks). Only the labels differ. */
@@ -76,7 +77,6 @@ function rankOf(row: PeerRankRow, period: PeriodKey): { rank: number; peerCount:
 export function TrendsPeerTable({
   rows,
   selectedSchemecode,
-  period,
   cohortLabel,
   variant = "nav",
 }: Props) {
@@ -104,19 +104,17 @@ export function TrendsPeerTable({
   const periodLabel = (p: PeriodKey) =>
     p === "3Y" || p === "5Y" || p === "10Y" ? `${p} CAGR` : p;
 
-  // Rank funds by the selected period (best first); funds with no number for it
-  // fall to the bottom, then alphabetical.
-  const sorted = rows.slice().sort((a, b) => {
-    const ra = rankOf(a, period);
-    const rb = rankOf(b, period);
-    const ka = ra ? ra.rank : Number.POSITIVE_INFINITY;
-    const kb = rb ? rb.rank : Number.POSITIVE_INFINITY;
-    if (ka !== kb) return ka - kb;
-    const va = returnOf(a, period);
-    const vb = returnOf(b, period);
-    if (va !== vb) return (vb ?? -Infinity) - (va ?? -Infinity);
-    return a.fundName.localeCompare(b.fundName);
-  });
+  // Fund names in alphabetical order. With a Ranking column per period there is
+  // no single "correct" ordering to impose, and a stable A–Z list means a given
+  // fund sits in the same place whichever period you're reading — the rank
+  // numbers already carry the ordering information.
+  const sorted = rows
+    .slice()
+    .sort((a, b) =>
+      cleanSchemeName(a.fundName).localeCompare(cleanSchemeName(b.fundName), "en", {
+        sensitivity: "base",
+      })
+    );
 
   if (periods.length === 0) {
     return (
@@ -141,7 +139,7 @@ export function TrendsPeerTable({
         <p className="text-xs text-muted-foreground">
           Same-cohort comparison · {cohortLabel} · {sorted.length} fund
           {sorted.length === 1 ? "" : "s"} · returns and rank across every period
-          {rolling ? " (rolling-average returns)" : ""} · ordered by {period} rank
+          {rolling ? " (rolling-average returns)" : ""} · listed alphabetically
         </p>
       </div>
       <div className="overflow-x-auto rounded-md border bg-card">

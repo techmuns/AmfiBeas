@@ -335,7 +335,6 @@ export async function gatherSchemeExport(args: {
   const peerPeriods: PeriodKey[] = PERIODS.filter((p) =>
     cohortFunds.some((f) => typeof f.periodRanks[p]?.return === "number")
   );
-  const primaryIdx = peerPeriods.indexOf(peerPeriod);
   const peers: PeerRow[] = cohortFunds
     .map((f) => {
       const e = f.periodRanks[peerPeriod];
@@ -364,14 +363,12 @@ export async function gatherSchemeExport(args: {
         selected: f.schemecode === entry.schemecode || f.schemecode === `${entry.schemecode}-D`,
       };
     })
-    .sort((a, b) => {
-      const ar = a.rank ?? Number.POSITIVE_INFINITY;
-      const br = b.rank ?? Number.POSITIVE_INFINITY;
-      if (ar !== br) return ar - br;
-      const av = primaryIdx >= 0 ? a.returns[primaryIdx] : null;
-      const bv = primaryIdx >= 0 ? b.returns[primaryIdx] : null;
-      return (bv ?? -Infinity) - (av ?? -Infinity);
-    });
+    // Alphabetical, matching the dashboard's peer table: with a Ranking column
+    // per period there's no single ordering to impose, and A–Z keeps a fund in
+    // the same row whichever period you read.
+    .sort((a, b) =>
+      a.fund.localeCompare(b.fund, "en", { sensitivity: "base" })
+    );
 
   const sectors: SectorRow[] = sectorRows.map((s) => ({
     sector: s.label,
