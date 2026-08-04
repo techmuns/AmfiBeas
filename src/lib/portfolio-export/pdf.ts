@@ -196,52 +196,63 @@ export async function downloadSchemePdf(data: SchemeExport, filename: string): P
     schemeHoldingsTable(doc, autoTable, base, y, data.monthLabels, data.monthBooksCr, data.holdings);
   }
 
-  // Peer ranking — every period ranked best → worst INDEPENDENTLY (the fund in a
-  // given row differs per column), mirroring the dashboard Peer Ranking table.
-  // It's wide, so it gets its own landscape page(s) at the end.
-  if (data.peerLeaderboard.length) {
+  // Peer ranking — matrix: one ROW per fund, a Returns + Ranking pair per period,
+  // so a single row reads as that fund's whole track record. Wide, so it gets its
+  // own landscape page(s) at the end.
+  if (data.peers.length && data.peerPeriods.length) {
     doc.addPage("a4", "landscape");
     const landW = doc.internal.pageSize.getWidth();
     const lBase = tableBase(landW);
-    let ly = heading(doc, "Peer Ranking — trailing returns (all periods)", 44, landW);
-    ly = note(doc, `${data.peerCohortLabel}  ·  each period ranked best to worst`, ly, landW);
-    const cols = data.peerLeaderboard;
-    const head: string[] = ["#"];
-    cols.forEach((col) => {
-      const ph = col.cagr ? `${col.period} CAGR` : col.period;
-      head.push(`${ph} — Fund`, `${ph} Ret`);
-    });
-    const maxRows = cols.reduce((m, col) => Math.max(m, col.entries.length), 0);
-    const body: RowInput[] = [];
-    for (let i = 0; i < maxRows; i++) {
-      const line: CellDef[] = [{ content: `${i + 1}`, styles: { halign: "right" } }];
-      cols.forEach((col) => {
-        const e = col.entries[i];
-        if (!e) {
-          line.push({ content: "", styles: { halign: "left" } }, { content: "—", styles: { halign: "right", textColor: rgb(HEX.mutedText) } });
-          return;
-        }
-        line.push(
-          e.selected
-            ? { content: `★ ${e.fund}`, styles: { fontStyle: "bold", fillColor: rgb(HEX.accent), textColor: rgb(HEX.accentInk), halign: "left" } }
-            : { content: e.fund, styles: { halign: "left" } },
-          { ...signedPctCell(e.ret), styles: { ...signedPctCell(e.ret).styles, fontStyle: e.selected ? "bold" : "normal" } },
-        );
+    let ly = heading(doc, "Peer Ranking — returns & rank by period", 44, landW);
+    ly = note(doc, `${data.peerCohortLabel}  ·  ordered by ${data.peerPeriod} rank`, ly, landW);
+    const periods = data.peerPeriods;
+    const ph = (p: string) => (/^(3Y|5Y|10Y)$/.test(p) ? `${p} CAGR` : p);
+    // Two header rows: the period spanning its pair, then Returns / Ranking.
+    const head1: CellDef[] = [
+      { content: "Fund", rowSpan: 2, styles: { halign: "left", valign: "middle" } },
+      ...periods.map(
+        (p): CellDef => ({ content: ph(p), colSpan: 2, styles: { halign: "center" } })
+      ),
+    ];
+    const head2: CellDef[] = periods.flatMap((): CellDef[] => [
+      { content: "Returns", styles: { halign: "right" } },
+      { content: "Ranking", styles: { halign: "right" } },
+    ]);
+    const body: RowInput[] = data.peers.map((p): RowInput => {
+      const name: CellDef = p.selected
+        ? {
+            content: `★ ${p.fund}`,
+            styles: { fontStyle: "bold", fillColor: rgb(HEX.accent), textColor: rgb(HEX.accentInk), halign: "left" },
+          }
+        : { content: p.fund, styles: { halign: "left" } };
+      const cells: CellDef[] = [name];
+      periods.forEach((_, i) => {
+        const ret = p.returns[i] ?? null;
+        const rk = p.ranks?.[i] ?? null;
+        cells.push({
+          ...signedPctCell(ret),
+          styles: { ...signedPctCell(ret).styles, fontStyle: p.selected ? "bold" : "normal" },
+        });
+        cells.push({
+          content: rk ? `${rk.rank}/${rk.peerCount}` : "—",
+          styles: { halign: "right", textColor: rk ? rgb(HEX.ink) : rgb(HEX.mutedText) },
+        });
       });
-      body.push(line);
-    }
-    const fundW = Math.max(56, (landW - M * 2 - 20 - cols.length * 26) / cols.length);
-    const colStyles: Record<number, Partial<Styles>> = { 0: { halign: "right", cellWidth: 20 } };
-    cols.forEach((_, i) => {
-      colStyles[1 + i * 2] = { halign: "left", cellWidth: fundW };
-      colStyles[2 + i * 2] = { halign: "right", cellWidth: 26 };
+      return cells;
+    });
+    const pairW = 34;
+    const fundW = Math.max(90, landW - M * 2 - periods.length * pairW * 2);
+    const colStyles: Record<number, Partial<Styles>> = { 0: { halign: "left", cellWidth: fundW } };
+    periods.forEach((_, i) => {
+      colStyles[1 + i * 2] = { halign: "right", cellWidth: pairW };
+      colStyles[2 + i * 2] = { halign: "right", cellWidth: pairW };
     });
     autoTable(doc, {
       ...lBase,
       startY: ly,
       styles: { ...lBase.styles, fontSize: 6.5, cellPadding: 2 },
-      headStyles: { ...lBase.headStyles, fontSize: 6.5, halign: "left" },
-      head: [head],
+      headStyles: { ...lBase.headStyles, fontSize: 6.5, halign: "right" },
+      head: [head1, head2],
       body,
       columnStyles: colStyles,
     });
