@@ -28,8 +28,6 @@ import type {
   FundHousePeerRow,
   HoldingExportRow,
   HoldingMonthCell,
-  PeerLeaderColumn,
-  PeerLeaderEntry,
   PeerRow,
   PlanProfile,
   RatioRow,
@@ -348,6 +346,14 @@ export async function gatherSchemeExport(args: {
           const pe = f.periodRanks[p];
           return pe && typeof pe.return === "number" ? pe.return : null;
         }),
+        // Rank per period, so the export can show a Returns + Ranking pair for
+        // every horizon (the dashboard peer matrix, in spreadsheet form).
+        ranks: peerPeriods.map((p) => {
+          const pe = f.periodRanks[p];
+          return pe && pe.statsAvailable && typeof pe.rank === "number"
+            ? { rank: pe.rank, peerCount: pe.peerCount }
+            : null;
+        }),
         rank: stats?.rank ?? null,
         peerCount: stats?.peerCount ?? null,
         quartile: stats?.quartile ?? null,
@@ -366,29 +372,6 @@ export async function gatherSchemeExport(args: {
       const bv = primaryIdx >= 0 ? b.returns[primaryIdx] : null;
       return (bv ?? -Infinity) - (av ?? -Infinity);
     });
-
-  // Per-period leaderboards: for each period, every peer with a numeric return,
-  // ranked best → worst independently (mirrors the dashboard Peer Ranking table
-  // showing all periods at once — the fund in a given row differs per column).
-  const peerLeaderboard: PeerLeaderColumn[] = peerPeriods.map((p) => ({
-    period: p,
-    cagr: CAGR_PERIODS.has(p),
-    entries: cohortFunds
-      .map((f): PeerLeaderEntry | null => {
-        const pe = f.periodRanks[p];
-        const ret = pe && typeof pe.return === "number" ? pe.return : null;
-        if (ret === null) return null;
-        return {
-          fund: cleanSchemeName(f.fundName),
-          ret,
-          selected:
-            f.schemecode === entry.schemecode ||
-            f.schemecode === `${entry.schemecode}-D`,
-        };
-      })
-      .filter((e): e is PeerLeaderEntry => e !== null)
-      .sort((a, b) => b.ret - a.ret || a.fund.localeCompare(b.fund)),
-  }));
 
   const sectors: SectorRow[] = sectorRows.map((s) => ({
     sector: s.label,
@@ -439,7 +422,6 @@ export async function gatherSchemeExport(args: {
     peerPeriod,
     peerPeriods,
     peers,
-    peerLeaderboard,
     holdings: holdingsData.rows,
     holdingsSource,
   };

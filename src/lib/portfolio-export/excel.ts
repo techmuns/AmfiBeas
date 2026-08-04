@@ -426,45 +426,63 @@ function selectedNameCell(name: string): SCell {
 
 function schemePeerSheet(XLSX: XlsxModule, data: SchemeExport) {
   const grid: (SCell | null)[][] = [];
-  const cols = data.peerLeaderboard;
-  const periodHeader = (c: { period: string; cagr: boolean }) =>
-    c.cagr ? `${c.period} CAGR` : c.period;
-  // Layout: rank index + (Fund, Return) pair per period. Each period is ranked
-  // best → worst independently, so the fund in a given row differs per column —
-  // exactly the dashboard Peer Ranking table, and the table is period-agnostic.
-  const W = 1 + cols.length * 2;
+  const periods = data.peerPeriods;
+  const periodHeader = (p: string) => (/^(3Y|5Y|10Y)$/.test(p) ? `${p} CAGR` : p);
+  // Matrix layout: one ROW per fund, and a Returns + Ranking pair per period.
+  // Fund rows stay fixed, so a single row reads as that fund's whole track
+  // record across every horizon. The two header rows are UNMERGED (the period
+  // label simply sits in the first cell of its pair) so every cell stays
+  // individually addressable by formulas.
+  const W = 1 + periods.length * 2;
 
-  grid.push([titleCell("Peer Ranking — trailing returns (all periods)", 14), ...Array(W - 1).fill(null)]);
+  grid.push([titleCell("Peer Ranking — returns & rank by period", 14), ...Array(W - 1).fill(null)]);
   grid.push([
-    titleCell(`${data.peerCohortLabel}  ·  each period ranked best to worst`, 9, HEX.mutedText, false),
+    titleCell(`${data.peerCohortLabel}  ·  ordered by ${data.peerPeriod} rank`, 9, HEX.mutedText, false),
     ...Array(W - 1).fill(null),
   ]);
   grid.push(Array(W).fill(null));
 
-  const head: SCell[] = [hCell("#", "right")];
-  cols.forEach((c) => {
-    head.push(hCell(`${periodHeader(c)} — Fund`, "left"), hCell(`${periodHeader(c)} — Return`, "right"));
+  // Header row 1: period label over each pair (label in the Returns cell).
+  const h1: SCell[] = [hCell("", "left")];
+  periods.forEach((p) => {
+    h1.push(hCell(periodHeader(p), "center"), hCell("", "center"));
   });
-  grid.push(head);
+  grid.push(h1);
+  // Header row 2: Returns / Ranking under each period.
+  const h2: SCell[] = [hCell("Fund", "left")];
+  periods.forEach(() => {
+    h2.push(hCell("Returns", "right"), hCell("Ranking", "right"));
+  });
+  grid.push(h2);
 
-  const maxRows = cols.reduce((m, c) => Math.max(m, c.entries.length), 0);
-  for (let i = 0; i < maxRows; i++) {
+  data.peers.forEach((p, i) => {
     const zebra = i % 2 === 1;
-    const line: SCell[] = [numCell(i + 1, FMT.rank, { zebra })];
-    cols.forEach((c) => {
-      const e = c.entries[i];
-      if (!e) {
-        line.push(textCell("", "left", zebra), dash(zebra));
-        return;
-      }
-      line.push(e.selected ? selectedNameCell(e.fund) : textCell(e.fund, "left", zebra));
-      line.push(numCell(e.ret, FMT.pct1Signed, { tone: e.ret, zebra, bold: e.selected }));
+    const line: SCell[] = [p.selected ? selectedNameCell(p.fund) : textCell(p.fund, "left", zebra)];
+    periods.forEach((_, pi) => {
+      const ret = p.returns[pi] ?? null;
+      const rk = p.ranks?.[pi] ?? null;
+      line.push(numCell(ret, FMT.pct1Signed, { tone: ret, zebra, bold: p.selected }));
+      // Rank as a plain number so it sorts/filters; the peer count is in the
+      // header note rather than glued in as "3/25" text.
+      line.push(rk ? numCell(rk.rank, FMT.rank, { zebra }) : dash(zebra));
     });
     grid.push(line);
-  }
+  });
 
-  const widths = [5, ...cols.flatMap(() => [30, 11])];
-  return buildWorksheet(XLSX, grid, widths, { rowHeights: { 0: 20, 3: 22 } });
+  const peerCount = data.peers.find((p) => p.peerCount != null)?.peerCount ?? null;
+  grid.push(Array(W).fill(null));
+  grid.push([
+    titleCell(
+      `Returns are trailing (3Y/5Y/10Y annualised). Ranking is the fund's position within its cohort for that period${peerCount ? ` (out of ${peerCount} funds in the ${data.peerPeriod} cohort)` : ""}; 1 = best. Blank where the snapshot has no rank for that period.`,
+      8,
+      HEX.mutedText,
+      false
+    ),
+    ...Array(W - 1).fill(null),
+  ]);
+
+  const widths = [34, ...periods.flatMap(() => [10, 9])];
+  return buildWorksheet(XLSX, grid, widths, { rowHeights: { 0: 20, 3: 16, 4: 16 } });
 }
 
 export async function downloadSchemeXlsx(data: SchemeExport, filename: string): Promise<void> {
@@ -482,7 +500,7 @@ export async function downloadSchemeXlsx(data: SchemeExport, filename: string): 
     );
   if (data.sectors.length)
     XLSX.utils.book_append_sheet(wb, schemeSectorSheet(XLSX, data), safeName("Sector Allocation"));
-  if (data.peerLeaderboard.length)
+  if (data.peers.length)
     XLSX.utils.book_append_sheet(wb, schemePeerSheet(XLSX, data), safeName("Peer Ranking"));
   const out = XLSX.write(wb, { bookType: "xlsx", type: "array" }) as ArrayBuffer;
   triggerDownload(
