@@ -55,11 +55,14 @@ jobs:
   deploy:
     runs-on: ubuntu-22.04
     timeout-minutes: 20
-    # For a workflow_run trigger, only deploy when the data refresh SUCCEEDED
-    # (a failed/no-op refresh shouldn't publish); all other triggers always run.
-    if: >-
-      ${{ github.event_name != 'workflow_run' ||
-          github.event.workflow_run.conclusion == 'success' }}
+    # No trigger gating on purpose. This job always checks out `main` and
+    # publishes whatever is there, so deploying after a FAILED data refresh is
+    # harmless (nothing was committed — it just republishes the same tip).
+    # Gating on workflow_run.conclusion was actively harmful: GitHub keeps only
+    # ONE pending run per concurrency group, so a skipped-on-arrival deploy could
+    # evict a genuine pending push deploy and silently drop a merge from
+    # production. Publishing an extra time costs a build; losing a deploy costs
+    # correctness.
     steps:
       # Always publish the current tip of main, whatever triggered us — so the
       # live Worker is the latest build regardless of who pushed.
