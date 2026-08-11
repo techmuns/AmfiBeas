@@ -11,6 +11,7 @@
  */
 
 import * as XLSX from "xlsx";
+import { isPlausibleYm, ymOf } from "./months";
 import type { AmcHolding, AmcParseOptions, AmcScheme } from "./types";
 
 type Cell = string | number | boolean | null;
@@ -213,6 +214,14 @@ function findSchemeName(rows: Row[]): string {
   return "";
 }
 
+/** A date can only be this sheet's "as on" date if it could be a disclosure
+ *  month at all. The header band of a debt scheme's sheet routinely holds a
+ *  security's MATURITY date instead ("15-Apr-2053", "08-Nov-1958"), and taking
+ *  one of those as the as-on date is how a fund ended up filed under "Apr-53". */
+function plausibleAsOf(iso: string | null): string | null {
+  return iso && isPlausibleYm(ymOf(iso)) ? iso : null;
+}
+
 function findAsOf(rows: Row[]): string | null {
   // Scan through the header-row band: some AMCs (Shriram) print "Portfolio
   // Statement as on <date>" on the line just above the column header at row ~11.
@@ -220,10 +229,15 @@ function findAsOf(rows: Row[]): string | null {
     for (let j = 0; j < rows[i].length; j++) {
       const cell = rows[i][j];
       if (/as on|statement as|portfolio statement/i.test(s(cell))) {
-        const iso = toIso(cell) || toIso(rows[i][j + 1]) || toIso(rows[i + 1]?.[j]);
+        // An explicitly labelled date wins outright — but still has to be a
+        // plausible month, or we fall through to keep looking.
+        const iso =
+          plausibleAsOf(toIso(cell)) ||
+          plausibleAsOf(toIso(rows[i][j + 1])) ||
+          plausibleAsOf(toIso(rows[i + 1]?.[j]));
         if (iso) return iso;
       }
-      const iso = toIso(cell);
+      const iso = plausibleAsOf(toIso(cell));
       if (iso && s(cell).length < 30) return iso;
     }
   }

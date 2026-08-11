@@ -39,6 +39,17 @@ import { launchBrowser } from "./browser";
 import { browserFetchAmc, monthFloor, monthCeil } from "./browser-fallback";
 import { BROWSER_CONFIG } from "./browser-hints";
 import { waybackFetch, WAYBACK_FALLBACK } from "./wayback";
+import {
+  isoEndOfMonth,
+  isPlausibleYm,
+  labelOfYm,
+  MAX_SNAPSHOT_MONTHS,
+  latestDisclosureYm,
+  mergeMonthBuckets,
+  modalYm,
+  normalizeMonthLabel,
+  ymOf,
+} from "./months";
 import type { Browser } from "playwright";
 import type { AmcParseOptions, AmcPortfolioSnapshot, AmcScheme } from "./types";
 
@@ -76,14 +87,21 @@ const FALLBACK_AMCS = [
   "Union Mutual Fund", "UTI Mutual Fund", "WhiteOak Capital Mutual Fund", "Zerodha Mutual Fund",
 ];
 
-type Status = "ok" | "blocked" | "empty" | "no-link" | "parse-empty";
+type Status = "ok" | "blocked" | "empty" | "no-link" | "parse-empty" | "no-month";
 
 interface IndexEntry {
   slug: string;
   amc: string;
   status: Status;
   source: "advisorkhoj" | "direct" | "browser" | "page-scrape" | "json-api" | "wayback" | null;
+  /** Newest month the snapshot now holds — what the dashboard shows. */
   asOfMonth: string | null;
+  /** Month THIS run downloaded. Equal to asOfMonth on a healthy fetch; older
+   *  when the AMC hasn't published yet (so staleness is visible in the index
+   *  rather than only in the logs). */
+  fetchedMonth?: string | null;
+  /** How many months of history the snapshot holds after the merge. */
+  months?: number;
   schemes: number;
   holdings: number;
   file: string | null;
@@ -94,50 +112,92 @@ function countHoldings(schemes: AmcScheme[]): number {
   return schemes.reduce((s, x) => s + x.holdings.length, 0);
 }
 
-const MON3 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/** Human month label from the modal per-scheme "as on" date, else a fallback.
- *  Future-dated `asOf` cells (seen in a few AMC workbooks, e.g. a "2030" typo)
- *  are ignored so they can't produce a nonsensical label. */
-function monthLabelFromSchemes(schemes: AmcScheme[], fallback: string | null): string {
-  const now = new Date();
-  const ceilYm = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 2).padStart(2, "0")}`; // now+1 month
-  const counts = new Map<string, number>();
-  for (const s of schemes) {
-    if (!s.asOf) continue;
-    const key = s.asOf.slice(0, 7); // YYYY-MM
-    if (key > ceilYm) continue; // ignore implausible future dates
-    counts.set(key, (counts.get(key) ?? 0) + 1);
-  }
-  let modal: string | null = null;
-  let best = -1;
-  for (const [k, c] of counts) if (c > best || (c === best && k > (modal ?? ""))) { best = c; modal = k; }
-  if (modal) {
-    const [y, m] = modal.split("-");
-    return `${MON3[+m - 1]} ${y}`;
-  }
-  return fallback ?? "latest";
+/** The disclosure month a fetch actually delivered, as "YYYY-MM", or null when
+ *  neither the file nor the tier names a plausible one.
+ *
+ *  The file's own as-on dates win: the tier's label is what we ASKED for (a
+ *  templated URL, a listing link), and an AMC that hasn't published yet happily
+ *  serves last month's workbook from this month's URL. Labelling that by the URL
+ *  would silently overwrite a real month with older holdings. */
+function resolveMonth(schemes: AmcScheme[], tierLabel: string | null): string | null {
+  const content = modalYm(schemes);
+  if (content) return content;
+  const fromLabel = ymOf(tierLabel);
+  return isPlausibleYm(fromLabel) ? fromLabel : null;
 }
 
+interface WriteResult {
+  file: string;
+  holdings: number;
+  /** Canonical label of the month this run fetched ("Jul-26"). */
+  fetchedMonth: string;
+  /** Canonical label of the newest month the snapshot holds after merging. */
+  latestMonth: string;
+  months: number;
+}
+
+/**
+ * Write an AMC's snapshot, MERGING the fetched month into the months the file
+ * already holds.
+ *
+ * This used to overwrite the file with just the month it had downloaded, so the
+ * first monthly cron after the history backfill wiped every older month — a
+ * fund's month-over-month panel went from six columns to one. The months a
+ * previous run captured are data we cannot re-fetch once an AMC rotates its
+ * files off its site, so they are preserved here and only ever displaced by a
+ * fresher copy of the SAME month.
+ *
+ * Returns null when the month can't be identified, in which case nothing is
+ * written: a snapshot filed under an unknown month can neither be deduped nor
+ * ordered, and would poison the merge for every later run.
+ */
 async function writeSnapshot(
   slug: string,
   amc: string,
   sourceUrl: string,
-  asOfMonth: string,
+  asOfMonth: string | null,
   schemes: AmcScheme[],
-): Promise<{ file: string; holdings: number }> {
+): Promise<WriteResult | null> {
+  const ym = resolveMonth(schemes, asOfMonth);
+  if (!ym) return null;
+
   const normalized = schemes.map(normalizeSchemePct);
+  const file = `${slug}.json`;
+  const full = path.join(OUT, file);
+
+  let prev: Partial<AmcPortfolioSnapshot> = {};
+  try { prev = JSON.parse(await fs.readFile(full, "utf8")) as AmcPortfolioSnapshot; } catch { /* first fetch */ }
+  const existing = prev.schemes?.length
+    ? [{ asOfMonth: prev.asOfMonth ?? "", asOf: prev.schemes[0]?.asOf ?? null, schemes: prev.schemes }, ...(prev.history ?? [])]
+    : (prev.history ?? []);
+
+  const merged = mergeMonthBuckets(
+    [{ asOfMonth: labelOfYm(ym), asOf: isoEndOfMonth(ym), schemes: normalized }],
+    existing,
+    MAX_SNAPSHOT_MONTHS,
+  );
+  const latest = merged[0];
+  const latestYm = ymOf(latest.asOfMonth)!;
+
   const snapshot: AmcPortfolioSnapshot = {
     amc,
     amcSlug: slug,
-    sourceUrl,
-    asOfMonth,
+    // The URL we just used describes the month we just fetched — keep the older
+    // one on the record when this fetch turned out to be an older month.
+    sourceUrl: latestYm === ym ? sourceUrl : prev.sourceUrl ?? sourceUrl,
+    asOfMonth: latest.asOfMonth,
     fetchedAt: new Date().toISOString(),
-    schemes: normalized,
+    schemes: latest.schemes,
+    history: merged.slice(1),
   };
-  const file = `${slug}.json`;
-  await fs.writeFile(path.join(OUT, file), JSON.stringify(snapshot) + "\n", "utf8");
-  return { file, holdings: countHoldings(normalized) };
+  await fs.writeFile(full, JSON.stringify(snapshot) + "\n", "utf8");
+  return {
+    file,
+    holdings: countHoldings(latest.schemes),
+    fetchedMonth: labelOfYm(ym),
+    latestMonth: latest.asOfMonth,
+    months: merged.length,
+  };
 }
 
 async function processAmc(amc: string, year: number, browser: Browser | null): Promise<IndexEntry> {
@@ -145,6 +205,20 @@ async function processAmc(amc: string, year: number, browser: Browser | null): P
   const base: IndexEntry = {
     slug, amc, status: "no-link", source: null, asOfMonth: null,
     schemes: 0, holdings: 0, file: null, updatedAt: new Date().toISOString(),
+  };
+  // A tier that only has a STALE month must not stop the tiers behind it. Kotak
+  // moved its consolidated workbook to a new path, the old path kept serving May
+  // — and because the direct tier "succeeded", AdvisorKhoj (which had June) was
+  // never tried, so Kotak sat two months behind while reporting ok. So each tier
+  // returns immediately only when it delivered the newest month an AMC could
+  // have published; otherwise we keep its result as a floor and try the next.
+  // Every tier writes through writeSnapshot, which merges, so continuing can
+  // only add months.
+  const targetMonth = labelOfYm(latestDisclosureYm(new Date()));
+  let best: IndexEntry | null = null;
+  const settle = (e: IndexEntry): IndexEntry | null => {
+    if (!best || (ymOf(e.asOfMonth) ?? "") > (ymOf(best.asOfMonth) ?? "")) best = e;
+    return e.fetchedMonth === targetMonth ? e : null;
   };
 
   // 0) Page-scrape (curl) tier — for AMCs whose monthly portfolio sits on a
@@ -155,9 +229,13 @@ async function processAmc(amc: string, year: number, browser: Browser | null): P
   if (scrapeCfg) {
     const res = pageScrapeAmc(scrapeCfg, GENERIC, new Date());
     if (res.schemes.length > 0) {
-      const label = monthLabelFromSchemes(res.schemes, null);
-      const w = await writeSnapshot(slug, amc, res.usedUrl ?? "", label, res.schemes);
-      return { ...base, status: "ok", source: "page-scrape", asOfMonth: label, schemes: res.schemes.length, holdings: w.holdings, file: w.file };
+      const w = await writeSnapshot(slug, amc, res.usedUrl ?? "", null, res.schemes);
+      if (w) {
+        const done = settle({ ...base, status: "ok", source: "page-scrape", asOfMonth: w.latestMonth, fetchedMonth: w.fetchedMonth, months: w.months, schemes: res.schemes.length, holdings: w.holdings, file: w.file });
+        if (done) return done;
+      } else {
+        base.status = "no-month"; // month unidentifiable — try the next tier
+      }
     }
   }
 
@@ -167,9 +245,13 @@ async function processAmc(amc: string, year: number, browser: Browser | null): P
   if (apiCfg) {
     const res = jsonApiAmc(slug, GENERIC, new Date());
     if (res.schemes.length > 0) {
-      const label = monthLabelFromSchemes(res.schemes, null);
-      const w = await writeSnapshot(slug, amc, res.usedUrl ?? "", label, res.schemes);
-      return { ...base, status: "ok", source: "json-api", asOfMonth: label, schemes: res.schemes.length, holdings: w.holdings, file: w.file };
+      const w = await writeSnapshot(slug, amc, res.usedUrl ?? "", null, res.schemes);
+      if (w) {
+        const done = settle({ ...base, status: "ok", source: "json-api", asOfMonth: w.latestMonth, fetchedMonth: w.fetchedMonth, months: w.months, schemes: res.schemes.length, holdings: w.holdings, file: w.file });
+        if (done) return done;
+      } else {
+        base.status = "no-month";
+      }
     }
   }
 
@@ -187,7 +269,12 @@ async function processAmc(amc: string, year: number, browser: Browser | null): P
       if (schemes.length === 0) schemes = parseZip(f.buf, GENERIC);
       if (schemes.length > 0) {
         const w = await writeSnapshot(slug, amc, f.url, f.asOfMonth, schemes);
-        return { ...base, status: "ok", source: "direct", asOfMonth: f.asOfMonth, schemes: schemes.length, holdings: w.holdings, file: w.file };
+        if (w) {
+          const done = settle({ ...base, status: "ok", source: "direct", asOfMonth: w.latestMonth, fetchedMonth: w.fetchedMonth, months: w.months, schemes: schemes.length, holdings: w.holdings, file: w.file });
+          if (done) return done;
+        } else {
+          base.status = "no-month";
+        }
       }
     }
   }
@@ -200,10 +287,16 @@ async function processAmc(amc: string, year: number, browser: Browser | null): P
     const used = res.link ?? links[0];
     if (res.schemes.length > 0) {
       const w = await writeSnapshot(slug, amc, used.url, used.label, res.schemes);
-      return { ...base, status: "ok", source: "advisorkhoj", asOfMonth: used.label, schemes: res.schemes.length, holdings: w.holdings, file: w.file };
+      if (w) {
+        const done = settle({ ...base, status: "ok", source: "advisorkhoj", asOfMonth: w.latestMonth, fetchedMonth: w.fetchedMonth, months: w.months, schemes: res.schemes.length, holdings: w.holdings, file: w.file });
+        if (done) return done;
+      } else {
+        base.status = "no-month";
+      }
+    } else {
+      base.status = res.kind === "blocked" ? "blocked" : res.kind === "empty" ? "empty" : "parse-empty";
     }
-    base.status = res.kind === "blocked" ? "blocked" : res.kind === "empty" ? "empty" : "parse-empty";
-    base.asOfMonth = used.label;
+    base.asOfMonth = normalizeMonthLabel(used.label);
   }
 
   // 3) Browser fallback — clears Akamai bot-walls (HDFC, …) and runs JS-rendered
@@ -219,9 +312,13 @@ async function processAmc(amc: string, year: number, browser: Browser | null): P
       const hints = { floorScore: monthFloor(now), ceilScore: monthCeil(now), ...cfg.hints };
       const r = await browserFetchAmc(browser, urls, GENERIC, hints);
       if (r.schemes.length > 0) {
-        const label = monthLabelFromSchemes(r.schemes, base.asOfMonth);
-        const w = await writeSnapshot(slug, amc, r.usedUrl ?? urls[0], label, r.schemes);
-        return { ...base, status: "ok", source: "browser", asOfMonth: label, schemes: r.schemes.length, holdings: w.holdings, file: w.file };
+        const w = await writeSnapshot(slug, amc, r.usedUrl ?? urls[0], base.asOfMonth, r.schemes);
+        if (w) {
+          const done = settle({ ...base, status: "ok", source: "browser", asOfMonth: w.latestMonth, fetchedMonth: w.fetchedMonth, months: w.months, schemes: r.schemes.length, holdings: w.holdings, file: w.file });
+          if (done) return done;
+        } else {
+          base.status = "no-month";
+        }
       }
     }
   }
@@ -240,11 +337,27 @@ async function processAmc(amc: string, year: number, browser: Browser | null): P
       console.log(`  (wayback ${link.label}: ${buf.length}b → ${schemes.length} scheme(s))`);
       if (schemes.length === 0) continue;
       const w = await writeSnapshot(slug, amc, link.url, link.label, schemes);
-      return { ...base, status: "ok", source: "wayback", asOfMonth: link.label, schemes: schemes.length, holdings: w.holdings, file: w.file };
+      if (!w) { base.status = "no-month"; continue; }
+      const done = settle({ ...base, status: "ok", source: "wayback", asOfMonth: w.latestMonth, fetchedMonth: w.fetchedMonth, months: w.months, schemes: schemes.length, holdings: w.holdings, file: w.file });
+      if (done) return done;
     }
   }
 
-  return base;
+  // Nothing fetched. Report what the snapshot on disk still holds rather than the
+  // month we tried and failed to get, so the index's asOfMonth always describes
+  // the data the dashboard is actually serving.
+  return best ?? { ...base, asOfMonth: (await snapshotLatestMonth(slug)) ?? base.asOfMonth };
+}
+
+/** Newest month already on file for an AMC, canonicalised, or null. */
+async function snapshotLatestMonth(slug: string): Promise<string | null> {
+  try {
+    const snap = JSON.parse(await fs.readFile(path.join(OUT, `${slug}.json`), "utf8")) as AmcPortfolioSnapshot;
+    const ym = ymOf(snap.asOfMonth);
+    return ym ? labelOfYm(ym) : null;
+  } catch {
+    return null;
+  }
 }
 
 async function main() {
@@ -311,10 +424,17 @@ async function main() {
   for (const e of index) bySlug.set(e.slug, e);
   const merged = [...bySlug.values()].sort((a, b) => a.slug.localeCompare(b.slug));
 
+  const targetMonth = labelOfYm(latestDisclosureYm(new Date()));
+  const behind = merged.filter((e) => normalizeMonthLabel(e.asOfMonth ?? "") !== targetMonth);
+
   const meta = {
     generatedAt: new Date().toISOString(),
     source: "AdvisorKhoj monthly portfolio disclosures (per-AMC, latest month)",
+    /** The month every AMC should be at by now — anything below is stale. */
+    targetMonth,
     latestMonthByAmc: Object.fromEntries(merged.filter((e) => e.asOfMonth).map((e) => [e.slug, e.asOfMonth])),
+    monthsByAmc: Object.fromEntries(merged.filter((e) => e.months).map((e) => [e.slug, e.months])),
+    behindTarget: behind.map((e) => ({ slug: e.slug, latest: e.asOfMonth, status: e.status })),
     coverage: {
       total: merged.length,
       ok: merged.filter((e) => e.status === "ok").length,
@@ -328,6 +448,13 @@ async function main() {
   console.log(`\nAdvisorKhoj monthly fetch: ${ok}/${index.length} processed AMCs OK, ${holdings.toLocaleString()} holdings total.`);
   const gaps = meta.coverage.needsFallback;
   if (gaps.length) console.log(`Needs fallback (${gaps.length}): ${gaps.map((g) => `${g.slug}(${g.status})`).join(", ")}`);
+  // Staleness is the failure mode that used to hide: an AMC whose source quietly
+  // stops yielding the newest month still reports "ok" every run.
+  if (behind.length) {
+    console.log(`Behind ${targetMonth} (${behind.length}/${merged.length}): ${behind.map((e) => `${e.slug}(${e.asOfMonth ?? "none"})`).join(", ")}`);
+  } else {
+    console.log(`All ${merged.length} AMCs are at ${targetMonth}.`);
+  }
 }
 
 main().catch((e) => { console.error("run-monthly failed:", e); process.exit(1); });
