@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Search, X, TriangleAlert } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Search, X, TriangleAlert, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Card } from "@/components/ui/Card";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
 
+/** A row from our own holdings directory (public/stocks/index.json). */
 interface IndexRow {
   slug: string;
   name: string;
@@ -23,6 +24,13 @@ interface IndexFile {
     note: string;
   };
   stocks: IndexRow[];
+}
+/** A suggestion from the company-search API. */
+interface ApiRow {
+  symbol: string;
+  name: string;
+  country: string;
+  sector: string;
 }
 interface HolderRow {
   scheme: string;
@@ -45,15 +53,35 @@ interface StockDetail {
 }
 
 const MAX_SUGGESTIONS = 12;
+const MIN_QUERY = 2;
+const DEBOUNCE_MS = 250;
 
 const fmtInt = (v: number | null | undefined) =>
   v == null ? "—" : Math.round(v).toLocaleString("en-IN");
 const fmtCr = (v: number | null | undefined) =>
   v == null ? "—" : Math.round(v).toLocaleString("en-IN");
-const fmtPct = (v: number | null | undefined) =>
-  v == null ? "—" : `${v.toFixed(2)}`;
+const fmtPct = (v: number | null | undefined) => (v == null ? "—" : v.toFixed(2));
 
-/** ▲ / ▼ against the next-older month. Nothing is shown when either side wasn't
+/**
+ * Fold a company name to a comparison key. The search API and the AMC filings
+ * spell the same company differently ("Reliance Industries Ltd" vs "Reliance
+ * Industries Limited", "…Inc. Common Stock"), and the API returns a ticker while
+ * our holdings are keyed by ISIN — so the name is the only bridge between them.
+ */
+function nameKey(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/\(.*?\)/g, " ")
+    .replace(/\b(common|ordinary)\s+(stock|shares?)\b/g, " ")
+    .replace(/\bclass\s+[a-z]\b/g, " ")
+    .replace(/\b(ltd|limited|inc|incorporated|plc|corp|corporation|company|the|adr)\b/g, " ")
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** ▲ / ▼ against the next-older month. Nothing shows when either side wasn't
  *  disclosed — an absent filing is not a change in shareholding. */
 function Delta({ cur, prev }: { cur: number | null; prev: number | null | undefined }) {
   if (cur == null || prev == null || cur === prev) return null;
@@ -70,33 +98,49 @@ function Delta({ cur, prev }: { cur: number | null; prev: number | null | undefi
 
 export function StockSearchView() {
   const [index, setIndex] = useState<IndexFile | null>(null);
-  const [indexError, setIndexError] = useState(false);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
-  const [selected, setSelected] = useState<IndexRow | null>(null);
+  /** Results tagged with the query they came from, so a stale response is simply
+   *  ignored rather than having to be cleared imperatively. */
+  const [apiResult, setApiResult] = useState<{ q: string; rows: ApiRow[] }>({
+    q: "",
+    rows: [],
+  });
+  const [searching, setSearching] = useState(false);
+  /** "api" = live search; "local" = API unavailable, matching our own directory. */
+  const [mode, setMode] = useState<"api" | "local">("api");
+  const [selectedName, setSelectedName] = useState<string | null>(null);
   const [detail, setDetail] = useState<StockDetail | null>(null);
   const [loading, setLoading] = useState(false);
+  const [notHeld, setNotHeld] = useState<ApiRow | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
 
-  // The directory is one small file (~135 KB) fetched once; matching is local so
-  // the dropdown responds on every keystroke without a round trip.
+  // Our holdings directory: needed to resolve a picked company to its holder
+  // list (the API knows tickers, our data knows ISINs) and as the search
+  // fallback when the API is unavailable.
   useEffect(() => {
     let alive = true;
     fetch("/stocks/index.json")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("no index"))))
-      .then((j: IndexFile) => {
-        if (alive) setIndex(j);
-      })
-      .catch(() => {
-        if (alive) setIndexError(true);
-      });
+      .then((j: IndexFile) => alive && setIndex(j))
+      .catch(() => {});
     return () => {
       alive = false;
     };
   }, []);
 
-  // Close the dropdown on an outside click.
+  const byName = useMemo(() => {
+    const m = new Map<string, IndexRow>();
+    for (const s of index?.stocks ?? []) {
+      const k = nameKey(s.name);
+      // Keep the most widely held on a key collision.
+      const prev = m.get(k);
+      if (!prev || s.funds > prev.funds) m.set(k, s);
+    }
+    return m;
+  }, [index]);
+
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
       if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
@@ -105,9 +149,46 @@ export function StockSearchView() {
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
-  const suggestions = useMemo(() => {
+  // Debounced live search. A new keystroke aborts the in-flight request so late
+  // responses can't overwrite the dropdown for a query the user has moved past.
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < MIN_QUERY) return;
+    const ctrl = new AbortController();
+    const t = setTimeout(() => {
+      setSearching(true);
+      fetch(`/api/stock-search?q=${encodeURIComponent(q)}`, { signal: ctrl.signal })
+        .then(async (r) => {
+          const body = (await r.json().catch(() => ({}))) as { results?: ApiRow[] };
+          if (!r.ok) {
+            // Either the token isn't set yet (503) or the upstream failed (502).
+            // Either way, fall back to matching our own directory so the tab
+            // stays usable instead of dead.
+            setMode("local");
+            setApiResult({ q, rows: [] });
+            return;
+          }
+          setMode("api");
+          setApiResult({ q, rows: body.results ?? [] });
+        })
+        .catch((e) => {
+          if ((e as Error).name !== "AbortError") {
+            setMode("local");
+            setApiResult({ q, rows: [] });
+          }
+        })
+        .finally(() => setSearching(false));
+    }, DEBOUNCE_MS);
+    return () => {
+      clearTimeout(t);
+      ctrl.abort();
+    };
+  }, [query]);
+
+  /** Local-directory matches, used when the API can't serve the search. */
+  const localRows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!index || q.length < 2) return [];
+    if (!index || q.length < MIN_QUERY) return [];
     const starts: IndexRow[] = [];
     const contains: IndexRow[] = [];
     for (const s of index.stocks) {
@@ -116,34 +197,68 @@ export function StockSearchView() {
       else if (n.includes(q)) contains.push(s);
       if (starts.length >= MAX_SUGGESTIONS) break;
     }
-    // Name-initial matches first, then substring matches by holder count —
-    // typing "bank" should surface the widely-held names, not an obscure one.
-    return [...starts, ...contains.sort((a, b) => b.funds - a.funds)].slice(
-      0,
-      MAX_SUGGESTIONS
-    );
+    return [...starts, ...contains.sort((a, b) => b.funds - a.funds)].slice(0, MAX_SUGGESTIONS);
   }, [index, query]);
 
-  function pick(row: IndexRow) {
-    setSelected(row);
-    setQuery(row.name);
-    setOpen(false);
+  // One suggestion list for the dropdown, whichever source produced it. API rows
+  // are used only while they match the current query, so a response that lands
+  // after the user has typed on is discarded.
+  const apiRows = useMemo(
+    () => (apiResult.q === query.trim() ? apiResult.rows : []),
+    [apiResult, query]
+  );
+  const suggestions = useMemo(() => {
+    if (mode === "api") {
+      return apiRows.slice(0, MAX_SUGGESTIONS).map((r) => ({
+        key: r.symbol,
+        name: r.name,
+        meta: [r.symbol, r.country, r.sector].filter(Boolean).join(" · "),
+        api: r as ApiRow | null,
+        local: byName.get(nameKey(r.name)) ?? null,
+      }));
+    }
+    return localRows.map((r) => ({
+      key: r.slug,
+      name: r.name,
+      meta: `${r.sector} · ${r.funds} fund${r.funds === 1 ? "" : "s"}`,
+      api: null,
+      local: r,
+    }));
+  }, [mode, apiRows, localRows, byName]);
+
+  const loadDetail = useCallback((row: IndexRow) => {
     setLoading(true);
     setDetail(null);
+    setNotHeld(null);
     fetch(`/stocks/${row.slug}.json`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("missing"))))
       .then((j: StockDetail) => setDetail(j))
       .catch(() => setDetail(null))
       .finally(() => setLoading(false));
-  }
+  }, []);
+
+  const pick = useCallback(
+    (s: { name: string; api: ApiRow | null; local: IndexRow | null }) => {
+      setQuery(s.name);
+      setSelectedName(s.name);
+      setOpen(false);
+      if (s.local) {
+        loadDetail(s.local);
+      } else {
+        // Searchable company, but no tracked scheme holds it.
+        setDetail(null);
+        setLoading(false);
+        setNotHeld(s.api ?? { symbol: "", name: s.name, country: "", sector: "" });
+      }
+    },
+    [loadDetail]
+  );
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (!open || suggestions.length === 0) {
-      if (e.key === "ArrowDown" && suggestions.length > 0) setOpen(true);
-      return;
-    }
+    if (suggestions.length === 0) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
+      setOpen(true);
       setHighlight((h) => (h + 1) % suggestions.length);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
@@ -201,11 +316,7 @@ export function StockSearchView() {
             aria-controls="stock-suggestions"
             aria-autocomplete="list"
             autoComplete="off"
-            placeholder={
-              index
-                ? `Search ${index.stocks.length.toLocaleString("en-IN")} companies held by mutual funds…`
-                : "Loading companies…"
-            }
+            placeholder="Search a company by name or ticker…"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -216,13 +327,20 @@ export function StockSearchView() {
             onKeyDown={onKeyDown}
             className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
-          {query && (
+          {searching && (
+            <Loader2
+              className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground"
+              aria-label="Searching"
+            />
+          )}
+          {query && !searching && (
             <button
               type="button"
               onClick={() => {
                 setQuery("");
-                setSelected(null);
+                setSelectedName(null);
                 setDetail(null);
+                setNotHeld(null);
                 setOpen(false);
               }}
               aria-label="Clear search"
@@ -240,7 +358,7 @@ export function StockSearchView() {
             className="absolute z-20 mt-1 max-h-80 w-full overflow-y-auto rounded-md border bg-card py-1 shadow-lg"
           >
             {suggestions.map((s, i) => (
-              <li key={s.slug} role="option" aria-selected={i === highlight}>
+              <li key={s.key} role="option" aria-selected={i === highlight}>
                 <button
                   type="button"
                   onMouseEnter={() => setHighlight(i)}
@@ -250,29 +368,30 @@ export function StockSearchView() {
                     i === highlight ? "bg-accent text-foreground" : "hover:bg-accent/50"
                   )}
                 >
-                  <span className="truncate">{s.name}</span>
-                  <span className="shrink-0 text-[11px] text-muted-foreground">
-                    {s.sector} · {s.funds} fund{s.funds === 1 ? "" : "s"}
+                  <span className="truncate">
+                    {s.name}
+                    {/* Flag up front whether we hold MF data for this company. */}
+                    {s.local && (
+                      <span className="ml-1.5 text-[10px] text-positive">
+                        {s.local.funds} fund{s.local.funds === 1 ? "" : "s"}
+                      </span>
+                    )}
                   </span>
+                  <span className="shrink-0 text-[11px] text-muted-foreground">{s.meta}</span>
                 </button>
               </li>
             ))}
           </ul>
         )}
-        {indexError && (
-          <p className="mt-2 text-xs text-negative">
-            Couldn&apos;t load the company directory. Reload the page to try again.
-          </p>
-        )}
-        {open && index && query.trim().length >= 2 && suggestions.length === 0 && (
+        {open && query.trim().length >= MIN_QUERY && !searching && suggestions.length === 0 && (
           <p className="mt-2 text-xs text-muted-foreground">
-            No company matching “{query.trim()}” is held by any tracked scheme.
+            No company matching “{query.trim()}”.
           </p>
         )}
       </div>
 
       {/* ---- Empty state -------------------------------------------------- */}
-      {!selected && !loading && (
+      {!selectedName && !loading && (
         <div className="rounded-lg border border-dashed bg-card px-6 py-10 text-center">
           <p className="text-sm text-foreground">
             Search a company to see which mutual funds own it.
@@ -292,7 +411,7 @@ export function StockSearchView() {
                   <button
                     key={s.slug}
                     type="button"
-                    onClick={() => pick(s)}
+                    onClick={() => pick({ name: s.name, api: null, local: s })}
                     className="rounded-full border px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   >
                     {s.name}
@@ -305,14 +424,30 @@ export function StockSearchView() {
 
       {loading && (
         <div className="rounded-lg border bg-card px-6 py-10 text-center text-sm text-muted-foreground">
-          Loading {selected?.name}…
+          Loading {selectedName}…
         </div>
       )}
 
-      {selected && !loading && !detail && (
+      {/* Company exists in search but no tracked scheme holds it. */}
+      {notHeld && !loading && (
+        <div className="rounded-lg border border-dashed bg-card px-6 py-8 text-center">
+          <TriangleAlert className="mx-auto mb-2 h-4 w-4 text-muted-foreground" aria-hidden />
+          <p className="text-sm text-foreground">
+            No tracked mutual-fund scheme holds {notHeld.name}
+            {notHeld.symbol ? ` (${notHeld.symbol})` : ""}.
+          </p>
+          <p className="mx-auto mt-1.5 max-w-xl text-xs leading-snug text-muted-foreground">
+            {notHeld.country && notHeld.country !== "India"
+              ? `This is a ${notHeld.country} listing — Indian mutual funds rarely hold it, and only their Indian equity holdings are disclosed here.`
+              : "It may be held below the disclosure threshold, or held only by schemes outside the tracked universe."}
+          </p>
+        </div>
+      )}
+
+      {selectedName && !loading && !detail && !notHeld && (
         <div className="rounded-lg border border-dashed bg-card px-6 py-8 text-center text-sm text-muted-foreground">
           <TriangleAlert className="mx-auto mb-2 h-4 w-4" aria-hidden />
-          Couldn&apos;t load holdings for {selected.name}.
+          Couldn&apos;t load holdings for {selectedName}.
         </div>
       )}
 
