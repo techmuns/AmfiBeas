@@ -59,11 +59,20 @@ export function candidateUrls(slug: string, year: number, month1: number): strin
     ];
   }
   if (slug === "kotak") {
-    // Consolidated (complete) monthly portfolio on Kotak's S3, e.g.
-    // .../Consolidated-Portfolio-as-on-May-31,-2026/ConsolidatedSEBIPortfolioMay2026.xlsx
+    // Consolidated (complete) monthly portfolio on Kotak's S3. Kotak has moved
+    // this file twice, and the old paths keep serving their old months, so a
+    // single template silently pins us to whatever month it was written for (it
+    // was stuck on May while July was published). Probe every known shape:
+    //   FormsDownloads + "Consolidated-SEBI-Portfolio-as-on-…"  (current, ≥ Jun-26)
+    //   FormsDownloads + "Consolidated-Portfolio-as-on-…"       (through May-26)
+    //   FAD            + "Consolidated-Portfolio-as-on-…"       (older mirror)
     const mon = MON_FULL_TC[month1 - 1];
+    const file = `ConsolidatedSEBIPortfolio${mon}${year}.xlsx`;
+    const asOn = `as-on-${mon}-${day},-${year}`;
     return [
-      `https://vatseelabs-s3.kotakmf.com/FAD/Portfolios/Consolidated-Portfolio-as-on-${mon}-${day},-${year}/ConsolidatedSEBIPortfolio${mon}${year}.xlsx`,
+      `https://vatseelabs-s3.kotakmf.com/FormsDownloads/Portfolios/Consolidated-SEBI-Portfolio-${asOn}/${file}`,
+      `https://vatseelabs-s3.kotakmf.com/FormsDownloads/Portfolios/Consolidated-Portfolio-${asOn}/${file}`,
+      `https://vatseelabs-s3.kotakmf.com/FAD/Portfolios/Consolidated-Portfolio-${asOn}/${file}`,
     ];
   }
   return [];

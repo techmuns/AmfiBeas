@@ -21,6 +21,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { isoEndOfMonth, isPlausibleYm, labelOfYm, ymOf } from "./ingest/amc-factsheets/months";
 
 const ROOT = process.cwd();
 const HOLDINGS_DIR = path.join(ROOT, "public/amc-holdings");
@@ -34,6 +35,29 @@ const OUT_PANELS = path.join(ROOT, "public/amc-portfolio");
 type AssetClass = "Equity" | "Debt" | "Cash & equiv" | "Gold" | "Silver" | "Other";
 const ASSET_ORDER: AssetClass[] = ["Equity", "Debt", "Cash & equiv", "Gold", "Silver", "Other"];
 const MON3 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** A month label ("Jul-26", "July 2026") → "2026-07", but only if it could be a
+ *  real disclosure month — so a snapshot mislabelled off a bond maturity date
+ *  ("Jul 1973") is treated as having no month at all rather than as history. */
+function ymOfLabel(label: string | null | undefined): string | null {
+  const ym = ymOf(label);
+  return isPlausibleYm(ym) ? ym : null;
+}
+/** The month most of a bucket's schemes declare, ignoring implausible dates. */
+function modalMonthKey(schemes: { asOf: string | null }[]): string | null {
+  const counts = new Map<string, number>();
+  for (const s of schemes) {
+    const ym = ymOf(s.asOf);
+    if (!isPlausibleYm(ym)) continue;
+    counts.set(ym, (counts.get(ym) ?? 0) + 1);
+  }
+  let best: string | null = null;
+  let bestCount = -1;
+  for (const [ym, c] of counts) if (c > bestCount || (c === bestCount && ym > (best ?? ""))) { bestCount = c; best = ym; }
+  return best;
+}
+const labelOfKey = (ym: string): string => (/^\d{4}-\d{2}$/.test(ym) ? labelOfYm(ym) : ym);
+const isoEndOf = (ym: string): string | null => (/^\d{4}-\d{2}$/.test(ym) ? isoEndOfMonth(ym) : null);
 
 interface AmcHolding { isin: string | null; name: string; industry: string | null; quantity: number | null; marketValueCr: number | null; pctToNav: number | null }
 interface AmcScheme { schemeName: string; schemeCode?: string | null; asOf: string | null; holdings: AmcHolding[] }
@@ -243,13 +267,37 @@ function main() {
     ];
 
     // Group each scheme's per-month snapshots by scheme name.
+    //
+    // The BUCKET decides the month, not the individual sheet. A scheme sheet's
+    // own "as on" cell is the right source for the day within the month, but in
+    // debt schemes the parser can pick up a security's maturity date instead —
+    // and a scheme filed under "Apr-53" isn't just mislabelled, it becomes the
+    // newest month in the universe and drags the Overview's month anchor with
+    // it. So a sheet's date is honoured only when it lands in a month this AMC
+    // actually disclosed; otherwise the bucket's month stands.
+    const bucketKeys = new Set(monthBuckets.map((mb) => ymOfLabel(mb.asOfMonth) ?? "").filter(Boolean));
     const bySchemeName = new Map<string, { asOf: string | null; monthKey: string; monthLabel: string; holdings: AmcHolding[] }[]>();
     for (const mb of monthBuckets) {
-      const asOf = mb.schemes[0]?.asOf ?? mb.asOf;
-      const key = (asOf ?? "").slice(0, 7) || mb.asOfMonth;
+      const bucketKey = ymOfLabel(mb.asOfMonth) ?? modalMonthKey(mb.schemes) ?? ymOfLabel(mb.asOf) ?? "";
+      if (!bucketKey) {
+        // Neither the snapshot's label nor any of its sheets names a plausible
+        // month, so there is nothing to file these holdings under. Loud, because
+        // it means that AMC silently drops out of the tracker until re-fetched.
+        console.log(`  ! ${snap.amcSlug}: bucket "${mb.asOfMonth}" has no identifiable month — ${mb.schemes.length} scheme(s) skipped`);
+        continue;
+      }
       for (const sc of mb.schemes) {
+        const own = (sc.asOf ?? "").slice(0, 7);
+        const trusted = own && (own === bucketKey || bucketKeys.has(own));
+        const monthKey = trusted ? own : bucketKey;
+        if (!monthKey) continue; // no identifiable month → nothing to align on
         if (!bySchemeName.has(sc.schemeName)) bySchemeName.set(sc.schemeName, []);
-        bySchemeName.get(sc.schemeName)!.push({ asOf: sc.asOf ?? asOf, monthKey: (sc.asOf ?? asOf ?? "").slice(0, 7) || key, monthLabel: mb.asOfMonth, holdings: sc.holdings });
+        bySchemeName.get(sc.schemeName)!.push({
+          asOf: trusted ? sc.asOf : isoEndOf(monthKey),
+          monthKey,
+          monthLabel: labelOfKey(monthKey),
+          holdings: sc.holdings,
+        });
       }
     }
 

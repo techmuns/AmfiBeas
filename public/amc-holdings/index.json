@@ -1,33 +1,34 @@
 {
   "meta": {
-    "generatedAt": "2026-08-11T08:32:33.611Z",
+    "generatedAt": "2026-08-11T19:23:18.047Z",
     "source": "AdvisorKhoj monthly portfolio disclosures (per-AMC, latest month)",
+    "targetMonth": "Jul-26",
     "latestMonthByAmc": {
-      "360-one": "Jun 2026",
+      "360-one": "Jun-26",
       "abakkus": "Jul 2026",
       "absl": "Jul 2026",
       "angel-one": "June 2026",
       "axis": "Jul 2026",
-      "bajaj-finserv": "June 2026",
+      "bajaj-finserv": "Jul-26",
       "bandhan": "Jul 2026",
-      "bank-of-india": "June 2026",
+      "bank-of-india": "Jun-26",
       "baroda-bnp-paribas": "Jul 2026",
       "canara-robeco": "Jul 2026",
-      "capitalmind": "Mar 2026",
-      "choice": "May 2026",
+      "capitalmind": "Mar-26",
+      "choice": "May-26",
       "dsp": "Jul 2026",
-      "edelweiss": "June 2026",
+      "edelweiss": "Jun-26",
       "franklin-templeton": "Jul 2026",
       "groww": "Jul 2026",
-      "hdfc": "Jul 2026",
+      "hdfc": "Jul-26",
       "helios": "Jul 2026",
-      "hsbc": "June 2026",
+      "hsbc": "Jun-26",
       "icici-pru": "Jul-26",
       "invesco": "Jul 2026",
       "iti": "Jul 2026",
       "jio-blackrock": "June 2026",
-      "jm-financial": "Sep 2026",
-      "kotak": "May-26",
+      "jm-financial": "Jul-26",
+      "kotak": "Jul-26",
       "lic": "Jul 2026",
       "mahindra": "Jul 2026",
       "mirae": "Jul 2026",
@@ -38,7 +39,7 @@
       "old-bridge": "Jul 2026",
       "pgim-india": "Jul 2026",
       "ppfas": "Jul 2026",
-      "quant": "June 2026",
+      "quant": "Jun-26",
       "quantum": "Jul 2026",
       "samco": "Jul 2026",
       "sbi": "Jul-26",
@@ -48,18 +49,97 @@
       "taurus": "Jul 2026",
       "the-wealth-company": "Jul 2026",
       "trust": "Jul 2026",
-      "unifi": "Jul 2026",
+      "unifi": "Jul-26",
       "union": "Jul 2026",
-      "uti": "Jul 1973",
+      "uti": "Jul-26",
       "whiteoak-capital": "June 2026",
-      "zerodha": "May 2021"
+      "zerodha": "Jul-26"
     },
+    "monthsByAmc": {
+      "360-one": 7,
+      "bajaj-finserv": 5,
+      "bank-of-india": 6,
+      "capitalmind": 4,
+      "choice": 1,
+      "jm-financial": 7,
+      "kotak": 5,
+      "nippon": 7,
+      "quant": 1,
+      "unifi": 2,
+      "uti": 7,
+      "zerodha": 7
+    },
+    "behindTarget": [
+      {
+        "slug": "360-one",
+        "latest": "Jun-26",
+        "status": "ok"
+      },
+      {
+        "slug": "angel-one",
+        "latest": "June 2026",
+        "status": "blocked"
+      },
+      {
+        "slug": "bank-of-india",
+        "latest": "Jun-26",
+        "status": "ok"
+      },
+      {
+        "slug": "capitalmind",
+        "latest": "Mar-26",
+        "status": "ok"
+      },
+      {
+        "slug": "choice",
+        "latest": "May-26",
+        "status": "ok"
+      },
+      {
+        "slug": "edelweiss",
+        "latest": "Jun-26",
+        "status": "blocked"
+      },
+      {
+        "slug": "hsbc",
+        "latest": "Jun-26",
+        "status": "blocked"
+      },
+      {
+        "slug": "jio-blackrock",
+        "latest": "June 2026",
+        "status": "blocked"
+      },
+      {
+        "slug": "navi",
+        "latest": "June 2026",
+        "status": "blocked"
+      },
+      {
+        "slug": "quant",
+        "latest": "Jun-26",
+        "status": "ok"
+      },
+      {
+        "slug": "whiteoak-capital",
+        "latest": "June 2026",
+        "status": "blocked"
+      }
+    ],
     "coverage": {
       "total": 50,
-      "ok": 45,
+      "ok": 43,
       "needsFallback": [
         {
           "slug": "angel-one",
+          "status": "blocked"
+        },
+        {
+          "slug": "edelweiss",
+          "status": "blocked"
+        },
+        {
+          "slug": "hdfc",
           "status": "blocked"
         },
         {
@@ -87,11 +167,13 @@
       "amc": "360 ONE Mutual Fund",
       "status": "ok",
       "source": "json-api",
-      "asOfMonth": "Jun 2026",
+      "asOfMonth": "Jun-26",
       "schemes": 10,
       "holdings": 562,
       "file": "360-one.json",
-      "updatedAt": "2026-08-11T08:07:55.677Z"
+      "updatedAt": "2026-08-11T19:13:33.922Z",
+      "fetchedMonth": "Jun-26",
+      "months": 7
     },
     {
       "slug": "abakkus",
@@ -141,12 +223,14 @@
       "slug": "bajaj-finserv",
       "amc": "Bajaj Finserv Mutual Fund",
       "status": "ok",
-      "source": "advisorkhoj",
-      "asOfMonth": "June 2026",
-      "schemes": 24,
-      "holdings": 1183,
+      "source": "json-api",
+      "asOfMonth": "Jul-26",
+      "schemes": 25,
+      "holdings": 1221,
       "file": "bajaj-finserv.json",
-      "updatedAt": "2026-08-11T08:08:33.594Z"
+      "updatedAt": "2026-08-11T19:13:44.748Z",
+      "fetchedMonth": "Jul-26",
+      "months": 5
     },
     {
       "slug": "bandhan",
@@ -164,11 +248,13 @@
       "amc": "Bank of India Mutual Fund",
       "status": "ok",
       "source": "advisorkhoj",
-      "asOfMonth": "June 2026",
+      "asOfMonth": "Jun-26",
       "schemes": 23,
       "holdings": 1165,
       "file": "bank-of-india.json",
-      "updatedAt": "2026-08-11T08:11:51.815Z"
+      "updatedAt": "2026-08-11T19:14:31.052Z",
+      "fetchedMonth": "Jun-26",
+      "months": 6
     },
     {
       "slug": "baroda-bnp-paribas",
@@ -197,22 +283,26 @@
       "amc": "Capitalmind Mutual Fund",
       "status": "ok",
       "source": "json-api",
-      "asOfMonth": "Mar 2026",
+      "asOfMonth": "Mar-26",
       "schemes": 4,
       "holdings": 134,
       "file": "capitalmind.json",
-      "updatedAt": "2026-08-11T08:12:21.419Z"
+      "updatedAt": "2026-08-11T19:14:38.719Z",
+      "fetchedMonth": "Mar-26",
+      "months": 4
     },
     {
       "slug": "choice",
       "amc": "Choice Mutual Fund",
       "status": "ok",
       "source": "json-api",
-      "asOfMonth": "May 2026",
+      "asOfMonth": "May-26",
       "schemes": 2,
       "holdings": 104,
       "file": "choice.json",
-      "updatedAt": "2026-08-11T08:12:36.815Z"
+      "updatedAt": "2026-08-11T19:14:58.342Z",
+      "fetchedMonth": "May-26",
+      "months": 1
     },
     {
       "slug": "dsp",
@@ -228,13 +318,13 @@
     {
       "slug": "edelweiss",
       "amc": "Edelweiss Mutual Fund",
-      "status": "ok",
-      "source": "wayback",
-      "asOfMonth": "June 2026",
-      "schemes": 62,
-      "holdings": 3628,
-      "file": "edelweiss.json",
-      "updatedAt": "2026-08-11T08:12:42.002Z"
+      "status": "blocked",
+      "source": null,
+      "asOfMonth": "Jun-26",
+      "schemes": 0,
+      "holdings": 0,
+      "file": null,
+      "updatedAt": "2026-08-11T19:15:07.332Z"
     },
     {
       "slug": "franklin-templeton",
@@ -261,13 +351,13 @@
     {
       "slug": "hdfc",
       "amc": "HDFC Mutual Fund",
-      "status": "ok",
-      "source": "browser",
-      "asOfMonth": "Jul 2026",
-      "schemes": 99,
-      "holdings": 8085,
-      "file": "hdfc.json",
-      "updatedAt": "2026-08-11T08:13:24.840Z"
+      "status": "blocked",
+      "source": null,
+      "asOfMonth": "Jul-26",
+      "schemes": 0,
+      "holdings": 0,
+      "file": null,
+      "updatedAt": "2026-08-11T19:22:49.378Z"
     },
     {
       "slug": "helios",
@@ -285,11 +375,11 @@
       "amc": "HSBC Mutual Fund",
       "status": "blocked",
       "source": null,
-      "asOfMonth": "June 2026",
+      "asOfMonth": "Jun-26",
       "schemes": 0,
       "holdings": 0,
       "file": null,
-      "updatedAt": "2026-08-11T08:13:57.937Z"
+      "updatedAt": "2026-08-11T19:22:52.112Z"
     },
     {
       "slug": "icici-pru",
@@ -340,22 +430,26 @@
       "amc": "JM Financial Mutual Fund",
       "status": "ok",
       "source": "json-api",
-      "asOfMonth": "Sep 2026",
+      "asOfMonth": "Jul-26",
       "schemes": 16,
       "holdings": 864,
       "file": "jm-financial.json",
-      "updatedAt": "2026-08-11T08:17:26.922Z"
+      "updatedAt": "2026-08-11T19:09:13.448Z",
+      "fetchedMonth": "Jul-26",
+      "months": 7
     },
     {
       "slug": "kotak",
       "amc": "Kotak Mahindra Mutual Fund",
       "status": "ok",
       "source": "direct",
-      "asOfMonth": "May-26",
-      "schemes": 109,
-      "holdings": 6092,
+      "asOfMonth": "Jul-26",
+      "schemes": 110,
+      "holdings": 6137,
       "file": "kotak.json",
-      "updatedAt": "2026-08-11T08:17:52.456Z"
+      "updatedAt": "2026-08-11T19:13:17.281Z",
+      "fetchedMonth": "Jul-26",
+      "months": 5
     },
     {
       "slug": "lic",
@@ -421,7 +515,9 @@
       "schemes": 99,
       "holdings": 5851,
       "file": "nippon.json",
-      "updatedAt": "2026-08-11T08:20:52.227Z"
+      "updatedAt": "2026-08-11T19:22:16.671Z",
+      "fetchedMonth": "Jul-26",
+      "months": 7
     },
     {
       "slug": "nj",
@@ -472,11 +568,13 @@
       "amc": "Quant Mutual Fund",
       "status": "ok",
       "source": "advisorkhoj",
-      "asOfMonth": "June 2026",
+      "asOfMonth": "Jun-26",
       "schemes": 28,
       "holdings": 866,
       "file": "quant.json",
-      "updatedAt": "2026-08-11T08:22:57.305Z"
+      "updatedAt": "2026-08-11T19:16:49.643Z",
+      "fetchedMonth": "Jun-26",
+      "months": 1
     },
     {
       "slug": "quantum",
@@ -582,11 +680,13 @@
       "amc": "Unifi Mutual Fund",
       "status": "ok",
       "source": "json-api",
-      "asOfMonth": "Jul 2026",
+      "asOfMonth": "Jul-26",
       "schemes": 3,
       "holdings": 187,
       "file": "unifi.json",
-      "updatedAt": "2026-08-11T08:29:54.814Z"
+      "updatedAt": "2026-08-11T19:17:03.565Z",
+      "fetchedMonth": "Jul-26",
+      "months": 2
     },
     {
       "slug": "union",
@@ -604,11 +704,13 @@
       "amc": "UTI Mutual Fund",
       "status": "ok",
       "source": "json-api",
-      "asOfMonth": "Jul 1973",
+      "asOfMonth": "Jul-26",
       "schemes": 79,
       "holdings": 4492,
       "file": "uti.json",
-      "updatedAt": "2026-08-11T08:32:10.341Z"
+      "updatedAt": "2026-08-11T19:09:42.080Z",
+      "fetchedMonth": "Jul-26",
+      "months": 7
     },
     {
       "slug": "whiteoak-capital",
@@ -626,11 +728,13 @@
       "amc": "Zerodha Mutual Fund",
       "status": "ok",
       "source": "json-api",
-      "asOfMonth": "May 2021",
+      "asOfMonth": "Jul-26",
       "schemes": 13,
       "holdings": 1246,
       "file": "zerodha.json",
-      "updatedAt": "2026-08-11T08:32:24.785Z"
+      "updatedAt": "2026-08-11T19:09:44.770Z",
+      "fetchedMonth": "Jul-26",
+      "months": 7
     }
   ]
 }

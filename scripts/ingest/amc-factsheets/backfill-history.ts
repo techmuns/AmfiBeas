@@ -28,11 +28,11 @@ import { browserFetchAmc } from "./browser-fallback";
 import { BROWSER_CONFIG } from "./browser-hints";
 import { waybackFetch, WAYBACK_FALLBACK } from "./wayback";
 import type { Browser } from "playwright";
-import type { AmcMonthSnapshot, AmcParseOptions, AmcPortfolioSnapshot, AmcScheme } from "./types";
+import { isoEndOfMonth, labelOfYm, MAX_SNAPSHOT_MONTHS, mergeMonthBuckets } from "./months";
+import type { AmcParseOptions, AmcPortfolioSnapshot, AmcScheme } from "./types";
 
 const OUT = path.resolve(process.cwd(), "public/amc-holdings");
 const GENERIC: AmcParseOptions = { pctScale: 1, valueToCr: 100 };
-const MON3 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const DIRECT = new Set(["sbi", "nippon", "kotak", "icici-pru"]);
 const REFERER: Record<string, string> = { nippon: "https://mf.nipponindiaim.com/", sbi: "https://www.sbimf.com/portfolios" };
 
@@ -56,11 +56,11 @@ const FALLBACK_AMCS = [
   "Zerodha Mutual Fund",
 ];
 
-function labelOf(ym: string): string { return `${MON3[+ym.slice(5, 7) - 1]} ${ym.slice(0, 4)}`; }
-function isoLastDay(ym: string): string {
-  const y = +ym.slice(0, 4), m = +ym.slice(5, 7);
-  return `${ym}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, "0")}`;
-}
+// Canonical "Jul-26" / "2026-07-31" — one spelling of a month across every tier,
+// so a month fetched by the backfill and the same month fetched by the monthly
+// run dedupe to one entry instead of becoming two "months".
+const labelOf = labelOfYm;
+const isoLastDay = isoEndOfMonth;
 
 /** Direct file template months (SBI/Nippon/Kotak/ICICI): one file per month. */
 function directMonths(slug: string): Map<string, AmcScheme[]> {
@@ -172,23 +172,32 @@ async function main(): Promise<void> {
     if (months.size === 0) { console.log(`· ${slug.padEnd(20)} no history`); continue; }
 
     const yms = [...months.keys()].sort().reverse(); // newest first
-    const latestYm = yms[0];
     const file = path.join(OUT, `${slug}.json`);
     let prev: Partial<AmcPortfolioSnapshot> = {};
     try { prev = JSON.parse(fs.readFileSync(file, "utf8")); } catch { /* new */ }
-    const history: AmcMonthSnapshot[] = yms.slice(1).map((ym) => ({ asOfMonth: labelOf(ym), asOf: isoLastDay(ym), schemes: months.get(ym)! }));
+    // Merge rather than replace: a backfill run that reaches fewer months than
+    // the file already holds (an AMC that rotated older files off its site) must
+    // not delete the months we captured earlier.
+    const existing = prev.schemes?.length
+      ? [{ asOfMonth: prev.asOfMonth ?? "", asOf: prev.schemes[0]?.asOf ?? null, schemes: prev.schemes }, ...(prev.history ?? [])]
+      : (prev.history ?? []);
+    const merged = mergeMonthBuckets(
+      yms.map((ym) => ({ asOfMonth: labelOf(ym), asOf: isoLastDay(ym), schemes: months.get(ym)! })),
+      existing,
+      MAX_SNAPSHOT_MONTHS,
+    );
     const snap: AmcPortfolioSnapshot = {
       amc: prev.amc ?? amc,
       amcSlug: slug,
       sourceUrl: prev.sourceUrl ?? "",
-      asOfMonth: labelOf(latestYm),
+      asOfMonth: merged[0].asOfMonth,
       fetchedAt: now.toISOString(),
-      schemes: months.get(latestYm)!,
-      history,
+      schemes: merged[0].schemes,
+      history: merged.slice(1),
     };
     fs.writeFileSync(file, JSON.stringify(snap) + "\n", "utf8");
     ok++;
-    console.log(`✓ ${slug.padEnd(20)} ${yms.length} months: ${yms.join(" ")}`);
+    console.log(`✓ ${slug.padEnd(20)} fetched ${yms.length} month(s): ${yms.join(" ")} → ${merged.length} on file`);
   }
   if (browser) await browser.close();
   console.log(`\nBackfilled ${ok}/${amcs.length} AMCs.`);

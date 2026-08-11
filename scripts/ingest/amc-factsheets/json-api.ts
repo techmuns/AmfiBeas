@@ -10,6 +10,7 @@
 import { execFileSync } from "node:child_process";
 import crypto from "node:crypto";
 import { downloadAndParse } from "./page-scrape";
+import { stampAsOfFromLinks } from "./months";
 import type { HarvestedLink } from "./browser-fallback";
 import type { AmcParseOptions, AmcScheme } from "./types";
 
@@ -1520,5 +1521,10 @@ export function jsonApiAmc(slug: string, opts: AmcParseOptions, now: Date): Json
   const links = cfg.discover(now);
   if (!links.length) return { schemes: [], usedUrl: null, fileCount: 0 };
   const { schemes, fileCount } = downloadAndParse(links, opts, cfg.referer);
+  // Every discoverer resolves ONE month and builds its file URLs from it, so the
+  // URL names the disclosure month authoritatively. Fill in schemes whose sheet
+  // carries no usable as-on date (UTI, Zerodha and JM print none), which is what
+  // used to leave those AMCs labelled off a mis-read maturity date.
+  stampAsOfFromLinks(schemes, links, now);
   return { schemes, usedUrl: cfg.page, fileCount };
 }
