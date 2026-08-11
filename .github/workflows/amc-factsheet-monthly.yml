@@ -90,12 +90,13 @@ jobs:
           npm run build:cap-flows
           npm run build:sector-gross
           npm run build:insights-plus
+          npm run build:stocks
       - name: Commit refreshed AMC holdings + tracker data
         # commit=false → test run (fetch + log only). A filtered run commits
         # safely because index.json is merged, not overwritten.
         if: ${{ github.event_name == 'schedule' || inputs.commit != 'false' }}
         run: |
-          PATHS="public/amc-holdings public/amc-portfolio public/holdings-direct src/data/portfolio-tracker/amc-portfolio-crosswalk.json src/data/portfolio-tracker/amc-direct-index.json src/data/portfolio-tracker/cap-flows.json src/data/portfolio-tracker/sector-gross-flows.json src/data/portfolio-tracker/insights-plus.json"
+          PATHS="public/amc-holdings public/amc-portfolio public/holdings-direct public/stocks src/data/portfolio-tracker/amc-portfolio-crosswalk.json src/data/portfolio-tracker/amc-direct-index.json src/data/portfolio-tracker/cap-flows.json src/data/portfolio-tracker/sector-gross-flows.json src/data/portfolio-tracker/insights-plus.json"
           if [ -z "$(git status --porcelain $PATHS)" ]; then
             echo "No AMC holdings / crosswalk changes — nothing to commit."
             exit 0

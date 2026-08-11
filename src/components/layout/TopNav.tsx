@@ -10,6 +10,7 @@ import {
   FileBarChart,
   Building2,
   Briefcase,
+  Search as SearchIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -27,6 +28,7 @@ const nav = [
   { href: "/amc", label: "AMCs", icon: Building2 },
   { href: "/financials", label: "Financials", icon: FileBarChart },
   { href: "/mfs-portfolio-tracker", label: "MFs Portfolio Tracker", icon: Briefcase },
+  { href: "/stocks", label: "Search Stocks", icon: SearchIcon },
 ];
 
 function isActive(pathname: string, href: string) {
