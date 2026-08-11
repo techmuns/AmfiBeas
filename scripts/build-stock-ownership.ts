@@ -53,6 +53,19 @@ const num = (v: unknown): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
+// A handful of corporate bonds / CDs reach the equity view because they carry an
+// INE ISIN and no debt keyword the holdings classifier looks for
+// ("11.25% Spandana Sphoorty Financial Limited 04-SEP-2026", "HDFC Bank Limited
+// 24-JUN-2026"). They are debt securities, so they don't belong in a STOCK
+// search — and one of them sorted first alphabetically. Identified by the two
+// things equity names never carry: a leading coupon rate, or a maturity date.
+const COUPON_LED = /^\s*\d+(\.\d+)?\s*%/;
+const MATURITY_DATE =
+  /(\b\d{1,2}[-/\s](jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[-/\s]\d{2,4}\b)|(\b\d{1,2}\/\d{1,2}\/\d{2,4}\b)/i;
+function looksLikeDebtSecurity(name: string): boolean {
+  return COUPON_LED.test(name) || MATURITY_DATE.test(name);
+}
+
 /** Filesystem-safe key for a stock (ISIN, or a hashed name for ISIN-less rows). */
 function slugify(key: string): string {
   const s = key.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -200,9 +213,14 @@ function main() {
   const indexRows: IndexRow[] = [];
   const usedSlugs = new Set<string>();
 
+  let skippedDebt = 0;
   for (const [key, s] of stocks) {
     if (s.holders.length === 0) continue;
     const name = pickName(s.names) || key;
+    if (looksLikeDebtSecurity(name)) {
+      skippedDebt++;
+      continue;
+    }
     const sector =
       [...s.sectors.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "Unclassified";
     let slug = slugify(key);
@@ -275,6 +293,7 @@ function main() {
   console.log(
     `wrote public/stocks/: ${indexRows.length} companies from ${schemeCount} schemes | months ${axisLabels.join(", ")}`
   );
+  if (skippedDebt) console.log(`  skipped ${skippedDebt} debt securities (coupon-led / dated names)`);
   const top = [...indexRows].sort((a, b) => b.funds - a.funds).slice(0, 5);
   for (const t of top) console.log(`  ${String(t.funds).padStart(4)} funds  ${t.name} (${t.sector})`);
 }
