@@ -74,4 +74,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add $FILES
           git commit -m "chore(data): refresh shares-outstanding + cap-flows % + fund-wise portfolios ($(date -u +%Y-%m-%d))"
-          git push
+          bash scripts/ci/push-with-rebase.sh

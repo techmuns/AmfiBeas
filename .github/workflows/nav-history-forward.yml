@@ -134,7 +134,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/nav-history src/data/snapshots/mf-history-manifest.json src/data/snapshots/mf-returns.json src/data/snapshots/mf-category-returns.json
           git commit -m "chore(data): daily forward NAV refresh"
-          git push
+          bash scripts/ci/push-with-rebase.sh
       - name: Fail the job if the run failed
         # Propagate the script's exit status so a guardrail / production-write
         # failure shows the run as red (rather than green via
