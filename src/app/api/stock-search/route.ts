@@ -35,26 +35,95 @@ interface UpstreamResponse {
   success?: boolean;
 }
 
-/**
- * The token is a Worker secret. On Cloudflare it arrives as a binding on the
- * Cloudflare env; under `next dev` (plain Node) it comes from process.env. Try
- * the binding first and fall back, so the same code path works in both.
- */
-async function readToken(): Promise<string | null> {
+const TOKEN_KEY = "MUNS_ACCESS_TOKEN";
+
+/** Where a candidate env came from, for the ?diag report. */
+interface EnvProbe {
+  source: string;
+  ok: boolean;
+  /** Binding NAMES only — never values. */
+  keys?: string[];
+  hasToken?: boolean;
+  error?: string;
+}
+
+/** Every place a Worker secret can surface, tried in order. */
+async function probeEnvs(): Promise<{ envs: Record<string, unknown>[]; probes: EnvProbe[] }> {
+  const envs: Record<string, unknown>[] = [];
+  const probes: EnvProbe[] = [];
+  const add = (source: string, env: unknown, error?: string) => {
+    if (error || !env || typeof env !== "object") {
+      probes.push({ source, ok: false, error });
+      return;
+    }
+    const rec = env as Record<string, unknown>;
+    envs.push(rec);
+    probes.push({
+      source,
+      ok: true,
+      keys: Object.keys(rec).sort(),
+      hasToken: typeof rec[TOKEN_KEY] === "string" && !!(rec[TOKEN_KEY] as string).trim(),
+    });
+  };
+
   try {
     const mod = await import("@opennextjs/cloudflare");
-    const ctx = await mod.getCloudflareContext({ async: true });
-    const v = (ctx?.env as Record<string, unknown> | undefined)?.MUNS_ACCESS_TOKEN;
-    if (typeof v === "string" && v.trim()) return v.trim();
-  } catch {
-    // Not running on Workers — fall through to process.env.
+    try {
+      add("cf-context-async", (await mod.getCloudflareContext({ async: true }))?.env);
+    } catch (e) {
+      add("cf-context-async", null, (e as Error).message.slice(0, 120));
+    }
+    try {
+      add("cf-context-sync", mod.getCloudflareContext()?.env);
+    } catch (e) {
+      add("cf-context-sync", null, (e as Error).message.slice(0, 120));
+    }
+  } catch (e) {
+    add("opennext-import", null, (e as Error).message.slice(0, 120));
   }
-  const fromProcess = process.env.MUNS_ACCESS_TOKEN;
-  return typeof fromProcess === "string" && fromProcess.trim() ? fromProcess.trim() : null;
+  add("process-env", process.env as unknown);
+  return { envs, probes };
+}
+
+/**
+ * The token is a Worker secret, so on Cloudflare it arrives as a binding on the
+ * Cloudflare env; under `next dev` (plain Node) it comes from process.env. Every
+ * surface is tried rather than just one, because which of them carries a
+ * dashboard-set secret depends on the adapter version.
+ */
+async function readToken(): Promise<string | null> {
+  const { envs } = await probeEnvs();
+  for (const env of envs) {
+    const v = env[TOKEN_KEY];
+    if (typeof v === "string" && v.trim()) return v.trim();
+  }
+  return null;
 }
 
 export async function GET(request: Request) {
-  const q = (new URL(request.url).searchParams.get("q") ?? "").trim();
+  const url = new URL(request.url);
+
+  // Wiring check for "the secret is set but the Worker says it isn't": reports
+  // which env surfaces exist and what binding NAMES each carries. Never returns
+  // a value, and never reveals the token itself.
+  if (url.searchParams.get("diag") === "1") {
+    const { probes } = await probeEnvs();
+    return NextResponse.json(
+      {
+        tokenKey: TOKEN_KEY,
+        found: probes.some((p) => p.hasToken),
+        probes: probes.map((p) => ({
+          ...p,
+          // process.env on Workers carries the whole Node shim; only the names
+          // that could plausibly be our binding are useful here.
+          keys: p.source === "process-env" ? p.keys?.filter((k) => /MUNS|TOKEN|SECRET/i.test(k)) : p.keys,
+        })),
+      },
+      { headers: { "cache-control": "no-store" } }
+    );
+  }
+
+  const q = (url.searchParams.get("q") ?? "").trim();
   if (q.length < MIN_QUERY) {
     return NextResponse.json(
       { error: `Query must be at least ${MIN_QUERY} characters.`, results: [] },
