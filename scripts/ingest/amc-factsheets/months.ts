@@ -210,15 +210,17 @@ export function ymFromText(text: string, now: Date = new Date()): string | null 
  * Two failure modes this handles, both seen in production:
  *   - No usable date at all. UTI, Zerodha and JM print no as-on date the parser
  *     can trust anywhere in the workbook, so those schemes take the file's month.
- *   - A date LATER than the file's month. Once implausible dates were rejected,
- *     UTI's liquid schemes still offered up a treasury bill maturing next month
- *     as their "as on" date — a perfectly plausible month, just not this file's.
- *     A disclosure the AMC publishes as July cannot hold August positions, so
- *     the file's month is a ceiling.
+ *   - A date in ANY other month. Once implausible dates were rejected, sheets
+ *     still offered up dates that are plausible and simply wrong: a treasury
+ *     bill maturing next month (UTI), or an NFO date from last year
+ *     (Capitalmind, whose July workbook was filed as Mar-26 on the strength of
+ *     one such cell). The file the AMC publishes as "July 2026" IS the July
+ *     disclosure, so its month wins over anything read out of a sheet.
  *
- * A date at or before the file's month is left alone: an AMC serving last
- * month's workbook from this month's URL is exactly the staleness we want to
- * see, not something to paper over.
+ * This applies to tiers whose link month comes from the AMC's own listing or a
+ * month-stamped filename. The direct-template tier does the opposite (see
+ * resolveMonth): there the URL is a guess we probed, so content wins and an AMC
+ * serving last month's workbook from this month's URL stays visible as stale.
  */
 export function stampAsOfFromLinks(
   schemes: AmcScheme[],
@@ -233,8 +235,7 @@ export function stampAsOfFromLinks(
   if (!ym) return null;
   const iso = isoEndOfMonth(ym);
   for (const s of schemes) {
-    const own = ymOf(s.asOf);
-    if (!isPlausibleYm(own, now) || own > ym) s.asOf = iso;
+    if (ymOf(s.asOf) !== ym) s.asOf = iso;
   }
   return ym;
 }
