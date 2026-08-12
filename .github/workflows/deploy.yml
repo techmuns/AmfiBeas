@@ -116,6 +116,13 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
+          # Which account/Worker this deploy actually targets. Needed because a
+          # secret added to the wrong Worker (or a different Cloudflare account)
+          # looks perfectly set in the dashboard while the deployed code sees
+          # nothing — `secret list` returning [] is what that looks like here.
+          echo "--- wrangler whoami (secret values are masked by Actions) ---"
+          npx wrangler whoami || true
+          echo "--- secrets bound to the Worker named in wrangler.jsonc ---"
           npx wrangler secret list > secrets.json 2>&1 || true
           cat secrets.json
           if grep -q MUNS_ACCESS_TOKEN secrets.json; then
