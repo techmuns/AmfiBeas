@@ -10,7 +10,7 @@
 import { execFileSync } from "node:child_process";
 import crypto from "node:crypto";
 import { downloadAndParse } from "./page-scrape";
-import { stampAsOfFromLinks } from "./months";
+import { latestDisclosureYm, stampAsOfFromLinks } from "./months";
 import type { HarvestedLink } from "./browser-fallback";
 import type { AmcParseOptions, AmcScheme } from "./types";
 
@@ -32,6 +32,26 @@ function curl(url: string, opts: CurlOpts = {}): string | null {
     return null;
   }
 }
+/** Does this URL actually serve a file? Templated month URLs MUST be probed
+ *  before we accept that month: a builder that always returns a URL makes the
+ *  month loop "resolve" on the current month every time, so the month that IS
+ *  published is never tried — Bank of India and Quant both sat a month behind on
+ *  a URL that 404s. A 1-byte range GET, because some CDNs refuse HEAD. */
+function urlExists(url: string, referer?: string): boolean {
+  const args = ["-fsL", "-g", "--max-time", "45", "-o", "/dev/null", "-r", "0-0", "-w", "%{content_type}", "-A", UA];
+  if (referer) args.push("-H", `Referer: ${referer}`);
+  args.push(url);
+  try {
+    const ct = execFileSync("curl", args, { maxBuffer: 1 << 20 }).toString("utf8").toLowerCase();
+    // A 200 is not enough: Bank of India's Sitecore host answers a missing month
+    // with an HTML error page, which is how August "existed" while July — a real
+    // 529 KB workbook — was never tried.
+    return !ct.includes("text/html");
+  } catch {
+    return false;
+  }
+}
+
 // Parsed JSON body of an untyped third-party API, or null. Typed `any` on
 // purpose (these bodies have no schema); field access is guarded at each site.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -60,10 +80,25 @@ function dateScore(s: string | undefined): number {
   return mo ? +m[3] * 12 + mo : 0;
 }
 /** [[y,m] current, [y,m] previous] — AMCs publish the prior month around the 9th. */
+/** Disclosure months worth probing, newest first.
+ *
+ *  Starts at the last month that has ENDED rather than the current one: a
+ *  month-end portfolio for the current month cannot exist yet, so probing it only
+ *  wastes a request and invites false positives (Bank of India's host answers
+ *  200-with-HTML for a month it hasn't published). Three months of lookback so an
+ *  AMC that publishes late still resolves here instead of falling through to the
+ *  aggregator, which lags further. */
 function monthsToTry(now: Date): [number, number][] {
-  const y = now.getUTCFullYear();
-  const m = now.getUTCMonth() + 1;
-  return [[y, m], m > 1 ? [y, m - 1] : [y - 1, 12]];
+  const start = latestDisclosureYm(now);
+  let y = +start.slice(0, 4);
+  let m = +start.slice(5, 7);
+  const out: [number, number][] = [];
+  for (let i = 0; i < 3; i++) {
+    out.push([y, m]);
+    m -= 1;
+    if (m === 0) { m = 12; y -= 1; }
+  }
+  return out;
 }
 
 // ---- Bandhan: WordPress finance-api, one post per scheme ----
@@ -384,7 +419,10 @@ function boiMonth(yy: number, mm: number): HarvestedLink[] {
   return [{ url, text: "" }];
 }
 function discoverBoi(now: Date): HarvestedLink[] {
-  for (const [yy, mm] of monthsToTry(now)) { const l = boiMonth(yy, mm); if (l.length) return l; }
+  for (const [yy, mm] of monthsToTry(now)) {
+    const l = boiMonth(yy, mm).filter((x) => urlExists(x.url));
+    if (l.length) return l;
+  }
   return [];
 }
 
@@ -395,7 +433,10 @@ function quantMonth(yy: number, mm: number): HarvestedLink[] {
   return [{ url, text: "" }];
 }
 function discoverQuant(now: Date): HarvestedLink[] {
-  for (const [yy, mm] of monthsToTry(now)) { const l = quantMonth(yy, mm); if (l.length) return l; }
+  for (const [yy, mm] of monthsToTry(now)) {
+    const l = quantMonth(yy, mm).filter((x) => urlExists(x.url));
+    if (l.length) return l;
+  }
   return [];
 }
 

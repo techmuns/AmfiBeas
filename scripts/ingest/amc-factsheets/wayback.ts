@@ -21,8 +21,14 @@
 import { execFileSync } from "node:child_process";
 import { gunzipSync } from "node:zlib";
 
-/** AMC slugs whose file host 403s all direct access — try the archive for these. */
-export const WAYBACK_FALLBACK = new Set(["edelweiss"]);
+/** AMC slugs whose file host 403s all direct access — try the archive for these.
+ *
+ *  Navi and Jio BlackRock are here because every other tier now fails for them
+ *  in BOTH environments — curl and the CI browser are refused, and their June
+ *  data came from a tier that no longer resolves. This runs only after
+ *  everything else has failed, so listing them costs nothing when their own
+ *  hosts start answering again. */
+export const WAYBACK_FALLBACK = new Set(["edelweiss", "navi", "jio-blackrock"]);
 
 const UA = "Mozilla/5.0 (compatible; AmfiBeas-ingest/1.0; +https://github.com/techmuns/AmfiBeas)";
 const DEBUG = !!process.env.AMC_BROWSER_DEBUG;
