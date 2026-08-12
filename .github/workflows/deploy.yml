@@ -107,3 +107,19 @@ jobs:
             exit 0
           fi
           printf '%s' "$MUNS_ACCESS_TOKEN" | npx wrangler secret put MUNS_ACCESS_TOKEN
+      - name: Report the Worker's secrets
+        # Names only (never values). Confirms the deploy didn't drop a secret set
+        # in the dashboard — the failure that left /api/stock-search answering
+        # "no-token" while the dashboard showed MUNS_ACCESS_TOKEN as encrypted.
+        # Never fails the deploy: it is a signal, not a gate.
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx wrangler secret list > secrets.json 2>&1 || true
+          cat secrets.json
+          if grep -q MUNS_ACCESS_TOKEN secrets.json; then
+            echo "::notice::MUNS_ACCESS_TOKEN is bound to the Worker."
+          else
+            echo "::warning::MUNS_ACCESS_TOKEN is NOT bound to this Worker — /api/stock-search will answer 503 no-token."
+          fi

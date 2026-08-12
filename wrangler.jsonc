@@ -6,6 +6,13 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
+  // Keep variables and secrets that were configured in the Cloudflare dashboard
+  // rather than here. Without this, `wrangler deploy` publishes a version whose
+  // bindings are exactly the ones in this file, so a dashboard-set secret stops
+  // reaching the running Worker — MUNS_ACCESS_TOKEN was set, showed as encrypted
+  // in the dashboard, and /api/stock-search still saw an env of only ASSETS,
+  // IMAGES and WORKER_SELF_REFERENCE.
+  "keep_vars": true,
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
