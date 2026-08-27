@@ -45,6 +45,12 @@ const OUTPUT_PATH = path.resolve(process.cwd(), "public/nav-data/mf-ratios.json"
 const RULE_VERSION = 1;
 const MIN_PEER_COUNT = 5;
 const WINDOW_MONTHS = 36; // trailing months of returns (needs 37 month-end NAVs)
+// Anchor resilience: the window normally ends at the latest month, but if that
+// month (or the next few) lands in a NAV coverage hole — a month with no
+// month-end NAVs across the base, which collapses every fund to "short window" —
+// we walk the anchor back to the newest month the universe can actually cover.
+const MAX_ANCHOR_STEPBACK = 12; // months to walk back before giving up
+const MIN_ANCHOR_COVERAGE = 200; // full-window funds an anchor must clear (matches the emit floor)
 // Risk-free: India 1-year T-bill (~6.5% as of 2026). Assumed market return per
 // the client. Both are documented, configurable constants — not data-derived.
 const RISK_FREE_RATE = 0.065;
@@ -172,6 +178,14 @@ function targetMonths(anchor: string): string[] {
   return out.reverse();
 }
 
+/** The "YYYY-MM" one month before `m`. */
+function prevMonth(m: string): string {
+  let [y, mo] = m.split("-").map(Number);
+  mo -= 1;
+  if (mo === 0) { mo = 12; y -= 1; }
+  return `${y.toString().padStart(4, "0")}-${mo.toString().padStart(2, "0")}`;
+}
+
 /** Monthly returns (decimals) over `months` from a month-end map. Returns null
  *  if any required month is missing. `months` has WINDOW_MONTHS+1 entries →
  *  WINDOW_MONTHS returns. */
@@ -269,15 +283,63 @@ async function main(): Promise<void> {
 
   info(`reading benchmark ${path.relative(process.cwd(), BENCHMARK_PATH)}`);
   const benchmark = JSON.parse(await fs.readFile(BENCHMARK_PATH, "utf8")) as HistoryFile;
-
-  // Anchor month = latest month present in BOTH the benchmark and the snapshot
-  // as-of date. Use the benchmark's last month (it tracks the same trading
-  // calendar) — falls back to the returns asOfDate month.
   const benchMonths = monthEndNavs(benchmark.series);
   const benchLastMonth = benchmark.series[benchmark.series.length - 1][0].slice(0, 7);
   const asOfMonth = returnsFile.asOfDate ? returnsFile.asOfDate.slice(0, 7) : benchLastMonth;
-  const anchor = benchLastMonth <= asOfMonth ? benchLastMonth : asOfMonth;
-  const months = targetMonths(anchor);
+
+  // Pre-load each eligible fund's month-end NAVs once. ETFs / FoFs are excluded —
+  // these risk ratios target active open-ended schemes benchmarked to the broad
+  // market. The same maps drive both anchor selection and ratio computation.
+  const universe: Array<{ fund: ReturnsFund; monthEnds: Map<string, number> }> = [];
+  let missingHistory = 0;
+  for (const fund of returnsFile.funds) {
+    if (fund.isEtf || fund.isFof) continue;
+    let hist: HistoryFile;
+    try {
+      hist = JSON.parse(await fs.readFile(path.join(HISTORY_DIR, `${fund.schemecode}.json`), "utf8")) as HistoryFile;
+    } catch {
+      missingHistory += 1;
+      continue;
+    }
+    universe.push({ fund, monthEnds: monthEndNavs(hist.series) });
+  }
+
+  // Anchor month = the latest month (≤ the benchmark's / snapshot's last month)
+  // whose trailing WINDOW_MONTHS+1 window the benchmark AND a healthy slice of the
+  // fund universe can both cover in full. Normally that is the latest month
+  // itself. Stepping back only kicks in when the newest month(s) fall in a NAV
+  // coverage hole — e.g. a gap in the base where a month has no month-end NAVs
+  // for most funds — which would otherwise short-window the whole universe and
+  // emit nothing (freezing every downstream consumer that this snapshot feeds).
+  const latestCandidate = benchLastMonth <= asOfMonth ? benchLastMonth : asOfMonth;
+  const countFullWindow = (ms: string[]): number => {
+    let n = 0;
+    for (const { monthEnds } of universe) if (monthlyReturns(monthEnds, ms) !== null) n += 1;
+    return n;
+  };
+  let anchor: string | null = null;
+  let months: string[] = [];
+  let candidate = latestCandidate;
+  for (let back = 0; back <= MAX_ANCHOR_STEPBACK; back++) {
+    const cand = targetMonths(candidate);
+    const covered = countFullWindow(cand);
+    if (monthlyReturns(benchMonths, cand) !== null && covered >= MIN_ANCHOR_COVERAGE) {
+      anchor = candidate;
+      months = cand;
+      if (back > 0) {
+        warn(`anchor stepped back ${back}m to ${anchor}: ${latestCandidate} lacked coverage (a NAV gap in the base — backfill needed for the window to reach ${latestCandidate})`);
+      }
+      break;
+    }
+    if (back < MAX_ANCHOR_STEPBACK) {
+      info(`anchor ${candidate}: only ${covered} funds with a full window (need ${MIN_ANCHOR_COVERAGE}) — stepping back`);
+    }
+    candidate = prevMonth(candidate);
+  }
+  if (!anchor) {
+    warn(`no month within ${MAX_ANCHOR_STEPBACK} of ${latestCandidate} has ≥ ${MIN_ANCHOR_COVERAGE} full-window funds and a full benchmark window; keeping previous snapshot, not writing.`);
+    process.exit(1);
+  }
   info(`window: ${WINDOW_MONTHS} monthly returns, ${months[0]} … ${months[months.length - 1]} (anchor ${anchor})`);
 
   const benchReturns = monthlyReturns(benchMonths, months);
@@ -287,23 +349,12 @@ async function main(): Promise<void> {
   }
 
   // -------------------------------------------------------------------------
-  // 1. Compute raw ratios per fund (only equity-style funds with full window).
+  // 1. Compute raw ratios per fund (only funds with a full window at the anchor).
   // -------------------------------------------------------------------------
   const raw = new Map<string, { fund: ReturnsFund; ratios: RawRatios }>();
-  let missingHistory = 0;
   let shortWindow = 0;
-  for (const fund of returnsFile.funds) {
-    // ETFs / FoFs are excluded — these risk ratios target active open-ended
-    // schemes benchmarked to the broad market.
-    if (fund.isEtf || fund.isFof) continue;
-    let hist: HistoryFile;
-    try {
-      hist = JSON.parse(await fs.readFile(path.join(HISTORY_DIR, `${fund.schemecode}.json`), "utf8")) as HistoryFile;
-    } catch {
-      missingHistory += 1;
-      continue;
-    }
-    const rets = monthlyReturns(monthEndNavs(hist.series), months);
+  for (const { fund, monthEnds } of universe) {
+    const rets = monthlyReturns(monthEnds, months);
     if (!rets) { shortWindow += 1; continue; }
     const ratios = computeRatios(rets, benchReturns);
     if (METRICS.some((m) => !Number.isFinite(ratios[m]))) { shortWindow += 1; continue; }

@@ -68,18 +68,32 @@ jobs:
         run: npm run ingest:nav:returns
       - name: Recompute category ranks
         run: npm run ingest:nav:category-returns
+      # Derived analytics (ratios / rolling ranks / insights) run continue-on-error
+      # so a failure in one of these SECONDARY snapshots can never discard the
+      # core NAV commit below. Each script is keep-last-good (a failure leaves its
+      # own file untouched), so the worst case is one stale derived snapshot
+      # committed alongside a fresh latest NAV — not the whole site frozen. A
+      # dedicated gate after the commit re-surfaces any such failure as a red run.
       - name: Recompute risk ratios
+        id: ratios
+        continue-on-error: true
         run: npm run ingest:nav:ratios
       - name: Recompute rolling-return peer ranks
+        id: rolling
+        continue-on-error: true
         run: npm run ingest:nav:rolling-ranks
       - name: Rebuild NAV-derived Insights blocks
+        id: insights
+        continue-on-error: true
         # The Insights tab's flows-vs-performance and quartile-persistence blocks
         # read the category-returns / returns snapshots and the NAV history this
         # job just refreshed, so recompute them here to keep the tab in step.
         run: npm run build:insights-plus
       - name: Commit refreshed snapshots
-        # Only after every prior step SUCCEEDED (a keep-last-good non-zero exit
-        # skips this). Scheduled runs always commit; manual runs honour the
+        # Runs once the CORE steps (daily refresh + returns + category ranks)
+        # succeeded — those gate the commit, a keep-last-good non-zero exit in any
+        # of them skips it. The derived steps above are continue-on-error, so they
+        # do NOT gate this. Scheduled runs always commit; manual runs honour the
         # toggle. No-op when nothing changed.
         if: ${{ github.event_name == 'schedule' || inputs.commit == 'true' }}
         run: |
@@ -93,3 +107,11 @@ jobs:
           git add $PATHS
           git commit -m "chore(data): daily NAV refresh ($(date -u +%Y-%m-%d))"
           bash scripts/ci/push-with-rebase.sh
+      - name: Surface derived-analytics failures
+        # The core NAV is already committed above. If a derived analytic failed,
+        # fail the job now so the run goes red and the failure is noticed — without
+        # having blocked the latest-NAV commit.
+        if: ${{ always() && (steps.ratios.outcome == 'failure' || steps.rolling.outcome == 'failure' || steps.insights.outcome == 'failure') }}
+        run: |
+          echo "::error::Derived analytics failed (ratios=${{ steps.ratios.outcome }} rolling=${{ steps.rolling.outcome }} insights=${{ steps.insights.outcome }}). Core NAV snapshot was still committed; investigate the failed script."
+          exit 1
