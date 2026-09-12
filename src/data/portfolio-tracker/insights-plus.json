@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-09-12T11:53:35.335Z",
+    "generatedAt": "2026-09-12T22:02:52.567Z",
     "monthCur": "Aug-26",
     "monthPrev": "Jul-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -789,21 +789,8 @@
     "medianFlowPct": 0.6,
     "quadrants": {
       "winning": {
-        "count": 71,
+        "count": 70,
         "rows": [
-          {
-            "fund": "DSP Healthcare Fund",
-            "amc": "DSP",
-            "classification": "Equity : Sectoral - Pharma",
-            "percentile": 50,
-            "quartile": "Q2",
-            "perfReturn": 20.2,
-            "bookGrowthPct": 34.7,
-            "navReturnPct": 9.5,
-            "impliedFlowPct": 25.2,
-            "bookCr": 3371,
-            "monthsBack": 3
-          },
           {
             "fund": "Kotak Pioneer Fund",
             "amc": "Kotak Mahindra",
@@ -860,7 +847,7 @@
             "fund": "Kotak Business Cycle Fund",
             "amc": "Kotak Mahindra",
             "classification": "Equity : Thematic",
-            "percentile": 52.4,
+            "percentile": 57.1,
             "quartile": "Q2",
             "perfReturn": 13.5,
             "bookGrowthPct": 18.9,
@@ -894,12 +881,38 @@
             "impliedFlowPct": 11.5,
             "bookCr": 251,
             "monthsBack": 3
+          },
+          {
+            "fund": "ITI Flexi Cap Fund",
+            "amc": "ITI",
+            "classification": "Equity : Flexi Cap",
+            "percentile": 93,
+            "quartile": "Q1",
+            "perfReturn": 16.2,
+            "bookGrowthPct": 22,
+            "navReturnPct": 10.6,
+            "impliedFlowPct": 11.4,
+            "bookCr": 1489,
+            "monthsBack": 3
           }
         ]
       },
       "coasting": {
-        "count": 48,
+        "count": 49,
         "rows": [
+          {
+            "fund": "DSP Healthcare Fund",
+            "amc": "DSP",
+            "classification": "Equity : Sectoral - Pharma",
+            "percentile": 37.5,
+            "quartile": "Q3",
+            "perfReturn": 20.1,
+            "bookGrowthPct": 34.7,
+            "navReturnPct": 8.5,
+            "impliedFlowPct": 26.2,
+            "bookCr": 3371,
+            "monthsBack": 3
+          },
           {
             "fund": "UTI Nifty Midcap 150 Quality 50 Index Fund",
             "amc": "UTI",
@@ -917,12 +930,12 @@
             "fund": "SBI Large & Midcap Fund",
             "amc": "SBI",
             "classification": "Equity : Large & Mid Cap",
-            "percentile": 33.3,
+            "percentile": 25,
             "quartile": "Q3",
-            "perfReturn": 11.1,
+            "perfReturn": 10.7,
             "bookGrowthPct": 10.2,
-            "navReturnPct": 2,
-            "impliedFlowPct": 8.2,
+            "navReturnPct": 2.4,
+            "impliedFlowPct": 7.8,
             "bookCr": 41681,
             "monthsBack": 3
           },
@@ -950,19 +963,6 @@
             "navReturnPct": 6.3,
             "impliedFlowPct": 6.8,
             "bookCr": 1558,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Aditya Birla SL Pharma & Healthcare Fund",
-            "amc": "Aditya Birla Sun Life",
-            "classification": "Equity : Sectoral - Pharma",
-            "percentile": 37.5,
-            "quartile": "Q3",
-            "perfReturn": 20.2,
-            "bookGrowthPct": 15.5,
-            "navReturnPct": 8.7,
-            "impliedFlowPct": 6.8,
-            "bookCr": 1063,
             "monthsBack": 3
           },
           {
@@ -1088,6 +1088,19 @@
             "monthsBack": 3
           },
           {
+            "fund": "Aditya Birla SL Digital India Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Sectoral - Technology",
+            "percentile": 16.7,
+            "quartile": "Q4",
+            "perfReturn": 2.7,
+            "bookGrowthPct": 5.1,
+            "navReturnPct": 10.4,
+            "impliedFlowPct": -5.3,
+            "bookCr": 3730,
+            "monthsBack": 3
+          },
+          {
             "fund": "Tata Business Cycle Fund",
             "amc": "Tata",
             "classification": "Equity : Thematic",
@@ -1098,19 +1111,6 @@
             "navReturnPct": 4.2,
             "impliedFlowPct": -5.1,
             "bookCr": 2533,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Kotak Quant Fund",
-            "amc": "Kotak Mahindra",
-            "classification": "Equity : Thematic",
-            "percentile": 40.5,
-            "quartile": "Q3",
-            "perfReturn": 12.8,
-            "bookGrowthPct": -0.7,
-            "navReturnPct": 4.3,
-            "impliedFlowPct": -5,
-            "bookCr": 495,
             "monthsBack": 3
           }
         ]
@@ -1150,10 +1150,10 @@
             "classification": "Equity : Thematic",
             "percentile": 54.8,
             "quartile": "Q2",
-            "perfReturn": 13.6,
+            "perfReturn": 13.2,
             "bookGrowthPct": -4.7,
-            "navReturnPct": 1.6,
-            "impliedFlowPct": -6.3,
+            "navReturnPct": 1.4,
+            "impliedFlowPct": -6.1,
             "bookCr": 14256,
             "monthsBack": 3
           },
@@ -1242,27 +1242,27 @@
     "matrix": [
       [
         43,
-        30,
-        34,
+        29,
+        35,
         31
       ],
       [
         29,
         39,
-        31,
-        31
+        32,
+        30
       ],
       [
         35,
-        37,
-        37,
+        38,
+        36,
         27
       ],
       [
         31,
         24,
-        34,
-        40
+        33,
+        41
       ]
     ],
     "rowTotals": [
@@ -1272,7 +1272,7 @@
       129
     ],
     "q1StayPct": 31.2,
-    "q1ToBottomHalfPct": 47.1,
+    "q1ToBottomHalfPct": 47.8,
     "topStayers": [
       {
         "fund": "SBI Healthcare Opp Fund",
