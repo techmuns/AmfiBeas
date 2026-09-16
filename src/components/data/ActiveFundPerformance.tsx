@@ -28,6 +28,7 @@ import { Card } from "@/components/ui/Card";
 import { DownloadXlsxButton } from "@/components/data/DownloadXlsxButton";
 import type { CsvColumn } from "@/lib/csv";
 import { cn } from "@/lib/cn";
+import { CATEGORY_BENCHMARK, type BenchmarkTriSnapshot } from "@/data/benchmark-tri";
 
 // ---- API response shape (fields=full) --------------------------------------
 type Quartile = "Q1" | "Q2" | "Q3" | "Q4";
@@ -205,6 +206,22 @@ export function ActiveFundPerformance() {
   const error = settled ? result.error : null;
   const loading = !settled;
 
+  // Benchmark TRI snapshot — category-independent, fetched once. setState only
+  // runs inside the async .then, never synchronously in the effect body.
+  const [bench, setBench] = useState<BenchmarkTriSnapshot | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/nav-data/benchmark-tri.json", { signal: controller.signal })
+      .then((r) => (r.ok ? (r.json() as Promise<BenchmarkTriSnapshot>) : null))
+      .then((j) => setBench(j))
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
+
+  const benchId = CATEGORY_BENCHMARK[category] ?? null;
+  const benchIndex = benchId && bench ? bench.indices[benchId] ?? null : null;
+  const benchReturn = benchIndex?.periods[period]?.triEstCagrPct ?? null;
+
   // ---- Derived view (sorted funds, quartile spread, cohort stats) ----------
   const view = useMemo(() => {
     const funds = data?.funds ?? [];
@@ -249,6 +266,21 @@ export function ActiveFundPerformance() {
     return { rows: withReturn, counts, ranked, median, average, best, worst, listed };
   }, [data, period]);
 
+  // How many schemes beat their category's benchmark TRI over the horizon.
+  const benchBeat = useMemo(() => {
+    if (benchReturn == null) return null;
+    let beat = 0;
+    let n = 0;
+    for (const f of view.rows) {
+      const r = f.returns[period]?.return;
+      if (typeof r === "number") {
+        n += 1;
+        if (r > benchReturn) beat += 1;
+      }
+    }
+    return { beat, n, pct: n ? Math.round((beat / n) * 100) : 0 };
+  }, [view.rows, period, benchReturn]);
+
   // ---- Excel export (mirrors the on-screen table) --------------------------
   type XRow = Record<string, string | number>;
   const exportRows: XRow[] = useMemo(
@@ -271,9 +303,21 @@ export function ActiveFundPerformance() {
               : "",
           percentile: s?.statsAvailable && s.percentile != null ? s.percentile : "",
           vsMedian: typeof s?.excessVsMedian === "number" ? s.excessVsMedian : "",
+          benchmark: benchIndex?.label ?? "",
+          benchReturn: benchReturn ?? "",
+          vsBenchmark:
+            typeof s?.return === "number" && benchReturn != null
+              ? Math.round((s.return - benchReturn) * 10) / 10
+              : "",
+          beatBenchmark:
+            typeof s?.return === "number" && benchReturn != null
+              ? s.return > benchReturn
+                ? "Yes"
+                : "No"
+              : "",
         };
       }),
-    [view.rows, period, category]
+    [view.rows, period, category, benchIndex, benchReturn]
   );
   const exportColumns: CsvColumn<XRow>[] = [
     { key: "rank", header: `Rank (${period})` },
@@ -288,6 +332,10 @@ export function ActiveFundPerformance() {
     { key: "cohortRank", header: `${period} Rank in cohort` },
     { key: "percentile", header: `${period} Percentile` },
     { key: "vsMedian", header: `${period} vs category median (pp)` },
+    { key: "benchmark", header: "Benchmark (TRI est.)" },
+    { key: "benchReturn", header: `Benchmark ${period} TRI est. (%)` },
+    { key: "vsBenchmark", header: `${period} vs benchmark (pp)` },
+    { key: "beatBenchmark", header: "Beat benchmark?" },
   ];
 
   const asOf = data?.asOfDate ?? null;
@@ -424,14 +472,55 @@ export function ActiveFundPerformance() {
                   </div>
                 </div>
 
-                {/* Honest placeholder for the not-yet-sourced benchmark column */}
-                <p className="rounded-md border border-dashed border-muted-foreground/40 bg-muted/40 px-3 py-2 text-[11px] leading-snug text-muted-foreground">
-                  <strong className="text-foreground">Coming next:</strong>{" "}
-                  &ldquo;% of schemes beating their benchmark&rdquo; vs the
-                  fact-sheet index (Nifty 500 TRI, Nifty Midcap 150 TRI …). That
-                  needs total-return (TRI) index data, which is being sourced —
-                  quartiles above are peer-relative and live today.
-                </p>
+                {/* Benchmark verdict — active vs the category's index (TRI est.) */}
+                {benchIndex && benchReturn != null && benchBeat ? (
+                  <div className="rounded-lg border bg-card px-4 py-3">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                      <div className="text-[13px]">
+                        <span className="text-muted-foreground">Benchmark</span>{" "}
+                        <span className="font-semibold">{benchIndex.label}</span>
+                        <span className="text-muted-foreground"> · {period} </span>
+                        <span className="font-semibold tabular">{benchReturn.toFixed(1)}%</span>
+                        <span className="text-muted-foreground"> (est.)</span>
+                      </div>
+                      <div className="text-[13px]">
+                        <span
+                          className={cn(
+                            "text-[18px] font-semibold tabular",
+                            benchBeat.pct >= 50 ? "text-positive" : "text-negative"
+                          )}
+                        >
+                          {benchBeat.pct}%
+                        </span>{" "}
+                        <span className="text-muted-foreground">
+                          beat it ({benchBeat.beat}/{benchBeat.n})
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex h-3 w-full overflow-hidden rounded-full bg-negative/25">
+                      <div
+                        className="bg-positive"
+                        style={{ width: `${benchBeat.pct}%` }}
+                        title={`${benchBeat.beat} of ${benchBeat.n} beat the benchmark`}
+                      />
+                    </div>
+                    <p className="mt-1.5 text-[10px] leading-snug text-muted-foreground">
+                      Share of {benchBeat.n} growth schemes with a {period} record that beat
+                      their category index.{" "}
+                      {benchBeat.pct >= 50
+                        ? "Active management is adding value in this category."
+                        : "Most active funds here are trailing the index."}{" "}
+                      TRI est. = price return + dividend yield; benchmark as of{" "}
+                      {benchIndex.asOf}.
+                    </p>
+                  </div>
+                ) : benchId == null ? (
+                  <p className="rounded-md border border-dashed border-muted-foreground/40 bg-muted/40 px-3 py-2 text-[11px] leading-snug text-muted-foreground">
+                    Benchmark-beat isn&rsquo;t shown for this category — hybrid funds
+                    are measured against a blended debt+equity index we don&rsquo;t
+                    reconstruct. The quartiles above are peer-relative and live.
+                  </p>
+                ) : null}
               </div>
             )}
           </Card>
@@ -493,7 +582,7 @@ export function ActiveFundPerformance() {
               }
             >
               <div className="overflow-x-auto rounded-md border bg-card">
-                <table className="w-full min-w-[720px] border-collapse text-sm">
+                <table className="w-full min-w-[800px] border-collapse text-sm">
                   <thead>
                     <tr className="bg-muted/60 text-xs text-muted-foreground">
                       <th className="px-3 py-2 text-left font-medium">#</th>
@@ -511,6 +600,7 @@ export function ActiveFundPerformance() {
                       ))}
                       <th className="px-3 py-2 text-center font-medium">Quartile</th>
                       <th className="px-3 py-2 text-right font-medium">vs median</th>
+                      <th className="px-3 py-2 text-right font-medium">vs TRI</th>
                       <th className="px-3 py-2 text-right font-medium">%ile</th>
                     </tr>
                   </thead>
@@ -554,6 +644,20 @@ export function ActiveFundPerformance() {
                           >
                             {fmtSigned(s?.excessVsMedian)}
                           </td>
+                          <td
+                            className={cn(
+                              "px-3 py-2 text-right tabular",
+                              typeof s?.return === "number" &&
+                                benchReturn != null &&
+                                (s.return - benchReturn >= 0
+                                  ? "text-positive"
+                                  : "text-negative")
+                            )}
+                          >
+                            {typeof s?.return === "number" && benchReturn != null
+                              ? fmtSigned(s.return - benchReturn)
+                              : "—"}
+                          </td>
                           <td className="px-3 py-2 text-right tabular text-muted-foreground">
                             {s?.statsAvailable && s.percentile != null
                               ? s.percentile.toFixed(0)
@@ -567,9 +671,10 @@ export function ActiveFundPerformance() {
               </div>
               <p className="mt-3 text-[10px] leading-snug text-muted-foreground/70">
                 Growth option only. Quartile, rank and &ldquo;vs median&rdquo; are
-                computed within the exact cohort (category · plan · option);
-                &ldquo;vs median&rdquo; is in percentage points. Simple return for
-                1Y, CAGR for 3Y/5Y. Source: AmfiBeas daily NAV snapshot (AMFI)
+                computed within the exact cohort (category · plan · option), in
+                percentage points. &ldquo;vs TRI&rdquo; is the scheme&rsquo;s return
+                less its benchmark&rsquo;s TRI estimate. Simple return for 1Y, CAGR
+                for 3Y/5Y. Source: AmfiBeas daily NAV snapshot (AMFI)
                 {asOf ? ` · as of ${asOf}` : ""}.
               </p>
             </Card>

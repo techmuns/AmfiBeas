@@ -1,0 +1,138 @@
+{
+  "generatedAt": "2026-09-16T09:10:26.250Z",
+  "source": "NSE ind_close_all daily CSV (price return + per-index dividend yield)",
+  "method": "TRI estimate = (1 + price-return CAGR) × (1 + mean dividend yield over the window) − 1. Estimate, not exact fact-sheet TRI.",
+  "latestDate": "2026-09-01",
+  "indices": {
+    "NIFTY_500": {
+      "label": "Nifty 500 TRI",
+      "asOf": "2026-09-01",
+      "priClose": 23339.9,
+      "divYieldPct": 0.96,
+      "periods": {
+        "1Y": {
+          "triEstCagrPct": 3.87,
+          "priCagrPct": 2.76,
+          "divYieldAvgPct": 1.09,
+          "fromDate": "2025-09-01"
+        },
+        "3Y": {
+          "triEstCagrPct": 12.23,
+          "priCagrPct": 10.98,
+          "divYieldAvgPct": 1.13,
+          "fromDate": "2023-09-01"
+        },
+        "5Y": {
+          "triEstCagrPct": 10.99,
+          "priCagrPct": 9.91,
+          "divYieldAvgPct": 0.99,
+          "fromDate": "2021-09-01"
+        }
+      }
+    },
+    "NIFTY_100": {
+      "label": "Nifty 100 TRI",
+      "asOf": "2026-09-01",
+      "priClose": 25157.4,
+      "divYieldPct": 1.13,
+      "periods": {
+        "1Y": {
+          "triEstCagrPct": 0.96,
+          "priCagrPct": -0.29,
+          "divYieldAvgPct": 1.25,
+          "fromDate": "2025-09-01"
+        },
+        "3Y": {
+          "triEstCagrPct": 10.44,
+          "priCagrPct": 9.08,
+          "divYieldAvgPct": 1.25,
+          "fromDate": "2023-09-01"
+        },
+        "5Y": {
+          "triEstCagrPct": 8.9,
+          "priCagrPct": 7.72,
+          "divYieldAvgPct": 1.09,
+          "fromDate": "2021-09-01"
+        }
+      }
+    },
+    "NIFTY_LARGEMIDCAP_250": {
+      "label": "Nifty LargeMidcap 250 TRI",
+      "asOf": "2026-09-01",
+      "priClose": 16729.7,
+      "divYieldPct": 0.86,
+      "periods": {
+        "1Y": {
+          "triEstCagrPct": 5.89,
+          "priCagrPct": 4.86,
+          "divYieldAvgPct": 0.98,
+          "fromDate": "2025-09-01"
+        },
+        "3Y": {
+          "triEstCagrPct": 13.86,
+          "priCagrPct": 12.7,
+          "divYieldAvgPct": 1.03,
+          "fromDate": "2023-09-01"
+        },
+        "5Y": {
+          "triEstCagrPct": 13.22,
+          "priCagrPct": 12.19,
+          "divYieldAvgPct": 0.92,
+          "fromDate": "2021-09-01"
+        }
+      }
+    },
+    "NIFTY_MIDCAP_150": {
+      "label": "Nifty Midcap 150 TRI",
+      "asOf": "2026-09-01",
+      "priClose": 23252.7,
+      "divYieldPct": 0.59,
+      "periods": {
+        "1Y": {
+          "triEstCagrPct": 10.92,
+          "priCagrPct": 10.14,
+          "divYieldAvgPct": 0.71,
+          "fromDate": "2025-09-01"
+        },
+        "3Y": {
+          "triEstCagrPct": 17.17,
+          "priCagrPct": 16.23,
+          "divYieldAvgPct": 0.82,
+          "fromDate": "2023-09-01"
+        },
+        "5Y": {
+          "triEstCagrPct": 17.45,
+          "priCagrPct": 16.6,
+          "divYieldAvgPct": 0.74,
+          "fromDate": "2021-09-01"
+        }
+      }
+    },
+    "NIFTY_SMALLCAP_250": {
+      "label": "Nifty Smallcap 250 TRI",
+      "asOf": "2026-09-01",
+      "priClose": 18363.1,
+      "divYieldPct": 0.56,
+      "periods": {
+        "1Y": {
+          "triEstCagrPct": 10.4,
+          "priCagrPct": 9.71,
+          "divYieldAvgPct": 0.63,
+          "fromDate": "2025-09-01"
+        },
+        "3Y": {
+          "triEstCagrPct": 16.11,
+          "priCagrPct": 15.18,
+          "divYieldAvgPct": 0.81,
+          "fromDate": "2023-09-01"
+        },
+        "5Y": {
+          "triEstCagrPct": 16.43,
+          "priCagrPct": 15.66,
+          "divYieldAvgPct": 0.67,
+          "fromDate": "2021-09-01"
+        }
+      }
+    }
+  }
+}

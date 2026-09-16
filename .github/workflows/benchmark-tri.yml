@@ -1,0 +1,88 @@
+name: Benchmark TRI estimate (daily)
+
+# Daily benchmark-TRI builder for the Active Fund Performance tab.
+#
+# Reconstructs a TRI (total-return) CAGR estimate for each category benchmark
+# index (Nifty 500 / 100 / LargeMidcap 250 / Midcap 150 / Smallcap 250) from
+# NSE's ind_close_all CSV — price-return close plus the per-index dividend
+# yield — because niftyindices.com (the only source of TRI *levels*) blocks
+# scripted access. See scripts/build-benchmark-tri.ts for the method.
+#
+# Trigger model:
+#   • schedule (cron) — daily 18:00 UTC (23:30 IST). Sits after index-latest's
+#     17:00 UTC fetch (so NSE's CSV is published) and before nav-latest /
+#     nav-daily-refresh at 20:00 UTC, so the daily pipelines never collide.
+#   • workflow_dispatch — manual run with an optional pinned latest date.
+#
+# Keep-last-good: the script exits non-zero WITHOUT writing if it can't resolve
+# the anchor trading days, so a degraded snapshot is never committed. The npm
+# step is a hard gate — a failed fetch fails the job before the commit step.
+
+on:
+  schedule:
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are you running this? (optional)"
+        required: false
+        type: string
+      target_date:
+        description: "Override the latest anchor as YYYY-MM-DD (optional). Default: today's IST date."
+        required: false
+        type: string
+      commit:
+        description: "true = commit + push the snapshot when it changed (default). false = artifact only. Ignored for the scheduled run, which always commits when changed."
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: benchmark-tri-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark-tri:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build benchmark TRI estimate
+        env:
+          BENCHMARK_TRI_DATE: ${{ inputs.target_date }}
+        run: npm run build:benchmark-tri
+      - name: Upload snapshot artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-tri
+          path: public/nav-data/benchmark-tri.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Commit snapshot
+        # Always commit on the scheduled run; honour the toggle on manual
+        # dispatch (default true). Runs only after a successful build (the npm
+        # step is a hard gate; a non-zero exit fails the job before this).
+        if: ${{ github.event_name == 'schedule' || inputs.commit == 'true' }}
+        run: |
+          if [ -z "$(git status --porcelain public/nav-data/benchmark-tri.json)" ]; then
+            echo "No snapshot changes to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/nav-data/benchmark-tri.json
+          git commit -m "chore(data): refresh benchmark TRI estimate ($(date -u +%Y-%m-%d))"
+          bash scripts/ci/push-with-rebase.sh
