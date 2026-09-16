@@ -11,6 +11,7 @@ import { StrategicMovesCohortLane } from "@/components/amc/StrategicMovesCohortL
 import { CohortUniqueInvestorShare } from "@/components/amc/CohortUniqueInvestorShare";
 import { AmcCashAllocationTrend } from "@/components/amc/AmcCashAllocationTrend";
 import { ActiveFundPerformance } from "@/components/data/ActiveFundPerformance";
+import { BrokingView } from "@/components/data/BrokingView";
 import { amcIndexRows } from "@/data/amc-detail";
 import {
   amcEquityBook,
@@ -38,6 +39,7 @@ export const dynamic = "force-static";
 const AMC_TABS = [
   { id: "overview", label: "AMC Overview" },
   { id: "performance", label: "Active Fund Performance" },
+  { id: "broking", label: "Broking" },
   { id: "share", label: "Market Share & Concentration" },
   { id: "compare", label: "Compare" },
 ] as const satisfies readonly ClientTabDef[];
@@ -170,6 +172,7 @@ export default async function AmcListPage() {
         panels={{
           overview: overviewPanel,
           performance: <ActiveFundPerformance />,
+          broking: <BrokingView />,
           share: sharePanel,
           compare: comparePanel,
         }}
