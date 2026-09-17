@@ -30,3 +30,7 @@ data/debug/
 !.dev.vars.example
 
 !.env.example
+
+# Python bytecode cache (scripts/ingest Python helpers)
+__pycache__/
+*.pyc
