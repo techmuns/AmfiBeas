@@ -1,136 +1,136 @@
 {
-  "generatedAt": "2026-09-16T09:10:26.250Z",
+  "generatedAt": "2026-09-17T20:42:32.402Z",
   "source": "NSE ind_close_all daily CSV (price return + per-index dividend yield)",
   "method": "TRI estimate = (1 + price-return CAGR) × (1 + mean dividend yield over the window) − 1. Estimate, not exact fact-sheet TRI.",
-  "latestDate": "2026-09-01",
+  "latestDate": "2026-09-17",
   "indices": {
     "NIFTY_500": {
       "label": "Nifty 500 TRI",
-      "asOf": "2026-09-01",
-      "priClose": 23339.9,
-      "divYieldPct": 0.96,
+      "asOf": "2026-09-17",
+      "priClose": 22654.65,
+      "divYieldPct": 0.99,
       "periods": {
         "1Y": {
-          "triEstCagrPct": 3.87,
-          "priCagrPct": 2.76,
-          "divYieldAvgPct": 1.09,
-          "fromDate": "2025-09-01"
+          "triEstCagrPct": -2.33,
+          "priCagrPct": -3.37,
+          "divYieldAvgPct": 1.08,
+          "fromDate": "2025-09-17"
         },
         "3Y": {
-          "triEstCagrPct": 12.23,
-          "priCagrPct": 10.98,
-          "divYieldAvgPct": 1.13,
-          "fromDate": "2023-09-01"
+          "triEstCagrPct": 9.86,
+          "priCagrPct": 8.64,
+          "divYieldAvgPct": 1.12,
+          "fromDate": "2023-09-15"
         },
         "5Y": {
-          "triEstCagrPct": 10.99,
-          "priCagrPct": 9.91,
-          "divYieldAvgPct": 0.99,
-          "fromDate": "2021-09-01"
+          "triEstCagrPct": 9.68,
+          "priCagrPct": 8.56,
+          "divYieldAvgPct": 1.04,
+          "fromDate": "2021-09-17"
         }
       }
     },
     "NIFTY_100": {
       "label": "Nifty 100 TRI",
-      "asOf": "2026-09-01",
-      "priClose": 25157.4,
-      "divYieldPct": 1.13,
+      "asOf": "2026-09-17",
+      "priClose": 24377.75,
+      "divYieldPct": 1.18,
       "periods": {
         "1Y": {
-          "triEstCagrPct": 0.96,
-          "priCagrPct": -0.29,
+          "triEstCagrPct": -5.03,
+          "priCagrPct": -6.2,
           "divYieldAvgPct": 1.25,
-          "fromDate": "2025-09-01"
+          "fromDate": "2025-09-17"
         },
         "3Y": {
-          "triEstCagrPct": 10.44,
-          "priCagrPct": 9.08,
+          "triEstCagrPct": 7.97,
+          "priCagrPct": 6.63,
           "divYieldAvgPct": 1.25,
-          "fromDate": "2023-09-01"
+          "fromDate": "2023-09-15"
         },
         "5Y": {
-          "triEstCagrPct": 8.9,
-          "priCagrPct": 7.72,
-          "divYieldAvgPct": 1.09,
-          "fromDate": "2021-09-01"
+          "triEstCagrPct": 7.65,
+          "priCagrPct": 6.41,
+          "divYieldAvgPct": 1.16,
+          "fromDate": "2021-09-17"
         }
       }
     },
     "NIFTY_LARGEMIDCAP_250": {
       "label": "Nifty LargeMidcap 250 TRI",
-      "asOf": "2026-09-01",
-      "priClose": 16729.7,
-      "divYieldPct": 0.86,
+      "asOf": "2026-09-17",
+      "priClose": 16224.6,
+      "divYieldPct": 0.88,
       "periods": {
         "1Y": {
-          "triEstCagrPct": 5.89,
-          "priCagrPct": 4.86,
-          "divYieldAvgPct": 0.98,
-          "fromDate": "2025-09-01"
+          "triEstCagrPct": -0.51,
+          "priCagrPct": -1.46,
+          "divYieldAvgPct": 0.97,
+          "fromDate": "2025-09-17"
         },
         "3Y": {
-          "triEstCagrPct": 13.86,
-          "priCagrPct": 12.7,
-          "divYieldAvgPct": 1.03,
-          "fromDate": "2023-09-01"
+          "triEstCagrPct": 11.5,
+          "priCagrPct": 10.38,
+          "divYieldAvgPct": 1.02,
+          "fromDate": "2023-09-15"
         },
         "5Y": {
-          "triEstCagrPct": 13.22,
-          "priCagrPct": 12.19,
-          "divYieldAvgPct": 0.92,
-          "fromDate": "2021-09-01"
+          "triEstCagrPct": 11.79,
+          "priCagrPct": 10.74,
+          "divYieldAvgPct": 0.95,
+          "fromDate": "2021-09-17"
         }
       }
     },
     "NIFTY_MIDCAP_150": {
       "label": "Nifty Midcap 150 TRI",
-      "asOf": "2026-09-01",
-      "priClose": 23252.7,
-      "divYieldPct": 0.59,
+      "asOf": "2026-09-17",
+      "priClose": 22568.85,
+      "divYieldPct": 0.6,
       "periods": {
         "1Y": {
-          "triEstCagrPct": 10.92,
-          "priCagrPct": 10.14,
-          "divYieldAvgPct": 0.71,
-          "fromDate": "2025-09-01"
+          "triEstCagrPct": 4.1,
+          "priCagrPct": 3.38,
+          "divYieldAvgPct": 0.7,
+          "fromDate": "2025-09-17"
         },
         "3Y": {
-          "triEstCagrPct": 17.17,
-          "priCagrPct": 16.23,
-          "divYieldAvgPct": 0.82,
-          "fromDate": "2023-09-01"
+          "triEstCagrPct": 14.94,
+          "priCagrPct": 14.03,
+          "divYieldAvgPct": 0.8,
+          "fromDate": "2023-09-15"
         },
         "5Y": {
-          "triEstCagrPct": 17.45,
-          "priCagrPct": 16.6,
-          "divYieldAvgPct": 0.74,
-          "fromDate": "2021-09-01"
+          "triEstCagrPct": 15.86,
+          "priCagrPct": 14.99,
+          "divYieldAvgPct": 0.75,
+          "fromDate": "2021-09-17"
         }
       }
     },
     "NIFTY_SMALLCAP_250": {
       "label": "Nifty Smallcap 250 TRI",
-      "asOf": "2026-09-01",
-      "priClose": 18363.1,
+      "asOf": "2026-09-17",
+      "priClose": 18009.25,
       "divYieldPct": 0.56,
       "periods": {
         "1Y": {
-          "triEstCagrPct": 10.4,
-          "priCagrPct": 9.71,
+          "triEstCagrPct": 3.73,
+          "priCagrPct": 3.08,
           "divYieldAvgPct": 0.63,
-          "fromDate": "2025-09-01"
+          "fromDate": "2025-09-17"
         },
         "3Y": {
-          "triEstCagrPct": 16.11,
-          "priCagrPct": 15.18,
-          "divYieldAvgPct": 0.81,
-          "fromDate": "2023-09-01"
+          "triEstCagrPct": 14.46,
+          "priCagrPct": 13.55,
+          "divYieldAvgPct": 0.8,
+          "fromDate": "2023-09-15"
         },
         "5Y": {
-          "triEstCagrPct": 16.43,
-          "priCagrPct": 15.66,
+          "triEstCagrPct": 14.91,
+          "priCagrPct": 14.15,
           "divYieldAvgPct": 0.67,
-          "fromDate": "2021-09-01"
+          "fromDate": "2021-09-17"
         }
       }
     }
