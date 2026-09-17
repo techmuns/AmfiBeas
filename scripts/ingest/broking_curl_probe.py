@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 """
-NSE endpoint DISCOVERY probe using curl_cffi (real-Chrome TLS impersonation).
+NSE report-catalog discovery via curl_cffi (real-Chrome TLS impersonation).
 
-curl_cffi reaches NSE where headless Chromium is blocked (confirmed: the
-homepage and /all-reports return 200). This pass mines the reachable pages for
-the active-clients-per-broker data endpoint: it warms cookies, fetches a set of
-candidate pages/APIs, and for each one prints the status plus any API paths,
-downloadable-file links (csv/xlsx/zip), and "active client / member" mentions it
-finds — so the real endpoint can be pinned.
+curl_cffi reaches NSE's API (confirmed: /api/merged-daily-reports and
+/api/reports respond). This pass hunts the exact "active clients per member"
+report descriptor two ways:
+
+  1. Mine the /all-reports Next.js JS bundle — the report tree (names, keys,
+     archive descriptors) is defined there — for anything matching
+     active / client / member.
+  2. Enumerate /api/merged-daily-reports?key=<K> for the known report groups and
+     print the report names each returns, so we can see which group (if any)
+     carries active clients and its `link`.
 
 No writes. Run: pip install curl_cffi && python scripts/ingest/broking_curl_probe.py
 """
@@ -22,77 +26,76 @@ except Exception as e:  # pragma: no cover
 
 IMPERSONATE = "chrome"
 HOME = "https://www.nseindia.com/"
+ALL_REPORTS = "https://www.nseindia.com/all-reports"
 
-# Pages likely to reference the active-clients data or its API, plus direct API
-# guesses. curl_cffi follows the same cookie jar across them.
-PAGES = [
-    "https://www.nseindia.com/all-reports",
-    "https://www.nseindia.com/market-data/exchange-communication-circulars",
-    "https://www.nseindia.com/reports-indices-sp-cnx-nifty",
-    "https://www.nseindia.com/resources-membership",
-]
-API_GUESSES = [
-    "https://www.nseindia.com/api/reports?archives=%5B%7B%22name%22%3A%22Active%20clients%22%2C%22type%22%3A%22archives%22%2C%22category%22%3A%22capital_market%22%2C%22section%22%3A%22equities%22%7D%5D&date=&type=equities&mode=single",
-    "https://www.nseindia.com/api/merged-daily-reports?key=favCapital",
-    "https://www.nseindia.com/api/allIndices",
+# merged-daily-reports report-group keys to enumerate (NSE segments).
+KEYS = [
+    "favCapital", "favDerivatives", "favDebt", "favCurrency", "favCommodity",
+    "favSLBS", "favMF", "favInvest", "favEmerge", "favMonthly", "favMember",
+    "favMembership", "favTradeStatistics", "favBusinessGrowth",
 ]
 
-API_RE = re.compile(r"/api/[A-Za-z0-9_\-/?=&%.:,{}\[\]\"]+")
-FILE_RE = re.compile(r"https?://[^\s\"'<>]+\.(?:csv|xlsx|xls|zip)", re.I)
-ARCHIVE_RE = re.compile(r"https?://nsearchives\.nseindia\.com[^\s\"'<>]+", re.I)
-ACTIVE_RE = re.compile(r".{0,60}active\s*clients?.{0,60}", re.I)
+KW = re.compile(r"active[\s_\-]*clients?", re.I)
+SCRIPT_RE = re.compile(r'src="(/_next/[^"]+\.js)"')
+STR_RE = re.compile(r'["\']([^"\']{0,80}?active[\s_\-]*clients?[^"\']{0,80}?)["\']', re.I)
 
 
-def mine(label: str, url: str, session) -> None:
+def get(session, url, **kw):
     try:
-        r = session.get(url, timeout=30)
+        return session.get(url, timeout=30, **kw)
     except Exception as e:
-        print(f"[ERR] {label:26} {url} -> {type(e).__name__}: {e}")
-        return
-    body = r.text or ""
-    print(f"[{r.status_code}] {label:26} {len(body):>8} B  {url}")
-    if r.status_code != 200 or len(body) < 200:
-        print(f"        preview: {body[:160]!r}")
-        return
-    apis = sorted(set(m.group(0) for m in API_RE.finditer(body)))[:25]
-    files = sorted(set(FILE_RE.findall(body) if False else (m.group(0) for m in FILE_RE.finditer(body))))[:15]
-    archives = sorted(set(m.group(0) for m in ARCHIVE_RE.finditer(body)))[:15]
-    actives = sorted(set(m.group(0).strip() for m in ACTIVE_RE.finditer(body)))[:8]
-    if apis:
-        print(f"        api paths ({len(apis)}): " + "; ".join(apis))
-    if files:
-        print(f"        file links: " + "; ".join(files))
-    if archives:
-        print(f"        archive links: " + "; ".join(archives))
-    if actives:
-        print(f"        'active client' hits:")
-        for a in actives:
-            print(f"          … {a!r}")
-    if not (apis or files or archives or actives):
-        print("        (no api/file/active-client references found)")
+        print(f"[ERR] {url[:90]} -> {type(e).__name__}: {e}")
+        return None
 
 
 def main() -> None:
-    print(f"curl_cffi discovery — impersonate={IMPERSONATE}")
+    print(f"curl_cffi catalog discovery — impersonate={IMPERSONATE}")
     session = requests.Session(impersonate=IMPERSONATE)
-    try:
-        r0 = session.get(HOME, timeout=30)
-        print(f"[warm] {HOME} -> {r0.status_code}, cookies={list(session.cookies.keys())}")
-    except Exception as e:
-        print(f"[warm] failed: {e}")
-    print("================ NSE DISCOVERY ================")
-    for url in PAGES:
-        mine(url.rsplit("/", 1)[-1] or "root", url, session)
-    print("---- direct API guesses ----")
-    for url in API_GUESSES:
-        try:
-            r = session.get(url, timeout=30)
-            body = r.text or ""
-            print(f"[{r.status_code}] {'api-guess':26} {len(body):>8} B  {url[:90]}")
-            print(f"        preview: {body[:220]!r}")
-        except Exception as e:
-            print(f"[ERR] api-guess {url[:80]} -> {type(e).__name__}: {e}")
-    print("==============================================")
+    r0 = get(session, HOME)
+    print(f"[warm] home -> {r0.status_code if r0 else 'ERR'}")
+
+    # ---- 1. mine the all-reports JS bundle ---------------------------------
+    print("================ JS BUNDLE MINE ================")
+    r = get(session, ALL_REPORTS)
+    scripts = sorted(set(SCRIPT_RE.findall(r.text))) if r and r.status_code == 200 else []
+    print(f"/all-reports -> {r.status_code if r else 'ERR'}, {len(scripts)} _next scripts")
+    hits = 0
+    for path in scripts[:30]:
+        url = "https://www.nseindia.com" + path
+        jr = get(session, url)
+        if not jr or jr.status_code != 200:
+            continue
+        found = sorted(set(m.group(1).strip() for m in STR_RE.finditer(jr.text)))
+        if found:
+            print(f"  [{path.rsplit('/',1)[-1]}] active-clients strings:")
+            for f in found[:12]:
+                print(f"      {f!r}")
+            hits += len(found)
+        # also surface any nearby report keys / api paths in the same chunk
+        if KW.search(jr.text):
+            apis = sorted(set(re.findall(r"/api/[A-Za-z0-9_\-]+", jr.text)))[:20]
+            if apis:
+                print(f"      ({path.rsplit('/',1)[-1]} api paths: {', '.join(apis)})")
+    if not hits:
+        print("  (no active-clients strings in JS bundle)")
+
+    # ---- 2. enumerate report-group catalogs --------------------------------
+    print("================ REPORT-GROUP KEYS ================")
+    for key in KEYS:
+        jr = get(session, f"https://www.nseindia.com/api/merged-daily-reports?key={key}")
+        if not jr:
+            continue
+        body = jr.text or ""
+        names = re.findall(r'"name"\s*:\s*"([^"]+)"', body)
+        active = [n for n in names if KW.search(n)]
+        flag = "  <<< ACTIVE-CLIENTS" if active else ""
+        print(f"  key={key:20} {jr.status_code} {len(body):>7}B  {len(names)} reports{flag}")
+        if active:
+            for n in active:
+                # print the full object for the matching report
+                m = re.search(r'\{[^{}]*"name"\s*:\s*"' + re.escape(n) + r'"[^{}]*\}', body)
+                print(f"      {m.group(0) if m else n}")
+    print("==================================================")
 
 
 if __name__ == "__main__":
