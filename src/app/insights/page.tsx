@@ -213,13 +213,26 @@ function KpiTile({
   return (
     <div className="relative flex flex-col overflow-hidden rounded-lg border bg-card px-4 py-3.5 shadow-sm">
       {wash && (
-        <div
-          className={cn(
-            "pointer-events-none absolute -bottom-10 -right-8 h-40 w-40 rounded-full opacity-50 blur-[46px]",
-            wash === "pos" ? "bg-green-500" : "bg-red-500"
-          )}
-          aria-hidden
-        />
+        <>
+          {/* Broad colour wash across the tile + a brighter focused bloom in the
+              corner, so the green / red reads as vividly as the design mock. */}
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0",
+              wash === "pos"
+                ? "bg-gradient-to-tl from-green-500/45 via-green-500/10 to-transparent"
+                : "bg-gradient-to-tl from-red-500/45 via-red-500/10 to-transparent"
+            )}
+            aria-hidden
+          />
+          <div
+            className={cn(
+              "pointer-events-none absolute -bottom-14 -right-10 h-52 w-80 rounded-full opacity-70 blur-[55px]",
+              wash === "pos" ? "bg-green-500" : "bg-red-500"
+            )}
+            aria-hidden
+          />
+        </>
       )}
       <div className="relative flex flex-1 flex-col">
         <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -743,7 +756,7 @@ export default function InsightsPage() {
           )}
           {eqAum && (
             <Card title="Industry equity AUM — 7-year arc">
-              <Spark values={aumSeries.map((p) => p.value)} tone="accent" />
+              <Spark values={aumSeries.map((p) => p.value)} tone="pos" />
               <p className="mt-3 text-[13px] leading-snug text-muted-foreground">
                 ₹{fmtINR(eqAum.firstValue)} Cr → <span className="font-medium text-foreground">₹{fmtINR(eqAum.latestValue)} Cr</span>,{" "}
                 <span className="font-medium text-positive">{fmtX(eqAum.multiple)}</span> in 7 years and
