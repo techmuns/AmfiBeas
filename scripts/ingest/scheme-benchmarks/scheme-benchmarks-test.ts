@@ -304,6 +304,20 @@ Fund Manager: B
   );
   check("…while the neighbour keeps its own", nearest.get("gilt")?.resolved?.canonical.key === "CRISIL_10_YEAR_GILT");
 
+  // A fund whose own NAME states an index cannot be benchmarked to another one.
+  check(
+    "a fund named after an index contradicts a different extracted benchmark",
+    matchLongestBenchmark("Nippon India ETF Nifty Midcap 150")?.canonical.key === "NIFTY_MIDCAP_150"
+  );
+  check(
+    "…and agrees when the extraction matches its name",
+    matchLongestBenchmark("Kotak Nifty 100 Low Volatility 30 ETF")?.canonical.key === "NIFTY_100_LOW_VOLATILITY_30"
+  );
+  check(
+    "…while a fund whose name states no index is unaffected",
+    matchLongestBenchmark("Parag Parikh Flexi Cap Fund") === null
+  );
+
   const e = entry({
     classifications: ["Equity : Focused"],
     categoryProxyBenchmarkKey: "NIFTY_500",

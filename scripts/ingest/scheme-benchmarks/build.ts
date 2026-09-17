@@ -43,7 +43,7 @@ import { HOLDINGS_SLUG_ALIASES, SCHEME_DOC_SOURCES } from "./sources";
 import { loadOverrides, type SchemeBenchmarkOverride } from "./overrides";
 import { runGuards } from "./guards";
 import { CATEGORY_BENCHMARK } from "../../../src/data/benchmark-tri";
-import { registryCollisions, resolveBenchmark } from "../../../src/data/benchmark-registry";
+import { matchLongestBenchmark, registryCollisions, resolveBenchmark } from "../../../src/data/benchmark-registry";
 import {
   hasFirstPartyEvidence,
   type BenchmarkRecord,
@@ -255,6 +255,24 @@ function statusFor(record: BenchmarkRecord | null): { status: SchemeBenchmarkSta
     : { status: "official-name-only", reason: null };
 }
 
+/**
+ * SELF-CONTRADICTION VETO.
+ *
+ * A scheme whose own name states an index ("Nippon India ETF Nifty Midcap 150")
+ * cannot be benchmarked to a different one. When the extracted benchmark
+ * contradicts the AMC's own name for the fund, the extraction is wrong — a
+ * label was read across a boundary — and the candidate is dropped.
+ *
+ * This compares two pieces of FIRST-PARTY information about the same scheme; it
+ * is not category inference, and it never assigns a benchmark, only rejects one.
+ */
+function contradictsSchemeName(scheme: UnderlyingScheme, record: BenchmarkRecord): boolean {
+  if (!record.canonicalBenchmarkKey) return false;
+  const fromName = matchLongestBenchmark(scheme.schemeName);
+  if (!fromName) return false;
+  return fromName.canonical.key !== record.canonicalBenchmarkKey;
+}
+
 function categoryProxyFor(scheme: UnderlyingScheme): string | null {
   for (const c of scheme.classifications) {
     const key = CATEGORY_BENCHMARK[c];
@@ -421,12 +439,19 @@ async function main(): Promise<void> {
   const prev = await readPrevious();
   const prevByKey = new Map((prev.registry?.schemes ?? []).map((e) => [e.underlyingKey, e]));
   let carriedForward = 0;
+  let vetoed = 0;
 
   // --- resolve each underlying scheme --------------------------------------
   const entries: SchemeBenchmarkEntry[] = [];
   for (const scheme of universe.schemes) {
     const proxy = categoryProxyFor(scheme);
-    const cands = (candidates.get(scheme.underlyingKey) ?? []).slice().sort((a, b) => {
+    const cands = (candidates.get(scheme.underlyingKey) ?? [])
+      .filter((c) => {
+        if (!contradictsSchemeName(scheme, c.record)) return true;
+        vetoed += 1;
+        return false;
+      })
+      .sort((a, b) => {
       if (a.rank !== b.rank) return a.rank - b.rank;
       // Newer document wins within the same tier.
       return (b.documentDate ?? "").localeCompare(a.documentDate ?? "");
@@ -516,6 +541,7 @@ async function main(): Promise<void> {
   info(`wrote ${path.relative(process.cwd(), REGISTRY_PATH)}`);
   info(`wrote ${path.relative(process.cwd(), COVERAGE_PATH)}`);
 
+  info(`self-contradiction veto: ${vetoed} candidate(s) dropped for disagreeing with the scheme's own name`);
   printSummary(coverage, extractionLog, carriedForward);
 }
 
