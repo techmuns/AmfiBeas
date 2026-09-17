@@ -150,6 +150,10 @@ interface FundRank {
   classification: string | null;
   plan: Plan;
   option: OptionKind;
+  /** Last NAV date this fund's returns end on. Additive field: downstream
+   *  consumers need the fund's own window end to check that a benchmark return
+   *  covers a comparable period (see /api/returns-ranking). */
+  asOfNavDate: string;
   periodRanks: Partial<Record<PeriodKey, FundPeriodEntry>>;
 }
 
@@ -358,6 +362,7 @@ async function main(): Promise<void> {
       classification: f.classification,
       plan: f.plan,
       option: f.option,
+      asOfNavDate: f.asOfNavDate,
       periodRanks,
     };
   });

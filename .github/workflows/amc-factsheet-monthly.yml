@@ -9,6 +9,12 @@ name: AMC monthly portfolio fetch
 # (browser-fallback.ts), which needs Playwright's browser installed. Any AMC
 # still unresolved is recorded in index.json with a non-ok status rather than
 # dropped silently. Commits refreshed snapshots.
+#
+# The same run also refreshes the OFFICIAL SCHEME BENCHMARK REGISTRY
+# (public/nav-data/mf-scheme-benchmarks.json): AMC factsheets change monthly, so
+# this is the right cadence for re-reading each scheme's AMC-published benchmark
+# from its first-party document. Use mode=scheme-benchmarks to refresh ONLY that
+# registry without re-fetching holdings.
 
 on:
   schedule:
@@ -30,13 +36,14 @@ on:
         default: "false"
         type: string
       mode:
-        description: "monthly (default) = latest-month fetch (run-monthly.ts). backfill = last-6-months history seed (backfill-history.ts) — pair with `amcs` to target specific AMCs."
+        description: "monthly (default) = latest-month fetch (run-monthly.ts). backfill = last-6-months history seed (backfill-history.ts) — pair with `amcs` to target specific AMCs. scheme-benchmarks = refresh ONLY the official scheme-benchmark registry."
         required: false
         default: "monthly"
         type: choice
         options:
           - monthly
           - backfill
+          - scheme-benchmarks
 
 permissions:
   contents: write
@@ -60,6 +67,7 @@ jobs:
       - name: Install Playwright Chromium (browser fallback tier)
         run: npx playwright install --with-deps chromium
       - name: Fetch + parse AMC monthly portfolios
+        if: ${{ inputs.mode != 'scheme-benchmarks' }}
         env:
           AMC_ONLY: ${{ inputs.amcs }}
           AMC_BROWSER_DEBUG: ${{ inputs.debug == 'true' && '1' || '' }}
@@ -71,11 +79,12 @@ jobs:
             npx tsx scripts/ingest/amc-factsheets/run-monthly.ts
           fi
       - name: Rebuild AMC-direct tracker (universe + panels + crosswalk)
+        # Skipped in scheme-benchmarks mode: no holdings were fetched.
         # The MFs Portfolio Tracker is sourced entirely from AMC-direct filings
         # (build-amc-direct-tracker.ts). Safe after a filtered run too:
         # run-monthly MERGES index.json, and the builder reads ALL committed
         # amc-holdings files, so the universe/crosswalk stay complete.
-        if: ${{ github.event_name == 'schedule' || inputs.commit != 'false' }}
+        if: ${{ inputs.mode != 'scheme-benchmarks' && (github.event_name == 'schedule' || inputs.commit != 'false') }}
         run: npm run build:amc-direct
       - name: Rebuild Overview + Insights feeds from the refreshed AMC holdings
         # The Overview "buying & selling" (cap-flows), the sector-flow heatmap and
@@ -85,16 +94,58 @@ jobs:
         # rebuilt here to move to the new month. (% of o/s is attached from the
         # committed shares-outstanding feed; shares-outstanding.yml re-scrapes any
         # new names on its own schedule.)
-        if: ${{ github.event_name == 'schedule' || inputs.commit != 'false' }}
+        if: ${{ inputs.mode != 'scheme-benchmarks' && (github.event_name == 'schedule' || inputs.commit != 'false') }}
         run: |
           npm run build:cap-flows
           npm run build:sector-gross
           npm run build:insights-plus
           npm run build:stocks
+      - name: Refresh the official scheme-benchmark registry
+        # Re-reads each AMC's own factsheet / SID / KIM / scheme page and
+        # rebuilds public/nav-data/mf-scheme-benchmarks.json. Evidence already on
+        # record is CARRIED FORWARD when an AMC cannot be reached this run, so a
+        # single bot wall never demotes a verified mapping to "unmapped".
+        # Keep-last-good: a non-zero exit writes nothing and skips the commit.
+        env:
+          AMC_ONLY: ${{ inputs.amcs }}
+          AMC_BROWSER_DEBUG: ${{ inputs.debug == 'true' && '1' || '' }}
+        run: npm run build:scheme-benchmarks
+
+      - name: Validate the scheme-benchmark registry
+        run: npm run validate:scheme-benchmarks
+
+      - name: Scheme-benchmark regression tests
+        run: npm run test:scheme-benchmarks
+
+      - name: Upload scheme-benchmark artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scheme-benchmarks
+          path: |
+            public/nav-data/mf-scheme-benchmarks.json
+            public/nav-data/mf-scheme-benchmark-coverage.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Commit the refreshed scheme-benchmark registry
+        if: ${{ github.event_name == 'schedule' || inputs.commit != 'false' }}
+        run: |
+          PATHS="public/nav-data/mf-scheme-benchmarks.json public/nav-data/mf-scheme-benchmark-coverage.json"
+          if [ -z "$(git status --porcelain $PATHS)" ]; then
+            echo "No scheme-benchmark registry changes — nothing to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add $PATHS
+          git commit -m "chore(data): refresh official scheme-benchmark registry ($(date -u +%Y-%m-%d))"
+          bash scripts/ci/push-with-rebase.sh
+
       - name: Commit refreshed AMC holdings + tracker data
         # commit=false → test run (fetch + log only). A filtered run commits
         # safely because index.json is merged, not overwritten.
-        if: ${{ github.event_name == 'schedule' || inputs.commit != 'false' }}
+        if: ${{ inputs.mode != 'scheme-benchmarks' && (github.event_name == 'schedule' || inputs.commit != 'false') }}
         run: |
           PATHS="public/amc-holdings public/amc-portfolio public/holdings-direct public/stocks src/data/portfolio-tracker/amc-portfolio-crosswalk.json src/data/portfolio-tracker/amc-direct-index.json src/data/portfolio-tracker/cap-flows.json src/data/portfolio-tracker/sector-gross-flows.json src/data/portfolio-tracker/insights-plus.json"
           if [ -z "$(git status --porcelain $PATHS)" ]; then
