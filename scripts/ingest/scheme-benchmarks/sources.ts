@@ -35,6 +35,9 @@ export interface SchemeDocSource {
   referer?: string;
   /** Page is JS-rendered or bot-walled — needs the headless-browser tier. */
   browser?: boolean;
+  /** Never spend browser time here: this host hangs the renderer, and burning
+   *  two 25-second navigations on it costs every AMC after it in the queue. */
+  skipBrowser?: boolean;
 }
 
 /** Links that look like a monthly factsheet / fund-facts document. */
@@ -51,7 +54,7 @@ export const SCHEME_DOC_SOURCES: SchemeDocSource[] = [
   { slug: "angel-one", amc: "Angel One Mutual Fund", pages: ["https://www.angelonemf.com/downloads"], sourceType: "factsheet" },
   { slug: "axis", amc: "Axis Mutual Fund", pages: ["https://www.axismf.com/factsheet", "https://www.axismf.com/downloads"], sourceType: "factsheet", referer: "https://www.axismf.com/" },
   { slug: "bajaj-finserv", amc: "Bajaj Finserv Mutual Fund", pages: ["https://www.bajajamc.com/downloads", "https://www.bajajamc.com/factsheet"], sourceType: "factsheet" },
-  { slug: "bandhan", amc: "Bandhan Mutual Fund", pages: ["https://bandhanmutual.com/downloads/factsheet", "https://bandhanmutual.com/downloads"], sourceType: "factsheet" },
+  { slug: "bandhan", amc: "Bandhan Mutual Fund", pages: ["https://bandhanmutual.com/downloads/fund-factsheet", "https://bandhanmutual.com/downloads/factsheet", "https://bandhanmutual.com/downloads"], sourceType: "factsheet", browser: true },
   { slug: "bank-of-india", amc: "Bank of India Mutual Fund", pages: ["https://www.boimf.in/investor-corner", "https://www.boimf.in/downloads"], sourceType: "factsheet" },
   { slug: "baroda-bnp-paribas", amc: "Baroda BNP Paribas Mutual Fund", pages: ["https://www.barodabnpparibasmf.in/downloads/factsheet", "https://www.barodabnpparibasmf.in/downloads"], sourceType: "factsheet" },
   { slug: "canara-robeco", amc: "Canara Robeco Mutual Fund", pages: ["https://www.canararobeco.com/downloads/factsheet", "https://www.canararobeco.com/downloads"], sourceType: "factsheet" },
@@ -59,31 +62,31 @@ export const SCHEME_DOC_SOURCES: SchemeDocSource[] = [
   { slug: "choice", amc: "Choice Mutual Fund", pages: ["https://www.choicemf.com/disclosures/factsheet", "https://www.choicemf.com/disclosures"], sourceType: "factsheet", referer: "https://www.choicemf.com/" },
   { slug: "dsp", amc: "DSP Mutual Fund", pages: ["https://www.dspim.com/mandatory-disclosures/factsheet", "https://www.dspim.com/downloads"], sourceType: "factsheet" },
   { slug: "edelweiss", amc: "Edelweiss Mutual Fund", pages: ["https://www.edelweissmf.com/literature/factsheet", "https://www.edelweissmf.com/literature/disclosures?productType=All"], sourceType: "factsheet", browser: true },
-  { slug: "franklin-templeton", amc: "Franklin Templeton Mutual Fund", pages: ["https://www.franklintempletonindia.com/reports", "https://www.franklintempletonindia.com/investor/forms-and-downloads"], sourceType: "factsheet", referer: "https://www.franklintempletonindia.com/" },
+  { slug: "franklin-templeton", amc: "Franklin Templeton Mutual Fund", pages: ["https://www.franklintempletonindia.com/investor/forms-and-downloads", "https://www.franklintempletonindia.com/reports", "https://www.franklintempletonindia.com/downloads"], sourceType: "factsheet", referer: "https://www.franklintempletonindia.com/", browser: true },
   { slug: "groww", amc: "Groww Mutual Fund", pages: ["https://www.growwmf.in/statutory-disclosure/factsheet", "https://www.growwmf.in/statutory-disclosure"], sourceType: "factsheet" },
   { slug: "hdfc", amc: "HDFC Mutual Fund", pages: ["https://www.hdfcfund.com/mutual-funds/factsheets", "https://www.hdfcfund.com/statutory-disclosure"], sourceType: "factsheet", browser: true },
   { slug: "helios", amc: "Helios Mutual Fund", pages: ["https://www.heliosmf.in/downloads/", "https://www.heliosmf.in/"], sourceType: "factsheet" },
   { slug: "hsbc", amc: "HSBC Mutual Fund", pages: ["https://www.assetmanagement.hsbc.co.in/en/mutual-funds/investor-resources", "https://www.assetmanagement.hsbc.co.in/en/mutual-funds"], sourceType: "factsheet" },
-  { slug: "icici-pru", amc: "ICICI Prudential Mutual Fund", pages: ["https://www.icicipruamc.com/media-center/downloads", "https://www.icicipruamc.com/downloads"], sourceType: "factsheet" },
+  { slug: "icici-pru", amc: "ICICI Prudential Mutual Fund", pages: ["https://www.icicipruamc.com/media-center/downloads?currentTabFilter=Factsheet", "https://www.icicipruamc.com/media-center/downloads", "https://www.icicipruamc.com/downloads"], sourceType: "factsheet", browser: true },
   { slug: "invesco", amc: "Invesco Mutual Fund", pages: ["https://www.invescomutualfund.com/literature-and-form?tab=Factsheet", "https://www.invescomutualfund.com/literature-and-form?tab=Complete"], sourceType: "factsheet", referer: "https://www.invescomutualfund.com/" },
   { slug: "iti", amc: "ITI Mutual Fund", pages: ["https://www.itiamc.com/downloads", "https://www.itiamc.com/statuory-disclosure"], sourceType: "factsheet" },
-  { slug: "jio-blackrock", amc: "Jio BlackRock Mutual Fund", pages: ["https://www.jioblackrockmf.com/downloads", "https://www.jioblackrockmf.com/"], sourceType: "factsheet" },
+  { slug: "jio-blackrock", amc: "Jio BlackRock Mutual Fund", pages: ["https://www.jioblackrock.com/mutual-fund/downloads", "https://www.jioblackrock.com/mutual-fund", "https://www.jioblackrock.com/"], sourceType: "factsheet" },
   { slug: "jm-financial", amc: "JM Financial Mutual Fund", pages: ["https://www.jmfinancialmf.com/downloads/Factsheet", "https://www.jmfinancialmf.com/downloads"], sourceType: "factsheet", referer: "https://www.jmfinancialmf.com/" },
-  { slug: "kotak", amc: "Kotak Mahindra Mutual Fund", pages: ["https://www.kotakmf.com/Information/forms-and-downloads", "https://www.kotakmf.com/factsheet"], sourceType: "factsheet" },
+  { slug: "kotak", amc: "Kotak Mahindra Mutual Fund", pages: ["https://www.kotakmf.com/Information/forms-and-downloads", "https://www.kotakmf.com/Information/factsheet", "https://www.kotakmf.com/downloads"], sourceType: "factsheet", browser: true },
   { slug: "lic", amc: "LIC Mutual Fund", pages: ["https://www.licmf.com/downloads/factsheet", "https://www.licmf.com/downloads"], sourceType: "factsheet", referer: "https://www.licmf.com/" },
   { slug: "mahindra-manulife", amc: "Mahindra Manulife Mutual Fund", pages: ["https://www.mahindramanulife.com/downloads", "https://www.mahindramanulife.com/"], sourceType: "factsheet" },
   { slug: "mirae", amc: "Mirae Asset Mutual Fund", pages: ["https://www.miraeassetmf.co.in/downloads/factsheet", "https://www.miraeassetmf.co.in/downloads"], sourceType: "factsheet", browser: true },
-  { slug: "motilal-oswal", amc: "Motilal Oswal Mutual Fund", pages: ["https://www.motilaloswalmf.com/downloads/mutual-fund/factsheet", "https://www.motilaloswalmf.com/downloads"], sourceType: "factsheet" },
+  { slug: "motilal-oswal", amc: "Motilal Oswal Mutual Fund", pages: ["https://www.motilaloswalmf.com/downloads/factsheet", "https://www.motilaloswalmf.com/downloads", "https://www.motilaloswalmf.com/download/factsheet"], sourceType: "factsheet", browser: true },
   { slug: "navi", amc: "Navi Mutual Fund", pages: ["https://navi.com/mutual-fund/downloads", "https://navi.com/mutual-fund"], sourceType: "factsheet" },
   { slug: "nippon", amc: "Nippon India Mutual Fund", pages: ["https://mf.nipponindiaim.com/investor-service/downloads/factsheet-portfolio-and-other-disclosures", "https://mf.nipponindiaim.com/investor-service/downloads"], sourceType: "factsheet", referer: "https://mf.nipponindiaim.com/" },
   { slug: "nj", amc: "NJ Mutual Fund", pages: ["https://www.njmutualfund.com/downloads", "https://www.njmutualfund.com/"], sourceType: "factsheet" },
-  { slug: "old-bridge", amc: "Old Bridge Mutual Fund", pages: ["https://oldbridgemf.com/statutory-disclosures.html", "https://oldbridgemf.com/"], sourceType: "factsheet" },
+  { slug: "old-bridge", amc: "Old Bridge Mutual Fund", pages: ["https://oldbridgemf.com/factsheet.html", "https://oldbridgemf.com/statutory-disclosures.html"], sourceType: "factsheet", skipBrowser: true },
   { slug: "pgim-india", amc: "PGIM India Mutual Fund", pages: ["https://www.pgimindia.com/mutual-funds/disclosures/factsheet", "https://www.pgimindia.com/mutual-funds/disclosures"], sourceType: "factsheet", referer: "https://www.pgimindia.com/" },
   { slug: "ppfas", amc: "PPFAS Mutual Fund", pages: ["https://amc.ppfas.com/downloads/factsheet/", "https://amc.ppfas.com/downloads/"], sourceType: "factsheet" },
   { slug: "quant", amc: "quant Mutual Fund", pages: ["https://quantmutual.com/downloads", "https://www.quantmutual.com/downloads"], sourceType: "factsheet" },
   { slug: "quantum", amc: "Quantum Mutual Fund", pages: ["https://www.quantumamc.com/downloads", "https://www.quantumamc.com/"], sourceType: "factsheet" },
   { slug: "samco", amc: "Samco Mutual Fund", pages: ["https://www.samcomf.com/StatutoryDisclosure", "https://www.samcomf.com/downloads"], sourceType: "factsheet" },
-  { slug: "sbi", amc: "SBI Mutual Fund", pages: ["https://www.sbimf.com/docs/default-source/monthly-factsheet", "https://www.sbimf.com/forms-and-downloads"], sourceType: "factsheet", referer: "https://www.sbimf.com/" },
+  { slug: "sbi", amc: "SBI Mutual Fund", pages: ["https://www.sbimf.com/downloads", "https://www.sbimf.com/forms-and-downloads", "https://www.sbimf.com/investor-corner/downloads"], sourceType: "factsheet", referer: "https://www.sbimf.com/", browser: true },
   { slug: "shriram", amc: "Shriram Mutual Fund", pages: ["https://www.shriramamc.in/investor-statutory-disclosures", "https://www.shriramamc.in/downloads"], sourceType: "factsheet" },
   { slug: "sundaram", amc: "Sundaram Mutual Fund", pages: ["https://www.sundarammutual.com/factsheet", "https://www.sundarammutual.com/downloads"], sourceType: "factsheet" },
   { slug: "tata", amc: "Tata Mutual Fund", pages: ["https://www.tatamutualfund.com/downloads/factsheet", "https://www.tatamutualfund.com/downloads"], sourceType: "factsheet" },
@@ -92,7 +95,7 @@ export const SCHEME_DOC_SOURCES: SchemeDocSource[] = [
   { slug: "trust", amc: "Trust Mutual Fund", pages: ["https://www.trustmf.com/disclosures?activeTab=factsheet", "https://www.trustmf.com/disclosures"], sourceType: "factsheet" },
   { slug: "unifi", amc: "Unifi Mutual Fund", pages: ["https://unifimf.com/statutorydocuments/", "https://unifimf.com/"], sourceType: "factsheet" },
   { slug: "union", amc: "Union Mutual Fund", pages: ["https://www.unionmf.com/about-us/downloads", "https://www.unionmf.com/"], sourceType: "factsheet", referer: "https://www.unionmf.com/" },
-  { slug: "uti", amc: "UTI Mutual Fund", pages: ["https://www.utimf.com/downloads/fund-factsheet", "https://www.utimf.com/downloads"], sourceType: "factsheet" },
+  { slug: "uti", amc: "UTI Mutual Fund", pages: ["https://www.utimf.com/downloads/fund-factsheet", "https://www.utimf.com/forms-and-downloads", "https://www.utimf.com/downloads"], sourceType: "factsheet", browser: true },
   { slug: "whiteoak-capital", amc: "WhiteOak Capital Mutual Fund", pages: ["https://mf.whiteoakamc.com/downloads", "https://mf.whiteoakamc.com/regulatory-disclosures"], sourceType: "factsheet" },
   { slug: "zerodha", amc: "Zerodha Mutual Fund", pages: ["https://www.zerodhafundhouse.com/resources/disclosures", "https://www.zerodhafundhouse.com/"], sourceType: "factsheet" },
 ];

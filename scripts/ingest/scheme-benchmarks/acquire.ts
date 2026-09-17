@@ -30,7 +30,7 @@ const DOC_RE = /\.(pdf|htm|html|aspx)(\?|#|$)/i;
 const MAX_DOCS_PER_AMC = 3;
 const MAX_PDF_BYTES = 80 * 1024 * 1024;
 /** Hub pages to follow when the configured pages yield nothing. */
-const MAX_CRAWL_PAGES = 4;
+const MAX_CRAWL_PAGES = 6;
 /** Links that lead to a downloads/literature hub where factsheets are listed. */
 const HUB_LINK_RE = /(fact[\s_-]*sheet|fund[\s_-]*fact|download|literature|disclosure|statutory|forms[\s_-]*and|reports?)/i;
 
@@ -173,6 +173,14 @@ function sourceTypeFor(link: HarvestedLink, fallback: BenchmarkSourceType): Benc
   return fallback;
 }
 
+/** Akamai and friends answer curl with a full HTML "Access Denied" page, which
+ *  is long enough to look like a real response. Detect it so the browser tier
+ *  still gets its turn instead of the AMC being written off. */
+function isBotWall(html: string): boolean {
+  const head = html.slice(0, 4000);
+  return /access denied|reference\s*#|request unsuccessful|incapsula|cf-error|captcha|enable javascript to continue/i.test(head);
+}
+
 /** A listing page can itself be the evidence: plenty of AMCs render a
  *  "Scheme | Benchmark" table straight into the fund-list HTML. */
 function pageIsEvidence(text: string): boolean {
@@ -226,9 +234,9 @@ export async function acquireAmcDocuments(
     let html: string | null = curlText(pageUrl, source.referer);
     let via: AcquiredDocument["via"] = "curl";
 
-    if ((!html || html.length < 512) && (source.browser || opts.browser)) {
-      html = await renderPage(pageUrl, opts);
-      via = "browser";
+    if ((!html || html.length < 512 || isBotWall(html)) && !source.skipBrowser && (source.browser || opts.browser)) {
+      const rendered = await renderPage(pageUrl, opts);
+      if (rendered) { html = rendered; via = "browser"; }
     }
     if (!html) {
       if (opts.debug) warn(`[${source.slug}] no HTML from ${pageUrl}`);
@@ -241,7 +249,7 @@ export async function acquireAmcDocuments(
     }
 
     const ranked = rankLinks(harvestDocLinks(html, pageUrl), pageUrl);
-    if (ranked.length === 0 && crawled < MAX_CRAWL_PAGES) {
+    if (docs.length === 0 && crawled < MAX_CRAWL_PAGES) {
       // Nothing here — follow this page's own downloads/literature links rather
       // than giving up on the AMC because a guessed path moved.
       for (const hub of harvestHubLinks(html, pageUrl)) {
@@ -282,8 +290,8 @@ async function renderPage(url: string, opts: AcquireOptions): Promise<string | n
     const ctx = await newContext(opts.browser);
     try {
       const page = await ctx.newPage();
-      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60_000 });
-      await page.waitForTimeout(4000);
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 25_000 });
+      await page.waitForTimeout(3000);
       return await page.content();
     } finally {
       await ctx.close().catch(() => undefined);
