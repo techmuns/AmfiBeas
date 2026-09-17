@@ -121,7 +121,12 @@ export function periodBenchmark(
   fundReturn: number | null,
   fundAsOfNavDate: string | null,
   entry: SchemeBenchmarkEntry | undefined,
-  bench: BenchmarkTriSnapshot | null
+  bench: BenchmarkTriSnapshot | null,
+  /** The window the FUND's return was actually measured over, when the snapshot
+   *  carries it. A fund whose NAV series has a gap resolves a start date well
+   *  before the nominal period boundary, and comparing that against a benchmark
+   *  anchored on the boundary is exactly the mismatch we must refuse. */
+  fundWindow?: { startDate?: string | null; endDate?: string | null }
 ): PeriodBenchmarkResult {
   const base: PeriodBenchmarkResult = { ...NO_BENCHMARK_PERIOD };
   if (!entry || entry.mappingStatus === "unmapped" || !entry.currentBenchmark) return base;
@@ -154,9 +159,12 @@ export function periodBenchmark(
 
   // ---- date comparability -------------------------------------------------
   const spec = SPEC_BY_KEY.get(period);
-  if (fundAsOfNavDate && spec) {
-    const fundWindowStart = subPeriod(fundAsOfNavDate, spec.months, spec.years);
-    if (out.benchmarkToDate && Math.abs(daysBetween(out.benchmarkToDate, fundAsOfNavDate)) > END_DATE_TOLERANCE_DAYS) {
+  const fundEnd = fundWindow?.endDate ?? fundAsOfNavDate;
+  if (fundEnd && spec) {
+    // Prefer the fund's ACTUAL resolved start; fall back to the nominal window
+    // when an older snapshot does not carry it.
+    const fundWindowStart = fundWindow?.startDate ?? subPeriod(fundEnd, spec.months, spec.years);
+    if (out.benchmarkToDate && Math.abs(daysBetween(out.benchmarkToDate, fundEnd)) > END_DATE_TOLERANCE_DAYS) {
       return { ...out, excessVsOfficialBenchmark: null, benchmarkComparisonStatus: "benchmark-date-mismatch" };
     }
     if (out.benchmarkFromDate && Math.abs(daysBetween(out.benchmarkFromDate, fundWindowStart)) > START_DATE_TOLERANCE_DAYS) {

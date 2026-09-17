@@ -101,6 +101,10 @@ const CACHE_TTL_MS = 10 * 60 * 1000;
 
 interface RawRankStats {
   return?: number;
+  /** Window the fund's return was measured over (present on snapshots built
+   *  after the official-benchmark work). */
+  startDate?: string;
+  endDate?: string;
   rank?: number;
   peerCount?: number;
   percentile?: number;
@@ -230,6 +234,8 @@ function shapeStats(
     quartile: available ? s.quartile ?? null : null,
     statsAvailable: available,
     ...(available ? {} : { reason: s.reason ?? null }),
+    fundFromDate: s.startDate ?? null,
+    fundToDate: s.endDate ?? null,
     ...(benchmark ?? {}),
   };
   if (level === "standard") return standard;
@@ -301,6 +307,8 @@ function toCsv(
 
   const benchIdentityCols = ["status", "name", "key", "provider", "basis", "sourceType", "sourceUrl", "sourceDocumentDate", "effectiveFrom", "checkedAt"] as const;
   const benchPeriodCols = [
+    "fundFromDate",
+    "fundToDate",
     "officialBenchmarkReturn",
     "excessVsOfficialBenchmark",
     "benchmarkFromDate",
@@ -431,7 +439,10 @@ export async function GET(request: Request) {
         level === "compact"
           ? null
           : bench || entry
-            ? periodBenchmark(pk, num(stats?.return), asOfNavDate, entry, bench)
+            ? periodBenchmark(pk, num(stats?.return), asOfNavDate, entry, bench, {
+                startDate: stats?.startDate ?? null,
+                endDate: stats?.endDate ?? null,
+              })
             : { ...NO_BENCHMARK_PERIOD };
       returns[pk] = shapeStats(stats, level, benchmark);
     }

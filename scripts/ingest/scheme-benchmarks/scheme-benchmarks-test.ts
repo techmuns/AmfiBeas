@@ -377,6 +377,14 @@ function testDateMismatch(): void {
   check("…excess = fund − benchmark", aligned.excessVsOfficialBenchmark !== null && Math.abs(aligned.excessVsOfficialBenchmark - (12 - 10.92)) < 1e-9);
   check("…and the return is labelled an estimate", aligned.benchmarkReturnIsEstimate === true && aligned.benchmarkReturnMethod === "estimated-tri-from-pri-plus-dividend-yield");
 
+  // The fund's ACTUAL window, when the snapshot carries it, is what must match —
+  // a NAV gap can push a fund's 1M start weeks before the nominal boundary.
+  const gappy = periodBenchmark("1M", 3, "2026-09-16", entry(), BENCH, { startDate: "2026-06-03", endDate: "2026-09-16" });
+  check("a fund whose actual window is far wider than the benchmark's → benchmark-date-mismatch", gappy.benchmarkComparisonStatus !== "available", gappy.benchmarkComparisonStatus);
+
+  const exact = periodBenchmark("1Y", 12, "2026-09-16", entry(), BENCH, { startDate: "2025-09-16", endDate: "2026-09-16" });
+  check("a fund whose actual window matches → available", exact.benchmarkComparisonStatus === "available", exact.benchmarkComparisonStatus);
+
   const noFundReturn = periodBenchmark("1Y", null, "2026-09-16", entry(), BENCH);
   check("a fund with no return for the period → fund-return-missing", noFundReturn.benchmarkComparisonStatus === "fund-return-missing", noFundReturn.benchmarkComparisonStatus);
 
@@ -487,7 +495,7 @@ async function testApiContract(): Promise<void> {
       "every returned fund has an explicit benchmark status",
       body.funds.every((x) => ["official-mapped", "official-name-only", "unmapped"].includes((x.officialBenchmark as Record<string, unknown>).status as string))
     );
-    for (const k of ["officialBenchmarkReturn", "excessVsOfficialBenchmark", "benchmarkFromDate", "benchmarkToDate", "benchmarkReturnMethod", "benchmarkReturnIsEstimate", "benchmarkComparisonStatus"]) {
+    for (const k of ["fundFromDate", "fundToDate", "officialBenchmarkReturn", "excessVsOfficialBenchmark", "benchmarkFromDate", "benchmarkToDate", "benchmarkReturnMethod", "benchmarkReturnIsEstimate", "benchmarkComparisonStatus"]) {
       check(`period field "${k}" present`, k in r1y);
     }
     check(
