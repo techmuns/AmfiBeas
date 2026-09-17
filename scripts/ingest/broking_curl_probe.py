@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
-NSE reachability probe using curl_cffi (real-Chrome TLS/JA3 impersonation).
+NSE endpoint DISCOVERY probe using curl_cffi (real-Chrome TLS impersonation).
 
-The Playwright probe hit NSE's Akamai defence: an HTTP/2 reset, then a hang on
-HTTP/1.1. This tests the strongest free technique — impersonating a real
-Chrome's TLS + HTTP/2 fingerprint — to decide, decisively, whether NSE is
-blocking the *fingerprint* (beatable: curl_cffi gets 200s) or the GitHub-runner
-*IP* itself (not beatable for free: everything 403s/times out from this IP).
+curl_cffi reaches NSE where headless Chromium is blocked (confirmed: the
+homepage and /all-reports return 200). This pass mines the reachable pages for
+the active-clients-per-broker data endpoint: it warms cookies, fetches a set of
+candidate pages/APIs, and for each one prints the status plus any API paths,
+downloadable-file links (csv/xlsx/zip), and "active client / member" mentions it
+finds — so the real endpoint can be pinned.
 
-No writes — this only prints status + a content preview for each candidate URL.
-Run: pip install curl_cffi && python scripts/ingest/broking_curl_probe.py
+No writes. Run: pip install curl_cffi && python scripts/ingest/broking_curl_probe.py
 """
+import re
 import sys
 
 try:
@@ -21,51 +22,77 @@ except Exception as e:  # pragma: no cover
 
 IMPERSONATE = "chrome"
 HOME = "https://www.nseindia.com/"
-# Candidate URLs: the member page, plausible JSON APIs, and the less-protected
-# static archive host. We mainly want to know if ANY NSE host returns real 200s.
-CANDIDATES = [
-    ("home", HOME),
-    ("members-page", "https://www.nseindia.com/market-data/exchange-wise-active-members"),
-    ("api-exchange-wise", "https://www.nseindia.com/api/exchange-wise-active-members"),
-    ("api-active-members", "https://www.nseindia.com/api/active-members"),
-    ("all-reports-page", "https://www.nseindia.com/all-reports"),
-    ("archives-root", "https://nsearchives.nseindia.com/"),
+
+# Pages likely to reference the active-clients data or its API, plus direct API
+# guesses. curl_cffi follows the same cookie jar across them.
+PAGES = [
+    "https://www.nseindia.com/all-reports",
+    "https://www.nseindia.com/market-data/exchange-communication-circulars",
+    "https://www.nseindia.com/reports-indices-sp-cnx-nifty",
+    "https://www.nseindia.com/resources-membership",
 ]
+API_GUESSES = [
+    "https://www.nseindia.com/api/reports?archives=%5B%7B%22name%22%3A%22Active%20clients%22%2C%22type%22%3A%22archives%22%2C%22category%22%3A%22capital_market%22%2C%22section%22%3A%22equities%22%7D%5D&date=&type=equities&mode=single",
+    "https://www.nseindia.com/api/merged-daily-reports?key=favCapital",
+    "https://www.nseindia.com/api/allIndices",
+]
+
+API_RE = re.compile(r"/api/[A-Za-z0-9_\-/?=&%.:,{}\[\]\"]+")
+FILE_RE = re.compile(r"https?://[^\s\"'<>]+\.(?:csv|xlsx|xls|zip)", re.I)
+ARCHIVE_RE = re.compile(r"https?://nsearchives\.nseindia\.com[^\s\"'<>]+", re.I)
+ACTIVE_RE = re.compile(r".{0,60}active\s*clients?.{0,60}", re.I)
+
+
+def mine(label: str, url: str, session) -> None:
+    try:
+        r = session.get(url, timeout=30)
+    except Exception as e:
+        print(f"[ERR] {label:26} {url} -> {type(e).__name__}: {e}")
+        return
+    body = r.text or ""
+    print(f"[{r.status_code}] {label:26} {len(body):>8} B  {url}")
+    if r.status_code != 200 or len(body) < 200:
+        print(f"        preview: {body[:160]!r}")
+        return
+    apis = sorted(set(m.group(0) for m in API_RE.finditer(body)))[:25]
+    files = sorted(set(FILE_RE.findall(body) if False else (m.group(0) for m in FILE_RE.finditer(body))))[:15]
+    archives = sorted(set(m.group(0) for m in ARCHIVE_RE.finditer(body)))[:15]
+    actives = sorted(set(m.group(0).strip() for m in ACTIVE_RE.finditer(body)))[:8]
+    if apis:
+        print(f"        api paths ({len(apis)}): " + "; ".join(apis))
+    if files:
+        print(f"        file links: " + "; ".join(files))
+    if archives:
+        print(f"        archive links: " + "; ".join(archives))
+    if actives:
+        print(f"        'active client' hits:")
+        for a in actives:
+            print(f"          … {a!r}")
+    if not (apis or files or archives or actives):
+        print("        (no api/file/active-client references found)")
 
 
 def main() -> None:
-    print(f"curl_cffi probe — impersonate={IMPERSONATE}")
+    print(f"curl_cffi discovery — impersonate={IMPERSONATE}")
     session = requests.Session(impersonate=IMPERSONATE)
-    # Warm cookies from the homepage first (Akamai sets them there).
     try:
         r0 = session.get(HOME, timeout=30)
-        print(f"[warm] {HOME} -> {r0.status_code}, {len(r0.content)} bytes, "
-              f"cookies={list(session.cookies.keys())}")
+        print(f"[warm] {HOME} -> {r0.status_code}, cookies={list(session.cookies.keys())}")
     except Exception as e:
-        print(f"[warm] {HOME} -> EXCEPTION {type(e).__name__}: {e}")
-
-    print("================ NSE CURL PROBE ================")
-    any_ok = False
-    for label, url in CANDIDATES:
+        print(f"[warm] failed: {e}")
+    print("================ NSE DISCOVERY ================")
+    for url in PAGES:
+        mine(url.rsplit("/", 1)[-1] or "root", url, session)
+    print("---- direct API guesses ----")
+    for url in API_GUESSES:
         try:
             r = session.get(url, timeout=30)
             body = r.text or ""
-            preview = body[:180].replace("\n", " ")
-            ok = r.status_code == 200 and len(body) > 200
-            any_ok = any_ok or ok
-            print(f"[{'OK ' if ok else '   '}] {r.status_code} {label:18} {len(body):>8} B  {url}")
-            print(f"        preview: {preview!r}")
+            print(f"[{r.status_code}] {'api-guess':26} {len(body):>8} B  {url[:90]}")
+            print(f"        preview: {body[:220]!r}")
         except Exception as e:
-            print(f"[ERR] {label:18} {url} -> {type(e).__name__}: {e}")
-    print("===============================================")
-    if any_ok:
-        print("RESULT: curl_cffi reached NSE (fingerprint block is beatable). "
-              "Next: find the active-clients endpoint among the 200s / their XHRs.")
-    else:
-        print("RESULT: every NSE request failed from this runner IP. This is an "
-              "IP-level block, not a fingerprint block — no free client-side "
-              "technique will fetch NSE from GitHub Actions. Use the manual "
-              "monthly CSV drop (auto-deploys) instead.")
+            print(f"[ERR] api-guess {url[:80]} -> {type(e).__name__}: {e}")
+    print("==============================================")
 
 
 if __name__ == "__main__":

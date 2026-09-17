@@ -91,6 +91,10 @@ jobs:
           python3 scripts/ingest/broking_curl_probe.py
 
       - name: Refresh NSE active clients
+        # Skipped in probe mode: NSE blocks headless Chromium (proven), so probe
+        # mode now relies on the curl_cffi step above. Full/scheduled runs still
+        # go through here until the fetcher is ported to curl_cffi.
+        if: ${{ inputs.mode != 'probe' }}
         env:
           BROKING_MODE: ${{ inputs.mode || 'full' }}
           # Manual override wins; otherwise the pinned repo variable (empty until
