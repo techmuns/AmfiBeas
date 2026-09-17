@@ -515,6 +515,7 @@ function buildCoverage(registry: SchemeBenchmarkRegistry, universe: Universe): S
   let officialNameOnly = 0;
   let unmapped = 0;
   let proxyDisagreements = 0;
+  const proxyDisagreementList: SchemeBenchmarkCoverage["proxyDisagreementList"] = [];
   let staleSource = 0;
   let historyInsufficient = 0;
   const rows = { officialMapped: 0, officialNameOnly: 0, unmapped: 0, returnAvailable: 0 };
@@ -526,7 +527,18 @@ function buildCoverage(registry: SchemeBenchmarkRegistry, universe: Universe): S
     if (e.mappingStatus === "official-mapped") { officialMapped += 1; rows.officialMapped += n; rows.returnAvailable += n; }
     else if (e.mappingStatus === "official-name-only") { officialNameOnly += 1; rows.officialNameOnly += n; }
     else { unmapped += 1; rows.unmapped += n; }
-    if (e.proxyDisagreesWithOfficial) proxyDisagreements += 1;
+    if (e.proxyDisagreesWithOfficial) {
+      proxyDisagreements += 1;
+      proxyDisagreementList.push({
+        schemeName: e.schemeName,
+        amc: e.amc,
+        classification: e.classifications[0] ?? null,
+        officialBenchmarkName: e.currentBenchmark?.officialBenchmarkName ?? "",
+        officialBenchmarkKey: e.currentBenchmark?.canonicalBenchmarkKey ?? null,
+        categoryProxyBenchmarkKey: e.categoryProxyBenchmarkKey,
+        schemeCodes: e.schemeCodes,
+      });
+    }
 
     const rec = e.currentBenchmark;
     if (rec) {
@@ -588,6 +600,7 @@ function buildCoverage(registry: SchemeBenchmarkRegistry, universe: Universe): S
     byCanonicalKey: sortCounts(byKey),
     unsupportedBenchmarkFamilies: sortCounts(unsupportedFamilies),
     proxyDisagreements,
+    proxyDisagreementList: proxyDisagreementList.sort((a, b) => a.amc.localeCompare(b.amc) || a.schemeName.localeCompare(b.schemeName)),
   };
 }
 

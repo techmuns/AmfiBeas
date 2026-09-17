@@ -157,6 +157,18 @@ export interface SchemeBenchmarkCoverage {
   byCanonicalKey: CoverageCount[];
   unsupportedBenchmarkFamilies: CoverageCount[];
   proxyDisagreements: number;
+  /** The schemes where the OLD category-proxy model was actually misleading:
+   *  the AMC publishes a different index than the category proxy would have
+   *  assigned. Listed in full — this is the list that justifies the feature. */
+  proxyDisagreementList: Array<{
+    schemeName: string;
+    amc: string;
+    classification: string | null;
+    officialBenchmarkName: string;
+    officialBenchmarkKey: string | null;
+    categoryProxyBenchmarkKey: string | null;
+    schemeCodes: string[];
+  }>;
 }
 
 // ---------------------------------------------------------------------------

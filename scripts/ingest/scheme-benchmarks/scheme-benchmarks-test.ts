@@ -147,6 +147,7 @@ function emptyCoverage(over: Partial<SchemeBenchmarkCoverage> = {}): SchemeBench
     byCanonicalKey: [],
     unsupportedBenchmarkFamilies: [],
     proxyDisagreements: 0,
+    proxyDisagreementList: [],
     ...over,
   };
 }
