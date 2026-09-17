@@ -1,12 +1,29 @@
-# Broking data (manual upload)
+# Broking data
 
 The Broking / Capital Markets tab reads monthly NSE **active clients per member
-(broker)** from the CSV files in this folder. NSE publishes this data on
-nseindia.com (Members → "Active clients of members"); it's behind a bot-wall, so
-it can't be fetched automatically here and is refreshed by dropping the monthly
-file in this folder — the same manual-upload pattern as `manual-data/market/`.
+(broker)** from the CSV files in this folder. `scripts/build-broking.ts` turns
+the newest month into `src/data/snapshots/broking.json`, which the tab renders.
 
-## How to refresh (one step, then it auto-deploys)
+## Automated refresh (free, GitHub Actions)
+
+`.github/workflows/broking-active-clients.yml` refreshes this monthly for free.
+NSE serves the data only through nseindia.com, which is Akamai bot-walled, so the
+job drives a real (headless) browser to hold a session — the same technique the
+schemewise-holdings job uses. NSE's exact endpoint isn't documented, so it's
+**probe-first** (a one-time setup, then automatic forever):
+
+1. **Actions → "Broking active clients (monthly)" → Run workflow → mode: `probe`.**
+   It captures NSE's own API calls and uploads a `broking-probe` artifact listing
+   each endpoint and how many broker rows it parsed.
+2. Copy the endpoint the artifact flags as `LIKELY ENDPOINT` into the repo
+   **Actions variable `NSE_ACTIVE_CLIENTS_URL`** (Settings → Secrets and variables
+   → Actions → Variables). *(Configure this once — then it's automated forever.)*
+3. Done. The monthly schedule now fetches, writes
+   `active-clients-YYYY-MM.csv` (an official, non-sample file — the "sample data"
+   banner disappears), rebuilds the snapshot and commits. Any failed/blocked fetch
+   is skipped, never overwriting good data.
+
+## Manual refresh (fallback — one step, then it auto-deploys)
 
 1. Download the latest monthly "Active clients" list from NSE (or copy the top
    brokers' counts from the monthly report).

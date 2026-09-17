@@ -5,9 +5,10 @@
  * (see that folder's README) and writes src/data/snapshots/broking.json — the
  * static feed the Broking tab renders at build time.
  *
- * NSE publishes active-client counts on nseindia.com behind a bot-wall, so the
- * data can't be fetched automatically here; it's refreshed by dropping the
- * monthly file in, exactly like manual-data/market/. Files named
+ * NSE publishes active-client counts on nseindia.com behind a bot-wall. The
+ * monthly CSVs are refreshed either by the broking-active-clients workflow
+ * (scripts/ingest/broking-active-clients.ts — a headless-browser fetch) or by
+ * dropping the file in manually, exactly like manual-data/market/. Files named
  * `active-clients-YYYY-MM.sample.csv` are flagged as sample (the tab shows a
  * "sample data" banner until the newest month is an official, non-sample file).
  *

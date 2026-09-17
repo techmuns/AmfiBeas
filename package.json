@@ -44,7 +44,8 @@
     "build:amc-direct": "tsx scripts/build-amc-direct-tracker.ts",
     "build:amc-aggregation": "tsx scripts/ingest/amc-portfolio-aggregation.ts",
     "ingest:shares-outstanding": "tsx scripts/ingest/shares-outstanding.ts",
-    "ingest:holdings": "tsx scripts/ingest/holdings-tracker.ts"
+    "ingest:holdings": "tsx scripts/ingest/holdings-tracker.ts",
+    "ingest:broking": "tsx scripts/ingest/broking-active-clients.ts"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.19.6",
