@@ -159,8 +159,10 @@ const AMC_ALIASES: Array<[RegExp, string]> = [
   [/\bmutual fund\b/g, " "],
 ];
 
-// Strict tokens — must be present on both sides or neither.
-const CRITICAL_TOKENS = new Set<string>([
+// Strict tokens — must be present on both sides or neither. Exported so the
+// scheme-benchmark extractor can apply the same reject-don't-downgrade rule
+// when anchoring a scheme name inside a free-text AMC document.
+export const CRITICAL_TOKENS = new Set<string>([
   "next", "alpha", "momentum", "quality", "value", "low", "vol", "volatility",
   "equal", "weighted", "select", "edge",
   "midcap", "smallcap", "largecap", "micro",

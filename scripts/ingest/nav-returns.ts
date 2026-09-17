@@ -27,6 +27,14 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { info, nowIso, warn } from "./utils";
+import {
+  PERIOD_SPECS,
+  elapsedYears,
+  round4,
+  subPeriod,
+  type PeriodKey,
+  type PeriodSpec,
+} from "../../src/lib/return-periods";
 
 const MANIFEST_PATH = path.resolve(process.cwd(), "public/nav-data/mf-history-manifest.json");
 const HISTORY_DIR = path.resolve(process.cwd(), "public/nav-history");
@@ -114,8 +122,6 @@ interface HistoryFile {
   series: Array<[string, number]>; // ascending [isoDate, nav]
 }
 
-type PeriodKey = "1M" | "3M" | "6M" | "1Y" | "3Y" | "5Y" | "10Y";
-
 // Phase 3.6A/3.8A: 1M/3M/6M/1Y stay simple. 3Y and 5Y are annualized
 // (CAGR) using the actual elapsed years between the selected start and end
 // dates, not the nominal 3.0/5.0; this keeps the formula honest when
@@ -161,16 +167,6 @@ interface ReturnRow {
 // Date + return math (UTC, deterministic)
 // ---------------------------------------------------------------------------
 
-function subPeriod(iso: string, months: number, years: number): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  let ny = y - years;
-  let nm = m - months;
-  while (nm <= 0) { nm += 12; ny -= 1; }
-  const dim = new Date(Date.UTC(ny, nm, 0)).getUTCDate();
-  const nd = Math.min(d, dim);
-  return `${ny}-${String(nm).padStart(2, "0")}-${String(nd).padStart(2, "0")}`;
-}
-
 interface SeriesPoint { date: string; nav: number }
 
 function nearestPrior(series: SeriesPoint[], target: string): SeriesPoint | null {
@@ -179,34 +175,9 @@ function nearestPrior(series: SeriesPoint[], target: string): SeriesPoint | null
   return null;
 }
 
-function round4(n: number): number { return Math.round(n * 10000) / 10000; }
-
-// Elapsed years between two ISO YYYY-MM-DD dates, computed deterministically
-// in UTC. 365.25 absorbs leap years; the CAGR formula is forgiving enough
-// that this is more than accurate for fund-return reporting.
-function elapsedYears(startIso: string, endIso: string): number {
-  const [sy, sm, sd] = startIso.split("-").map(Number);
-  const [ey, em, ed] = endIso.split("-").map(Number);
-  const startMs = Date.UTC(sy, sm - 1, sd);
-  const endMs = Date.UTC(ey, em - 1, ed);
-  return (endMs - startMs) / (86400_000 * 365.25);
-}
-
-type PeriodSpec =
-  | { key: "1M" | "3M" | "6M" | "1Y"; months: number; years: number; kind: "simple" }
-  | { key: "3Y"; months: 0; years: 3; kind: "cagr" }
-  | { key: "5Y"; months: 0; years: 5; kind: "cagr" }
-  | { key: "10Y"; months: 0; years: 10; kind: "cagr" };
-
-const PERIODS: PeriodSpec[] = [
-  { key: "1M", months: 1, years: 0, kind: "simple" },
-  { key: "3M", months: 3, years: 0, kind: "simple" },
-  { key: "6M", months: 6, years: 0, kind: "simple" },
-  { key: "1Y", months: 0, years: 1, kind: "simple" },
-  { key: "3Y", months: 0, years: 3, kind: "cagr" },
-  { key: "5Y", months: 0, years: 5, kind: "cagr" },
-  { key: "10Y", months: 0, years: 10, kind: "cagr" },
-];
+/** Period definitions come from ./return-periods so the fund feed and the
+ *  benchmark feed stay byte-for-byte comparable. */
+const PERIODS: PeriodSpec[] = PERIOD_SPECS;
 
 function computeReturns(series: SeriesPoint[]): { returns: Partial<Record<PeriodKey, ReturnCell>>; availability: Record<PeriodKey, boolean> } {
   const returns: Partial<Record<PeriodKey, ReturnCell>> = {};

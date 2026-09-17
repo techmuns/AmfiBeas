@@ -31,6 +31,36 @@
  *   standard → + percentile, quartile, statsAvailable (default)
  *   full     → + categoryAverage, categoryMedian, excessVsAverage, excessVsMedian
  *
+ * OFFICIAL BENCHMARK (added; every existing field is unchanged)
+ * ------------------------------------------------------------
+ * Each fund carries `officialBenchmark` — the index the scheme's OWN AMC
+ * publishes for it, read from a first-party AMC document and joined from
+ * public/nav-data/mf-scheme-benchmarks.json. Every fund has an explicit
+ * `status`: official-mapped / official-name-only / unmapped. There is no silent
+ * fallback: a scheme we could not verify says so.
+ *
+ * This is NOT the category proxy. `categoryProxyBenchmarkKey` (the broad index
+ * CATEGORY_BENCHMARK assigns to the fund's AMFI category) is exposed alongside
+ * it purely as a diagnostic, and `proxyDisagreesWithOfficial` marks the funds
+ * where the two differ — the cases the old category-only model got wrong.
+ *
+ * At `standard`/`full`, each period additionally carries:
+ *   officialBenchmarkReturn, excessVsOfficialBenchmark, benchmarkFromDate,
+ *   benchmarkToDate, benchmarkReturnMethod, benchmarkReturnIsEstimate,
+ *   benchmarkComparisonStatus
+ *
+ * The benchmark IDENTITY is official; the benchmark RETURN is an ESTIMATE
+ * (reconstructed from NSE price levels + dividend yield — see
+ * scripts/build-benchmark-tri.ts), which is why every period states its
+ * `benchmarkReturnMethod` and `benchmarkReturnIsEstimate`. `excess…` is only
+ * populated when `benchmarkComparisonStatus === "available"`; a window that
+ * does not line up, an index we cannot price, or a benchmark that changed
+ * inside the period yields a status and a null, never a fabricated alpha.
+ *
+ * `categoryAverage` / `categoryMedian` / `excessVsAverage` / `excessVsMedian` /
+ * `rank` / `percentile` / `quartile` remain PEER statistics over the fund's
+ * cohort. They are unrelated to the official index benchmark.
+ *
  * `rank`, `percentile`, `quartile` are null when the cohort was too small to rank
  * (fewer than the snapshot's minPeerCount peers with that period); `return` is
  * still provided whenever the fund has one. A period a fund has no return for is
@@ -41,10 +71,23 @@
  * another origin can call it directly from the browser.
  */
 import { NextResponse } from "next/server";
+import {
+  NO_BENCHMARK_PERIOD,
+  indexRegistry,
+  officialBenchmarkView,
+  periodBenchmark,
+} from "@/lib/official-benchmark";
+import type { BenchmarkTriSnapshot } from "@/data/benchmark-tri";
+import type { SchemeBenchmarkEntry, SchemeBenchmarkRegistry } from "@/data/scheme-benchmarks";
 
 export const dynamic = "force-dynamic";
 
 const ASSET_PATH = "/nav-data/mf-category-returns.json";
+/** Official AMC-published benchmark per scheme + the estimated benchmark
+ *  returns. Both are small static assets built offline; the request path only
+ *  joins them, so latency is unchanged. */
+const BENCHMARK_REGISTRY_PATH = "/nav-data/mf-scheme-benchmarks.json";
+const BENCHMARK_RETURNS_PATH = "/nav-data/benchmark-tri.json";
 const PERIODS = ["1M", "3M", "6M", "1Y", "3Y", "5Y", "10Y"] as const;
 type PeriodKey = (typeof PERIODS)[number];
 
@@ -58,6 +101,10 @@ const CACHE_TTL_MS = 10 * 60 * 1000;
 
 interface RawRankStats {
   return?: number;
+  /** Window the fund's return was measured over (present on snapshots built
+   *  after the official-benchmark work). */
+  startDate?: string;
+  endDate?: string;
   rank?: number;
   peerCount?: number;
   percentile?: number;
@@ -76,6 +123,10 @@ interface RawFundRank {
   classification: string | null;
   plan: "direct" | "regular" | "unknown";
   option: "growth" | "idcw" | "unknown";
+  /** Present on snapshots built after the official-benchmark work; older
+   *  snapshots omit it and the comparability check falls back to the
+   *  snapshot-level asOfDate. */
+  asOfNavDate?: string;
   periodRanks: Partial<Record<PeriodKey, RawRankStats>>;
 }
 interface CategorySnapshot {
@@ -97,19 +148,23 @@ const CORS_HEADERS: Record<string, string> = {
 // let stale-while-revalidate hide the refresh from callers.
 const CACHE_HEADER = "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400";
 
-let cache: { at: number; snap: CategorySnapshot } | null = null;
+interface Snapshots {
+  snap: CategorySnapshot;
+  registry: SchemeBenchmarkRegistry | null;
+  bench: BenchmarkTriSnapshot | null;
+  byCode: Map<string, SchemeBenchmarkEntry>;
+}
+
+let cache: { at: number; data: Snapshots } | null = null;
 
 /**
- * Read the snapshot. On Cloudflare the file is a static asset served by the
- * ASSETS binding, so we fetch it in-process through that binding; under
- * `next dev` (plain Node) that binding is absent and we fall back to a
- * same-origin fetch, which the dev server serves from public/.
+ * Read a static asset. On Cloudflare the file is served by the ASSETS binding,
+ * so we fetch it in-process through that binding; under `next dev` (plain Node)
+ * that binding is absent and we fall back to a same-origin fetch, which the dev
+ * server serves from public/.
  */
-async function loadSnapshot(request: Request): Promise<CategorySnapshot> {
-  const now = Date.now();
-  if (cache && now - cache.at < CACHE_TTL_MS) return cache.snap;
-
-  const assetUrl = new URL(ASSET_PATH, request.url);
+async function loadAsset<T>(request: Request, assetPath: string): Promise<T> {
+  const assetUrl = new URL(assetPath, request.url);
   let res: Response | null = null;
   try {
     const mod = await import("@opennextjs/cloudflare");
@@ -121,20 +176,50 @@ async function loadSnapshot(request: Request): Promise<CategorySnapshot> {
     /* not running on Cloudflare — fall through to a plain fetch */
   }
   if (!res || !res.ok) res = await fetch(assetUrl);
-  if (!res.ok) throw new Error(`snapshot fetch failed: ${res.status}`);
+  if (!res.ok) throw new Error(`asset fetch failed: ${assetPath} ${res.status}`);
+  return (await res.json()) as T;
+}
 
-  const snap = (await res.json()) as CategorySnapshot;
-  cache = { at: now, snap };
-  return snap;
+/**
+ * Load the returns snapshot plus the two benchmark assets. The returns snapshot
+ * is mandatory; the benchmark registry and benchmark returns are OPTIONAL — a
+ * deployment without them keeps serving the pre-existing contract, with every
+ * fund reported as `unmapped` rather than failing the request.
+ */
+async function loadSnapshots(request: Request): Promise<Snapshots> {
+  const now = Date.now();
+  if (cache && now - cache.at < CACHE_TTL_MS) return cache.data;
+
+  const snap = await loadAsset<CategorySnapshot>(request, ASSET_PATH);
+  const [registry, bench] = await Promise.all([
+    loadAsset<SchemeBenchmarkRegistry>(request, BENCHMARK_REGISTRY_PATH).catch(() => null),
+    loadAsset<BenchmarkTriSnapshot>(request, BENCHMARK_RETURNS_PATH).catch(() => null),
+  ]);
+
+  const data: Snapshots = { snap, registry, bench, byCode: indexRegistry(registry) };
+  cache = { at: now, data };
+  return data;
 }
 
 function num(v: unknown): number | null {
   return typeof v === "number" && Number.isFinite(v) ? v : null;
 }
 
-/** Shape one period's stats for the API at the requested detail level. */
-function shapeStats(s: RawRankStats | undefined, level: FieldLevel) {
-  if (!s) return { return: null, rank: null, peerCount: null };
+/**
+ * Shape one period's stats for the API at the requested detail level.
+ *
+ * Existing fields keep their exact names, types and meanings. The official
+ * benchmark block is ADDED at standard/full — `compact` stays byte-minimal.
+ */
+function shapeStats(
+  s: RawRankStats | undefined,
+  level: FieldLevel,
+  benchmark: PeriodBenchmarkFields | null
+) {
+  if (!s) {
+    const empty = { return: null, rank: null, peerCount: null };
+    return level === "compact" || !benchmark ? empty : { ...empty, ...benchmark };
+  }
   const available = s.statsAvailable === true;
   const compact = {
     return: num(s.return),
@@ -149,6 +234,9 @@ function shapeStats(s: RawRankStats | undefined, level: FieldLevel) {
     quartile: available ? s.quartile ?? null : null,
     statsAvailable: available,
     ...(available ? {} : { reason: s.reason ?? null }),
+    fundFromDate: s.startDate ?? null,
+    fundToDate: s.endDate ?? null,
+    ...(benchmark ?? {}),
   };
   if (level === "standard") return standard;
 
@@ -160,6 +248,8 @@ function shapeStats(s: RawRankStats | undefined, level: FieldLevel) {
     excessVsMedian: num(s.excessVsMedian),
   };
 }
+
+type PeriodBenchmarkFields = ReturnType<typeof periodBenchmark>;
 
 function cohortKeyOf(f: RawFundRank): string {
   return `${f.classification ?? "(unclassified)"} | ${f.plan} | ${f.option}`;
@@ -177,7 +267,11 @@ function csvCell(v: unknown): string {
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-/** Flatten to one CSV row per fund: identity columns, then per-period columns. */
+/** Flatten to one CSV row per fund: identity columns, then per-period columns.
+ *
+ *  Backwards compatible by construction: every pre-existing column keeps its
+ *  name AND its position. The official-benchmark columns are APPENDED after all
+ *  of them, and only at `full`. */
 function toCsv(
   funds: Array<{
     schemecode: string;
@@ -186,6 +280,9 @@ function toCsv(
     plan: string;
     option: string;
     cohortKey: string;
+    // `full` (the only level whose CSV carries these) always gets the complete
+    // view; the compact summary is JSON-only.
+    officialBenchmark: Partial<ReturnType<typeof officialBenchmarkView>>;
     returns: Record<string, ReturnType<typeof shapeStats>>;
   }>,
   periods: PeriodKey[],
@@ -208,6 +305,20 @@ function toCsv(
             "excessVsMedian",
           ] as const);
 
+  const benchIdentityCols = ["status", "name", "key", "provider", "basis", "sourceType", "sourceUrl", "sourceDocumentDate", "effectiveFrom", "checkedAt"] as const;
+  const benchPeriodCols = [
+    "fundFromDate",
+    "fundToDate",
+    "officialBenchmarkReturn",
+    "excessVsOfficialBenchmark",
+    "benchmarkFromDate",
+    "benchmarkToDate",
+    "benchmarkReturnMethod",
+    "benchmarkReturnIsEstimate",
+    "benchmarkComparisonStatus",
+  ] as const;
+  const withBenchmark = level === "full";
+
   const header = [
     "schemecode",
     "fundName",
@@ -216,6 +327,12 @@ function toCsv(
     "option",
     "cohortKey",
     ...periods.flatMap((p) => perPeriodCols.map((c) => `${p}_${c}`)),
+    ...(withBenchmark
+      ? [
+          ...benchIdentityCols.map((c) => `officialBenchmark_${c}`),
+          ...periods.flatMap((p) => benchPeriodCols.map((c) => `${p}_${c}`)),
+        ]
+      : []),
   ];
 
   const lines = [header.map(csvCell).join(",")];
@@ -232,6 +349,14 @@ function toCsv(
       const cell = f.returns[p] as Record<string, unknown> | undefined;
       for (const c of perPeriodCols) row.push(cell ? cell[c] ?? null : null);
     }
+    if (withBenchmark) {
+      const ob = f.officialBenchmark as unknown as Record<string, unknown>;
+      for (const c of benchIdentityCols) row.push(ob[c] ?? null);
+      for (const p of periods) {
+        const cell = f.returns[p] as Record<string, unknown> | undefined;
+        for (const c of benchPeriodCols) row.push(cell ? cell[c] ?? null : null);
+      }
+    }
     lines.push(row.map(csvCell).join(","));
   }
   return lines.join("\r\n") + "\r\n";
@@ -245,15 +370,16 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const p = url.searchParams;
 
-  let snap: CategorySnapshot;
+  let loaded: Snapshots;
   try {
-    snap = await loadSnapshot(request);
+    loaded = await loadSnapshots(request);
   } catch {
     return NextResponse.json(
       { error: "Returns & ranking snapshot is unavailable.", funds: [] },
       { status: 502, headers: CORS_HEADERS }
     );
   }
+  const { snap, registry, bench, byCode } = loaded;
 
   // ---- parse + validate params ----------------------------------------------
   const levelParam = (p.get("fields") ?? "standard").toLowerCase();
@@ -301,8 +427,25 @@ export async function GET(request: Request) {
 
   // ---- shape -----------------------------------------------------------------
   const funds = page.map((f) => {
+    const entry = byCode.get(f.schemecode);
+    const benchmarkView = officialBenchmarkView(entry);
+    // The fund's own window end. Older snapshots omit it per row; the
+    // snapshot-level as-of date is the correct fallback there.
+    const asOfNavDate = f.asOfNavDate ?? snap.asOfDate ?? null;
     const returns: Record<string, ReturnType<typeof shapeStats>> = {};
-    for (const pk of periods) returns[pk] = shapeStats(f.periodRanks[pk], level);
+    for (const pk of periods) {
+      const stats = f.periodRanks[pk];
+      const benchmark =
+        level === "compact"
+          ? null
+          : bench || entry
+            ? periodBenchmark(pk, num(stats?.return), asOfNavDate, entry, bench, {
+                startDate: stats?.startDate ?? null,
+                endDate: stats?.endDate ?? null,
+              })
+            : { ...NO_BENCHMARK_PERIOD };
+      returns[pk] = shapeStats(stats, level, benchmark);
+    }
     return {
       schemecode: f.schemecode,
       fundName: f.fundName,
@@ -310,6 +453,14 @@ export async function GET(request: Request) {
       plan: f.plan,
       option: f.option,
       cohortKey: cohortKeyOf(f),
+      // Every fund carries an explicit mapping status at EVERY field level —
+      // "which benchmark is this scheme measured against, and do we actually
+      // know?" is not a detail-level question. `compact` gets the three fields
+      // that answer it; standard/full get the full provenance block.
+      officialBenchmark:
+        level === "compact"
+          ? { status: benchmarkView.status, key: benchmarkView.key, name: benchmarkView.name }
+          : benchmarkView,
       returns,
     };
   });
@@ -336,6 +487,20 @@ export async function GET(request: Request) {
       rankingBasis:
         "point-to-point return, ranked within cohort (classification | plan | option); 1M/3M/6M/1Y simple, 3Y/5Y/10Y CAGR",
       minPeerCount: snap.minPeerCount ?? null,
+      officialBenchmark: {
+        available: registry !== null,
+        registryGeneratedAt: registry?.generatedAt ?? null,
+        registryUniverseAsOfDate: registry?.universeAsOfDate ?? null,
+        sourcePolicy: registry?.sourcePolicy ?? null,
+        returnsGeneratedAt: bench?.generatedAt ?? null,
+        returnsAsOfDate: bench?.latestDate ?? null,
+        returnMethod: bench?.returnMethod ?? null,
+        returnIsEstimate: bench?.isEstimate ?? true,
+        note:
+          "officialBenchmark.* is the AMC-published benchmark for the scheme itself. " +
+          "categoryProxyBenchmarkKey is the broad category proxy and is NOT an official benchmark. " +
+          "categoryAverage / categoryMedian / excessVsAverage / excessVsMedian / rank / percentile / quartile are PEER statistics, not index comparisons.",
+      },
       periods,
       fields: level,
       total,

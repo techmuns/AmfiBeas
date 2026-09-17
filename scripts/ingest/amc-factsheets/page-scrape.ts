@@ -30,7 +30,7 @@ export interface PageScrapeConfig {
   referer?: string;
 }
 
-function curlText(url: string, referer?: string): string | null {
+export function curlText(url: string, referer?: string): string | null {
   try {
     const args = ["-fsL", "--max-time", "60", "-A", UA];
     if (referer) args.push("-H", `Referer: ${referer}`);

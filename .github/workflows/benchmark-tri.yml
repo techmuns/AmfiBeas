@@ -1,12 +1,23 @@
 name: Benchmark TRI estimate (daily)
 
-# Daily benchmark-TRI builder for the Active Fund Performance tab.
+# Daily benchmark-return builder.
 #
-# Reconstructs a TRI (total-return) CAGR estimate for each category benchmark
-# index (Nifty 500 / 100 / LargeMidcap 250 / Midcap 150 / Smallcap 250) from
-# NSE's ind_close_all CSV — price-return close plus the per-index dividend
-# yield — because niftyindices.com (the only source of TRI *levels*) blocks
-# scripted access. See scripts/build-benchmark-tri.ts for the method.
+# Reconstructs a TRI (total-return) ESTIMATE for every benchmark index the
+# system needs, from NSE's ind_close_all CSV — price-return close plus the
+# per-index dividend yield — because niftyindices.com (the only source of TRI
+# *levels*) blocks scripted access. See scripts/build-benchmark-tri.ts.
+#
+# The index universe is DRIVEN BY THE OFFICIAL SCHEME REGISTRY
+# (public/nav-data/mf-scheme-benchmarks.json): whichever NSE indices the AMCs'
+# own factsheets actually name get priced, unioned with the legacy category
+# proxies the Active Fund Performance tab reads. Indices from providers we
+# cannot price (BSE, CRISIL, MSCI, blended debt/hybrid) are deliberately NOT
+# substituted with a Nifty proxy — their schemes keep the official name and a
+# null return.
+#
+# Period anchors come from src/lib/return-periods.ts, the same module the NAV
+# feed uses, and the run anchors to the NAV snapshot's as-of date, so fund and
+# benchmark windows are comparable.
 #
 # Trigger model:
 #   • schedule (cron) — daily 18:00 UTC (23:30 IST). Sits after index-latest's
@@ -63,6 +74,11 @@ jobs:
         env:
           BENCHMARK_TRI_DATE: ${{ inputs.target_date }}
         run: npm run build:benchmark-tri
+      - name: Validate the scheme-benchmark join
+        # Confirms the registry and the freshly-built returns snapshot still
+        # agree (canonical keys resolve, official mappings keep their evidence).
+        # Non-fatal for the returns snapshot itself, which has its own guards.
+        run: npm run validate:scheme-benchmarks
       - name: Upload snapshot artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -85,4 +101,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/nav-data/benchmark-tri.json
           git commit -m "chore(data): refresh benchmark TRI estimate ($(date -u +%Y-%m-%d))"
-          bash scripts/ci/push-with-rebase.sh
+          # Push to the ref this run was dispatched on. On the scheduled run that
+          # IS main, so nothing changes there; on a manual dispatch against a
+          # branch it commits to that branch instead of trying to push branch
+          # work onto main (which the script would reject as a conflict).
+          bash scripts/ci/push-with-rebase.sh "${{ github.ref_name }}"

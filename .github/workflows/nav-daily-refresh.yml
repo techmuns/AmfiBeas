@@ -68,6 +68,15 @@ jobs:
         run: npm run ingest:nav:returns
       - name: Recompute category ranks
         run: npm run ingest:nav:category-returns
+      - name: Re-sync the official scheme-benchmark registry to the new universe
+        # OFFLINE: no scraping here. The daily NAV refresh can add or retire
+        # schemes, and every row /api/returns-ranking serves must carry an
+        # explicit benchmark status. Existing evidence is carried forward
+        # unchanged (the factsheet still says what it said); the monthly AMC job
+        # is what re-reads the source documents.
+        env:
+          SCHEME_BENCHMARKS_OFFLINE: "1"
+        run: npm run build:scheme-benchmarks
       # Derived analytics (ratios / rolling ranks / insights) run continue-on-error
       # so a failure in one of these SECONDARY snapshots can never discard the
       # core NAV commit below. Each script is keep-last-good (a failure leaves its

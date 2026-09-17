@@ -124,6 +124,12 @@ interface CategoryEntry {
 
 interface FundPeriodRank {
   return: number;
+  /** The window this return was actually measured over. Carried through from
+   *  mf-returns so downstream consumers can check a benchmark return covers a
+   *  comparable window — a fund whose NAV series has a gap can resolve a start
+   *  date well before the nominal period boundary. */
+  startDate: string;
+  endDate: string;
   rank: number;
   peerCount: number;
   percentile: number;
@@ -137,6 +143,8 @@ interface FundPeriodRank {
 }
 interface FundPeriodNoStats {
   return?: number;             // present when the fund has a return but the cohort lacks peers
+  startDate?: string;          // present whenever `return` is
+  endDate?: string;
   cohortKey: string;
   peerCount: number;           // n of the fund's cohort (could be 0)
   statsAvailable: false;
@@ -150,6 +158,10 @@ interface FundRank {
   classification: string | null;
   plan: Plan;
   option: OptionKind;
+  /** Last NAV date this fund's returns end on. Additive field: downstream
+   *  consumers need the fund's own window end to check that a benchmark return
+   *  covers a comparable period (see /api/returns-ranking). */
+  asOfNavDate: string;
   periodRanks: Partial<Record<PeriodKey, FundPeriodEntry>>;
 }
 
@@ -316,6 +328,8 @@ async function main(): Promise<void> {
       if (!ps || !rankMap) {
         periodRanks[p] = {
           return: round4(cell.value),
+          startDate: cell.startDate,
+          endDate: cell.endDate,
           cohortKey: key,
           peerCount: cohortFundsWithReturn,
           statsAvailable: false,
@@ -328,6 +342,8 @@ async function main(): Promise<void> {
         // Shouldn't happen given the filter above; defensive.
         periodRanks[p] = {
           return: round4(cell.value),
+          startDate: cell.startDate,
+          endDate: cell.endDate,
           cohortKey: key,
           peerCount: ps.n,
           statsAvailable: false,
@@ -339,6 +355,8 @@ async function main(): Promise<void> {
       const quartile = quartileFromPercentile(percentile);
       periodRanks[p] = {
         return: round4(cell.value),
+        startDate: cell.startDate,
+        endDate: cell.endDate,
         rank,
         peerCount: ps.n,
         percentile: round2(percentile),
@@ -358,6 +376,7 @@ async function main(): Promise<void> {
       classification: f.classification,
       plan: f.plan,
       option: f.option,
+      asOfNavDate: f.asOfNavDate,
       periodRanks,
     };
   });
