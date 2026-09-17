@@ -51,11 +51,14 @@ const TRACKING_DESCRIPTOR_RE =
 
 /** How far after the label we look for the index name. */
 const VALUE_WINDOW = 160;
-/** How far back from a benchmark label a scheme anchor may sit. A factsheet
- *  states a fund's benchmark in its own block, right under the heading; 2000
- *  characters reaches back through a whole neighbouring fund's block, which is
- *  how a target-maturity fund ends up wearing its neighbour's gilt index. */
-const MAX_ANCHOR_GAP = 700;
+/** How far back from a benchmark label a scheme anchor may sit.
+ *
+ *  A factsheet states a fund's benchmark in the fund's own block, within a few
+ *  lines of its heading. A generous gap only helps when the NEXT fund's heading
+ *  failed to anchor — and then it hurts, because that fund's benchmark gets
+ *  attached to the previous one. Keep it tight: a missed mapping is recoverable,
+ *  a wrong one is not. */
+const MAX_ANCHOR_GAP = 350;
 /** AMC-name tokens are optional inside an AMC's own document (headings often
  *  drop the house name), so they never count as REQUIRED tokens. */
 const OPTIONAL_TOKEN_MIN_SCHEMES = 1;
@@ -340,7 +343,9 @@ export function extractBenchmarks(
           if (a.charStart < limit) limit = a.charStart;
           if (a.charStart > limit) break;
         }
-        const extended = text.slice(valueStart, limit);
+        // A blank line ends the field group as surely as a heading does.
+        const para = text.slice(valueStart, limit).search(/\n[ \t]*\r?\n/);
+        const extended = para >= 0 ? text.slice(valueStart, valueStart + para) : text.slice(valueStart, limit);
         if (extended.length > sameLine.length) {
           const viaExtension = matchLongestBenchmark(extended);
           if (viaExtension) { window = extended; resolved = viaExtension; }

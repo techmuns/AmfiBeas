@@ -287,6 +287,11 @@ async function main(): Promise<void> {
 
   // --- gather documents per AMC -------------------------------------------
   const knownPages = new Map<string, string>();
+  /** AMCs whose OWN documents we actually re-read from the network this run.
+   *  For these, "no hit" is a real answer and must not be papered over with an
+   *  older record — otherwise a tightened reading rule could never correct a
+   *  mistake it made last month. */
+  const networkReadSlugs = new Set<string>();
   const docsByAmc = await descriptorDocuments(universe, knownPages);
   info(`tier 3 (committed AMC disclosures): ${docsByAmc.size} AMCs with scheme descriptors`);
 
@@ -313,6 +318,7 @@ async function main(): Promise<void> {
             continue;
           }
           docsByAmc.set(source.slug, [...docs, ...(docsByAmc.get(source.slug) ?? [])]);
+          networkReadSlugs.add(source.slug);
         } catch (e) {
           warn(`[${source.slug}] acquisition failed: ${(e as Error).message}`);
         }
@@ -406,8 +412,12 @@ async function main(): Promise<void> {
   // A run that could not reach an AMC (offline mode, AMC_ONLY, a bot wall that
   // day) must therefore KEEP that AMC's existing mappings rather than silently
   // demoting them to unmapped — otherwise the daily pipeline would erase what
-  // the monthly pipeline verified. Status is recomputed so a change in return
-  // support still takes effect.
+  // the monthly pipeline verified.
+  //
+  // It applies ONLY to AMCs we did not re-read. When we DID read an AMC's own
+  // documents and a scheme produced nothing, that is a real answer: keeping the
+  // old record would make every past mis-reading permanent, since a tightened
+  // rule produces fewer hits by design.
   const prev = await readPrevious();
   const prevByKey = new Map((prev.registry?.schemes ?? []).map((e) => [e.underlyingKey, e]));
   let carriedForward = 0;
@@ -429,7 +439,7 @@ async function main(): Promise<void> {
     if (contradictoryKeys.has(scheme.underlyingKey)) {
       unmappedReason = "contradictory benchmark evidence in one source document — not resolvable safely";
     } else if (cands.length === 0) {
-      const carried = prevByKey.get(scheme.underlyingKey);
+      const carried = networkReadSlugs.has(scheme.amcSlug) ? undefined : prevByKey.get(scheme.underlyingKey);
       if (carried?.currentBenchmark) {
         current = carried.currentBenchmark;
         history = carried.benchmarkHistory ?? [];
