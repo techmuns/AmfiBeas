@@ -212,7 +212,14 @@ function coalesce(rows: Row[]): Row[] {
 // Session
 // ---------------------------------------------------------------------------
 async function withSession<T>(fn: (req: APIRequestContext, page: Page) => Promise<T>): Promise<T> {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+    headless: true,
+    // NSE's Akamai edge resets HTTP/2 connections from headless Chromium
+    // (ERR_HTTP2_PROTOCOL_ERROR) as a bot defence; forcing HTTP/1.1 sidesteps
+    // its HTTP/2 frame fingerprinting. AutomationControlled off hides the
+    // obvious webdriver flag.
+    args: ["--disable-http2", "--disable-blink-features=AutomationControlled"],
+  });
   try {
     const ctx = await browser.newContext({
       userAgent:
@@ -228,13 +235,18 @@ async function withSession<T>(fn: (req: APIRequestContext, page: Page) => Promis
   }
 }
 
-async function establish(page: Page, url: string): Promise<void> {
-  try {
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: NAV_TIMEOUT_MS });
-    await page.waitForTimeout(2500);
-  } catch (e) {
-    warn(`nav to ${url} failed: ${(e as Error).message}`);
+async function establish(page: Page, url: string): Promise<boolean> {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: NAV_TIMEOUT_MS });
+      await page.waitForTimeout(2500);
+      return true;
+    } catch (e) {
+      warn(`nav to ${url} failed (attempt ${attempt}): ${(e as Error).message}`);
+      await sleep(1500 * attempt);
+    }
   }
+  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -286,9 +298,12 @@ async function runProbe(): Promise<void> {
 
     for (const seed of SEED_PAGES) {
       info(`probe: loading ${seed}`);
-      await establish(page, seed);
-      await page.waitForTimeout(1500);
+      const ok = await establish(page, seed);
+      const title = ok ? await page.title().catch(() => "?") : "-";
+      info(`probe:   ${ok ? "LOADED" : "FAILED"} ${seed}${ok ? ` (title: ${JSON.stringify(title)})` : ""}`);
+      await page.waitForTimeout(2000);
     }
+    info(`probe: captured ${captured.length} NSE response(s) from page traffic`);
     page.off("response", (r) => void onResp(r));
 
     // Direct tries of the candidate endpoints through the established session.
