@@ -1,21 +1,21 @@
 {
-  "generatedAt": "2026-09-17T21:26:12.907Z",
+  "generatedAt": "2026-09-17T22:03:31.208Z",
   "universeAsOfDate": "2026-09-16",
   "totalApiSchemeRows": 3439,
   "totalUnderlyingSchemes": 1771,
-  "officialMapped": 112,
+  "officialMapped": 111,
   "officialNameOnly": 109,
-  "unmapped": 1550,
-  "returnAvailable": 112,
-  "returnUnavailable": 1659,
+  "unmapped": 1551,
+  "returnAvailable": 111,
+  "returnUnavailable": 1660,
   "benchmarkHistoryInsufficient": 0,
   "staleSource": 8,
-  "coveragePct": 12.48,
+  "coveragePct": 12.42,
   "rows": {
-    "officialMapped": 198,
+    "officialMapped": 197,
     "officialNameOnly": 200,
-    "unmapped": 3041,
-    "returnAvailable": 198
+    "unmapped": 3042,
+    "returnAvailable": 197
   },
   "byAmc": [
     {
@@ -389,10 +389,10 @@
     {
       "amc": "Nippon India Mutual Fund",
       "total": 95,
-      "officialMapped": 22,
+      "officialMapped": 21,
       "officialNameOnly": 17,
-      "unmapped": 56,
-      "pct": 41.05
+      "unmapped": 57,
+      "pct": 40
     },
     {
       "amc": "DSP Mutual Fund",
@@ -797,6 +797,14 @@
       "pct": 18.18
     },
     {
+      "classification": "Equity : ETFs",
+      "total": 176,
+      "officialMapped": 24,
+      "officialNameOnly": 11,
+      "unmapped": 141,
+      "pct": 19.89
+    },
+    {
       "classification": "Metal : ETFs",
       "total": 25,
       "officialMapped": 0,
@@ -819,14 +827,6 @@
       "officialNameOnly": 1,
       "unmapped": 4,
       "pct": 20
-    },
-    {
-      "classification": "Equity : ETFs",
-      "total": 176,
-      "officialMapped": 25,
-      "officialNameOnly": 11,
-      "unmapped": 140,
-      "pct": 20.45
     },
     {
       "classification": "Debt : Low Duration",
@@ -872,7 +872,7 @@
   "byProvider": [
     {
       "key": "NSE Indices",
-      "count": 132
+      "count": 131
     },
     {
       "key": "CRISIL",
@@ -937,10 +937,6 @@
       "count": 4
     },
     {
-      "key": "NIFTY_PSU_BANK",
-      "count": 4
-    },
-    {
       "key": "BSE_200",
       "count": 3
     },
@@ -974,6 +970,10 @@
     },
     {
       "key": "NIFTY_LOW_DURATION_DEBT",
+      "count": 3
+    },
+    {
+      "key": "NIFTY_PSU_BANK",
       "count": 3
     },
     {
