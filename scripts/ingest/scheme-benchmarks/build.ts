@@ -64,6 +64,13 @@ const SOURCE_POLICY =
   "Third-party aggregators may be used for discovery but never as evidence. " +
   "AMFI category is never used to infer a benchmark.";
 
+/** Wall-clock budget for network acquisition. The monthly job has a 60-minute
+ *  timeout and ~50 AMCs behind it; a handful of slow hosts must not starve the
+ *  rest or push the job into a timeout, where NOTHING would be committed. When
+ *  the budget runs out the remaining AMCs simply keep their carried-forward
+ *  evidence and are re-tried next run. */
+const ACQUIRE_BUDGET_MS = Number(process.env.SCHEME_BENCHMARKS_BUDGET_MS ?? 32 * 60_000);
+
 /** Source priority (lower = stronger). */
 const SOURCE_RANK: Record<BenchmarkSourceType, number> = {
   "manual-override": 0,
@@ -286,8 +293,14 @@ async function main(): Promise<void> {
   if (!offline) {
     const wanted = SCHEME_DOC_SOURCES.filter((s) => (only.length === 0 || only.includes(s.slug)) && universe.byAmcSlug.has(s.slug));
     const browser = await maybeLaunchBrowser(wanted.some((s) => s.browser));
+    const deadline = Date.now() + ACQUIRE_BUDGET_MS;
+    let skippedForBudget = 0;
     try {
       for (const source of wanted) {
+        if (Date.now() > deadline) {
+          skippedForBudget += 1;
+          continue;
+        }
         try {
           const known = knownPages.get(source.slug);
           const docs = await acquireAmcDocuments(source, {
@@ -303,6 +316,9 @@ async function main(): Promise<void> {
         } catch (e) {
           warn(`[${source.slug}] acquisition failed: ${(e as Error).message}`);
         }
+      }
+      if (skippedForBudget > 0) {
+        warn(`acquisition budget exhausted — ${skippedForBudget} AMCs keep their existing evidence and are re-tried next run`);
       }
     } finally {
       await browser?.close().catch(() => undefined);
