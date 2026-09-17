@@ -1,0 +1,120 @@
+name: Broking active clients (monthly)
+
+# Monthly refresh of the Broking / Capital Markets tab from NSE's "active clients
+# per member (broker)" data (scripts/ingest/broking-active-clients.ts).
+#
+# NSE serves this only through www.nseindia.com, which is Akamai bot-walled, so —
+# exactly like the schemewise-holdings job — the scraper drives a real browser to
+# hold a session. The exact JSON endpoint isn't documented and can't be seen from
+# a blocked network, so the job is PROBE-FIRST:
+#
+#   1. Run once with mode = probe (workflow_dispatch). It loads NSE's member /
+#      all-reports pages, captures every API response they fire, and uploads a
+#      `broking-probe` artifact listing each endpoint + how many member rows it
+#      parsed into. Read it, pick the endpoint that returns the active-client
+#      rows.
+#   2. Save that URL as the repo/Actions variable NSE_ACTIVE_CLIENTS_URL
+#      (Settings → Secrets and variables → Actions → Variables).
+#   3. From then on the monthly schedule runs in `full` mode, writes
+#      manual-data/broking/active-clients-YYYY-MM.csv (an official, non-sample
+#      file — the "sample data" banner disappears), rebuilds the snapshot, and
+#      commits. All free; no manual step.
+#
+# Safety: any failure (blocked, endpoint moved, too few rows) exits non-zero and
+# the commit step is skipped, so a degraded fetch can never overwrite good data.
+
+on:
+  # NSE publishes a month's active-clients data in the first week of the next
+  # month; the 8th (20:00 UTC = 01:30 IST on the 9th) captures it comfortably.
+  schedule:
+    - cron: "0 20 8 * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "full = fetch + write + commit; probe = discover the endpoint (no writes)"
+        required: false
+        default: "full"
+        type: choice
+        options:
+          - "full"
+          - "probe"
+      endpoint:
+        description: "Override NSE_ACTIVE_CLIENTS_URL for this run (blank = use the repo variable)"
+        required: false
+        default: ""
+        type: string
+      month:
+        description: "Force the output month as YYYY-MM (blank = prior month)"
+        required: false
+        default: ""
+        type: string
+      commit:
+        description: "Commit the refreshed data? (false = run only)"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: broking-active-clients-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  broking:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Chromium
+        # NSE is session-gated (Akamai), so the scraper drives a real browser.
+        run: npx playwright install --with-deps chromium
+
+      - name: Refresh NSE active clients
+        env:
+          BROKING_MODE: ${{ inputs.mode || 'full' }}
+          # Manual override wins; otherwise the pinned repo variable (empty until
+          # the first probe run confirms the endpoint).
+          NSE_ACTIVE_CLIENTS_URL: ${{ inputs.endpoint != '' && inputs.endpoint || vars.NSE_ACTIVE_CLIENTS_URL }}
+          BROKING_MONTH: ${{ inputs.month }}
+        run: npm run ingest:broking
+
+      - name: Upload probe capture
+        if: ${{ always() && inputs.mode == 'probe' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: broking-probe
+          path: data/debug/broking-probe*.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Rebuild broking snapshot
+        # Only after a successful full fetch (keep-last-good non-zero exit skips
+        # this). Regenerates src/data/snapshots/broking.json from the new CSV.
+        if: ${{ success() && (inputs.mode || 'full') != 'probe' }}
+        run: npm run build:broking
+
+      - name: Commit refreshed broking data
+        # Scheduled runs always commit; manual runs honour the toggle and never
+        # commit in probe mode. Runs only when the fetch + rebuild SUCCEEDED.
+        if: ${{ success() && (github.event_name == 'schedule' || (inputs.mode == 'full' && inputs.commit == 'true')) }}
+        run: |
+          git add manual-data/broking src/data/snapshots/broking.json
+          if git diff --cached --quiet; then
+            echo "No broking changes."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(data): refresh NSE broking active clients ($(date -u +%Y-%m-%d))"
+          bash scripts/ci/push-with-rebase.sh
