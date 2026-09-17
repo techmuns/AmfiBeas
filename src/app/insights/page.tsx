@@ -45,19 +45,25 @@ const TIERS: CapTier[] = ["large", "mid", "small"];
 //  (positive / negative / muted / foreground), so it works in both themes.
 // ===========================================================================
 
-type Tone = "pos" | "neg" | "muted" | "accent";
+type Tone = "pos" | "neg" | "muted" | "accent" | "indigo";
 const TONE_TEXT: Record<Tone, string> = {
   pos: "text-positive",
   neg: "text-negative",
   muted: "text-muted-foreground",
   accent: "text-foreground",
+  indigo: "text-indigo-400",
 };
 const TONE_BAR: Record<Tone, string> = {
   pos: "bg-positive",
   neg: "bg-negative",
   muted: "bg-muted-foreground",
   accent: "bg-foreground",
+  indigo: "bg-indigo-500",
 };
+
+// Unique-id counter for each sparkline's gradient (safe: this page is
+// force-static, so it renders once at build time).
+let sparkSeq = 0;
 
 /** Tiny area+line sparkline. Pure SVG; colour rides `currentColor`. */
 function Spark({ values, tone = "pos" }: { values: number[]; tone?: Tone }) {
@@ -77,6 +83,7 @@ function Spark({ values, tone = "pos" }: { values: number[]; tone?: Tone }) {
     .map((p, i) => `${i === 0 ? "M" : "L"}${p[0].toFixed(1)},${p[1].toFixed(1)}`)
     .join(" ");
   const area = `${line} L${pts[pts.length - 1][0].toFixed(1)},${h - pad} L${pts[0][0].toFixed(1)},${h - pad} Z`;
+  const gid = `sparkgrad-${sparkSeq++}`;
   return (
     <svg
       viewBox={`0 0 ${w} ${h}`}
@@ -84,16 +91,89 @@ function Spark({ values, tone = "pos" }: { values: number[]; tone?: Tone }) {
       className={cn("h-10 w-full", TONE_TEXT[tone])}
       aria-hidden
     >
-      <path d={area} fill="currentColor" fillOpacity={0.12} />
+      <defs>
+        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="currentColor" stopOpacity={0.35} />
+          <stop offset="1" stopColor="currentColor" stopOpacity={0} />
+        </linearGradient>
+      </defs>
+      <path d={area} fill={`url(#${gid})`} />
       <path
         d={line}
         fill="none"
         stroke="currentColor"
-        strokeWidth={1.5}
+        strokeWidth={1.8}
         vectorEffect="non-scaling-stroke"
         strokeLinejoin="round"
         strokeLinecap="round"
       />
+    </svg>
+  );
+}
+
+/** Semicircular market-cycle gauge with a needle pointing at the current phase. */
+const GAUGE_ZONES = [
+  { label: "Base", color: "#3b82f6" },
+  { label: "Recovery", color: "#f59e0b" },
+  { label: "Expansion", color: "#22c55e" },
+  { label: "Peak", color: "#ef4444" },
+];
+function Gauge({ phase }: { phase: string }) {
+  const idx = GAUGE_ZONES.findIndex((z) => z.label.toLowerCase() === phase.toLowerCase());
+  const centreAngle = idx >= 0 ? 180 - (idx * 45 + 22.5) : 90;
+  const rad = (centreAngle * Math.PI) / 180;
+  const nx = 100 + 58 * Math.cos(rad);
+  const ny = 100 - 58 * Math.sin(rad);
+  const arcs = [
+    "M20,100 A80,80 0 0 1 43.4,43.4",
+    "M45.4,41.6 A80,80 0 0 1 100,20",
+    "M100,20 A80,80 0 0 1 154.6,41.6",
+    "M156.6,43.4 A80,80 0 0 1 180,100",
+  ];
+  return (
+    <svg viewBox="0 0 200 116" className="w-full max-w-[210px] text-foreground" aria-hidden>
+      {arcs.map((d, i) => (
+        <path key={i} d={d} fill="none" stroke={GAUGE_ZONES[i].color} strokeWidth={13}
+          strokeLinecap="round" opacity={idx === i ? 1 : 0.4} />
+      ))}
+      <line x1="100" y1="100" x2={nx.toFixed(1)} y2={ny.toFixed(1)} stroke="currentColor" strokeWidth={3.5} strokeLinecap="round" />
+      <circle cx="100" cy="100" r="5.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** SVG donut for a small composition (e.g. the conviction split). */
+function Donut({
+  segments,
+  centerTop,
+  centerBottom,
+}: {
+  segments: { value: number; color: string }[];
+  centerTop: string;
+  centerBottom: string;
+}) {
+  const total = segments.reduce((s, x) => s + Math.abs(x.value), 0) || 1;
+  const r = 40;
+  const circ = 2 * Math.PI * r;
+  const dashes = segments.map((s) => (Math.abs(s.value) / total) * circ);
+  const offsets = dashes.map((_, i) => dashes.slice(0, i).reduce((a, b) => a + b, 0));
+  return (
+    <svg viewBox="0 0 120 120" className="h-[132px] w-[132px] shrink-0 text-foreground" aria-hidden>
+      <g transform="rotate(-90 60 60)" fill="none" strokeWidth={16}>
+        {segments.map((s, i) => (
+          <circle
+            key={i}
+            cx="60"
+            cy="60"
+            r={r}
+            stroke={s.color}
+            strokeDasharray={`${dashes[i].toFixed(2)} ${(circ - dashes[i]).toFixed(2)}`}
+            strokeDashoffset={`${(-offsets[i]).toFixed(2)}`}
+          />
+        ))}
+      </g>
+      <text x="60" y="57" textAnchor="middle" fill="currentColor" fontSize="14" fontWeight="700">{centerTop}</text>
+      <text x="60" y="72" textAnchor="middle" fill="currentColor" fillOpacity="0.6" fontSize="9">{centerBottom}</text>
     </svg>
   );
 }
@@ -227,9 +307,10 @@ function DivergingBars({
               <div className="absolute inset-y-0 left-1/2 w-px bg-border" />
               <div
                 className={cn(
-                  "absolute inset-y-0",
-                  pos ? "left-1/2 rounded-r bg-positive" : "right-1/2 rounded-l bg-negative",
-                  "opacity-80"
+                  "absolute inset-y-0 shadow-sm",
+                  pos
+                    ? "left-1/2 rounded-r bg-gradient-to-r from-emerald-600 to-emerald-400"
+                    : "right-1/2 rounded-l bg-gradient-to-l from-rose-600 to-rose-400"
                 )}
                 style={{ width: `${pctW}%` }}
               />
@@ -540,45 +621,77 @@ export default function InsightsPage() {
         subtitle="The signals read out of every dataset on this dashboard — each one leads with the picture, then the detail."
       />
 
-      {/* ============ Hero signal strip ==================================== */}
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {sip && (
+      {/* ============ Bento hero =========================================== */}
+      <section className="space-y-3">
+        <div className="grid gap-3 lg:grid-cols-2">
+          {/* Insight of the month — SIP */}
+          {sip && (
+            <div className="relative flex flex-col overflow-hidden rounded-xl border bg-card p-5">
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-indigo-500/15 via-transparent to-transparent" />
+              <div className="relative flex flex-1 flex-col">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  ◆ Insight of the month
+                </div>
+                <p className="mt-2 text-[22px] font-bold leading-tight tracking-tight sm:text-[25px]">
+                  Monthly SIP has{" "}
+                  <span className="text-positive">doubled to ₹{fmtINR(sip.latestValue)} Cr</span>
+                </p>
+                <p className="mt-1.5 text-[13px] leading-snug text-muted-foreground">
+                  The structural bid under Indian equities — {fmtX(sip.multiple)} in 10 years,
+                  doubled in the last {sip.doubledInMonths ?? "—"} months.
+                </p>
+                <div className="mt-auto pt-5">
+                  <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-positive/30 bg-positive/15 px-2.5 py-0.5 text-[11px] font-semibold text-positive">
+                      ▲ {fmtX(sip.multiple)} · {sip.doubledInMonths ?? "—"} mo
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {monthLong(sip.firstMonth)} → {monthLong(sip.latestMonth)}
+                    </span>
+                  </div>
+                  <Spark values={sipSeries.map((p) => p.value)} tone="indigo" />
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Market-cycle gauge */}
+          <div className="relative flex flex-col rounded-xl border bg-card p-5">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Market-cycle phase
+            </div>
+            <div className="flex flex-1 flex-col items-center justify-center py-2">
+              <Gauge phase={currentPhase} />
+              <div className="mt-1 text-[22px] font-bold tracking-tight text-amber-500">{currentPhase}</div>
+              <div className="mt-1 text-center text-[11px] text-muted-foreground">
+                {nfo
+                  ? `NFO mobilisation runs ${fmtX(nfo.multiple)} hotter in bull phases`
+                  : "Active-equity flow z-score + Nifty 500 drawdown"}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {eqAum && (
+            <KpiTile
+              kicker="Industry equity AUM"
+              value={`₹${fmtINR(eqAum.latestValue)} Cr`}
+              delta={`${fmtX(eqAum.multiple)} in 7y`}
+              spark={aumSeries.slice(-36).map((p) => p.value)}
+              sparkTone="pos"
+              footnote={`Doubled in ${eqAum.doubledInMonths ?? "—"} months on flows + markets compounding together.`}
+            />
+          )}
           <KpiTile
-            kicker="Monthly SIP inflow"
-            value={`₹${fmtINR(sip.latestValue)} Cr`}
-            delta={`${fmtX(sip.multiple)} in 10y`}
-            spark={sipSeries.slice(-36).map((p) => p.value)}
-            footnote={`Doubled in the last ${sip.doubledInMonths ?? "—"} months — the structural bid under Indian equities.`}
+            kicker="Past performance persists?"
+            value={`${persistence.q1StayPct}%`}
+            footnote={`of past top-quartile funds stayed top-quartile (pure chance = 25%). ${streak24} active-equity categories are on 24+ month inflow streaks.`}
           />
-        )}
-        {eqAum && (
-          <KpiTile
-            kicker="Industry equity AUM"
-            value={`₹${fmtINR(eqAum.latestValue)} Cr`}
-            delta={`${fmtX(eqAum.multiple)} in 7y`}
-            spark={aumSeries.slice(-36).map((p) => p.value)}
-            footnote={`Doubled in ${eqAum.doubledInMonths ?? "—"} months on flows + markets compounding together.`}
-          />
-        )}
-        <KpiTile
-          kicker="Market-cycle phase"
-          value={currentPhase}
-          footnote={
-            nfo
-              ? `NFO mobilisation runs ${fmtX(nfo.multiple)} hotter in bull phases — last 3 months averaged ₹${fmtINR(nfo.latest3mAvg)} Cr.`
-              : "Active-equity flow z-score + Nifty 500 drawdown."
-          }
-        />
-        <KpiTile
-          kicker="Flow persistence"
-          value={`${streak24}`}
-          footnote={`active-equity categories with 24+ straight months of net inflows (8+ quarters). ${persistence.q1StayPct}% of past top-quartile funds stayed top-quartile.`}
-        />
+        </div>
       </section>
 
       {/* ============ 1. Structural bid (SIP + AUM, full history) ========== */}
       <section className="space-y-3">
-        <h2 className="text-sm font-medium tracking-tight">The structural bid</h2>
+        <h2 className="flex items-center gap-2 text-sm font-medium tracking-tight"><span className="h-2 w-2 shrink-0 rounded-sm bg-indigo-500" aria-hidden />The structural bid</h2>
         <div className="grid gap-4 lg:grid-cols-2">
           {sip && (
             <Card title="Monthly SIP contribution — full decade">
@@ -611,7 +724,7 @@ export default function InsightsPage() {
       {/* ============ 2. NFO × cycle ======================================= */}
       {nfo && (
         <section className="space-y-3">
-          <h2 className="text-sm font-medium tracking-tight">New funds chase the cycle</h2>
+          <h2 className="flex items-center gap-2 text-sm font-medium tracking-tight"><span className="h-2 w-2 shrink-0 rounded-sm bg-indigo-500" aria-hidden />New funds chase the cycle</h2>
           <Card title={`Average monthly NFO mobilisation by market phase (${monthLong(nfo.firstMonth)} → ${monthLong(nfo.lastMonth)})`}>
             <RankBars
               tone="accent"
@@ -638,7 +751,7 @@ export default function InsightsPage() {
 
       {/* ============ 3. Flow streaks ===================================== */}
       <section className="space-y-3">
-        <h2 className="text-sm font-medium tracking-tight">Categories on unbroken inflow runs</h2>
+        <h2 className="flex items-center gap-2 text-sm font-medium tracking-tight"><span className="h-2 w-2 shrink-0 rounded-sm bg-indigo-500" aria-hidden />Categories on unbroken inflow runs</h2>
         <Card
           title="Consecutive months of net inflow, by category"
           action={
@@ -674,7 +787,7 @@ export default function InsightsPage() {
 
       {/* ============ 4. Fund-house share shifts ========================== */}
       <section className="space-y-3">
-        <h2 className="text-sm font-medium tracking-tight">Who is winning equity share this month</h2>
+        <h2 className="flex items-center gap-2 text-sm font-medium tracking-tight"><span className="h-2 w-2 shrink-0 rounded-sm bg-indigo-500" aria-hidden />Who is winning equity share this month</h2>
         <Card
           title={`Active-equity book share — month-over-month move (${amcShare.months[0] ?? ""})`}
           action={
@@ -700,7 +813,7 @@ export default function InsightsPage() {
 
       {/* ============ 5. Conviction ledger ================================ */}
       <section className="space-y-3">
-        <h2 className="text-sm font-medium tracking-tight">Conviction ledger</h2>
+        <h2 className="flex items-center gap-2 text-sm font-medium tracking-tight"><span className="h-2 w-2 shrink-0 rounded-sm bg-indigo-500" aria-hidden />Conviction ledger</h2>
         <Card
           title={`Every position change, split four ways (${ledger.monthCur})`}
           action={
@@ -715,6 +828,32 @@ export default function InsightsPage() {
             <span className="text-positive">{q.new.companies}</span> new names (₹{fmtINR(q.new.totalCr)} Cr)
             and walked away from <span className="text-negative">{q.exited.companies}</span> (₹{fmtINR(q.exited.totalCr)} Cr).
           </p>
+          <div className="mb-4 flex flex-wrap items-center gap-6 rounded-lg border bg-muted/20 px-4 py-3">
+            <Donut
+              segments={[
+                { value: q.new.totalCr, color: "#22c55e" },
+                { value: q.increased.totalCr, color: "#4d7c4f" },
+                { value: q.decreased.totalCr, color: "#f59e0b" },
+                { value: q.exited.totalCr, color: "#ef4444" },
+              ]}
+              centerTop={`₹${fmtINR(q.new.totalCr + q.increased.totalCr + q.decreased.totalCr + q.exited.totalCr)}`}
+              centerBottom="Cr moved"
+            />
+            <div className="grid flex-1 grid-cols-1 gap-x-8 gap-y-2 text-[12px] sm:grid-cols-2">
+              {[
+                ["New positions", q.new.totalCr, "#22c55e"] as const,
+                ["Added to", q.increased.totalCr, "#4d7c4f"] as const,
+                ["Trimmed", q.decreased.totalCr, "#f59e0b"] as const,
+                ["Exited fully", q.exited.totalCr, "#ef4444"] as const,
+              ].map(([label, val, color]) => (
+                <div key={label} className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: color }} />
+                  <span className="text-muted-foreground">{label}</span>
+                  <span className="ml-auto font-semibold tabular">₹{fmtINR(val)} Cr</span>
+                </div>
+              ))}
+            </div>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <LedgerCard label="New positions" blurb="Nothing held last month — a fresh idea." quad={q.new} tone="buy" />
             <LedgerCard label="Added to" blurb="Existing holding increased." quad={q.increased} tone="buy" />
@@ -731,7 +870,7 @@ export default function InsightsPage() {
       {/* ============ 6. Contested stocks ================================= */}
       {contested.rows.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-sm font-medium tracking-tight">Where fund houses disagree</h2>
+          <h2 className="flex items-center gap-2 text-sm font-medium tracking-tight"><span className="h-2 w-2 shrink-0 rounded-sm bg-indigo-500" aria-hidden />Where fund houses disagree</h2>
           <Card
             title={`Most contested stocks — bought and sold in the same month (${contested.month})`}
             action={
@@ -779,7 +918,7 @@ export default function InsightsPage() {
       {/* ============ 7. Churn league ===================================== */}
       {churn.rows.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-sm font-medium tracking-tight">Who actually trades</h2>
+          <h2 className="flex items-center gap-2 text-sm font-medium tracking-tight"><span className="h-2 w-2 shrink-0 rounded-sm bg-indigo-500" aria-hidden />Who actually trades</h2>
           <Card
             title={`Monthly portfolio turnover by fund house (${churn.month})`}
             action={
@@ -813,7 +952,7 @@ export default function InsightsPage() {
 
       {/* ============ 8. Unique conviction bets =========================== */}
       <section className="space-y-3">
-        <h2 className="text-sm font-medium tracking-tight">Solo conviction bets</h2>
+        <h2 className="flex items-center gap-2 text-sm font-medium tracking-tight"><span className="h-2 w-2 shrink-0 rounded-sm bg-indigo-500" aria-hidden />Solo conviction bets</h2>
         <Card
           title={`Stocks held by exactly one fund house (${meta.monthCur})`}
           action={
@@ -863,7 +1002,7 @@ export default function InsightsPage() {
       {/* ============ 9. Sector rotation ================================== */}
       {rotation.rows.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-sm font-medium tracking-tight">Sector rotation</h2>
+          <h2 className="flex items-center gap-2 text-sm font-medium tracking-tight"><span className="h-2 w-2 shrink-0 rounded-sm bg-indigo-500" aria-hidden />Sector rotation</h2>
           <Card title={`Active-equity AUM-share shift by sector (${rotation.monthPrev} → ${rotation.month})`}>
             <DivergingBars
               labelWidth="10rem"
@@ -919,7 +1058,7 @@ export default function InsightsPage() {
 
       {/* ============ 10. Ownership moves ================================= */}
       <section className="space-y-3">
-        <h2 className="text-sm font-medium tracking-tight">Biggest ownership moves</h2>
+        <h2 className="flex items-center gap-2 text-sm font-medium tracking-tight"><span className="h-2 w-2 shrink-0 rounded-sm bg-indigo-500" aria-hidden />Biggest ownership moves</h2>
         <Card title={`MF stake changes as % of shares outstanding (${moves.month})`}>
           <DivergingBars
             labelWidth="11rem"
@@ -940,7 +1079,7 @@ export default function InsightsPage() {
       {/* ============ 11. Flows vs performance (quadrant map) ============= */}
       {flowsVsPerf.universe > 0 && (
         <section className="space-y-3">
-          <h2 className="text-sm font-medium tracking-tight">Does money reward performance?</h2>
+          <h2 className="flex items-center gap-2 text-sm font-medium tracking-tight"><span className="h-2 w-2 shrink-0 rounded-sm bg-indigo-500" aria-hidden />Does money reward performance?</h2>
           <Card
             title={`${flowsVsPerf.period} performance vs asset gathering (${flowsVsPerf.windowLabel})`}
             action={
@@ -1014,7 +1153,7 @@ export default function InsightsPage() {
       {/* ============ 12. Quartile persistence (heatmap) ================= */}
       {persistence.funds > 0 && (
         <section className="space-y-3">
-          <h2 className="text-sm font-medium tracking-tight">Does past performance persist?</h2>
+          <h2 className="flex items-center gap-2 text-sm font-medium tracking-tight"><span className="h-2 w-2 shrink-0 rounded-sm bg-indigo-500" aria-hidden />Does past performance persist?</h2>
           <Card
             title="Where the winners went — quartile transitions across two 3-year blocks"
             action={

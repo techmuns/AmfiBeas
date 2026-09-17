@@ -85,7 +85,7 @@ export function BrokingView() {
               </div>
               <div className="relative h-6 flex-1 overflow-hidden rounded bg-muted/40">
                 <div
-                  className="absolute inset-y-0 left-0 rounded bg-foreground/75"
+                  className="absolute inset-y-0 left-0 rounded bg-gradient-to-r from-indigo-500 to-violet-400 shadow-sm"
                   style={{ width: `${(b.activeClients / max) * 100}%` }}
                 />
               </div>
@@ -195,7 +195,7 @@ function TurnoverTable({ rows }: { rows: BrokerRow[] }) {
           <div className="w-32 shrink-0 truncate text-xs font-medium">{b.broker}</div>
           <div className="relative h-6 flex-1 overflow-hidden rounded bg-muted/40">
             <div
-              className="absolute inset-y-0 left-0 rounded bg-foreground/75"
+              className="absolute inset-y-0 left-0 rounded bg-gradient-to-r from-cyan-500 to-teal-400 shadow-sm"
               style={{ width: `${((b.turnoverCr ?? 0) / max) * 100}%` }}
             />
           </div>
