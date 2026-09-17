@@ -4,30 +4,14 @@ The Broking / Capital Markets tab reads monthly NSE **active clients per member
 (broker)** from the CSV files in this folder. `scripts/build-broking.ts` turns
 the newest month into `src/data/snapshots/broking.json`, which the tab renders.
 
-## Automated refresh (free, GitHub Actions)
+## How to refresh (recommended: manual monthly drop — then it auto-deploys)
 
-`.github/workflows/broking-active-clients.yml` refreshes this monthly for free.
-NSE serves the data only through nseindia.com, which is Akamai bot-walled, so the
-job drives a real (headless) browser to hold a session — the same technique the
-schemewise-holdings job uses. NSE's exact endpoint isn't documented, so it's
-**probe-first** (a one-time setup, then automatic forever):
+This is the reliable, free path — about 2 minutes a month:
 
-1. **Actions → "Broking active clients (monthly)" → Run workflow → mode: `probe`.**
-   It captures NSE's own API calls and uploads a `broking-probe` artifact listing
-   each endpoint and how many broker rows it parsed.
-2. Copy the endpoint the artifact flags as `LIKELY ENDPOINT` into the repo
-   **Actions variable `NSE_ACTIVE_CLIENTS_URL`** (Settings → Secrets and variables
-   → Actions → Variables). *(Configure this once — then it's automated forever.)*
-3. Done. The monthly schedule now fetches, writes
-   `active-clients-YYYY-MM.csv` (an official, non-sample file — the "sample data"
-   banner disappears), rebuilds the snapshot and commits. Any failed/blocked fetch
-   is skipped, never overwriting good data.
-
-## Manual refresh (fallback — one step, then it auto-deploys)
-
-1. Download the latest monthly "Active clients" list from NSE (or copy the top
-   brokers' counts from the monthly report).
-2. Save it here as `active-clients-YYYY-MM.csv` with this header:
+1. Get the latest monthly "Active clients" numbers from NSE (or copy the top
+   brokers' counts from any monthly report / news write-up — Business Standard,
+   ET, etc. republish them).
+2. Save them here as `active-clients-YYYY-MM.csv` with this header:
 
    ```
    broker,activeClients
@@ -37,9 +21,34 @@ schemewise-holdings job uses. NSE's exact endpoint isn't documented, so it's
    ```
 
    (Optionally add a `turnoverCr` column for average daily turnover per broker
-   when you have it — the tab will pick it up automatically.)
+   when you have it — the tab picks it up automatically.)
 3. Run `npm run build:broking` (CI also runs it on push), commit the refreshed
-   `src/data/snapshots/broking.json`, and the dashboard redeploys with it.
+   `src/data/snapshots/broking.json`, and the dashboard redeploys with it. The
+   "sample data" banner disappears once the newest file is a real (non-`.sample`)
+   CSV.
+
+## Why not fully automated? (NSE auto-fetch investigation, Sep 2026)
+
+We built and tested a GitHub Actions auto-fetcher
+(`.github/workflows/broking-active-clients.yml`). The honest result:
+
+- **Headless browsers are blocked.** NSE's Akamai edge blocks headless Chromium
+  from GitHub-runner IPs (HTTP/2 reset, then HTTP/1.1 hang) — so a Playwright
+  scraper can't fetch NSE from CI.
+- **curl_cffi reaches NSE.** A real-Chrome TLS/JA3-impersonating request
+  (`scripts/ingest/broking_curl_probe.py`) *does* get 200s from NSE's homepage,
+  `/all-reports` and `/api/*` from the same runners. The block is a fingerprint
+  block, and curl_cffi beats it — a reusable capability for other NSE data.
+- **…but this dataset isn't in NSE's free API.** NSE's discoverable report API
+  (`/api/merged-daily-reports`) is daily-only (bhavcopies etc.); per-broker
+  active clients is not in it, nor in the `/all-reports` catalog. That statistic
+  lives in NSE's monthly *Market Pulse* PDF / member portal, not a free
+  structured endpoint.
+
+So the manual drop above is the practical free path. If NSE ever exposes a
+structured active-clients endpoint, run the workflow in `mode: probe` to confirm
+it, set the `NSE_ACTIVE_CLIENTS_URL` Actions variable, and switch `mode: full`
+(and re-add a monthly `schedule`) — the fetch/parse/commit plumbing is ready.
 
 ## Status
 
