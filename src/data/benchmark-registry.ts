@@ -373,6 +373,12 @@ export function matchLongestBenchmark(window: string): ResolvedBenchmark | null 
     .replace(/^[\s:,.\u2010-\u2015-]+/, "")
     .replace(/^(index|benchmark)\b[\s:,-]*/i, "")
     .replace(/\s+/g, " ")
+    .trim()
+    // Drop a dangling close-paren the span picked up from a wrapping clause
+    // ("…tracking Nifty Auto Index)"), but keep a balanced "(TRI)".
+    .replace(/\)+$/, (m, offset: number, full: string) =>
+      (full.slice(0, offset).match(/\(/g)?.length ?? 0) >= m.length ? m : ""
+    )
     .trim();
   return { canonical, basis: detectBasis(rawName), rawName };
 }

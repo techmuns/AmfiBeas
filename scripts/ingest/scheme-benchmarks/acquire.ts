@@ -29,6 +29,10 @@ const DOC_RE = /\.(pdf|htm|html|aspx)(\?|#|$)/i;
  *  candidates is plenty and keeps the monthly job inside its time budget. */
 const MAX_DOCS_PER_AMC = 3;
 const MAX_PDF_BYTES = 80 * 1024 * 1024;
+/** Hub pages to follow when the configured pages yield nothing. */
+const MAX_CRAWL_PAGES = 4;
+/** Links that lead to a downloads/literature hub where factsheets are listed. */
+const HUB_LINK_RE = /(fact[\s_-]*sheet|fund[\s_-]*fact|download|literature|disclosure|statutory|forms[\s_-]*and|reports?)/i;
 
 export interface AcquiredDocument {
   /** First-party URL the text came from. */
@@ -180,6 +184,28 @@ export interface AcquireOptions {
   /** Reuse one browser across AMCs (the caller owns its lifecycle). */
   browser?: Browser | null;
   debug?: boolean;
+  /** Extra first-party pages to try after the configured ones — e.g. the
+   *  disclosure page the committed monthly-portfolio snapshot resolved to,
+   *  which is a page this repo already knows is reachable for that AMC. */
+  extraPages?: string[];
+}
+
+/** Anchors that look like a route to a downloads/literature hub, so a wrong
+ *  path guess in sources.ts can still be recovered from the site itself. */
+function harvestHubLinks(html: string, pageUrl: string): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const m of html.matchAll(/<a\b[^>]*\bhref="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi)) {
+    const text = m[2].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    let u: string;
+    try { u = new URL(decodeHtml(m[1].trim()), pageUrl).href; } catch { continue; }
+    if (DOC_RE.test(u)) continue; // that is a document, not a hub
+    if (!HUB_LINK_RE.test(`${u} ${text}`)) continue;
+    if (!isFirstParty(u, pageUrl) || seen.has(u)) continue;
+    seen.add(u);
+    out.push(u);
+  }
+  return out;
 }
 
 export async function acquireAmcDocuments(
@@ -189,7 +215,13 @@ export async function acquireAmcDocuments(
   const docs: AcquiredDocument[] = [];
   const tried = new Set<string>();
 
-  for (const pageUrl of source.pages) {
+  // Configured pages first, then anything the caller knows is reachable, then
+  // hub pages discovered on the AMC's own site (filled in below).
+  const queue = [...source.pages, ...(opts.extraPages ?? []).filter((u) => !DOC_RE.test(u))];
+  let crawled = 0;
+
+  for (let qi = 0; qi < queue.length; qi++) {
+    const pageUrl = queue[qi];
     if (docs.length >= MAX_DOCS_PER_AMC) break;
     let html: string | null = curlText(pageUrl, source.referer);
     let via: AcquiredDocument["via"] = "curl";
@@ -208,7 +240,19 @@ export async function acquireAmcDocuments(
       docs.push({ url: pageUrl, text: pageText, sourceType: "scheme-page", documentDate: documentDateFrom(pageText.slice(0, 4000)), via: via === "browser" ? "browser" : "page-html" });
     }
 
-    for (const link of rankLinks(harvestDocLinks(html, pageUrl), pageUrl)) {
+    const ranked = rankLinks(harvestDocLinks(html, pageUrl), pageUrl);
+    if (ranked.length === 0 && crawled < MAX_CRAWL_PAGES) {
+      // Nothing here — follow this page's own downloads/literature links rather
+      // than giving up on the AMC because a guessed path moved.
+      for (const hub of harvestHubLinks(html, pageUrl)) {
+        if (crawled >= MAX_CRAWL_PAGES) break;
+        if (queue.includes(hub)) continue;
+        queue.push(hub);
+        crawled += 1;
+      }
+    }
+
+    for (const link of ranked) {
       if (docs.length >= MAX_DOCS_PER_AMC) break;
       if (tried.has(link.url)) continue;
       tried.add(link.url);

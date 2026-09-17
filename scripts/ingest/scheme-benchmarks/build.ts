@@ -99,7 +99,10 @@ interface HoldingsSnapshot {
  * sentence comes from the AMC's own filing — so it is first-party evidence.
  * Read offline from files the monthly job already commits.
  */
-async function descriptorDocuments(universe: Universe): Promise<Map<string, AcquiredDocument[]>> {
+async function descriptorDocuments(
+  universe: Universe,
+  knownPages?: Map<string, string>
+): Promise<Map<string, AcquiredDocument[]>> {
   const out = new Map<string, AcquiredDocument[]>();
   let files: string[];
   try {
@@ -121,6 +124,9 @@ async function descriptorDocuments(universe: Universe): Promise<Map<string, Acqu
     const slug = holdingsSlugToUniverse.get(holdingsSlug) ?? holdingsSlug;
     const url = snap.sourceUrl ?? "";
     if (!/^https?:\/\//i.test(url)) continue; // no first-party URL → no evidence
+    // The disclosure page this repo already resolves for the AMC is a page we
+    // KNOW is reachable; hand it to the acquisition tier as an extra candidate.
+    if (knownPages && !/\.(xlsx?|zip|pdf)(\?|#|$)/i.test(url)) knownPages.set(slug, url);
     const names = (snap.schemes ?? []).map((s) => (s.schemeName ?? "").replace(/\s+/g, " ").trim()).filter(Boolean);
     if (names.length === 0) continue;
     const asOf = (snap.schemes ?? []).find((s) => s.asOf)?.asOf ?? null;
@@ -273,7 +279,8 @@ async function main(): Promise<void> {
     .filter(Boolean);
 
   // --- gather documents per AMC -------------------------------------------
-  const docsByAmc = await descriptorDocuments(universe);
+  const knownPages = new Map<string, string>();
+  const docsByAmc = await descriptorDocuments(universe, knownPages);
   info(`tier 3 (committed AMC disclosures): ${docsByAmc.size} AMCs with scheme descriptors`);
 
   if (!offline) {
@@ -282,7 +289,12 @@ async function main(): Promise<void> {
     try {
       for (const source of wanted) {
         try {
-          const docs = await acquireAmcDocuments(source, { browser, debug: process.env.AMC_BROWSER_DEBUG === "1" });
+          const known = knownPages.get(source.slug);
+          const docs = await acquireAmcDocuments(source, {
+            browser,
+            debug: process.env.AMC_BROWSER_DEBUG === "1",
+            extraPages: known ? [known] : [],
+          });
           if (docs.length === 0) {
             warn(`[${source.slug}] no official document acquired`);
             continue;
