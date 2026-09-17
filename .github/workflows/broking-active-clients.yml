@@ -80,6 +80,16 @@ jobs:
         # NSE is session-gated (Akamai), so the scraper drives a real browser.
         run: npx playwright install --with-deps chromium
 
+      - name: NSE reachability probe (curl_cffi TLS impersonation)
+        # Probe mode only. Decides whether NSE's block is fingerprint-level
+        # (curl_cffi's real-Chrome TLS/JA3 gets 200s → beatable) or an IP-level
+        # block of GitHub's runners (everything fails → no free fetch works).
+        if: ${{ inputs.mode == 'probe' }}
+        continue-on-error: true
+        run: |
+          python3 -m pip install --quiet "curl_cffi>=0.7"
+          python3 scripts/ingest/broking_curl_probe.py
+
       - name: Refresh NSE active clients
         env:
           BROKING_MODE: ${{ inputs.mode || 'full' }}

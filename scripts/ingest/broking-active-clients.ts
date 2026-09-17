@@ -75,7 +75,9 @@ const AJAX_HEADERS = {
   Referer: SEED_PAGES[0],
 };
 const FETCH_TIMEOUT_MS = 45_000;
-const NAV_TIMEOUT_MS = 90_000;
+// Short nav timeout: if NSE's edge is going to hang the connection (as it does
+// from GitHub-runner IPs) we want the probe to fail fast, not sit on retries.
+const NAV_TIMEOUT_MS = 20_000;
 
 // ---- knobs ---------------------------------------------------------------
 const argv = process.argv.slice(2);
