@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-17T20:07:59.636Z",
+  "generatedAt": "2026-09-17T20:16:19.476Z",
   "universeAsOfDate": "2026-09-16",
-  "universeGeneratedAt": "2026-09-17T19:43:17.591Z",
+  "universeGeneratedAt": "2026-09-17T20:10:54.206Z",
   "ruleVersion": 1,
   "sourcePolicy": "official = first-party AMC document only (factsheet > SID > KIM > scheme page > other official). Third-party aggregators may be used for discovery but never as evidence. AMFI category is never used to infer a benchmark.",
   "totalApiSchemeRows": 3439,
@@ -33,7 +33,7 @@
         "evidenceKind": "tracked-index-descriptor",
         "sourceUrl": "https://s3.ap-south-1.amazonaws.com/x-web-s3.360.one/IN_MF_MONTHLY_PORTFOLIO_July2026_94296a0535.xls",
         "sourceDocumentDate": "2026-07-31",
-        "checkedAt": "2026-09-17T20:07:59.636Z"
+        "checkedAt": "2026-09-17T20:16:19.476Z"
       },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -124,7 +124,7 @@
         "evidenceKind": "tracked-index-descriptor",
         "sourceUrl": "https://s3.ap-south-1.amazonaws.com/x-web-s3.360.one/IN_MF_MONTHLY_PORTFOLIO_July2026_94296a0535.xls",
         "sourceDocumentDate": "2026-07-31",
-        "checkedAt": "2026-09-17T20:07:59.636Z"
+        "checkedAt": "2026-09-17T20:16:19.476Z"
       },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -305,9 +305,21 @@
       "classifications": [
         "Debt : Low Duration"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL-IBX Financial Services 9-12",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -326,7 +338,7 @@
         "Equity : Mid Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_MIDCAP_150",
@@ -345,9 +357,21 @@
       "classifications": [
         "Debt : Medium to Long Duration"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL 10 Year Gilt Index",
+        "canonicalBenchmarkKey": "CRISIL_10_YEAR_GILT",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -365,9 +389,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL-IBX AAA NBFC-HFC Index Sep 2026",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -385,9 +421,21 @@
       "classifications": [
         "Debt : Medium to Long Duration"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL 10 Year Gilt Index",
+        "canonicalBenchmarkKey": "CRISIL_10_YEAR_GILT",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -405,9 +453,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL IBX AAA Financial Services Index Sep",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -425,9 +485,21 @@
       "classifications": [
         "Debt : Medium to Long Duration"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL 10 Year Gilt Index",
+        "canonicalBenchmarkKey": "CRISIL_10_YEAR_GILT",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -445,9 +517,21 @@
       "classifications": [
         "Debt"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL 10 Year Gilt Index",
+        "canonicalBenchmarkKey": "CRISIL_10_YEAR_GILT",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -465,9 +549,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL 10 Year Gilt Index",
+        "canonicalBenchmarkKey": "CRISIL_10_YEAR_GILT",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -485,9 +581,21 @@
       "classifications": [
         "Debt"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL 10 Year Gilt Index",
+        "canonicalBenchmarkKey": "CRISIL_10_YEAR_GILT",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -505,9 +613,21 @@
       "classifications": [
         "Debt"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL 10 Year Gilt Index",
+        "canonicalBenchmarkKey": "CRISIL_10_YEAR_GILT",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -525,9 +645,21 @@
       "classifications": [
         "Debt : Gilt"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL 10 Year Gilt Index",
+        "canonicalBenchmarkKey": "CRISIL_10_YEAR_GILT",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -546,7 +678,7 @@
         "Equity : Index"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -585,9 +717,21 @@
       "classifications": [
         "Debt : Ultra Short Duration"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL-IBX Financial Services 3-6",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -604,7 +748,7 @@
       ],
       "classifications": [],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -622,7 +766,7 @@
       ],
       "classifications": [],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -641,9 +785,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "BSE 500 Momentum 50 Total Return Index",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -661,9 +817,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "BSE 500 Quality 50 Total Return Index",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -681,9 +849,21 @@
       "classifications": [
         "Debt"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL Short Term Bond Index",
+        "canonicalBenchmarkKey": "CRISIL_FLOATING_RATE_DEBT",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -702,7 +882,7 @@
         "Equity : Index"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -721,7 +901,7 @@
         "Equity : ETFs"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -741,7 +921,7 @@
         "Equity : Index"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -761,7 +941,7 @@
         "Equity : Small Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_SMALLCAP_250",
@@ -781,7 +961,7 @@
         "Equity : Index Funds"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -799,7 +979,7 @@
       ],
       "classifications": [],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -819,7 +999,7 @@
         "Hybrid : Aggressive Hybrid"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -838,9 +1018,21 @@
       "classifications": [
         "FoFs : Domestic"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL Short Term Bond",
+        "canonicalBenchmarkKey": "CRISIL_FLOATING_RATE_DEBT",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -859,7 +1051,7 @@
         "Hybrid : Dynamic Asset Allocation"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -879,7 +1071,7 @@
         "Hybrid : Multi Asset Allocation"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -899,7 +1091,7 @@
         "Hybrid : Arbitrage"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -919,7 +1111,7 @@
         "Other : FoF"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -939,7 +1131,7 @@
         "Equity : Flexi Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -957,21 +1149,9 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "official-mapped",
-      "unmappedReason": null,
-      "currentBenchmark": {
-        "officialBenchmarkName": "Nifty Bank Index",
-        "canonicalBenchmarkKey": "NIFTY_BANK",
-        "benchmarkProvider": "NSE Indices",
-        "basis": "unknown",
-        "effectiveFrom": null,
-        "effectiveTo": null,
-        "sourceType": "other-official",
-        "evidenceKind": "tracked-index-descriptor",
-        "sourceUrl": "https://mutualfund.adityabirlacapital.com/forms-and-downloads/portfolio",
-        "sourceDocumentDate": "2026-08-31",
-        "checkedAt": "2026-09-17T20:07:59.636Z"
-      },
+      "mappingStatus": "unmapped",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
+      "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -989,9 +1169,21 @@
       "classifications": [
         "Debt : Banking & PSU"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Banking & PSU Debt Index",
+        "canonicalBenchmarkKey": "NIFTY_BANKING_AND_PSU_DEBT",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -1010,7 +1202,7 @@
         "Equity : Sectoral - Financial Services"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1033,7 +1225,7 @@
         "Debt : Corporate Bond"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1053,7 +1245,7 @@
         "Debt : Dynamic Bond"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1072,9 +1264,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "BSE India Infrastructure Total Return Index",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -1093,7 +1297,7 @@
         "Equity : Thematic"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -1113,7 +1317,7 @@
         "Equity : Flexi Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -1133,7 +1337,7 @@
         "Equity : Multi Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -1153,7 +1357,7 @@
         "Equity : Thematic"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -1173,7 +1377,7 @@
         "Equity : Thematic - Consumption"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1193,7 +1397,7 @@
         "Debt : Credit Risk"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1213,7 +1417,7 @@
         "Equity : Index Funds"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1233,7 +1437,7 @@
         "Equity : Sectoral - Technology"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1252,9 +1456,21 @@
       "classifications": [
         "Debt"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL 10 Year Gilt Index",
+        "canonicalBenchmarkKey": "CRISIL_10_YEAR_GILT",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -1272,9 +1488,21 @@
       "classifications": [
         "Debt : Low Duration"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Low Duration Debt Index",
+        "canonicalBenchmarkKey": "NIFTY_LOW_DURATION_DEBT",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -1293,7 +1521,7 @@
         "Equity : Tax Saving (ELSS)"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -1315,7 +1543,7 @@
         "Equity : Thematic - Consumption"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1335,7 +1563,7 @@
         "Equity : Thematic"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -1355,7 +1583,7 @@
         "Hybrid : Equity Savings"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1374,12 +1602,24 @@
       "classifications": [
         "Equity : Thematic"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 50 TRI",
+        "canonicalBenchmarkKey": "NIFTY_50",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
-      "proxyDisagreesWithOfficial": false
+      "proxyDisagreesWithOfficial": true
     },
     {
       "underlyingKey": "absl::aditya birla etf fof life silver sun",
@@ -1414,7 +1654,7 @@
         "Metal : ETFs"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1432,9 +1672,21 @@
       "classifications": [
         "Metal : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Price of silver",
+        "canonicalBenchmarkKey": "DOMESTIC_PRICE_OF_SILVER",
+        "benchmarkProvider": "Other / unclassified",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -1452,9 +1704,21 @@
       "classifications": [
         "Debt : Floater"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Low Duration Debt Index",
+        "canonicalBenchmarkKey": "NIFTY_LOW_DURATION_DEBT",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -1473,7 +1737,7 @@
         "Equity : Focused"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -1493,7 +1757,7 @@
         "Metal : MFs"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1511,7 +1775,7 @@
       ],
       "classifications": [],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1531,7 +1795,7 @@
         "Equity : Sectoral - Pharma"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1551,7 +1815,7 @@
         "Debt : Medium to Long Duration"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1571,7 +1835,7 @@
         "Equity : Sectoral - Infrastructure"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1591,7 +1855,7 @@
         "Equity : Large & Mid Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_LARGEMIDCAP_250",
@@ -1611,7 +1875,7 @@
         "Equity : Large Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_100",
@@ -1630,9 +1894,21 @@
       "classifications": [
         "Debt : Liquid"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Liquid Index",
+        "canonicalBenchmarkKey": "NIFTY_LIQUID",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -1651,7 +1927,7 @@
         "Equity : Sectoral - Auto"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1670,9 +1946,21 @@
       "classifications": [
         "Debt : Money Market"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL Money Market",
+        "canonicalBenchmarkKey": "CRISIL_MONEY_MARKET",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mutualfund.adityabirlacapital.com/-/media/bsl/files/resources/factsheets/2026/absl-factsheet_aug-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -1691,7 +1979,7 @@
         "Debt : Medium Duration"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1711,7 +1999,7 @@
         "Equity : Mid Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_MIDCAP_150",
@@ -1731,7 +2019,7 @@
         "Equity : Thematic - MNC"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1753,7 +2041,7 @@
         "Equity : Thematic"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -1773,7 +2061,7 @@
         "Equity : Thematic"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -1796,7 +2084,7 @@
         "Hybrid : Conservative Hybrid"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1816,7 +2104,7 @@
         "Debt : Short Duration"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -1836,7 +2124,7 @@
         "Equity : Small Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_SMALLCAP_250",
@@ -1856,7 +2144,7 @@
         "Equity : Value / Contra"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -1876,7 +2164,7 @@
         "Equity : Thematic - Dividend Yield"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -2110,9 +2398,21 @@
       "classifications": [
         "Equity : Index Funds"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 1...",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "scheme-page",
+        "evidenceKind": "tracked-index-descriptor",
+        "sourceUrl": "https://www.axismf.com/mutual-fund-knowledge-centre",
+        "sourceDocumentDate": "2026-09-30",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -6739,9 +7039,21 @@
       "classifications": [
         "Hybrid : Dynamic Asset Allocation"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL Hybrid 50+50 – Moderate Index",
+        "canonicalBenchmarkKey": "CRISIL_HYBRID_50_50_MODERATE",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.canararobeco.com/wp-content/uploads/2026/04/Retums-for-factsheets-March-2026.pdf",
+        "sourceDocumentDate": "2026-03-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -6879,12 +7191,24 @@
       "classifications": [
         "Equity : Multi Cap"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "NIFTY 500 Multicap 50:25:25 Index TRI",
+        "canonicalBenchmarkKey": "NIFTY_500_MULTICAP_50_25_25",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.canararobeco.com/wp-content/uploads/2026/04/Retums-for-factsheets-March-2026.pdf",
+        "sourceDocumentDate": "2026-03-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
-      "proxyDisagreesWithOfficial": false
+      "proxyDisagreesWithOfficial": true
     },
     {
       "underlyingKey": "canara-robeco::canara conservative hybrid robeco",
@@ -6920,7 +7244,7 @@
         "Equity : Thematic - Consumption"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -6940,7 +7264,7 @@
         "Debt"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -6960,7 +7284,7 @@
         "Equity : Tax Saving (ELSS)"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -7037,9 +7361,21 @@
         "542-D"
       ],
       "classifications": [],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL Ultra Short Duration Debt",
+        "canonicalBenchmarkKey": "CRISIL_ULTRA_SHORT_DURATION_DEBT",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.canararobeco.com/wp-content/uploads/2026/04/Retums-for-factsheets-March-2026.pdf",
+        "sourceDocumentDate": "2026-03-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -7057,9 +7393,21 @@
       "classifications": [
         "Equity : Sectoral - Infrastructure"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "NIFTY Large Midcap 250 TRI",
+        "canonicalBenchmarkKey": "NIFTY_LARGEMIDCAP_250",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.canararobeco.com/wp-content/uploads/2026/04/Retums-for-factsheets-March-2026.pdf",
+        "sourceDocumentDate": "2026-03-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -7078,7 +7426,7 @@
         "Equity : Large & Mid Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_LARGEMIDCAP_250",
@@ -7138,7 +7486,7 @@
         "Equity : Thematic"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -7157,9 +7505,21 @@
       "classifications": [
         "Equity : Mid Cap"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "BSE 150 Mid Cap TRI",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.canararobeco.com/wp-content/uploads/2026/04/Retums-for-factsheets-March-2026.pdf",
+        "sourceDocumentDate": "2026-03-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_MIDCAP_150",
       "proxyDisagreesWithOfficial": false
@@ -7236,7 +7596,7 @@
         "Equity : Small Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_SMALLCAP_250",
@@ -7374,9 +7734,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "BSE Top 10 Banks Index TRI",
+        "canonicalBenchmarkKey": "BSE_TOP_10_BANKS",
+        "benchmarkProvider": "BSE (Asia Index)",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -7393,9 +7765,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty500",
+        "canonicalBenchmarkKey": "NIFTY_500",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -7413,9 +7797,21 @@
       "classifications": [
         "Equity : Index Funds"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Top 10 Equal Weight TRI",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -7453,7 +7849,7 @@
         "Equity : Mid Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_MIDCAP_150",
@@ -7472,9 +7868,21 @@
       "classifications": [
         "Equity : Mid Cap"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Midcap 150 Index",
+        "canonicalBenchmarkKey": "NIFTY_MIDCAP_150",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "tracked-index-descriptor",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_MIDCAP_150",
       "proxyDisagreesWithOfficial": false
@@ -7571,9 +7979,21 @@
       "classifications": [
         "Equity : Small Cap"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Smallcap 250 TRI",
+        "canonicalBenchmarkKey": "NIFTY_SMALLCAP_250",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_SMALLCAP_250",
       "proxyDisagreesWithOfficial": false
@@ -7591,9 +8011,21 @@
       "classifications": [
         "Equity : Small Cap"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Smallcap 250 Index",
+        "canonicalBenchmarkKey": "NIFTY_SMALLCAP_250",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "tracked-index-descriptor",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_SMALLCAP_250",
       "proxyDisagreesWithOfficial": false
@@ -7611,9 +8043,21 @@
       "classifications": [
         "Equity : Flexi Cap"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty500",
+        "canonicalBenchmarkKey": "NIFTY_500",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
       "proxyDisagreesWithOfficial": false
@@ -7631,9 +8075,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "BSE SENSEX Next 30 TRI",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -7651,7 +8107,7 @@
         "Equity : ETFs"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -7670,9 +8126,21 @@
       "classifications": [
         "Equity : Index Funds"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "NIFTY 50 Equal Weight TRI",
+        "canonicalBenchmarkKey": "NIFTY_50_EQUAL_WEIGHT",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -7689,9 +8157,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Next 50 TRI",
+        "canonicalBenchmarkKey": "NIFTY_NEXT_50",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -7708,9 +8188,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 50 TRI",
+        "canonicalBenchmarkKey": "NIFTY_50",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -7728,9 +8220,21 @@
       "classifications": [
         "Equity : Index Funds"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Next 50 TRI",
+        "canonicalBenchmarkKey": "NIFTY_NEXT_50",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -7749,7 +8253,7 @@
         "Equity : Index Funds"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -7768,9 +8272,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 500 TRI",
+        "canonicalBenchmarkKey": "NIFTY_500",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -7828,9 +8344,21 @@
       "classifications": [
         "Hybrid : Multi Asset Allocation"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "NIFTY500 TRI",
+        "canonicalBenchmarkKey": "NIFTY_500",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -7848,9 +8376,21 @@
       "classifications": [
         "Hybrid : Arbitrage"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Equity Savings Index TRI",
+        "canonicalBenchmarkKey": "NIFTY_EQUITY_SAVINGS",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -7868,9 +8408,21 @@
       "classifications": [
         "FoFs : Overseas"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Next 50",
+        "canonicalBenchmarkKey": "NIFTY_NEXT_50",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -7888,7 +8440,7 @@
         "Equity : ETFs"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -7906,9 +8458,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Private Bank TRI",
+        "canonicalBenchmarkKey": "NIFTY_PRIVATE_BANK",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -7925,9 +8489,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty PSU Bank TRI",
+        "canonicalBenchmarkKey": "NIFTY_PSU_BANK",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -7945,9 +8521,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Bank TRI",
+        "canonicalBenchmarkKey": "NIFTY_BANK",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -7965,9 +8553,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Private Bank TRI",
+        "canonicalBenchmarkKey": "NIFTY_PRIVATE_BANK",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -8005,9 +8605,21 @@
       "classifications": [
         "Equity : Sectoral - Financial Services"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Financial Services TRI",
+        "canonicalBenchmarkKey": "NIFTY_FINANCIAL_SERVICES",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -8048,9 +8660,21 @@
       "classifications": [
         "Debt"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL Hybrid 85+15-Conservative",
+        "canonicalBenchmarkKey": "CRISIL_HYBRID_85_15_CONSERVATIVE",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -8087,9 +8711,21 @@
       "classifications": [
         "Debt : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "BSE Liquid Rate Index. A relatively low interest rate risk and relatively low credit risk.",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "tracked-index-descriptor",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -8106,9 +8742,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "BSE Sensex TRI",
+        "canonicalBenchmarkKey": "BSE_SENSEX",
+        "benchmarkProvider": "BSE (Asia Index)",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -8167,7 +8815,7 @@
         "Debt"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -8206,9 +8854,21 @@
       "classifications": [
         "Equity : Sectoral - Infrastructure"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "BSE India Infrastructure TRI",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -8226,9 +8886,21 @@
       "classifications": [
         "Equity : Tax Saving (ELSS)"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 500 (TRI)",
+        "canonicalBenchmarkKey": "NIFTY_500",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
       "proxyDisagreesWithOfficial": false
@@ -8264,9 +8936,21 @@
         "d-dsp-9-D"
       ],
       "classifications": [],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "35% BSE Oil & Gas Index + 30% BSE",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -8284,9 +8968,21 @@
       "classifications": [
         "FoFs : Overseas"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "MSCI All Country World Index (ACWI) -",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -8363,9 +9059,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "NIFTY FMCG Index TRI",
+        "canonicalBenchmarkKey": "NIFTY_FMCG",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -8422,9 +9130,21 @@
       "classifications": [
         "Metal : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Price of Gold",
+        "canonicalBenchmarkKey": "DOMESTIC_PRICE_OF_GOLD",
+        "benchmarkProvider": "Other / unclassified",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -8441,9 +9161,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "MSCI India Index (TRI)",
+        "canonicalBenchmarkKey": "MSCI_INDIA",
+        "benchmarkProvider": "MSCI",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -8460,9 +9192,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty IT TRI",
+        "canonicalBenchmarkKey": "NIFTY_IT",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -8480,7 +9224,7 @@
         "Metal : ETFs"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -8517,9 +9261,21 @@
       "classifications": [
         "Equity : Focused"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 500 (TRI)",
+        "canonicalBenchmarkKey": "NIFTY_500",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
       "proxyDisagreesWithOfficial": false
@@ -8558,7 +9314,7 @@
         "Equity : Sectoral - Pharma"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -8577,9 +9333,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Healthcare Index",
+        "canonicalBenchmarkKey": "NIFTY_HEALTHCARE",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "tracked-index-descriptor",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -8597,9 +9365,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty IT TRI",
+        "canonicalBenchmarkKey": "NIFTY_IT",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -8637,9 +9417,21 @@
       "classifications": [
         "Equity : Large Cap"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "NIFTY 100 Index TRI",
+        "canonicalBenchmarkKey": "NIFTY_100",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_100",
       "proxyDisagreesWithOfficial": false
@@ -8678,7 +9470,7 @@
         "Equity : Mid Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_MIDCAP_150",
@@ -8717,9 +9509,21 @@
       "classifications": [
         "Debt : Overnight"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL Liquid Overnight Index",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -8737,12 +9541,24 @@
       "classifications": [
         "Equity : Thematic"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "BSE 200 TRI",
+        "canonicalBenchmarkKey": "BSE_200",
+        "benchmarkProvider": "BSE (Asia Index)",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
-      "proxyDisagreesWithOfficial": false
+      "proxyDisagreesWithOfficial": true
     },
     {
       "underlyingKey": "dsp::dsp short term",
@@ -8757,9 +9573,21 @@
       "classifications": [
         "Debt : Short Duration"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "NIFTY 50 Arbitrage Index",
+        "canonicalBenchmarkKey": "NIFTY_50_ARBITRAGE",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -8798,7 +9626,7 @@
         "Equity : Small Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_SMALLCAP_250",
@@ -8817,9 +9645,21 @@
       "classifications": [
         "Equity : Value / Contra"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 500 TRI",
+        "canonicalBenchmarkKey": "NIFTY_500",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.dspim.com/downloads/dsp-factsheet-june-2026.pdf",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
       "proxyDisagreesWithOfficial": false
@@ -12557,7 +13397,7 @@
         "Hybrid : Dynamic Asset Allocation"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -12597,7 +13437,7 @@
         "Equity : Flexi Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -12615,7 +13455,7 @@
       ],
       "classifications": [],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -12635,7 +13475,7 @@
         "Equity : Large & Mid Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_LARGEMIDCAP_250",
@@ -12655,7 +13495,7 @@
         "Equity : Mid Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_MIDCAP_150",
@@ -12675,7 +13515,7 @@
         "Equity : Small Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_SMALLCAP_250",
@@ -12694,9 +13534,21 @@
       "classifications": [
         "Debt : Medium to Long Duration"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL IBX 50:50 Gilt Plus SDL Index – April 2028. Relatively",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "tracked-index-descriptor",
+        "sourceUrl": "https://www.assetmanagement.hsbc.co.in/assets/documents/mutual-funds/en/120eff73-6d17-43ce-a4c0-2d90c38d67c8/the-asset-factsheet-apr-2023.pdf",
+        "sourceDocumentDate": "2023-04-30",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -12714,9 +13566,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Next 50 TRI",
+        "canonicalBenchmarkKey": "NIFTY_NEXT_50",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.assetmanagement.hsbc.co.in/assets/documents/mutual-funds/en/120eff73-6d17-43ce-a4c0-2d90c38d67c8/the-asset-factsheet-apr-2023.pdf",
+        "sourceDocumentDate": "2023-04-30",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -12734,9 +13598,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 50 TRI",
+        "canonicalBenchmarkKey": "NIFTY_50",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.assetmanagement.hsbc.co.in/assets/documents/mutual-funds/en/120eff73-6d17-43ce-a4c0-2d90c38d67c8/the-asset-factsheet-apr-2023.pdf",
+        "sourceDocumentDate": "2023-04-30",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -12754,9 +13630,21 @@
       "classifications": [
         "Hybrid : Dynamic Asset Allocation"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 50 Hybrid",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.assetmanagement.hsbc.co.in/assets/documents/mutual-funds/en/120eff73-6d17-43ce-a4c0-2d90c38d67c8/the-asset-factsheet-apr-2023.pdf",
+        "sourceDocumentDate": "2023-04-30",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -12774,9 +13662,21 @@
       "classifications": [
         "Hybrid : Aggressive Hybrid"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "NIFTY 50 Hybrid Composite",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.assetmanagement.hsbc.co.in/assets/documents/mutual-funds/en/120eff73-6d17-43ce-a4c0-2d90c38d67c8/the-asset-factsheet-apr-2023.pdf",
+        "sourceDocumentDate": "2023-04-30",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -12894,9 +13794,21 @@
       "classifications": [
         "Equity : Thematic"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 500 TRI",
+        "canonicalBenchmarkKey": "NIFTY_500",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.assetmanagement.hsbc.co.in/assets/documents/mutual-funds/en/120eff73-6d17-43ce-a4c0-2d90c38d67c8/the-asset-factsheet-apr-2023.pdf",
+        "sourceDocumentDate": "2023-04-30",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
       "proxyDisagreesWithOfficial": false
@@ -12935,7 +13847,7 @@
         "Equity : Multi Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -12995,7 +13907,7 @@
         "Debt"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -13115,7 +14027,7 @@
         "Hybrid : Equity Savings"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -13193,12 +14105,24 @@
       "classifications": [
         "Equity : Focused"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 100 TRI",
+        "canonicalBenchmarkKey": "NIFTY_100",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.assetmanagement.hsbc.co.in/assets/documents/mutual-funds/en/120eff73-6d17-43ce-a4c0-2d90c38d67c8/the-asset-factsheet-apr-2023.pdf",
+        "sourceDocumentDate": "2023-04-30",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
-      "proxyDisagreesWithOfficial": false
+      "proxyDisagreesWithOfficial": true
     },
     {
       "underlyingKey": "hsbc::gilt hsbc",
@@ -13233,9 +14157,21 @@
       "classifications": [
         "Equity : Sectoral - Infrastructure"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "NIFTY Infrastructure",
+        "canonicalBenchmarkKey": "NIFTY_INFRASTRUCTURE",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.assetmanagement.hsbc.co.in/assets/documents/mutual-funds/en/120eff73-6d17-43ce-a4c0-2d90c38d67c8/the-asset-factsheet-apr-2023.pdf",
+        "sourceDocumentDate": "2023-04-30",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -13253,9 +14189,21 @@
       "classifications": [
         "Equity : Large & Mid Cap"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "NIFTY Large Midcap 250 TRI",
+        "canonicalBenchmarkKey": "NIFTY_LARGEMIDCAP_250",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.assetmanagement.hsbc.co.in/assets/documents/mutual-funds/en/120eff73-6d17-43ce-a4c0-2d90c38d67c8/the-asset-factsheet-apr-2023.pdf",
+        "sourceDocumentDate": "2023-04-30",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_LARGEMIDCAP_250",
       "proxyDisagreesWithOfficial": false
@@ -13273,9 +14221,21 @@
       "classifications": [
         "Equity : Large Cap"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 100 TRI",
+        "canonicalBenchmarkKey": "NIFTY_100",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.assetmanagement.hsbc.co.in/assets/documents/mutual-funds/en/120eff73-6d17-43ce-a4c0-2d90c38d67c8/the-asset-factsheet-apr-2023.pdf",
+        "sourceDocumentDate": "2023-04-30",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_100",
       "proxyDisagreesWithOfficial": false
@@ -13314,7 +14274,7 @@
         "Debt : Money Market"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -13334,7 +14294,7 @@
         "Equity : Mid Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_MIDCAP_150",
@@ -13353,9 +14313,21 @@
       "classifications": [
         "Debt : Overnight"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "NIFTY 1D Rate Index",
+        "canonicalBenchmarkKey": "NIFTY_1D_RATE",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.assetmanagement.hsbc.co.in/assets/documents/mutual-funds/en/120eff73-6d17-43ce-a4c0-2d90c38d67c8/the-asset-factsheet-apr-2023.pdf",
+        "sourceDocumentDate": "2023-04-30",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -13374,7 +14346,7 @@
         "Equity : Small Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_SMALLCAP_250",
@@ -13393,9 +14365,21 @@
       "classifications": [
         "Equity : Value / Contra"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 500 TRI",
+        "canonicalBenchmarkKey": "NIFTY_500",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.assetmanagement.hsbc.co.in/assets/documents/mutual-funds/en/120eff73-6d17-43ce-a4c0-2d90c38d67c8/the-asset-factsheet-apr-2023.pdf",
+        "sourceDocumentDate": "2023-04-30",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
       "proxyDisagreesWithOfficial": false
@@ -20052,7 +21036,7 @@
         "Equity : ETFs"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -20071,7 +21055,7 @@
         "Debt : ETFs"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -20089,9 +21073,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 100",
+        "canonicalBenchmarkKey": "NIFTY_100",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/09/lic-mf-factsheet-31st-august-2026-637762107.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -20109,9 +21105,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "NIFTY Next 50 Index(TRI)",
+        "canonicalBenchmarkKey": "NIFTY_NEXT_50",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "tracked-index-descriptor",
+        "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/09/lic-mf-factsheet-31st-august-2026-637762107.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -20209,9 +21217,21 @@
       "classifications": [
         "Hybrid : Arbitrage"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "NIFTY Equity Savings Index",
+        "canonicalBenchmarkKey": "NIFTY_EQUITY_SAVINGS",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/09/lic-mf-factsheet-31st-august-2026-637762107.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -20227,9 +21247,21 @@
         "19955-D"
       ],
       "classifications": [],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Financial Services",
+        "canonicalBenchmarkKey": "NIFTY_FINANCIAL_SERVICES",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/09/lic-mf-factsheet-31st-august-2026-637762107.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -20247,9 +21279,21 @@
       "classifications": [
         "Debt : Banking & PSU"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "NIFTY Banking & PSU Debt Index",
+        "canonicalBenchmarkKey": "NIFTY_BANKING_AND_PSU_DEBT",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/09/lic-mf-factsheet-31st-august-2026-637762107.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -20287,7 +21331,7 @@
         "Equity : Index"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -20326,9 +21370,21 @@
       "classifications": [
         "Equity : Multi Cap"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 500 TRI",
+        "canonicalBenchmarkKey": "NIFTY_500",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/09/lic-mf-factsheet-31st-august-2026-637762107.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
       "proxyDisagreesWithOfficial": false
@@ -20402,10 +21458,36 @@
       "classifications": [
         "Debt"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
-      "benchmarkHistory": [],
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL Medium to Long",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/09/lic-mf-factsheet-31st-august-2026-637762107.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
+      "benchmarkHistory": [
+        {
+          "officialBenchmarkName": "CRISIL Short Duration Debt",
+          "canonicalBenchmarkKey": "CRISIL_SHORT_DURATION_DEBT",
+          "benchmarkProvider": "CRISIL",
+          "basis": "unknown",
+          "effectiveFrom": null,
+          "effectiveTo": "2026-08-31",
+          "sourceType": "factsheet",
+          "evidenceKind": "labelled-benchmark-field",
+          "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/08/lic-mf-factsheet-31st-july-2026.pdf",
+          "sourceDocumentDate": "2026-07-31",
+          "checkedAt": "2026-09-17T20:16:19.476Z"
+        }
+      ],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
     },
@@ -20422,10 +21504,36 @@
       "classifications": [
         "Debt : Low Duration"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
-      "benchmarkHistory": [],
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL Low Duration",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/09/lic-mf-factsheet-31st-august-2026-637762107.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
+      "benchmarkHistory": [
+        {
+          "officialBenchmarkName": "CRISIL Ultra Short Duration Debt",
+          "canonicalBenchmarkKey": "CRISIL_ULTRA_SHORT_DURATION_DEBT",
+          "benchmarkProvider": "CRISIL",
+          "basis": "unknown",
+          "effectiveFrom": null,
+          "effectiveTo": "2026-08-31",
+          "sourceType": "factsheet",
+          "evidenceKind": "labelled-benchmark-field",
+          "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/08/lic-mf-factsheet-31st-july-2026.pdf",
+          "sourceDocumentDate": "2026-07-31",
+          "checkedAt": "2026-09-17T20:16:19.476Z"
+        }
+      ],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
     },
@@ -20443,7 +21551,7 @@
         "Debt"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -20462,9 +21570,21 @@
       "classifications": [
         "Debt"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL Ultra Short",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/09/lic-mf-factsheet-31st-august-2026-637762107.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -20482,9 +21602,21 @@
       "classifications": [
         "Equity : Tax Saving (ELSS)"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Crisil Hybrid 35 + 65 -",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/09/lic-mf-factsheet-31st-august-2026-637762107.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
       "proxyDisagreesWithOfficial": false
@@ -20502,9 +21634,21 @@
       "classifications": [
         "Hybrid"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Equity Savings Index",
+        "canonicalBenchmarkKey": "NIFTY_EQUITY_SAVINGS",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/09/lic-mf-factsheet-31st-august-2026-637762107.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -20520,7 +21664,7 @@
       ],
       "classifications": [],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -20595,9 +21739,21 @@
         "41330-D"
       ],
       "classifications": [],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "BSE Healthcare - TRI",
+        "canonicalBenchmarkKey": "BSE_HEALTHCARE",
+        "benchmarkProvider": "BSE (Asia Index)",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/09/lic-mf-factsheet-31st-august-2026-637762107.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -20617,9 +21773,21 @@
       "classifications": [
         "Equity : Sectoral - Infrastructure"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Infrastructure TRI",
+        "canonicalBenchmarkKey": "NIFTY_INFRASTRUCTURE",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/09/lic-mf-factsheet-31st-august-2026-637762107.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -20638,7 +21806,7 @@
         "Equity : Large & Mid Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_LARGEMIDCAP_250",
@@ -20657,9 +21825,21 @@
       "classifications": [
         "Equity : Large Cap"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 100 TRI",
+        "canonicalBenchmarkKey": "NIFTY_100",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/09/lic-mf-factsheet-31st-august-2026-637762107.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_100",
       "proxyDisagreesWithOfficial": false
@@ -20718,7 +21898,7 @@
         "Debt : Money Market"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -20737,12 +21917,24 @@
       "classifications": [
         "Equity : Mid Cap"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Midcap 100 TRI",
+        "canonicalBenchmarkKey": "NIFTY_MIDCAP_100",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/09/lic-mf-factsheet-31st-august-2026-637762107.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_MIDCAP_150",
-      "proxyDisagreesWithOfficial": false
+      "proxyDisagreesWithOfficial": true
     },
     {
       "underlyingKey": "lic::lic mf overnight",
@@ -20757,9 +21949,21 @@
       "classifications": [
         "Debt : Overnight"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Crisil Hybrid 35 + 65 - Aggressive Index",
+        "canonicalBenchmarkKey": "CRISIL_HYBRID_35_65_AGGRESSIVE",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/09/lic-mf-factsheet-31st-august-2026-637762107.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -20777,12 +21981,24 @@
       "classifications": [
         "Equity : Small Cap"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "NIFTY 500 Multicap 50:25:25 TRI",
+        "canonicalBenchmarkKey": "NIFTY_500_MULTICAP_50_25_25",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://www.licmf.com/assets/downloads/monthly_fact_sheet/2026-2027/09/lic-mf-factsheet-31st-august-2026-637762107.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_SMALLCAP_250",
-      "proxyDisagreesWithOfficial": false
+      "proxyDisagreesWithOfficial": true
     },
     {
       "underlyingKey": "lic::lic mf technology",
@@ -23858,9 +25074,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 100 TRI",
+        "canonicalBenchmarkKey": "NIFTY_100",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -23897,9 +25125,21 @@
       "classifications": [
         "Debt : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "composition of Nifty",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "tracked-index-descriptor",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -23917,7 +25157,7 @@
         "Equity : ETFs"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -23937,7 +25177,7 @@
         "Equity : Index Funds"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -23955,9 +25195,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 50 Value 20 TRI",
+        "canonicalBenchmarkKey": "NIFTY_50_VALUE_20",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -23975,9 +25227,21 @@
       "classifications": [
         "Equity : Index Funds"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 50 Value 20 TRI",
+        "canonicalBenchmarkKey": "NIFTY_50_VALUE_20",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24015,9 +25279,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL-",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "tracked-index-descriptor",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24095,9 +25371,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL-",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "tracked-index-descriptor",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24175,9 +25463,21 @@
       "classifications": [
         "Equity : Index Funds"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Smallcap 250 TRI",
+        "canonicalBenchmarkKey": "NIFTY_SMALLCAP_250",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24215,9 +25515,21 @@
       "classifications": [
         "Equity : Index Funds"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Alpha Low Volatility 30 TRI",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24235,9 +25547,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Realty TRI",
+        "canonicalBenchmarkKey": "NIFTY_REALTY",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24258,17 +25582,17 @@
       "mappingStatus": "official-name-only",
       "unmappedReason": null,
       "currentBenchmark": {
-        "officialBenchmarkName": "Nifty 500 Low Volatility 50 Index)",
+        "officialBenchmarkName": "Nifty500 Low Volatility 50 TRI",
         "canonicalBenchmarkKey": null,
         "benchmarkProvider": null,
         "basis": "unknown",
         "effectiveFrom": null,
         "effectiveTo": null,
-        "sourceType": "other-official",
-        "evidenceKind": "tracked-index-descriptor",
-        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactsheetsDocuments/NIMF-MONTHLY-PORTFOLIO-31-Aug-26.xls",
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
         "sourceDocumentDate": "2026-08-31",
-        "checkedAt": "2026-09-17T20:07:59.636Z"
+        "checkedAt": "2026-09-17T20:16:19.476Z"
       },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -24287,20 +25611,20 @@
       "classifications": [
         "Equity : Index Funds"
       ],
-      "mappingStatus": "official-name-only",
+      "mappingStatus": "official-mapped",
       "unmappedReason": null,
       "currentBenchmark": {
-        "officialBenchmarkName": "Nifty 500 Momentum 50 Index)",
-        "canonicalBenchmarkKey": null,
-        "benchmarkProvider": null,
-        "basis": "unknown",
+        "officialBenchmarkName": "NIFTY IT TRI",
+        "canonicalBenchmarkKey": "NIFTY_IT",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
         "effectiveFrom": null,
         "effectiveTo": null,
-        "sourceType": "other-official",
-        "evidenceKind": "tracked-index-descriptor",
-        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactsheetsDocuments/NIMF-MONTHLY-PORTFOLIO-31-Aug-26.xls",
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
         "sourceDocumentDate": "2026-08-31",
-        "checkedAt": "2026-09-17T20:07:59.636Z"
+        "checkedAt": "2026-09-17T20:16:19.476Z"
       },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -24319,9 +25643,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty500 Quality 50 TRI",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24339,7 +25675,7 @@
         "Equity : ETFs"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -24357,9 +25693,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 50 TRI",
+        "canonicalBenchmarkKey": "NIFTY_50",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24376,9 +25724,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Bank TRI",
+        "canonicalBenchmarkKey": "NIFTY_BANK",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24395,9 +25755,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "BSE Sensex Next 50 TRI",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24414,9 +25786,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Dividend Opportunities 50 TRI",
+        "canonicalBenchmarkKey": "NIFTY_DIVIDEND_OPPORTUNITIES_50",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24434,9 +25818,21 @@
       "classifications": [
         "Equity : Index Funds"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 50 TRI",
+        "canonicalBenchmarkKey": "NIFTY_50",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24454,9 +25850,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 500 Equal Weight TRI",
+        "canonicalBenchmarkKey": "NIFTY_500_EQUAL_WEIGHT",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24492,9 +25900,21 @@
         "49115-D"
       ],
       "classifications": [],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 500 TRI",
+        "canonicalBenchmarkKey": "NIFTY_500",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24532,9 +25952,21 @@
       "classifications": [
         "Hybrid : Aggressive Hybrid"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL Hybrid 35+65 - Aggressive Index",
+        "canonicalBenchmarkKey": "CRISIL_HYBRID_35_65_AGGRESSIVE",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24572,9 +26004,21 @@
       "classifications": [
         "Hybrid : Arbitrage"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL Short Term Bond Index",
+        "canonicalBenchmarkKey": "CRISIL_FLOATING_RATE_DEBT",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24617,17 +26061,17 @@
       "mappingStatus": "official-mapped",
       "unmappedReason": null,
       "currentBenchmark": {
-        "officialBenchmarkName": "Nifty Auto Index",
+        "officialBenchmarkName": "Nifty Auto TRI",
         "canonicalBenchmarkKey": "NIFTY_AUTO",
         "benchmarkProvider": "NSE Indices",
-        "basis": "unknown",
+        "basis": "TRI",
         "effectiveFrom": null,
         "effectiveTo": null,
-        "sourceType": "other-official",
-        "evidenceKind": "tracked-index-descriptor",
-        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactsheetsDocuments/NIMF-MONTHLY-PORTFOLIO-31-Aug-26.xls",
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
         "sourceDocumentDate": "2026-08-31",
-        "checkedAt": "2026-09-17T20:07:59.636Z"
+        "checkedAt": "2026-09-17T20:16:19.476Z"
       },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -24645,9 +26089,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Bank TRI",
+        "canonicalBenchmarkKey": "NIFTY_BANK",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24664,9 +26120,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty PSU Bank TRI",
+        "canonicalBenchmarkKey": "NIFTY_PSU_BANK",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24684,9 +26152,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Bank TRI",
+        "canonicalBenchmarkKey": "NIFTY_BANK",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24704,9 +26184,21 @@
       "classifications": [
         "Equity : Sectoral - Financial Services"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Financial Services TRI",
+        "canonicalBenchmarkKey": "NIFTY_FINANCIAL_SERVICES",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24743,9 +26235,21 @@
       "classifications": [
         "Metal : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Domestic Price of Gold",
+        "canonicalBenchmarkKey": "DOMESTIC_PRICE_OF_GOLD",
+        "benchmarkProvider": "Other / unclassified",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24762,9 +26266,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Hang Seng TRI",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24782,7 +26298,7 @@
         "Equity : ETFs"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -24844,7 +26360,7 @@
         "Equity : ETFs"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -24863,9 +26379,21 @@
       "classifications": [
         "Equity : Index Funds"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "BSE Sensex TRI",
+        "canonicalBenchmarkKey": "BSE_SENSEX",
+        "benchmarkProvider": "BSE (Asia Index)",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24884,7 +26412,7 @@
         "Equity : Flexi Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -24904,7 +26432,7 @@
         "Equity : Multi Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -24923,9 +26451,21 @@
       "classifications": [
         "Hybrid : Conservative Hybrid"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Crisil Hybrid 85+15 - Conservative Index",
+        "canonicalBenchmarkKey": "CRISIL_HYBRID_85_15_CONSERVATIVE",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -24963,7 +26503,7 @@
         "Equity : Thematic - Consumption"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -24981,9 +26521,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty CPSE TRI",
+        "canonicalBenchmarkKey": "NIFTY_CPSE",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -25002,7 +26554,7 @@
         "Equity : Flexi Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -25022,7 +26574,7 @@
         "Debt : Credit Risk"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -25121,9 +26673,21 @@
       "classifications": [
         "Debt"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "NIFTY Corporate Bond Index",
+        "canonicalBenchmarkKey": "NIFTY_CORPORATE_BOND",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -25181,9 +26745,21 @@
       "classifications": [
         "Equity : Tax Saving (ELSS)"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 500 TRI",
+        "canonicalBenchmarkKey": "NIFTY_500",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
       "proxyDisagreesWithOfficial": false
@@ -25201,9 +26777,21 @@
       "classifications": [
         "Equity : International"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "S&P 500 TRI",
+        "canonicalBenchmarkKey": "SP_500",
+        "benchmarkProvider": "S&P Dow Jones Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -25221,9 +26809,21 @@
       "classifications": [
         "Hybrid : Equity Savings"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Equity Savings Index",
+        "canonicalBenchmarkKey": "NIFTY_EQUITY_SAVINGS",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -25241,9 +26841,21 @@
       "classifications": [
         "Equity : International"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Taiwan Capitalization Weighted Stock Index (TAIEX) TRI",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -25280,9 +26892,21 @@
       "classifications": [
         "Equity : ETFs"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "NIFTY IT TRI",
+        "canonicalBenchmarkKey": "NIFTY_IT",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -25300,7 +26924,7 @@
         "Equity : ETFs"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -25319,7 +26943,7 @@
         "Metal : ETFs"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -25376,9 +27000,21 @@
         "17166-D"
       ],
       "classifications": [],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL Hybrid 85+15 - Conservative Index",
+        "canonicalBenchmarkKey": "CRISIL_HYBRID_85_15_CONSERVATIVE",
+        "benchmarkProvider": "CRISIL",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -25436,9 +27072,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "NIFTY IT TRI",
+        "canonicalBenchmarkKey": "NIFTY_IT",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -25455,9 +27103,21 @@
       "classifications": [
         "Equity : Index"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty India Manufacturing TRI",
+        "canonicalBenchmarkKey": "NIFTY_INDIA_MANUFACTURING",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -25478,17 +27138,17 @@
       "mappingStatus": "official-mapped",
       "unmappedReason": null,
       "currentBenchmark": {
-        "officialBenchmarkName": "Nifty Realty Index",
+        "officialBenchmarkName": "Nifty Realty TRI",
         "canonicalBenchmarkKey": "NIFTY_REALTY",
         "benchmarkProvider": "NSE Indices",
-        "basis": "unknown",
+        "basis": "TRI",
         "effectiveFrom": null,
         "effectiveTo": null,
-        "sourceType": "other-official",
-        "evidenceKind": "tracked-index-descriptor",
-        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactsheetsDocuments/NIMF-MONTHLY-PORTFOLIO-31-Aug-26.xls",
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
         "sourceDocumentDate": "2026-08-31",
-        "checkedAt": "2026-09-17T20:07:59.636Z"
+        "checkedAt": "2026-09-17T20:16:19.476Z"
       },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -25508,7 +27168,7 @@
         "Equity : Sectoral - Energy / Power"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -25567,12 +27227,24 @@
       "classifications": [
         "Equity : Large Cap"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "BSE 100 TRI",
+        "canonicalBenchmarkKey": "BSE_100",
+        "benchmarkProvider": "BSE (Asia Index)",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_100",
-      "proxyDisagreesWithOfficial": false
+      "proxyDisagreesWithOfficial": true
     },
     {
       "underlyingKey": "nippon::india liquid nippon",
@@ -25587,9 +27259,21 @@
       "classifications": [
         "Debt : Liquid"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 1D Rate Index",
+        "canonicalBenchmarkKey": "NIFTY_1D_RATE",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -25608,7 +27292,7 @@
         "Debt : Money Market"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -25628,7 +27312,7 @@
         "Equity : Mid Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_MIDCAP_150",
@@ -25645,9 +27329,21 @@
         "49503-D"
       ],
       "classifications": [],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty MNC TRI",
+        "canonicalBenchmarkKey": "NIFTY_MNC",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -25686,7 +27382,7 @@
         "Equity : Sectoral - Pharma"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -25703,9 +27399,21 @@
         "5153-D"
       ],
       "classifications": [],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "BSE 200 TRI",
+        "canonicalBenchmarkKey": "BSE_200",
+        "benchmarkProvider": "BSE (Asia Index)",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -25723,9 +27431,21 @@
       "classifications": [
         "Equity : Small Cap"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty Smallcap 250 TRI",
+        "canonicalBenchmarkKey": "NIFTY_SMALLCAP_250",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://mf.nipponindiaim.com/InvestorServices/FactSheetsDocuments/Nippon-FS-AUGUST-2026.pdf",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_SMALLCAP_250",
       "proxyDisagreesWithOfficial": false
@@ -25744,7 +27464,7 @@
         "Equity : Value / Contra"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -26359,9 +28079,21 @@
       "classifications": [
         "Hybrid : Dynamic Asset Allocation"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 50 TRI",
+        "canonicalBenchmarkKey": "NIFTY_50",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://amc.ppfas.com/downloads/factsheet/2026/ppfas-mf-factsheet-for-July-2026.pdf?07082026",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -26379,9 +28111,21 @@
       "classifications": [
         "Hybrid : Arbitrage"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-name-only",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "CRISIL 1 Year",
+        "canonicalBenchmarkKey": null,
+        "benchmarkProvider": null,
+        "basis": "unknown",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://amc.ppfas.com/downloads/factsheet/2026/ppfas-mf-factsheet-for-July-2026.pdf?07082026",
+        "sourceDocumentDate": "2026-07-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
       "proxyDisagreesWithOfficial": false
@@ -26399,9 +28143,21 @@
       "classifications": [
         "Equity : Flexi Cap"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 500 TRI",
+        "canonicalBenchmarkKey": "NIFTY_500",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://amc.ppfas.com/downloads/factsheet/2026/ppfas-mf-factsheet-for-August-2026.pdf?10092026",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
       "proxyDisagreesWithOfficial": false
@@ -26440,7 +28196,7 @@
         "Equity : Tax Saving (ELSS)"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -26459,12 +28215,38 @@
       "classifications": [
         "Equity : Large Cap"
       ],
-      "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
-      "currentBenchmark": null,
-      "benchmarkHistory": [],
+      "mappingStatus": "official-mapped",
+      "unmappedReason": null,
+      "currentBenchmark": {
+        "officialBenchmarkName": "Nifty 500 TRI",
+        "canonicalBenchmarkKey": "NIFTY_500",
+        "benchmarkProvider": "NSE Indices",
+        "basis": "TRI",
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "sourceType": "factsheet",
+        "evidenceKind": "labelled-benchmark-field",
+        "sourceUrl": "https://amc.ppfas.com/downloads/factsheet/2026/ppfas-mf-factsheet-for-August-2026.pdf?10092026",
+        "sourceDocumentDate": "2026-08-31",
+        "checkedAt": "2026-09-17T20:16:19.476Z"
+      },
+      "benchmarkHistory": [
+        {
+          "officialBenchmarkName": "NIFTY 50",
+          "canonicalBenchmarkKey": "NIFTY_50",
+          "benchmarkProvider": "NSE Indices",
+          "basis": "unknown",
+          "effectiveFrom": null,
+          "effectiveTo": "2026-08-31",
+          "sourceType": "factsheet",
+          "evidenceKind": "labelled-benchmark-field",
+          "sourceUrl": "https://amc.ppfas.com/downloads/factsheet/2026/ppfas-mf-factsheet-for-July-2026.pdf?07082026",
+          "sourceDocumentDate": "2026-07-31",
+          "checkedAt": "2026-09-17T20:16:19.476Z"
+        }
+      ],
       "categoryProxyBenchmarkKey": "NIFTY_100",
-      "proxyDisagreesWithOfficial": false
+      "proxyDisagreesWithOfficial": true
     },
     {
       "underlyingKey": "ppfas::liquid parag parikh",
@@ -27227,7 +29009,7 @@
         "Equity : Thematic"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -27249,7 +29031,7 @@
         "Hybrid : Dynamic Asset Allocation"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -27271,7 +29053,7 @@
         "Hybrid"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -27293,7 +29075,7 @@
         "Hybrid : Arbitrage"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -27315,7 +29097,7 @@
         "Equity : Multi Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_500",
@@ -27337,7 +29119,7 @@
         "Equity : ELSS"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -27359,7 +29141,7 @@
         "Equity : Mid Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_MIDCAP_150",
@@ -27381,7 +29163,7 @@
         "Equity : Large Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_100",
@@ -27403,7 +29185,7 @@
         "Equity : Mid Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_MIDCAP_150",
@@ -27423,7 +29205,7 @@
       ],
       "classifications": [],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": null,
@@ -27445,7 +29227,7 @@
         "Equity : Small Cap"
       ],
       "mappingStatus": "unmapped",
-      "unmappedReason": "no official AMC evidence found",
+      "unmappedReason": "contradictory benchmark evidence in one source document — not resolvable safely",
       "currentBenchmark": null,
       "benchmarkHistory": [],
       "categoryProxyBenchmarkKey": "NIFTY_SMALLCAP_250",
