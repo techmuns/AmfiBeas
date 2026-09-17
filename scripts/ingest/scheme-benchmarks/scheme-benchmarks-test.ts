@@ -497,10 +497,13 @@ async function testApiContract(): Promise<void> {
       })
     );
 
-    // compact stays minimal — no benchmark bloat in the small payload.
+    // compact stays minimal — no benchmark bloat in the small payload, but the
+    // mapping status is still there.
     const compact = await GET(new Request("http://localhost/api/returns-ranking?limit=2&fields=compact&period=1Y"));
-    const cbody = (await compact.json()) as { funds: Array<{ returns: Record<string, Record<string, unknown>> }> };
+    const cbody = (await compact.json()) as { funds: Array<{ returns: Record<string, Record<string, unknown>>; officialBenchmark: Record<string, unknown> }> };
     check("compact keeps its three period fields", Object.keys(cbody.funds[0].returns["1Y"]).length === 3);
+    check("compact still carries an explicit benchmark status", typeof cbody.funds[0].officialBenchmark.status === "string");
+    check("compact benchmark block is the 3-field summary", Object.keys(cbody.funds[0].officialBenchmark).length === 3);
 
     // CSV: legacy column order preserved.
     const csv = await GET(new Request("http://localhost/api/returns-ranking?limit=2&format=csv&fields=standard&period=1Y"));

@@ -274,7 +274,9 @@ function toCsv(
     plan: string;
     option: string;
     cohortKey: string;
-    officialBenchmark: ReturnType<typeof officialBenchmarkView>;
+    // `full` (the only level whose CSV carries these) always gets the complete
+    // view; the compact summary is JSON-only.
+    officialBenchmark: Partial<ReturnType<typeof officialBenchmarkView>>;
     returns: Record<string, ReturnType<typeof shapeStats>>;
   }>,
   periods: PeriodKey[],
@@ -418,6 +420,7 @@ export async function GET(request: Request) {
   // ---- shape -----------------------------------------------------------------
   const funds = page.map((f) => {
     const entry = byCode.get(f.schemecode);
+    const benchmarkView = officialBenchmarkView(entry);
     // The fund's own window end. Older snapshots omit it per row; the
     // snapshot-level as-of date is the correct fallback there.
     const asOfNavDate = f.asOfNavDate ?? snap.asOfDate ?? null;
@@ -439,8 +442,14 @@ export async function GET(request: Request) {
       plan: f.plan,
       option: f.option,
       cohortKey: cohortKeyOf(f),
-      // Every fund carries an explicit mapping status at every field level.
-      officialBenchmark: officialBenchmarkView(entry),
+      // Every fund carries an explicit mapping status at EVERY field level —
+      // "which benchmark is this scheme measured against, and do we actually
+      // know?" is not a detail-level question. `compact` gets the three fields
+      // that answer it; standard/full get the full provenance block.
+      officialBenchmark:
+        level === "compact"
+          ? { status: benchmarkView.status, key: benchmarkView.key, name: benchmarkView.name }
+          : benchmarkView,
       returns,
     };
   });
