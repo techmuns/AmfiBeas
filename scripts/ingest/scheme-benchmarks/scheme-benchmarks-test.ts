@@ -244,6 +244,39 @@ function testProxyDisagreement(): void {
   );
   check("a scheme absent from the document gets no benchmark", !byScheme.has("largecap"));
 
+  // PDF text extraction splits a two-column "Benchmark | <index>" row across
+  // lines. The reader follows on — but only as far as the next scheme's name.
+  const twoColumn = `
+Demo Mid Cap Fund
+Inception Date
+Benchmark
+Fund Manager
+25-Jun-2007
+NIFTY Midcap 150 TRI
+Someone
+
+Demo Focused Fund
+Inception Date
+Benchmark
+17-Sep-2004
+NIFTY 500 Multicap 50:25:25 TRI
+`;
+  const col = new Map(
+    extractBenchmarks(twoColumn, FACTSHEET_SPECS).hits.filter((h) => h.resolved).map((h) => [h.schemeId, h.resolved!.canonical.key])
+  );
+  check("a two-column PDF row still resolves", col.get("midcap") === "NIFTY_MIDCAP_150" && col.get("focused") === "NIFTY_500_MULTICAP_50_25_25", `${col.get("midcap")} / ${col.get("focused")}`);
+
+  const bleeding = `
+Demo Mid Cap Fund
+Benchmark
+Demo Focused Fund
+Benchmark: NIFTY 500 Multicap 50:25:25 TRI
+`;
+  const bled = new Map(
+    extractBenchmarks(bleeding, FACTSHEET_SPECS).hits.filter((h) => h.resolved).map((h) => [h.schemeId, h.resolved!.canonical.key])
+  );
+  check("a label with no value does NOT borrow the next scheme's index", !bled.has("midcap"), String(bled.get("midcap")));
+
   const e = entry({
     classifications: ["Equity : Focused"],
     categoryProxyBenchmarkKey: "NIFTY_500",

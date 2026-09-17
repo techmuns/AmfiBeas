@@ -312,13 +312,34 @@ export function extractBenchmarks(
       labelCount += 1;
       const valueStart = m.index + m[0].length;
       const rawWindow = text.slice(valueStart, valueStart + VALUE_WINDOW);
-      // NEVER cross a hard break. A factsheet line carries one field; a window
+      // Prefer the same line: a factsheet line carries one field, and a window
       // that bleeds past the line end reads the NEXT scheme's text.
       const brk = rawWindow.search(/[\r\n|]/);
-      const window = brk >= 0 ? rawWindow.slice(0, brk) : rawWindow;
+      const sameLine = brk >= 0 ? rawWindow.slice(0, brk) : rawWindow;
       const anchor = anchorMode === "same-line" ? sameLineAnchor(text, anchors, m.index) : anchorFor(anchors, m.index);
       if (!anchor) continue;
-      const resolved = matchLongestBenchmark(window);
+
+      let window = sameLine;
+      let resolved = matchLongestBenchmark(window);
+      // PDF text extraction routinely splits a two-column "Benchmark | <index>"
+      // row across lines. When the label's own line names nothing we know, read
+      // on — but ONLY while no other scheme's name starts in the extension,
+      // which is the boundary that keeps a benchmark on its own fund.
+      if (!resolved && anchorMode !== "same-line" && brk >= 0) {
+        // Read on only as far as the NEXT scheme's name. That boundary is what
+        // keeps a benchmark attached to its own fund.
+        let limit = valueStart + rawWindow.length;
+        for (const a of anchors) {
+          if (a.charStart <= valueStart || a.id === anchor.id) continue;
+          if (a.charStart < limit) limit = a.charStart;
+          if (a.charStart > limit) break;
+        }
+        const extended = text.slice(valueStart, limit);
+        if (extended.length > sameLine.length) {
+          const viaExtension = matchLongestBenchmark(extended);
+          if (viaExtension) { window = extended; resolved = viaExtension; }
+        }
+      }
       hits.push({
         schemeId: anchor.id,
         resolved,
