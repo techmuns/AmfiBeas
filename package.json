@@ -34,6 +34,7 @@
     "build:benchmark-tri": "tsx scripts/build-benchmark-tri.ts",
     "build:scheme-benchmarks": "tsx scripts/ingest/scheme-benchmarks/build.ts",
     "validate:scheme-benchmarks": "tsx scripts/ingest/scheme-benchmarks/validate.ts",
+    "report:scheme-benchmarks": "tsx scripts/ingest/scheme-benchmarks/report.ts",
     "test:scheme-benchmarks": "tsx scripts/ingest/scheme-benchmarks/scheme-benchmarks-test.ts",
     "build:broking": "tsx scripts/build-broking.ts",
     "build:cap-flows": "tsx scripts/build-cap-flows.ts",
