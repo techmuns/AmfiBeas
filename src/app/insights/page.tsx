@@ -65,8 +65,18 @@ const TONE_BAR: Record<Tone, string> = {
 // force-static, so it renders once at build time).
 let sparkSeq = 0;
 
-/** Tiny area+line sparkline. Pure SVG; colour rides `currentColor`. */
-function Spark({ values, tone = "pos" }: { values: number[]; tone?: Tone }) {
+/** Tiny area+line sparkline. Pure SVG; colour rides `currentColor`.
+ *  `className` overrides the default height so a hero chart can fill its tile
+ *  while the compact tiles stay short. */
+function Spark({
+  values,
+  tone = "pos",
+  className,
+}: {
+  values: number[];
+  tone?: Tone;
+  className?: string;
+}) {
   if (values.length < 2) return null;
   const w = 160;
   const h = 40;
@@ -88,7 +98,7 @@ function Spark({ values, tone = "pos" }: { values: number[]; tone?: Tone }) {
     <svg
       viewBox={`0 0 ${w} ${h}`}
       preserveAspectRatio="none"
-      className={cn("h-10 w-full", TONE_TEXT[tone])}
+      className={cn(className ?? "h-10 w-full", TONE_TEXT[tone])}
       aria-hidden
     >
       <defs>
@@ -188,6 +198,7 @@ function KpiTile({
   spark,
   sparkTone,
   footnote,
+  wash,
 }: {
   kicker: string;
   value: React.ReactNode;
@@ -196,32 +207,50 @@ function KpiTile({
   spark?: number[];
   sparkTone?: Tone;
   footnote?: string;
+  /** Colour-washed corner glow: "pos" = green, "neg" = red. */
+  wash?: "pos" | "neg";
 }) {
   return (
-    <div className="flex flex-col rounded-lg border bg-card px-4 py-3.5 shadow-sm">
-      <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-        {kicker}
-      </div>
-      <div className="mt-1 flex items-baseline gap-2">
-        <span className="text-[22px] font-semibold leading-none tabular tracking-tight">
-          {value}
-        </span>
-        {delta && (
-          <span className={cn("text-xs font-medium tabular", TONE_TEXT[deltaTone ?? "pos"])}>
-            {delta}
+    <div className="relative flex flex-col overflow-hidden rounded-lg border bg-card px-4 py-3.5 shadow-sm">
+      {wash && (
+        <div
+          className={cn(
+            "pointer-events-none absolute -bottom-10 -right-8 h-40 w-40 rounded-full opacity-50 blur-[46px]",
+            wash === "pos" ? "bg-green-500" : "bg-red-500"
+          )}
+          aria-hidden
+        />
+      )}
+      <div className="relative flex flex-1 flex-col">
+        <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          {kicker}
+        </div>
+        <div className="mt-1 flex items-baseline gap-2">
+          <span
+            className={cn(
+              "text-[22px] font-semibold leading-none tabular tracking-tight",
+              wash === "neg" && "text-negative"
+            )}
+          >
+            {value}
           </span>
+          {delta && (
+            <span className={cn("text-xs font-medium tabular", TONE_TEXT[deltaTone ?? "pos"])}>
+              {delta}
+            </span>
+          )}
+        </div>
+        {spark && spark.length > 1 && (
+          <div className="mt-2">
+            <Spark values={spark} tone={sparkTone ?? "pos"} />
+          </div>
+        )}
+        {footnote && (
+          <div className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
+            {footnote}
+          </div>
         )}
       </div>
-      {spark && spark.length > 1 && (
-        <div className="mt-2">
-          <Spark values={spark} tone={sparkTone ?? "pos"} />
-        </div>
-      )}
-      {footnote && (
-        <div className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
-          {footnote}
-        </div>
-      )}
     </div>
   );
 }
@@ -640,16 +669,20 @@ export default function InsightsPage() {
                   The structural bid under Indian equities — {fmtX(sip.multiple)} in 10 years,
                   doubled in the last {sip.doubledInMonths ?? "—"} months.
                 </p>
-                <div className="mt-auto pt-5">
-                  <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-full border border-positive/30 bg-positive/15 px-2.5 py-0.5 text-[11px] font-semibold text-positive">
-                      ▲ {fmtX(sip.multiple)} · {sip.doubledInMonths ?? "—"} mo
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">
-                      {monthLong(sip.firstMonth)} → {monthLong(sip.latestMonth)}
-                    </span>
-                  </div>
-                  <Spark values={sipSeries.map((p) => p.value)} tone="indigo" />
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-positive/30 bg-positive/15 px-2.5 py-0.5 text-[11px] font-semibold text-positive">
+                    ▲ {fmtX(sip.multiple)} · {sip.doubledInMonths ?? "—"} mo
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {monthLong(sip.firstMonth)} → {monthLong(sip.latestMonth)}
+                  </span>
+                </div>
+                <div className="mt-3 min-h-[68px] flex-1">
+                  <Spark
+                    values={sipSeries.map((p) => p.value)}
+                    tone="indigo"
+                    className="h-full w-full"
+                  />
                 </div>
               </div>
             </div>
@@ -678,12 +711,14 @@ export default function InsightsPage() {
               delta={`${fmtX(eqAum.multiple)} in 7y`}
               spark={aumSeries.slice(-36).map((p) => p.value)}
               sparkTone="pos"
+              wash="pos"
               footnote={`Doubled in ${eqAum.doubledInMonths ?? "—"} months on flows + markets compounding together.`}
             />
           )}
           <KpiTile
             kicker="Past performance persists?"
             value={`${persistence.q1StayPct}%`}
+            wash="neg"
             footnote={`of past top-quartile funds stayed top-quartile (pure chance = 25%). ${streak24} active-equity categories are on 24+ month inflow streaks.`}
           />
         </div>
