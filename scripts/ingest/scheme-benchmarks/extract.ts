@@ -343,7 +343,10 @@ export function extractBenchmarks(
       hits.push({
         schemeId: anchor.id,
         resolved,
-        rawText: window.split(/[\r\n|]/)[0].trim().slice(0, 120),
+        // When nothing resolved, quote the label's OWN line: the continuation
+        // may have run through several unrelated lines, and storing one of
+        // those as the "benchmark name" would be worse than storing nothing.
+        rawText: (resolved ? window : sameLine).split(/[\r\n|]/)[0].trim().slice(0, 120),
         evidenceKind,
         charOffset: m.index,
       });
