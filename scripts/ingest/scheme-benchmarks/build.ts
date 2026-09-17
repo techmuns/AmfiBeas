@@ -348,13 +348,22 @@ async function main(): Promise<void> {
       anchors += res.anchorCount;
       labels += res.labelCount;
       for (const id of res.contradictory) contradictoryKeys.add(id);
-      // One benchmark per (scheme, document): a document that says two different
-      // things about one scheme has already been flagged contradictory above.
+      // One benchmark per (scheme, document), and it is the NEAREST label — not
+      // simply the nearest one we happen to recognise. Preferring a resolvable
+      // hit over a closer unresolvable one is how a fund whose own benchmark is
+      // an index we do not know (a CRISIL IBX target-maturity index, say) ends
+      // up wearing a neighbouring fund's gilt index instead. Nearest wins;
+      // resolvable only breaks a tie.
       const perScheme = new Map<string, BenchmarkHit>();
       for (const hit of res.hits) {
-        if (!hit.resolved && perScheme.has(hit.schemeId)) continue;
         const existing = perScheme.get(hit.schemeId);
-        if (!existing || (!existing.resolved && hit.resolved)) perScheme.set(hit.schemeId, hit);
+        if (
+          !existing ||
+          hit.anchorDistance < existing.anchorDistance ||
+          (hit.anchorDistance === existing.anchorDistance && !existing.resolved && hit.resolved)
+        ) {
+          perScheme.set(hit.schemeId, hit);
+        }
       }
       for (const [id, hit] of perScheme) {
         const record = recordFromHit(hit, doc, checkedAt);

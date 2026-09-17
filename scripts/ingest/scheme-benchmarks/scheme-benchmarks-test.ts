@@ -277,6 +277,33 @@ Benchmark: NIFTY 500 Multicap 50:25:25 TRI
   );
   check("a label with no value does NOT borrow the next scheme's index", !bled.has("midcap"), String(bled.get("midcap")));
 
+  // NEAREST label wins. A fund whose own benchmark is an index we do not know
+  // must keep that name, not adopt a recognisable one from the next block.
+  const neighbours = `
+Demo Nifty SDL Apr 2027 Index Fund
+Benchmark: CRISIL IBX 60:40 SDL + AAA PSU Index - April 2027
+Fund Manager: A
+
+Demo Gilt Fund
+Benchmark: CRISIL 10 Year Gilt Index
+Fund Manager: B
+`;
+  const nHits = extractBenchmarks(neighbours, [
+    { id: "sdl", names: ["Demo Nifty SDL Apr 2027 Index Fund-Reg(G)"] },
+    { id: "gilt", names: ["Demo Gilt Fund-Reg(G)"] },
+  ]).hits;
+  const nearest = new Map<string, (typeof nHits)[number]>();
+  for (const h of nHits) {
+    const cur = nearest.get(h.schemeId);
+    if (!cur || h.anchorDistance < cur.anchorDistance) nearest.set(h.schemeId, h);
+  }
+  check(
+    "a fund with an unrecognised benchmark does NOT adopt its neighbour's index",
+    nearest.get("sdl")?.resolved === null,
+    String(nearest.get("sdl")?.resolved?.canonical.key)
+  );
+  check("…while the neighbour keeps its own", nearest.get("gilt")?.resolved?.canonical.key === "CRISIL_10_YEAR_GILT");
+
   const e = entry({
     classifications: ["Equity : Focused"],
     categoryProxyBenchmarkKey: "NIFTY_500",

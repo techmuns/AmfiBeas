@@ -51,8 +51,11 @@ const TRACKING_DESCRIPTOR_RE =
 
 /** How far after the label we look for the index name. */
 const VALUE_WINDOW = 160;
-/** How far back from a benchmark label a scheme anchor may sit. */
-const MAX_ANCHOR_GAP = 2000;
+/** How far back from a benchmark label a scheme anchor may sit. A factsheet
+ *  states a fund's benchmark in its own block, right under the heading; 2000
+ *  characters reaches back through a whole neighbouring fund's block, which is
+ *  how a target-maturity fund ends up wearing its neighbour's gilt index. */
+const MAX_ANCHOR_GAP = 700;
 /** AMC-name tokens are optional inside an AMC's own document (headings often
  *  drop the house name), so they never count as REQUIRED tokens. */
 const OPTIONAL_TOKEN_MIN_SCHEMES = 1;
@@ -78,6 +81,9 @@ interface Anchor {
 export interface BenchmarkHit {
   schemeId: string;
   resolved: ResolvedBenchmark | null;
+  /** Characters between the end of the scheme's name and the label. The NEAREST
+   *  label is the scheme's own; a farther one belongs to somebody else. */
+  anchorDistance: number;
   /** Verbatim text the name was read from (kept even when unresolved). */
   rawText: string;
   evidenceKind: "labelled-benchmark-field" | "tracked-index-descriptor";
@@ -343,6 +349,7 @@ export function extractBenchmarks(
       hits.push({
         schemeId: anchor.id,
         resolved,
+        anchorDistance: Math.max(0, m.index - anchor.charEnd),
         // When nothing resolved, quote the label's OWN line: the continuation
         // may have run through several unrelated lines, and storing one of
         // those as the "benchmark name" would be worse than storing nothing.
