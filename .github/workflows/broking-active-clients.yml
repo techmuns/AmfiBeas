@@ -1,43 +1,44 @@
-name: Broking active clients (monthly)
+name: Broking active clients (NSE probe / fetch)
 
-# Monthly refresh of the Broking / Capital Markets tab from NSE's "active clients
-# per member (broker)" data (scripts/ingest/broking-active-clients.ts).
+# Automated-fetch tooling for the Broking tab's NSE "active clients per member
+# (broker)" data — kept as a MANUAL, dispatch-only workflow because a full
+# investigation (Sep 2026) found NSE does not currently expose this dataset
+# through a free, machine-readable endpoint. What that investigation established:
 #
-# NSE serves this only through www.nseindia.com, which is Akamai bot-walled, so —
-# exactly like the schemewise-holdings job — the scraper drives a real browser to
-# hold a session. The exact JSON endpoint isn't documented and can't be seen from
-# a blocked network, so the job is PROBE-FIRST:
+#   • Headless Chromium (Playwright) is blocked from GitHub-runner IPs at NSE's
+#     Akamai edge — HTTP/2 reset, then HTTP/1.1 hang. So the browser approach
+#     cannot fetch NSE from CI.
+#   • curl_cffi (real-Chrome TLS/JA3 impersonation) DOES reach NSE's API from the
+#     same runners — homepage, /all-reports and /api/* return 200. The block is a
+#     fingerprint block, and curl_cffi beats it. (Proven by the probe step below;
+#     reusable for any other NSE data we want automated.)
+#   • BUT NSE's discoverable report API (/api/merged-daily-reports) is daily-only
+#     (bhavcopies etc.); per-broker active clients is not in it, nor in the
+#     /all-reports catalog. That statistic lives in NSE's monthly Market Pulse
+#     PDF / member portal, not a free structured feed.
 #
-#   1. Run once with mode = probe (workflow_dispatch). It loads NSE's member /
-#      all-reports pages, captures every API response they fire, and uploads a
-#      `broking-probe` artifact listing each endpoint + how many member rows it
-#      parsed into. Read it, pick the endpoint that returns the active-client
-#      rows.
-#   2. Save that URL as the repo/Actions variable NSE_ACTIVE_CLIENTS_URL
-#      (Settings → Secrets and variables → Actions → Variables).
-#   3. From then on the monthly schedule runs in `full` mode, writes
-#      manual-data/broking/active-clients-YYYY-MM.csv (an official, non-sample
-#      file — the "sample data" banner disappears), rebuilds the snapshot, and
-#      commits. All free; no manual step.
+# So the Broking tab is refreshed by the MANUAL monthly CSV drop (see
+# manual-data/broking/README.md) — ~2 min/month, then it auto-deploys. This
+# workflow stays for two reasons: (1) `mode: probe` re-runs the curl_cffi
+# discovery if NSE ever exposes an endpoint (pin it in NSE_ACTIVE_CLIENTS_URL and
+# flip `mode: full` back on with a schedule); (2) it documents the finding.
 #
-# Safety: any failure (blocked, endpoint moved, too few rows) exits non-zero and
-# the commit step is skipped, so a degraded fetch can never overwrite good data.
+# Safety: any failed/blocked fetch exits non-zero and the commit step is skipped,
+# so a degraded run can never overwrite good data.
 
 on:
-  # NSE publishes a month's active-clients data in the first week of the next
-  # month; the 8th (20:00 UTC = 01:30 IST on the 9th) captures it comfortably.
-  schedule:
-    - cron: "0 20 8 * *"
+  # Dispatch-only: no monthly schedule, because there is no working auto-fetch
+  # endpoint yet (see the header). Refresh via the manual CSV drop instead.
   workflow_dispatch:
     inputs:
       mode:
-        description: "full = fetch + write + commit; probe = discover the endpoint (no writes)"
+        description: "probe = re-run curl_cffi NSE discovery (no writes); full = fetch + write (needs a working NSE_ACTIVE_CLIENTS_URL)"
         required: false
-        default: "full"
+        default: "probe"
         type: choice
         options:
-          - "full"
           - "probe"
+          - "full"
       endpoint:
         description: "Override NSE_ACTIVE_CLIENTS_URL for this run (blank = use the repo variable)"
         required: false
@@ -80,7 +81,21 @@ jobs:
         # NSE is session-gated (Akamai), so the scraper drives a real browser.
         run: npx playwright install --with-deps chromium
 
+      - name: NSE reachability probe (curl_cffi TLS impersonation)
+        # Probe mode only. Decides whether NSE's block is fingerprint-level
+        # (curl_cffi's real-Chrome TLS/JA3 gets 200s → beatable) or an IP-level
+        # block of GitHub's runners (everything fails → no free fetch works).
+        if: ${{ inputs.mode == 'probe' }}
+        continue-on-error: true
+        run: |
+          python3 -m pip install --quiet "curl_cffi>=0.7"
+          python3 scripts/ingest/broking_curl_probe.py
+
       - name: Refresh NSE active clients
+        # Skipped in probe mode: NSE blocks headless Chromium (proven), so probe
+        # mode now relies on the curl_cffi step above. Full/scheduled runs still
+        # go through here until the fetcher is ported to curl_cffi.
+        if: ${{ inputs.mode != 'probe' }}
         env:
           BROKING_MODE: ${{ inputs.mode || 'full' }}
           # Manual override wins; otherwise the pinned repo variable (empty until
