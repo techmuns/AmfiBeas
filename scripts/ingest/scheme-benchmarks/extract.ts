@@ -14,7 +14,11 @@
  *  2. Locate every occurrence of every scheme of that AMC as a token-window hit
  *     (an "anchor"). The most SPECIFIC scheme wins an overlapping window; exact
  *     ties are discarded, because "Fund" vs "Fund - Series II" mis-attribution
- *     is exactly the failure mode this whole feature exists to remove.
+ *     is exactly the failure mode this whole feature exists to remove. The NAV
+ *     crosswalk's critical-token rule applies here too: a phrase carrying a
+ *     distinguishing token the scheme does not have is a DIFFERENT scheme, so
+ *     "NIFTY Bank ETF" never anchors inside "NIFTY PSU BANK ETF" merely because
+ *     its tokens are a subset.
  *  3. Locate every "Benchmark"/"Benchmark Index"/"Tier 1 Benchmark" label and
  *     read the index name out of the text that follows it with the registry's
  *     longest-exact-match scanner.

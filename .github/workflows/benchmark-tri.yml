@@ -101,4 +101,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/nav-data/benchmark-tri.json
           git commit -m "chore(data): refresh benchmark TRI estimate ($(date -u +%Y-%m-%d))"
-          bash scripts/ci/push-with-rebase.sh
+          # Push to the ref this run was dispatched on. On the scheduled run that
+          # IS main, so nothing changes there; on a manual dispatch against a
+          # branch it commits to that branch instead of trying to push branch
+          # work onto main (which the script would reject as a conflict).
+          bash scripts/ci/push-with-rebase.sh "${{ github.ref_name }}"
