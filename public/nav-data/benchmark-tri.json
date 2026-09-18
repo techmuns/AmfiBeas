@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T22:01:41.402Z",
+  "generatedAt": "2026-09-18T20:07:03.239Z",
   "source": "NSE ind_close_all daily CSV (price-return close + per-index dividend yield)",
   "method": "TRI estimate = (1 + price return) × (1 + mean dividend yield over the window) − 1. ESTIMATE, not the published fact-sheet TRI. Benchmark IDENTITY is official (AMC-sourced); this RETURN is reconstructed.",
   "returnMethod": "estimated-tri-from-pri-plus-dividend-yield",
@@ -863,101 +863,6 @@
         }
       }
     },
-    "NIFTY_PSU_BANK": {
-      "label": "NIFTY PSU Bank TRI",
-      "asOf": "2026-09-16",
-      "priClose": 8275.9,
-      "divYieldPct": 0.77,
-      "schemeCount": 4,
-      "periods": {
-        "1M": {
-          "returnPct": -5.23,
-          "priReturnPct": -5.3,
-          "kind": "simple",
-          "divYieldAvgPct": 0.75,
-          "fromDate": "2026-08-14",
-          "toDate": "2026-09-16",
-          "targetDate": "2026-08-16",
-          "returnMethod": "estimated-tri-from-pri-plus-dividend-yield",
-          "returnSource": "NSE ind_close_all daily CSV (price-return close + per-index dividend yield)",
-          "isEstimate": true,
-          "triEstCagrPct": -5.23,
-          "priCagrPct": -5.3
-        },
-        "3M": {
-          "returnPct": -3.09,
-          "priReturnPct": -3.36,
-          "kind": "simple",
-          "divYieldAvgPct": 1.09,
-          "fromDate": "2026-06-16",
-          "toDate": "2026-09-16",
-          "targetDate": "2026-06-16",
-          "returnMethod": "estimated-tri-from-pri-plus-dividend-yield",
-          "returnSource": "NSE ind_close_all daily CSV (price-return close + per-index dividend yield)",
-          "isEstimate": true,
-          "triEstCagrPct": -3.09,
-          "priCagrPct": -3.36
-        },
-        "6M": {
-          "returnPct": -2.68,
-          "priReturnPct": -3.41,
-          "kind": "simple",
-          "divYieldAvgPct": 1.51,
-          "fromDate": "2026-03-16",
-          "toDate": "2026-09-16",
-          "targetDate": "2026-03-16",
-          "returnMethod": "estimated-tri-from-pri-plus-dividend-yield",
-          "returnSource": "NSE ind_close_all daily CSV (price-return close + per-index dividend yield)",
-          "isEstimate": true,
-          "triEstCagrPct": -2.68,
-          "priCagrPct": -3.41
-        },
-        "1Y": {
-          "returnPct": 18.05,
-          "priReturnPct": 16.08,
-          "kind": "simple",
-          "divYieldAvgPct": 1.7,
-          "fromDate": "2025-09-16",
-          "toDate": "2026-09-16",
-          "targetDate": "2025-09-16",
-          "returnMethod": "estimated-tri-from-pri-plus-dividend-yield",
-          "returnSource": "NSE ind_close_all daily CSV (price-return close + per-index dividend yield)",
-          "isEstimate": true,
-          "triEstCagrPct": 18.05,
-          "priCagrPct": 16.08
-        },
-        "3Y": {
-          "returnPct": 19.59,
-          "priReturnPct": 17.91,
-          "kind": "cagr",
-          "years": 3.0034,
-          "divYieldAvgPct": 1.43,
-          "fromDate": "2023-09-15",
-          "toDate": "2026-09-16",
-          "targetDate": "2023-09-16",
-          "returnMethod": "estimated-tri-from-pri-plus-dividend-yield",
-          "returnSource": "NSE ind_close_all daily CSV (price-return close + per-index dividend yield)",
-          "isEstimate": true,
-          "triEstCagrPct": 19.59,
-          "priCagrPct": 17.91
-        },
-        "5Y": {
-          "returnPct": 27.33,
-          "priReturnPct": 26.63,
-          "kind": "cagr",
-          "years": 4.9993,
-          "divYieldAvgPct": 0.56,
-          "fromDate": "2021-09-16",
-          "toDate": "2026-09-16",
-          "targetDate": "2021-09-16",
-          "returnMethod": "estimated-tri-from-pri-plus-dividend-yield",
-          "returnSource": "NSE ind_close_all daily CSV (price-return close + per-index dividend yield)",
-          "isEstimate": true,
-          "triEstCagrPct": 27.33,
-          "priCagrPct": 26.63
-        }
-      }
-    },
     "NIFTY_500_MULTICAP_50_25_25": {
       "label": "NIFTY 500 Multicap 50:25:25 TRI",
       "asOf": "2026-09-16",
@@ -1240,6 +1145,101 @@
           "isEstimate": true,
           "triEstCagrPct": 11.47,
           "priCagrPct": 10.41
+        }
+      }
+    },
+    "NIFTY_PSU_BANK": {
+      "label": "NIFTY PSU Bank TRI",
+      "asOf": "2026-09-16",
+      "priClose": 8275.9,
+      "divYieldPct": 0.77,
+      "schemeCount": 3,
+      "periods": {
+        "1M": {
+          "returnPct": -5.23,
+          "priReturnPct": -5.3,
+          "kind": "simple",
+          "divYieldAvgPct": 0.75,
+          "fromDate": "2026-08-14",
+          "toDate": "2026-09-16",
+          "targetDate": "2026-08-16",
+          "returnMethod": "estimated-tri-from-pri-plus-dividend-yield",
+          "returnSource": "NSE ind_close_all daily CSV (price-return close + per-index dividend yield)",
+          "isEstimate": true,
+          "triEstCagrPct": -5.23,
+          "priCagrPct": -5.3
+        },
+        "3M": {
+          "returnPct": -3.09,
+          "priReturnPct": -3.36,
+          "kind": "simple",
+          "divYieldAvgPct": 1.09,
+          "fromDate": "2026-06-16",
+          "toDate": "2026-09-16",
+          "targetDate": "2026-06-16",
+          "returnMethod": "estimated-tri-from-pri-plus-dividend-yield",
+          "returnSource": "NSE ind_close_all daily CSV (price-return close + per-index dividend yield)",
+          "isEstimate": true,
+          "triEstCagrPct": -3.09,
+          "priCagrPct": -3.36
+        },
+        "6M": {
+          "returnPct": -2.68,
+          "priReturnPct": -3.41,
+          "kind": "simple",
+          "divYieldAvgPct": 1.51,
+          "fromDate": "2026-03-16",
+          "toDate": "2026-09-16",
+          "targetDate": "2026-03-16",
+          "returnMethod": "estimated-tri-from-pri-plus-dividend-yield",
+          "returnSource": "NSE ind_close_all daily CSV (price-return close + per-index dividend yield)",
+          "isEstimate": true,
+          "triEstCagrPct": -2.68,
+          "priCagrPct": -3.41
+        },
+        "1Y": {
+          "returnPct": 18.05,
+          "priReturnPct": 16.08,
+          "kind": "simple",
+          "divYieldAvgPct": 1.7,
+          "fromDate": "2025-09-16",
+          "toDate": "2026-09-16",
+          "targetDate": "2025-09-16",
+          "returnMethod": "estimated-tri-from-pri-plus-dividend-yield",
+          "returnSource": "NSE ind_close_all daily CSV (price-return close + per-index dividend yield)",
+          "isEstimate": true,
+          "triEstCagrPct": 18.05,
+          "priCagrPct": 16.08
+        },
+        "3Y": {
+          "returnPct": 19.59,
+          "priReturnPct": 17.91,
+          "kind": "cagr",
+          "years": 3.0034,
+          "divYieldAvgPct": 1.43,
+          "fromDate": "2023-09-15",
+          "toDate": "2026-09-16",
+          "targetDate": "2023-09-16",
+          "returnMethod": "estimated-tri-from-pri-plus-dividend-yield",
+          "returnSource": "NSE ind_close_all daily CSV (price-return close + per-index dividend yield)",
+          "isEstimate": true,
+          "triEstCagrPct": 19.59,
+          "priCagrPct": 17.91
+        },
+        "5Y": {
+          "returnPct": 27.33,
+          "priReturnPct": 26.63,
+          "kind": "cagr",
+          "years": 4.9993,
+          "divYieldAvgPct": 0.56,
+          "fromDate": "2021-09-16",
+          "toDate": "2026-09-16",
+          "targetDate": "2021-09-16",
+          "returnMethod": "estimated-tri-from-pri-plus-dividend-yield",
+          "returnSource": "NSE ind_close_all daily CSV (price-return close + per-index dividend yield)",
+          "isEstimate": true,
+          "triEstCagrPct": 27.33,
+          "priCagrPct": 26.63
         }
       }
     },
