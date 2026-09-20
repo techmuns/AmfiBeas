@@ -1,8 +1,15 @@
 import assert from 'node:assert/strict';
-import {anchorFiles,baseName,oneDisclosures,publicDisclosures,publicReader,publicUrl,readDisclosures,resumeDisclosures,retainDisclosedNames,schemeNameResolver,verifiedNonIndianRows,parsePublicWorkbook} from './public-disclosures.mjs';
+import {anchorFiles,baseName,oneDisclosures,publicDisclosures,publicReader,publicUrl,readDisclosures,resumeDisclosures,retainDisclosedNames,schemeNameResolver,verifiedNonIndianRows,parsePublicWorkbook,hsbcSchemeIdentity} from './public-disclosures.mjs';
 import {reconcileSourceChecks,lastCompleteCheck} from './checks.mjs';
 const reply=value=>Buffer.from(JSON.stringify(value));
 const month='2026-08';
+const copiedTitle={schemeName:'HSBC Corporate Bond Fund',holdings:[{isin:'INF336L01RX2',quantity:28496000}]};
+const riskometer=[['HSBC Gold ETF Fund of Fund','Scheme Riskometer','Scheme Benchmark Riskometer']];
+const corrected=hsbcSchemeIdentity(copiedTitle,riskometer,'hsbc gold etf fof');
+assert.equal(corrected.schemeName,'HSBC Gold ETF Fund of Fund');assert.equal(corrected.validatedSchemeHeader,true);assert.deepEqual(corrected.holdings,copiedTitle.holdings);
+assert.equal(hsbcSchemeIdentity(copiedTitle,[],'hsbc corporate bond fund'),copiedTitle);
+const fullName={schemeName:'HSBC Large & Mid Cap Fund'};assert.equal(hsbcSchemeIdentity(fullName,[],'hsbc large mid cap fund'),fullName,'Do not rewrite genuine headings to abbreviated filenames');
+for(const rows of [[],[['HSBC Gold ETF Fund of Fund']],riskometer.concat(riskometer),[['HSBC Other Fund','Scheme Riskometer','Scheme Benchmark Riskometer']]])assert.throws(()=>hsbcSchemeIdentity(copiedTitle,rows,'hsbc gold etf fof'),e=>e.code==='SCHEME_IDENTITY');
 const one='https://s3.ap-south-1.amazonaws.com/x-web-s3.360.one/IN_MF_MONTHLY_PORTFOLIO_Aug2026_Final_hash.xls';
 assert.deepEqual(oneDisclosures(`{"month":"null","documents":[{"fileName":"August","fileUrl":"${one}"},{"fileName":"July","fileUrl":"${one}"}]}`,month).map(l=>l.url),[one]);
 assert.throws(()=>oneDisclosures(`{"fileName":"August","fileUrl":"${one.replace('2026','2025')}"}`,month),/unavailable/);

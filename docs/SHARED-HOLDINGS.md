@@ -66,6 +66,9 @@ navigation and content size; refusals stop collection and every exit closes the
 browser. Workbooks still use the bounded HTTP reader. Monthly portfolios are kept
 separate from identical month-end files mirrored in the fortnightly directory,
 preventing duplicate hybrid-fund holdings in historical comparisons.
+Two June HSBC workbooks contain a copied Corporate Bond Fund heading. A correction
+requires the workbook's own scheme-riskometer name to match the published file
+label; filename-only renaming is rejected. Quantities and dates are preserved.
 
 This source contract does not certify every historical upstream observation.
 Current-month duplicate quantities, dates and ambiguous instruments mark coverage

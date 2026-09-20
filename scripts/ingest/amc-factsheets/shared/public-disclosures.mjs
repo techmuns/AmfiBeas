@@ -284,6 +284,19 @@ export function verifiedNonIndianRows(rows,name,month) {
   }
   return true;
 }
+export function hsbcSchemeIdentity(scheme,rows,label) {
+  const key=name=>baseName(name).replace(/\bfof\b/g,'fund of fund').replace(/\bfund of funds\b/g,'fund of fund');
+  if(!/^hsbc /i.test(label||''))throw Object.assign(Error('Scheme title unverified'),{code:'SCHEME_IDENTITY'});
+  // This correction is limited to the observed copied template. Other genuine
+  // headings can use fuller names than their abbreviated download filenames.
+  if(key(scheme.schemeName)===key(label)||scheme.schemeName!=='HSBC Corporate Bond Fund')return scheme;
+  // Two June reports retained another scheme's template heading. Repair only
+  // when the workbook's own riskometer name corroborates the published file.
+  const titles=rows.filter(row=>row.some(v=>/^scheme riskometer$/i.test(String(v||'').trim()))&&row.some(v=>/^scheme benchmark riskometer$/i.test(String(v||'').trim())))
+    .flatMap(row=>row.filter(v=>/^hsbc /i.test(String(v||'').trim())).map(v=>String(v).trim()));
+  if(titles.length!==1||key(titles[0])!==key(label))throw Object.assign(Error('Scheme title unverified'),{code:'SCHEME_IDENTITY'});
+  return {...scheme,schemeName:titles[0],validatedSchemeHeader:true};
+}
 export function parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedWorkbook,opts,month,link,slug,identifyScheme}) {
   try{
     let schemes=parseVerifiedWorkbook(buffer,{XLSX,parseAmcWorkbook,opts,month});
@@ -302,9 +315,17 @@ export function parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedW
       scheme.schemeName=row[1];scheme.validatedSchemeHeader=true;
       if(scheme.holdings?.some(h=>/^INE/.test(h.isin||'')))throw Error('Ambiguous FoF ownership');
     }
+    if(slug==='hsbc') {
+      if(schemes.length!==1)throw Object.assign(Error('Scheme title unverified'),{code:'SCHEME_IDENTITY'});
+      const book=XLSX.read(buffer,{type:'buffer',cellDates:false}),sheet=book.Sheets[schemes[0].schemeCode];
+      if(!sheet)throw Object.assign(Error('Scheme title unverified'),{code:'SCHEME_IDENTITY'});
+      const rows=XLSX.utils.sheet_to_json(sheet,{header:1,blankrows:true,defval:null,raw:true});
+      schemes=[hsbcSchemeIdentity(schemes[0],rows,link.text)];
+    }
     return schemes;
   }
   catch(error) {
+    if(error.code==='SCHEME_IDENTITY')throw error;
     const book=XLSX.read(buffer,{type:'buffer',cellDates:false});
     const ancillary=n=>{
       if(/^(?:Notes|Disclaimer)$/i.test(n))return true;
