@@ -35,13 +35,6 @@ const naviReader=(year='2026-2027',title='Portfolio 1st August to 31st August 20
 assert.equal((await publicDisclosures('navi',month,naviReader())).length,1);
 assert.equal((await publicDisclosures('navi','2027-01',naviReader('2026-2027','Portfolio 1st January to 31st January 2027'))).length,1);
 await assert.rejects(publicDisclosures('navi',month,naviReader('2026-2027','Portfolio 31st July 2026')),/month mismatch/);
-const bajajReader=count=>async(url,options)=>{
-  if(!options)return html('var bajajDownloads = {"ajaxUrl":"https://www.bajajamc.com/wp-admin/admin-ajax.php","nonce":"public"};<div class="bd-accordion" data-section-id="99"><button>Other</button></div><div class="bd-accordion" data-section-id="123"><button><span>Monthly Portfolio</span></button></div>');
-  const form=new URLSearchParams(options.body);assert.equal(form.get('section_id'),'123');assert.equal(form.get('year'),'2026-27');assert.equal(form.get('month'),'August');
-  return json({success:true,data:{html:'<a href="https://media.bajajamc.com/monthly.xlsx">Monthly Portfolio</a>',count}});
-};
-assert.equal((await publicDisclosures('bajaj-finserv',month,bajajReader(1))).length,1);
-await assert.rejects(publicDisclosures('bajaj-finserv',month,bajajReader(2)),/Incomplete/);
 const alphaData={monthly:[{schemeName:'AlphaGrep Fund',folderName:'fund',financialYears:[{yearFolder:'2026_27',documents:[{fileName:'August_2026'},{fileName:'July_2026'}]}]}]};
 const alpha=await publicDisclosures('alphagrep',month,async()=>json(alphaData));
 assert.equal(alpha.length,1);assert.match(alpha[0].url,/fund\/monthly\/2026_27\/August_2026.xls$/);
@@ -58,7 +51,7 @@ await assert.rejects(publicDisclosures('choice','2026-09',async()=>json(choiceDa
 choiceData.body.data[0].reports[0].file_path='https://unexpected.test/report.xlsx';
 await assert.rejects(publicDisclosures('choice',month,async()=>json(choiceData)),/file/);
 
-for(const [slug,host] of [['tata','https://betacms.tatamutualfund.com'],['edelweiss','https://www.edelweissmf.com']]) {
+for(const [slug,host] of [['tata','https://betacms.tatamutualfund.com'],['edelweiss','https://www.edelweissmf.com'],['bajaj-finserv','https://media.bajajamc.com']]) {
  const reader=async()=>html(`<a href="${host}/aug.xlsx">Monthly Portfolio Disclosure - August 2026</a><a href="${host}/jul.xlsx">Monthly Portfolio Disclosure - July 2026</a>`);
  assert.equal((await publicDisclosures(slug,month,reader)).length,1);
  await assert.rejects(publicDisclosures(slug,'2026-07',async()=>html('<a href="https://unexpected.test/jul.xlsx">Monthly Portfolio Disclosure - July 2026</a>')),/unavailable/);

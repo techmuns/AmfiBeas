@@ -26,7 +26,7 @@ export const CATALOGUE_HOSTS={
   'jio-blackrock':['https://www.jioblackrockamc.com','https://cdnstorage-ddh3hqhvg3gyedd9.a02.azurefd.net','https://jioinvest.cdn.jio.com'],
   hsbc:['https://www.assetmanagement.hsbc.co.in'],
   navi:['https://navi.com','https://public-assets.prod.navi-tech.in'],
-  'bajaj-finserv':['https://www.bajajamc.com','https://media.bajajamc.com'],
+  'bajaj-finserv':['https://www.bajajamc.com','https://media.bajajamc.com','https://www.advisorkhoj.com'],
   alphagrep:['https://www.alphagrepmf.ai'],
   'il-fs-idf':['https://www.ilfsinfrafund.com'],
 };
@@ -59,13 +59,13 @@ export async function catalogueDisclosures(slug,month,read,{anchorFiles}) {
     }
     return links;
   }
-  if(slug==='edelweiss'||slug==='tata') {
+  if(slug==='edelweiss'||slug==='tata'||slug==='bajaj-finserv') {
     // The public index supplies published file links; all holdings come from the
     // AMC's own allowed host and still require matching workbook dates.
-    const display=slug==='tata'?'Tata':'Edelweiss';
+    const display={tata:'Tata',edelweiss:'Edelweiss','bajaj-finserv':'Bajaj-Finserv'}[slug];
     const index=`https://www.advisorkhoj.com/mutual-funds-research/mutual-fund-portfolio/${display}-Mutual-Fund/${year}`;
     const links=anchorFiles(await html(index),index).filter(l=>l.text===`Monthly Portfolio Disclosure - ${name} ${year}`);
-    const expected=slug==='tata'?'https://betacms.tatamutualfund.com':'https://www.edelweissmf.com';
+    const expected={tata:'https://betacms.tatamutualfund.com',edelweiss:'https://www.edelweissmf.com','bajaj-finserv':'https://media.bajajamc.com'}[slug];
     if(links.length!==1||new URL(links[0].url).origin!==expected)throw Error('Official monthly file unavailable');
     return links;
   }
@@ -138,19 +138,6 @@ export async function catalogueDisclosures(slug,month,read,{anchorFiles}) {
       if(!files.some(url=>/\.xlsx?$/i.test(url||'')))throw Error('Monthly workbook missing');
       return files.filter(url=>/\.xlsx?$/i.test(url||'')).map(url=>({url,text:d.title.replace(/\s+1st.*$/i,'')}));
     });
-  }
-  if(slug==='bajaj-finserv') {
-    const source=await html(page),settings=config(source,'bajajDownloads');
-    // Match each accordion independently so an earlier section cannot supply its ID.
-    const block=source.split(/(?=<div\b[^>]*\bclass="bd-accordion\s*")/).find(s=>/^<div\b/.test(s)&&s.slice(0,s.indexOf('</button>')).includes('>Monthly Portfolio<'));
-    const id=block&&/data-section-id="(\d+)"/.exec(block)?.[1];
-    if(!id||settings.ajaxUrl!=='https://www.bajajamc.com/wp-admin/admin-ajax.php'||!settings.nonce)throw Error('Monthly catalogue missing');
-    const fy=num>=4?year:year-1,financialYear=`${fy}-${String(fy+1).slice(-2)}`;
-    const data=await json(settings.ajaxUrl,form({action:'bajaj_get_downloads',nonce:settings.nonce,section_id:id,year:financialYear,month:name}));
-    if(data.success!==true||typeof data.data?.html!=='string'||!Number.isSafeInteger(data.data.count))throw Error('Invalid disclosure index');
-    const links=anchorFiles(data.data.html,page);
-    if(links.length!==data.data.count)throw Error('Incomplete disclosure index');
-    return links;
   }
   if(slug==='alphagrep') {
     const data=await json('https://www.alphagrepmf.ai/assets/documents/files.json');

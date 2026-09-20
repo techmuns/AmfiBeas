@@ -105,7 +105,11 @@ Unavailable catalogues, unpublished reports, changed formats, unclassified
 instruments and missing active-scheme inventory must remain visible gaps. An
 external source's future publication time cannot be guaranteed.
 
-Edelweiss and Tata use the public AdvisorKhoj catalogue for exact published links, then fetch only the verified AMC file hosts. Index discovery does not substitute for access to or validation of the actual reports.
+Edelweiss, Tata and Bajaj Finserv use the public AdvisorKhoj catalogue for exact
+published links, then fetch only the verified AMC file hosts. Bajaj's consolidated
+workbook is served by its official media host even when the catalogue page is
+unavailable. Index discovery does not substitute for access to or validation of
+the actual reports.
 
 ASK, Monarch and Lakshya now have first-party readers independent of missing AMFI
 directory links. ASK and Monarch accept only published month-end monthly entries;
