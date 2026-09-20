@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {anchorFiles,oneDisclosures,publicDisclosures,publicReader,publicUrl,readDisclosures,resumeDisclosures,retainDisclosedNames,schemeNameResolver,verifiedNonIndianRows,parsePublicWorkbook} from './public-disclosures.mjs';
+import {anchorFiles,baseName,oneDisclosures,publicDisclosures,publicReader,publicUrl,readDisclosures,resumeDisclosures,retainDisclosedNames,schemeNameResolver,verifiedNonIndianRows,parsePublicWorkbook} from './public-disclosures.mjs';
 import {reconcileSourceChecks,lastCompleteCheck} from './checks.mjs';
 const reply=value=>Buffer.from(JSON.stringify(value));
 const month='2026-08';
@@ -89,6 +89,15 @@ assert(verifiedNonIndianRows([...cashRows.slice(0,-1),['Equity & Equity related'
 assert(!verifiedNonIndianRows([...cashRows,cashRows.at(-1)],'quant Overnight Fund',month),'Multiple total boundaries cannot certify one empty report');
 assert(!verifiedNonIndianRows(cashRows,'Unidentified Fund',month));
 assert(!verifiedNonIndianRows([...cashRows.slice(0,-1),['Underlying scheme','INF090A01021',1],cashRows.at(-1)],'quant Overnight Fund',month));
+const overseasRows=[['Bandhan US Equity Active FOF'],['Portfolio as on 31 August 2026'],[null,'Name of Instrument','ISIN','Quantity','Market Value','% to NAV'],[null,'International Mutual Fund Units'],['2500445USD','Overseas Fund',null,10,100,0.99],[null,'Net Current Assets',null,null,null,0.01],[null,'Grand Total',null,null,null,1]];
+assert(verifiedNonIndianRows(overseasRows,'Bandhan US Equity Active FOF',month));
+assert(!verifiedNonIndianRows(overseasRows.map(r=>r[0]==='2500445USD'?['UNKNOWN',...r.slice(1)]:r),'Bandhan US Equity Active FOF',month));
+assert(!verifiedNonIndianRows(overseasRows.map(r=>r[1]==='International Mutual Fund Units'?[null,'Equity & Equity related']:r),'Bandhan US Equity Active FOF',month));
+assert(!verifiedNonIndianRows(overseasRows.map(r=>r[0]==='2500445USD'?[...r.slice(0,2),'INE090A01021',...r.slice(3)]:r),'Bandhan US Equity Active FOF',month));
+const ilfsSchemes=['2026-08-15','2026-08-31'].flatMap(asOf=>['Series 2A','Series 2B'].map(schemeName=>({schemeName,asOf,holdings:[]})));
+const ilfsOpts={parseVerifiedWorkbook:()=>ilfsSchemes,slug:'il-fs-idf',month,link:{},XLSX:{read:()=>{throw Error('Incomplete month-end portfolios');}}};
+assert.equal(parsePublicWorkbook(null,ilfsOpts).length,2);
+assert.throws(()=>parsePublicWorkbook(null,{...ilfsOpts,parseVerifiedWorkbook:()=>ilfsSchemes.slice(0,-1)}),/Incomplete/);
 const fakeBook={read:()=>({SheetNames:['One'],Sheets:{One:cashRows}}),utils:{sheet_to_json:s=>s}};
 const zero=parsePublicWorkbook(Buffer.alloc(0),{XLSX:fakeBook,parseAmcWorkbook:()=>[],parseVerifiedWorkbook:()=>{throw Error('No Indian positions');},opts:{},month,link:{text:'quant Overnight Fund'}})[0];
 assert.equal(zero.validatedNoIndianHoldings,true);
@@ -116,6 +125,12 @@ for(let pass=0;pass<4;pass++) {
 }
 assert.deepEqual(visited,['a','b','c','d'],'Repeated slow attempts eventually visit every disclosure URL');
 assert.deepEqual(resumeDisclosures(catalogue,{resumeUrl:'removed-file'}),catalogue,'A changed catalogue cannot omit new or corrected files');
+const mixed=[{url:'new',disclosureMonth:month},{url:'old',disclosureMonth:'2026-07'}];
+assert.equal(resumeDisclosures(mixed,{resumeUrl:'old'})[0].url,'new');
+const mixedProgress=await readDisclosures(mixed,{month,read:async url=>{if(url==='old')throw Error('History unavailable');return Buffer.from('ok');},parse:()=>[{asOf:'2026-08-31'}]});
+assert.deepEqual(mixedProgress.byMonth[month],{expectedFiles:1,completedFiles:1,failedFiles:0,pendingFiles:0});
+assert.equal(mixedProgress.byMonth['2026-07'].failedFiles,1);
+assert.equal(mixedProgress.fileFailures[0].month,'2026-07');
 let failedProgress;
 await assert.rejects(readDisclosures(catalogue,{month,concurrency:1,read:async()=>{throw Error('Temporary download failure');},parse:()=>[],onCheckpoint:p=>{failedProgress=p;throw Error('Interrupted');}}),/checkpoint failed/);
 assert.equal(failedProgress.schemes.length,0);assert.equal(failedProgress.resumeUrl,'b','Even an attempt with no parsed schemes retains the unfinished tail');
@@ -124,9 +139,30 @@ let finished=0;
 await assert.rejects(readDisclosures([{url:'one'},{url:'two'}],{month,read:async url=>{await new Promise(r=>setTimeout(r,url==='one'?1:15));finished++;return Buffer.from(url);},parse:()=>[{asOf:'2026-08-31'}],onCheckpoint:()=>{throw Error('Disk unavailable');}}),/checkpoint failed/);
 assert.equal(finished,2,'A checkpoint failure must await other in-flight file reads before returning');
 let attempted=0;
-const refused=publicReader('quant',{execute:async()=>{attempted++;throw Object.assign(Error('curl failed'),{stderr:Buffer.from('curl: (22) The requested URL returned error: 403')});}});
+const refused=publicReader('quant',{execute:async()=>{attempted++;throw Object.assign(Error('curl failed'),{code:56,stderr:Buffer.from('curl: (56) The requested URL returned error: 403')});}});
 await assert.rejects(refused('https://quantmutual.com/first.xlsx'),/refused/);
 await assert.rejects(refused('https://quantmutual.com/second.xlsx'),/refused/);assert.equal(attempted,1);
 const redirect=publicReader('quant',{execute:async()=>({stdout:Buffer.from('redirect\n302')})});
 await assert.rejects(redirect('https://quantmutual.com/first.xlsx'),/failed/);
 console.log('PASS public disclosures: nine live-catalogue shapes, all pages, month rollover, host bounds, identity preservation, per-file failure checkpoints, bounded downloads and refusal handling');
+
+const serialRows=cashRows.map(r=>r[0].startsWith('Monthly Portfolio')?['PORTFOLIO STATEMENT AS ON :',46265]:r[0]==='Name of Instrument'?['Name of Instrument','ISIN','% to AUM']:r);
+assert(verifiedNonIndianRows(serialRows,'Choice Overnight Fund',month));
+assert(!verifiedNonIndianRows(serialRows,'Choice Overnight Fund','2026-07'));
+
+const foreignRows=[['PGIM INDIA GLOBAL FUND OF FUND'],['Portfolio as on 31 August 2026'],['Name of Instrument','ISIN','% to NAV'],['Foreign Securities and/or Overseas ETFs'],['Foreign fund','IE00BYV6MS67',99],['Clearing Corporation of India Ltd.','',1],['GRAND_TOTAL','',100]];
+assert(verifiedNonIndianRows(foreignRows,'PGIM INDIA GLOBAL FUND OF FUND',month));
+assert(!verifiedNonIndianRows(foreignRows.map(r=>r[0]==='Foreign fund'?['Indian fund','INF209K01WE3',99]:r),'PGIM INDIA GLOBAL FUND OF FUND',month));
+const summary=[['Scheme Name: PGIM INDIA GLOBAL FUND OF FUND'],['Top 10 holdings by issuer'],['Issuer Name','% to Net Assets'],['Foreign fund',1]];
+const multiBook={read:()=>({SheetNames:['Portfolio','Allocation'],Sheets:{Portfolio:foreignRows,Allocation:summary}}),utils:{sheet_to_json:s=>s}};
+const parseEmpty=XLSX=>parsePublicWorkbook(null,{XLSX,parseVerifiedWorkbook:()=>{throw Error('Empty');},month,link:{text:'PGIM INDIA GLOBAL FUND OF FUND'}});
+assert.equal(parseEmpty(multiBook).length,1);
+assert.throws(()=>parseEmpty({...multiBook,read:()=>({SheetNames:['Portfolio','Other'],Sheets:{Portfolio:foreignRows,Other:[['Unknown portfolio']]}})}),/Empty/);
+
+assert.equal(baseName('JM Large & Midcap Fund'),baseName('JM Large and Midcap Fund'));
+assert.equal(baseName('JM Short Term Fund (Erstwhile known as JM Short Duration Fund)'),baseName('JM Short Term Fund'));
+assert.notEqual(baseName('Example Direct Plan'),baseName('Example Regular Plan'));
+
+const emptyArgs={XLSX:multiBook,parseVerifiedWorkbook:()=>{throw Error('Empty');},month,identifyScheme:()=> 'PGIM INDIA GLOBAL FOF'};
+assert.equal(parsePublicWorkbook(null,{...emptyArgs,link:{text:'PGIM INDIA GLOBAL FUND OF FUND'}})[0].schemeName,'PGIM INDIA GLOBAL FUND OF FUND','Verified source labels retain identity across parser improvements');
+assert.equal(parsePublicWorkbook(null,{...emptyArgs,link:{text:'Download'}})[0].schemeName,'PGIM INDIA GLOBAL FOF','Generic links use the verified workbook title');

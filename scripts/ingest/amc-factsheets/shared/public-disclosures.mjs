@@ -3,9 +3,11 @@
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {monthKey,previousMonth} from './dates.mjs';
+import {CATALOGUE_PAGES,CATALOGUE_HOSTS,catalogueDisclosures} from './catalogues.mjs';
 const run=promisify(execFile);
 const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
 export const PUBLIC_PAGES={
+  ...CATALOGUE_PAGES,
   '360-one':'https://www.360.one/asset/mutual-funds/downloads/',
   quant:'https://quantmutual.com/statutory-disclosures',
   mirae:'https://www.miraeassetmf.co.in/downloads/portfolio',
@@ -17,6 +19,7 @@ export const PUBLIC_PAGES={
   bandhan:'https://bandhanmutual.com/downloads/disclosures',
 };
 const allowed={
+  ...Object.fromEntries(Object.entries(CATALOGUE_HOSTS).map(([slug,hosts])=>[slug,url=>hosts.includes(url.origin)])),
   '360-one':url=>url.origin==='https://www.360.one'||url.origin==='https://s3.ap-south-1.amazonaws.com'&&url.pathname.startsWith('/x-web-s3.360.one/'),
   quant:url=>url.origin==='https://quantmutual.com',mirae:url=>url.origin==='https://www.miraeassetmf.co.in',
   union:url=>url.origin==='https://www.unionmf.com',lic:url=>url.origin==='https://www.licmf.com',
@@ -42,14 +45,15 @@ export function publicReader(slug,{execute=run}={}) {
     for(const [key,value] of Object.entries(headers))args.push('-H',`${key}: ${value}`);
     if(body!==undefined)args.push('-H',`Content-Type: ${contentType}`,'--data-raw',typeof body==='string'?body:JSON.stringify(body));
     args.push('--write-out','\n%{http_code}',url);
-    try {
+    for(let attempt=0;attempt<3;attempt++)try {
       const {stdout}=await execute('curl',args,{encoding:'buffer',maxBuffer:25_001_024,timeout:22000});
       const status=Number(stdout.subarray(-3).toString());
       if(status!==200)throw Object.assign(Error('Disclosure HTTP failure'),{status});
       return stdout.subarray(0,-4);
     } catch(error) {
-      const status=error.status||Number(/error:\s*(401|403|429)/i.exec(String(error.stderr||''))?.[1]);
+      const status=error.status||Number(error.stdout?.subarray?.(-3)?.toString())||Number(/error:\s*(401|403|429)/i.exec(String(error.stderr||''))?.[1]);
       if([401,403,429].includes(status))refused.add(host);
+      if(attempt<2&&([408,500,502,503,504].includes(status)||!status&&[5,6,7,18,28,35,52,55,56].includes(error.code))){await new Promise(resolve=>setTimeout(resolve,250*(attempt+1)));continue;}
       throw Error([401,403,429].includes(status)?'Source refused access':'Disclosure download failed');
     }
   };
@@ -90,6 +94,7 @@ export async function publicDisclosures(slug,month,read,{axisPublicToken,include
   const [year,num]=month.split('-').map(Number),name=months[num-1],page=PUBLIC_PAGES[slug];let links=[];
   const json=async(url,options)=>jsonReply(await read(url,options));
   const html=async(url,options)=>(await read(url,options)).toString('utf8');
+  if(CATALOGUE_PAGES[slug])return uniqueFiles(slug,await catalogueDisclosures(slug,month,read,{anchorFiles}));
   if(slug==='360-one')return oneDisclosures(await html(page),month);
   if(slug==='bandhan') {
     const ids=new Set();let first=null,finished=false;
@@ -192,7 +197,7 @@ export async function publicDisclosures(slug,month,read,{axisPublicToken,include
   return uniqueFiles(slug,links).sort((a,b)=>String(b.disclosureMonth||month).localeCompare(String(a.disclosureMonth||month)));
 }
 
-const baseName=name=>String(name||'').split(/\s*[-–]\s*an?\s+open[ -]ended/i)[0].toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+export const baseName=name=>String(name||'').split(/\s*[-–]\s*an?\s+open[ -]ended/i)[0].replace(/\s*\(erstwhile known as[^)]*\)\s*$/i,'').replace(/&/g,' and ').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 export function retainDisclosedNames(schemes,prior=[]) {
   const names=new Map();
   for(const scheme of prior){const key=baseName(scheme.schemeName);if(!names.has(key))names.set(key,new Set());names.get(key).add(scheme.schemeName);}
@@ -211,43 +216,56 @@ export function schemeNameResolver(snapshot) {
 // Some gold, overnight and overseas-only reports contain no Indian shares or units,
 // so the equity parser correctly returns no positions. Verify that exact case
 // without treating an arbitrary empty/malformed workbook as an empty portfolio.
-const emptySections=new Set(`equity & equity related|listed/awaiting listing on stock exchanges|listed/awaiting listing on stock exchange|listed/awaiting listing on the stock exchanges|listed/awaited listed on stock exchanges|unlisted|preference shares|debt instruments|privately placed/unlisted|unlisted/privately placed|securitised debt|securitised debt instruments|securitized debt instruments|others|money market instruments|tri party repo (treps)/reverse repo|treps/reverse repo instrument|treps/reverse repo|treps/reverse repo investments|international exchange traded funds|international mutual fund units|other current assets/(liabilities)|international equity shares|reit|derivatives|index/stock futures|index/stock options|exchange traded commodity derivatives|commodity futures|commodity option|commercial paper|commercial papers|cd-certificate of deposits|treasury bills|units of an alternative investment fund (aif)|fixed deposits|mutual fund unit|mutual fund units|units of infrastructure investment trust|tri party repo (treps)|other receivables (payables)|overseas security|preference/right shares|warrants|derivative|govt security|certificate of deposits|reverserepo/treps|investments in foreign securities - units of mutual funds|deposits with commercial banks|share application money pending allotment|foreign securities and/or overseas etf|real estate investment trust|infrastructure investment trust|central government securities|state government securities|bills re- discounting|mutual fund units/exchange traded funds|short term deposits|term deposits placed as margins|alternative investment funds`.split('|'));
+const emptySections=new Set(`equity & equity related|listed/awaiting listing on stock exchanges|listed/awaiting listing on stock exchange|listed/awaiting listing on the stock exchanges|listed/awaited listed on stock exchanges|unlisted|preference shares|debt instruments|privately placed/unlisted|unlisted/privately placed|securitised debt|securitised debt instruments|securitized debt instruments|others|money market instruments|tri party repo (treps)/reverse repo|treps/reverse repo instrument|treps/reverse repo|treps/reverse repo investments|international exchange traded funds|international mutual fund units|other current assets/(liabilities)|international equity shares|reit|derivatives|index/stock futures|index/stock options|exchange traded commodity derivatives|commodity futures|commodity option|commercial paper|commercial papers|cd-certificate of deposits|treasury bills|units of an alternative investment fund (aif)|fixed deposits|mutual fund unit|mutual fund units|units of infrastructure investment trust|tri party repo (treps)|other receivables (payables)|overseas security|preference/right shares|warrants|derivative|govt security|certificate of deposits|reverserepo/treps|investments in foreign securities - units of mutual funds|deposits with commercial banks|share application money pending allotment|foreign securities and/or overseas etf|real estate investment trust|infrastructure investment trust|central government securities|state government securities|bills re- discounting|mutual fund units/exchange traded funds|short term deposits|term deposits placed as margins|alternative investment funds|foreign mutual fund units|fixed deposit|exchange traded funds|cdmdf_aif|strips|margin amount for derivative positions|foreign securities/overseas etfs|foreign securities and/or overseas etfs|reverse repo/treps|commodities and commodities related|listed on commodity exchange (quantity in lots)`.split('|'));
 export function verifiedNonIndianRows(rows,name,month) {
-  if(!/\b(?:gold etf|silver etf|overnight fund|1d rate liquid etf|global.*(?:\bfof|fund of fund)|S&P 500.*ETF|NYSE FANG.*ETF|Hang Seng.*ETF)\b/i.test(name||''))return false;
+  if(!/\b(?:gold (?:etf|exchange traded fund)|silver etf|overnight fund|1d rate liquid etf|global.*(?:\bfof|fund of fund)|HSBC (?:Brazil Fund|Global Emerging Markets Fund|Asia Pacific.*Yield ?Fund)|Navi .*US Specific Equity Passive FoF|Bandhan US.*(?:FOF|fund of fund)|Invesco India - Invesco .*Fund of Fund|PGIM INDIA .*FUND OF FUND|S&P 500.*ETF|NYSE FANG.*ETF|Hang Seng.*ETF)\b/i.test(name||''))return false;
   const heading=rows.slice(0,15).flat().map(v=>String(v??'')).join(' ').replace(/[-,]/g,' ').replace(/\s+/g,' ');
   const [year,num]=month.split('-').map(Number),end=new Date(Date.UTC(year,num,0)).getUTCDate(),mon=months[num-1];
-  const dates=[...heading.matchAll(/(?:as on|month ended|period ended)\s+(\d{1,2}\s+[A-Za-z]+\s+20\d{2}|[A-Za-z]+\s+\d{1,2}\s+20\d{2})/gi)];
-  if(!dates.length||dates.some(d=>!new RegExp(`^(?:${end} ${mon}(?: |$)|${mon} ${end} )`,'i').test(d[1].replace(new RegExp(mon.slice(0,3)+'(?= )','i'),mon))||!d[1].endsWith(String(year))))return false;
-  const header=rows.findIndex(r=>r.some(v=>/^ISIN(?:\s+Code)?$/i.test(String(v||''))));
+  const dates=[...heading.matchAll(/(?:as on|as of|month ended|period ended)\s+(\d{1,2}\s+[A-Za-z]+\s+20\d{2}|[A-Za-z]+\s+\d{1,2}\s+20\d{2})/gi)];
+  const monthlyOnly=new RegExp(`monthly portfolio statement of .+ for ${mon} ${year}(?: |$)`,'i').test(heading);
+  const serialDates=rows.slice(0,15).flatMap(r=>r.flatMap((v,i)=>/portfolio statement as on\s*:?$/i.test(String(v||''))&&Number.isInteger(r[i+1])&&r[i+1]>20000&&r[i+1]<90000?[new Date(Date.UTC(1899,11,30)+r[i+1]*86400000).toISOString().slice(0,10)]:[]));
+  if((!dates.length&&!serialDates.length&&!monthlyOnly)||serialDates.some(d=>d!==`${month}-${end}`)||dates.some(d=>!new RegExp(`^(?:${end} ${mon}(?: |$)|${mon} ${end} )`,'i').test(d[1].replace(new RegExp(mon.slice(0,3)+'(?= )','i'),mon))||!d[1].endsWith(String(year))))return false;
+  const header=rows.findIndex(r=>r.some(v=>/^ISIN(?:\s+Code)?$/i.test(String(v||'')))||/gold exchange traded fund/i.test(name)&&r.some(v=>/name.*instrument/i.test(String(v||''))));
   if(header<0)return false;
-  const cols=rows[header],isin=cols.findIndex(v=>/^ISIN(?:\s+Code)?$/i.test(String(v||''))),pct=cols.findIndex(v=>/%|percentage/i.test(String(v||''))&&/nav|net asset/i.test(String(v||''))),instrument=cols.findIndex(v=>/name.*instrument/i.test(String(v||'')));
+  const cols=rows[header],isin=cols.findIndex(v=>/^ISIN(?:\s+Code)?$/i.test(String(v||''))),pct=cols.findIndex(v=>/%|percentage/i.test(String(v||''))&&/nav|aum|net asset/i.test(String(v||''))),instrument=cols.findIndex(v=>/name.*instrument/i.test(String(v||'')));
   if(pct<0||instrument<0)return false;
   // Check the whole document, not just the first section or first parsed sheet.
   if(rows.flat().some(v=>/\bIN[EF][A-Z0-9]{9}\b/i.test(String(v??'')))||rows.slice(header+1).some(r=>/^IN[EF]/i.test(String(r[isin]||'').trim())))return false;
-  const totals=rows.map((r,i)=>r.some(v=>/^grand total(?:\s*\(aum\))?$/i.test(String(v||'').trim()))?i:-1).filter(i=>i>=0);
+  const totals=rows.map((r,i)=>r.some(v=>/^(?:grand[ _]total(?:\s*\(aum\))?|total net assets as on \d{1,2}-[A-Za-z]+-20\d{2})$/i.test(String(v||'').trim()))?i:-1).filter(i=>i>=0);
   if(totals.length!==1||totals[0]<=header||![1,100].some(n=>Math.abs(Number(rows[totals[0]][pct])-n)<0.0001))return false;
   const amounts=cols.flatMap((v,i)=>/quantity|(?:market|fair).*value/i.test(String(v||''))?[i]:[]),blank=v=>v===undefined||v===null||v==='';
+  let currentSection=null;
   for(const row of rows.slice(header+1,totals[0]+1)) {
     const label=String(row[instrument]||'').trim(),id=String(row[isin]||'').trim();
     const emptyValue=v=>blank(v)||v===0||/^NIL$/i.test(String(v).trim());
     if(!label&&!id&&blank(row[pct])&&amounts.every(i=>blank(row[i])))continue;
     const section=label.replace(/^\(?[a-z]\)\s*/i,'').toLowerCase().replace(/\s*\/\s*/g,'/').replace(/\s+/g,' ');
-    if(!id&&emptyValue(row[pct])&&amounts.every(i=>emptyValue(row[i]))&&emptySections.has(section))continue;
+    if(!id&&emptyValue(row[pct])&&amounts.every(i=>emptyValue(row[i]))&&emptySections.has(section)){currentSection=section;continue;}
     if(!blank(row[pct])&&!/^NIL$/i.test(String(row[pct]).trim())&&!(row[pct]==='$'&&/^(?:Cash Margin - CCIL|sub\s*total)$/i.test(label))&&(typeof row[pct]!=='number'||!Number.isFinite(row[pct])))return false;
-    if(/^(?:sub\s*total|grand total(?:\s*\(aum\))?|total(?: for (?:money market instruments|equity & equity related|debt instruments))?|(?:NCA-)?net current assets|cash and other net current assets|cash margin - CCIL|net receivables?\s*\/\s*\(?payables?\)?|clearing corporation of india limited)$/i.test(label))continue;
+    if(/^(?:sub\s*total|grand[ _]total(?:\s*\(aum\))?|total(?: for (?:money market instruments|equity & equity related|debt instruments))?|(?:NCA-)?net current assets(?: \(including cash & bank balances\))?|TREPS\/Reverse Repo\/Net Current Assets\/Cash\/Cash Equivalent|total net assets as on \d{1,2}-[A-Za-z]+-20\d{2}|cash and other net current assets|cash margin - CCIL|net receivables?\s*\/\s*\(?payables?\)?|clearing corporation of india (?:limited|ltd\.?))$/i.test(label))continue;
     if(/^TREPS(?:\s+\d{2}-[A-Za-z]{3}-20\d{2}\s+DEPO\s+\d+)?$/i.test(label))continue;
-    if(/^Triparty Repo TRP_\d{6}$/i.test(label))continue;
-    if(/^(?:\(?[a-z]\)\s*)?(?:gold(?: 1 kg bar \(995 fineness\)| 995 purity| - mumbai)?|silver)$/i.test(label))continue;
-    if(/^(?:GOLD \.995 1KG BAR|GOLD 999 100GM BAR|SILVER 999 1KG BAR)$/i.test(label))continue;
+    if(/^Triparty Repo(?: TRP_\d{6})?$/i.test(label))continue;
+    if(/^(?:\(?[a-z]\)\s*)?(?:gold(?: 1 kg bar \(995 fineness\)| (?:995|999) purity| 995 Finnese| - mumbai)?|silver)$/i.test(label))continue;
+    if(/^(?:GOLD \.995 1KG BAR(?: - Mumbai)?|GOLD 999 100GM BAR|SILVER 999 1KG BAR)$/i.test(label))continue;
     if(/^(?:GOLD\s*M?|SILVERM?)\s+\d{2}\/\d{2}\/20\d{2}\s+\(FUTURES\)$/i.test(label))continue;
+    if(/^(?:GOLD \.995|SILVER) ETCD \d{2} [A-Za-z]{3} 20\d{2}$/i.test(label))continue;
     if(/^[A-Z]{2}[A-Z0-9]{10}$/.test(id)&&!id.startsWith('IN'))continue;
+    if(/^international (?:mutual fund units|exchange traded funds)$/.test(currentSection||'')&&/^\d{5,12}(?:USD|EUR|GBP)$/.test(id||String(row[0]||'').trim())&&label)continue;
     return false;
   }
   return true;
 }
-export function parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedWorkbook,opts,month,link}) {
+export function parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedWorkbook,opts,month,link,slug,identifyScheme}) {
   try{
-    const schemes=parseVerifiedWorkbook(buffer,{XLSX,parseAmcWorkbook,opts,month});
+    let schemes=parseVerifiedWorkbook(buffer,{XLSX,parseAmcWorkbook,opts,month});
+    // IL&FS publishes both fortnightly and month-end portfolios in one workbook.
+    // Every named fortnightly scheme must have a matching month-end report.
+    if(slug==='il-fs-idf') {
+      const date=month+'-'+new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5,7)),0)).getUTCDate();
+      const monthly=schemes.filter(s=>s.asOf===date),names=new Set(monthly.map(s=>s.schemeName));
+      if(!monthly.length||schemes.some(s=>!names.has(s.schemeName)))throw Error('Incomplete month-end portfolios');
+      schemes=monthly;
+    }
     for(const scheme of schemes)if(/^mutual fund units$/i.test(scheme.schemeName)) {
       const book=XLSX.read(buffer,{type:'buffer',cellDates:false}),sheet=book.Sheets[scheme.schemeCode];
       const row=sheet&&XLSX.utils.sheet_to_json(sheet,{header:1,blankrows:true,defval:null,raw:true})[0];
@@ -259,19 +277,43 @@ export function parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedW
   }
   catch(error) {
     const book=XLSX.read(buffer,{type:'buffer',cellDates:false});
-    if(book.SheetNames.length!==1)throw error;
-    const rows=XLSX.utils.sheet_to_json(book.Sheets[book.SheetNames[0]],{header:1,blankrows:true,defval:null,raw:true});
-    if(!verifiedNonIndianRows(rows,link.text,month))throw error;
-    return [{schemeCode:book.SheetNames[0],schemeName:link.text,asOf:month+'-'+new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5,7)),0)).getUTCDate(),holdings:[],validatedNoIndianHoldings:true}];
+    const ancillary=n=>{
+      if(/^(?:Notes|Disclaimer)$/i.test(n))return true;
+      const rows=XLSX.utils.sheet_to_json(book.Sheets[n],{header:1,blankrows:false,defval:null,raw:true});
+      return rows.slice(0,3).some(r=>r.some(v=>String(v||'')==='Top 10 holdings by issuer'))&&rows.slice(0,4).some(r=>r.some(v=>String(v||'')==='Issuer Name'))&&!rows.flat().some(v=>/\bIN[EF][A-Z0-9]{9}\b/i.test(String(v||'')));
+    };
+    const candidates=book.SheetNames.filter(n=>!ancillary(n));
+    if(candidates.length!==1)throw error;
+    const rows=XLSX.utils.sheet_to_json(book.Sheets[candidates[0]],{header:1,blankrows:true,defval:null,raw:true});
+    // Keep the validated published file label stable when it identifies the
+    // scheme; generic download labels must use the actual workbook heading.
+    const name=verifiedNonIndianRows(rows,link.text,month)?link.text:identifyScheme?.(rows,candidates[0])||link.text;
+    if(!verifiedNonIndianRows(rows,name,month))throw error;
+    return [{schemeCode:candidates[0],schemeName:name,asOf:month+'-'+new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5,7)),0)).getUTCDate(),holdings:[],validatedNoIndianHoldings:true}];
   }
 }
 export function resumeDisclosures(links,check) {
-  const at=links.findIndex(l=>l.url===check?.resumeUrl);
-  return at>0?[...links.slice(at),...links.slice(0,at)]:links;
+  const newest=links.map(l=>l.disclosureMonth).filter(Boolean).sort().at(-1);
+  const current=newest?links.filter(l=>l.disclosureMonth===newest):links;
+  const history=newest?links.filter(l=>l.disclosureMonth!==newest):[];
+  const rotate=list=>{const at=list.findIndex(l=>l.url===check?.resumeUrl);return at>0?[...list.slice(at),...list.slice(0,at)]:list;};
+  // Current reports always get first priority; rotate only within that period.
+  return [...rotate(current),...rotate(history)];
 }
 export async function readDisclosures(links,{read,parse,month,concurrency=4,onCheckpoint=()=>{}}) {
   let cursor=0;const results=new Array(links.length).fill(undefined),failures=[];
-  const resumeUrl=()=>links[results.findIndex(s=>s===undefined)]?.url||links[failures[0]]?.url||null;
+  function progress(lastCompletedMonth) {
+    const byMonth={};
+    for(let i=0;i<links.length;i++) {
+      const key=links[i].disclosureMonth||month;
+      const part=byMonth[key]??={expectedFiles:0,completedFiles:0,failedFiles:0,pendingFiles:0};
+      part.expectedFiles++;
+      if(results[i]===undefined)part.pendingFiles++;else if(results[i].length)part.completedFiles++;else part.failedFiles++;
+    }
+    return {schemes:results.flatMap(s=>s||[]),failedFiles:failures.length,pendingFiles:results.filter(s=>s===undefined).length,expectedFiles:links.length,completedFiles:results.filter(s=>s?.length).length,lastCompletedMonth,byMonth,
+      fileFailures:failures.map(f=>({url:links[f.index].url,month:links[f.index].disclosureMonth||month,reason:f.reason})),
+      resumeUrl:links[results.findIndex(s=>s===undefined)]?.url||links[failures[0]?.index]?.url||null};
+  }
   const settled=await Promise.allSettled(Array.from({length:Math.min(concurrency,links.length)},async()=>{
     while(cursor<links.length) {
       const index=cursor++,link=links[index];
@@ -281,11 +323,10 @@ export async function readDisclosures(links,{read,parse,month,concurrency=4,onCh
         const schemes=parse(buffer,link);
         if(!schemes.length||schemes.some(s=>monthKey(s.asOf)!==(link.disclosureMonth||month)))throw Error('Disclosure month unverified');
         results[index]=schemes.map(s=>({...s,sourceUrl:link.url}));
-      } catch {failures.push(index);results[index]=[];}
-      // Persist completed files before another slow file can time out the child.
-      await onCheckpoint({schemes:results.flatMap(s=>s||[]),failedFiles:failures.length,pendingFiles:results.filter(s=>s===undefined).length,expectedFiles:links.length,completedFiles:results.filter(s=>s?.length).length,lastCompletedMonth:link.disclosureMonth||month,resumeUrl:resumeUrl()});
+      } catch(error) {failures.push({index,reason:String(error.message||'Disclosure unavailable').slice(0,180)});results[index]=[];}
+      await onCheckpoint(progress(link.disclosureMonth||month));
     }
   }));
   if(settled.some(r=>r.status==='rejected'))throw Error('Disclosure checkpoint failed');
-  return {schemes:results.flatMap(s=>s||[]),failedFiles:failures.length,pendingFiles:0,expectedFiles:links.length,completedFiles:links.length-failures.length,resumeUrl:resumeUrl()};
+  return progress();
 }

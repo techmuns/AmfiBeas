@@ -5,7 +5,7 @@ import {execFileSync} from 'node:child_process';
 import {STATUTORY_PAGES,statutoryLinks} from './discovery.mjs';
 import {atomicJson,runSourcePool} from './source-pool.mjs';
 import {QUANTUM_PAGE,quantumDisclosures,parseQuantumWorkbook} from './quantum.mjs';
-import {PUBLIC_PAGES,publicReader,publicDisclosures,readDisclosures,resumeDisclosures,schemeNameResolver,parsePublicWorkbook} from './public-disclosures.mjs';
+import {PUBLIC_PAGES,baseName,publicReader,publicDisclosures,readDisclosures,resumeDisclosures,schemeNameResolver,parsePublicWorkbook} from './public-disclosures.mjs';
 import {reconcileSourceChecks,lastCompleteCheck} from './checks.mjs';
 import path from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
@@ -13,7 +13,7 @@ import {monthKey,targetMonth} from './dates.mjs';
 import {publishManifest} from './manifest.mjs';
 import {syncDirectory} from './directory.mjs';
 const root=path.resolve(process.env.AMFIBEAS_PATH||fileURLToPath(new URL('../../../../',import.meta.url)));
-const opts={pctScale:1,valueToCr:100},dir=path.join(root,'public/amc-holdings');
+const opts={pctScale:1,valueToCr:100,strictHoldings:true},dir=path.join(root,'public/amc-holdings');
 if(!process.env.MF_SOURCE_WORKER)await syncDirectory(root);
 const index=JSON.parse(fs.readFileSync(path.join(dir,'index.json')));
 // Actions supplies an empty string for an omitted optional input. An empty
@@ -33,7 +33,9 @@ if(!process.env.MF_SOURCE_WORKER) {
   if(result.interrupted)process.exitCode=1;
 } else {
 const importSource=file=>import(pathToFileURL(path.join(root,'scripts/ingest/amc-factsheets',file)).href);
-const [{fetchLatest},{parseAmcWorkbook},{parseZip,normalizeSchemePct},{PAGE_SCRAPE_CONFIG,pageScrapeAmc,downloadAndParse},{JSON_API_CONFIG,jsonApiAmc}]=await Promise.all(['fetch.ts','parse.ts','advisorkhoj.ts','page-scrape.ts','json-api.ts'].map(importSource));
+const [{fetchLatest},{parseAmcWorkbook,findSchemeName},{parseZip,normalizeSchemePct},{PAGE_SCRAPE_CONFIG,pageScrapeAmc,downloadAndParse},{JSON_API_CONFIG,jsonApiAmc}]=await Promise.all(['fetch.ts','parse.ts','advisorkhoj.ts','page-scrape.ts','json-api.ts'].map(importSource));
+const XLSX=await import('xlsx');
+opts.verifyEmptyWorkbook=(buffer,link)=>parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedWorkbook:()=>{throw Error('Empty portfolio requires verification');},opts,month:targetMonth(),link,identifyScheme:findSchemeName});
 for(const entry of index.amcs) {
   if(selected&&!selected.includes(entry.slug))continue;
   const startedAt=new Date().toISOString();let result=null,sourceUnavailableReason=null;
@@ -46,16 +48,17 @@ for(const entry of index.amcs) {
     if(!month)throw Error('Disclosure month unverified');
     const existing=[{asOfMonth:old.asOfMonth,schemes:old.schemes},...(old.history||[])].filter(b=>b.schemes?.length).map(b=>({...b,checkedAt:b.checkedAt||old.fetchedAt,sourceUrl:b.sourceUrl||old.sourceUrl}));
     const schemes=resolveNames(result.schemes).map(s=>({...normalizeSchemePct(s),checkedAt:startedAt,sourceUrl:s.sourceUrl||result.usedUrl||old.sourceUrl})),oldMonth=existing.find(b=>monthKey(b.asOfMonth)===month);
-    const names=new Set(schemes.map(s=>s.schemeName)),missing=oldMonth?.schemes.filter(s=>!names.has(s.schemeName)&&!(/^mutual fund units$/i.test(s.schemeName)&&schemes.some(next=>next.validatedSchemeHeader&&next.schemeCode===s.schemeCode)))||[];
+    const names=new Set(schemes.map(s=>baseName(s.schemeName))),missing=oldMonth?.schemes.filter(s=>!names.has(baseName(s.schemeName))&&!((/^(?:mutual fund units|exchange traded fund|BRSR Score\d*$|an? open[ -]ended)/i.test(s.schemeName)||s.schemeName===s.schemeCode)&&schemes.some(next=>next.schemeCode===s.schemeCode&&!/^(?:mutual fund units|exchange traded fund)$/i.test(next.schemeName))))||[];
     const months=new Map(existing.map(b=>[monthKey(b.asOfMonth),b]));
     months.set(month,{asOfMonth:month,schemes:[...schemes,...missing.map(s=>({...s,checkedAt:s.checkedAt||oldMonth.checkedAt||old.fetchedAt,sourceUrl:s.sourceUrl||oldMonth.sourceUrl||old.sourceUrl}))],checkedAt:startedAt,sourceUrl:result.usedUrl||old.sourceUrl});
     const buckets=[...months].filter(([m])=>m).sort((a,b)=>b[0].localeCompare(a[0])).map(([,b])=>b),latest=buckets[0];
-    const partial=Boolean(missing.length||result.failedFiles||result.pendingFiles);
+    const period=result.byMonth?.[month]||result;
+    const partial=Boolean(missing.length||period.failedFiles||period.pendingFiles);
     const saved={amc:entry.amc,amcSlug:entry.slug,asOfMonth:latest.asOfMonth,schemes:latest.schemes,sourceUrl:latest.sourceUrl||old.sourceUrl,fetchedAt:latest.checkedAt||old.fetchedAt,history:buckets.slice(1),lastCompleteCheckedAt:recordCheck&&!partial?startedAt:old.lastCompleteCheckedAt||null};
     atomicJson(file,saved);old=saved;
     if(!recordCheck)return;
     const check=reconcileSourceChecks([priorCheck],[{slug:entry.slug,name:entry.amc,month,status:partial?'partial':'ok',checkedAt:partial?null:startedAt,lastAttemptAt:startedAt,partialCheckedAt:partial?startedAt:null,schemeCount:schemes.length,missingSchemes:missing.length}])[0];
-    for(const key of ['expectedFiles','completedFiles','failedFiles','pendingFiles','resumeUrl'])if(result[key]!==undefined)check[key]=result[key];
+    for(const key of ['expectedFiles','completedFiles','failedFiles','pendingFiles','resumeUrl','byMonth','fileFailures'])if(result[key]!==undefined)check[key]=result[key];
     const prior=checks.findIndex(c=>c.slug===entry.slug);if(prior>=0)checks[prior]=check;else checks.push(check);
     atomicJson(checksFile,checks);
   }
@@ -70,7 +73,7 @@ for(const entry of index.amcs) {
       const links=resumeDisclosures(await publicDisclosures(entry.slug,month,read,{axisPublicToken,includeHistory:true}),priorCheck);
       const XLSX=await import(pathToFileURL(path.join(root,'node_modules/xlsx/xlsx.mjs')).href);
       const parse=(buffer,link)=>{
-        const schemes=parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedWorkbook:parseQuantumWorkbook,opts,month:link.disclosureMonth||month,link});
+        const schemes=parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedWorkbook:parseQuantumWorkbook,opts,month:link.disclosureMonth||month,link,slug:entry.slug,identifyScheme:findSchemeName});
         if(schemes.length===1&&/fund|etf/i.test(link.text||'')&&(/name of instrument|portfolio statement|^\s*\(|open[ -]?ended?\s+(scheme|fund)/i.test(schemes[0].schemeName)||schemes[0].schemeName.trim().length<6))schemes[0].schemeName=link.text;
         return schemes;
       };
@@ -80,12 +83,10 @@ for(const entry of index.amcs) {
         // Older reports enrich history, while coverage continues to refer to the
         // current month. Save it last; interrupted history never erases current data.
         for(const [key,schemes] of [...groups].sort(([a],[b])=>a.localeCompare(b)))if(!progress.lastCompletedMonth||key===progress.lastCompletedMonth)saveResult({...progress,schemes,usedUrl:PUBLIC_PAGES[entry.slug]},{recordCheck:key===month});
-        // A historical file changes progress, not the current month's holdings.
-        // Update its small check record without rewriting every other month again.
-        if(!groups.has(month)||progress.lastCompletedMonth&&progress.lastCompletedMonth!==month) {
-          const check=checks.find(c=>c.slug===entry.slug);
-          if(check){for(const key of ['expectedFiles','completedFiles','failedFiles','pendingFiles','resumeUrl'])check[key]=progress[key];check.status=!groups.has(month)||check.missingSchemes||progress.failedFiles||progress.pendingFiles?'partial':'ok';check.checkedAt=check.status==='ok'?startedAt:priorCheck.lastCompleteCheckedAt;check.partialCheckedAt=check.status==='partial'?startedAt:null;check.lastCompleteCheckedAt=check.checkedAt;atomicJson(checksFile,checks);}
-        }
+        // Backfill progress is separate from the latest month's source evidence.
+        const check=checks.find(c=>c.slug===entry.slug);
+        if(check){for(const key of ['expectedFiles','completedFiles','failedFiles','pendingFiles','resumeUrl','byMonth','fileFailures'])check[key]=progress[key];atomicJson(checksFile,checks);}
+
       };
       result=await readDisclosures(links,{read,parse,month,onCheckpoint:checkpoint});
       checkpoint(result);
@@ -95,9 +96,9 @@ for(const entry of index.amcs) {
     else if(STATUTORY_PAGES[entry.slug]) {
       const page=STATUTORY_PAGES[entry.slug];
       const html=execFileSync('curl',['--fail','--location','--silent','--show-error','--max-time','30',page],{encoding:'utf8',maxBuffer:8*1024*1024,timeout:35000});
-      const links=statutoryLinks(entry.slug,html,targetMonth()),schemes=[];
-      for(const link of links)schemes.push(...downloadAndParse([link],opts,page).schemes.map(s=>({...s,sourceUrl:link.url})));
-      result={schemes,usedUrl:page};
+      const links=statutoryLinks(entry.slug,html,targetMonth()),schemes=[];let completedFiles=0,failedFiles=0;const fileFailures=[];
+      for(const link of links){const parsed=downloadAndParse([link],opts,page);schemes.push(...parsed.schemes.map(s=>({...s,sourceUrl:link.url})));completedFiles+=parsed.completedFiles;failedFiles+=parsed.failedFiles;fileFailures.push(...parsed.fileFailures);}
+      result={schemes,usedUrl:page,expectedFiles:links.length,completedFiles,failedFiles,fileFailures};
     }
     else if(entry.slug==='quantum') {
       const month=targetMonth(),XLSX=await import(pathToFileURL(path.join(root,'node_modules/xlsx/xlsx.mjs')).href);

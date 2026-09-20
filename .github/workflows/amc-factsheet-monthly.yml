@@ -1,4 +1,5 @@
 name: AMC monthly portfolio fetch
+run-name: "AMC holdings · ${{ github.event.schedule == '7 7 9-12 * *' && 'scheme-benchmarks' || inputs.mode || 'monthly' }}"
 
 # One shared collector for AmfiBeas and downstream readers. Raw disclosures and
 # their verified manifest publish before derived dashboards or optional benchmarks.
@@ -6,7 +7,7 @@ on:
   push:
     branches: [main]
     paths:
-      - scripts/ingest/amc-factsheets/shared/**
+      - scripts/ingest/amc-factsheets/**
       - .github/workflows/amc-factsheet-monthly.yml
   schedule:
     - cron: "3,18,33,48 * * * *"

@@ -41,8 +41,9 @@ const slug=process.env.MF_SOURCE_AMCS;
 fs.appendFileSync(process.env.EVENTS,JSON.stringify({slug,event:'start'})+'\\n');
 if(slug==='seeded'){const prior=JSON.parse(process.env.MF_SOURCE_PREVIOUS_CHECK);if(prior?.resumeUrl!=='pending.xlsx')process.exit(3);}
 if(slug==='failed')process.exit(2);
-if(slug==='hanging'||slug==='checkpointed'||slug==='checkpoint-empty'){
+if(slug==='hanging'||slug==='checkpointed'||slug==='checkpoint-empty'||slug==='history-pending'){
   if(slug!=='hanging')fs.writeFileSync(process.env.MF_SOURCE_CHECK_FILE,JSON.stringify([{slug,status:'partial',schemeCount:slug==='checkpoint-empty'?0:2,resumeUrl:'pending.xlsx',checkedAt:null,partialCheckedAt:'2026-09-20T09:00:00Z',month:'2026-08',expectedFiles:3,completedFiles:2,pendingFiles:1}]));
+  if(slug==='history-pending')fs.writeFileSync(process.env.MF_SOURCE_CHECK_FILE,JSON.stringify([{slug,status:'ok',schemeCount:2,checkedAt:'2026-09-20T09:00:00Z',month:'2026-08',byMonth:{'2026-08':{expectedFiles:1,completedFiles:1,failedFiles:0,pendingFiles:0}},pendingFiles:1}]));
   const descendant=spawn(process.execPath,['-e',"process.on('SIGTERM',()=>{});setInterval(()=>{},1000)"],{stdio:'ignore'});
   fs.writeFileSync(process.env.DESCENDANT,String(descendant.pid));
   process.on('SIGTERM',()=>{});setInterval(()=>{},1000);
@@ -89,6 +90,8 @@ if(slug==='hanging'||slug==='checkpointed'||slug==='checkpoint-empty'){
   assert.equal(saved.checks[0].pendingFiles,1,'A timed-out file retains completed reports without claiming a full check');
   const emptyProgress=await runSourcePool([{slug:'checkpoint-empty',amc:'No parsed reports yet'}],{command:process.execPath,args:[script],env,checksFile,timeoutMs:1000});
   assert.equal(emptyProgress.checks[0].schemeCount,0);assert.equal(emptyProgress.checks[0].resumeUrl,'pending.xlsx','Timeout preserves the next file even if earlier downloads all failed');
+  const historyPending=await runSourcePool([{slug:'history-pending',amc:'Historical continuation'}],{command:process.execPath,args:[script],env,checksFile,timeoutMs:1000});
+  assert.equal(historyPending.checks[0].status,'ok');assert.equal(historyPending.checks[0].reason,'history-backfill-pending');assert.equal(historyPending.checks[0].pendingFiles,1);
   // Exercise the actual source entry point with local adapters. Missing public
   // Axis client config fails discovery before any network request or file parse.
   const fixture=path.join(dir,'source-fixture'),adapters=path.join(fixture,'scripts/ingest/amc-factsheets'),holdings=path.join(fixture,'public/amc-holdings');

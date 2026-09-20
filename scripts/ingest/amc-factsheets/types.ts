@@ -11,6 +11,9 @@ export interface AmcHolding {
   /** Industry / rating text as printed (used for the 2A sector mapping). */
   industry: string | null;
   quantity: number | null;
+  /** Explicit section heading in the source sheet, never inferred from name. */
+  sourceSection?: string;
+  aggregatedCashSections?: string[];
   /** Market value normalized to ₹ Cr (source files quote ₹ Lakhs/Lacs). */
   marketValueCr: number | null;
   /** Weight as a percentage of the scheme's AUM/NAV (e.g. 5.5 = 5.5%). */
@@ -57,4 +60,8 @@ export interface AmcParseOptions {
   valueToCr: number;
   /** Sheet names to skip (index/cover/disclaimer sheets). */
   skipSheets?: (name: string) => boolean;
+  /** Fail instead of silently dropping a sheet containing Indian securities. */
+  strictHoldings?: boolean;
+  /** Shared collector's strict verifier for a workbook without Indian positions. */
+  verifyEmptyWorkbook?: (buffer: Buffer, link: {url: string; text: string}) => AmcScheme[];
 }

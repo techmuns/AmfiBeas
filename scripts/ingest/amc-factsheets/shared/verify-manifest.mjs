@@ -8,8 +8,9 @@ import {parseDirectory,syncDirectory} from './directory.mjs';
 import {statutoryLinks} from './discovery.mjs';
 const monthly={title:'August 31, 2026',downloadMedia:{url:'/uploads/monthly.xls'}};
 const fortnightly={...monthly,title:'August 15, 2026',downloadMedia:{url:'/uploads/fortnight.xls'}};
-assert.deepEqual(statutoryLinks('abakkus',JSON.stringify(JSON.stringify([monthly,fortnightly])),'2026-08').map(r=>r.url),['https://www.abakkusmf.com/uploads/monthly.xls']);
-assert.equal(statutoryLinks('abakkus',JSON.stringify(monthly),'2026-09').length,0);
+const catalogue='const verticals = '+JSON.stringify([{title:'Monthly Portfolio Disclosures',sections:[{subSections:[{items:[monthly,fortnightly]}]}]},{title:'Debt and Money Market Transaction Report',sections:[{subSections:[{items:[{...monthly,downloadMedia:{url:'/uploads/transaction.xls'}}]}]}]}])+';';
+assert.deepEqual(statutoryLinks('abakkus',catalogue,'2026-08').map(r=>r.url),['https://www.abakkusmf.com/uploads/monthly.xls']);
+assert.equal(statutoryLinks('abakkus',catalogue,'2026-09').length,0);
 assert.equal(statutoryLinks('old-bridge','<h2>Old Bridge Flexi Cap Fund - August 2026</h2><a href="/uploads/aug.xlsx">Download</a><h2>Financials - August 2026</h2><a href="/uploads/financial.xlsx">Download</a>','2026-08').length,1);
 const html=rows=>`<script>self.__next_f.push(${JSON.stringify([1,'a:'+JSON.stringify({amcs:rows})+'\n'])})</script>`;
 const rows=[{mf_id:'1',mf_name:'Axis Mutual Fund',amc_monthly_portfolio_disclosure:'https://www.axismf.com/statutory-disclosures'},

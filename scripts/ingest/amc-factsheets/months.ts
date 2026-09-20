@@ -203,25 +203,9 @@ export function ymFromText(text: string, now: Date = new Date()): string | null 
   return null;
 }
 
-/**
- * Reconcile parsed as-on dates with the disclosure month the downloaded file
- * NAMES (its URL or the listing's own label for it), and return that month.
- *
- * Two failure modes this handles, both seen in production:
- *   - No usable date at all. UTI, Zerodha and JM print no as-on date the parser
- *     can trust anywhere in the workbook, so those schemes take the file's month.
- *   - A date in ANY other month. Once implausible dates were rejected, sheets
- *     still offered up dates that are plausible and simply wrong: a treasury
- *     bill maturing next month (UTI), or an NFO date from last year
- *     (Capitalmind, whose July workbook was filed as Mar-26 on the strength of
- *     one such cell). The file the AMC publishes as "July 2026" IS the July
- *     disclosure, so its month wins over anything read out of a sheet.
- *
- * This applies to tiers whose link month comes from the AMC's own listing or a
- * month-stamped filename. The direct-template tier does the opposite (see
- * resolveMonth): there the URL is a guess we probed, so content wins and an AMC
- * serving last month's workbook from this month's URL stays visible as stale.
- */
+/** Fill missing dates from an explicit published disclosure link. A workbook
+ * date that conflicts with the link remains visible for coverage validation;
+ * a newly dated filename cannot relabel retained/old content as current. */
 export function stampAsOfFromLinks(
   schemes: AmcScheme[],
   links: { url: string; text?: string }[],
@@ -235,7 +219,7 @@ export function stampAsOfFromLinks(
   if (!ym) return null;
   const iso = isoEndOfMonth(ym);
   for (const s of schemes) {
-    if (ymOf(s.asOf) !== ym) s.asOf = iso;
+    if (!s.asOf) s.asOf = iso;
   }
   return ym;
 }
