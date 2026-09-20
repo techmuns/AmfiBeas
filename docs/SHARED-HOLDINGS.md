@@ -54,10 +54,21 @@ pagination, date labels, allowed file hosts and reporting months are verified.
 Access refusals remain unavailable; the collector does not rotate identities or
 solve challenges. Trendlyne is not a required source.
 
-Mirae's current and preceding three months are traversed to restore comparison
+Mirae's and HSBC's current and preceding three months are traversed to restore comparison
 baselines. Validated overseas-only, bullion and overnight statements can establish
 no Indian holdings; unclassified positions cannot. Descriptive name changes use
 an unambiguous prior identity, never fuzzy joining of plans or funds.
+
+HSBC's catalogue uses a fresh standard Chromium context on the server. Hosted
+diagnostics confirmed that its public library renders while plain catalogue
+transfers time out. The reader accepts only the fixed official page, with bounded
+navigation and content size; refusals stop collection and every exit closes the
+browser. Workbooks still use the bounded HTTP reader. Monthly portfolios are kept
+separate from identical month-end files mirrored in the fortnightly directory,
+preventing duplicate hybrid-fund holdings in historical comparisons.
+Two June HSBC workbooks contain a copied Corporate Bond Fund heading. A correction
+requires the workbook's own scheme-riskometer name to match the published file
+label; filename-only renaming is rejected. Quantities and dates are preserved.
 
 This source contract does not certify every historical upstream observation.
 Current-month duplicate quantities, dates and ambiguous instruments mark coverage
@@ -76,7 +87,7 @@ Live source tests write only to an isolated `AMFIBEAS_PATH`; they do not publish
 
 ### Catalogue and workbook reconciliation
 
-The collector reads the current official download catalogues for Canara Robeco,
+The collector reads the current official download catalogues for HDFC, Canara Robeco,
 JioBlackRock, HSBC, Navi, Bajaj Finserv, AlphaGrep, Choice, Zerodha and IL&FS, alongside the existing
 AMC adapters. Public website configuration is rediscovered when each source is
 checked; private sessions and challenge bypasses are not used. Catalogue periods,
@@ -105,7 +116,11 @@ Unavailable catalogues, unpublished reports, changed formats, unclassified
 instruments and missing active-scheme inventory must remain visible gaps. An
 external source's future publication time cannot be guaranteed.
 
-Edelweiss and Tata use the public AdvisorKhoj catalogue for exact published links, then fetch only the verified AMC file hosts. Index discovery does not substitute for access to or validation of the actual reports.
+Edelweiss, Tata and Bajaj Finserv use the public AdvisorKhoj catalogue for exact
+published links, then fetch only the verified AMC file hosts. Bajaj's consolidated
+workbook is served by its official media host even when the catalogue page is
+unavailable. Index discovery does not substitute for access to or validation of
+the actual reports.
 
 ASK, Monarch and Lakshya now have first-party readers independent of missing AMFI
 directory links. ASK and Monarch accept only published month-end monthly entries;
@@ -119,7 +134,7 @@ Failures retain a bounded `failure` object identifying HTTP status, transport
 failure or catalogue validation. It excludes response bodies, headers and URL
 queries. Source-file failures carry the same evidence in `fileFailures`. A later
 successful check clears an older discovery failure without clearing retained history.
-For changed source readers, pull-request CI records a read-only catalogue-access
+For changed source readers, pull-request and manually requested branch CI record a read-only catalogue-access
 diagnostic artifact from the hosted runner. This probe does not publish holdings,
 dispatch a production job or certify that discovered workbooks are complete.
 
@@ -128,6 +143,13 @@ validated explicitly, including rejection of stale/fortnightly dates and unknown
 or Indian securities. PR browser diagnostics use ordinary Chromium defaults and
 retain a fixed August 2026 regression sample separately from current-month data.
 An access refusal remains a refusal; these diagnostics do not alter production.
+
+HDFC's reader enumerates the official monthly page rather than leaving its saved
+holdings without an active reader. It checks the scheme filename against the
+month-end label and excludes overlap summaries and other months. The report
+itself must still pass workbook validation; merely listing files does not establish
+coverage. Standard-browser CI diagnostics also check WhiteOak, HSBC and Union to
+distinguish obsolete readers from hosted-source connectivity failures.
 
 Public GET downloads may follow up to three redirects, validating every destination
 against that AMC's approved HTTPS hosts before requesting it. Redirects never carry
