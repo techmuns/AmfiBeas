@@ -1,167 +1,119 @@
 name: AMC monthly portfolio fetch
 
-# AMC monthly portfolio disclosures → public/amc-holdings/, via the AdvisorKhoj
-# aggregator (one curl-able code path for all ~50 AMCs; see run-monthly.ts).
-# Runs once a day on the 9th–12th of each month (the window in which most AMCs
-# publish the prior month's disclosure), plus manual dispatch. AMCs with a
-# directly-downloadable disclosure are fetched with plain curl; AMCs behind a
-# JS landing page or Akamai bot wall fall through to a headless-Chromium tier
-# (browser-fallback.ts), which needs Playwright's browser installed. Any AMC
-# still unresolved is recorded in index.json with a non-ok status rather than
-# dropped silently. Commits refreshed snapshots.
-#
-# The same run also refreshes the OFFICIAL SCHEME BENCHMARK REGISTRY
-# (public/nav-data/mf-scheme-benchmarks.json): AMC factsheets change monthly, so
-# this is the right cadence for re-reading each scheme's AMC-published benchmark
-# from its first-party document. Use mode=scheme-benchmarks to refresh ONLY that
-# registry without re-fetching holdings.
-
+# One shared collector for AmfiBeas and downstream readers. Raw disclosures and
+# their verified manifest publish before derived dashboards or optional benchmarks.
 on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/ingest/amc-factsheets/shared/**
+      - .github/workflows/amc-factsheet-monthly.yml
   schedule:
-    - cron: "0 7 9-12 * *" # 07:00 UTC, days 9–12, every month
+    - cron: "3,18,33,48 * * * *"
+    - cron: "7 7 9-12 * *" # Preserve the monthly benchmark-refresh window.
   workflow_dispatch:
     inputs:
       amcs:
-        description: "Comma-separated AMC slugs to fetch (blank = all). Sets AMC_ONLY for targeted iteration."
+        description: "Optional comma-separated AMC slugs; all other saved sources remain retained."
         required: false
         type: string
       commit:
-        description: "Commit results. Set to 'false' for a test run (fetch + log only; never commits a filtered index.json)."
-        required: false
+        description: "Set false for a local/staging-style collection without publishing data."
         default: "true"
         type: string
-      debug:
-        description: "Set to 'true' to log browser-tier diagnostics (page titles, harvested links, per-download status) for bot-wall iteration."
-        required: false
-        default: "false"
-        type: string
       mode:
-        description: "monthly (default) = latest-month fetch (run-monthly.ts). backfill = last-6-months history seed (backfill-history.ts) — pair with `amcs` to target specific AMCs. scheme-benchmarks = refresh ONLY the official scheme-benchmark registry."
-        required: false
-        default: "monthly"
+        description: "Holdings modes recover available history using saved checkpoints."
+        default: monthly
         type: choice
-        options:
-          - monthly
-          - backfill
-          - scheme-benchmarks
-
+        options: [monthly, backfill, scheme-benchmarks]
 permissions:
   contents: write
-
 concurrency:
   group: amc-monthly-fetch
   cancel-in-progress: false
-
 jobs:
   fetch:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
+    env:
+      MODE: ${{ github.event.schedule == '7 7 9-12 * *' && 'scheme-benchmarks' || inputs.mode || 'monthly' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - name: Install dependencies
-        run: npm ci
-      - name: Install Playwright Chromium (browser fallback tier)
-        run: npx playwright install --with-deps chromium
-      - name: Fetch + parse AMC monthly portfolios
-        if: ${{ inputs.mode != 'scheme-benchmarks' }}
+      - run: npm ci --ignore-scripts
+      - name: Collect shared AMC disclosures
+        id: capture
+        if: env.MODE != 'scheme-benchmarks'
+        continue-on-error: true
         env:
           AMC_ONLY: ${{ inputs.amcs }}
-          AMC_BROWSER_DEBUG: ${{ inputs.debug == 'true' && '1' || '' }}
-          BACKFILL_BROWSER: ${{ inputs.mode == 'backfill' && '1' || '' }}
+        run: timeout 35m npm run collect:holdings
+      - name: Finalize retained source manifest
+        id: manifest
+        if: always() && steps.capture.outcome != 'skipped'
+        env:
+          AMC_CAPTURE_INTERRUPTED: ${{ steps.capture.outcome != 'success' }}
+        run: node scripts/ingest/amc-factsheets/shared/manifest.mjs
+      - name: Publish source snapshots and continuation checkpoints
+        if: always() && steps.manifest.outcome == 'success' && inputs.commit != 'false'
         run: |
-          if [ "${{ inputs.mode }}" = "backfill" ]; then
-            npx tsx scripts/ingest/amc-factsheets/backfill-history.ts 6
-          else
-            npx tsx scripts/ingest/amc-factsheets/run-monthly.ts
-          fi
-      - name: Rebuild AMC-direct tracker (universe + panels + crosswalk)
-        # Skipped in scheme-benchmarks mode: no holdings were fetched.
-        # The MFs Portfolio Tracker is sourced entirely from AMC-direct filings
-        # (build-amc-direct-tracker.ts). Safe after a filtered run too:
-        # run-monthly MERGES index.json, and the builder reads ALL committed
-        # amc-holdings files, so the universe/crosswalk stay complete.
-        if: ${{ inputs.mode != 'scheme-benchmarks' && (github.event_name == 'schedule' || inputs.commit != 'false') }}
-        run: npm run build:amc-direct
-      - name: Rebuild Overview + Insights feeds from the refreshed AMC holdings
-        # The Overview "buying & selling" (cap-flows), the sector-flow heatmap and
-        # the Insights deep-read blocks (conviction ledger, contested stocks,
-        # churn, flows-vs-performance, persistence) all read public/holdings-direct
-        # — the same AMC filings this workflow just refreshed — so they must be
-        # rebuilt here to move to the new month. (% of o/s is attached from the
-        # committed shares-outstanding feed; shares-outstanding.yml re-scrapes any
-        # new names on its own schedule.)
-        if: ${{ inputs.mode != 'scheme-benchmarks' && (github.event_name == 'schedule' || inputs.commit != 'false') }}
+          if [ -z "$(git status --porcelain public/amc-holdings)" ]; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/amc-holdings
+          git commit -m "chore(data): publish verified AMC disclosure snapshots"
+          bash scripts/ci/push-with-rebase.sh "${{ github.ref_name }}"
+      - name: Rebuild holdings views from the shared snapshots
+        if: steps.manifest.outcome == 'success'
         run: |
+          npm run build:amc-direct
           npm run build:cap-flows
           npm run build:sector-gross
           npm run build:insights-plus
           npm run build:stocks
-      - name: Refresh the official scheme-benchmark registry
-        # Re-reads each AMC's own factsheet / SID / KIM / scheme page and
-        # rebuilds public/nav-data/mf-scheme-benchmarks.json. Evidence already on
-        # record is CARRIED FORWARD when an AMC cannot be reached this run, so a
-        # single bot wall never demotes a verified mapping to "unmapped".
-        # Keep-last-good: a non-zero exit writes nothing and skips the commit.
+      - name: Publish derived holdings views
+        if: steps.manifest.outcome == 'success' && inputs.commit != 'false'
+        run: |
+          PATHS="public/amc-portfolio public/holdings-direct public/stocks src/data/portfolio-tracker/amc-portfolio-crosswalk.json src/data/portfolio-tracker/amc-direct-index.json src/data/portfolio-tracker/cap-flows.json src/data/portfolio-tracker/sector-gross-flows.json src/data/portfolio-tracker/insights-plus.json"
+          if [ -z "$(git status --porcelain $PATHS)" ]; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add $PATHS
+          git commit -m "chore(data): rebuild views from shared AMC disclosures"
+          bash scripts/ci/push-with-rebase.sh "${{ github.ref_name }}"
+      - name: Refresh official scheme benchmarks
+        if: env.MODE == 'scheme-benchmarks'
         env:
           AMC_ONLY: ${{ inputs.amcs }}
-          AMC_BROWSER_DEBUG: ${{ inputs.debug == 'true' && '1' || '' }}
-        run: npm run build:scheme-benchmarks
-
-      - name: Validate the scheme-benchmark registry
-        run: npm run validate:scheme-benchmarks
-
-      - name: Scheme-benchmark regression tests
-        run: npm run test:scheme-benchmarks
-
-      - name: Upload scheme-benchmark artefacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: scheme-benchmarks
-          path: |
-            public/nav-data/mf-scheme-benchmarks.json
-            public/nav-data/mf-scheme-benchmark-coverage.json
-          if-no-files-found: warn
-          retention-days: 30
-
-      - name: Commit the refreshed scheme-benchmark registry
-        if: ${{ github.event_name == 'schedule' || inputs.commit != 'false' }}
+        run: |
+          npx playwright install --with-deps chromium
+          npm run build:scheme-benchmarks
+          npm run validate:scheme-benchmarks
+          npm run test:scheme-benchmarks
+      - name: Publish official scheme benchmarks
+        if: env.MODE == 'scheme-benchmarks' && inputs.commit != 'false'
         run: |
           PATHS="public/nav-data/mf-scheme-benchmarks.json public/nav-data/mf-scheme-benchmark-coverage.json"
-          if [ -z "$(git status --porcelain $PATHS)" ]; then
-            echo "No scheme-benchmark registry changes — nothing to commit."
-            exit 0
-          fi
-          git config user.name  "github-actions[bot]"
+          if [ -z "$(git status --porcelain $PATHS)" ]; then exit 0; fi
+          git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add $PATHS
-          git commit -m "chore(data): refresh official scheme-benchmark registry ($(date -u +%Y-%m-%d))"
-          # Push to the ref this run was dispatched on. On the scheduled run that
-          # IS main, so nothing changes there; on a manual dispatch against a
-          # branch it commits to that branch instead of trying to push branch
-          # work onto main (which the script would reject as a conflict).
+          git commit -m "chore(data): refresh official scheme benchmarks"
           bash scripts/ci/push-with-rebase.sh "${{ github.ref_name }}"
-
-      - name: Commit refreshed AMC holdings + tracker data
-        # commit=false → test run (fetch + log only). A filtered run commits
-        # safely because index.json is merged, not overwritten.
-        if: ${{ inputs.mode != 'scheme-benchmarks' && (github.event_name == 'schedule' || inputs.commit != 'false') }}
-        run: |
-          PATHS="public/amc-holdings public/amc-portfolio public/holdings-direct public/stocks src/data/portfolio-tracker/amc-portfolio-crosswalk.json src/data/portfolio-tracker/amc-direct-index.json src/data/portfolio-tracker/cap-flows.json src/data/portfolio-tracker/sector-gross-flows.json src/data/portfolio-tracker/insights-plus.json"
-          if [ -z "$(git status --porcelain $PATHS)" ]; then
-            echo "No AMC holdings / crosswalk changes — nothing to commit."
-            exit 0
-          fi
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add $PATHS
-          git commit -m "chore(data): AMC monthly portfolio fetch ($(date -u +%Y-%m-%d))"
-          # Push to the ref this run was dispatched on. On the scheduled run that
-          # IS main, so nothing changes there; on a manual dispatch against a
-          # branch it commits to that branch instead of trying to push branch
-          # work onto main (which the script would reject as a conflict).
-          bash scripts/ci/push-with-rebase.sh "${{ github.ref_name }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: amc-source-coverage
+          path: |
+            public/amc-holdings/coverage.json
+            public/amc-holdings/coverage-checks.json
+            public/amc-holdings/directory.json
+            public/nav-data/mf-scheme-benchmark-coverage.json
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Report incomplete source coverage after publication
+        if: always() && steps.manifest.outcome == 'success'
+        run: node -e 'const m=require("./public/amc-holdings/coverage.json");console.log(m.coverage);if(m.coverage.status!=="current"||m.state!=="complete")process.exitCode=1;'

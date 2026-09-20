@@ -1,0 +1,74 @@
+# Shared monthly holdings collection
+
+AmfiBeas owns the AMC source readers. Both its dashboard and Sattva consume the
+same retained snapshots under `public/amc-holdings`. Sattva does not download AMC
+workbooks or execute this repository's scripts.
+
+## Cadence and publication
+
+`AMC monthly portfolio fetch` runs throughout the month with a 15-minute target,
+and on merges changing the shared collector. GitHub scheduling and source response
+times can extend this interval; this is not an instant-publication guarantee.
+The existing monthly benchmark refresh stays separate from normal holdings runs.
+
+Four isolated AMC readers run concurrently with a two-minute limit each. One
+blocked source cannot prevent other sources from completing. Completed workbook
+files are checkpointed, and the next run starts at the saved unfinished file.
+All captured monthly buckets are retained. Fresh source reads do not turn a
+missing workbook into a sale or delete older schemes.
+
+The workflow commits the raw snapshots and manifest before rebuilding derived
+views. A later builder/benchmark failure cannot strand already collected reports.
+The existing deployment chain publishes the AmfiBeas dashboard after the run.
+Incomplete coverage produces a failed health step after useful data is published.
+Manual `commit=false` performs collection and local generation without publishing.
+The `backfill` mode uses the same resumable collection, including historical files
+where the adapter supports them; it does not claim a complete industry archive.
+
+## Public consumer contract
+
+`coverage.json` has schema version 1, capture state, generation time, target month,
+AMFI directory status, per-AMC source checks, and the exact byte size and SHA-256
+of every available `<slug>.json` snapshot. Consumers must load all these files
+from one repository commit and verify the inventory and checksums before import.
+Unsupported versions, missing declared files and mismatched hashes fail closed.
+An unavailable AMC can have no file; every source remains represented in coverage.
+
+Source checks distinguish complete checks, partial attempts and unavailable sources.
+Validation failures preserve the previous complete-check time. Re-reading this
+manifest or committing files must never advance a source's successful-check time.
+The legacy index is rebuilt from these same checks for existing consumers.
+`coverage-checks.json` retains continuation URLs between scheduled runners.
+
+The AMFI public portfolio directory is checked each run. New fund houses enter the
+inventory, including those without a published download page. They remain visibly
+unavailable until supported disclosures are verified. A failed directory read or
+missing prior directory member prevents a claim of complete coverage.
+
+## Source coverage
+
+The shared readers include the reviewed direct routes for 360 ONE, Axis, LIC,
+Quant, Mirae, Union, Sundaram, Angel One, Bandhan, Quantum, Abakkus and Old Bridge,
+plus the existing first-party HTTP adapters for other fund houses. Public pages,
+pagination, date labels, allowed file hosts and reporting months are verified.
+Access refusals remain unavailable; the collector does not rotate identities or
+solve challenges. Trendlyne is not a required source.
+
+Mirae's current and preceding three months are traversed to restore comparison
+baselines. Validated overseas-only, bullion and overnight statements can establish
+no Indian holdings; unclassified positions cannot. Descriptive name changes use
+an unambiguous prior identity, never fuzzy joining of plans or funds.
+
+This source contract does not certify every historical upstream observation.
+Current-month duplicate quantities, dates and ambiguous instruments mark coverage
+partial. Downstream ownership calculations retain their own instrument checks.
+Some AMC endpoints remain inaccessible, and some catalogue members have no monthly
+download page. Coverage must remain partial until those gaps are resolved.
+
+## Verification
+
+`npm run test:holdings` covers public catalogue pagination, month rollover,
+per-file resumption, refusals, exact identities, verified empty reports, source
+isolation, process timeouts, source clocks, directory growth/failure and manifest
+hashes. Run `npm run lint`, `npm run typecheck`, and `npm run build` before merging.
+Live source tests write only to an isolated `AMFIBEAS_PATH`; they do not publish.

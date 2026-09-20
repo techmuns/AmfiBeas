@@ -29,3 +29,8 @@ npm run typecheck
 ## Status
 
 Phase 1 scaffold. Charts, fixtures, and routes land in subsequent phases.
+
+## Shared mutual-fund holdings feed
+
+The automatic AMC collector and verified consumer contract are documented in
+[Shared monthly holdings collection](docs/SHARED-HOLDINGS.md).
