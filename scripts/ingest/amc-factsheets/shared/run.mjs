@@ -16,7 +16,10 @@ const root=path.resolve(process.env.AMFIBEAS_PATH||fileURLToPath(new URL('../../
 const opts={pctScale:1,valueToCr:100},dir=path.join(root,'public/amc-holdings');
 if(!process.env.MF_SOURCE_WORKER)await syncDirectory(root);
 const index=JSON.parse(fs.readFileSync(path.join(dir,'index.json')));
-const selected=(process.env.MF_SOURCE_AMCS||process.env.AMC_ONLY)?.split(',').map(s=>s.trim()).filter(Boolean),checksFile=process.env.MF_SOURCE_CHECK_FILE||path.join(dir,'coverage-checks.json');
+// Actions supplies an empty string for an omitted optional input. An empty
+// selection means all sources, just as when neither variable is present locally.
+const selectedSlugs=(process.env.MF_SOURCE_AMCS||process.env.AMC_ONLY||'').split(',').map(s=>s.trim()).filter(Boolean);
+const selected=selectedSlugs.length?selectedSlugs:null,checksFile=process.env.MF_SOURCE_CHECK_FILE||path.join(dir,'coverage-checks.json');
 const previousChecks=fs.existsSync(checksFile)?JSON.parse(fs.readFileSync(checksFile)):[];
 const checks=selected?previousChecks.filter(c=>!selected.includes(c.slug)):[];
 if(!process.env.MF_SOURCE_WORKER) {
