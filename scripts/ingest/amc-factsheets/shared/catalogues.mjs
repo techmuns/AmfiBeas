@@ -129,7 +129,9 @@ export async function catalogueDisclosures(slug,month,read,{anchorFiles,includeH
       periods.set(`${day}${String(m).padStart(2,'0')}${y}`,wanted);wanted=previousMonth(wanted);
     }
     return anchorFiles(await html(page),new URL('/',page).href).flatMap(link=>{
-      const period=periods.get(/\/document-(\d{8})\//i.exec(link.url)?.[1]);
+      // Month-end debt reports are also mirrored in the fortnightly directory.
+      // Mixing that catalogue into monthly holdings would count hybrid shares twice.
+      const period=periods.get(/\/mutual-funds\/portfolios\/document-(\d{8})\//i.exec(new URL(link.url).pathname)?.[1]);
       if(!period)return [];
       return [{...link,text:decodeURIComponent(new URL(link.url).pathname.split('/').pop()).replace(/-\d{2}-[a-z]+-20\d{2}\.xlsx?$/i,'').replace(/-/g,' '),...(includeHistory?{disclosureMonth:period}:{})}];
     });

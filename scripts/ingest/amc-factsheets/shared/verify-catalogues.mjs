@@ -25,13 +25,13 @@ const jioReader=({total=1,date='31-08-2026'}={})=>async(url,options)=>{
 assert.equal((await publicDisclosures('jio-blackrock',month,jioReader())).length,1);
 await assert.rejects(publicDisclosures('jio-blackrock',month,jioReader({total:2})),/Incomplete/);
 await assert.rejects(publicDisclosures('jio-blackrock',month,jioReader({date:'31-07-2026'})),/month mismatch/);
-const hsbc=await publicDisclosures('hsbc',month,async()=>html('<a href="/document-31082026/hsbc-value-fund-31-aug-2026.xls">Download</a><a href="/document-31072026/hsbc-value-fund-31-jul-2026.xls">Old</a>'));
+const hsbc=await publicDisclosures('hsbc',month,async()=>html('<a href="/mutual-funds/portfolios/document-31082026/hsbc-value-fund-31-aug-2026.xls">Download</a><a href="/mutual-funds/portfolios/document-31072026/hsbc-value-fund-31-jul-2026.xls">Old</a>'));
 assert.equal(hsbc.length,1);assert.equal(hsbc[0].text,'hsbc value fund');
-const hsbcHistoryHtml=html(['30042026','31052026','30062026','31072026','31082026'].map(date=>`<a href="/document-${date}/hsbc-value-fund.xlsx">Download</a>`).join(''));
+const hsbcHistoryHtml=html('<a href="/mutual-funds/fortnightly-debt-portfolio/document-31082026/hsbc-value-fund.xlsx">Mirror</a>'+ ['30042026','31052026','30062026','31072026','31082026'].map(date=>`<a href="/mutual-funds/portfolios/document-${date}/hsbc-value-fund.xlsx">Download</a>`).join(''));
 const hsbcHistory=await publicDisclosures('hsbc',month,async()=>hsbcHistoryHtml,{includeHistory:true});
 assert.deepEqual(hsbcHistory.map(file=>file.disclosureMonth),['2026-08','2026-07','2026-06','2026-05']);
 await assert.rejects(publicDisclosures('hsbc','2026-09',async()=>hsbcHistoryHtml,{includeHistory:true}),/Current monthly/);
-const hsbcRollover=await publicDisclosures('hsbc','2027-01',async()=>html(['31012027','31122026','30112026','31102026'].map(date=>`<a href="/document-${date}/hsbc-value-fund.xlsx">Download</a>`).join('')),{includeHistory:true});
+const hsbcRollover=await publicDisclosures('hsbc','2027-01',async()=>html(['31012027','31122026','30112026','31102026'].map(date=>`<a href="/mutual-funds/portfolios/document-${date}/hsbc-value-fund.xlsx">Download</a>`).join('')),{includeHistory:true});
 assert.deepEqual(hsbcRollover.map(file=>file.disclosureMonth),['2027-01','2026-12','2026-11','2026-10']);
 const naviReader=(year='2026-2027',title='Portfolio 1st August to 31st August 2026')=>async(url,options)=>{
   if(!options)return html('var navi_property = {"rest_url":"https://navi.com/wp-json/","nonce":"public"};<div data-item="portfolio_portfolio-monthly" data-category="123"></div>');
