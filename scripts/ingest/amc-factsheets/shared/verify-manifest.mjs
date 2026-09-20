@@ -1,0 +1,48 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {createHash} from 'node:crypto';
+import {publishManifest} from './manifest.mjs';
+import {parseDirectory,syncDirectory} from './directory.mjs';
+import {statutoryLinks} from './discovery.mjs';
+const monthly={title:'August 31, 2026',downloadMedia:{url:'/uploads/monthly.xls'}};
+const fortnightly={...monthly,title:'August 15, 2026',downloadMedia:{url:'/uploads/fortnight.xls'}};
+assert.deepEqual(statutoryLinks('abakkus',JSON.stringify(JSON.stringify([monthly,fortnightly])),'2026-08').map(r=>r.url),['https://www.abakkusmf.com/uploads/monthly.xls']);
+assert.equal(statutoryLinks('abakkus',JSON.stringify(monthly),'2026-09').length,0);
+assert.equal(statutoryLinks('old-bridge','<h2>Old Bridge Flexi Cap Fund - August 2026</h2><a href="/uploads/aug.xlsx">Download</a><h2>Financials - August 2026</h2><a href="/uploads/financial.xlsx">Download</a>','2026-08').length,1);
+const html=rows=>`<script>self.__next_f.push(${JSON.stringify([1,'a:'+JSON.stringify({amcs:rows})+'\n'])})</script>`;
+const rows=[{mf_id:'1',mf_name:'Axis Mutual Fund',amc_monthly_portfolio_disclosure:'https://www.axismf.com/statutory-disclosures'},
+  {mf_id:'2',mf_name:'New Mutual Fund',amc_monthly_portfolio_disclosure:null}];
+assert.equal(parseDirectory(html(rows)).length,2);
+assert.throws(()=>parseDirectory(html([{...rows[0],amc_monthly_portfolio_disclosure:'javascript:evil()'}])),/URL/);
+assert.throws(()=>parseDirectory(html([rows[0],{...rows[0],mf_name:'Conflicting'}])),/Conflicting/);
+assert.throws(()=>parseDirectory('<html>Temporarily unavailable</html>'),/unavailable/);
+const root=fs.mkdtempSync(path.join(os.tmpdir(),'amfi-shared-test-')),dir=path.join(root,'public/amc-holdings');fs.mkdirSync(dir,{recursive:true});
+const write=(file,value)=>fs.writeFileSync(path.join(dir,file),JSON.stringify(value));
+try {
+  write('index.json',{meta:{},amcs:[{slug:'axis',amc:'Axis Mutual Fund',asOfMonth:'Jul-26'}]});
+  let directory=await syncDirectory(root,{read:()=>html(rows)});
+  assert.equal(directory.status,'ok');assert.equal(JSON.parse(fs.readFileSync(path.join(dir,'index.json'))).amcs.length,2,'New AMCs enter coverage automatically, even before a download page exists');
+  directory=await syncDirectory(root,{read:()=>html(rows.slice(0,1))});assert.equal(directory.status,'unavailable');assert.equal(directory.records.length,2,'A broken directory cannot silently discard members');
+  await syncDirectory(root,{read:()=>html(rows)});
+  const old='2026-09-19T09:00:00Z',now='2026-09-20T09:00:00Z';
+  const scheme={schemeName:'Axis Equity Fund',asOf:'2026-08-31',holdings:[{isin:'INE090A01021',name:'Company',quantity:100,pctToNav:100}]};
+  const snapshot={amcSlug:'axis',amc:'Axis Mutual Fund',asOfMonth:'2026-08',fetchedAt:now,schemes:[scheme],history:[{asOfMonth:'2026-07',schemes:[{...scheme,asOf:'2026-07-31'}]}]};
+  write('axis.json',snapshot);
+  write('coverage-checks.json',[{slug:'axis',name:snapshot.amc,month:'2026-08',status:'ok',checkedAt:now,priorCompleteCheckedAt:old}]);
+  let m=publishManifest(root,{now:Date.parse(now)});
+  assert.equal(m.coverage.current,1);assert.equal(m.coverage.total,2);assert.equal(m.amcs[1].status,'unchecked');
+  assert.equal(m.files[0].sha256,createHash('sha256').update(fs.readFileSync(path.join(dir,'axis.json'))).digest('hex'));
+  assert.equal(JSON.parse(fs.readFileSync(path.join(dir,'axis.json'))).history.length,1,'Publication never edits retained observations');
+  snapshot.schemes[0].holdings[0].quantity=null;write('axis.json',snapshot);
+  write('coverage-checks.json',[{slug:'axis',month:'2026-08',status:'ok',checkedAt:now,priorCompleteCheckedAt:old}]);
+  m=publishManifest(root,{now:Date.parse(now),interrupted:true});
+  assert.equal(m.state,'interrupted');assert.equal(m.amcs[0].status,'partial');assert.equal(m.amcs[0].checkedAt,old);assert.equal(m.amcs[0].lastAttemptAt,now);assert.equal(m.amcs[0].validationFindings,1);
+  m=publishManifest(root,{now:Date.parse(now)});assert.equal(m.amcs[0].checkedAt,old,'Repeated failed publication preserves the complete-check clock');
+  snapshot.schemes[0].holdings[0].quantity=100;write('axis.json',snapshot);
+  write('coverage-checks.json',[{slug:'axis',month:'2026-08',status:'ok',checkedAt:now,priorCompleteCheckedAt:old}]);
+  m=publishManifest(root,{now:Date.parse(now)});assert.equal(m.amcs[0].validationFindings,0);assert.equal(m.amcs[0].checkedAt,now);
+  fs.unlinkSync(path.join(dir,'axis.json'));m=publishManifest(root,{now:Date.parse(now)});assert.equal(m.amcs[0].status,'unavailable');assert.equal(m.files.length,0);
+} finally {fs.rmSync(root,{recursive:true,force:true});}
+console.log('PASS shared source contract: official directory discovery, future AMCs, dropped-member recovery, snapshot hashes, retained history, partial checks, validation recovery and missing files');

@@ -49,7 +49,9 @@
     "build:amc-aggregation": "tsx scripts/ingest/amc-portfolio-aggregation.ts",
     "ingest:shares-outstanding": "tsx scripts/ingest/shares-outstanding.ts",
     "ingest:holdings": "tsx scripts/ingest/holdings-tracker.ts",
-    "ingest:broking": "tsx scripts/ingest/broking-active-clients.ts"
+    "ingest:broking": "tsx scripts/ingest/broking-active-clients.ts",
+    "collect:holdings": "tsx scripts/ingest/amc-factsheets/shared/run.mjs",
+    "test:holdings": "node scripts/ingest/amc-factsheets/shared/verify-public.mjs && node scripts/ingest/amc-factsheets/shared/verify-source-pool.mjs && tsx scripts/ingest/amc-factsheets/shared/verify-manifest.mjs"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.19.6",
