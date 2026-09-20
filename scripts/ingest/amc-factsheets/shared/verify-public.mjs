@@ -142,8 +142,40 @@ let attempted=0;
 const refused=publicReader('quant',{execute:async()=>{attempted++;throw Object.assign(Error('curl failed'),{code:56,stderr:Buffer.from('curl: (56) The requested URL returned error: 403')});}});
 await assert.rejects(refused('https://quantmutual.com/first.xlsx'),/refused/);
 await assert.rejects(refused('https://quantmutual.com/second.xlsx'),/refused/);assert.equal(attempted,1);
-const redirect=publicReader('quant',{execute:async()=>({stdout:Buffer.from('redirect\n302')})});
+const redirect=publicReader('quant',{execute:async()=>({stdout:Buffer.from('redirect\n302\n')})});
 await assert.rejects(redirect('https://quantmutual.com/first.xlsx'),/failed/);
+// Actual Tata publication moves from the CMS to the official website. Validate
+// every destination before requesting it; preserve binary workbook bytes.
+const movedFrom='https://betacms.tatamutualfund.com/system/files/2026-09/portfolio.xlsx';
+const movedTo='https://www.tatamutualfund.com/system/files/2026-09/portfolio.xlsx';
+const workbook=Buffer.from([80,75,0,10,50,48,48,10,255]);
+const wire=(bytes,status,next='')=>Buffer.concat([Buffer.from(bytes),Buffer.from(`\n${status}\n${next}`)]);
+let urls=[];
+const moved=publicReader('tata',{execute:async(_cmd,args)=>{
+  const url=args.at(-1);urls.push(url);assert(!args.includes('--location'));
+  return {stdout:url===movedFrom?wire('',302,movedTo):wire(workbook,200)};
+}});
+assert.deepEqual(await moved(movedFrom),workbook);assert.deepEqual(urls,[movedFrom,movedTo]);
+for(const next of ['https://unapproved.example/report.xlsx','http://www.tatamutualfund.com/report.xlsx','https://name:password@www.tatamutualfund.com/report.xlsx']) {
+  let calls=0;const blocked=publicReader('tata',{execute:async()=>{calls++;return {stdout:wire('',302,next)};}});
+  await assert.rejects(blocked(movedFrom));assert.equal(calls,1,'An unapproved redirect must never be requested');
+}
+for(const options of [{body:'sensitive-body'},{headers:{Authorization:'private-token'}}]) {
+  let calls=0;const blocked=publicReader('tata',{execute:async()=>{calls++;return {stdout:wire('',302,movedTo)};}});
+  await assert.rejects(blocked(movedFrom,options));assert.equal(calls,1,'Request-specific data must not be redirected');
+}
+let hops=0;const endless=publicReader('tata',{execute:async()=>({stdout:wire('',302,`https://www.tatamutualfund.com/${++hops}.xlsx`)})});
+await assert.rejects(endless(movedFrom));assert.equal(hops,4,'Redirect chains are bounded');
+let loops=0;const cycle=publicReader('tata',{execute:async()=>{loops++;return {stdout:wire('',302,movedFrom)};}});
+await assert.rejects(cycle(movedFrom),/loop/);assert.equal(loops,1);
+urls=[];const deniedDestination=publicReader('tata',{execute:async(_cmd,args)=>{
+  const url=args.at(-1);urls.push(url);
+  if(url===movedFrom)return {stdout:wire('',302,movedTo)};
+  throw Object.assign(Error('HTTP refusal'),{code:22,stdout:wire('',403)});
+}});
+await assert.rejects(deniedDestination(movedFrom),e=>e.status===403);
+await assert.rejects(deniedDestination(movedTo),/refused/);assert.deepEqual(urls,[movedFrom,movedTo]);
+console.log('PASS source redirects: approved HTTPS hosts only, exact binary bytes, bounded hops, refused destinations and no forwarded request data');
 console.log('PASS public disclosures: nine live-catalogue shapes, all pages, month rollover, host bounds, identity preservation, per-file failure checkpoints, bounded downloads and refusal handling');
 
 const serialRows=cashRows.map(r=>r[0].startsWith('Monthly Portfolio')?['PORTFOLIO STATEMENT AS ON :',46265]:r[0]==='Name of Instrument'?['Name of Instrument','ISIN','% to AUM']:r);

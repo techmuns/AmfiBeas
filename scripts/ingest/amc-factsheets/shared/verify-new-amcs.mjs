@@ -25,7 +25,7 @@ assert.equal(lakshya.length,1);assert.equal(new URL(lakshya[0].url).searchParams
 await assert.rejects(publicDisclosures('lakshya',month,async()=>reply([scheme,scheme])),/Invalid scheme/);
 assert.deepEqual(sourceFailure(new SyntaxError('secret upstream body')),{kind:'invalid-catalogue'});
 assert.deepEqual(sourceFailure(Error('token=private')),{kind:'validation-error'});
-const denied=publicReader('ask',{execute:async()=>{throw Object.assign(Error('private transport internals'),{code:56,stdout:Buffer.from('\n403')});}});
+const denied=publicReader('ask',{execute:async()=>{throw Object.assign(Error('private transport internals'),{code:56,stdout:Buffer.from('\n403\n')});}});
 await assert.rejects(denied('https://www.askmutualfund.com/x.xlsx'),e=>{
   assert.deepEqual(sourceFailure(e),{kind:'access-refused',httpStatus:403});return true;
 });
