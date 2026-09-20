@@ -14,7 +14,7 @@ const file=process.env.MF_DIAGNOSTICS_FILE||path.join(os.tmpdir(),'amc-catalogue
 const save=()=>fs.writeFileSync(file,JSON.stringify({checkedAt:new Date().toISOString(),targetMonth:targetMonth(),scope:'Public catalogue access only; does not establish complete or validated holdings',pending:wanted.filter(s=>!results.some(r=>r.slug===s)),results},null,2));
 save();
 for(const slug of wanted) {
-  if(!PUBLIC_PAGES[slug]){results.push({slug,status:'adapter-unavailable'});save();continue;}
+  if(!PUBLIC_PAGES[slug]){results.push({slug,status:'not-probed',reason:'No standalone public-catalogue probe; source coverage remains authoritative'});save();continue;}
   try {
     const axisPublicToken=slug==='axis'?/const AXIS_TOKEN\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(root,'scripts/ingest/amc-factsheets/json-api.ts'),'utf8'))?.[1]:undefined;
     const links=await publicDisclosures(slug,targetMonth(),publicReader(slug),{axisPublicToken});
