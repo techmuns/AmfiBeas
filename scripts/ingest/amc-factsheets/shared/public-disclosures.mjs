@@ -65,7 +65,11 @@ export function publicReader(slug,{execute=run}={}) {
         if(status!==200)throw Object.assign(Error('Disclosure HTTP failure'),{status});
         return buffer;
       } catch(error) {
-        const status=error.status||response(error.stdout).status||Number(/error:\s*(401|403|429)/i.exec(String(error.stderr||''))?.[1]);
+        let status=error.status||response(error.stdout).status||Number(/error:\s*(401|403|429)/i.exec(String(error.stderr||''))?.[1]);
+        // Headers can say 200 before the body times out or its connection breaks.
+        // A failed curl transfer is not a complete response; retain its real cause
+        // and apply bounded transport retries even after successful headers.
+        if(status<400&&Number.isInteger(error.code))status=undefined;
         if([401,403,429].includes(status))refused.add(host);
         if(attempt<2&&([408,500,502,503,504].includes(status)||!status&&[5,6,7,18,28,35,52,55,56].includes(error.code))){await new Promise(resolve=>setTimeout(resolve,250*(attempt+1)));continue;}
         throw Object.assign(Error([401,403,429].includes(status)?'Source refused access':'Disclosure download failed'),{

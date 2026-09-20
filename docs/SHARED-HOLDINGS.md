@@ -134,3 +134,8 @@ against that AMC's approved HTTPS hosts before requesting it. Redirects never ca
 request bodies or source-specific headers. Loops, unapproved destinations, longer
 chains and access refusals remain failures. This covers official CMS-to-website
 moves such as Tata's workbook links without treating a redirect as a valid workbook.
+
+A successful HTTP header does not certify a downloaded workbook. Partial transfers,
+timeouts and broken connections receive the same bounded transport retries even
+after HTTP 200. Exhausted transfers retain their transport cause; oversized files
+and access refusals are not retried, and interrupted bytes never enter the parser.
