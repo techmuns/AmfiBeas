@@ -245,9 +245,12 @@ function plausibleAsOf(iso: string | null): string | null {
 }
 
 function findAsOf(rows: Row[]): string | null {
+  // Security maturities and quantities can look like dates/Excel serials. Only
+  // the heading before the holdings table can establish the reporting period.
+  const limit = Math.min(rows.length, 30, findColumns(rows)?.headerIdx ?? 30);
   // Scan through the header-row band: some AMCs (Shriram) print "Portfolio
   // Statement as on <date>" on the line just above the column header at row ~11.
-  for (let i = 0; i < Math.min(rows.length, 30); i++) {
+  for (let i = 0; i < limit; i++) {
     for (let j = 0; j < rows[i].length; j++) {
       const cell = rows[i][j];
       const monthly = /^monthly portfolio statement of .+ for ([A-Za-z]+) (20\d{2})$/i.exec(s(cell));
@@ -267,7 +270,8 @@ function findAsOf(rows: Row[]): string | null {
     }
   }
   // Only consider unlabelled dates after checking every explicit heading.
-  for (const row of rows.slice(0, 30)) for (const cell of row) {
+  for (const row of rows.slice(0, limit)) for (const cell of row) {
+    if (row.some(v => /inception|launch date|maturity|NFO/i.test(s(v)))) continue;
     const iso = plausibleAsOf(toIso(cell));
     if (iso && s(cell).length < 30) return iso;
   }

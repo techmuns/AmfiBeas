@@ -43,3 +43,8 @@ assert.equal(parseAmcWorkbook(XLSX.write(workbook,{type:'buffer',bookType:'xlsx'
 for(const label of ['Portfolio as on 31st August 2026','Portfolio as on 31/08/2026','Portfolio as on 2026-08-31','MONTHLY PORTFOLIO STATEMENT OF EXAMPLE INDEX FUND FOR AUGUST 2026']) {
  const [s]=parse('Fund',[['Example Index Fund'],['Inception 22-Feb-2026'],[label],header,holding]);assert.equal(s.asOf,'2026-08-31',label);
 }
+
+const [undated]=parse("Fund",[["Example Hybrid Fund"],["Inception 22-Feb-2026"],header,["Bond maturing 23-Jan-2026","INE040A01034","Debt",46265,200,40]]);
+assert.equal(undated.asOf,null,"A holding maturity, quantity or inception date is not the reporting date");
+stampAsOfFromLinks([undated],[{url:"https://example.test/Portfolio_August_2026.xlsx"}],new Date("2026-09-20"));
+assert.equal(undated.asOf,"2026-08-31");
