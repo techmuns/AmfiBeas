@@ -197,7 +197,7 @@ export async function publicDisclosures(slug,month,read,{axisPublicToken,include
   return uniqueFiles(slug,links).sort((a,b)=>String(b.disclosureMonth||month).localeCompare(String(a.disclosureMonth||month)));
 }
 
-const baseName=name=>String(name||'').split(/\s*[-–]\s*an?\s+open[ -]ended/i)[0].toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+export const baseName=name=>String(name||'').split(/\s*[-–]\s*an?\s+open[ -]ended/i)[0].replace(/\s*\(erstwhile known as[^)]*\)\s*$/i,'').replace(/&/g,' and ').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 export function retainDisclosedNames(schemes,prior=[]) {
   const names=new Map();
   for(const scheme of prior){const key=baseName(scheme.schemeName);if(!names.has(key))names.set(key,new Set());names.get(key).add(scheme.schemeName);}
@@ -216,21 +216,22 @@ export function schemeNameResolver(snapshot) {
 // Some gold, overnight and overseas-only reports contain no Indian shares or units,
 // so the equity parser correctly returns no positions. Verify that exact case
 // without treating an arbitrary empty/malformed workbook as an empty portfolio.
-const emptySections=new Set(`equity & equity related|listed/awaiting listing on stock exchanges|listed/awaiting listing on stock exchange|listed/awaiting listing on the stock exchanges|listed/awaited listed on stock exchanges|unlisted|preference shares|debt instruments|privately placed/unlisted|unlisted/privately placed|securitised debt|securitised debt instruments|securitized debt instruments|others|money market instruments|tri party repo (treps)/reverse repo|treps/reverse repo instrument|treps/reverse repo|treps/reverse repo investments|international exchange traded funds|international mutual fund units|other current assets/(liabilities)|international equity shares|reit|derivatives|index/stock futures|index/stock options|exchange traded commodity derivatives|commodity futures|commodity option|commercial paper|commercial papers|cd-certificate of deposits|treasury bills|units of an alternative investment fund (aif)|fixed deposits|mutual fund unit|mutual fund units|units of infrastructure investment trust|tri party repo (treps)|other receivables (payables)|overseas security|preference/right shares|warrants|derivative|govt security|certificate of deposits|reverserepo/treps|investments in foreign securities - units of mutual funds|deposits with commercial banks|share application money pending allotment|foreign securities and/or overseas etf|real estate investment trust|infrastructure investment trust|central government securities|state government securities|bills re- discounting|mutual fund units/exchange traded funds|short term deposits|term deposits placed as margins|alternative investment funds|foreign mutual fund units|fixed deposit|exchange traded funds|cdmdf_aif|strips|margin amount for derivative positions`.split('|'));
+const emptySections=new Set(`equity & equity related|listed/awaiting listing on stock exchanges|listed/awaiting listing on stock exchange|listed/awaiting listing on the stock exchanges|listed/awaited listed on stock exchanges|unlisted|preference shares|debt instruments|privately placed/unlisted|unlisted/privately placed|securitised debt|securitised debt instruments|securitized debt instruments|others|money market instruments|tri party repo (treps)/reverse repo|treps/reverse repo instrument|treps/reverse repo|treps/reverse repo investments|international exchange traded funds|international mutual fund units|other current assets/(liabilities)|international equity shares|reit|derivatives|index/stock futures|index/stock options|exchange traded commodity derivatives|commodity futures|commodity option|commercial paper|commercial papers|cd-certificate of deposits|treasury bills|units of an alternative investment fund (aif)|fixed deposits|mutual fund unit|mutual fund units|units of infrastructure investment trust|tri party repo (treps)|other receivables (payables)|overseas security|preference/right shares|warrants|derivative|govt security|certificate of deposits|reverserepo/treps|investments in foreign securities - units of mutual funds|deposits with commercial banks|share application money pending allotment|foreign securities and/or overseas etf|real estate investment trust|infrastructure investment trust|central government securities|state government securities|bills re- discounting|mutual fund units/exchange traded funds|short term deposits|term deposits placed as margins|alternative investment funds|foreign mutual fund units|fixed deposit|exchange traded funds|cdmdf_aif|strips|margin amount for derivative positions|foreign securities/overseas etfs|foreign securities and/or overseas etfs|reverse repo/treps|commodities and commodities related|listed on commodity exchange (quantity in lots)`.split('|'));
 export function verifiedNonIndianRows(rows,name,month) {
-  if(!/\b(?:gold etf|silver etf|overnight fund|1d rate liquid etf|global.*(?:\bfof|fund of fund)|HSBC (?:Brazil Fund|Global Emerging Markets Fund|Asia Pacific.*Yield ?Fund)|Navi .*US Specific Equity Passive FoF|Bandhan US.*(?:FOF|fund of fund)|S&P 500.*ETF|NYSE FANG.*ETF|Hang Seng.*ETF)\b/i.test(name||''))return false;
+  if(!/\b(?:gold (?:etf|exchange traded fund)|silver etf|overnight fund|1d rate liquid etf|global.*(?:\bfof|fund of fund)|HSBC (?:Brazil Fund|Global Emerging Markets Fund|Asia Pacific.*Yield ?Fund)|Navi .*US Specific Equity Passive FoF|Bandhan US.*(?:FOF|fund of fund)|Invesco India - Invesco .*Fund of Fund|PGIM INDIA .*FUND OF FUND|S&P 500.*ETF|NYSE FANG.*ETF|Hang Seng.*ETF)\b/i.test(name||''))return false;
   const heading=rows.slice(0,15).flat().map(v=>String(v??'')).join(' ').replace(/[-,]/g,' ').replace(/\s+/g,' ');
   const [year,num]=month.split('-').map(Number),end=new Date(Date.UTC(year,num,0)).getUTCDate(),mon=months[num-1];
   const dates=[...heading.matchAll(/(?:as on|as of|month ended|period ended)\s+(\d{1,2}\s+[A-Za-z]+\s+20\d{2}|[A-Za-z]+\s+\d{1,2}\s+20\d{2})/gi)];
+  const monthlyOnly=new RegExp(`monthly portfolio statement of .+ for ${mon} ${year}(?: |$)`,'i').test(heading);
   const serialDates=rows.slice(0,15).flatMap(r=>r.flatMap((v,i)=>/portfolio statement as on\s*:?$/i.test(String(v||''))&&Number.isInteger(r[i+1])&&r[i+1]>20000&&r[i+1]<90000?[new Date(Date.UTC(1899,11,30)+r[i+1]*86400000).toISOString().slice(0,10)]:[]));
-  if((!dates.length&&!serialDates.length)||serialDates.some(d=>d!==`${month}-${end}`)||dates.some(d=>!new RegExp(`^(?:${end} ${mon}(?: |$)|${mon} ${end} )`,'i').test(d[1].replace(new RegExp(mon.slice(0,3)+'(?= )','i'),mon))||!d[1].endsWith(String(year))))return false;
-  const header=rows.findIndex(r=>r.some(v=>/^ISIN(?:\s+Code)?$/i.test(String(v||''))));
+  if((!dates.length&&!serialDates.length&&!monthlyOnly)||serialDates.some(d=>d!==`${month}-${end}`)||dates.some(d=>!new RegExp(`^(?:${end} ${mon}(?: |$)|${mon} ${end} )`,'i').test(d[1].replace(new RegExp(mon.slice(0,3)+'(?= )','i'),mon))||!d[1].endsWith(String(year))))return false;
+  const header=rows.findIndex(r=>r.some(v=>/^ISIN(?:\s+Code)?$/i.test(String(v||'')))||/gold exchange traded fund/i.test(name)&&r.some(v=>/name.*instrument/i.test(String(v||''))));
   if(header<0)return false;
   const cols=rows[header],isin=cols.findIndex(v=>/^ISIN(?:\s+Code)?$/i.test(String(v||''))),pct=cols.findIndex(v=>/%|percentage/i.test(String(v||''))&&/nav|aum|net asset/i.test(String(v||''))),instrument=cols.findIndex(v=>/name.*instrument/i.test(String(v||'')));
   if(pct<0||instrument<0)return false;
   // Check the whole document, not just the first section or first parsed sheet.
   if(rows.flat().some(v=>/\bIN[EF][A-Z0-9]{9}\b/i.test(String(v??'')))||rows.slice(header+1).some(r=>/^IN[EF]/i.test(String(r[isin]||'').trim())))return false;
-  const totals=rows.map((r,i)=>r.some(v=>/^(?:grand total(?:\s*\(aum\))?|total net assets as on \d{1,2}-[A-Za-z]+-20\d{2})$/i.test(String(v||'').trim()))?i:-1).filter(i=>i>=0);
+  const totals=rows.map((r,i)=>r.some(v=>/^(?:grand[ _]total(?:\s*\(aum\))?|total net assets as on \d{1,2}-[A-Za-z]+-20\d{2})$/i.test(String(v||'').trim()))?i:-1).filter(i=>i>=0);
   if(totals.length!==1||totals[0]<=header||![1,100].some(n=>Math.abs(Number(rows[totals[0]][pct])-n)<0.0001))return false;
   const amounts=cols.flatMap((v,i)=>/quantity|(?:market|fair).*value/i.test(String(v||''))?[i]:[]),blank=v=>v===undefined||v===null||v==='';
   let currentSection=null;
@@ -241,12 +242,13 @@ export function verifiedNonIndianRows(rows,name,month) {
     const section=label.replace(/^\(?[a-z]\)\s*/i,'').toLowerCase().replace(/\s*\/\s*/g,'/').replace(/\s+/g,' ');
     if(!id&&emptyValue(row[pct])&&amounts.every(i=>emptyValue(row[i]))&&emptySections.has(section)){currentSection=section;continue;}
     if(!blank(row[pct])&&!/^NIL$/i.test(String(row[pct]).trim())&&!(row[pct]==='$'&&/^(?:Cash Margin - CCIL|sub\s*total)$/i.test(label))&&(typeof row[pct]!=='number'||!Number.isFinite(row[pct])))return false;
-    if(/^(?:sub\s*total|grand total(?:\s*\(aum\))?|total(?: for (?:money market instruments|equity & equity related|debt instruments))?|(?:NCA-)?net current assets(?: \(including cash & bank balances\))?|TREPS\/Reverse Repo\/Net Current Assets\/Cash\/Cash Equivalent|total net assets as on \d{1,2}-[A-Za-z]+-20\d{2}|cash and other net current assets|cash margin - CCIL|net receivables?\s*\/\s*\(?payables?\)?|clearing corporation of india limited)$/i.test(label))continue;
+    if(/^(?:sub\s*total|grand[ _]total(?:\s*\(aum\))?|total(?: for (?:money market instruments|equity & equity related|debt instruments))?|(?:NCA-)?net current assets(?: \(including cash & bank balances\))?|TREPS\/Reverse Repo\/Net Current Assets\/Cash\/Cash Equivalent|total net assets as on \d{1,2}-[A-Za-z]+-20\d{2}|cash and other net current assets|cash margin - CCIL|net receivables?\s*\/\s*\(?payables?\)?|clearing corporation of india (?:limited|ltd\.?))$/i.test(label))continue;
     if(/^TREPS(?:\s+\d{2}-[A-Za-z]{3}-20\d{2}\s+DEPO\s+\d+)?$/i.test(label))continue;
-    if(/^Triparty Repo TRP_\d{6}$/i.test(label))continue;
+    if(/^Triparty Repo(?: TRP_\d{6})?$/i.test(label))continue;
     if(/^(?:\(?[a-z]\)\s*)?(?:gold(?: 1 kg bar \(995 fineness\)| (?:995|999) purity| 995 Finnese| - mumbai)?|silver)$/i.test(label))continue;
-    if(/^(?:GOLD \.995 1KG BAR|GOLD 999 100GM BAR|SILVER 999 1KG BAR)$/i.test(label))continue;
+    if(/^(?:GOLD \.995 1KG BAR(?: - Mumbai)?|GOLD 999 100GM BAR|SILVER 999 1KG BAR)$/i.test(label))continue;
     if(/^(?:GOLD\s*M?|SILVERM?)\s+\d{2}\/\d{2}\/20\d{2}\s+\(FUTURES\)$/i.test(label))continue;
+    if(/^(?:GOLD \.995|SILVER) ETCD \d{2} [A-Za-z]{3} 20\d{2}$/i.test(label))continue;
     if(/^[A-Z]{2}[A-Z0-9]{10}$/.test(id)&&!id.startsWith('IN'))continue;
     if(/^international (?:mutual fund units|exchange traded funds)$/.test(currentSection||'')&&/^\d{5,12}(?:USD|EUR|GBP)$/.test(id||String(row[0]||'').trim())&&label)continue;
     return false;
@@ -275,8 +277,13 @@ export function parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedW
   }
   catch(error) {
     const book=XLSX.read(buffer,{type:'buffer',cellDates:false});
-    const candidates=book.SheetNames.filter(n=>!/^Notes|^Disclaimer$/i.test(n));
-    if(candidates.length!==1||book.SheetNames.some(n=>n!==candidates[0]&&!/^(?:Notes|Disclaimer)$/i.test(n)))throw error;
+    const ancillary=n=>{
+      if(/^(?:Notes|Disclaimer)$/i.test(n))return true;
+      const rows=XLSX.utils.sheet_to_json(book.Sheets[n],{header:1,blankrows:false,defval:null,raw:true});
+      return rows.slice(0,3).some(r=>r.some(v=>String(v||'')==='Top 10 holdings by issuer'))&&rows.slice(0,4).some(r=>r.some(v=>String(v||'')==='Issuer Name'))&&!rows.flat().some(v=>/\bIN[EF][A-Z0-9]{9}\b/i.test(String(v||'')));
+    };
+    const candidates=book.SheetNames.filter(n=>!ancillary(n));
+    if(candidates.length!==1)throw error;
     const rows=XLSX.utils.sheet_to_json(book.Sheets[candidates[0]],{header:1,blankrows:true,defval:null,raw:true});
     const name=identifyScheme?.(rows,candidates[0])||link.text;
     if(!verifiedNonIndianRows(rows,name,month))throw error;

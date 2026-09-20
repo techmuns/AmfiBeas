@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {anchorFiles,oneDisclosures,publicDisclosures,publicReader,publicUrl,readDisclosures,resumeDisclosures,retainDisclosedNames,schemeNameResolver,verifiedNonIndianRows,parsePublicWorkbook} from './public-disclosures.mjs';
+import {anchorFiles,baseName,oneDisclosures,publicDisclosures,publicReader,publicUrl,readDisclosures,resumeDisclosures,retainDisclosedNames,schemeNameResolver,verifiedNonIndianRows,parsePublicWorkbook} from './public-disclosures.mjs';
 import {reconcileSourceChecks,lastCompleteCheck} from './checks.mjs';
 const reply=value=>Buffer.from(JSON.stringify(value));
 const month='2026-08';
@@ -149,3 +149,16 @@ console.log('PASS public disclosures: nine live-catalogue shapes, all pages, mon
 const serialRows=cashRows.map(r=>r[0].startsWith('Monthly Portfolio')?['PORTFOLIO STATEMENT AS ON :',46265]:r[0]==='Name of Instrument'?['Name of Instrument','ISIN','% to AUM']:r);
 assert(verifiedNonIndianRows(serialRows,'Choice Overnight Fund',month));
 assert(!verifiedNonIndianRows(serialRows,'Choice Overnight Fund','2026-07'));
+
+const foreignRows=[['PGIM INDIA GLOBAL FUND OF FUND'],['Portfolio as on 31 August 2026'],['Name of Instrument','ISIN','% to NAV'],['Foreign Securities and/or Overseas ETFs'],['Foreign fund','IE00BYV6MS67',99],['Clearing Corporation of India Ltd.','',1],['GRAND_TOTAL','',100]];
+assert(verifiedNonIndianRows(foreignRows,'PGIM INDIA GLOBAL FUND OF FUND',month));
+assert(!verifiedNonIndianRows(foreignRows.map(r=>r[0]==='Foreign fund'?['Indian fund','INF209K01WE3',99]:r),'PGIM INDIA GLOBAL FUND OF FUND',month));
+const summary=[['Scheme Name: PGIM INDIA GLOBAL FUND OF FUND'],['Top 10 holdings by issuer'],['Issuer Name','% to Net Assets'],['Foreign fund',1]];
+const multiBook={read:()=>({SheetNames:['Portfolio','Allocation'],Sheets:{Portfolio:foreignRows,Allocation:summary}}),utils:{sheet_to_json:s=>s}};
+const parseEmpty=XLSX=>parsePublicWorkbook(null,{XLSX,parseVerifiedWorkbook:()=>{throw Error('Empty');},month,link:{text:'PGIM INDIA GLOBAL FUND OF FUND'}});
+assert.equal(parseEmpty(multiBook).length,1);
+assert.throws(()=>parseEmpty({...multiBook,read:()=>({SheetNames:['Portfolio','Other'],Sheets:{Portfolio:foreignRows,Other:[['Unknown portfolio']]}})}),/Empty/);
+
+assert.equal(baseName('JM Large & Midcap Fund'),baseName('JM Large and Midcap Fund'));
+assert.equal(baseName('JM Short Term Fund (Erstwhile known as JM Short Duration Fund)'),baseName('JM Short Term Fund'));
+assert.notEqual(baseName('Example Direct Plan'),baseName('Example Regular Plan'));

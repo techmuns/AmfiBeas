@@ -11,7 +11,7 @@ await assert.rejects(publicDisclosures('canara-robeco',month,async()=>canaraPage
 await assert.rejects(publicDisclosures('canara-robeco',month,async url=>new URL(url).searchParams.has('pagination')?html(''):canaraPage(1)),/Incomplete/);
 const jioFile={title:'JioBlackRock Equity Fund-Monthly-Portfolio-31-08-2026',docType:'file',file:{url:'https://jioinvest.cdn.jio.com/fund.xlsx'}};
 const jioReader=({total=1,date='31-08-2026'}={})=>async(url,options)=>{
-  if(options){assert.equal(options.headers['next-action'],'abc123');assert.equal(JSON.parse(options.body)[1].year,'FI2026-2027');return html('1:'+JSON.stringify({data:[{...jioFile,title:jioFile.title.replace('31-08-2026',date)}],meta:{pagination:{page:1,pageCount:1,total}}}));}
+  if(options){assert.equal(options.headers['next-action'],'abc123');assert.equal(options.headers.origin,'https://www.jioblackrockamc.com');assert.equal(options.headers.referer,url);assert.match(decodeURIComponent(options.headers['next-router-state-tree']),/monthly-portfolio-disclosure/);assert.equal(JSON.parse(options.body)[1].year,'FI2026-2027');return html('1:'+JSON.stringify({data:[{...jioFile,title:jioFile.title.replace('31-08-2026',date)}],meta:{pagination:{page:1,pageCount:1,total}}}));}
   return html(url.includes('page-')?'createServerReference)("abc123",a,b,"getDisclosureL3Data")':'<script src="/_next/static/chunks/app/statutory-disclosure/page-test.js"></script>');
 };
 assert.equal((await publicDisclosures('jio-blackrock',month,jioReader())).length,1);
@@ -55,3 +55,6 @@ for(const [slug,host] of [['tata','https://betacms.tatamutualfund.com'],['edelwe
  assert.equal((await publicDisclosures(slug,month,reader)).length,1);
  await assert.rejects(publicDisclosures(slug,'2026-07',async()=>html('<a href="https://unexpected.test/jul.xlsx">Monthly Portfolio Disclosure - July 2026</a>')),/unavailable/);
 }
+
+const zerodha=await publicDisclosures('zerodha',month,async()=>html(JSON.stringify({files:[{name:'ZOVER - Monthly Portfolio August 2026',url:'https://assets.zerodhafundhouse.com/statutory-reports/portfolio-disclosures/ZOVER - Monthly Portfolio August 2026.xlsx'},{name:'ZOVER - Half-Yearly Portfolio August 2026',url:'https://assets.zerodhafundhouse.com/statutory-reports/portfolio-disclosures/half.xlsx'}]})));
+assert.equal(zerodha.length,1);assert.match(zerodha[0].url,/ZOVER%20/);

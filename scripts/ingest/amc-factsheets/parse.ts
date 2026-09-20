@@ -36,9 +36,16 @@ function toIso(v: Cell): string | null {
   }
   const str = s(v);
   const m1 = str.match(/((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*)\s+(\d{1,2})\s*,?\s*(\d{4})/i); // May 31,2026
-  const m2 = str.match(/(\d{1,2})[-/\s]((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*)[-/\s](\d{2,4})/i); // 31-May-2026
+  const m2 = str.match(/(\d{1,2})(?:st|nd|rd|th)?[-/\s]+((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*)[-/\s](\d{2,4})/i); // 31-May-2026
   const MON: Record<string, number> = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
-  const mk = (y: number, mo: number, d: number) => `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  const mk = (y: number, mo: number, d: number) => {
+    const iso = `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    return mo >= 1 && mo <= 12 && d >= 1 && d <= 31 && new Date(Date.UTC(y, mo - 1, d)).toISOString().slice(0, 10) === iso ? iso : null;
+  };
+  const numeric = str.match(/\b(\d{1,2})[/-](\d{1,2})[/-](20\d{2})\b/);
+  const isoDate = str.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
+  if (numeric) return mk(+numeric[3], +numeric[2], +numeric[1]);
+  if (isoDate) return mk(+isoDate[1], +isoDate[2], +isoDate[3]);
   if (m1) { const mo = MON[m1[1].slice(0, 3).toLowerCase()]; if (mo) return mk(+m1[3], mo, +m1[2]); }
   if (m2) { const mo = MON[m2[2].slice(0, 3).toLowerCase()]; const y = +m2[3] < 100 ? 2000 + +m2[3] : +m2[3]; if (mo) return mk(y, mo, +m2[1]); }
   return null;
@@ -243,6 +250,11 @@ function findAsOf(rows: Row[]): string | null {
   for (let i = 0; i < Math.min(rows.length, 30); i++) {
     for (let j = 0; j < rows[i].length; j++) {
       const cell = rows[i][j];
+      const monthly = /^monthly portfolio statement of .+ for ([A-Za-z]+) (20\d{2})$/i.exec(s(cell));
+      if (monthly) {
+        const first = toIso(`1 ${monthly[1]} ${monthly[2]}`);
+        if (first) return plausibleAsOf(new Date(Date.UTC(+first.slice(0,4), +first.slice(5,7), 0)).toISOString().slice(0,10));
+      }
       if (/as on|statement as|portfolio statement/i.test(s(cell))) {
         // An explicitly labelled date wins outright — but still has to be a
         // plausible month, or we fall through to keep looking.
@@ -322,6 +334,13 @@ function parseScheme(name: string, rows: Row[], opts: AmcParseOptions): AmcSchem
   };
 }
 
+// A cover sheet may list plan ISINs without holding any securities. Require
+// a position-table header before a failed parse can invalidate the workbook.
+function unparsedHoldings(rows: Row[]): boolean {
+  const table = rows.some(r => r.some(v => /\bisin\b/i.test(s(v))) && r.some(v => /quantity|(?:market|fair)\s*value/i.test(s(v))));
+  return table && rows.flat().some(v => ISIN_RE.test(s(v)));
+}
+
 /** Parse a whole AMC workbook buffer → schemes. */
 export function parseAmcWorkbook(buf: ArrayBuffer | Buffer, opts: AmcParseOptions): AmcScheme[] {
   const wb = XLSX.read(buf, { type: "buffer", cellDates: false });
@@ -346,12 +365,12 @@ export function parseAmcWorkbook(buf: ArrayBuffer | Buffer, opts: AmcParseOption
           const seg = rows.slice(marks[k].i + 1, k + 1 < marks.length ? marks[k + 1].i : rows.length);
           const scheme = parseScheme(marks[k].name, seg, opts);
           if (scheme) out.push(scheme);
-          else if (opts.strictHoldings && seg.flat().some(v => ISIN_RE.test(s(v)))) throw Error("Unparsed scheme securities");
+          else if (opts.strictHoldings && unparsedHoldings(seg)) throw Error("Unparsed scheme securities");
         }
       } else {
         const scheme = parseScheme(sheetName, rows, opts);
         if (scheme) out.push(scheme);
-        else if (opts.strictHoldings && rows.flat().some(v => ISIN_RE.test(s(v)))) throw Error("Unparsed sheet securities");
+        else if (opts.strictHoldings && unparsedHoldings(rows)) throw Error("Unparsed sheet securities");
       }
     } catch (error) {
       if (opts.strictHoldings) throw error;

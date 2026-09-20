@@ -5,7 +5,7 @@ import {execFileSync} from 'node:child_process';
 import {STATUTORY_PAGES,statutoryLinks} from './discovery.mjs';
 import {atomicJson,runSourcePool} from './source-pool.mjs';
 import {QUANTUM_PAGE,quantumDisclosures,parseQuantumWorkbook} from './quantum.mjs';
-import {PUBLIC_PAGES,publicReader,publicDisclosures,readDisclosures,resumeDisclosures,schemeNameResolver,parsePublicWorkbook} from './public-disclosures.mjs';
+import {PUBLIC_PAGES,baseName,publicReader,publicDisclosures,readDisclosures,resumeDisclosures,schemeNameResolver,parsePublicWorkbook} from './public-disclosures.mjs';
 import {reconcileSourceChecks,lastCompleteCheck} from './checks.mjs';
 import path from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
@@ -48,7 +48,7 @@ for(const entry of index.amcs) {
     if(!month)throw Error('Disclosure month unverified');
     const existing=[{asOfMonth:old.asOfMonth,schemes:old.schemes},...(old.history||[])].filter(b=>b.schemes?.length).map(b=>({...b,checkedAt:b.checkedAt||old.fetchedAt,sourceUrl:b.sourceUrl||old.sourceUrl}));
     const schemes=resolveNames(result.schemes).map(s=>({...normalizeSchemePct(s),checkedAt:startedAt,sourceUrl:s.sourceUrl||result.usedUrl||old.sourceUrl})),oldMonth=existing.find(b=>monthKey(b.asOfMonth)===month);
-    const names=new Set(schemes.map(s=>s.schemeName)),missing=oldMonth?.schemes.filter(s=>!names.has(s.schemeName)&&!((/^(?:mutual fund units|exchange traded fund|an? open[ -]ended)/i.test(s.schemeName)||s.schemeName===s.schemeCode)&&schemes.some(next=>next.schemeCode===s.schemeCode&&!/^(?:mutual fund units|exchange traded fund)$/i.test(next.schemeName))))||[];
+    const names=new Set(schemes.map(s=>baseName(s.schemeName))),missing=oldMonth?.schemes.filter(s=>!names.has(baseName(s.schemeName))&&!((/^(?:mutual fund units|exchange traded fund|BRSR Score\d*$|an? open[ -]ended)/i.test(s.schemeName)||s.schemeName===s.schemeCode)&&schemes.some(next=>next.schemeCode===s.schemeCode&&!/^(?:mutual fund units|exchange traded fund)$/i.test(next.schemeName))))||[];
     const months=new Map(existing.map(b=>[monthKey(b.asOfMonth),b]));
     months.set(month,{asOfMonth:month,schemes:[...schemes,...missing.map(s=>({...s,checkedAt:s.checkedAt||oldMonth.checkedAt||old.fetchedAt,sourceUrl:s.sourceUrl||oldMonth.sourceUrl||old.sourceUrl}))],checkedAt:startedAt,sourceUrl:result.usedUrl||old.sourceUrl});
     const buckets=[...months].filter(([m])=>m).sort((a,b)=>b[0].localeCompare(a[0])).map(([,b])=>b),latest=buckets[0];

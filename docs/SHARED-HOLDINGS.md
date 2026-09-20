@@ -77,7 +77,7 @@ Live source tests write only to an isolated `AMFIBEAS_PATH`; they do not publish
 ### Catalogue and workbook reconciliation
 
 The collector reads the current official download catalogues for Canara Robeco,
-JioBlackRock, HSBC, Navi, Bajaj Finserv, AlphaGrep, Choice and IL&FS, alongside the existing
+JioBlackRock, HSBC, Navi, Bajaj Finserv, AlphaGrep, Choice, Zerodha and IL&FS, alongside the existing
 AMC adapters. Public website configuration is rediscovered when each source is
 checked; private sessions and challenge bypasses are not used. Catalogue periods,
 pagination, duplicate IDs, published totals and file-host allowlists are validated.

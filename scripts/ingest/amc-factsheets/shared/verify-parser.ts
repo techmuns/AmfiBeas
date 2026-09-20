@@ -30,9 +30,16 @@ const report=XLSX.write(workbook,{type:'buffer',bookType:'xlsx'});
 const partial=downloadAndParse(['valid','failed','html'].map(n=>({url:`https://example.test/${n}.xlsx`,text:n})),{pctScale:1,valueToCr:100},undefined,url=>url.includes('valid')?report:url.includes('html')?Buffer.from('<html>Unavailable</html>'):null);
 assert.equal(partial.schemes.length,1);assert.equal(partial.expectedFiles,3);assert.equal(partial.completedFiles,1);assert.equal(partial.failedFiles,2);
 
-const damaged=XLSX.utils.book_new();XLSX.utils.book_append_sheet(damaged,XLSX.utils.aoa_to_sheet([['Example Fund'],['Wrong header'],holding]),'Damaged');
+const damaged=XLSX.utils.book_new();XLSX.utils.book_append_sheet(damaged,XLSX.utils.aoa_to_sheet([['Example Fund'],['ISIN','Quantity','Missing other columns'],holding]),'Damaged');
 assert.throws(()=>parseAmcWorkbook(XLSX.write(damaged,{type:'buffer',bookType:'xlsx'}),{pctScale:1,valueToCr:100,strictHoldings:true}),/Unparsed/);
 
 const [motilal]=parse('YO01',[['Back to Index'],['Example Asset Management Company Limited'],['(Investment Manager for Example Mutual Fund)'],['Registered Office: City'],['Monthly Portfolio Statement as on August 31, 2026'],['Example Nifty 50 ETF'],header,holding]);assert.equal(motilal.schemeName,'Example Nifty 50 ETF');
 XLSX.utils.book_append_sheet(workbook,XLSX.utils.aoa_to_sheet([['Notes: Example Fund'],['Historical transaction','INE040A01034']]),'Notes');
 assert.equal(parseAmcWorkbook(XLSX.write(workbook,{type:'buffer',bookType:'xlsx'}),{pctScale:1,valueToCr:100,strictHoldings:true}).length,1);
+
+XLSX.utils.book_append_sheet(workbook,XLSX.utils.aoa_to_sheet([['Scheme plans'],['ISIN','Scheme Name'],['INF209K01WE3','Example Plan']]),'Contents');
+assert.equal(parseAmcWorkbook(XLSX.write(workbook,{type:'buffer',bookType:'xlsx'}),{pctScale:1,valueToCr:100,strictHoldings:true}).length,1);
+
+for(const label of ['Portfolio as on 31st August 2026','Portfolio as on 31/08/2026','Portfolio as on 2026-08-31','MONTHLY PORTFOLIO STATEMENT OF EXAMPLE INDEX FUND FOR AUGUST 2026']) {
+ const [s]=parse('Fund',[['Example Index Fund'],['Inception 22-Feb-2026'],[label],header,holding]);assert.equal(s.asOf,'2026-08-31',label);
+}

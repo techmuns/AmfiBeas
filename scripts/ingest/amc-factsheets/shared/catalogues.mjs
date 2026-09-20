@@ -1,5 +1,6 @@
 // Official catalogues whose current public download UI supersedes legacy routes.
 export const CATALOGUE_PAGES={
+  zerodha:'https://www.zerodhafundhouse.com/resources/disclosures',
   edelweiss:'https://www.edelweissmf.com/statutory/monthly-portfolio',
   tata:'https://www.tatamutualfund.com/schemes-related/portfolio',
   choice:'https://choicemf.com/disclosures/monthly-portfolio',
@@ -12,6 +13,7 @@ export const CATALOGUE_PAGES={
   'il-fs-idf':'https://www.ilfsinfrafund.com/other.php',
 };
 export const CATALOGUE_HOSTS={
+  zerodha:['https://www.zerodhafundhouse.com','https://assets.zerodhafundhouse.com'],
   edelweiss:['https://www.edelweissmf.com','https://www.advisorkhoj.com'],
   tata:['https://www.tatamutualfund.com','https://betacms.tatamutualfund.com','https://www.advisorkhoj.com'],
   choice:['https://choicemf.com','https://doc.choicemf.com'],
@@ -29,6 +31,16 @@ export async function catalogueDisclosures(slug,month,read,{anchorFiles}) {
   const page=CATALOGUE_PAGES[slug],[year,num]=month.split('-').map(Number),name=names[num-1],end=new Date(Date.UTC(year,num,0)).getUTCDate();
   const html=async u=>(await read(u)).toString('utf8'),json=async(u,o)=>JSON.parse((await read(u,o)).toString('utf8'));
   const form=(body,headers={})=>({body:new URLSearchParams(body).toString(),contentType:'application/x-www-form-urlencoded',headers});
+  if(slug==='zerodha') {
+    const source=(await html(page)).replace(/\\"/g,'"'),links=[];
+    for(const m of source.matchAll(/"name":"([^"<>]+)","url":"(https:[^"<>]+\.xlsx?)"/g)) {
+      if(!new RegExp(`^[A-Z0-9]+ - Monthly Portfolio ${name} ${year}$`).test(m[1]))continue;
+      const url=new URL(m[2]);
+      if(url.origin!=='https://assets.zerodhafundhouse.com'||!url.pathname.startsWith('/statutory-reports/portfolio-disclosures/'))throw Error('Unexpected monthly file');
+      links.push({url:url.href,text:m[1]});
+    }
+    return links;
+  }
   if(slug==='edelweiss'||slug==='tata') {
     // The public index supplies published file links; all holdings come from the
     // AMC's own allowed host and still require matching workbook dates.
@@ -81,7 +93,7 @@ export async function catalogueDisclosures(slug,month,read,{anchorFiles}) {
     const action=/createServerReference\)\("([a-f0-9]+)"[^;]+"getDisclosureL3Data"/.exec(client)?.[1];
     if(!action)throw Error('Disclosure action unavailable');
     const fy=num>=4?year:year-1;
-    const response=await read(page,{body:JSON.stringify(['monthly-portfolio-disclosure',{year:`FI${fy}-${fy+1}`,month:name,date:'$undefined'},'MF']),contentType:'text/plain;charset=UTF-8',headers:{accept:'text/x-component','next-action':action}});
+    const response=await read(page,{body:JSON.stringify(['monthly-portfolio-disclosure',{year:`FI${fy}-${fy+1}`,month:name,date:'$undefined'},'MF']),contentType:'text/plain;charset=UTF-8',headers:{accept:'text/x-component','next-action':action,origin:new URL(page).origin,referer:page,'next-router-state-tree':'%5B%22%22%2C%7B%22children%22%3A%5B%22(mf)%22%2C%7B%22children%22%3A%5B%22(public)%22%2C%7B%22children%22%3A%5B%22statutory-disclosure%22%2C%7B%22children%22%3A%5B%5B%22l1Id%22%2C%22disclosures%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%5B%22l2Id%22%2C%22monthly-portfolio-disclosure%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22__PAGE__%22%2C%7B%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%2Ctrue%5D'}});
     const line=response.toString('utf8').split('\n').find(l=>/^1:\{/.test(l));
     const data=line&&JSON.parse(line.slice(2)),pagination=data?.meta?.pagination;
     if(!Array.isArray(data?.data)||pagination?.page!==1||pagination?.pageCount!==1||pagination.total!==data.data.length)throw Error('Incomplete disclosure index');
