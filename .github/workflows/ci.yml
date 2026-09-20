@@ -19,12 +19,53 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run test:holdings
+      - name: Identify changed source readers
+        if: github.event_name == 'pull_request'
+        id: source-readers
+        run: |
+          if test -n "$(git diff --name-only HEAD^ HEAD -- scripts/ingest/amc-factsheets/shared)"; then
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Diagnose public catalogue access from the runner
+        if: steps.source-readers.outputs.changed == 'true'
+        timeout-minutes: 5
+        continue-on-error: true
+        env:
+          MF_DIAGNOSTICS_FILE: ${{ runner.temp }}/amc-catalogue-diagnostics.json
+        run: node scripts/ingest/amc-factsheets/shared/probe-catalogues.mjs
+      - name: Retain source-access diagnostics
+        if: always() && steps.source-readers.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: amc-catalogue-diagnostics
+          path: ${{ runner.temp }}/amc-catalogue-diagnostics.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Check ordinary browser disclosure downloads
+        if: steps.source-readers.outputs.changed == 'true'
+        timeout-minutes: 5
+        continue-on-error: true
+        env:
+          MF_RENDERED_DIAGNOSTICS_DIR: ${{ runner.temp }}/amc-rendered-diagnostics
+        run: |
+          npx playwright install --with-deps chromium
+          node scripts/ingest/amc-factsheets/shared/probe-rendered.mjs
+      - name: Retain browser download diagnostics
+        if: always() && steps.source-readers.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: amc-rendered-diagnostics
+          path: ${{ runner.temp }}/amc-rendered-diagnostics/
+          if-no-files-found: warn
+          retention-days: 7
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build

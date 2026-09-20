@@ -4,6 +4,7 @@ import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {monthKey,previousMonth} from './dates.mjs';
 import {CATALOGUE_PAGES,CATALOGUE_HOSTS,catalogueDisclosures} from './catalogues.mjs';
+import {sourceFailure} from './source-errors.mjs';
 const run=promisify(execFile);
 const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
 export const PUBLIC_PAGES={
@@ -39,7 +40,7 @@ export function publicReader(slug,{execute=run}={}) {
   const refused=new Set();
   return async function read(input,{body,contentType='application/json',headers={}}={}) {
     const url=publicUrl(slug,input),host=new URL(url).host;
-    if(refused.has(host))throw Error('Source refused access');
+    if(refused.has(host))throw Object.assign(Error('Source refused access'),{code:'SOURCE_REFUSED'});
     const args=['--silent','--show-error','--fail','--globoff','--max-time','20','--max-filesize','25000000','--proto','=https'];
     // No redirects: every accepted URL is a link on the verified disclosure host.
     for(const [key,value] of Object.entries(headers))args.push('-H',`${key}: ${value}`);
@@ -54,7 +55,9 @@ export function publicReader(slug,{execute=run}={}) {
       const status=error.status||Number(error.stdout?.subarray?.(-3)?.toString())||Number(/error:\s*(401|403|429)/i.exec(String(error.stderr||''))?.[1]);
       if([401,403,429].includes(status))refused.add(host);
       if(attempt<2&&([408,500,502,503,504].includes(status)||!status&&[5,6,7,18,28,35,52,55,56].includes(error.code))){await new Promise(resolve=>setTimeout(resolve,250*(attempt+1)));continue;}
-      throw Error([401,403,429].includes(status)?'Source refused access':'Disclosure download failed');
+      throw Object.assign(Error([401,403,429].includes(status)?'Source refused access':'Disclosure download failed'),{
+        code:status?'SOURCE_HTTP':'SOURCE_TRANSPORT',status:status||undefined,transportCode:Number.isInteger(error.code)?error.code:undefined,
+      });
     }
   };
 }
@@ -71,7 +74,7 @@ function uniqueFiles(slug,links) {
   const found=new Map();
   for(const link of links){
     const url=publicUrl(slug,link.url);
-    if(!/\.xlsx?$/i.test(new URL(url).pathname))throw Error('Unexpected disclosure format');
+    if(!/\.xlsx?$/i.test(new URL(url).pathname)&&!(slug==='lakshya'&&new URL(url).pathname==='/api/ext/disclosures/portfolio-disclosure/download'))throw Error('Unexpected disclosure format');
     if(found.has(url)&&found.get(url).disclosureMonth!==link.disclosureMonth)throw Error('Disclosure file period ambiguous');
     found.set(url,{...link,url});
   }
@@ -222,9 +225,10 @@ export function verifiedNonIndianRows(rows,name,month) {
   const heading=rows.slice(0,15).flat().map(v=>String(v??'')).join(' ').replace(/[-,]/g,' ').replace(/\s+/g,' ');
   const [year,num]=month.split('-').map(Number),end=new Date(Date.UTC(year,num,0)).getUTCDate(),mon=months[num-1];
   const dates=[...heading.matchAll(/(?:as on|as of|month ended|period ended)\s+(\d{1,2}\s+[A-Za-z]+\s+20\d{2}|[A-Za-z]+\s+\d{1,2}\s+20\d{2})/gi)];
+  const numericDates=[...heading.matchAll(/(?:as on|as of|month ended|period ended)\s+(\d{1,2})[./ ](\d{1,2})[./ ](20\d{2})\b/gi)];
   const monthlyOnly=new RegExp(`monthly portfolio statement of .+ for ${mon} ${year}(?: |$)`,'i').test(heading);
   const serialDates=rows.slice(0,15).flatMap(r=>r.flatMap((v,i)=>/portfolio statement as on\s*:?$/i.test(String(v||''))&&Number.isInteger(r[i+1])&&r[i+1]>20000&&r[i+1]<90000?[new Date(Date.UTC(1899,11,30)+r[i+1]*86400000).toISOString().slice(0,10)]:[]));
-  if((!dates.length&&!serialDates.length&&!monthlyOnly)||serialDates.some(d=>d!==`${month}-${end}`)||dates.some(d=>!new RegExp(`^(?:${end} ${mon}(?: |$)|${mon} ${end} )`,'i').test(d[1].replace(new RegExp(mon.slice(0,3)+'(?= )','i'),mon))||!d[1].endsWith(String(year))))return false;
+  if((!dates.length&&!numericDates.length&&!serialDates.length&&!monthlyOnly)||numericDates.some(d=>Number(d[1])!==end||Number(d[2])!==num||Number(d[3])!==year)||serialDates.some(d=>d!==`${month}-${end}`)||dates.some(d=>!new RegExp(`^(?:${end} ${mon}(?: |$)|${mon} ${end} )`,'i').test(d[1].replace(new RegExp(mon.slice(0,3)+'(?= )','i'),mon))||!d[1].endsWith(String(year))))return false;
   const header=rows.findIndex(r=>r.some(v=>/^ISIN(?:\s+Code)?$/i.test(String(v||'')))||/gold exchange traded fund/i.test(name)&&r.some(v=>/name.*instrument/i.test(String(v||''))));
   if(header<0)return false;
   const cols=rows[header],isin=cols.findIndex(v=>/^ISIN(?:\s+Code)?$/i.test(String(v||''))),pct=cols.findIndex(v=>/%|percentage/i.test(String(v||''))&&/nav|aum|net asset/i.test(String(v||''))),instrument=cols.findIndex(v=>/name.*instrument/i.test(String(v||'')));
@@ -240,11 +244,12 @@ export function verifiedNonIndianRows(rows,name,month) {
     const emptyValue=v=>blank(v)||v===0||/^NIL$/i.test(String(v).trim());
     if(!label&&!id&&blank(row[pct])&&amounts.every(i=>blank(row[i])))continue;
     const section=label.replace(/^\(?[a-z]\)\s*/i,'').toLowerCase().replace(/\s*\/\s*/g,'/').replace(/\s+/g,' ');
-    if(!id&&emptyValue(row[pct])&&amounts.every(i=>emptyValue(row[i]))&&emptySections.has(section)){currentSection=section;continue;}
+    if(!id&&emptyValue(row[pct])&&amounts.every(i=>emptyValue(row[i]))&&(emptySections.has(section)||['government securities/sdl','treps/reverse repo investments/corporate debt repo','cash & cash equivalents'].includes(section))){currentSection=section;continue;}
     if(!blank(row[pct])&&!/^NIL$/i.test(String(row[pct]).trim())&&!(row[pct]==='$'&&/^(?:Cash Margin - CCIL|sub\s*total)$/i.test(label))&&(typeof row[pct]!=='number'||!Number.isFinite(row[pct])))return false;
     if(/^(?:sub\s*total|grand[ _]total(?:\s*\(aum\))?|total(?: for (?:money market instruments|equity & equity related|debt instruments))?|(?:NCA-)?net current assets(?: \(including cash & bank balances\))?|TREPS\/Reverse Repo\/Net Current Assets\/Cash\/Cash Equivalent|total net assets as on \d{1,2}-[A-Za-z]+-20\d{2}|cash and other net current assets|cash margin - CCIL|net receivables?\s*\/\s*\(?payables?\)?|clearing corporation of india (?:limited|ltd\.?))$/i.test(label))continue;
     if(/^TREPS(?:\s+\d{2}-[A-Za-z]{3}-20\d{2}\s+DEPO\s+\d+)?$/i.test(label))continue;
     if(/^Triparty Repo(?: TRP_\d{6})?$/i.test(label))continue;
+    if(label==='CCIL'&&!id&&currentSection==='treps/reverse repo investments/corporate debt repo')continue;
     if(/^(?:\(?[a-z]\)\s*)?(?:gold(?: 1 kg bar \(995 fineness\)| (?:995|999) purity| 995 Finnese| - mumbai)?|silver)$/i.test(label))continue;
     if(/^(?:GOLD \.995 1KG BAR(?: - Mumbai)?|GOLD 999 100GM BAR|SILVER 999 1KG BAR)$/i.test(label))continue;
     if(/^(?:GOLD\s*M?|SILVERM?)\s+\d{2}\/\d{2}\/20\d{2}\s+\(FUTURES\)$/i.test(label))continue;
@@ -311,7 +316,7 @@ export async function readDisclosures(links,{read,parse,month,concurrency=4,onCh
       if(results[i]===undefined)part.pendingFiles++;else if(results[i].length)part.completedFiles++;else part.failedFiles++;
     }
     return {schemes:results.flatMap(s=>s||[]),failedFiles:failures.length,pendingFiles:results.filter(s=>s===undefined).length,expectedFiles:links.length,completedFiles:results.filter(s=>s?.length).length,lastCompletedMonth,byMonth,
-      fileFailures:failures.map(f=>({url:links[f.index].url,month:links[f.index].disclosureMonth||month,reason:f.reason})),
+      fileFailures:failures.map(f=>({url:links[f.index].url,month:links[f.index].disclosureMonth||month,reason:f.reason,failure:f.failure})),
       resumeUrl:links[results.findIndex(s=>s===undefined)]?.url||links[failures[0]?.index]?.url||null};
   }
   const settled=await Promise.allSettled(Array.from({length:Math.min(concurrency,links.length)},async()=>{
@@ -323,7 +328,7 @@ export async function readDisclosures(links,{read,parse,month,concurrency=4,onCh
         const schemes=parse(buffer,link);
         if(!schemes.length||schemes.some(s=>monthKey(s.asOf)!==(link.disclosureMonth||month)))throw Error('Disclosure month unverified');
         results[index]=schemes.map(s=>({...s,sourceUrl:link.url}));
-      } catch(error) {failures.push({index,reason:String(error.message||'Disclosure unavailable').slice(0,180)});results[index]=[];}
+      } catch(error) {failures.push({index,reason:String(error.message||'Disclosure unavailable').slice(0,180),failure:sourceFailure(error)});results[index]=[];}
       await onCheckpoint(progress(link.disclosureMonth||month));
     }
   }));

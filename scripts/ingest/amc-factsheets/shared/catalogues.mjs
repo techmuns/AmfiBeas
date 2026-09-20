@@ -1,5 +1,7 @@
 // Official catalogues whose current public download UI supersedes legacy routes.
+import {NEW_AMC_PAGES,NEW_AMC_HOSTS,newAmcDisclosures} from './new-amcs.mjs';
 export const CATALOGUE_PAGES={
+  ...NEW_AMC_PAGES,
   zerodha:'https://www.zerodhafundhouse.com/resources/disclosures',
   edelweiss:'https://www.edelweissmf.com/statutory/monthly-portfolio',
   tata:'https://www.tatamutualfund.com/schemes-related/portfolio',
@@ -13,6 +15,7 @@ export const CATALOGUE_PAGES={
   'il-fs-idf':'https://www.ilfsinfrafund.com/other.php',
 };
 export const CATALOGUE_HOSTS={
+  ...NEW_AMC_HOSTS,
   zerodha:['https://www.zerodhafundhouse.com','https://assets.zerodhafundhouse.com'],
   edelweiss:['https://www.edelweissmf.com','https://www.advisorkhoj.com'],
   tata:['https://www.tatamutualfund.com','https://betacms.tatamutualfund.com','https://www.advisorkhoj.com'],
@@ -28,6 +31,7 @@ export const CATALOGUE_HOSTS={
 const names=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const config=(html,name)=>{const m=new RegExp(`var ${name}\\s*=\\s*(\\{[^;]*?\\});`).exec(html);if(!m)throw Error('Public catalogue configuration missing');return JSON.parse(m[1]);};
 export async function catalogueDisclosures(slug,month,read,{anchorFiles}) {
+  if(NEW_AMC_PAGES[slug])return newAmcDisclosures(slug,month,read,{anchorFiles});
   const page=CATALOGUE_PAGES[slug],[year,num]=month.split('-').map(Number),name=names[num-1],end=new Date(Date.UTC(year,num,0)).getUTCDate();
   const html=async u=>(await read(u)).toString('utf8'),json=async(u,o)=>JSON.parse((await read(u,o)).toString('utf8'));
   const form=(body,headers={})=>({body:new URLSearchParams(body).toString(),contentType:'application/x-www-form-urlencoded',headers});
