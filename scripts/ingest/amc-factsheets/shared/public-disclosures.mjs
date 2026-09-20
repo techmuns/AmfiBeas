@@ -285,7 +285,9 @@ export function parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedW
     const candidates=book.SheetNames.filter(n=>!ancillary(n));
     if(candidates.length!==1)throw error;
     const rows=XLSX.utils.sheet_to_json(book.Sheets[candidates[0]],{header:1,blankrows:true,defval:null,raw:true});
-    const name=identifyScheme?.(rows,candidates[0])||link.text;
+    // Keep the validated published file label stable when it identifies the
+    // scheme; generic download labels must use the actual workbook heading.
+    const name=verifiedNonIndianRows(rows,link.text,month)?link.text:identifyScheme?.(rows,candidates[0])||link.text;
     if(!verifiedNonIndianRows(rows,name,month))throw error;
     return [{schemeCode:candidates[0],schemeName:name,asOf:month+'-'+new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5,7)),0)).getUTCDate(),holdings:[],validatedNoIndianHoldings:true}];
   }

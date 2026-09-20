@@ -162,3 +162,7 @@ assert.throws(()=>parseEmpty({...multiBook,read:()=>({SheetNames:['Portfolio','O
 assert.equal(baseName('JM Large & Midcap Fund'),baseName('JM Large and Midcap Fund'));
 assert.equal(baseName('JM Short Term Fund (Erstwhile known as JM Short Duration Fund)'),baseName('JM Short Term Fund'));
 assert.notEqual(baseName('Example Direct Plan'),baseName('Example Regular Plan'));
+
+const emptyArgs={XLSX:multiBook,parseVerifiedWorkbook:()=>{throw Error('Empty');},month,identifyScheme:()=> 'PGIM INDIA GLOBAL FOF'};
+assert.equal(parsePublicWorkbook(null,{...emptyArgs,link:{text:'PGIM INDIA GLOBAL FUND OF FUND'}})[0].schemeName,'PGIM INDIA GLOBAL FUND OF FUND','Verified source labels retain identity across parser improvements');
+assert.equal(parsePublicWorkbook(null,{...emptyArgs,link:{text:'Download'}})[0].schemeName,'PGIM INDIA GLOBAL FOF','Generic links use the verified workbook title');
