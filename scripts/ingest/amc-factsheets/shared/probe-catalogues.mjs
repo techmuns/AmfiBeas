@@ -16,7 +16,8 @@ save();
 for(const slug of wanted) {
   if(!PUBLIC_PAGES[slug]){results.push({slug,status:'adapter-unavailable'});save();continue;}
   try {
-    const links=await publicDisclosures(slug,targetMonth(),publicReader(slug));
+    const axisPublicToken=slug==='axis'?/const AXIS_TOKEN\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(root,'scripts/ingest/amc-factsheets/json-api.ts'),'utf8'))?.[1]:undefined;
+    const links=await publicDisclosures(slug,targetMonth(),publicReader(slug),{axisPublicToken});
     results.push({slug,status:'catalogue-readable',files:links.length});
   }catch(error){results.push({slug,status:'unavailable',failure:sourceFailure(error)});}
   save();
