@@ -176,6 +176,25 @@ urls=[];const deniedDestination=publicReader('tata',{execute:async(_cmd,args)=>{
 await assert.rejects(deniedDestination(movedFrom),e=>e.status===403);
 await assert.rejects(deniedDestination(movedTo),/refused/);assert.deepEqual(urls,[movedFrom,movedTo]);
 console.log('PASS source redirects: approved HTTPS hosts only, exact binary bytes, bounded hops, refused destinations and no forwarded request data');
+for(const code of [18,28,56]) {
+  let calls=0;const interrupted=publicReader('tata',{execute:async()=>{
+    calls++;
+    if(calls===1)throw Object.assign(Error('Interrupted after response headers'),{code,stdout:wire('truncated workbook',200)});
+    return {stdout:wire(workbook,200)};
+  }});
+  assert.deepEqual(await interrupted(movedTo),workbook);assert.equal(calls,2,'A partial transfer retries without returning truncated data');
+}
+let transferAttempts=0;const exhausted=publicReader('tata',{execute:async()=>{
+  transferAttempts++;throw Object.assign(Error('Repeated partial transfer'),{code:18,stdout:wire('partial',200)});
+}});
+await assert.rejects(exhausted(movedTo),e=>e.code==='SOURCE_TRANSPORT'&&e.transportCode===18&&!e.status);
+assert.equal(transferAttempts,3,'Interrupted downloads have a fixed retry budget');
+let oversizedAttempts=0;const oversized=publicReader('tata',{execute:async()=>{
+  oversizedAttempts++;throw Object.assign(Error('File size limit'),{code:63,stdout:wire('',200)});
+}});
+await assert.rejects(oversized(movedTo),e=>e.code==='SOURCE_TRANSPORT'&&e.transportCode===63&&!e.status);
+assert.equal(oversizedAttempts,1,'A non-transient download failure is not retried');
+console.log('PASS interrupted transfers: bounded retries after HTTP 200, no truncated workbook success and preserved transport causes');
 console.log('PASS public disclosures: nine live-catalogue shapes, all pages, month rollover, host bounds, identity preservation, per-file failure checkpoints, bounded downloads and refusal handling');
 
 const serialRows=cashRows.map(r=>r[0].startsWith('Monthly Portfolio')?['PORTFOLIO STATEMENT AS ON :',46265]:r[0]==='Name of Instrument'?['Name of Instrument','ISIN','% to AUM']:r);
