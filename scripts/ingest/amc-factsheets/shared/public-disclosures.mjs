@@ -225,9 +225,10 @@ export function verifiedNonIndianRows(rows,name,month) {
   const heading=rows.slice(0,15).flat().map(v=>String(v??'')).join(' ').replace(/[-,]/g,' ').replace(/\s+/g,' ');
   const [year,num]=month.split('-').map(Number),end=new Date(Date.UTC(year,num,0)).getUTCDate(),mon=months[num-1];
   const dates=[...heading.matchAll(/(?:as on|as of|month ended|period ended)\s+(\d{1,2}\s+[A-Za-z]+\s+20\d{2}|[A-Za-z]+\s+\d{1,2}\s+20\d{2})/gi)];
+  const numericDates=[...heading.matchAll(/(?:as on|as of|month ended|period ended)\s+(\d{1,2})[./ ](\d{1,2})[./ ](20\d{2})\b/gi)];
   const monthlyOnly=new RegExp(`monthly portfolio statement of .+ for ${mon} ${year}(?: |$)`,'i').test(heading);
   const serialDates=rows.slice(0,15).flatMap(r=>r.flatMap((v,i)=>/portfolio statement as on\s*:?$/i.test(String(v||''))&&Number.isInteger(r[i+1])&&r[i+1]>20000&&r[i+1]<90000?[new Date(Date.UTC(1899,11,30)+r[i+1]*86400000).toISOString().slice(0,10)]:[]));
-  if((!dates.length&&!serialDates.length&&!monthlyOnly)||serialDates.some(d=>d!==`${month}-${end}`)||dates.some(d=>!new RegExp(`^(?:${end} ${mon}(?: |$)|${mon} ${end} )`,'i').test(d[1].replace(new RegExp(mon.slice(0,3)+'(?= )','i'),mon))||!d[1].endsWith(String(year))))return false;
+  if((!dates.length&&!numericDates.length&&!serialDates.length&&!monthlyOnly)||numericDates.some(d=>Number(d[1])!==end||Number(d[2])!==num||Number(d[3])!==year)||serialDates.some(d=>d!==`${month}-${end}`)||dates.some(d=>!new RegExp(`^(?:${end} ${mon}(?: |$)|${mon} ${end} )`,'i').test(d[1].replace(new RegExp(mon.slice(0,3)+'(?= )','i'),mon))||!d[1].endsWith(String(year))))return false;
   const header=rows.findIndex(r=>r.some(v=>/^ISIN(?:\s+Code)?$/i.test(String(v||'')))||/gold exchange traded fund/i.test(name)&&r.some(v=>/name.*instrument/i.test(String(v||''))));
   if(header<0)return false;
   const cols=rows[header],isin=cols.findIndex(v=>/^ISIN(?:\s+Code)?$/i.test(String(v||''))),pct=cols.findIndex(v=>/%|percentage/i.test(String(v||''))&&/nav|aum|net asset/i.test(String(v||''))),instrument=cols.findIndex(v=>/name.*instrument/i.test(String(v||'')));
@@ -243,11 +244,12 @@ export function verifiedNonIndianRows(rows,name,month) {
     const emptyValue=v=>blank(v)||v===0||/^NIL$/i.test(String(v).trim());
     if(!label&&!id&&blank(row[pct])&&amounts.every(i=>blank(row[i])))continue;
     const section=label.replace(/^\(?[a-z]\)\s*/i,'').toLowerCase().replace(/\s*\/\s*/g,'/').replace(/\s+/g,' ');
-    if(!id&&emptyValue(row[pct])&&amounts.every(i=>emptyValue(row[i]))&&emptySections.has(section)){currentSection=section;continue;}
+    if(!id&&emptyValue(row[pct])&&amounts.every(i=>emptyValue(row[i]))&&(emptySections.has(section)||['government securities/sdl','treps/reverse repo investments/corporate debt repo','cash & cash equivalents'].includes(section))){currentSection=section;continue;}
     if(!blank(row[pct])&&!/^NIL$/i.test(String(row[pct]).trim())&&!(row[pct]==='$'&&/^(?:Cash Margin - CCIL|sub\s*total)$/i.test(label))&&(typeof row[pct]!=='number'||!Number.isFinite(row[pct])))return false;
     if(/^(?:sub\s*total|grand[ _]total(?:\s*\(aum\))?|total(?: for (?:money market instruments|equity & equity related|debt instruments))?|(?:NCA-)?net current assets(?: \(including cash & bank balances\))?|TREPS\/Reverse Repo\/Net Current Assets\/Cash\/Cash Equivalent|total net assets as on \d{1,2}-[A-Za-z]+-20\d{2}|cash and other net current assets|cash margin - CCIL|net receivables?\s*\/\s*\(?payables?\)?|clearing corporation of india (?:limited|ltd\.?))$/i.test(label))continue;
     if(/^TREPS(?:\s+\d{2}-[A-Za-z]{3}-20\d{2}\s+DEPO\s+\d+)?$/i.test(label))continue;
     if(/^Triparty Repo(?: TRP_\d{6})?$/i.test(label))continue;
+    if(label==='CCIL'&&!id&&currentSection==='treps/reverse repo investments/corporate debt repo')continue;
     if(/^(?:\(?[a-z]\)\s*)?(?:gold(?: 1 kg bar \(995 fineness\)| (?:995|999) purity| 995 Finnese| - mumbai)?|silver)$/i.test(label))continue;
     if(/^(?:GOLD \.995 1KG BAR(?: - Mumbai)?|GOLD 999 100GM BAR|SILVER 999 1KG BAR)$/i.test(label))continue;
     if(/^(?:GOLD\s*M?|SILVERM?)\s+\d{2}\/\d{2}\/20\d{2}\s+\(FUTURES\)$/i.test(label))continue;

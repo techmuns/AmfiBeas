@@ -122,3 +122,9 @@ successful check clears an older discovery failure without clearing retained his
 For changed source readers, pull-request CI records a read-only catalogue-access
 diagnostic artifact from the hosted runner. This probe does not publish holdings,
 dispatch a production job or certify that discovered workbooks are complete.
+
+JM Overnight's numeric month-end date and disclosed CCIL repo/cash layout are
+validated explicitly, including rejection of stale/fortnightly dates and unknown
+or Indian securities. PR browser diagnostics use ordinary Chromium defaults and
+retain a fixed August 2026 regression sample separately from current-month data.
+An access refusal remains a refusal; these diagnostics do not alter production.

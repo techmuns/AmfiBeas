@@ -23,12 +23,14 @@ try {
         await links.first().waitFor();check();
         const inventory=await links.evaluateAll(nodes=>nodes.map(a=>({text:a.textContent,url:a.href})));
         fs.writeFileSync(path.join(dir,'hdfc-links.json'),JSON.stringify(inventory,null,2));
-        const pending=page.waitForEvent('download',{timeout:20000});
+        const pending=page.waitForEvent('download',{timeout:20000}).catch(()=>null);
         await links.first().click();
         const download=await pending;check();
+        if(!download)throw Error('No public download received');
         await download.saveAs(path.join(dir,'hdfc-sample.xlsx'));
         results.push({source,status:'downloaded',catalogueLinks:inventory.length});
       } else {
+        // Fixed regression sample, not a claim about the latest published month.
         await page.goto('https://www.jmfinancialmf.com/downloads/Portfolio-Disclosure',{waitUntil:'domcontentloaded',timeout:30000});check();
         await page.getByLabel('Select sub category',{exact:true}).selectOption({label:'Monthly Portfolio of Schemes'});
         await page.getByLabel('Financial Year',{exact:true}).selectOption({label:'2026 - 2027'});check();
@@ -39,8 +41,10 @@ try {
           await page.getByRole('button',{name:'Go to next page',exact:true}).click();check();
         }
         await target.waitFor();check();
-        const pending=page.waitForEvent('download',{timeout:20000});await target.click();
-        const download=await pending;check();await download.saveAs(path.join(dir,'jm-overnight-august.xlsx'));
+        const pending=page.waitForEvent('download',{timeout:20000}).catch(()=>null);await target.click();
+        const download=await pending;check();
+        if(!download)throw Error('No public download received');
+        await download.saveAs(path.join(dir,'jm-overnight-august.xlsx'));
         results.push({source,status:'downloaded'});
       }
     }catch(error) {results.push({source,status:'unavailable',reason:refusal?`HTTP ${refusal}`:String(error.name||'Error')});}
