@@ -49,6 +49,23 @@ jobs:
           path: ${{ runner.temp }}/amc-catalogue-diagnostics.json
           if-no-files-found: warn
           retention-days: 7
+      - name: Check ordinary browser disclosure downloads
+        if: steps.source-readers.outputs.changed == 'true'
+        timeout-minutes: 5
+        continue-on-error: true
+        env:
+          MF_RENDERED_DIAGNOSTICS_DIR: ${{ runner.temp }}/amc-rendered-diagnostics
+        run: |
+          npx playwright install --with-deps chromium
+          node scripts/ingest/amc-factsheets/shared/probe-rendered.mjs
+      - name: Retain browser download diagnostics
+        if: always() && steps.source-readers.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: amc-rendered-diagnostics
+          path: ${{ runner.temp }}/amc-rendered-diagnostics/
+          if-no-files-found: warn
+          retention-days: 7
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
