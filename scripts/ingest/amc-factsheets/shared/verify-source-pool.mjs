@@ -101,5 +101,16 @@ if(slug==='hanging'||slug==='checkpointed'||slug==='checkpoint-empty'){
   execFileSync(process.execPath,[path.resolve('scripts/ingest/amc-factsheets/shared/run.mjs')],{env:{...process.env,AMFIBEAS_PATH:fixture,MF_SOURCE_WORKER:'1',MF_SOURCE_AMCS:'axis',MF_SOURCE_CHECK_FILE:path.join(holdings,'checks.json'),MF_SOURCE_PREVIOUS_CHECK:JSON.stringify({slug:'axis',month:'2026-08',schemeCount:81,status:'ok',checkedAt:'2026-09-20T09:00:00Z',resumeUrl:'pending.xlsx'})},stdio:'pipe',timeout:10000});
   const discoveryFailure=JSON.parse(fs.readFileSync(path.join(holdings,'checks.json')))[0];
   assert.equal(discoveryFailure.status,'unavailable');assert.equal(discoveryFailure.month,'2026-08');assert.equal(discoveryFailure.schemeCount,81);assert.equal(discoveryFailure.resumeUrl,'pending.xlsx');assert.equal(discoveryFailure.checkedAt,'2026-09-20T09:00:00Z');
+  // Match scheduled Actions' blank optional AMC_ONLY input. The actual entry
+  // point must attempt the listed source instead of silently selecting no AMCs.
+  for(const value of ['', ' ,  ']) {
+    const output=path.join(holdings,'blank-selection.json');
+    fs.rmSync(output,{force:true});
+    execFileSync(process.execPath,[path.resolve('scripts/ingest/amc-factsheets/shared/run.mjs')],{env:{...process.env,AMFIBEAS_PATH:fixture,MF_SOURCE_WORKER:'1',MF_SOURCE_AMCS:'',AMC_ONLY:value,MF_SOURCE_CHECK_FILE:output,MF_SOURCE_PREVIOUS_CHECK:'null'},stdio:'pipe',timeout:10000});
+    const attempted=JSON.parse(fs.readFileSync(output));
+    assert.equal(attempted.length,1,'Blank filters must attempt every indexed source');
+    assert.equal(attempted[0].slug,'axis');assert.equal(attempted[0].reason,'source-discovery-failed');
+    assert(attempted[0].lastAttemptAt);
+  }
   console.log('PASS source isolation: bounded concurrency, hung source and descendant timeout, later-source progress, failed child, durable checkpoints, preserved check times and interruption');
 } finally {fs.rmSync(dir,{recursive:true,force:true});}
