@@ -106,3 +106,19 @@ instruments and missing active-scheme inventory must remain visible gaps. An
 external source's future publication time cannot be guaranteed.
 
 Edelweiss and Tata use the public AdvisorKhoj catalogue for exact published links, then fetch only the verified AMC file hosts. Index discovery does not substitute for access to or validation of the actual reports.
+
+ASK, Monarch and Lakshya now have first-party readers independent of missing AMFI
+directory links. ASK and Monarch accept only published month-end monthly entries;
+their fortnightly reports do not establish monthly completeness. Monarch's document
+pagination must reconcile with its published total. Lakshya's public scheme list
+supplies scheme IDs to its own reporting-month download endpoint, and every
+returned workbook still passes the same date and instrument checks. A missing
+file or unpublished monthly category remains unavailable, including at launch.
+
+Failures retain a bounded `failure` object identifying HTTP status, transport
+failure or catalogue validation. It excludes response bodies, headers and URL
+queries. Source-file failures carry the same evidence in `fileFailures`. A later
+successful check clears an older discovery failure without clearing retained history.
+For changed source readers, pull-request CI records a read-only catalogue-access
+diagnostic artifact from the hosted runner. This probe does not publish holdings,
+dispatch a production job or certify that discovered workbooks are complete.

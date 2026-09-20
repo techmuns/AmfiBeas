@@ -4,6 +4,7 @@ import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {monthKey,previousMonth} from './dates.mjs';
 import {CATALOGUE_PAGES,CATALOGUE_HOSTS,catalogueDisclosures} from './catalogues.mjs';
+import {sourceFailure} from './source-errors.mjs';
 const run=promisify(execFile);
 const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
 export const PUBLIC_PAGES={
@@ -39,7 +40,7 @@ export function publicReader(slug,{execute=run}={}) {
   const refused=new Set();
   return async function read(input,{body,contentType='application/json',headers={}}={}) {
     const url=publicUrl(slug,input),host=new URL(url).host;
-    if(refused.has(host))throw Error('Source refused access');
+    if(refused.has(host))throw Object.assign(Error('Source refused access'),{code:'SOURCE_REFUSED'});
     const args=['--silent','--show-error','--fail','--globoff','--max-time','20','--max-filesize','25000000','--proto','=https'];
     // No redirects: every accepted URL is a link on the verified disclosure host.
     for(const [key,value] of Object.entries(headers))args.push('-H',`${key}: ${value}`);
@@ -54,7 +55,9 @@ export function publicReader(slug,{execute=run}={}) {
       const status=error.status||Number(error.stdout?.subarray?.(-3)?.toString())||Number(/error:\s*(401|403|429)/i.exec(String(error.stderr||''))?.[1]);
       if([401,403,429].includes(status))refused.add(host);
       if(attempt<2&&([408,500,502,503,504].includes(status)||!status&&[5,6,7,18,28,35,52,55,56].includes(error.code))){await new Promise(resolve=>setTimeout(resolve,250*(attempt+1)));continue;}
-      throw Error([401,403,429].includes(status)?'Source refused access':'Disclosure download failed');
+      throw Object.assign(Error([401,403,429].includes(status)?'Source refused access':'Disclosure download failed'),{
+        code:status?'SOURCE_HTTP':'SOURCE_TRANSPORT',status:status||undefined,transportCode:Number.isInteger(error.code)?error.code:undefined,
+      });
     }
   };
 }
@@ -71,7 +74,7 @@ function uniqueFiles(slug,links) {
   const found=new Map();
   for(const link of links){
     const url=publicUrl(slug,link.url);
-    if(!/\.xlsx?$/i.test(new URL(url).pathname))throw Error('Unexpected disclosure format');
+    if(!/\.xlsx?$/i.test(new URL(url).pathname)&&!(slug==='lakshya'&&new URL(url).pathname==='/api/ext/disclosures/portfolio-disclosure/download'))throw Error('Unexpected disclosure format');
     if(found.has(url)&&found.get(url).disclosureMonth!==link.disclosureMonth)throw Error('Disclosure file period ambiguous');
     found.set(url,{...link,url});
   }
@@ -311,7 +314,7 @@ export async function readDisclosures(links,{read,parse,month,concurrency=4,onCh
       if(results[i]===undefined)part.pendingFiles++;else if(results[i].length)part.completedFiles++;else part.failedFiles++;
     }
     return {schemes:results.flatMap(s=>s||[]),failedFiles:failures.length,pendingFiles:results.filter(s=>s===undefined).length,expectedFiles:links.length,completedFiles:results.filter(s=>s?.length).length,lastCompletedMonth,byMonth,
-      fileFailures:failures.map(f=>({url:links[f.index].url,month:links[f.index].disclosureMonth||month,reason:f.reason})),
+      fileFailures:failures.map(f=>({url:links[f.index].url,month:links[f.index].disclosureMonth||month,reason:f.reason,failure:f.failure})),
       resumeUrl:links[results.findIndex(s=>s===undefined)]?.url||links[failures[0]?.index]?.url||null};
   }
   const settled=await Promise.allSettled(Array.from({length:Math.min(concurrency,links.length)},async()=>{
@@ -323,7 +326,7 @@ export async function readDisclosures(links,{read,parse,month,concurrency=4,onCh
         const schemes=parse(buffer,link);
         if(!schemes.length||schemes.some(s=>monthKey(s.asOf)!==(link.disclosureMonth||month)))throw Error('Disclosure month unverified');
         results[index]=schemes.map(s=>({...s,sourceUrl:link.url}));
-      } catch(error) {failures.push({index,reason:String(error.message||'Disclosure unavailable').slice(0,180)});results[index]=[];}
+      } catch(error) {failures.push({index,reason:String(error.message||'Disclosure unavailable').slice(0,180),failure:sourceFailure(error)});results[index]=[];}
       await onCheckpoint(progress(link.disclosureMonth||month));
     }
   }));

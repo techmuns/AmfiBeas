@@ -12,6 +12,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {monthKey,targetMonth} from './dates.mjs';
 import {publishManifest} from './manifest.mjs';
 import {syncDirectory} from './directory.mjs';
+import {sourceFailure} from './source-errors.mjs';
 const root=path.resolve(process.env.AMFIBEAS_PATH||fileURLToPath(new URL('../../../../',import.meta.url)));
 const opts={pctScale:1,valueToCr:100,strictHoldings:true},dir=path.join(root,'public/amc-holdings');
 if(!process.env.MF_SOURCE_WORKER)await syncDirectory(root);
@@ -26,7 +27,7 @@ if(!process.env.MF_SOURCE_WORKER) {
   const initial=previousChecks;
   const result=await runSourcePool(index.amcs.filter(e=>!selected||selected.includes(e.slug)),{
     command:path.join(root,'node_modules/.bin/tsx'),args:[fileURLToPath(import.meta.url)],checksFile,initial,
-    onResult:c=>console.log(`${c.slug}: ${c.status} ${c.month||''}${c.reason?' '+c.reason:''}`)
+    onResult:c=>console.log(`${c.slug}: ${c.status} ${c.month||''}${c.reason?' '+c.reason:''}${c.failure?' '+JSON.stringify(c.failure):''}`)
   });
   atomicJson(checksFile,result.checks.map(c=>({...c,priorCompleteCheckedAt:lastCompleteCheck(initial.find(old=>old.slug===c.slug))})));
   publishManifest(root,{interrupted:result.interrupted});
@@ -57,7 +58,7 @@ for(const entry of index.amcs) {
     const saved={amc:entry.amc,amcSlug:entry.slug,asOfMonth:latest.asOfMonth,schemes:latest.schemes,sourceUrl:latest.sourceUrl||old.sourceUrl,fetchedAt:latest.checkedAt||old.fetchedAt,history:buckets.slice(1),lastCompleteCheckedAt:recordCheck&&!partial?startedAt:old.lastCompleteCheckedAt||null};
     atomicJson(file,saved);old=saved;
     if(!recordCheck)return;
-    const check=reconcileSourceChecks([priorCheck],[{slug:entry.slug,name:entry.amc,month,status:partial?'partial':'ok',checkedAt:partial?null:startedAt,lastAttemptAt:startedAt,partialCheckedAt:partial?startedAt:null,schemeCount:schemes.length,missingSchemes:missing.length}])[0];
+    const check=reconcileSourceChecks([priorCheck],[{slug:entry.slug,name:entry.amc,month,status:partial?'partial':'ok',checkedAt:partial?null:startedAt,lastAttemptAt:startedAt,partialCheckedAt:partial?startedAt:null,schemeCount:schemes.length,missingSchemes:missing.length,failure:null}])[0];
     for(const key of ['expectedFiles','completedFiles','failedFiles','pendingFiles','resumeUrl','byMonth','fileFailures'])if(result[key]!==undefined)check[key]=result[key];
     const prior=checks.findIndex(c=>c.slug===entry.slug);if(prior>=0)checks[prior]=check;else checks.push(check);
     atomicJson(checksFile,checks);
@@ -117,7 +118,7 @@ for(const entry of index.amcs) {
     else sourceUnavailableReason=entry.monthlyDisclosureUrl?'source-adapter-unavailable':'monthly-disclosure-page-unlisted';
     if(!result?.schemes?.length)throw Error('Disclosure unavailable');
     saveResult(result);
-  }catch{const check=checks.find(c=>c.slug===entry.slug);if(check){Object.assign(check,{status:'partial',reason:'source-check-failed',checkedAt:priorCheck.lastCompleteCheckedAt,lastCompleteCheckedAt:priorCheck.lastCompleteCheckedAt,partialCheckedAt:startedAt,lastAttemptAt:startedAt});}else checks.push(reconcileSourceChecks([priorCheck],[{slug:entry.slug,name:entry.amc,month:priorCheck.month||monthKey(old.asOfMonth)||monthKey(entry.asOfMonth),status:'unavailable',checkedAt:null,lastAttemptAt:startedAt,reason:sourceUnavailableReason||'source-discovery-failed'}])[0]);}
+  }catch(error){const failure=sourceFailure(error),check=checks.find(c=>c.slug===entry.slug);if(check){Object.assign(check,{status:'partial',reason:'source-check-failed',failure,checkedAt:priorCheck.lastCompleteCheckedAt,lastCompleteCheckedAt:priorCheck.lastCompleteCheckedAt,partialCheckedAt:startedAt,lastAttemptAt:startedAt});}else checks.push(reconcileSourceChecks([priorCheck],[{slug:entry.slug,name:entry.amc,month:priorCheck.month||monthKey(old.asOfMonth)||monthKey(entry.asOfMonth),status:'unavailable',checkedAt:null,lastAttemptAt:startedAt,reason:sourceUnavailableReason||'source-discovery-failed',failure}])[0]);}
   atomicJson(checksFile,checks);
   console.log(`${entry.slug}: ${checks.at(-1).status} ${checks.at(-1).month||''}`);
 }
