@@ -48,7 +48,7 @@ interface ColMap { name: number; isin: number; industry: number; qty: number; va
 
 /** Find the holdings header row + column indices in the first ~15 rows. */
 function findColumns(rows: Row[]): { headerIdx: number; cols: ColMap } | null {
-  for (let i = 0; i < Math.min(rows.length, 15); i++) {
+  for (let i = 0; i < Math.min(rows.length, 30); i++) {
     // Collapse internal whitespace runs so headers like "%  to Net Assets" or
     // "Name of  Instrument" (AMCs pad with double spaces) match the same way as
     // their single-spaced siblings.
@@ -106,7 +106,7 @@ function looksLikeSchemeName(t: string): boolean {
   // A real title can carry a trailing category description. Validate the title
   // independently; "scheme investing" inside that suffix is not a bad identity.
   t = t.split(/\s*(?:\(|[–-]|\n)\s*An?\s+open[\s-]?end/i)[0].trim();
-  if (t.length < 5) return false;
+  if (t.length < 5 || t.startsWith("(")) return false;
   if (/^(?:mutual fund units?|exchange traded funds?)$/i.test(t)) return false;
   if (t.endsWith(":")) return false; // a label ("SCHEME NAME :")
   if (HOUSE_RE.test(t)) return false; // the fund-house name
@@ -134,7 +134,7 @@ function looksLikeSchemeName(t: string): boolean {
  *      this is what fixes the "every scheme shares the house name" bug and also
  *      catches ETFs whose name has no "Fund" in it (e.g. "BHARAT 22 ETF");
  *   3. the first "… Fund" cell that is not itself the house name (Nippon, …). */
-function findSchemeName(rows: Row[], sheetName: string): string {
+export function findSchemeName(rows: Row[], sheetName: string): string {
   for (const row of rows.slice(0, 2)) {
     if (s(row[0]) === sheetName && looksLikeSchemeName(s(row[1]))) return cleanSchemeName(s(row[1]));
     for (const cell of row) {
@@ -240,7 +240,7 @@ function plausibleAsOf(iso: string | null): string | null {
 function findAsOf(rows: Row[]): string | null {
   // Scan through the header-row band: some AMCs (Shriram) print "Portfolio
   // Statement as on <date>" on the line just above the column header at row ~11.
-  for (let i = 0; i < Math.min(rows.length, 15); i++) {
+  for (let i = 0; i < Math.min(rows.length, 30); i++) {
     for (let j = 0; j < rows[i].length; j++) {
       const cell = rows[i][j];
       if (/as on|statement as|portfolio statement/i.test(s(cell))) {
@@ -255,7 +255,7 @@ function findAsOf(rows: Row[]): string | null {
     }
   }
   // Only consider unlabelled dates after checking every explicit heading.
-  for (const row of rows.slice(0, 15)) for (const cell of row) {
+  for (const row of rows.slice(0, 30)) for (const cell of row) {
     const iso = plausibleAsOf(toIso(cell));
     if (iso && s(cell).length < 30) return iso;
   }
@@ -331,6 +331,7 @@ export function parseAmcWorkbook(buf: ArrayBuffer | Buffer, opts: AmcParseOption
     if (opts.skipSheets?.(sheetName)) continue;
     try {
       const rows = XLSX.utils.sheet_to_json<Row>(wb.Sheets[sheetName], { header: 1, blankrows: false, defval: null });
+      if (opts.strictHoldings && /^(?:(?:Common )?Notes|Disclaimer|Transaction Report)$/i.test(sheetName) && !findColumns(rows)) continue;
       // Some AMCs (UTI) pack EVERY scheme into ONE sheet, each block introduced by
       // a "SCHEME: <name>" row. Split on those markers so each fund parses on its
       // own; with 0–1 markers, parse the whole sheet as before (no behaviour change

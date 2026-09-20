@@ -145,3 +145,7 @@ await assert.rejects(refused('https://quantmutual.com/second.xlsx'),/refused/);a
 const redirect=publicReader('quant',{execute:async()=>({stdout:Buffer.from('redirect\n302')})});
 await assert.rejects(redirect('https://quantmutual.com/first.xlsx'),/failed/);
 console.log('PASS public disclosures: nine live-catalogue shapes, all pages, month rollover, host bounds, identity preservation, per-file failure checkpoints, bounded downloads and refusal handling');
+
+const serialRows=cashRows.map(r=>r[0].startsWith('Monthly Portfolio')?['PORTFOLIO STATEMENT AS ON :',46265]:r[0]==='Name of Instrument'?['Name of Instrument','ISIN','% to AUM']:r);
+assert(verifiedNonIndianRows(serialRows,'Choice Overnight Fund',month));
+assert(!verifiedNonIndianRows(serialRows,'Choice Overnight Fund','2026-07'));

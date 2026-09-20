@@ -92,7 +92,7 @@ export function extractFileLinks(html: string, pageUrl: string): HarvestedLink[]
 /** Download a set of resolved workbook links → parsed, normalized schemes.
  *  Shared by the page-scrape and json-api tiers. Dedupes primary-host vs CDN
  *  mirrors by filename, and any remaining dup by scheme code + as-of month. */
-export function downloadAndParse(links: HarvestedLink[], opts: AmcParseOptions, referer?: string, read = curlBuffer): { schemes: AmcScheme[]; fileCount: number; expectedFiles: number; completedFiles: number; failedFiles: number } {
+export function downloadAndParse(links: HarvestedLink[], opts: AmcParseOptions, referer?: string, read = curlBuffer): { schemes: AmcScheme[]; fileCount: number; expectedFiles: number; completedFiles: number; failedFiles: number; fileFailures: {url: string; reason: string}[] } {
   const byFile = new Map<string, HarvestedLink>();
   for (const l of links) {
     // Dedup key is the workbook filename. Most AMCs put it in the path, but some
@@ -106,11 +106,12 @@ export function downloadAndParse(links: HarvestedLink[], opts: AmcParseOptions, 
   const schemes: AmcScheme[] = [];
   const seen = new Set<string>();
   let completedFiles = 0;
+  const fileFailures: {url: string; reason: string}[] = [];
   for (const l of byFile.values()) {
     const buf = read(l.url, referer);
-    if (!buf) continue;
+    if (!buf) {fileFailures.push({url:l.url,reason:"Disclosure download failed"});continue;}
     const head = buf.subarray(0, 64).toString("latin1").trimStart().toLowerCase();
-    if (head.startsWith("<!doctype") || head.startsWith("<html")) continue; // walled/HTML
+    if (head.startsWith("<!doctype") || head.startsWith("<html")) {fileFailures.push({url:l.url,reason:"Unexpected HTML"});continue;} // walled/HTML
     // One multi-sheet workbook (most AMCs), falling back to a zip-of-workbooks
     // (DSP ships the monthly disclosure as a .zip of per-asset-class workbooks).
     let parsed: AmcScheme[] = [];
@@ -118,7 +119,10 @@ export function downloadAndParse(links: HarvestedLink[], opts: AmcParseOptions, 
     if (parsed.length === 0) {
       try { parsed = parseZip(buf, opts); } catch { /* skip bad file */ }
     }
-    if (parsed.length) completedFiles++;
+    if (!parsed.length && opts.verifyEmptyWorkbook) {
+      try { parsed = opts.verifyEmptyWorkbook(buf, l); } catch { /* A failed empty check stays a failed file. */ }
+    }
+    if (parsed.length) completedFiles++;else fileFailures.push({url:l.url,reason:"Workbook holdings unverified"});
     for (const sc of parsed.map(normalizeSchemePct)) {
       // Single-scheme workbooks (one file per fund: JM, Canara) whose header the
       // generic parser can't read leave the scheme name as a column label ("Name
@@ -146,7 +150,7 @@ export function downloadAndParse(links: HarvestedLink[], opts: AmcParseOptions, 
       schemes.push(sc);
     }
   }
-  return { schemes, fileCount: byFile.size, expectedFiles: byFile.size, completedFiles, failedFiles: byFile.size - completedFiles };
+  return { schemes, fileCount: byFile.size, expectedFiles: byFile.size, completedFiles, failedFiles: byFile.size - completedFiles, fileFailures };
 }
 
 export interface PageScrapeResult {

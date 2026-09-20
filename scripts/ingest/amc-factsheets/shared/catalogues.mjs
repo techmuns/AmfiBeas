@@ -1,5 +1,8 @@
 // Official catalogues whose current public download UI supersedes legacy routes.
 export const CATALOGUE_PAGES={
+  edelweiss:'https://www.edelweissmf.com/statutory/monthly-portfolio',
+  tata:'https://www.tatamutualfund.com/schemes-related/portfolio',
+  choice:'https://choicemf.com/disclosures/monthly-portfolio',
   'canara-robeco':'https://www.canararobeco.com/documents/statutory-disclosures/scheme-dashboard/scheme-monthly-portfolio/',
   'jio-blackrock':'https://www.jioblackrockamc.com/statutory-disclosure/disclosures/monthly-portfolio-disclosure',
   hsbc:'https://www.assetmanagement.hsbc.co.in/en/mutual-funds/investor-resources/information-library',
@@ -9,6 +12,9 @@ export const CATALOGUE_PAGES={
   'il-fs-idf':'https://www.ilfsinfrafund.com/other.php',
 };
 export const CATALOGUE_HOSTS={
+  edelweiss:['https://www.edelweissmf.com','https://www.advisorkhoj.com'],
+  tata:['https://www.tatamutualfund.com','https://betacms.tatamutualfund.com','https://www.advisorkhoj.com'],
+  choice:['https://choicemf.com','https://doc.choicemf.com'],
   'canara-robeco':['https://www.canararobeco.com'],
   'jio-blackrock':['https://www.jioblackrockamc.com','https://cdnstorage-ddh3hqhvg3gyedd9.a02.azurefd.net','https://jioinvest.cdn.jio.com'],
   hsbc:['https://www.assetmanagement.hsbc.co.in'],
@@ -23,6 +29,27 @@ export async function catalogueDisclosures(slug,month,read,{anchorFiles}) {
   const page=CATALOGUE_PAGES[slug],[year,num]=month.split('-').map(Number),name=names[num-1],end=new Date(Date.UTC(year,num,0)).getUTCDate();
   const html=async u=>(await read(u)).toString('utf8'),json=async(u,o)=>JSON.parse((await read(u,o)).toString('utf8'));
   const form=(body,headers={})=>({body:new URLSearchParams(body).toString(),contentType:'application/x-www-form-urlencoded',headers});
+  if(slug==='edelweiss'||slug==='tata') {
+    // The public index supplies published file links; all holdings come from the
+    // AMC's own allowed host and still require matching workbook dates.
+    const display=slug==='tata'?'Tata':'Edelweiss';
+    const index=`https://www.advisorkhoj.com/mutual-funds-research/mutual-fund-portfolio/${display}-Mutual-Fund/${year}`;
+    const links=anchorFiles(await html(index),index).filter(l=>l.text===`Monthly Portfolio Disclosure - ${name} ${year}`);
+    const expected=slug==='tata'?'https://betacms.tatamutualfund.com':'https://www.edelweissmf.com';
+    if(links.length!==1||new URL(links[0].url).origin!==expected)throw Error('Official monthly file unavailable');
+    return links;
+  }
+  if(slug==='choice') {
+    const data=await json('https://choicemf.com/api/monthly-portfolio-report/portfolio-website-list',{body:{}});
+    if(data.Status_code!==200||!Array.isArray(data.body?.data))throw Error('Invalid disclosure index');
+    return data.body.data.flatMap(s=>{
+      if(!s.scheme_name||!Array.isArray(s.reports))throw Error('Invalid scheme catalogue');
+      return s.reports.filter(r=>r.report_date===`${month}-${end}`).map(r=>{
+        if(!/^\/?portfolio-reports\/[^/]+\.xlsx?$/i.test(r.file_path||''))throw Error('Invalid disclosure file');
+        return {url:new URL('/'+r.file_path.replace(/^\//,''),'https://doc.choicemf.com').href,text:s.scheme_name};
+      });
+    });
+  }
   if(slug==='canara-robeco') {
     const first=new URL(page);first.search=new URLSearchParams({filteryear:String(year),filtermonth:String(num).padStart(2,'0')});
     const links=[],seen=new Set();let pages=1;

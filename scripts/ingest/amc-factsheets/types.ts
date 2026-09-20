@@ -62,4 +62,6 @@ export interface AmcParseOptions {
   skipSheets?: (name: string) => boolean;
   /** Fail instead of silently dropping a sheet containing Indian securities. */
   strictHoldings?: boolean;
+  /** Shared collector's strict verifier for a workbook without Indian positions. */
+  verifyEmptyWorkbook?: (buffer: Buffer, link: {url: string; text: string}) => AmcScheme[];
 }

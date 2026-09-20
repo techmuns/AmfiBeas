@@ -77,7 +77,7 @@ Live source tests write only to an isolated `AMFIBEAS_PATH`; they do not publish
 ### Catalogue and workbook reconciliation
 
 The collector reads the current official download catalogues for Canara Robeco,
-JioBlackRock, HSBC, Navi, Bajaj Finserv, AlphaGrep and IL&FS, alongside the existing
+JioBlackRock, HSBC, Navi, Bajaj Finserv, AlphaGrep, Choice and IL&FS, alongside the existing
 AMC adapters. Public website configuration is rediscovered when each source is
 checked; private sessions and challenge bypasses are not used. Catalogue periods,
 pagination, duplicate IDs, published totals and file-host allowlists are validated.
@@ -104,3 +104,5 @@ claim of independently audited coverage of every active scheme in the industry.
 Unavailable catalogues, unpublished reports, changed formats, unclassified
 instruments and missing active-scheme inventory must remain visible gaps. An
 external source's future publication time cannot be guaranteed.
+
+Edelweiss and Tata use the public AdvisorKhoj catalogue for exact published links, then fetch only the verified AMC file hosts. Index discovery does not substitute for access to or validation of the actual reports.

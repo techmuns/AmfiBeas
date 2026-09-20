@@ -33,7 +33,9 @@ if(!process.env.MF_SOURCE_WORKER) {
   if(result.interrupted)process.exitCode=1;
 } else {
 const importSource=file=>import(pathToFileURL(path.join(root,'scripts/ingest/amc-factsheets',file)).href);
-const [{fetchLatest},{parseAmcWorkbook},{parseZip,normalizeSchemePct},{PAGE_SCRAPE_CONFIG,pageScrapeAmc,downloadAndParse},{JSON_API_CONFIG,jsonApiAmc}]=await Promise.all(['fetch.ts','parse.ts','advisorkhoj.ts','page-scrape.ts','json-api.ts'].map(importSource));
+const [{fetchLatest},{parseAmcWorkbook,findSchemeName},{parseZip,normalizeSchemePct},{PAGE_SCRAPE_CONFIG,pageScrapeAmc,downloadAndParse},{JSON_API_CONFIG,jsonApiAmc}]=await Promise.all(['fetch.ts','parse.ts','advisorkhoj.ts','page-scrape.ts','json-api.ts'].map(importSource));
+const XLSX=await import('xlsx');
+opts.verifyEmptyWorkbook=(buffer,link)=>parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedWorkbook:()=>{throw Error('Empty portfolio requires verification');},opts,month:targetMonth(),link,identifyScheme:findSchemeName});
 for(const entry of index.amcs) {
   if(selected&&!selected.includes(entry.slug))continue;
   const startedAt=new Date().toISOString();let result=null,sourceUnavailableReason=null;
@@ -71,7 +73,7 @@ for(const entry of index.amcs) {
       const links=resumeDisclosures(await publicDisclosures(entry.slug,month,read,{axisPublicToken,includeHistory:true}),priorCheck);
       const XLSX=await import(pathToFileURL(path.join(root,'node_modules/xlsx/xlsx.mjs')).href);
       const parse=(buffer,link)=>{
-        const schemes=parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedWorkbook:parseQuantumWorkbook,opts,month:link.disclosureMonth||month,link,slug:entry.slug});
+        const schemes=parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedWorkbook:parseQuantumWorkbook,opts,month:link.disclosureMonth||month,link,slug:entry.slug,identifyScheme:findSchemeName});
         if(schemes.length===1&&/fund|etf/i.test(link.text||'')&&(/name of instrument|portfolio statement|^\s*\(|open[ -]?ended?\s+(scheme|fund)/i.test(schemes[0].schemeName)||schemes[0].schemeName.trim().length<6))schemes[0].schemeName=link.text;
         return schemes;
       };
@@ -94,9 +96,9 @@ for(const entry of index.amcs) {
     else if(STATUTORY_PAGES[entry.slug]) {
       const page=STATUTORY_PAGES[entry.slug];
       const html=execFileSync('curl',['--fail','--location','--silent','--show-error','--max-time','30',page],{encoding:'utf8',maxBuffer:8*1024*1024,timeout:35000});
-      const links=statutoryLinks(entry.slug,html,targetMonth()),schemes=[];let completedFiles=0,failedFiles=0;
-      for(const link of links){const parsed=downloadAndParse([link],opts,page);schemes.push(...parsed.schemes.map(s=>({...s,sourceUrl:link.url})));completedFiles+=parsed.completedFiles;failedFiles+=parsed.failedFiles;}
-      result={schemes,usedUrl:page,expectedFiles:links.length,completedFiles,failedFiles};
+      const links=statutoryLinks(entry.slug,html,targetMonth()),schemes=[];let completedFiles=0,failedFiles=0;const fileFailures=[];
+      for(const link of links){const parsed=downloadAndParse([link],opts,page);schemes.push(...parsed.schemes.map(s=>({...s,sourceUrl:link.url})));completedFiles+=parsed.completedFiles;failedFiles+=parsed.failedFiles;fileFailures.push(...parsed.fileFailures);}
+      result={schemes,usedUrl:page,expectedFiles:links.length,completedFiles,failedFiles,fileFailures};
     }
     else if(entry.slug==='quantum') {
       const month=targetMonth(),XLSX=await import(pathToFileURL(path.join(root,'node_modules/xlsx/xlsx.mjs')).href);

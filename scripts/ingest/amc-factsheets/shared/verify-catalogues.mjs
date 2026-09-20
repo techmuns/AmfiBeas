@@ -43,3 +43,15 @@ await assert.rejects(publicDisclosures('alphagrep',month,async()=>json(badAlpha)
 const ilfs=await publicDisclosures('il-fs-idf',month,async()=>html('<a href="/ILFS_Portfolio_TransactionReports_August_2026.xlsx">August</a><a href="/ILFS_Portfolio_TransactionReports_July_2026.xlsx">July</a>'));
 assert.equal(ilfs.length,1);
 console.log('PASS seven official catalogues: pagination, missing pages, duplicate files, reporting periods, fiscal-year rollover, published action discovery and allowed file paths');
+
+const choiceData={Status_code:200,body:{data:[{scheme_name:'Choice Fund',reports:[{report_date:'2026-08-31',file_path:'portfolio-reports/aug.xlsx'},{report_date:'2026-07-31',file_path:'portfolio-reports/jul.xlsx'}]}]}};
+assert.equal((await publicDisclosures('choice',month,async()=>json(choiceData))).length,1);
+await assert.rejects(publicDisclosures('choice','2026-09',async()=>json(choiceData)),/unavailable/);
+choiceData.body.data[0].reports[0].file_path='https://unexpected.test/report.xlsx';
+await assert.rejects(publicDisclosures('choice',month,async()=>json(choiceData)),/file/);
+
+for(const [slug,host] of [['tata','https://betacms.tatamutualfund.com'],['edelweiss','https://www.edelweissmf.com']]) {
+ const reader=async()=>html(`<a href="${host}/aug.xlsx">Monthly Portfolio Disclosure - August 2026</a><a href="${host}/jul.xlsx">Monthly Portfolio Disclosure - July 2026</a>`);
+ assert.equal((await publicDisclosures(slug,month,reader)).length,1);
+ await assert.rejects(publicDisclosures(slug,'2026-07',async()=>html('<a href="https://unexpected.test/jul.xlsx">Monthly Portfolio Disclosure - July 2026</a>')),/unavailable/);
+}

@@ -32,3 +32,7 @@ assert.equal(partial.schemes.length,1);assert.equal(partial.expectedFiles,3);ass
 
 const damaged=XLSX.utils.book_new();XLSX.utils.book_append_sheet(damaged,XLSX.utils.aoa_to_sheet([['Example Fund'],['Wrong header'],holding]),'Damaged');
 assert.throws(()=>parseAmcWorkbook(XLSX.write(damaged,{type:'buffer',bookType:'xlsx'}),{pctScale:1,valueToCr:100,strictHoldings:true}),/Unparsed/);
+
+const [motilal]=parse('YO01',[['Back to Index'],['Example Asset Management Company Limited'],['(Investment Manager for Example Mutual Fund)'],['Registered Office: City'],['Monthly Portfolio Statement as on August 31, 2026'],['Example Nifty 50 ETF'],header,holding]);assert.equal(motilal.schemeName,'Example Nifty 50 ETF');
+XLSX.utils.book_append_sheet(workbook,XLSX.utils.aoa_to_sheet([['Notes: Example Fund'],['Historical transaction','INE040A01034']]),'Notes');
+assert.equal(parseAmcWorkbook(XLSX.write(workbook,{type:'buffer',bookType:'xlsx'}),{pctScale:1,valueToCr:100,strictHoldings:true}).length,1);

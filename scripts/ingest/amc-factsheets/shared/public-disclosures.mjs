@@ -216,16 +216,17 @@ export function schemeNameResolver(snapshot) {
 // Some gold, overnight and overseas-only reports contain no Indian shares or units,
 // so the equity parser correctly returns no positions. Verify that exact case
 // without treating an arbitrary empty/malformed workbook as an empty portfolio.
-const emptySections=new Set(`equity & equity related|listed/awaiting listing on stock exchanges|listed/awaiting listing on stock exchange|listed/awaiting listing on the stock exchanges|listed/awaited listed on stock exchanges|unlisted|preference shares|debt instruments|privately placed/unlisted|unlisted/privately placed|securitised debt|securitised debt instruments|securitized debt instruments|others|money market instruments|tri party repo (treps)/reverse repo|treps/reverse repo instrument|treps/reverse repo|treps/reverse repo investments|international exchange traded funds|international mutual fund units|other current assets/(liabilities)|international equity shares|reit|derivatives|index/stock futures|index/stock options|exchange traded commodity derivatives|commodity futures|commodity option|commercial paper|commercial papers|cd-certificate of deposits|treasury bills|units of an alternative investment fund (aif)|fixed deposits|mutual fund unit|mutual fund units|units of infrastructure investment trust|tri party repo (treps)|other receivables (payables)|overseas security|preference/right shares|warrants|derivative|govt security|certificate of deposits|reverserepo/treps|investments in foreign securities - units of mutual funds|deposits with commercial banks|share application money pending allotment|foreign securities and/or overseas etf|real estate investment trust|infrastructure investment trust|central government securities|state government securities|bills re- discounting|mutual fund units/exchange traded funds|short term deposits|term deposits placed as margins|alternative investment funds|foreign mutual fund units|fixed deposit|exchange traded funds|cdmdf_aif`.split('|'));
+const emptySections=new Set(`equity & equity related|listed/awaiting listing on stock exchanges|listed/awaiting listing on stock exchange|listed/awaiting listing on the stock exchanges|listed/awaited listed on stock exchanges|unlisted|preference shares|debt instruments|privately placed/unlisted|unlisted/privately placed|securitised debt|securitised debt instruments|securitized debt instruments|others|money market instruments|tri party repo (treps)/reverse repo|treps/reverse repo instrument|treps/reverse repo|treps/reverse repo investments|international exchange traded funds|international mutual fund units|other current assets/(liabilities)|international equity shares|reit|derivatives|index/stock futures|index/stock options|exchange traded commodity derivatives|commodity futures|commodity option|commercial paper|commercial papers|cd-certificate of deposits|treasury bills|units of an alternative investment fund (aif)|fixed deposits|mutual fund unit|mutual fund units|units of infrastructure investment trust|tri party repo (treps)|other receivables (payables)|overseas security|preference/right shares|warrants|derivative|govt security|certificate of deposits|reverserepo/treps|investments in foreign securities - units of mutual funds|deposits with commercial banks|share application money pending allotment|foreign securities and/or overseas etf|real estate investment trust|infrastructure investment trust|central government securities|state government securities|bills re- discounting|mutual fund units/exchange traded funds|short term deposits|term deposits placed as margins|alternative investment funds|foreign mutual fund units|fixed deposit|exchange traded funds|cdmdf_aif|strips|margin amount for derivative positions`.split('|'));
 export function verifiedNonIndianRows(rows,name,month) {
   if(!/\b(?:gold etf|silver etf|overnight fund|1d rate liquid etf|global.*(?:\bfof|fund of fund)|HSBC (?:Brazil Fund|Global Emerging Markets Fund|Asia Pacific.*Yield ?Fund)|Navi .*US Specific Equity Passive FoF|Bandhan US.*(?:FOF|fund of fund)|S&P 500.*ETF|NYSE FANG.*ETF|Hang Seng.*ETF)\b/i.test(name||''))return false;
   const heading=rows.slice(0,15).flat().map(v=>String(v??'')).join(' ').replace(/[-,]/g,' ').replace(/\s+/g,' ');
   const [year,num]=month.split('-').map(Number),end=new Date(Date.UTC(year,num,0)).getUTCDate(),mon=months[num-1];
   const dates=[...heading.matchAll(/(?:as on|as of|month ended|period ended)\s+(\d{1,2}\s+[A-Za-z]+\s+20\d{2}|[A-Za-z]+\s+\d{1,2}\s+20\d{2})/gi)];
-  if(!dates.length||dates.some(d=>!new RegExp(`^(?:${end} ${mon}(?: |$)|${mon} ${end} )`,'i').test(d[1].replace(new RegExp(mon.slice(0,3)+'(?= )','i'),mon))||!d[1].endsWith(String(year))))return false;
+  const serialDates=rows.slice(0,15).flatMap(r=>r.flatMap((v,i)=>/portfolio statement as on\s*:?$/i.test(String(v||''))&&Number.isInteger(r[i+1])&&r[i+1]>20000&&r[i+1]<90000?[new Date(Date.UTC(1899,11,30)+r[i+1]*86400000).toISOString().slice(0,10)]:[]));
+  if((!dates.length&&!serialDates.length)||serialDates.some(d=>d!==`${month}-${end}`)||dates.some(d=>!new RegExp(`^(?:${end} ${mon}(?: |$)|${mon} ${end} )`,'i').test(d[1].replace(new RegExp(mon.slice(0,3)+'(?= )','i'),mon))||!d[1].endsWith(String(year))))return false;
   const header=rows.findIndex(r=>r.some(v=>/^ISIN(?:\s+Code)?$/i.test(String(v||''))));
   if(header<0)return false;
-  const cols=rows[header],isin=cols.findIndex(v=>/^ISIN(?:\s+Code)?$/i.test(String(v||''))),pct=cols.findIndex(v=>/%|percentage/i.test(String(v||''))&&/nav|net asset/i.test(String(v||''))),instrument=cols.findIndex(v=>/name.*instrument/i.test(String(v||'')));
+  const cols=rows[header],isin=cols.findIndex(v=>/^ISIN(?:\s+Code)?$/i.test(String(v||''))),pct=cols.findIndex(v=>/%|percentage/i.test(String(v||''))&&/nav|aum|net asset/i.test(String(v||''))),instrument=cols.findIndex(v=>/name.*instrument/i.test(String(v||'')));
   if(pct<0||instrument<0)return false;
   // Check the whole document, not just the first section or first parsed sheet.
   if(rows.flat().some(v=>/\bIN[EF][A-Z0-9]{9}\b/i.test(String(v??'')))||rows.slice(header+1).some(r=>/^IN[EF]/i.test(String(r[isin]||'').trim())))return false;
@@ -243,7 +244,7 @@ export function verifiedNonIndianRows(rows,name,month) {
     if(/^(?:sub\s*total|grand total(?:\s*\(aum\))?|total(?: for (?:money market instruments|equity & equity related|debt instruments))?|(?:NCA-)?net current assets(?: \(including cash & bank balances\))?|TREPS\/Reverse Repo\/Net Current Assets\/Cash\/Cash Equivalent|total net assets as on \d{1,2}-[A-Za-z]+-20\d{2}|cash and other net current assets|cash margin - CCIL|net receivables?\s*\/\s*\(?payables?\)?|clearing corporation of india limited)$/i.test(label))continue;
     if(/^TREPS(?:\s+\d{2}-[A-Za-z]{3}-20\d{2}\s+DEPO\s+\d+)?$/i.test(label))continue;
     if(/^Triparty Repo TRP_\d{6}$/i.test(label))continue;
-    if(/^(?:\(?[a-z]\)\s*)?(?:gold(?: 1 kg bar \(995 fineness\)| 995 purity| 995 Finnese| - mumbai)?|silver)$/i.test(label))continue;
+    if(/^(?:\(?[a-z]\)\s*)?(?:gold(?: 1 kg bar \(995 fineness\)| (?:995|999) purity| 995 Finnese| - mumbai)?|silver)$/i.test(label))continue;
     if(/^(?:GOLD \.995 1KG BAR|GOLD 999 100GM BAR|SILVER 999 1KG BAR)$/i.test(label))continue;
     if(/^(?:GOLD\s*M?|SILVERM?)\s+\d{2}\/\d{2}\/20\d{2}\s+\(FUTURES\)$/i.test(label))continue;
     if(/^[A-Z]{2}[A-Z0-9]{10}$/.test(id)&&!id.startsWith('IN'))continue;
@@ -252,7 +253,7 @@ export function verifiedNonIndianRows(rows,name,month) {
   }
   return true;
 }
-export function parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedWorkbook,opts,month,link,slug}) {
+export function parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedWorkbook,opts,month,link,slug,identifyScheme}) {
   try{
     let schemes=parseVerifiedWorkbook(buffer,{XLSX,parseAmcWorkbook,opts,month});
     // IL&FS publishes both fortnightly and month-end portfolios in one workbook.
@@ -277,8 +278,9 @@ export function parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedW
     const candidates=book.SheetNames.filter(n=>!/^Notes|^Disclaimer$/i.test(n));
     if(candidates.length!==1||book.SheetNames.some(n=>n!==candidates[0]&&!/^(?:Notes|Disclaimer)$/i.test(n)))throw error;
     const rows=XLSX.utils.sheet_to_json(book.Sheets[candidates[0]],{header:1,blankrows:true,defval:null,raw:true});
-    if(!verifiedNonIndianRows(rows,link.text,month))throw error;
-    return [{schemeCode:candidates[0],schemeName:link.text,asOf:month+'-'+new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5,7)),0)).getUTCDate(),holdings:[],validatedNoIndianHoldings:true}];
+    const name=identifyScheme?.(rows,candidates[0])||link.text;
+    if(!verifiedNonIndianRows(rows,name,month))throw error;
+    return [{schemeCode:candidates[0],schemeName:name,asOf:month+'-'+new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5,7)),0)).getUTCDate(),holdings:[],validatedNoIndianHoldings:true}];
   }
 }
 export function resumeDisclosures(links,check) {
