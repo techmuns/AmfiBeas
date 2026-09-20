@@ -1,5 +1,6 @@
 // Official catalogues whose current public download UI supersedes legacy routes.
 import {NEW_AMC_PAGES,NEW_AMC_HOSTS,newAmcDisclosures} from './new-amcs.mjs';
+import {previousMonth} from './dates.mjs';
 export const CATALOGUE_PAGES={
   ...NEW_AMC_PAGES,
   hdfc:'https://www.hdfcfund.com/statutory-disclosure/portfolio/monthly-portfolio',
@@ -32,7 +33,7 @@ export const CATALOGUE_HOSTS={
 };
 const names=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const config=(html,name)=>{const m=new RegExp(`var ${name}\\s*=\\s*(\\{[^;]*?\\});`).exec(html);if(!m)throw Error('Public catalogue configuration missing');return JSON.parse(m[1]);};
-export async function catalogueDisclosures(slug,month,read,{anchorFiles}) {
+export async function catalogueDisclosures(slug,month,read,{anchorFiles,includeHistory=false}) {
   if(NEW_AMC_PAGES[slug])return newAmcDisclosures(slug,month,read,{anchorFiles});
   const page=CATALOGUE_PAGES[slug],[year,num]=month.split('-').map(Number),name=names[num-1],end=new Date(Date.UTC(year,num,0)).getUTCDate();
   const html=async u=>(await read(u)).toString('utf8'),json=async(u,o)=>JSON.parse((await read(u,o)).toString('utf8'));
@@ -122,7 +123,16 @@ export async function catalogueDisclosures(slug,month,read,{anchorFiles}) {
   }
   if(slug==='hsbc') {
     // The official links use "aug", not the full month used by the legacy guesser.
-    return anchorFiles(await html(page),new URL('/',page).href).filter(l=>new RegExp(`/document-${end}${String(num).padStart(2,'0')}${year}/`,'i').test(l.url)).map(l=>({...l,text:decodeURIComponent(new URL(l.url).pathname.split('/').pop()).replace(/-\d{2}-[a-z]+-20\d{2}\.xlsx?$/i,'').replace(/-/g,' ')}));
+    const periods=new Map();let wanted=month;
+    for(let i=0;i<(includeHistory?4:1);i++) {
+      const [y,m]=wanted.split('-').map(Number),day=new Date(Date.UTC(y,m,0)).getUTCDate();
+      periods.set(`${day}${String(m).padStart(2,'0')}${y}`,wanted);wanted=previousMonth(wanted);
+    }
+    return anchorFiles(await html(page),new URL('/',page).href).flatMap(link=>{
+      const period=periods.get(/\/document-(\d{8})\//i.exec(link.url)?.[1]);
+      if(!period)return [];
+      return [{...link,text:decodeURIComponent(new URL(link.url).pathname.split('/').pop()).replace(/-\d{2}-[a-z]+-20\d{2}\.xlsx?$/i,'').replace(/-/g,' '),...(includeHistory?{disclosureMonth:period}:{})}];
+    });
   }
   if(slug==='il-fs-idf')return anchorFiles(await html(page),page).filter(l=>new RegExp(`/ILFS_Portfolio_TransactionReports_${name}_${year}\\.xlsx?$`,'i').test(l.url));
   if(slug==='navi') {

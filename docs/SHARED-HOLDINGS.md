@@ -54,7 +54,7 @@ pagination, date labels, allowed file hosts and reporting months are verified.
 Access refusals remain unavailable; the collector does not rotate identities or
 solve challenges. Trendlyne is not a required source.
 
-Mirae's current and preceding three months are traversed to restore comparison
+Mirae's and HSBC's current and preceding three months are traversed to restore comparison
 baselines. Validated overseas-only, bullion and overnight statements can establish
 no Indian holdings; unclassified positions cannot. Descriptive name changes use
 an unambiguous prior identity, never fuzzy joining of plans or funds.
@@ -123,7 +123,7 @@ Failures retain a bounded `failure` object identifying HTTP status, transport
 failure or catalogue validation. It excludes response bodies, headers and URL
 queries. Source-file failures carry the same evidence in `fileFailures`. A later
 successful check clears an older discovery failure without clearing retained history.
-For changed source readers, pull-request CI records a read-only catalogue-access
+For changed source readers, pull-request and manually requested branch CI record a read-only catalogue-access
 diagnostic artifact from the hosted runner. This probe does not publish holdings,
 dispatch a production job or certify that discovered workbooks are complete.
 

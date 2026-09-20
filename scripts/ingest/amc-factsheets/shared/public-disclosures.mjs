@@ -117,7 +117,11 @@ export async function publicDisclosures(slug,month,read,{axisPublicToken,include
   const [year,num]=month.split('-').map(Number),name=months[num-1],page=PUBLIC_PAGES[slug];let links=[];
   const json=async(url,options)=>jsonReply(await read(url,options));
   const html=async(url,options)=>(await read(url,options)).toString('utf8');
-  if(CATALOGUE_PAGES[slug])return uniqueFiles(slug,await catalogueDisclosures(slug,month,read,{anchorFiles}));
+  if(CATALOGUE_PAGES[slug]) {
+    const files=uniqueFiles(slug,await catalogueDisclosures(slug,month,read,{anchorFiles,includeHistory}));
+    if(!files.some(file=>(file.disclosureMonth||month)===month))throw Error('Current monthly disclosure unavailable');
+    return files.sort((a,b)=>String(b.disclosureMonth||month).localeCompare(String(a.disclosureMonth||month)));
+  }
   if(slug==='360-one')return oneDisclosures(await html(page),month);
   if(slug==='bandhan') {
     const ids=new Set();let first=null,finished=false;
