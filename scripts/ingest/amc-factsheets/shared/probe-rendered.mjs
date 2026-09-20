@@ -4,11 +4,23 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import {chromium} from 'playwright';
+import {readHsbcCatalogue,HSBC_CATALOGUE} from './rendered-catalogue.mjs';
+import {publicDisclosures} from './public-disclosures.mjs';
+import {targetMonth} from './dates.mjs';
 const dir=process.env.MF_RENDERED_DIAGNOSTICS_DIR||path.join(os.tmpdir(),'amc-rendered-diagnostics');
 fs.mkdirSync(dir,{recursive:true});
 const browser=await chromium.launch(),results=[];
 try {
   for(const source of ['whiteoak-capital','hdfc','hsbc','union','jm-financial']) {
+    if(source==='hsbc') {
+      try {
+        const html=await readHsbcCatalogue({chromium});
+        const links=await publicDisclosures('hsbc',targetMonth(),async url=>{if(url!==HSBC_CATALOGUE)throw Error('Unexpected catalogue URL');return html;},{includeHistory:true});
+        fs.writeFileSync(path.join(dir,'hsbc-links.json'),JSON.stringify(links,null,2));
+        results.push({source,status:'catalogue-readable',currentFiles:links.filter(l=>l.disclosureMonth===targetMonth()).length,filesWithHistory:links.length});
+      }catch(error){results.push({source,status:'unavailable',reason:error.status?`HTTP ${error.status}`:String(error.name||'Error')});}
+      fs.writeFileSync(path.join(dir,'results.json'),JSON.stringify(results,null,2));continue;
+    }
     const context=await browser.newContext({acceptDownloads:true}),page=await context.newPage();
     page.setDefaultTimeout(15000);let refusal=null;
     page.on('response',response=>{
@@ -31,9 +43,8 @@ try {
         if(!download)throw Error('No public download received');
         await download.saveAs(path.join(dir,'whiteoak-sample.xlsx'));
         results.push({source,status:'downloaded',catalogueRows:data.data?.length});
-      } else if(source==='hsbc'||source==='union') {
-        const url=source==='hsbc'?'https://www.assetmanagement.hsbc.co.in/en/mutual-funds/investor-resources/information-library':'https://www.unionmf.com/about-us/downloads';
-        await page.goto(url,{waitUntil:'domcontentloaded',timeout:30000});check();
+      } else if(source==='union') {
+        await page.goto('https://www.unionmf.com/about-us/downloads',{waitUntil:'domcontentloaded',timeout:30000});check();
         const links=await page.locator('a[href]').evaluateAll(nodes=>nodes.filter(a=>/\.xlsx?(?:\?|$)/i.test(a.href)).map(a=>({text:a.textContent,url:a.href})));
         fs.writeFileSync(path.join(dir,source+'-links.json'),JSON.stringify(links,null,2));
         results.push({source,status:'page-readable',catalogueLinks:links.length});

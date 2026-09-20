@@ -13,6 +13,7 @@ import {monthKey,targetMonth} from './dates.mjs';
 import {publishManifest} from './manifest.mjs';
 import {syncDirectory} from './directory.mjs';
 import {sourceFailure} from './source-errors.mjs';
+import {HSBC_CATALOGUE,readHsbcCatalogue} from './rendered-catalogue.mjs';
 const root=path.resolve(process.env.AMFIBEAS_PATH||fileURLToPath(new URL('../../../../',import.meta.url)));
 const opts={pctScale:1,valueToCr:100,strictHoldings:true},dir=path.join(root,'public/amc-holdings');
 if(!process.env.MF_SOURCE_WORKER)await syncDirectory(root);
@@ -67,7 +68,8 @@ for(const entry of index.amcs) {
   // do not switch IPs, challenge clients or archive proxies to get around it.
   try {
     if(PUBLIC_PAGES[entry.slug]) {
-      const month=targetMonth(),read=publicReader(entry.slug);
+      const month=targetMonth(),http=publicReader(entry.slug);
+      const read=(url,options)=>entry.slug==='hsbc'&&url===HSBC_CATALOGUE?readHsbcCatalogue():http(url,options);
       // The upstream adapter's checked-in client token is public website config,
       // not a private API credential. Keep it in the pinned source checkout.
       const axisPublicToken=entry.slug==='axis'?/const AXIS_TOKEN\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(root,'scripts/ingest/amc-factsheets/json-api.ts'),'utf8'))?.[1]:undefined;

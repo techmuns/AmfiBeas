@@ -45,6 +45,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --ignore-scripts
+      - name: Install the standard browser for HSBC's public catalogue
+        if: env.MODE != 'scheme-benchmarks'
+        run: npx playwright install --with-deps chromium
       - name: Collect shared AMC disclosures
         id: capture
         if: env.MODE != 'scheme-benchmarks'

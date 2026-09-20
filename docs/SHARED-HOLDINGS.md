@@ -59,6 +59,14 @@ baselines. Validated overseas-only, bullion and overnight statements can establi
 no Indian holdings; unclassified positions cannot. Descriptive name changes use
 an unambiguous prior identity, never fuzzy joining of plans or funds.
 
+HSBC's catalogue uses a fresh standard Chromium context on the server. Hosted
+diagnostics confirmed that its public library renders while plain catalogue
+transfers time out. The reader accepts only the fixed official page, with bounded
+navigation and content size; refusals stop collection and every exit closes the
+browser. Workbooks still use the bounded HTTP reader. Monthly portfolios are kept
+separate from identical month-end files mirrored in the fortnightly directory,
+preventing duplicate hybrid-fund holdings in historical comparisons.
+
 This source contract does not certify every historical upstream observation.
 Current-month duplicate quantities, dates and ambiguous instruments mark coverage
 partial. Downstream ownership calculations retain their own instrument checks.
