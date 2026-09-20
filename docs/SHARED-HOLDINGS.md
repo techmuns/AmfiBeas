@@ -76,7 +76,7 @@ Live source tests write only to an isolated `AMFIBEAS_PATH`; they do not publish
 
 ### Catalogue and workbook reconciliation
 
-The collector reads the current official download catalogues for Canara Robeco,
+The collector reads the current official download catalogues for HDFC, Canara Robeco,
 JioBlackRock, HSBC, Navi, Bajaj Finserv, AlphaGrep, Choice, Zerodha and IL&FS, alongside the existing
 AMC adapters. Public website configuration is rediscovered when each source is
 checked; private sessions and challenge bypasses are not used. Catalogue periods,
@@ -128,6 +128,13 @@ validated explicitly, including rejection of stale/fortnightly dates and unknown
 or Indian securities. PR browser diagnostics use ordinary Chromium defaults and
 retain a fixed August 2026 regression sample separately from current-month data.
 An access refusal remains a refusal; these diagnostics do not alter production.
+
+HDFC's reader enumerates the official monthly page rather than leaving its saved
+holdings without an active reader. It checks the scheme filename against the
+month-end label and excludes overlap summaries and other months. The report
+itself must still pass workbook validation; merely listing files does not establish
+coverage. Standard-browser CI diagnostics also check WhiteOak, HSBC and Union to
+distinguish obsolete readers from hosted-source connectivity failures.
 
 Public GET downloads may follow up to three redirects, validating every destination
 against that AMC's approved HTTPS hosts before requesting it. Redirects never carry

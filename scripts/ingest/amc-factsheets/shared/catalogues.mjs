@@ -2,6 +2,7 @@
 import {NEW_AMC_PAGES,NEW_AMC_HOSTS,newAmcDisclosures} from './new-amcs.mjs';
 export const CATALOGUE_PAGES={
   ...NEW_AMC_PAGES,
+  hdfc:'https://www.hdfcfund.com/statutory-disclosure/portfolio/monthly-portfolio',
   zerodha:'https://www.zerodhafundhouse.com/resources/disclosures',
   edelweiss:'https://www.edelweissmf.com/statutory/monthly-portfolio',
   tata:'https://www.tatamutualfund.com/schemes-related/portfolio',
@@ -16,6 +17,7 @@ export const CATALOGUE_PAGES={
 };
 export const CATALOGUE_HOSTS={
   ...NEW_AMC_HOSTS,
+  hdfc:['https://www.hdfcfund.com','https://files.hdfcfund.com'],
   zerodha:['https://www.zerodhafundhouse.com','https://assets.zerodhafundhouse.com'],
   edelweiss:['https://www.edelweissmf.com','https://www.advisorkhoj.com'],
   tata:['https://www.tatamutualfund.com','https://betacms.tatamutualfund.com','https://www.advisorkhoj.com'],
@@ -35,6 +37,18 @@ export async function catalogueDisclosures(slug,month,read,{anchorFiles}) {
   const page=CATALOGUE_PAGES[slug],[year,num]=month.split('-').map(Number),name=names[num-1],end=new Date(Date.UTC(year,num,0)).getUTCDate();
   const html=async u=>(await read(u)).toString('utf8'),json=async(u,o)=>JSON.parse((await read(u,o)).toString('utf8'));
   const form=(body,headers={})=>({body:new URLSearchParams(body).toString(),contentType:'application/x-www-form-urlencoded',headers});
+  if(slug==='hdfc') {
+    // The monthly page publishes individual scheme workbooks, alongside overlap
+    // summaries and older periods. Only actual monthly scheme files belong here.
+    const links=anchorFiles(await html(page),page),wanted=new RegExp(`^Monthly HDFC (.+) - ${end} ${name} ${year}\\.xlsx?$`,'i');
+    return links.flatMap(link=>{
+      const label=link.text.replace(/\s+/g,' ').trim(),match=wanted.exec(label);
+      if(!match)return [];
+      const url=new URL(link.url),file=decodeURIComponent(url.pathname.split('/').pop());
+      if(url.origin!=='https://files.hdfcfund.com'||!url.pathname.startsWith('/s3fs-public/')||file!==label)throw Error('Monthly disclosure file mismatch');
+      return [{url:url.href,text:'HDFC '+match[1]}];
+    });
+  }
   if(slug==='zerodha') {
     const source=(await html(page)).replace(/\\"/g,'"'),links=[];
     for(const m of source.matchAll(/"name":"([^"<>]+)","url":"(https:[^"<>]+\.xlsx?)"/g)) {

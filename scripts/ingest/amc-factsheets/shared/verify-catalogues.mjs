@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict';
 import {publicDisclosures} from './public-disclosures.mjs';
 const month='2026-08',json=value=>Buffer.from(JSON.stringify(value)),html=value=>Buffer.from(value);
+const hdfcAnchor=(label,file=label)=>`<a href="https://files.hdfcfund.com/s3fs-public/2026-09/${encodeURIComponent(file)}">${label}</a>`;
+const hdfcCurrent='Monthly HDFC Value Fund - 31 August 2026.xlsx';
+const hdfc=await publicDisclosures('hdfc',month,async()=>html(hdfcAnchor(hdfcCurrent)+hdfcAnchor('Monthly HDFC Value Fund - 31 July 2026.xlsx')+hdfcAnchor('PortfolioOverlap31Aug2026.xlsx')));
+assert.equal(hdfc.length,1);assert.equal(hdfc[0].text,'HDFC Value Fund');
+await assert.rejects(publicDisclosures('hdfc',month,async()=>html(hdfcAnchor(hdfcCurrent,'Monthly HDFC Value Fund - 31 July 2026.xlsx'))),/file mismatch/);
+await assert.rejects(publicDisclosures('hdfc',month,async()=>html(hdfcAnchor(hdfcCurrent).replace('files.hdfcfund.com','other.test'))),/file mismatch/);
+await assert.rejects(publicDisclosures('hdfc','2026-09',async()=>html(hdfcAnchor(hdfcCurrent))),/unavailable/);
+assert.equal((await publicDisclosures('hdfc','2028-02',async()=>html(hdfcAnchor('Monthly HDFC Value Fund - 29 February 2028.xlsx')))).length,1);
 const canaraBase='https://www.canararobeco.com/documents/statutory-disclosures/scheme-dashboard/scheme-monthly-portfolio/';
 const canaraPage=(p,{duplicate=false,wrongMonth=false}={})=>html(`<a href="/uploads/${duplicate?1:p}.xlsx">Canara Fund ${p} – ${wrongMonth?'July':'August'} 2026</a><a href="${canaraBase}?filteryear=2026&amp;filtermonth=08&amp;pagination=2">2</a>`);
 const pages=[];
