@@ -53,7 +53,7 @@ export function publicReader(slug,{execute=run}={}) {
     } catch(error) {
       const status=error.status||Number(error.stdout?.subarray?.(-3)?.toString())||Number(/error:\s*(401|403|429)/i.exec(String(error.stderr||''))?.[1]);
       if([401,403,429].includes(status))refused.add(host);
-      if(attempt<2&&([408,500,502,503,504].includes(status)||[5,6,7,18,28,35,52,55,56].includes(error.code))){await new Promise(resolve=>setTimeout(resolve,250*(attempt+1)));continue;}
+      if(attempt<2&&([408,500,502,503,504].includes(status)||!status&&[5,6,7,18,28,35,52,55,56].includes(error.code))){await new Promise(resolve=>setTimeout(resolve,250*(attempt+1)));continue;}
       throw Error([401,403,429].includes(status)?'Source refused access':'Disclosure download failed');
     }
   };
