@@ -38,27 +38,43 @@ export function publicUrl(slug,input) {
 // requests to that host for this pass; no alternate identity, proxy or challenge.
 export function publicReader(slug,{execute=run}={}) {
   const refused=new Set();
+  const response=stdout=>{
+    if(!Buffer.isBuffer(stdout))return {};
+    const end=stdout.lastIndexOf(10),start=stdout.lastIndexOf(10,end-1);
+    const code=stdout.subarray(start+1,end).toString();
+    if(start<0||!/^\d{3}$/.test(code))return {};
+    return {status:Number(code),redirect:stdout.subarray(end+1).toString(),buffer:stdout.subarray(0,start)};
+  };
   return async function read(input,{body,contentType='application/json',headers={}}={}) {
-    const url=publicUrl(slug,input),host=new URL(url).host;
-    if(refused.has(host))throw Object.assign(Error('Source refused access'),{code:'SOURCE_REFUSED'});
-    const args=['--silent','--show-error','--fail','--globoff','--max-time','20','--max-filesize','25000000','--proto','=https'];
-    // No redirects: every accepted URL is a link on the verified disclosure host.
-    for(const [key,value] of Object.entries(headers))args.push('-H',`${key}: ${value}`);
-    if(body!==undefined)args.push('-H',`Content-Type: ${contentType}`,'--data-raw',typeof body==='string'?body:JSON.stringify(body));
-    args.push('--write-out','\n%{http_code}',url);
-    for(let attempt=0;attempt<3;attempt++)try {
-      const {stdout}=await execute('curl',args,{encoding:'buffer',maxBuffer:25_001_024,timeout:22000});
-      const status=Number(stdout.subarray(-3).toString());
-      if(status!==200)throw Object.assign(Error('Disclosure HTTP failure'),{status});
-      return stdout.subarray(0,-4);
-    } catch(error) {
-      const status=error.status||Number(error.stdout?.subarray?.(-3)?.toString())||Number(/error:\s*(401|403|429)/i.exec(String(error.stderr||''))?.[1]);
-      if([401,403,429].includes(status))refused.add(host);
-      if(attempt<2&&([408,500,502,503,504].includes(status)||!status&&[5,6,7,18,28,35,52,55,56].includes(error.code))){await new Promise(resolve=>setTimeout(resolve,250*(attempt+1)));continue;}
-      throw Object.assign(Error([401,403,429].includes(status)?'Source refused access':'Disclosure download failed'),{
-        code:status?'SOURCE_HTTP':'SOURCE_TRANSPORT',status:status||undefined,transportCode:Number.isInteger(error.code)?error.code:undefined,
-      });
+    let url=publicUrl(slug,input);const visited=new Set();
+    for(let hop=0;hop<4;hop++) {
+      const host=new URL(url).host;
+      if(refused.has(host))throw Object.assign(Error('Source refused access'),{code:'SOURCE_REFUSED'});
+      if(visited.has(url))throw Error('Disclosure redirect loop');visited.add(url);
+      const args=['--silent','--show-error','--fail','--globoff','--max-time','20','--max-filesize','25000000','--proto','=https'];
+      // Follow each redirect ourselves only after validating its published host.
+      // Never forward request bodies or source-specific headers to another URL.
+      for(const [key,value] of Object.entries(headers))args.push('-H',`${key}: ${value}`);
+      if(body!==undefined)args.push('-H',`Content-Type: ${contentType}`,'--data-raw',typeof body==='string'?body:JSON.stringify(body));
+      args.push('--write-out','\n%{http_code}\n%{redirect_url}',url);
+      let redirect;
+      for(let attempt=0;attempt<3;attempt++)try {
+        const {stdout}=await execute('curl',args,{encoding:'buffer',maxBuffer:25_001_024,timeout:22000});
+        const {status,redirect:next,buffer}=response(stdout);
+        if([301,302,303,307,308].includes(status)&&next&&next.length<=8192&&hop<3&&body===undefined&&!Object.keys(headers).length){redirect=next;break;}
+        if(status!==200)throw Object.assign(Error('Disclosure HTTP failure'),{status});
+        return buffer;
+      } catch(error) {
+        const status=error.status||response(error.stdout).status||Number(/error:\s*(401|403|429)/i.exec(String(error.stderr||''))?.[1]);
+        if([401,403,429].includes(status))refused.add(host);
+        if(attempt<2&&([408,500,502,503,504].includes(status)||!status&&[5,6,7,18,28,35,52,55,56].includes(error.code))){await new Promise(resolve=>setTimeout(resolve,250*(attempt+1)));continue;}
+        throw Object.assign(Error([401,403,429].includes(status)?'Source refused access':'Disclosure download failed'),{
+          code:status?'SOURCE_HTTP':'SOURCE_TRANSPORT',status:status||undefined,transportCode:Number.isInteger(error.code)?error.code:undefined,
+        });
+      }
+      url=publicUrl(slug,redirect);
     }
+    throw Error('Disclosure redirect limit exceeded');
   };
 }
 const plain=value=>String(value||'').replace(/<[^>]*>/g,' ').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').replace(/\s+/g,' ').trim();

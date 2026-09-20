@@ -128,3 +128,9 @@ validated explicitly, including rejection of stale/fortnightly dates and unknown
 or Indian securities. PR browser diagnostics use ordinary Chromium defaults and
 retain a fixed August 2026 regression sample separately from current-month data.
 An access refusal remains a refusal; these diagnostics do not alter production.
+
+Public GET downloads may follow up to three redirects, validating every destination
+against that AMC's approved HTTPS hosts before requesting it. Redirects never carry
+request bodies or source-specific headers. Loops, unapproved destinations, longer
+chains and access refusals remain failures. This covers official CMS-to-website
+moves such as Tata's workbook links without treating a redirect as a valid workbook.
