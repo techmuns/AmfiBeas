@@ -1555,17 +1555,18 @@ export const JSON_API_CONFIG: Record<string, ApiConfig> = {
   "the-wealth-company": { discover: (now) => discoverTwc(now), referer: `${TWC_ORIGIN}/`, page: TWC_PAGE },
 };
 
-export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number }
+export interface JsonApiResult { schemes: AmcScheme[]; usedUrl: string | null; fileCount: number; expectedFiles?: number; completedFiles?: number; failedFiles?: number }
 export function jsonApiAmc(slug: string, opts: AmcParseOptions, now: Date): JsonApiResult {
   const cfg = JSON_API_CONFIG[slug];
   if (!cfg) return { schemes: [], usedUrl: null, fileCount: 0 };
   const links = cfg.discover(now);
   if (!links.length) return { schemes: [], usedUrl: null, fileCount: 0 };
-  const { schemes, fileCount } = downloadAndParse(links, opts, cfg.referer);
+  const result = downloadAndParse(links, opts, cfg.referer);
+  const { schemes } = result;
   // Every discoverer resolves ONE month and builds its file URLs from it, so the
   // URL names the disclosure month authoritatively. Fill in schemes whose sheet
   // carries no usable as-on date (UTI, Zerodha and JM print none), which is what
   // used to leave those AMCs labelled off a mis-read maturity date.
   stampAsOfFromLinks(schemes, links, now);
-  return { schemes, usedUrl: cfg.page, fileCount };
+  return { ...result, usedUrl: cfg.page };
 }

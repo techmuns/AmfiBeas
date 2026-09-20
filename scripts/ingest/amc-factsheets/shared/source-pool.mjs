@@ -42,7 +42,11 @@ export async function runSourcePool(entries,{command,args,env=process.env,checks
         try{
           const saved=JSON.parse(fs.readFileSync(file)),match=saved.find(c=>c.slug===entry.slug);
           if(match&&(!reason&&code===0))result=match;
-          else if(match&&(match.schemeCount>0||match.resumeUrl)&&(match.checkedAt||match.partialCheckedAt))result={...match,status:'partial',reason:reason||'source-process-failed',lastAttemptAt:startedAt};
+          else if(match&&(match.schemeCount>0||match.resumeUrl)&&(match.checkedAt||match.partialCheckedAt)) {
+            const period=match.byMonth?.[match.month];
+            const currentComplete=match.status==='ok'&&period?.expectedFiles>0&&period.completedFiles===period.expectedFiles&&period.pendingFiles===0&&period.failedFiles===0;
+            result={...match,status:currentComplete?'ok':'partial',reason:currentComplete?'history-backfill-pending':reason||'source-process-failed',lastAttemptAt:startedAt};
+          }
         }catch{/* A missing checkpoint is not a successful check. */}
         checks.set(entry.slug,result);save();onResult(result);resolve();
       };

@@ -51,7 +51,7 @@
     "ingest:holdings": "tsx scripts/ingest/holdings-tracker.ts",
     "ingest:broking": "tsx scripts/ingest/broking-active-clients.ts",
     "collect:holdings": "tsx scripts/ingest/amc-factsheets/shared/run.mjs",
-    "test:holdings": "node scripts/ingest/amc-factsheets/shared/verify-public.mjs && node scripts/ingest/amc-factsheets/shared/verify-source-pool.mjs && tsx scripts/ingest/amc-factsheets/shared/verify-manifest.mjs"
+    "test:holdings": "node scripts/ingest/amc-factsheets/shared/verify-public.mjs && node scripts/ingest/amc-factsheets/shared/verify-source-pool.mjs && tsx scripts/ingest/amc-factsheets/shared/verify-manifest.mjs && tsx scripts/ingest/amc-factsheets/shared/verify-parser.ts && node scripts/ingest/amc-factsheets/shared/verify-catalogues.mjs"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.19.6",

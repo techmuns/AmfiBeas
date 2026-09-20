@@ -72,3 +72,35 @@ per-file resumption, refusals, exact identities, verified empty reports, source
 isolation, process timeouts, source clocks, directory growth/failure and manifest
 hashes. Run `npm run lint`, `npm run typecheck`, and `npm run build` before merging.
 Live source tests write only to an isolated `AMFIBEAS_PATH`; they do not publish.
+
+
+### Catalogue and workbook reconciliation
+
+The collector reads the current official download catalogues for Canara Robeco,
+JioBlackRock, HSBC, Navi, Bajaj Finserv, AlphaGrep and IL&FS, alongside the existing
+AMC adapters. Public website configuration is rediscovered when each source is
+checked; private sessions and challenge bypasses are not used. Catalogue periods,
+pagination, duplicate IDs, published totals and file-host allowlists are validated.
+A refusal stops requests to that host for the pass; only transient network/server
+errors receive bounded retries.
+
+Per-file checkpoints now include `byMonth` and `fileFailures`. Current-month files
+run before historical continuations. An interrupted history backfill does not
+invalidate an independently completed current-month check. Legacy page/API
+adapters propagate expected, completed and failed file counts. A valid subset
+cannot hide a failed file, and filename dates never overwrite actual workbook dates.
+The shared collector also rejects sheets containing Indian securities that the
+parser could not read, including failures inside ZIP archives.
+
+Scheme title parsing distinguishes real names from section headings and category
+descriptions. Explicit cash-equity and arbitrage lots for the same instrument are
+summed; same-section duplicates remain validation errors. Overseas-only reports
+can establish zero Indian holdings only after checks of scheme identity, reporting
+date, every holding row and total assets. IL&FS fortnightly sheets are excluded
+only when matching month-end portfolios exist for every disclosed scheme.
+
+`coverage.current` counts successfully checked, validated AMC reports, not a
+claim of independently audited coverage of every active scheme in the industry.
+Unavailable catalogues, unpublished reports, changed formats, unclassified
+instruments and missing active-scheme inventory must remain visible gaps. An
+external source's future publication time cannot be guaranteed.

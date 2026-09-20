@@ -35,8 +35,8 @@ function toIso(v: Cell): string | null {
     if (d) return `${d.y}-${String(d.m).padStart(2, "0")}-${String(d.d).padStart(2, "0")}`;
   }
   const str = s(v);
-  const m1 = str.match(/([A-Za-z]{3,})\s+(\d{1,2})\s*,?\s*(\d{4})/); // May 31,2026
-  const m2 = str.match(/(\d{1,2})[-/\s]([A-Za-z]{3,})[-/\s](\d{2,4})/); // 31-May-2026
+  const m1 = str.match(/((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*)\s+(\d{1,2})\s*,?\s*(\d{4})/i); // May 31,2026
+  const m2 = str.match(/(\d{1,2})[-/\s]((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*)[-/\s](\d{2,4})/i); // 31-May-2026
   const MON: Record<string, number> = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
   const mk = (y: number, mo: number, d: number) => `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   if (m1) { const mo = MON[m1[1].slice(0, 3).toLowerCase()]; if (mo) return mk(+m1[3], mo, +m1[2]); }
@@ -103,14 +103,18 @@ function cleanSchemeName(t: string): string {
 /** Does a top-row cell read like an actual scheme title (vs. a house header,
  *  column header, banner, bullet, or one-line scheme-type description)? */
 function looksLikeSchemeName(t: string): boolean {
+  // A real title can carry a trailing category description. Validate the title
+  // independently; "scheme investing" inside that suffix is not a bad identity.
+  t = t.split(/\s*(?:\(|[–-]|\n)\s*An?\s+open[\s-]?end/i)[0].trim();
   if (t.length < 5) return false;
+  if (/^(?:mutual fund units?|exchange traded funds?)$/i.test(t)) return false;
   if (t.endsWith(":")) return false; // a label ("SCHEME NAME :")
   if (HOUSE_RE.test(t)) return false; // the fund-house name
   if (/^[•\-*·]/.test(t)) return false; // bullet / note line
   // Column headers and top-of-sheet banners.
   if (/^(isin|coupon|quantity|rating|industry|% to|exposure|market|fair value|yield|sr\.?\s*no|serial|s\.?\s*no|company|issuer|instrument|name of the|portfolio|monthly portfolio|portfolio statement|scheme name|as on|as at|notes?|product labelling|disclaimer|back to index|index|derivative)\b/i.test(t)) return false;
   // Asset-class SECTION headers inside the holdings table, not scheme names.
-  if (/\b(equity\s*&\s*equity\s*related|listed\s*\/\s*awaiting|debt\s+instruments?\b|money\s+market\b|cash\s*&\s*(cash\s*)?equiv|net\s+(current\s+asset|receivabl|payabl))/i.test(t)) return false;
+  if (/^(equity\s*&\s*equity\s*related|listed\s*\/\s*awaiting|debt\s+instruments?\b|money\s+market\b|cash\s*&\s*(cash\s*)?equiv|net\s+(current\s+asset|receivabl|payabl))/i.test(t)) return false;
   // Bare debt / money-market instrument-type headers that top each holdings block
   // (JioBlackRock's debt sheets, …) — never a scheme name. Anchored to the whole
   // cell so a real fund like "… Corporate Bond Fund" is untouched.
@@ -130,7 +134,14 @@ function looksLikeSchemeName(t: string): boolean {
  *      this is what fixes the "every scheme shares the house name" bug and also
  *      catches ETFs whose name has no "Fund" in it (e.g. "BHARAT 22 ETF");
  *   3. the first "… Fund" cell that is not itself the house name (Nippon, …). */
-function findSchemeName(rows: Row[]): string {
+function findSchemeName(rows: Row[], sheetName: string): string {
+  for (const row of rows.slice(0, 2)) {
+    if (s(row[0]) === sheetName && looksLikeSchemeName(s(row[1]))) return cleanSchemeName(s(row[1]));
+    for (const cell of row) {
+      const explicit = /^portfolio(?:\s+statement)?\s+of\s+(.+?)\s+as\s+(?:on|at)\b/i.exec(s(cell));
+      if (explicit && looksLikeSchemeName(explicit[1])) return cleanSchemeName(explicit[1]);
+    }
+  }
   // 1) Explicit label.
   for (let i = 0; i < Math.min(rows.length, 6); i++) {
     for (let j = 0; j < rows[i].length; j++) {
@@ -165,6 +176,10 @@ function findSchemeName(rows: Row[]): string {
       if (m && m[1] && /\b(fund|fof|etf|plan|scheme)\b/i.test(m[1]) && !HOUSE_RE.test(m[1])) return cleanSchemeName(m[1]);
     }
   }
+  for (const row of rows.slice(0, 4)) for (const cell of row) {
+    const title = s(cell);
+    if (looksLikeSchemeName(title) && /\b(fund|fof|etf)\b/i.test(title)) return cleanSchemeName(title);
+  }
   // 1c) The scheme name is the first scheme-like line after a "MONTHLY PORTFOLIO
   //     STATEMENT AS ON <date>" banner (Motilal Oswal, whose sheets carry no
   //     house banner ending in "Mutual Fund" and name the fund several rows down).
@@ -196,7 +211,7 @@ function findSchemeName(rows: Row[]): string {
   for (let i = 0; i < Math.min(rows.length, 4); i++) {
     for (const cell of rows[i]) {
       const t = s(cell);
-      if (/\bfund\b/i.test(t) && t.length > 6 && !HOUSE_RE.test(t)) {
+      if (/\bfund\b/i.test(t) && t.length > 6 && looksLikeSchemeName(t)) {
         return cleanSchemeName(t);
       }
     }
@@ -232,14 +247,17 @@ function findAsOf(rows: Row[]): string | null {
         // An explicitly labelled date wins outright — but still has to be a
         // plausible month, or we fall through to keep looking.
         const iso =
-          plausibleAsOf(toIso(cell)) ||
+          plausibleAsOf(toIso(s(cell).replace(/^[\s\S]*?\bas\s+(?:on|of|at)\s*/i, ""))) ||
           plausibleAsOf(toIso(rows[i][j + 1])) ||
           plausibleAsOf(toIso(rows[i + 1]?.[j]));
         if (iso) return iso;
       }
-      const iso = plausibleAsOf(toIso(cell));
-      if (iso && s(cell).length < 30) return iso;
     }
+  }
+  // Only consider unlabelled dates after checking every explicit heading.
+  for (const row of rows.slice(0, 15)) for (const cell of row) {
+    const iso = plausibleAsOf(toIso(cell));
+    if (iso && s(cell).length < 30) return iso;
   }
   return null;
 }
@@ -250,10 +268,15 @@ function parseScheme(name: string, rows: Row[], opts: AmcParseOptions): AmcSchem
   if (!found) return null;
   const { headerIdx, cols } = found;
   const holdings: AmcHolding[] = [];
+  let section: string | null = null;
   for (let i = headerIdx + 1; i < rows.length; i++) {
     const r = rows[i];
     const isinRaw = s(r[cols.isin]).toUpperCase().replace(/\s+/g, "");
-    if (!ISIN_RE.test(isinRaw)) continue; // only real securities
+    if (!ISIN_RE.test(isinRaw)) {
+      const label = r.slice(0, cols.isin).map(s).filter(Boolean).join(" ").trim();
+      if (/^(?:equity(?:\s*&\s*equity related)?|equity and equity related|arbitrage|derivatives?|(?:index[ /&-]*)?stock futures|debt instruments?|money market instruments?|mutual fund units?)$/i.test(label)) section = label;
+      continue;
+    } // only real securities
     const value = num(r[cols.value]);
     const pct = num(r[cols.pct]);
     // Name: usually cols.name, but some AMCs (Kotak) merge the "Name of
@@ -269,6 +292,7 @@ function parseScheme(name: string, rows: Row[], opts: AmcParseOptions): AmcSchem
     }
     holdings.push({
       isin: isinRaw,
+      ...(section ? {sourceSection: section} : {}),
       name,
       industry: cols.industry >= 0 ? s(r[cols.industry]) || null : null,
       quantity: num(r[cols.qty]),
@@ -279,9 +303,22 @@ function parseScheme(name: string, rows: Row[], opts: AmcParseOptions): AmcSchem
   if (holdings.length === 0) return null;
   return {
     schemeCode: name,
-    schemeName: findSchemeName(rows) || name,
+    schemeName: findSchemeName(rows, name) || name,
     asOf: findAsOf(rows),
-    holdings,
+    holdings: holdings.reduce<AmcHolding[]>((out, holding) => {
+      const prior = out.find(h => h.isin === holding.isin);
+      // Distinct cash-equity and arbitrage allocations are both owned shares.
+      // Same-section duplicates remain separate so validation still rejects them.
+      const cash = (h: AmcHolding) => /^(?:equity(?:\s*&\s*equity related)?|equity and equity related|arbitrage)$/i.test(h.sourceSection || "");
+      if (prior && cash(prior) && cash(holding) && prior.sourceSection !== holding.sourceSection && !prior.aggregatedCashSections &&
+          Number.isSafeInteger(prior.quantity) && Number.isSafeInteger(holding.quantity) && prior.quantity! >= 0 && holding.quantity! >= 0 && prior.name === holding.name) {
+        prior.aggregatedCashSections = [prior.sourceSection!, holding.sourceSection!];
+        prior.quantity! += holding.quantity!;
+        prior.marketValueCr = prior.marketValueCr !== null && holding.marketValueCr !== null ? prior.marketValueCr + holding.marketValueCr : null;
+        prior.pctToNav = prior.pctToNav !== null && holding.pctToNav !== null ? prior.pctToNav + holding.pctToNav : null;
+      } else out.push(holding);
+      return out;
+    }, []),
   };
 }
 
@@ -308,13 +345,16 @@ export function parseAmcWorkbook(buf: ArrayBuffer | Buffer, opts: AmcParseOption
           const seg = rows.slice(marks[k].i + 1, k + 1 < marks.length ? marks[k + 1].i : rows.length);
           const scheme = parseScheme(marks[k].name, seg, opts);
           if (scheme) out.push(scheme);
+          else if (opts.strictHoldings && seg.flat().some(v => ISIN_RE.test(s(v)))) throw Error("Unparsed scheme securities");
         }
       } else {
         const scheme = parseScheme(sheetName, rows, opts);
         if (scheme) out.push(scheme);
+        else if (opts.strictHoldings && rows.flat().some(v => ISIN_RE.test(s(v)))) throw Error("Unparsed sheet securities");
       }
-    } catch {
-      /* skip unparseable sheet */
+    } catch (error) {
+      if (opts.strictHoldings) throw error;
+      /* Legacy callers may continue with their existing partial parse. */
     }
   }
   return out;

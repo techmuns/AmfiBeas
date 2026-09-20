@@ -89,6 +89,15 @@ assert(verifiedNonIndianRows([...cashRows.slice(0,-1),['Equity & Equity related'
 assert(!verifiedNonIndianRows([...cashRows,cashRows.at(-1)],'quant Overnight Fund',month),'Multiple total boundaries cannot certify one empty report');
 assert(!verifiedNonIndianRows(cashRows,'Unidentified Fund',month));
 assert(!verifiedNonIndianRows([...cashRows.slice(0,-1),['Underlying scheme','INF090A01021',1],cashRows.at(-1)],'quant Overnight Fund',month));
+const overseasRows=[['Bandhan US Equity Active FOF'],['Portfolio as on 31 August 2026'],[null,'Name of Instrument','ISIN','Quantity','Market Value','% to NAV'],[null,'International Mutual Fund Units'],['2500445USD','Overseas Fund',null,10,100,0.99],[null,'Net Current Assets',null,null,null,0.01],[null,'Grand Total',null,null,null,1]];
+assert(verifiedNonIndianRows(overseasRows,'Bandhan US Equity Active FOF',month));
+assert(!verifiedNonIndianRows(overseasRows.map(r=>r[0]==='2500445USD'?['UNKNOWN',...r.slice(1)]:r),'Bandhan US Equity Active FOF',month));
+assert(!verifiedNonIndianRows(overseasRows.map(r=>r[1]==='International Mutual Fund Units'?[null,'Equity & Equity related']:r),'Bandhan US Equity Active FOF',month));
+assert(!verifiedNonIndianRows(overseasRows.map(r=>r[0]==='2500445USD'?[...r.slice(0,2),'INE090A01021',...r.slice(3)]:r),'Bandhan US Equity Active FOF',month));
+const ilfsSchemes=['2026-08-15','2026-08-31'].flatMap(asOf=>['Series 2A','Series 2B'].map(schemeName=>({schemeName,asOf,holdings:[]})));
+const ilfsOpts={parseVerifiedWorkbook:()=>ilfsSchemes,slug:'il-fs-idf',month,link:{},XLSX:{read:()=>{throw Error('Incomplete month-end portfolios');}}};
+assert.equal(parsePublicWorkbook(null,ilfsOpts).length,2);
+assert.throws(()=>parsePublicWorkbook(null,{...ilfsOpts,parseVerifiedWorkbook:()=>ilfsSchemes.slice(0,-1)}),/Incomplete/);
 const fakeBook={read:()=>({SheetNames:['One'],Sheets:{One:cashRows}}),utils:{sheet_to_json:s=>s}};
 const zero=parsePublicWorkbook(Buffer.alloc(0),{XLSX:fakeBook,parseAmcWorkbook:()=>[],parseVerifiedWorkbook:()=>{throw Error('No Indian positions');},opts:{},month,link:{text:'quant Overnight Fund'}})[0];
 assert.equal(zero.validatedNoIndianHoldings,true);
@@ -116,6 +125,12 @@ for(let pass=0;pass<4;pass++) {
 }
 assert.deepEqual(visited,['a','b','c','d'],'Repeated slow attempts eventually visit every disclosure URL');
 assert.deepEqual(resumeDisclosures(catalogue,{resumeUrl:'removed-file'}),catalogue,'A changed catalogue cannot omit new or corrected files');
+const mixed=[{url:'new',disclosureMonth:month},{url:'old',disclosureMonth:'2026-07'}];
+assert.equal(resumeDisclosures(mixed,{resumeUrl:'old'})[0].url,'new');
+const mixedProgress=await readDisclosures(mixed,{month,read:async url=>{if(url==='old')throw Error('History unavailable');return Buffer.from('ok');},parse:()=>[{asOf:'2026-08-31'}]});
+assert.deepEqual(mixedProgress.byMonth[month],{expectedFiles:1,completedFiles:1,failedFiles:0,pendingFiles:0});
+assert.equal(mixedProgress.byMonth['2026-07'].failedFiles,1);
+assert.equal(mixedProgress.fileFailures[0].month,'2026-07');
 let failedProgress;
 await assert.rejects(readDisclosures(catalogue,{month,concurrency:1,read:async()=>{throw Error('Temporary download failure');},parse:()=>[],onCheckpoint:p=>{failedProgress=p;throw Error('Interrupted');}}),/checkpoint failed/);
 assert.equal(failedProgress.schemes.length,0);assert.equal(failedProgress.resumeUrl,'b','Even an attempt with no parsed schemes retains the unfinished tail');

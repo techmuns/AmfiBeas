@@ -92,7 +92,7 @@ export function extractFileLinks(html: string, pageUrl: string): HarvestedLink[]
 /** Download a set of resolved workbook links → parsed, normalized schemes.
  *  Shared by the page-scrape and json-api tiers. Dedupes primary-host vs CDN
  *  mirrors by filename, and any remaining dup by scheme code + as-of month. */
-export function downloadAndParse(links: HarvestedLink[], opts: AmcParseOptions, referer?: string): { schemes: AmcScheme[]; fileCount: number } {
+export function downloadAndParse(links: HarvestedLink[], opts: AmcParseOptions, referer?: string, read = curlBuffer): { schemes: AmcScheme[]; fileCount: number; expectedFiles: number; completedFiles: number; failedFiles: number } {
   const byFile = new Map<string, HarvestedLink>();
   for (const l of links) {
     // Dedup key is the workbook filename. Most AMCs put it in the path, but some
@@ -105,8 +105,9 @@ export function downloadAndParse(links: HarvestedLink[], opts: AmcParseOptions, 
   }
   const schemes: AmcScheme[] = [];
   const seen = new Set<string>();
+  let completedFiles = 0;
   for (const l of byFile.values()) {
-    const buf = curlBuffer(l.url, referer);
+    const buf = read(l.url, referer);
     if (!buf) continue;
     const head = buf.subarray(0, 64).toString("latin1").trimStart().toLowerCase();
     if (head.startsWith("<!doctype") || head.startsWith("<html")) continue; // walled/HTML
@@ -117,6 +118,7 @@ export function downloadAndParse(links: HarvestedLink[], opts: AmcParseOptions, 
     if (parsed.length === 0) {
       try { parsed = parseZip(buf, opts); } catch { /* skip bad file */ }
     }
+    if (parsed.length) completedFiles++;
     for (const sc of parsed.map(normalizeSchemePct)) {
       // Single-scheme workbooks (one file per fund: JM, Canara) whose header the
       // generic parser can't read leave the scheme name as a column label ("Name
@@ -144,19 +146,22 @@ export function downloadAndParse(links: HarvestedLink[], opts: AmcParseOptions, 
       schemes.push(sc);
     }
   }
-  return { schemes, fileCount: byFile.size };
+  return { schemes, fileCount: byFile.size, expectedFiles: byFile.size, completedFiles, failedFiles: byFile.size - completedFiles };
 }
 
 export interface PageScrapeResult {
   schemes: AmcScheme[];
   usedUrl: string | null;
   fileCount: number;
+  expectedFiles?: number;
+  completedFiles?: number;
+  failedFiles?: number;
 }
 
-/** Override every scheme's as-on date with the disclosure month taken from the
+/** Fill a missing scheme as-on date with the disclosure month taken from the
  *  selected file's name — authoritative, and immune to a workbook whose
  *  per-holding dates (maturities, Tata's layout) the generic parser would
- *  otherwise mistake for the as-on date. No-op if the filename carries no month. */
+ *  otherwise mistake for the as-on date. Existing workbook dates are never overwritten. No-op if the filename carries no month. */
 function stampAsOfFromFilename(schemes: AmcScheme[], picked: HarvestedLink[]): void {
   const best = Math.max(0, ...picked.map((l) => monthScore(`${decodeURIComponent(l.url)} ${l.text}`)));
   if (best <= 0) return;
@@ -164,7 +169,7 @@ function stampAsOfFromFilename(schemes: AmcScheme[], picked: HarvestedLink[]): v
   const month1 = ((best - 1) % 12) + 1;
   const lastDay = new Date(Date.UTC(year, month1, 0)).getUTCDate();
   const iso = `${year}-${String(month1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-  for (const s of schemes) s.asOf = iso;
+  for (const s of schemes) if (!s.asOf) s.asOf = iso;
 }
 
 /** Scrape an AMC's monthly portfolio via curl: for each candidate page, harvest
@@ -181,10 +186,11 @@ export function pageScrapeAmc(cfg: PageScrapeConfig, opts: AmcParseOptions, now:
     if (links.length === 0) continue;
     const picked = selectLatestMonthFiles(links, 200, floorScore, ceilScore);
     if (picked.length === 0) continue;
-    const { schemes, fileCount } = downloadAndParse(picked, opts, cfg.referer ?? pageUrl);
+    const result = downloadAndParse(picked, opts, cfg.referer ?? pageUrl);
+    const { schemes } = result;
     if (schemes.length > 0) {
       stampAsOfFromFilename(schemes, picked);
-      return { schemes, usedUrl: pageUrl, fileCount };
+      return { ...result, usedUrl: pageUrl };
     }
   }
   return { schemes: [], usedUrl: null, fileCount: 0 };

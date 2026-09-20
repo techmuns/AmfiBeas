@@ -194,11 +194,13 @@ export function parseZip(buf: Buffer, opts: AmcParseOptions): AmcScheme[] {
       if (f === zipPath || !/\.(xlsx|xls|csv)$/i.test(f)) continue;
       try {
         merged.push(...parseAmcWorkbook(fs.readFileSync(f), opts));
-      } catch {
-        /* skip an unparseable inner file */
+      } catch (error) {
+        if (opts.strictHoldings) throw error;
+        /* Legacy callers retain their existing partial parse behavior. */
       }
     }
-  } catch {
+  } catch (error) {
+    if (opts.strictHoldings) throw error;
     /* not a real zip / corrupt archive */
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
