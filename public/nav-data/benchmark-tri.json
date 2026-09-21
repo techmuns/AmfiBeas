@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T19:57:05.848Z",
+  "generatedAt": "2026-09-21T21:21:03.352Z",
   "source": "NSE ind_close_all daily CSV (price-return close + per-index dividend yield)",
   "method": "TRI estimate = (1 + price return) × (1 + mean dividend yield over the window) − 1. ESTIMATE, not the published fact-sheet TRI. Benchmark IDENTITY is official (AMC-sourced); this RETURN is reconstructed.",
   "returnMethod": "estimated-tri-from-pri-plus-dividend-yield",
