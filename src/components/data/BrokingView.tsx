@@ -36,7 +36,9 @@ function MomPill({ pct }: { pct: number | null }) {
 }
 
 export function BrokingView() {
-  const { brokers, latestMonth, priorMonth, totalActiveClients, isSample, hasTurnover } = broking;
+  const { brokers, latestMonth, priorMonth, totalActiveClients, marketTotalActiveClients, isSample, hasTurnover } =
+    broking;
+  const marketTotal = marketTotalActiveClients ?? totalActiveClients;
   const max = Math.max(...brokers.map((b) => b.activeClients), 1);
   const leader = brokers[0];
   const withMom = brokers.filter((b) => b.momPct != null);
@@ -59,8 +61,12 @@ export function BrokingView() {
 
       {/* ---- KPI row -------------------------------------------------------- */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label="Market leader" value={leader?.broker ?? "—"} sub={`${leader?.sharePct ?? 0}% of tracked`} />
-        <Kpi label="Tracked active clients" value={fmtClients(totalActiveClients)} sub={`${brokers.length} brokers`} />
+        <Kpi label="Market leader" value={leader?.broker ?? "—"} sub={`${leader?.sharePct ?? 0}% market share`} />
+        <Kpi
+          label="Total active clients (NSE)"
+          value={fmtClients(marketTotal)}
+          sub={`top ${brokers.length} brokers shown`}
+        />
         <Kpi
           label="Biggest gainer (MoM)"
           value={gainers[0]?.broker ?? "—"}
@@ -102,7 +108,7 @@ export function BrokingView() {
           ))}
         </div>
         <p className="mt-3 text-[10px] leading-snug text-muted-foreground/70">
-          Share = % of the tracked brokers&rsquo; total active clients. MoM vs{" "}
+          Share = % of all NSE active clients ({fmtClients(marketTotal)} across all members). MoM vs{" "}
           {priorMonth ? formatMonthLong(priorMonth) : "the prior month"}. Source:{" "}
           {broking.source}.
         </p>
@@ -122,11 +128,11 @@ export function BrokingView() {
           <TurnoverTable rows={brokers.filter((b) => b.turnoverCr != null)} />
         </Card>
       ) : (
-        <Card title="Average daily turnover (ADTO)">
+        <Card title="Average daily turnover by broker">
           <p className="text-[13px] leading-snug text-muted-foreground">
-            Add a <code className="rounded bg-muted px-1 py-0.5 text-[11px]">turnoverCr</code>{" "}
-            column to the monthly broking CSV and per-broker average daily turnover
-            appears here automatically — the other half of the capital-markets read.
+            Per-broker average daily turnover (ADTO) — the value side of the
+            capital-markets read — is coming soon, alongside the active-client base
+            shown above.
           </p>
         </Card>
       )}
