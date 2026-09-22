@@ -6,6 +6,8 @@ import type { CsvColumn } from "@/lib/csv";
 import { downloadXlsx } from "@/lib/xlsx";
 import { cn } from "@/lib/cn";
 
+type MetaCell = string | number | boolean | null;
+
 interface Props<T> {
   rows: readonly T[];
   columns: readonly CsvColumn<T>[];
@@ -13,6 +15,8 @@ interface Props<T> {
   filename: string;
   /** Worksheet tab name (truncated/sanitised to Excel's limits). */
   sheetName?: string;
+  /** Optional title/metadata rows placed above the table header. */
+  meta?: readonly MetaCell[][];
   label?: string;
   className?: string;
   size?: "sm" | "md";
@@ -30,6 +34,7 @@ export function DownloadXlsxButton<T>({
   columns,
   filename,
   sheetName,
+  meta,
   label = "Excel",
   className,
   size = "sm",
@@ -39,7 +44,7 @@ export function DownloadXlsxButton<T>({
   const handleClick = async () => {
     setBusy(true);
     try {
-      await downloadXlsx(rows, columns, filename, sheetName);
+      await downloadXlsx(rows, columns, filename, sheetName, meta);
     } finally {
       setBusy(false);
     }

@@ -50,16 +50,24 @@ function triggerDownload(blob: Blob, filename: string): void {
 /**
  * Build a single-sheet workbook from rows + columns and download it as .xlsx.
  * No-op during SSR (guarded on `window`); `xlsx` is imported on demand.
+ *
+ * `meta` prepends free-form rows above the header (a title block: report name,
+ * "as on" date, source, …), each followed here by nothing — pass a trailing
+ * blank row in `meta` if you want a gap before the table.
  */
 export async function downloadXlsx<T>(
   rows: readonly T[],
   columns: readonly CsvColumn<T>[],
   filename: string,
-  sheetName = "Sheet1"
+  sheetName = "Sheet1",
+  meta?: readonly Cell[][]
 ): Promise<void> {
   if (typeof window === "undefined") return;
   const XLSX = await import("xlsx");
-  const worksheet = XLSX.utils.aoa_to_sheet(rowsToAoa(rows, columns));
+  const aoa = meta && meta.length > 0
+    ? [...meta.map((r) => [...r]), ...rowsToAoa(rows, columns)]
+    : rowsToAoa(rows, columns);
+  const worksheet = XLSX.utils.aoa_to_sheet(aoa);
   const workbook = XLSX.utils.book_new();
   // Excel caps sheet names at 31 chars and forbids a handful of characters.
   const safeName =

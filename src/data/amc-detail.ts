@@ -327,11 +327,38 @@ export interface AmcIndexRow {
   qoqGrowthPct: number | null;
   yoyGrowthPct: number | null;
   isTop7: boolean;
+  /** AAUM (₹ Cr) for each quarter in the export window, oldest → newest,
+   *  aligned to the returned `quarterLabels`. `null` where the AMC had no
+   *  disclosure that quarter. */
+  aaumSeries: (number | null)[];
+  /** Annualised AAUM growth (CAGR %) across the shown window, or null. */
+  cagrPct: number | null;
+}
+
+/** How many trailing quarters of AAUM the /amc export carries. */
+const EXPORT_QUARTERS = 6;
+
+const QUARTER_END_MONTH: Record<string, string> = { Q1: "Mar", Q2: "Jun", Q3: "Sep", Q4: "Dec" };
+const QUARTER_END_DAY: Record<string, string> = { Q1: "31 Mar", Q2: "30 Jun", Q3: "30 Sep", Q4: "31 Dec" };
+
+/** "2026-Q2" → "Jun 2026" (quarter-end month). */
+function quarterEndMonthLabel(quarter: string): string {
+  const [y, q] = quarter.split("-");
+  return QUARTER_END_MONTH[q] ? `${QUARTER_END_MONTH[q]} ${y}` : quarter;
+}
+/** "2026-Q2" → "30 Jun 2026" (quarter-end date). */
+function quarterEndDate(quarter: string): string {
+  const [y, q] = quarter.split("-");
+  return QUARTER_END_DAY[q] ? `${QUARTER_END_DAY[q]} ${y}` : quarter;
 }
 
 function amcIndexRows_impl(): {
   quarter: string;
   fiscalLabel: string;
+  /** Quarter-end month labels for the export window, oldest → newest. */
+  quarterLabels: string[];
+  /** Quarter-end date of the latest quarter, e.g. "30 Jun 2026". */
+  asOnDate: string;
   rows: AmcIndexRow[];
 } | null {
   const q = latestAaumQuarter();
@@ -340,8 +367,38 @@ function amcIndexRows_impl(): {
   if (ranking.length === 0) return null;
   const total = ranking.reduce((s, r) => s + r.avgAum, 0);
   const top7 = new Set(topAumAmcSlugs(7));
+
+  // Trailing window of quarters + per-AMC AAUM lookup for the sequence columns.
+  const allQuarters = Array.from(
+    new Set(amcAaumQuarterlySnapshot.rows.filter((r) => r.status === "ok").map((r) => r.quarter))
+  ).sort();
+  const window = allQuarters.slice(-EXPORT_QUARTERS);
+  const aaumBySlug = new Map<string, Map<string, number>>();
+  for (const r of amcAaumQuarterlySnapshot.rows) {
+    if (r.status !== "ok" || !window.includes(r.quarter)) continue;
+    const inner = aaumBySlug.get(r.amcSlug) ?? new Map<string, number>();
+    inner.set(r.quarter, r.avgAum);
+    aaumBySlug.set(r.amcSlug, inner);
+  }
+
   const rows: AmcIndexRow[] = ranking.map((r, idx) => {
     const growth = amcGrowthMetrics(r.amcSlug);
+    const inner = aaumBySlug.get(r.amcSlug);
+    const aaumSeries = window.map((wq) => inner?.get(wq) ?? null);
+    // CAGR across the window: first → last non-null point, annualised by the
+    // number of quarters between them (4 quarters = 1 year).
+    let cagrPct: number | null = null;
+    const firstIdx = aaumSeries.findIndex((v) => v != null && v > 0);
+    let lastIdx = -1;
+    for (let i = aaumSeries.length - 1; i >= 0; i--) {
+      if (aaumSeries[i] != null && aaumSeries[i]! > 0) { lastIdx = i; break; }
+    }
+    if (firstIdx >= 0 && lastIdx > firstIdx) {
+      const years = (lastIdx - firstIdx) / 4;
+      const first = aaumSeries[firstIdx]!;
+      const last = aaumSeries[lastIdx]!;
+      if (years > 0 && first > 0) cagrPct = (Math.pow(last / first, 1 / years) - 1) * 100;
+    }
     return {
       amcSlug: r.amcSlug,
       displayName: r.displayName ?? r.amcNameAsReported,
@@ -353,9 +410,17 @@ function amcIndexRows_impl(): {
       qoqGrowthPct: growth?.qoqGrowthPct ?? null,
       yoyGrowthPct: growth?.yoyGrowthPct ?? null,
       isTop7: top7.has(r.amcSlug),
+      aaumSeries,
+      cagrPct,
     };
   });
-  return { quarter: q, fiscalLabel: fiscalLabelFromCalendarQuarter(q), rows };
+  return {
+    quarter: q,
+    fiscalLabel: fiscalLabelFromCalendarQuarter(q),
+    quarterLabels: window.map(quarterEndMonthLabel),
+    asOnDate: quarterEndDate(q),
+    rows,
+  };
 }
 
 /** Industry-total AAUM per quarter, used as a reference line when an

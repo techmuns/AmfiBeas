@@ -23,10 +23,18 @@ export interface AmcSearchRow {
   qoqGrowthPct: number | null;
   yoyGrowthPct: number | null;
   isTop7: boolean;
+  /** AAUM (₹ Cr) per quarter in the export window, aligned to `quarterLabels`. */
+  aaumSeries: (number | null)[];
+  /** AAUM CAGR (%) across the window. */
+  cagrPct: number | null;
 }
 
 interface Props {
   rows: readonly AmcSearchRow[];
+  /** Quarter-end month labels for the AAUM sequence, oldest → newest. */
+  quarterLabels: string[];
+  /** Quarter-end date the data is as of, e.g. "30 Jun 2026". */
+  asOnDate: string;
 }
 
 function growthClass(value: number | null): string {
@@ -36,40 +44,49 @@ function growthClass(value: number | null): string {
   return "text-muted-foreground";
 }
 
-const CSV_COLUMNS: CsvColumn<AmcSearchRow>[] = [
-  { key: "rank", header: "Rank" },
-  { key: "displayName", header: "AMC" },
-  { key: "amcSlug", header: "Slug" },
-  { key: "amcNameAsReported", header: "AMFI name" },
-  {
-    key: "avgAum",
-    header: "AAUM (Cr)",
-    format: (v) => (typeof v === "number" ? Number(v.toFixed(2)) : ""),
-  },
-  {
-    key: "marketSharePct",
-    header: "Market share (%)",
-    format: (v) => (typeof v === "number" ? Number(v.toFixed(4)) : ""),
-  },
-  {
-    key: "qoqGrowthPct",
-    header: "QoQ growth (%)",
-    format: (v) => (typeof v === "number" ? Number(v.toFixed(2)) : ""),
-  },
-  {
-    key: "yoyGrowthPct",
-    header: "YoY growth (%)",
-    format: (v) => (typeof v === "number" ? Number(v.toFixed(2)) : ""),
-  },
-  {
-    key: "isTop7",
-    header: "Top 7",
-    format: (v) => (v ? "Y" : "N"),
-  },
-];
+// Clean, fixed decimals for the client export (Noel: share 2 dp, growth 1 dp,
+// AAUM whole ₹ Cr) — no more "random" trailing decimals.
+const dp = (n: number) => (v: unknown) =>
+  typeof v === "number" && Number.isFinite(v) ? Number(v.toFixed(n)) : "";
+const whole = (v: unknown) =>
+  typeof v === "number" && Number.isFinite(v) ? Math.round(v) : "";
 
-export function AmcSearchTable({ rows }: Props) {
+/** Export columns are built from the live quarter labels so the AAUM sequence
+ *  (one column per quarter) matches the data window. Debug-only fields (slug,
+ *  raw AMFI name) are intentionally omitted — the export is for end users. */
+function buildExportColumns(quarterLabels: string[]): CsvColumn<AmcSearchRow>[] {
+  const quarterCols: CsvColumn<AmcSearchRow>[] = quarterLabels.map((label, i) => ({
+    key: "aaumSeries",
+    header: `AAUM ${label} (Cr)`,
+    format: (_v, row) => whole(row.aaumSeries[i]),
+  }));
+  return [
+    { key: "rank", header: "Rank" },
+    { key: "displayName", header: "AMC" },
+    { key: "marketSharePct", header: "Market share (%)", format: dp(2) },
+    { key: "avgAum", header: "AAUM latest (Cr)", format: whole },
+    { key: "qoqGrowthPct", header: "QoQ growth (%)", format: dp(1) },
+    { key: "yoyGrowthPct", header: "YoY growth (%)", format: dp(1) },
+    { key: "cagrPct", header: `AAUM CAGR ${quarterLabels.length}Q (%)`, format: dp(1) },
+    ...quarterCols,
+    { key: "isTop7", header: "Top 7", format: (v) => (v ? "Y" : "N") },
+  ];
+}
+
+export function AmcSearchTable({ rows, quarterLabels, asOnDate }: Props) {
   const [query, setQuery] = useState("");
+
+  const exportColumns = useMemo(() => buildExportColumns(quarterLabels), [quarterLabels]);
+  const exportMeta = useMemo(
+    () => [
+      ["AMCs — AAUM & Market Share"],
+      [`As on: ${asOnDate}`],
+      ["Source: AMFI Fundwise AAUM (quarterly)"],
+      [`Generated: ${new Date().toISOString().slice(0, 10)}`],
+      [],
+    ],
+    [asOnDate]
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -121,8 +138,9 @@ export function AmcSearchTable({ rows }: Props) {
         </div>
         <DownloadXlsxButton
           rows={filtered}
-          columns={CSV_COLUMNS}
-          filename={`amc-aaum-${new Date().toISOString().slice(0, 10)}.xlsx`}
+          columns={exportColumns}
+          meta={exportMeta}
+          filename={`amc-aaum-${asOnDate.replace(/ /g, "-")}.xlsx`}
           sheetName="AMCs"
         />
       </div>
