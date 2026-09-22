@@ -18,7 +18,10 @@ export interface BrokingSnapshot {
   note: string;
   latestMonth: string;
   priorMonth: string | null;
+  /** Sum of the listed brokers' active clients. */
   totalActiveClients: number;
+  /** Whole-NSE active-client total (all members), when supplied — the share base. */
+  marketTotalActiveClients: number | null;
   hasTurnover: boolean;
   brokerCount: number;
   months: string[];

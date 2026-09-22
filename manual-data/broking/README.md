@@ -15,17 +15,28 @@ This is the reliable, free path — about 2 minutes a month:
 
    ```
    broker,activeClients
-   Groww,13000000
-   Zerodha,7950000
+   __market_total__,45450000
+   Groww,13053752
+   Zerodha,6801078
    ...
    ```
 
-   (Optionally add a `turnoverCr` column for average daily turnover per broker
-   when you have it — the tab picks it up automatically.)
+   - The optional `__market_total__` row is the whole-NSE active-client count
+     (all members) so each broker's share is a **true market share** (e.g. Groww
+     28.7%), not a share of just the listed brokers. Omit it and share falls back
+     to the sum of the listed brokers.
+   - Optionally add a `turnoverCr` column for average daily turnover per broker —
+     the tab picks it up automatically.
+   - For month-over-month movers, keep the previous month's file too (the tab
+     compares the two newest months).
 3. Run `npm run build:broking` (CI also runs it on push), commit the refreshed
    `src/data/snapshots/broking.json`, and the dashboard redeploys with it. The
    "sample data" banner disappears once the newest file is a real (non-`.sample`)
    CSV.
+
+**Current data:** `active-clients-2026-05.csv` and `active-clients-2026-06.csv`
+hold real NSE active-clients figures (June 2026), compiled from public reporting
+— so the tab shows live, correct numbers (no sample banner).
 
 ## Why not fully automated? (NSE auto-fetch investigation, Sep 2026)
 
