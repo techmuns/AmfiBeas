@@ -1,52 +1,31 @@
 {
-  "generatedAt": "2026-10-04T19:55:09.693Z",
+  "generatedAt": "2026-10-05T23:04:13.138Z",
   "source": "NSE daily index close CSV",
-  "feedDate": "2026-10-01",
+  "feedDate": "2026-10-05",
   "indices": [
     {
       "indexId": "NIFTY_500",
       "name": "Nifty 500",
-      "level": 21857.75,
-      "asOf": "2026-10-01",
-      "sourceUrl": "https://archives.nseindia.com/content/indices/ind_close_all_01102026.csv"
+      "level": 21971.6,
+      "asOf": "2026-10-05",
+      "sourceUrl": "https://archives.nseindia.com/content/indices/ind_close_all_05102026.csv"
     }
   ],
   "provenance": {
     "attempts": [
       {
+        "date": "2026-10-06",
+        "url": "https://archives.nseindia.com/content/indices/ind_close_all_06102026.csv",
+        "status": 404,
+        "bytes": 3541,
+        "outcome": "HTTP 404 (bytes=3541)"
+      },
+      {
         "date": "2026-10-05",
         "url": "https://archives.nseindia.com/content/indices/ind_close_all_05102026.csv",
-        "status": 404,
-        "bytes": 3532,
-        "outcome": "HTTP 404 (bytes=3532)"
-      },
-      {
-        "date": "2026-10-04",
-        "url": "https://archives.nseindia.com/content/indices/ind_close_all_04102026.csv",
-        "status": 404,
-        "bytes": 3532,
-        "outcome": "HTTP 404 (bytes=3532)"
-      },
-      {
-        "date": "2026-10-03",
-        "url": "https://archives.nseindia.com/content/indices/ind_close_all_03102026.csv",
-        "status": 404,
-        "bytes": 3532,
-        "outcome": "HTTP 404 (bytes=3532)"
-      },
-      {
-        "date": "2026-10-02",
-        "url": "https://archives.nseindia.com/content/indices/ind_close_all_02102026.csv",
-        "status": 404,
-        "bytes": 3532,
-        "outcome": "HTTP 404 (bytes=3532)"
-      },
-      {
-        "date": "2026-10-01",
-        "url": "https://archives.nseindia.com/content/indices/ind_close_all_01102026.csv",
         "status": 200,
-        "bytes": 17852,
-        "outcome": "ok level=21857.75 asOf=(header missing)"
+        "bytes": 17473,
+        "outcome": "ok level=21971.6 asOf=(header missing)"
       }
     ],
     "lookbackDaysTried": 7,
