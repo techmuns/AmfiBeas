@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-10-06T23:37:02.970Z",
+    "generatedAt": "2026-10-06T23:41:19.250Z",
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -165,7 +165,7 @@
     "windowMonths": 3,
     "period": "3Y",
     "universe": 2,
-    "medianFlowPct": 2.7,
+    "medianFlowPct": 2.1,
     "quadrants": {
       "winning": {
         "count": 0,
@@ -180,10 +180,10 @@
             "classification": "Equity : Value / Contra",
             "percentile": 16.7,
             "quartile": "Q4",
-            "perfReturn": 7.4,
+            "perfReturn": 7.5,
             "bookGrowthPct": -3,
-            "navReturnPct": -5.7,
-            "impliedFlowPct": 2.7,
+            "navReturnPct": -5.1,
+            "impliedFlowPct": 2.1,
             "bookCr": 1003,
             "monthsBack": 3
           }
@@ -202,10 +202,10 @@
             "classification": "Equity : ELSS",
             "percentile": 58.3,
             "quartile": "Q2",
-            "perfReturn": 7.3,
+            "perfReturn": 7.4,
             "bookGrowthPct": -3.2,
-            "navReturnPct": -5.7,
-            "impliedFlowPct": 2.6,
+            "navReturnPct": -5.1,
+            "impliedFlowPct": 2,
             "bookCr": 188,
             "monthsBack": 3
           }
@@ -214,42 +214,42 @@
     }
   },
   "persistence": {
-    "asOf": "2026-10-05",
+    "asOf": "2026-10-06",
     "priorWindow": {
-      "from": "2020-10-05",
-      "to": "2023-10-05"
+      "from": "2020-10-06",
+      "to": "2023-10-06"
     },
     "recentWindow": {
-      "from": "2023-10-05",
-      "to": "2026-10-05"
+      "from": "2023-10-06",
+      "to": "2026-10-06"
     },
     "cohorts": 19,
     "funds": 537,
     "minCohort": 8,
     "matrix": [
       [
-        45,
-        31,
-        35,
+        47,
+        30,
+        34,
         28
       ],
       [
         29,
-        38,
         39,
-        25
+        37,
+        26
       ],
       [
+        35,
+        39,
         33,
-        40,
-        32,
-        32
+        30
       ],
       [
-        32,
-        22,
-        31,
-        45
+        28,
+        23,
+        33,
+        46
       ]
     ],
     "rowTotals": [
@@ -258,56 +258,56 @@
       137,
       130
     ],
-    "q1StayPct": 32.4,
-    "q1ToBottomHalfPct": 45.3,
+    "q1StayPct": 33.8,
+    "q1ToBottomHalfPct": 44.6,
     "topStayers": [
       {
         "fund": "SBI Healthcare Opp Fund",
         "classification": "Equity : Sectoral - Pharma",
-        "prior": 16.6,
-        "recent": 22.9
+        "prior": 16.8,
+        "recent": 23.1
+      },
+      {
+        "fund": "SBI Healthcare Opp Fund",
+        "classification": "Equity : Sectoral - Pharma",
+        "prior": 15.5,
+        "recent": 21.9
       },
       {
         "fund": "Motilal Oswal Large & Midcap Fund",
         "classification": "Equity : Large & Mid Cap",
-        "prior": 30.8,
-        "recent": 21.2
+        "prior": 30.7,
+        "recent": 21.5
       },
       {
         "fund": "Motilal Oswal Large & Midcap Fund",
         "classification": "Equity : Large & Mid Cap",
-        "prior": 28.8,
-        "recent": 19.8
+        "prior": 28.7,
+        "recent": 20.1
       },
       {
         "fund": "Edelweiss Mid Cap Fund",
         "classification": "Equity : Mid Cap",
-        "prior": 32,
-        "recent": 19.7
+        "prior": 32.1,
+        "recent": 19.8
       },
       {
         "fund": "DSP India T.I.G.E.R Fund",
         "classification": "Equity : Sectoral - Infrastructure",
-        "prior": 42.2,
-        "recent": 19.1
+        "prior": 42,
+        "recent": 19.5
       },
       {
         "fund": "ICICI Pru Retirement Fund-Pure Equity Plan",
         "classification": "Equity : Flexi Cap",
         "prior": 30.8,
-        "recent": 19
+        "recent": 19.2
       },
       {
         "fund": "Bank of India Flexi Cap Fund",
         "classification": "Equity : Flexi Cap",
-        "prior": 28.8,
-        "recent": 18.7
-      },
-      {
-        "fund": "SBI PSU Fund",
-        "classification": "Equity : Thematic",
-        "prior": 37.6,
-        "recent": 18.5
+        "prior": 28.9,
+        "recent": 18.9
       }
     ]
   }
