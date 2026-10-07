@@ -2,106 +2,2697 @@
   "meta": {
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
-    "generatedAt": "2026-10-07T12:04:02.416Z",
+    "generatedAt": "2026-10-07T12:26:08.531Z",
     "universe": "Active equity schemes only (excludes ETFs, index, international and hybrid funds)",
-    "activeEquityFunds": 3,
+    "activeEquityFunds": 30,
     "metric": "Net Rs Cr bought/sold = change in aggregate shares held x current implied price. Excludes corporate actions (split/bonus). pctOutstanding = net shares traded ÷ company shares outstanding x 100 (null until the screener feed covers the fincode).",
     "topN": 20
   },
   "large": {
-    "bought": [],
-    "sold": []
-  },
-  "mid": {
     "bought": [
       {
-        "company": "Dabur India Ltd",
-        "fincode": "INE016A01026",
-        "netCr": 24,
-        "pctOutstanding": null,
+        "company": "DLF Limited",
+        "fincode": "INE271C01023",
+        "netCr": 2270,
+        "pctOutstanding": 1.6,
         "amcs": [
-          "the"
+          "PPFAS",
+          "Aditya"
         ],
         "schemes": [
           {
-            "fund": "the Quantum Value Fund",
-            "amc": "the",
-            "netCr": 20
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 2244
           },
           {
-            "fund": "the Quantum ELSS Tax Saver Fund",
-            "amc": "the",
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": 17
+          },
+          {
+            "fund": "PPFAS Parag Parikh ELSS Tax Saver Fund",
+            "amc": "PPFAS",
+            "netCr": 9
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Grasim Industries Ltd.",
+        "fincode": "INE047A01021",
+        "netCr": 410,
+        "pctOutstanding": 0.2,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": 357
+          },
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": 60
+          },
+          {
+            "fund": "Aditya Birla Sun Life Business Cycle Fund",
+            "amc": "Aditya",
+            "netCr": 18
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Trent Ltd.",
+        "fincode": "INE849A01020",
+        "netCr": 348,
+        "pctOutstanding": 0.25,
+        "amcs": [
+          "Aditya",
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": 198
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": 149
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "HDFC Bank Ltd.",
+        "fincode": "INE040A01034",
+        "netCr": 286,
+        "pctOutstanding": 0.03,
+        "amcs": [
+          "Aditya",
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": 85
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": 85
+          },
+          {
+            "fund": "Aditya Birla Sun Life Focused Fund",
+            "amc": "Aditya",
+            "netCr": 67
+          },
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": 45
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 3
+          }
+        ]
+      },
+      {
+        "company": "Mahindra & Mahindra Ltd.",
+        "fincode": "INE101A01026",
+        "netCr": 243,
+        "pctOutstanding": 0.07,
+        "amcs": [
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 334
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 1
+          }
+        ]
+      },
+      {
+        "company": "Cipla Limited",
+        "fincode": "INE059A01026",
+        "netCr": 176,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya",
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": 164
+          },
+          {
+            "fund": "Aditya Birla Sun Life Pharma & Healthcare Fund",
+            "amc": "Aditya",
+            "netCr": 12
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Indus Towers Limited",
+        "fincode": "INE121J01017",
+        "netCr": 166,
+        "pctOutstanding": 0.2,
+        "amcs": [
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 200
+          }
+        ]
+      },
+      {
+        "company": "Bajaj Holdings & Investment Limited",
+        "fincode": "INE118A01012",
+        "netCr": 149,
+        "pctOutstanding": null,
+        "amcs": [
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 149
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Bharti Airtel Ltd.",
+        "fincode": "INE397D01024",
+        "netCr": 91,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 198
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 2
+          }
+        ]
+      },
+      {
+        "company": "CG Power and Industrial Solutions Ltd.",
+        "fincode": "INE067A01029",
+        "netCr": 80,
+        "pctOutstanding": 0.06,
+        "amcs": [
+          "Aditya",
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": 80
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Adani Energy Solutions Ltd.",
+        "fincode": "INE931S01010",
+        "netCr": 73,
+        "pctOutstanding": 0.05,
+        "amcs": [
+          "Aditya",
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Focused Fund",
+            "amc": "Aditya",
+            "netCr": 38
+          },
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": 31
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
             "netCr": 4
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Asian Paints Limited",
+        "fincode": "INE021A01026",
+        "netCr": 72,
+        "pctOutstanding": 0.03,
+        "amcs": [
+          "Aditya",
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": 68
+          },
+          {
+            "fund": "Aditya Birla Sun Life Consumption Fund",
+            "amc": "Aditya",
+            "netCr": 4
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Vodafone Idea Ltd.",
+        "fincode": "INE669E01016",
+        "netCr": 68,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya",
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": 36
+          },
+          {
+            "fund": "Aditya Birla Sun Life Digital India Fund",
+            "amc": "Aditya",
+            "netCr": 22
+          },
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": 12
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 2
+          }
+        ]
+      },
+      {
+        "company": "Life Insurance Corporation of India",
+        "fincode": "INE0J1Y01017",
+        "netCr": 64,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": 64
+          }
+        ]
+      },
+      {
+        "company": "Shriram Finance Ltd.",
+        "fincode": "INE721A01047",
+        "netCr": 53,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya",
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": 66
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": 17
+          },
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": 2
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Kotak Mahindra Bank Limited",
+        "fincode": "INE237A01036",
+        "netCr": 44,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "Aditya",
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": 24
+          },
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": 18
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 1
+          }
+        ]
+      },
+      {
+        "company": "Pidilite Industries Ltd.",
+        "fincode": "INE318A01026",
+        "netCr": 43,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya",
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": 43
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Britannia Industries Ltd.",
+        "fincode": "INE216A01030",
+        "netCr": 41,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya",
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": 27
+          },
+          {
+            "fund": "Aditya Birla Sun Life Mnc Fund",
+            "amc": "Aditya",
+            "netCr": 14
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Divi's Laboratories Limited",
+        "fincode": "INE361B01024",
+        "netCr": 40,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya",
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": 40
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Union Bank of India",
+        "fincode": "INE692A01016",
+        "netCr": 33,
+        "pctOutstanding": 0.03,
+        "amcs": [
+          "Aditya",
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life PSU Equity Fund",
+            "amc": "Aditya",
+            "netCr": 33
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
           }
         ]
       }
     ],
-    "sold": []
-  },
-  "small": {
-    "bought": [
+    "sold": [
       {
-        "company": "Time Technoplast Ltd",
-        "fincode": "INE508G01029",
-        "netCr": 4,
-        "pctOutstanding": null,
+        "company": "Avenue Supermarts Ltd.",
+        "fincode": "INE192R01011",
+        "netCr": 610,
+        "pctOutstanding": 0.25,
         "amcs": [
-          "the"
+          "Aditya"
         ],
         "schemes": [
           {
-            "fund": "the Quantum Small Cap Fund",
-            "amc": "the",
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": -287
+          },
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": -270
+          },
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": -53
+          }
+        ]
+      },
+      {
+        "company": "Ultratech Cement Ltd.",
+        "fincode": "INE481G01011",
+        "netCr": 454,
+        "pctOutstanding": 0.15,
+        "amcs": [
+          "Aditya",
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": -346
+          },
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": -33
+          },
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": -33
+          },
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": -25
+          },
+          {
+            "fund": "Aditya Birla Sun Life Business Cycle Fund",
+            "amc": "Aditya",
+            "netCr": -18
+          }
+        ]
+      },
+      {
+        "company": "Sun Pharmaceutical Industries Ltd.",
+        "fincode": "INE044A01036",
+        "netCr": 244,
+        "pctOutstanding": 0.06,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": -190
+          },
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": -30
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": -26
+          }
+        ]
+      },
+      {
+        "company": "Axis Bank Ltd.",
+        "fincode": "INE238A01034",
+        "netCr": 97,
+        "pctOutstanding": 0.03,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": -78
+          },
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": -20
+          }
+        ]
+      },
+      {
+        "company": "Hindustan Aeronautics Ltd.",
+        "fincode": "INE066F01020",
+        "netCr": 73,
+        "pctOutstanding": 0.02,
+        "amcs": [
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": -74
+          }
+        ]
+      },
+      {
+        "company": "Bajaj Finance Ltd.",
+        "fincode": "INE296A01032",
+        "netCr": 66,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": -135
+          }
+        ]
+      },
+      {
+        "company": "Bharat Electronics Ltd.",
+        "fincode": "INE263A01024",
+        "netCr": 65,
+        "pctOutstanding": 0.02,
+        "amcs": [
+          "PPFAS",
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": -49
+          },
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": -16
+          }
+        ]
+      },
+      {
+        "company": "Infosys Ltd.",
+        "fincode": "INE009A01021",
+        "netCr": 64,
+        "pctOutstanding": 0.02,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Focused Fund",
+            "amc": "Aditya",
+            "netCr": -39
+          },
+          {
+            "fund": "Aditya Birla Sun Life ELSS Tax Saver Fund",
+            "amc": "Aditya",
+            "netCr": -27
+          }
+        ]
+      },
+      {
+        "company": "Eternal Ltd.",
+        "fincode": "INE758T01015",
+        "netCr": 61,
+        "pctOutstanding": 0.02,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Digital India Fund",
+            "amc": "Aditya",
+            "netCr": -47
+          },
+          {
+            "fund": "Aditya Birla Sun Life Focused Fund",
+            "amc": "Aditya",
+            "netCr": -15
+          }
+        ]
+      },
+      {
+        "company": "Torrent Pharmaceuticals Ltd.",
+        "fincode": "INE685A01028",
+        "netCr": 56,
+        "pctOutstanding": 0.03,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Consumption Fund",
+            "amc": "Aditya",
+            "netCr": -57
+          }
+        ]
+      },
+      {
+        "company": "Apollo Hospitals Enterprise Ltd.",
+        "fincode": "INE437A01024",
+        "netCr": 47,
+        "pctOutstanding": 0.04,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": -24
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": -24
+          },
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": -4
+          }
+        ]
+      },
+      {
+        "company": "State Bank of India",
+        "fincode": "INE062A01020",
+        "netCr": 42,
+        "pctOutstanding": 0,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": -43
+          }
+        ]
+      },
+      {
+        "company": "Vedanta Ltd.",
+        "fincode": "INE205A01025",
+        "netCr": 37,
+        "pctOutstanding": 0.04,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": -26
+          },
+          {
+            "fund": "Aditya Birla Sun Life Conglomerate Fund",
+            "amc": "Aditya",
+            "netCr": -7
+          },
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": -5
+          }
+        ]
+      },
+      {
+        "company": "Jindal Steel Ltd.",
+        "fincode": "INE749A01030",
+        "netCr": 35,
+        "pctOutstanding": 0.03,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": -37
+          },
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": -26
+          }
+        ]
+      },
+      {
+        "company": "Bharat Heavy Electricals Ltd.",
+        "fincode": "INE257A01026",
+        "netCr": 31,
+        "pctOutstanding": 0.02,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": -31
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Tata Steel Ltd.",
+        "fincode": "INE081A01020",
+        "netCr": 28,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": -39
+          }
+        ]
+      },
+      {
+        "company": "HCL Technologies Limited",
+        "fincode": "INE860A01027",
+        "netCr": 27,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Digital India Fund",
+            "amc": "Aditya",
+            "netCr": -28
+          }
+        ]
+      },
+      {
+        "company": "Tech Mahindra Ltd.",
+        "fincode": "INE669C01036",
+        "netCr": 25,
+        "pctOutstanding": 0.02,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": -34
+          },
+          {
+            "fund": "Aditya Birla Sun Life Conglomerate Fund",
+            "amc": "Aditya",
+            "netCr": -14
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
+            "amc": "Aditya",
+            "netCr": -11
+          }
+        ]
+      },
+      {
+        "company": "Titan Company Ltd.",
+        "fincode": "INE280A01028",
+        "netCr": 25,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": -26
+          }
+        ]
+      },
+      {
+        "company": "SBI Life Insurance Co. Ltd.",
+        "fincode": "INE123W01016",
+        "netCr": 25,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": -25
+          }
+        ]
+      }
+    ]
+  },
+  "mid": {
+    "bought": [
+      {
+        "company": "Petronet LNG Limited",
+        "fincode": "INE347G01014",
+        "netCr": 169,
+        "pctOutstanding": null,
+        "amcs": [
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 169
+          }
+        ]
+      },
+      {
+        "company": "Mankind Pharma Ltd.",
+        "fincode": "INE634S01028",
+        "netCr": 109,
+        "pctOutstanding": 0.11,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": 74
+          },
+          {
+            "fund": "Aditya Birla Sun Life ELSS Tax Saver Fund",
+            "amc": "Aditya",
+            "netCr": 20
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": 11
+          },
+          {
+            "fund": "Aditya Birla Sun Life Consumption Fund",
+            "amc": "Aditya",
             "netCr": 4
           }
         ]
       },
       {
-        "company": "Gujarat Ambuja Exports Ltd",
-        "fincode": "INE036B01030",
-        "netCr": 1,
-        "pctOutstanding": null,
+        "company": "L&T Finance Ltd.",
+        "fincode": "INE498L01015",
+        "netCr": 108,
+        "pctOutstanding": 0.16,
         "amcs": [
-          "the"
+          "Aditya"
         ],
         "schemes": [
           {
-            "fund": "the Quantum Small Cap Fund",
-            "amc": "the",
-            "netCr": 1
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": 76
+          },
+          {
+            "fund": "Aditya Birla Sun Life ELSS Tax Saver Fund",
+            "amc": "Aditya",
+            "netCr": 31
+          }
+        ]
+      },
+      {
+        "company": "Aditya Infotech Ltd.",
+        "fincode": "INE819V01029",
+        "netCr": 92,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Midcap Fund",
+            "amc": "Aditya",
+            "netCr": 40
+          },
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": 32
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
+            "amc": "Aditya",
+            "netCr": 20
+          }
+        ]
+      },
+      {
+        "company": "Kalpataru Projects International Ltd.",
+        "fincode": "INE220B01022",
+        "netCr": 89,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": 84
+          },
+          {
+            "fund": "Aditya Birla Sun Life Infrastructure Fund",
+            "amc": "Aditya",
+            "netCr": 5
+          }
+        ]
+      },
+      {
+        "company": "Biocon Ltd.",
+        "fincode": "INE376G01013",
+        "netCr": 79,
+        "pctOutstanding": 0.14,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Midcap Fund",
+            "amc": "Aditya",
+            "netCr": 38
+          },
+          {
+            "fund": "Aditya Birla Sun Life Focused Fund",
+            "amc": "Aditya",
+            "netCr": 27
+          },
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": 10
+          },
+          {
+            "fund": "Aditya Birla Sun Life Pharma & Healthcare Fund",
+            "amc": "Aditya",
+            "netCr": 4
+          }
+        ]
+      },
+      {
+        "company": "Indraprastha Gas Limited",
+        "fincode": "INE203G01027",
+        "netCr": 77,
+        "pctOutstanding": null,
+        "amcs": [
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 78
+          }
+        ]
+      },
+      {
+        "company": "Ather Energy Ltd.",
+        "fincode": "INE0LEZ01016",
+        "netCr": 77,
+        "pctOutstanding": 0.14,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Focused Fund",
+            "amc": "Aditya",
+            "netCr": 93
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Smallcap 50 Index Fund",
+            "amc": "Aditya",
+            "netCr": 11
+          }
+        ]
+      },
+      {
+        "company": "PNB Housing Finance Ltd.",
+        "fincode": "INE572E01012",
+        "netCr": 68,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": 61
+          },
+          {
+            "fund": "Aditya Birla Sun Life Dividend Yield Fund",
+            "amc": "Aditya",
+            "netCr": 7
+          }
+        ]
+      },
+      {
+        "company": "United Spirits Ltd.",
+        "fincode": "INE854D01024",
+        "netCr": 67,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": 39
+          },
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": 32
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 5
+          }
+        ]
+      },
+      {
+        "company": "Gland Pharma Ltd.",
+        "fincode": "INE068V01023",
+        "netCr": 62,
+        "pctOutstanding": 0.13,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": 48
+          },
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": 14
+          }
+        ]
+      },
+      {
+        "company": "GMR Airports Ltd.",
+        "fincode": "INE776C01039",
+        "netCr": 41,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": 41
+          }
+        ]
+      },
+      {
+        "company": "Ashok Leyland Ltd.",
+        "fincode": "INE208A01029",
+        "netCr": 38,
+        "pctOutstanding": 0.04,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Mnc Fund",
+            "amc": "Aditya",
+            "netCr": 44
+          },
+          {
+            "fund": "Aditya Birla Sun Life Conglomerate Fund",
+            "amc": "Aditya",
+            "netCr": 15
+          }
+        ]
+      },
+      {
+        "company": "One 97 Communications Ltd.",
+        "fincode": "INE982J01020",
+        "netCr": 38,
+        "pctOutstanding": 0.04,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Digital India Fund",
+            "amc": "Aditya",
+            "netCr": 38
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Sona Blw Precision Forgings Ltd.",
+        "fincode": "INE073K01018",
+        "netCr": 34,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": 41
+          },
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": 32
+          }
+        ]
+      },
+      {
+        "company": "Container Corporation of India Ltd.",
+        "fincode": "INE111A01025",
+        "netCr": 32,
+        "pctOutstanding": 0.1,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": 33
+          }
+        ]
+      },
+      {
+        "company": "Astral Ltd.",
+        "fincode": "INE006I01046",
+        "netCr": 27,
+        "pctOutstanding": 0.08,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
+            "amc": "Aditya",
+            "netCr": 14
+          },
+          {
+            "fund": "Aditya Birla Sun Life Midcap Fund",
+            "amc": "Aditya",
+            "netCr": 13
+          }
+        ]
+      },
+      {
+        "company": "Acutaas Chemicals Ltd.",
+        "fincode": "INE00FF01025",
+        "netCr": 26,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": 19
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Smallcap 50 Index Fund",
+            "amc": "Aditya",
+            "netCr": 7
+          }
+        ]
+      },
+      {
+        "company": "Dr. Lal Path labs Ltd.",
+        "fincode": "INE600L01024",
+        "netCr": 23,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Pharma & Healthcare Fund",
+            "amc": "Aditya",
+            "netCr": 14
+          },
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": 10
+          }
+        ]
+      },
+      {
+        "company": "Ambuja Cements Ltd.",
+        "fincode": "INE079A01024",
+        "netCr": 22,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": 22
           }
         ]
       }
     ],
-    "sold": []
+    "sold": [
+      {
+        "company": "The Great Eastern Shipping Company Limited",
+        "fincode": "INE017A01032",
+        "netCr": 195,
+        "pctOutstanding": null,
+        "amcs": [
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": -190
+          },
+          {
+            "fund": "PPFAS Parag Parikh ELSS Tax Saver Fund",
+            "amc": "PPFAS",
+            "netCr": -12
+          }
+        ]
+      },
+      {
+        "company": "Havells India Limited",
+        "fincode": "INE176B01034",
+        "netCr": 115,
+        "pctOutstanding": 0.18,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": -115
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Tube Investments of India Ltd.",
+        "fincode": "INE974X01010",
+        "netCr": 95,
+        "pctOutstanding": 0.21,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": -93
+          },
+          {
+            "fund": "Aditya Birla Sun Life Conglomerate Fund",
+            "amc": "Aditya",
+            "netCr": -3
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Welspun Corp Ltd.",
+        "fincode": "INE191B01025",
+        "netCr": 80,
+        "pctOutstanding": 0.11,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": -65
+          },
+          {
+            "fund": "Aditya Birla Sun Life Conglomerate Fund",
+            "amc": "Aditya",
+            "netCr": -14
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Smallcap 50 Index Fund",
+            "amc": "Aditya",
+            "netCr": -1
+          }
+        ]
+      },
+      {
+        "company": "Bank of Maharashtra",
+        "fincode": "INE457A01014",
+        "netCr": 52,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": -43
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
+            "amc": "Aditya",
+            "netCr": -9
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Lupin Ltd.",
+        "fincode": "INE326A01037",
+        "netCr": 49,
+        "pctOutstanding": 0.05,
+        "amcs": [
+          "Aditya",
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": -44
+          },
+          {
+            "fund": "Aditya Birla Sun Life Esg Integration Strategy Fund",
+            "amc": "Aditya",
+            "netCr": -4
+          },
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": -1
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Voltas Ltd.",
+        "fincode": "INE226A01021",
+        "netCr": 47,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Focused Fund",
+            "amc": "Aditya",
+            "netCr": -47
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Motherson Sumi Wiring India Ltd.",
+        "fincode": "INE0FS801015",
+        "netCr": 47,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Midcap Fund",
+            "amc": "Aditya",
+            "netCr": -47
+          }
+        ]
+      },
+      {
+        "company": "AU Small Finance Bank Ltd.",
+        "fincode": "INE949L01017",
+        "netCr": 41,
+        "pctOutstanding": 0.06,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Focused Fund",
+            "amc": "Aditya",
+            "netCr": -41
+          }
+        ]
+      },
+      {
+        "company": "Cholamandalam Financial Holdings Ltd.",
+        "fincode": "INE149A01033",
+        "netCr": 41,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": -35
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Smallcap 50 Index Fund",
+            "amc": "Aditya",
+            "netCr": -6
+          }
+        ]
+      },
+      {
+        "company": "Angel One Ltd.",
+        "fincode": "INE732I01021",
+        "netCr": 39,
+        "pctOutstanding": 0.16,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Digital India Fund",
+            "amc": "Aditya",
+            "netCr": -18
+          },
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": -13
+          },
+          {
+            "fund": "Aditya Birla Sun Life Dividend Yield Fund",
+            "amc": "Aditya",
+            "netCr": -8
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Smallcap 50 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Prestige Estates Projects Ltd.",
+        "fincode": "INE811K01011",
+        "netCr": 36,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": -36
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Torrent Power Ltd.",
+        "fincode": "INE813H01021",
+        "netCr": 36,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Midcap Fund",
+            "amc": "Aditya",
+            "netCr": -27
+          },
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": -9
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "RBL Bank Ltd.",
+        "fincode": "INE976G01028",
+        "netCr": 35,
+        "pctOutstanding": 0.06,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Mnc Fund",
+            "amc": "Aditya",
+            "netCr": -35
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Smallcap 50 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "The Phoenix Mills Ltd.",
+        "fincode": "INE211B01039",
+        "netCr": 26,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
+            "amc": "Aditya",
+            "netCr": -26
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Apar Industries Ltd.",
+        "fincode": "INE372A01015",
+        "netCr": 25,
+        "pctOutstanding": 0.03,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Midcap Fund",
+            "amc": "Aditya",
+            "netCr": -21
+          },
+          {
+            "fund": "Aditya Birla Sun Life Infrastructure Fund",
+            "amc": "Aditya",
+            "netCr": -4
+          }
+        ]
+      },
+      {
+        "company": "KEI Industries Ltd.",
+        "fincode": "INE878B01027",
+        "netCr": 22,
+        "pctOutstanding": 0.05,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Midcap Fund",
+            "amc": "Aditya",
+            "netCr": -13
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
+            "amc": "Aditya",
+            "netCr": -11
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Meesho Ltd.",
+        "fincode": "INE0VDM01015",
+        "netCr": 22,
+        "pctOutstanding": 0.02,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": -20
+          },
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": -4
+          }
+        ]
+      },
+      {
+        "company": "APL Apollo Tubes Ltd.",
+        "fincode": "INE702C01027",
+        "netCr": 21,
+        "pctOutstanding": 0.03,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": -11
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
+            "amc": "Aditya",
+            "netCr": -10
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Berger Paints India Ltd.",
+        "fincode": "INE463A01038",
+        "netCr": 18,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Midcap Fund",
+            "amc": "Aditya",
+            "netCr": -18
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      }
+    ]
+  },
+  "small": {
+    "bought": [
+      {
+        "company": "National Stock Exchange of India Ltd.",
+        "fincode": "INE721I01024",
+        "netCr": 132,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": 54
+          },
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": 53
+          },
+          {
+            "fund": "Aditya Birla Sun Life Banking and Financial Services Fund",
+            "amc": "Aditya",
+            "netCr": 25
+          }
+        ]
+      },
+      {
+        "company": "Sedemac Mechatronics Ltd.",
+        "fincode": "INE00XB01019",
+        "netCr": 75,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life ELSS Tax Saver Fund",
+            "amc": "Aditya",
+            "netCr": 42
+          },
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": 23
+          },
+          {
+            "fund": "Aditya Birla Sun Life Digital India Fund",
+            "amc": "Aditya",
+            "netCr": 10
+          }
+        ]
+      },
+      {
+        "company": "Dynamatic Technologies Ltd.",
+        "fincode": "INE221B01012",
+        "netCr": 70,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Digital India Fund",
+            "amc": "Aditya",
+            "netCr": 31
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
+            "amc": "Aditya",
+            "netCr": 22
+          },
+          {
+            "fund": "Aditya Birla Sun Life Infrastructure Fund",
+            "amc": "Aditya",
+            "netCr": 17
+          }
+        ]
+      },
+      {
+        "company": "Granules India Ltd.",
+        "fincode": "INE101D01020",
+        "netCr": 47,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": 47
+          }
+        ]
+      },
+      {
+        "company": "Wheels India Ltd.",
+        "fincode": "INE715A01015",
+        "netCr": 41,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": 41
+          }
+        ]
+      },
+      {
+        "company": "Mahanagar Gas Limited",
+        "fincode": "INE002S01010",
+        "netCr": 37,
+        "pctOutstanding": null,
+        "amcs": [
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 49
+          }
+        ]
+      },
+      {
+        "company": "Tilaknagar Industries Ltd.",
+        "fincode": "INE133E01013",
+        "netCr": 27,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Consumption Fund",
+            "amc": "Aditya",
+            "netCr": 19
+          },
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": 8
+          }
+        ]
+      },
+      {
+        "company": "Asset Reconstruction Co India Ltd.",
+        "fincode": "INE148G01016",
+        "netCr": 26,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": 26
+          }
+        ]
+      },
+      {
+        "company": "EID Parry India Limited",
+        "fincode": "INE126A01031",
+        "netCr": 22,
+        "pctOutstanding": 0.21,
+        "amcs": [
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 22
+          }
+        ]
+      },
+      {
+        "company": "CIE Automotive India Limited",
+        "fincode": "INE536H01010",
+        "netCr": 21,
+        "pctOutstanding": null,
+        "amcs": [
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 20
+          },
+          {
+            "fund": "PPFAS Parag Parikh ELSS Tax Saver Fund",
+            "amc": "PPFAS",
+            "netCr": 1
+          }
+        ]
+      },
+      {
+        "company": "Honasa Consumer Ltd.",
+        "fincode": "INE0J5401028",
+        "netCr": 19,
+        "pctOutstanding": 0.14,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Consumption Fund",
+            "amc": "Aditya",
+            "netCr": 19
+          }
+        ]
+      },
+      {
+        "company": "Nesco Limited",
+        "fincode": "INE317F01035",
+        "netCr": 17,
+        "pctOutstanding": null,
+        "amcs": [
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 17
+          }
+        ]
+      },
+      {
+        "company": "Fractal Analytics Ltd.",
+        "fincode": "INE212S01015",
+        "netCr": 17,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
+            "amc": "Aditya",
+            "netCr": 17
+          }
+        ]
+      },
+      {
+        "company": "Carborundum Universal Ltd.",
+        "fincode": "INE120A01034",
+        "netCr": 15,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": 12
+          },
+          {
+            "fund": "Aditya Birla Sun Life Conglomerate Fund",
+            "amc": "Aditya",
+            "netCr": 3
+          }
+        ]
+      },
+      {
+        "company": "Ujjivan Small Finance Bank Ltd.",
+        "fincode": "INE551W01018",
+        "netCr": 14,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": 14
+          }
+        ]
+      },
+      {
+        "company": "Aditya Vision Ltd.",
+        "fincode": "INE679V01027",
+        "netCr": 14,
+        "pctOutstanding": 0.18,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
+            "amc": "Aditya",
+            "netCr": 13
+          },
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "V-Guard Industries Ltd.",
+        "fincode": "INE951I01027",
+        "netCr": 13,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life ELSS Tax Saver Fund",
+            "amc": "Aditya",
+            "netCr": 13
+          }
+        ]
+      },
+      {
+        "company": "Arvind Ltd.",
+        "fincode": "INE034A01011",
+        "netCr": 13,
+        "pctOutstanding": 0.09,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life ELSS Tax Saver Fund",
+            "amc": "Aditya",
+            "netCr": 13
+          }
+        ]
+      },
+      {
+        "company": "Shaily Engineering Plastics Ltd.",
+        "fincode": "INE151G01028",
+        "netCr": 13,
+        "pctOutstanding": 0.1,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": 13
+          }
+        ]
+      },
+      {
+        "company": "Amagi Media Labs Ltd.",
+        "fincode": "INE121R01077",
+        "netCr": 12,
+        "pctOutstanding": 0.1,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": 12
+          }
+        ]
+      }
+    ],
+    "sold": [
+      {
+        "company": "LTM Ltd.",
+        "fincode": "INE214T01019",
+        "netCr": 103,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Digital India Fund",
+            "amc": "Aditya",
+            "netCr": -52
+          },
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": -36
+          },
+          {
+            "fund": "Aditya Birla Sun Life Conglomerate Fund",
+            "amc": "Aditya",
+            "netCr": -16
+          }
+        ]
+      },
+      {
+        "company": "Crompton Greaves Consumer Electricals Ltd",
+        "fincode": "INE299U01018",
+        "netCr": 30,
+        "pctOutstanding": 0.23,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": -30
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Smallcap 50 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Cyient Ltd.",
+        "fincode": "INE136B01020",
+        "netCr": 26,
+        "pctOutstanding": 0.23,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": -17
+          },
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": -10
+          }
+        ]
+      },
+      {
+        "company": "Vinati Organics Ltd.",
+        "fincode": "INE410B01037",
+        "netCr": 25,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": -25
+          }
+        ]
+      },
+      {
+        "company": "Cohance Lifesciences Ltd.",
+        "fincode": "INE03QK01018",
+        "netCr": 24,
+        "pctOutstanding": 0.14,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
+            "amc": "Aditya",
+            "netCr": -21
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Smallcap 50 Index Fund",
+            "amc": "Aditya",
+            "netCr": -3
+          }
+        ]
+      },
+      {
+        "company": "Rolex Rings Ltd.",
+        "fincode": "INE645S01024",
+        "netCr": 22,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Midcap Fund",
+            "amc": "Aditya",
+            "netCr": -22
+          }
+        ]
+      },
+      {
+        "company": "Home First Finance Company India Ltd.",
+        "fincode": "INE481N01025",
+        "netCr": 21,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": -22
+          },
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": -18
+          }
+        ]
+      },
+      {
+        "company": "Milky Mist Dairy Food Ltd.",
+        "fincode": "INE00IT01020",
+        "netCr": 20,
+        "pctOutstanding": 0.08,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Consumption Fund",
+            "amc": "Aditya",
+            "netCr": -15
+          },
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": -5
+          }
+        ]
+      },
+      {
+        "company": "ICRA Limited",
+        "fincode": "INE725G01011",
+        "netCr": 14,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Mnc Fund",
+            "amc": "Aditya",
+            "netCr": -14
+          }
+        ]
+      },
+      {
+        "company": "Urban Company Ltd.",
+        "fincode": "INE0CAZ01013",
+        "netCr": 14,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Digital India Fund",
+            "amc": "Aditya",
+            "netCr": -12
+          },
+          {
+            "fund": "Aditya Birla Sun Life Consumption Fund",
+            "amc": "Aditya",
+            "netCr": -2
+          }
+        ]
+      },
+      {
+        "company": "City Union Bank Ltd.",
+        "fincode": "INE491A01021",
+        "netCr": 12,
+        "pctOutstanding": 0.06,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Banking and Financial Services Fund",
+            "amc": "Aditya",
+            "netCr": -12
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Smallcap 50 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Aster DM Quality Care Ltd.",
+        "fincode": "INE914M01019",
+        "netCr": 12,
+        "pctOutstanding": 0.02,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Nifty Smallcap 50 Index Fund",
+            "amc": "Aditya",
+            "netCr": -8
+          },
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": -6
+          }
+        ]
+      },
+      {
+        "company": "Canara Robeco Asset Management Company Ltd.",
+        "fincode": "INE218I01013",
+        "netCr": 9,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": -5
+          },
+          {
+            "fund": "Aditya Birla Sun Life Banking and Financial Services Fund",
+            "amc": "Aditya",
+            "netCr": -4
+          }
+        ]
+      },
+      {
+        "company": "Mas Financial Services Ltd.",
+        "fincode": "INE348L01012",
+        "netCr": 8,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Banking and Financial Services Fund",
+            "amc": "Aditya",
+            "netCr": -8
+          }
+        ]
+      },
+      {
+        "company": "Vedanta Aluminium Metal Ltd.",
+        "fincode": "INE1CDF01017",
+        "netCr": 8,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Conglomerate Fund",
+            "amc": "Aditya",
+            "netCr": -14
+          }
+        ]
+      },
+      {
+        "company": "Samhi Hotels Ltd.",
+        "fincode": "INE08U801020",
+        "netCr": 7,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": -8
+          }
+        ]
+      },
+      {
+        "company": "INDO-MIM Ltd.",
+        "fincode": "INE084101034",
+        "netCr": 6,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Infrastructure Fund",
+            "amc": "Aditya",
+            "netCr": -6
+          }
+        ]
+      },
+      {
+        "company": "Cyient DLM Ltd.",
+        "fincode": "INE055S01018",
+        "netCr": 6,
+        "pctOutstanding": 0.09,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Digital India Fund",
+            "amc": "Aditya",
+            "netCr": -6
+          }
+        ]
+      },
+      {
+        "company": "Acme Solar Holdings Ltd.",
+        "fincode": "INE622W01025",
+        "netCr": 5,
+        "pctOutstanding": 0.02,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Infrastructure Fund",
+            "amc": "Aditya",
+            "netCr": -5
+          }
+        ]
+      },
+      {
+        "company": "SBI funds Management ltd.",
+        "fincode": "INE640G01020",
+        "netCr": 4,
+        "pctOutstanding": 0,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Banking and Financial Services Fund",
+            "amc": "Aditya",
+            "netCr": -4
+          }
+        ]
+      }
+    ]
   },
   "sectorShifts": {
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
     "rows": [
       {
-        "sector": "Personal Products",
+        "sector": "Realty",
         "direction": "up",
-        "pctCur": 1.73,
-        "pctPrev": 0,
-        "changePp": 1.73,
+        "pctCur": 5.22,
+        "pctPrev": 4.24,
+        "changePp": 0.99,
         "stocks": [
           {
-            "company": "Dabur India Ltd",
-            "netCr": 24,
+            "company": "DLF Limited",
+            "netCr": 2270,
             "amcs": [
-              "the"
+              "PPFAS",
+              "Aditya"
             ],
             "schemes": [
               {
-                "fund": "the Quantum Value Fund",
-                "amc": "the",
-                "netCr": 20,
-                "valueChgCr": 20
+                "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+                "amc": "PPFAS",
+                "netCr": 2244,
+                "valueChgCr": 2187
               },
               {
-                "fund": "the Quantum ELSS Tax Saver Fund",
-                "amc": "the",
+                "fund": "Aditya Birla Sun Life Value Fund",
+                "amc": "Aditya",
+                "netCr": 17,
+                "valueChgCr": 18
+              },
+              {
+                "fund": "PPFAS Parag Parikh ELSS Tax Saver Fund",
+                "amc": "PPFAS",
+                "netCr": 9,
+                "valueChgCr": 10
+              },
+              {
+                "fund": "PPFAS Parag Parikh Large Cap Fund",
+                "amc": "PPFAS",
+                "netCr": 0,
+                "valueChgCr": 0
+              }
+            ]
+          },
+          {
+            "company": "Anant Raj Ltd.",
+            "netCr": 7,
+            "amcs": [
+              "Aditya"
+            ],
+            "schemes": [
+              {
+                "fund": "Aditya Birla Sun Life Value Fund",
+                "amc": "Aditya",
+                "netCr": 7,
+                "valueChgCr": 6
+              }
+            ]
+          },
+          {
+            "company": "Sobha Ltd.",
+            "netCr": 6,
+            "amcs": [
+              "Aditya"
+            ],
+            "schemes": [
+              {
+                "fund": "Aditya Birla Sun Life Value Fund",
+                "amc": "Aditya",
+                "netCr": 13,
+                "valueChgCr": 11
+              }
+            ]
+          },
+          {
+            "company": "Embassy Office Parks REIT",
+            "netCr": 4,
+            "amcs": [
+              "Aditya"
+            ],
+            "schemes": [
+              {
+                "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+                "amc": "Aditya",
+                "netCr": 4,
+                "valueChgCr": 4
+              }
+            ]
+          },
+          {
+            "company": "Lodha Developers Limited",
+            "netCr": 2,
+            "amcs": [
+              "Aditya"
+            ],
+            "schemes": [
+              {
+                "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+                "amc": "Aditya",
                 "netCr": 4,
                 "valueChgCr": 4
               }
@@ -110,68 +2701,412 @@
         ],
         "schemes": [
           {
-            "fund": "the Quantum Value Fund",
-            "amc": "the",
-            "netCr": 20,
-            "valueChgCr": 20
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 2244,
+            "valueChgCr": 2103
           },
           {
-            "fund": "the Quantum ELSS Tax Saver Fund",
-            "amc": "the",
-            "netCr": 4,
-            "valueChgCr": 4
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": 36,
+            "valueChgCr": 35
+          },
+          {
+            "fund": "PPFAS Parag Parikh ELSS Tax Saver Fund",
+            "amc": "PPFAS",
+            "netCr": 9,
+            "valueChgCr": 8
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 7,
+            "valueChgCr": 7
           }
         ]
       },
       {
-        "sector": "Industrial Products",
+        "sector": "Pharmaceuticals & Biotechnology",
         "direction": "up",
-        "pctCur": 1.63,
-        "pctPrev": 1.19,
-        "changePp": 0.44,
+        "pctCur": 5.38,
+        "pctPrev": 5.13,
+        "changePp": 0.24,
         "stocks": [
           {
-            "company": "Time Technoplast Ltd",
-            "netCr": 4,
+            "company": "Cipla Limited",
+            "netCr": 176,
             "amcs": [
-              "the"
+              "Aditya",
+              "PPFAS"
             ],
             "schemes": [
               {
-                "fund": "the Quantum Small Cap Fund",
-                "amc": "the",
+                "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+                "amc": "Aditya",
+                "netCr": 164,
+                "valueChgCr": 186
+              },
+              {
+                "fund": "Aditya Birla Sun Life Pharma & Healthcare Fund",
+                "amc": "Aditya",
+                "netCr": 12,
+                "valueChgCr": 12
+              },
+              {
+                "fund": "PPFAS Parag Parikh Large Cap Fund",
+                "amc": "PPFAS",
+                "netCr": 0,
+                "valueChgCr": 0
+              }
+            ]
+          },
+          {
+            "company": "Mankind Pharma Ltd.",
+            "netCr": 109,
+            "amcs": [
+              "Aditya"
+            ],
+            "schemes": [
+              {
+                "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+                "amc": "Aditya",
+                "netCr": 74,
+                "valueChgCr": 86
+              },
+              {
+                "fund": "Aditya Birla Sun Life ELSS Tax Saver Fund",
+                "amc": "Aditya",
+                "netCr": 20,
+                "valueChgCr": 24
+              },
+              {
+                "fund": "Aditya Birla Sun Life Large Cap Fund",
+                "amc": "Aditya",
+                "netCr": 11,
+                "valueChgCr": 24
+              },
+              {
+                "fund": "Aditya Birla Sun Life Consumption Fund",
+                "amc": "Aditya",
                 "netCr": 4,
-                "valueChgCr": 4
+                "valueChgCr": 5
+              }
+            ]
+          },
+          {
+            "company": "Biocon Ltd.",
+            "netCr": 79,
+            "amcs": [
+              "Aditya"
+            ],
+            "schemes": [
+              {
+                "fund": "Aditya Birla Sun Life Midcap Fund",
+                "amc": "Aditya",
+                "netCr": 38,
+                "valueChgCr": 38
+              },
+              {
+                "fund": "Aditya Birla Sun Life Focused Fund",
+                "amc": "Aditya",
+                "netCr": 27,
+                "valueChgCr": 6
+              },
+              {
+                "fund": "Aditya Birla Sun Life Small Cap Fund",
+                "amc": "Aditya",
+                "netCr": 10,
+                "valueChgCr": 9
+              },
+              {
+                "fund": "Aditya Birla Sun Life Pharma & Healthcare Fund",
+                "amc": "Aditya",
+                "netCr": 4,
+                "valueChgCr": 3
+              }
+            ]
+          },
+          {
+            "company": "Gland Pharma Ltd.",
+            "netCr": 62,
+            "amcs": [
+              "Aditya"
+            ],
+            "schemes": [
+              {
+                "fund": "Aditya Birla Sun Life Value Fund",
+                "amc": "Aditya",
+                "netCr": 48,
+                "valueChgCr": 48
+              },
+              {
+                "fund": "Aditya Birla Sun Life Small Cap Fund",
+                "amc": "Aditya",
+                "netCr": 14,
+                "valueChgCr": 14
+              }
+            ]
+          },
+          {
+            "company": "Granules India Ltd.",
+            "netCr": 47,
+            "amcs": [
+              "Aditya"
+            ],
+            "schemes": [
+              {
+                "fund": "Aditya Birla Sun Life Multi-cap Fund",
+                "amc": "Aditya",
+                "netCr": 47,
+                "valueChgCr": 47
               }
             ]
           }
         ],
         "schemes": [
           {
-            "fund": "the Quantum Small Cap Fund",
-            "amc": "the",
-            "netCr": 4,
-            "valueChgCr": 4
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": 47,
+            "valueChgCr": 63
+          },
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": 47,
+            "valueChgCr": 48
+          },
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": 43,
+            "valueChgCr": 57
+          },
+          {
+            "fund": "Aditya Birla Sun Life Midcap Fund",
+            "amc": "Aditya",
+            "netCr": 38,
+            "valueChgCr": 40
+          },
+          {
+            "fund": "Aditya Birla Sun Life Focused Fund",
+            "amc": "Aditya",
+            "netCr": 27,
+            "valueChgCr": -8
           }
         ]
       },
       {
         "sector": "IT - Software",
         "direction": "down",
-        "pctCur": 13.23,
-        "pctPrev": 14.44,
-        "changePp": -1.21,
-        "stocks": [],
-        "schemes": []
+        "pctCur": 8.91,
+        "pctPrev": 9.65,
+        "changePp": -0.74,
+        "stocks": [
+          {
+            "company": "LTM Ltd.",
+            "netCr": -103,
+            "amcs": [
+              "Aditya"
+            ],
+            "schemes": [
+              {
+                "fund": "Aditya Birla Sun Life Digital India Fund",
+                "amc": "Aditya",
+                "netCr": -52,
+                "valueChgCr": -68
+              },
+              {
+                "fund": "Aditya Birla Sun Life Value Fund",
+                "amc": "Aditya",
+                "netCr": -36,
+                "valueChgCr": -53
+              },
+              {
+                "fund": "Aditya Birla Sun Life Conglomerate Fund",
+                "amc": "Aditya",
+                "netCr": -16,
+                "valueChgCr": -21
+              }
+            ]
+          },
+          {
+            "company": "Infosys Ltd.",
+            "netCr": -64,
+            "amcs": [
+              "Aditya"
+            ],
+            "schemes": [
+              {
+                "fund": "Aditya Birla Sun Life Focused Fund",
+                "amc": "Aditya",
+                "netCr": -39,
+                "valueChgCr": -72
+              },
+              {
+                "fund": "Aditya Birla Sun Life ELSS Tax Saver Fund",
+                "amc": "Aditya",
+                "netCr": -27,
+                "valueChgCr": -64
+              }
+            ]
+          },
+          {
+            "company": "HCL Technologies Limited",
+            "netCr": -27,
+            "amcs": [
+              "Aditya"
+            ],
+            "schemes": [
+              {
+                "fund": "Aditya Birla Sun Life Digital India Fund",
+                "amc": "Aditya",
+                "netCr": -28,
+                "valueChgCr": -38
+              }
+            ]
+          },
+          {
+            "company": "Tech Mahindra Ltd.",
+            "netCr": -25,
+            "amcs": [
+              "Aditya"
+            ],
+            "schemes": [
+              {
+                "fund": "Aditya Birla Sun Life Multi-cap Fund",
+                "amc": "Aditya",
+                "netCr": -34,
+                "valueChgCr": -37
+              },
+              {
+                "fund": "Aditya Birla Sun Life Conglomerate Fund",
+                "amc": "Aditya",
+                "netCr": -14,
+                "valueChgCr": -18
+              },
+              {
+                "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
+                "amc": "Aditya",
+                "netCr": -11,
+                "valueChgCr": -14
+              }
+            ]
+          },
+          {
+            "company": "Persistent Systems Ltd.",
+            "netCr": -16,
+            "amcs": [
+              "Aditya"
+            ],
+            "schemes": [
+              {
+                "fund": "Aditya Birla Sun Life Digital India Fund",
+                "amc": "Aditya",
+                "netCr": -16,
+                "valueChgCr": -24
+              },
+              {
+                "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+                "amc": "Aditya",
+                "netCr": 0,
+                "valueChgCr": -1
+              }
+            ]
+          }
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Digital India Fund",
+            "amc": "Aditya",
+            "netCr": -103,
+            "valueChgCr": -265
+          },
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": -34,
+            "valueChgCr": -75
+          },
+          {
+            "fund": "Aditya Birla Sun Life Focused Fund",
+            "amc": "Aditya",
+            "netCr": -31,
+            "valueChgCr": -117
+          },
+          {
+            "fund": "Aditya Birla Sun Life Conglomerate Fund",
+            "amc": "Aditya",
+            "netCr": -30,
+            "valueChgCr": -44
+          },
+          {
+            "fund": "Aditya Birla Sun Life ELSS Tax Saver Fund",
+            "amc": "Aditya",
+            "netCr": -27,
+            "valueChgCr": -88
+          }
+        ]
       },
       {
-        "sector": "Banks",
+        "sector": "Automobiles",
         "direction": "down",
-        "pctCur": 22.26,
-        "pctPrev": 22.78,
-        "changePp": -0.52,
-        "stocks": [],
-        "schemes": []
+        "pctCur": 6.12,
+        "pctPrev": 6.49,
+        "changePp": -0.37,
+        "stocks": [
+          {
+            "company": "TVS Motor Company Ltd.",
+            "netCr": -14,
+            "amcs": [
+              "Aditya"
+            ],
+            "schemes": [
+              {
+                "fund": "Aditya Birla Sun Life Multi-cap Fund",
+                "amc": "Aditya",
+                "netCr": -50,
+                "valueChgCr": -58
+              }
+            ]
+          },
+          {
+            "company": "Tata Motors Passenger Vehicles Ltd.",
+            "netCr": -14,
+            "amcs": [
+              "Aditya"
+            ],
+            "schemes": [
+              {
+                "fund": "Aditya Birla Sun Life Conglomerate Fund",
+                "amc": "Aditya",
+                "netCr": -14,
+                "valueChgCr": -15
+              }
+            ]
+          }
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": -50,
+            "valueChgCr": -96
+          },
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": -28,
+            "valueChgCr": -216
+          },
+          {
+            "fund": "Aditya Birla Sun Life Conglomerate Fund",
+            "amc": "Aditya",
+            "netCr": -14,
+            "valueChgCr": -24
+          }
+        ]
       }
     ]
   }
