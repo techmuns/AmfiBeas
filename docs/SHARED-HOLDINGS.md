@@ -105,6 +105,13 @@ actual reporting periods without promoting upload dates or fortnightly data.
 Declaration-gated user interfaces remain unresolved; the dated comparison states
 what each anonymously returned public catalogue lists, without claiming that a
 fund house has not published anywhere else.
+The comparison classifies 360 ONE, Bandhan and Quant as
+`access-publication-uncertain` because their residence/declaration interfaces
+remain unresolved. AlphaGrep has the same classification because its disclosure
+webpage separately returned HTTP 502. Their returned catalogue observations are
+retained as evidence, but do not establish September publication absence. Eight
+other sources have no September entry in the checked returned catalogue; that
+observation is also limited to the route and check time.
 
 The dated [source check comparison](mf-source-checks-2026-10-08.csv) records the
 published baseline, unmodified isolated replay and repaired isolated replay for
