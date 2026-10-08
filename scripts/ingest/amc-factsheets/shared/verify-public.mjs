@@ -11,8 +11,9 @@ assert.equal(hsbcSchemeIdentity(copiedTitle,[],'hsbc corporate bond fund'),copie
 const fullName={schemeName:'HSBC Large & Mid Cap Fund'};assert.equal(hsbcSchemeIdentity(fullName,[],'hsbc large mid cap fund'),fullName,'Do not rewrite genuine headings to abbreviated filenames');
 for(const rows of [[],[['HSBC Gold ETF Fund of Fund']],riskometer.concat(riskometer),[['HSBC Other Fund','Scheme Riskometer','Scheme Benchmark Riskometer']]])assert.throws(()=>hsbcSchemeIdentity(copiedTitle,rows,'hsbc gold etf fof'),e=>e.code==='SCHEME_IDENTITY');
 const one='https://s3.ap-south-1.amazonaws.com/x-web-s3.360.one/IN_MF_MONTHLY_PORTFOLIO_Aug2026_Final_hash.xls';
-assert.deepEqual(oneDisclosures(`{"month":"null","documents":[{"fileName":"August","fileUrl":"${one}"},{"fileName":"July","fileUrl":"${one}"}]}`,month).map(l=>l.url),[one]);
-assert.throws(()=>oneDisclosures(`{"fileName":"August","fileUrl":"${one.replace('2026','2025')}"}`,month),/unavailable/);
+const oneCatalogue=url=>`<script id="__NEXT_DATA__">${JSON.stringify({title:'Monthly Portfolio',yearlyData:[{year:'Monthly Portfolio 2026',monthlyData:[{month:'null',documentGroups:[{documents:[{fileName:'August',fileUrl:url}]}]}]}]})}</script>`;
+assert.deepEqual(oneDisclosures(oneCatalogue(one),month).map(l=>l.url),[one]);
+assert.throws(()=>oneDisclosures(oneCatalogue(one.replace('2026','2025')),month),/month mismatch/);
 assert.throws(()=>publicUrl('mirae','https://other.test/portfolio.xlsx'),/host/);
 assert.throws(()=>publicUrl('mirae','https://user:secret@www.miraeassetmf.co.in/file.xlsx'),/host/);
 assert.equal(anchorFiles('<a href="/a%20b.xlsx?x=1&amp;y=2">Fund &amp; name</a>','https://www.licmf.com')[0].text,'Fund & name');
@@ -23,7 +24,7 @@ const mirae=await publicDisclosures('mirae',month,async(url,{body})=>{
   return reply({ReturnCode:'0',DataCount:201,Data:Array.from({length:count},(_,n)=>({Id:String(first+n),Title:`Portfolio Details as on 31st ${first===200?'August':'July'} 2026 for Mirae Asset Fund ${n}`,URL:`docs/default-source/portfolios/${first+n}.xlsx`}))});
 });
 assert.deepEqual(calls,[1,2,3]);assert.equal(mirae.length,1);assert.match(mirae[0].url,/\/portfolios\/200.xlsx$/);
-const history=await publicDisclosures('mirae',month,async()=>reply({ReturnCode:'0',DataCount:4,Data:['August','May','July','June'].map((m,n)=>({Id:String(n),Title:`Portfolio Details as on 31st ${m} 2026 for Mirae Asset Fund`,URL:`/docs/${m}.xlsx`}))}),{includeHistory:true});
+const history=await publicDisclosures('mirae',month,async()=>reply({ReturnCode:'0',DataCount:4,Data:['August','May','July','June'].map((m,n)=>({Id:String(n),Title:`Portfolio Details as on ${m==='June'?'30th':'31st'} ${m} 2026 for Mirae Asset Fund`,URL:`/docs/${m}.xlsx`}))}),{includeHistory:true});
 assert.deepEqual(history.map(l=>l.disclosureMonth),['2026-08','2026-07','2026-06','2026-05']);
 const restored=await readDisclosures(history,{month,read:async url=>Buffer.from(url),parse:(buffer,link)=>[{schemeName:link.text,asOf:link.disclosureMonth+'-01'}]});
 assert.equal(restored.failedFiles,0);assert.equal(restored.schemes.length,4);
@@ -39,11 +40,12 @@ const union=await publicDisclosures('union',month,async url=>{
 assert.equal(union[0].text,'Union Fund');
 await assert.rejects(publicDisclosures('union',month,async()=>reply({'@odata.count':2,value:[]})),/Incomplete/);
 const quant=await publicDisclosures('quant','2027-01',async(url,{body})=>{
+  if(url.endsWith('displaydisclouser1')){assert.equal(body.id,'2027');return reply({d:"<li id='1'>Jan</li>"});}
   assert.equal(body.id,'1');assert.equal(body.tab,'2027');
   return reply({d:"<a href='/Admin/disclouser/quant_Fund_31_Jan_2027.xlsx'>quant Fund</a>"});
 });
 assert.equal(quant.length,1);
-await assert.rejects(publicDisclosures('quant',month,async()=>reply({d:"<a href='/Admin/disclouser/quant_Fund_31_Jul_2026.xlsx'>quant Fund</a>"})),/month mismatch/);
+await assert.rejects(publicDisclosures('quant',month,async url=>reply({d:url.endsWith('displaydisclouser1')?"<li id='8'>Aug</li>":"<a href='/Admin/disclouser/quant_Fund_31_Jul_2026.xlsx'>quant Fund</a>"})),/month mismatch/);
 const lic=await publicDisclosures('lic',month,async(url,options)=>{
   if(url.endsWith('consolidated-portfolio'))return Buffer.from('<option value="900">Monthly Portfolio</option>');
   assert.match(options.body,/id=900/);
@@ -102,9 +104,9 @@ assert(!verifiedNonIndianRows(overseasRows.map(r=>r[0]==='2500445USD'?['UNKNOWN'
 assert(!verifiedNonIndianRows(overseasRows.map(r=>r[1]==='International Mutual Fund Units'?[null,'Equity & Equity related']:r),'Bandhan US Equity Active FOF',month));
 assert(!verifiedNonIndianRows(overseasRows.map(r=>r[0]==='2500445USD'?[...r.slice(0,2),'INE090A01021',...r.slice(3)]:r),'Bandhan US Equity Active FOF',month));
 const ilfsSchemes=['2026-08-15','2026-08-31'].flatMap(asOf=>['Series 2A','Series 2B'].map(schemeName=>({schemeName,asOf,holdings:[]})));
-const ilfsOpts={parseVerifiedWorkbook:()=>ilfsSchemes,slug:'il-fs-idf',month,link:{},XLSX:{read:()=>{throw Error('Incomplete month-end portfolios');}}};
+const ilfsOpts={parseAmcWorkbook:()=>ilfsSchemes,slug:'il-fs-idf',month,link:{},XLSX:{read:()=>{throw Error('Incomplete month-end portfolios');}}};
 assert.equal(parsePublicWorkbook(null,ilfsOpts).length,2);
-assert.throws(()=>parsePublicWorkbook(null,{...ilfsOpts,parseVerifiedWorkbook:()=>ilfsSchemes.slice(0,-1)}),/Incomplete/);
+assert.throws(()=>parsePublicWorkbook(null,{...ilfsOpts,parseAmcWorkbook:()=>ilfsSchemes.slice(0,-1)}),/Incomplete/);
 const fakeBook={read:()=>({SheetNames:['One'],Sheets:{One:cashRows}}),utils:{sheet_to_json:s=>s}};
 const zero=parsePublicWorkbook(Buffer.alloc(0),{XLSX:fakeBook,parseAmcWorkbook:()=>[],parseVerifiedWorkbook:()=>{throw Error('No Indian positions');},opts:{},month,link:{text:'quant Overnight Fund'}})[0];
 assert.equal(zero.validatedNoIndianHoldings,true);

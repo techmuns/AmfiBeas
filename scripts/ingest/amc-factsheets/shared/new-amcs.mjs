@@ -19,6 +19,12 @@ export function nextRecords(html) {
     try{const value=JSON.parse(match[1]);if(typeof value[1]==='string')stream+=value[1];}catch{/* Non-data chunk. */}
   }
   function visit(value) {if(!value||typeof value!=='object')return;found.push(value);for(const child of Object.values(value))visit(child);}
+  // Pages Router sites publish the same catalogue as ordinary JSON instead of
+  // App Router data chunks. Parse that script as data, never client JavaScript.
+  if(!stream) {
+    const data=/<script\b[^>]*\bid=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i.exec(html);
+    if(data)visit(JSON.parse(data[1]));
+  }
   for(const line of stream.split('\n')) {const match=/^[\da-f]+:(.*)$/.exec(line);if(match)try{visit(JSON.parse(match[1]));}catch{/* Module references are not JSON objects. */}}
   return found;
 }

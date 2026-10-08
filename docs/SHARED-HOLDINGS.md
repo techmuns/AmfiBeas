@@ -87,6 +87,25 @@ September regression fixtures retain genuine published bytes or exact catalogue
 fragments, with source URLs and SHA-256 hashes in `shared/fixtures/provenance.json`.
 Validated catalogues with no target-period files report `target-period-not-listed`;
 transport failures and access refusals never establish publication absence.
+
+The isolated September replay improved published current coverage from 17/57 to
+25/57 (unmodified local replay: 18/57). Nine sources validate older complete
+periods, four remain partial and nineteen are unavailable for this attempt.
+All 52 original snapshot identities and every retained period survive; there are
+53 snapshots after the repair. A completed capture still reports partial coverage.
+
+Bajaj's new public download API uses fiscal-year options (2026-27), then its
+Monthly Portfolio category and a published month value. The September workbook
+has 25 schemes and OOXML bytes despite its .xls suffix. IL&FS's September label
+links an August-named replacement workbook: verify every parsed scheme, require
+matching identities for fortnightly reports, and select only the exact month-end
+statements. LIC's conflicting equity label/debt filename remains a validation
+failure. Structured Next catalogues and complete Wealth/Mirae pagination expose
+actual reporting periods without promoting upload dates or fortnightly data.
+Declaration-gated user interfaces remain unresolved; the dated comparison states
+what each anonymously returned public catalogue lists, without claiming that a
+fund house has not published anywhere else.
+
 The dated [source check comparison](mf-source-checks-2026-10-08.csv) records the
 published baseline, unmodified isolated replay and repaired isolated replay for
 all 57 AMCs. These are local verification results; they do not update the feed.

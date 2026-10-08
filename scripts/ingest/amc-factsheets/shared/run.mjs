@@ -78,6 +78,7 @@ for(const entry of index.amcs) {
       const links=resumeDisclosures(await publicDisclosures(entry.slug,month,read,{axisPublicToken,includeHistory:true}),priorCheck);
       const XLSX=await import(pathToFileURL(path.join(root,'node_modules/xlsx/xlsx.mjs')).href);
       const parse=(buffer,link)=>{
+        if(entry.slug==='dsp'&&/\.zip$/i.test(new URL(link.url).pathname))return parseZip(buffer,opts);
         const schemes=parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedWorkbook:parseQuantumWorkbook,opts,month:link.disclosureMonth||month,link,slug:entry.slug,identifyScheme:findSchemeName});
         if(schemes.length===1&&/fund|etf/i.test(link.text||'')&&(/name of instrument|portfolio statement|^\s*\(|open[ -]?ended?\s+(scheme|fund)/i.test(schemes[0].schemeName)||schemes[0].schemeName.trim().length<6))schemes[0].schemeName=link.text;
         return schemes;

@@ -5,6 +5,7 @@ import {promisify} from 'node:util';
 import {monthKey,previousMonth} from './dates.mjs';
 import {CATALOGUE_PAGES,CATALOGUE_HOSTS,catalogueDisclosures} from './catalogues.mjs';
 import {sourceFailure,periodNotListed} from './source-errors.mjs';
+import {nextRecords} from './new-amcs.mjs';
 const run=promisify(execFile);
 const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
 export const PUBLIC_PAGES={
@@ -82,11 +83,11 @@ export function publicReader(slug,{execute=run}={}) {
   };
 }
 const plain=value=>String(value||'').replace(/<[^>]*>/g,' ').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').replace(/\s+/g,' ').trim();
-export function anchorFiles(html,base) {
+export function anchorFiles(html,base,{archives=false}={}) {
   const out=[];
   for(const match of String(html).matchAll(/<a\b[^>]*\bhref\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
     const url=new URL(match[1].replace(/&amp;/g,'&'),base);
-    if(/\.xlsx?$/i.test(url.pathname))out.push({url:url.href,text:plain(match[2])});
+    if(/\.xlsx?$/i.test(url.pathname)||archives&&/\.zip$/i.test(url.pathname))out.push({url:url.href,text:plain(match[2])});
   }
   return out;
 }
@@ -94,7 +95,7 @@ function uniqueFiles(slug,links) {
   const found=new Map();
   for(const link of links){
     const url=publicUrl(slug,link.url);
-    if(!/\.xlsx?$/i.test(new URL(url).pathname)&&!(slug==='lakshya'&&new URL(url).pathname==='/api/ext/disclosures/portfolio-disclosure/download'))throw Error('Unexpected disclosure format');
+    if(!/\.xlsx?$/i.test(new URL(url).pathname)&&!(slug==='dsp'&&/\.zip$/i.test(new URL(url).pathname))&&!(slug==='lakshya'&&new URL(url).pathname==='/api/ext/disclosures/portfolio-disclosure/download'))throw Error('Unexpected disclosure format');
     if(found.has(url)&&found.get(url).disclosureMonth!==link.disclosureMonth)throw Error('Disclosure file period ambiguous');
     found.set(url,{...link,url});
   }
@@ -102,12 +103,19 @@ function uniqueFiles(slug,links) {
   return [...found.values()];
 }
 export function oneDisclosures(html,month) {
-  const text=html.replace(/\\"/g,'"').replace(/\\\//g,'/'),links=[];
-  // The latest year now has month:"null" with August/July in fileName instead.
-  for(const match of text.matchAll(/"fileName":"([A-Za-z]+)"\s*,\s*"fileUrl":"(https:[^"]+\/IN_MF_MONTHLY_PORTFOLIO_([A-Za-z]+)_?(20\d{2})[^"/]*\.xlsx?)"/g)) {
-    const label=monthKey(`${match[1].slice(0,3)}-${match[4]}`),file=monthKey(`${match[3].slice(0,3)}-${match[4]}`);
-    if(label===month&&file===month)links.push({url:match[2],text:month});
+  const groups=nextRecords(html).filter(v=>v.title==='Monthly Portfolio'&&Array.isArray(v.yearlyData)),links=[],periods=new Set();
+  if(groups.length!==1)throw Error('Monthly catalogue missing');
+  for(const year of groups[0].yearlyData) {
+    const y=/^Monthly Portfolio (20\d{2})$/.exec(year.year||'')?.[1];
+    if(!y||!Array.isArray(year.monthlyData))throw Error('Invalid reporting-year catalogue');
+    if(y!==month.slice(0,4))continue;
+    for(const section of year.monthlyData)for(const group of section.documentGroups||[])for(const doc of group.documents||[]) {
+      const label=monthKey(`${String(doc.fileName).slice(0,3)}-${y}`),file=/\/IN_MF_MONTHLY_PORTFOLIO_([A-Za-z]+)_?(20\d{2})[^/]*\.xlsx?$/i.exec(new URL(doc.fileUrl).pathname);
+      if(!label||!file||monthKey(`${file[1].slice(0,3)}-${file[2]}`)!==label)throw Error('Disclosure index month mismatch');
+      periods.add(label);if(label===month)links.push({url:doc.fileUrl,text:month});
+    }
   }
+  if(!links.length)throw periodNotListed(month,[...periods]);
   return uniqueFiles('360-one',links);
 }
 const jsonReply=buffer=>JSON.parse(buffer.toString('utf8'));
@@ -124,7 +132,7 @@ export async function publicDisclosures(slug,month,read,{axisPublicToken,include
   }
   if(slug==='360-one')return oneDisclosures(await html(page),month);
   if(slug==='bandhan') {
-    const ids=new Set();let first=null,finished=false;
+    const ids=new Set(),periods=new Set();let first=null,finished=false;
     const query=p=>{const url=new URL('https://cmsnew.bandhanmutual.com/wp-json/finance-api/v1/posts/scheme-portfolios');url.search=new URLSearchParams({title:`${name} ${year}`,posts_per_page:'100',page:String(p)});return url.href;};
     for(let p=1;p<=100;p++) {
       const data=await json(query(p));
@@ -136,11 +144,12 @@ export async function publicDisclosures(slug,month,read,{axisPublicToken,include
         if(!Number.isSafeInteger(item.id)||ids.has(item.id))throw Error('Repeated disclosure page');ids.add(item.id);
         if(!/monthly/i.test(item.sub_category||''))continue;
         const end=new Date(Date.UTC(year,num,0)).getUTCDate();
-        const dated=/(\d{1,2}) ([A-Za-z]+) (20\d{2})$/.exec(item.title||'');
+        const dated=/(\d{1,2})\s+([A-Za-z]+)\s+(20\d{2})$/.exec(item.title||'');
         if(!dated)throw Error('Disclosure index month missing');
         // Title search also matches a scheme's maturity year, so older August
         // reports can match "August 2026". Use the actual trailing report date.
-        if(monthKey(`${dated[2].slice(0,3)}-${dated[3]}`)!==month)continue;
+        const period=monthKey(`${dated[2].slice(0,3)}-${dated[3]}`);if(!period)throw Error('Disclosure index month mismatch');periods.add(period);
+        if(period!==month)continue;
         if(Number(dated[1])!==end)throw Error('Disclosure index month mismatch');
         const files=item.acf_fields?.disclosure_files;
         if(!Array.isArray(files)||!files.length)throw Error('Missing monthly file');
@@ -149,7 +158,14 @@ export async function publicDisclosures(slug,month,read,{axisPublicToken,include
     }
     if(!finished)throw Error('Incomplete disclosure index');
     if(JSON.stringify((await json(query(1))).data)!==first)throw Error('Disclosure index changed');
+    if(!links.length)throw periodNotListed(month,[...periods]);
   } else if(slug==='quant') {
+    const category='MONTHLY PORTFOLIO - FUND - WISE';
+    const selector=await json('https://quantmutual.com/statutorydisclosures.aspx/displaydisclouser1',{body:{id:String(year),cat:category}});
+    if(typeof selector.d!=='string')throw Error('Invalid disclosure index');
+    const options=[...selector.d.matchAll(/<li\b[^>]*\bid=["'](\d{1,2})["'][^>]*>([A-Za-z]{3})<\/li>/g)];
+    if(!options.length||new Set(options.map(o=>o[1])).size!==options.length||options.some(o=>months[Number(o[1])-1]?.slice(0,3)!==o[2]))throw Error('Invalid disclosure index');
+    if(!options.some(o=>Number(o[1])===num))throw periodNotListed(month,options.map(o=>`${year}-${String(o[1]).padStart(2,'0')}`));
     const data=await json('https://quantmutual.com/statutorydisclosures.aspx/displaydisclouser2',{body:{id:String(num),cat:'MONTHLY PORTFOLIO - FUND - WISE',tab:String(year)}});
     if(typeof data.d!=='string')throw Error('Invalid disclosure index');
     links=anchorFiles(data.d,page);
@@ -158,7 +174,7 @@ export async function publicDisclosures(slug,month,read,{axisPublicToken,include
     const wanted=new Set([month]);if(includeHistory){let prior=month;for(let i=0;i<3;i++){prior=previousMonth(prior);wanted.add(prior);}}
     // Read the complete published catalogue, not just the first ten results or
     // guessed filenames. Page counts and unique IDs establish traversal coverage.
-    let total=null,received=0;const ids=new Set();
+    let total=null,received=0;const ids=new Set(),periods=new Set();
     for(let pgno=1;pgno<=100;pgno++) {
       const data=await json('https://www.miraeassetmf.co.in/AjaxService/GetDownloadsData',{body:{request:{modulename:'portfolio_tab1',pgno,pgsize:100}}});
       if(data.ReturnCode!=='0'||!Array.isArray(data.Data)||!Number.isSafeInteger(data.DataCount)||data.DataCount<0)throw Error('Invalid disclosure index');
@@ -168,11 +184,16 @@ export async function publicDisclosures(slug,month,read,{axisPublicToken,include
         if(!item.Id||ids.has(item.Id))throw Error('Repeated disclosure page');ids.add(item.Id);received++;
         const date=/as on (\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)\s+(20\d{2})/i.exec(item.Title||'');
         const disclosed=date&&monthKey(`${date[2].slice(0,3)}-${date[3]}`);
-        if(wanted.has(disclosed))links.push({url:new URL('/'+String(item.URL).replace(/^\//,''),page).href,text:plain(item.Title).replace(/^.*?\sfor\s+/i,''),disclosureMonth:disclosed});
+        if(disclosed)periods.add(disclosed);
+        if(wanted.has(disclosed)) {
+          if(Number(date[1])!==new Date(Date.UTC(Number(date[3]),Number(disclosed.slice(5)),0)).getUTCDate())throw Error('Disclosure index month mismatch');
+          links.push({url:new URL('/'+String(item.URL).replace(/^\//,''),page).href,text:plain(item.Title).replace(/^.*?\sfor\s+/i,''),disclosureMonth:disclosed});
+        }
       }
       if(received===total)break;
       if(received>total||pgno===100)throw Error('Incomplete disclosure index');
     }
+    if(!links.some(l=>l.disclosureMonth===month))throw periodNotListed(month,[...periods]);
   } else if(slug==='union') {
     // Filter at the source, then page every match; newer non-portfolio documents
     // previously pushed this month's reports outside the unfiltered first page.
@@ -197,6 +218,7 @@ export async function publicDisclosures(slug,month,read,{axisPublicToken,include
     if(!id)throw Error('Monthly catalogue missing');
     const data=await html('https://www.licmf.com/downloads/consolidated-portfolio-files',{body:new URLSearchParams({id,month:String(num),year:String(year)}).toString(),contentType:'application/x-www-form-urlencoded'});
     links=anchorFiles(data,page);
+    if(links.some(l=>/Monthly (Debt|Equity) Portfolio/i.test(decodeURIComponent(new URL(l.url).pathname))&&/Monthly (Debt|Equity) Portfolio/i.exec(decodeURIComponent(new URL(l.url).pathname))[1].toLowerCase()!==/Monthly Portfolio (Debt|Equity)/i.exec(l.text)?.[1]?.toLowerCase()))throw Object.assign(Error('Disclosure catalogue category conflict'),{code:'SOURCE_INDEX_CONFLICT'});
     if(!links.some(l=>/Equity/i.test(l.text))||!links.some(l=>/Debt/i.test(l.text)))throw Error('Incomplete consolidated disclosure');
     if(links.some(l=>!new RegExp(`${name}\\s+\\d{1,2},\\s*${year}`,'i').test(l.text)))throw Error('Disclosure index month mismatch');
   } else if(slug==='sundaram') {
@@ -308,13 +330,15 @@ export function hsbcSchemeIdentity(scheme,rows,label) {
 }
 export function parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedWorkbook,opts,month,link,slug,identifyScheme}) {
   try{
-    let schemes=parseVerifiedWorkbook(buffer,{XLSX,parseAmcWorkbook,opts,month});
+    // The generic monthly validator rejects mixed reporting days before the
+    // IL&FS-specific selection can run. Parse its complete inventory first.
+    let schemes=slug==='il-fs-idf'?parseAmcWorkbook(buffer,opts):parseVerifiedWorkbook(buffer,{XLSX,parseAmcWorkbook,opts,month});
     // IL&FS publishes both fortnightly and month-end portfolios in one workbook.
     // Every named fortnightly scheme must have a matching month-end report.
     if(slug==='il-fs-idf') {
       const date=month+'-'+new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5,7)),0)).getUTCDate();
       const monthly=schemes.filter(s=>s.asOf===date),names=new Set(monthly.map(s=>s.schemeName));
-      if(!monthly.length||schemes.some(s=>!names.has(s.schemeName)))throw Error('Incomplete month-end portfolios');
+      if(!monthly.length||names.size!==monthly.length||schemes.some(s=>!names.has(s.schemeName)||![month+'-15',date].includes(s.asOf)))throw Error('Incomplete month-end portfolios');
       schemes=monthly;
     }
     for(const scheme of schemes)if(/^mutual fund units$/i.test(scheme.schemeName)) {

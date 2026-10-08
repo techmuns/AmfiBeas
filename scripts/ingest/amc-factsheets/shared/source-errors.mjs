@@ -3,6 +3,7 @@ export function periodNotListed(targetMonth,listedMonths=[]) {
 }
 // Persist operational evidence, never a response body, request headers or URL query.
 export function sourceFailure(error) {
+  if(error?.code==='SOURCE_INDEX_CONFLICT')return {kind:'catalogue-category-conflict'};
   if(error?.code==="SOURCE_PERIOD_NOT_LISTED")return {kind:"target-period-not-listed",targetMonth:error.targetMonth,listedMonths:error.listedMonths};
   const status=Number(error?.status);
   if(Number.isInteger(status)&&status>=100&&status<=599)return {
