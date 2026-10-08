@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-10-08T12:44:52.688Z",
+    "generatedAt": "2026-10-08T13:07:06.999Z",
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -9,26 +9,26 @@
   "convictionLedger": {
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
-    "funds": 140,
-    "amcs": 14,
+    "funds": 143,
+    "amcs": 15,
     "quadrants": {
       "new": {
-        "totalCr": 4068,
-        "positions": 103,
-        "companies": 82,
+        "totalCr": 4151,
+        "positions": 109,
+        "companies": 88,
         "byTier": {
           "large": {
-            "valueCr": 531,
-            "positions": 9,
-            "companies": 9
+            "valueCr": 545,
+            "positions": 10,
+            "companies": 10
           },
           "mid": {
-            "valueCr": 728,
-            "positions": 30,
-            "companies": 27
+            "valueCr": 794,
+            "positions": 35,
+            "companies": 32
           },
           "small": {
-            "valueCr": 2809,
+            "valueCr": 2812,
             "positions": 64,
             "companies": 46
           }
@@ -83,22 +83,22 @@
         ]
       },
       "increased": {
-        "totalCr": 28904,
-        "positions": 599,
-        "companies": 375,
+        "totalCr": 28926,
+        "positions": 606,
+        "companies": 377,
         "byTier": {
           "large": {
-            "valueCr": 15384,
-            "positions": 171,
+            "valueCr": 15394,
+            "positions": 175,
             "companies": 78
           },
           "mid": {
-            "valueCr": 9280,
-            "positions": 237,
-            "companies": 136
+            "valueCr": 9289,
+            "positions": 240,
+            "companies": 138
           },
           "small": {
-            "valueCr": 4241,
+            "valueCr": 4243,
             "positions": 191,
             "companies": 161
           }
@@ -141,7 +141,7 @@
           },
           {
             "company": "Solar Industries India",
-            "valueCr": 921,
+            "valueCr": 922,
             "amcs": [
               "Motilal Oswal",
               "SBI",
@@ -160,24 +160,24 @@
         ]
       },
       "decreased": {
-        "totalCr": 26897,
-        "positions": 612,
-        "companies": 369,
+        "totalCr": 26919,
+        "positions": 616,
+        "companies": 370,
         "byTier": {
           "large": {
-            "valueCr": 12624,
-            "positions": 189,
+            "valueCr": 12631,
+            "positions": 191,
             "companies": 80
           },
           "mid": {
-            "valueCr": 10564,
-            "positions": 246,
+            "valueCr": 10574,
+            "positions": 247,
             "companies": 144
           },
           "small": {
-            "valueCr": 3709,
-            "positions": 177,
-            "companies": 145
+            "valueCr": 3714,
+            "positions": 178,
+            "companies": 146
           }
         },
         "top": [
@@ -235,19 +235,19 @@
         ]
       },
       "exited": {
-        "totalCr": 1573,
-        "positions": 66,
-        "companies": 63,
+        "totalCr": 1661,
+        "positions": 72,
+        "companies": 69,
         "byTier": {
           "large": {
-            "valueCr": 517,
-            "positions": 17,
-            "companies": 15
+            "valueCr": 575,
+            "positions": 20,
+            "companies": 18
           },
           "mid": {
-            "valueCr": 667,
-            "positions": 25,
-            "companies": 24
+            "valueCr": 698,
+            "positions": 28,
+            "companies": 27
           },
           "small": {
             "valueCr": 388,
@@ -444,9 +444,9 @@
         "buyers": 3,
         "sellers": 4,
         "buyCr": 43,
-        "sellCr": 279,
-        "netCr": -235,
-        "grossCr": 322,
+        "sellCr": 280,
+        "netCr": -236,
+        "grossCr": 323,
         "topBuyer": "Mahindra",
         "topSeller": "UTI"
       },
@@ -470,7 +470,7 @@
         "buyCr": 2293,
         "sellCr": 99,
         "netCr": 2194,
-        "grossCr": 2391,
+        "grossCr": 2392,
         "topBuyer": "PPFAS",
         "topSeller": "UTI"
       },
@@ -496,12 +496,12 @@
     "rows": [
       {
         "amc": "Taurus",
-        "turnoverPct": 8.71,
-        "buyCr": 50,
-        "sellCr": 44,
-        "bookCr": 509,
-        "schemes": 2,
-        "holdings": 66
+        "turnoverPct": 8.05,
+        "buyCr": 60,
+        "sellCr": 51,
+        "bookCr": 639,
+        "schemes": 4,
+        "holdings": 87
       },
       {
         "amc": "JM Financial",
@@ -609,12 +609,25 @@
     "windowLabel": "Jun-26 → Sep-26",
     "windowMonths": 3,
     "period": "3Y",
-    "universe": 96,
-    "medianFlowPct": -0.2,
+    "universe": 98,
+    "medianFlowPct": -0.1,
     "quadrants": {
       "winning": {
-        "count": 26,
+        "count": 28,
         "rows": [
+          {
+            "fund": "Taurus Large Cap Fund",
+            "amc": "Taurus",
+            "classification": "Equity : Large Cap",
+            "percentile": 100,
+            "quartile": "Q1",
+            "perfReturn": 13.2,
+            "bookGrowthPct": 22.9,
+            "navReturnPct": 7.7,
+            "impliedFlowPct": 15.2,
+            "bookCr": 61,
+            "monthsBack": 3
+          },
           {
             "fund": "Axis Multicap Fund",
             "amc": "Axis",
@@ -705,24 +718,11 @@
             "impliedFlowPct": 4.5,
             "bookCr": 19181,
             "monthsBack": 3
-          },
-          {
-            "fund": "Axis Value Fund",
-            "amc": "Axis",
-            "classification": "Equity : Value / Contra",
-            "percentile": 94.4,
-            "quartile": "Q1",
-            "perfReturn": 15.5,
-            "bookGrowthPct": 5.2,
-            "navReturnPct": 0.8,
-            "impliedFlowPct": 4.4,
-            "bookCr": 1707,
-            "monthsBack": 3
           }
         ]
       },
       "coasting": {
-        "count": 22,
+        "count": 21,
         "rows": [
           {
             "fund": "UTI Nifty Midcap 150 Quality 50 Index Fund",
@@ -831,7 +831,7 @@
         ]
       },
       "falling": {
-        "count": 31,
+        "count": 32,
         "rows": [
           {
             "fund": "JM Large Cap Fund",

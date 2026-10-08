@@ -2,9 +2,9 @@
   "meta": {
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
-    "generatedAt": "2026-10-08T12:44:47.832Z",
+    "generatedAt": "2026-10-08T13:07:01.881Z",
     "universe": "Active equity schemes only (excludes ETFs, index, international and hybrid funds)",
-    "activeEquityFunds": 140,
+    "activeEquityFunds": 143,
     "metric": "Net Rs Cr bought/sold = change in aggregate shares held x current implied price. Excludes corporate actions (split/bonus). pctOutstanding = net shares traded ÷ company shares outstanding x 100 (null until the screener feed covers the fincode).",
     "topN": 20
   },
@@ -43,7 +43,7 @@
         ]
       },
       {
-        "company": "Kotak Mahindra Bank Limited",
+        "company": "Kotak Mahindra Bank Ltd.",
         "fincode": "INE237A01036",
         "netCr": 1427,
         "pctOutstanding": 0.37,
@@ -191,7 +191,7 @@
       {
         "company": "Solar Industries India Limited",
         "fincode": "INE343H01029",
-        "netCr": 757,
+        "netCr": 759,
         "pctOutstanding": null,
         "amcs": [
           "Motilal Oswal",
@@ -250,9 +250,14 @@
             "netCr": 13
           },
           {
-            "fund": "PPFAS Parag Parikh Large Cap Fund",
-            "amc": "PPFAS",
-            "netCr": 0
+            "fund": "Taurus Elss Tax Saver Fund",
+            "amc": "Taurus",
+            "netCr": 1
+          },
+          {
+            "fund": "Taurus Large Cap Fund",
+            "amc": "Taurus",
+            "netCr": 1
           }
         ]
       },
@@ -478,7 +483,7 @@
       {
         "company": "Grasim Industries Limited",
         "fincode": "INE047A01021",
-        "netCr": 405,
+        "netCr": 404,
         "pctOutstanding": 0.2,
         "amcs": [
           "Aditya",
@@ -829,7 +834,7 @@
       {
         "company": "ITC Limited",
         "fincode": "INE154A01025",
-        "netCr": 163,
+        "netCr": 162,
         "pctOutstanding": null,
         "amcs": [
           "Helios",
@@ -1536,7 +1541,7 @@
       {
         "company": "Bajaj Auto Limited",
         "fincode": "INE917I01010",
-        "netCr": 250,
+        "netCr": 248,
         "pctOutstanding": 0.09,
         "amcs": [
           "SBI",
@@ -1696,9 +1701,52 @@
         ]
       },
       {
+        "company": "Sun Pharmaceutical Industries Limited",
+        "fincode": "INE044A01036",
+        "netCr": 239,
+        "pctOutstanding": 0.06,
+        "amcs": [
+          "Aditya",
+          "Capitalmind",
+          "NJ"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": -193
+          },
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": -30
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": -26
+          },
+          {
+            "fund": "Capitalmind Flexi Cap Fund",
+            "amc": "Capitalmind",
+            "netCr": -12
+          },
+          {
+            "fund": "NJ Flexi Cap Fund",
+            "amc": "NJ",
+            "netCr": -1
+          },
+          {
+            "fund": "UTI Quant Fund",
+            "amc": "UTI",
+            "netCr": 0
+          }
+        ]
+      },
+      {
         "company": "Eternal Limited",
         "fincode": "INE758T01015",
-        "netCr": 234,
+        "netCr": 236,
         "pctOutstanding": 0.08,
         "amcs": [
           "UTI",
@@ -1798,7 +1846,7 @@
       {
         "company": "Apollo Hospitals Enterprise Limited",
         "fincode": "INE437A01024",
-        "netCr": 228,
+        "netCr": 227,
         "pctOutstanding": 0.2,
         "amcs": [
           "Axis",
@@ -1860,44 +1908,6 @@
             "fund": "Aditya Birla Sun Life Value Fund",
             "amc": "Aditya",
             "netCr": -4
-          }
-        ]
-      },
-      {
-        "company": "Sun Pharmaceutical Industries Limited",
-        "fincode": "INE044A01036",
-        "netCr": 227,
-        "pctOutstanding": 0.05,
-        "amcs": [
-          "Aditya",
-          "NJ",
-          "UTI"
-        ],
-        "schemes": [
-          {
-            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
-            "amc": "Aditya",
-            "netCr": -193
-          },
-          {
-            "fund": "Aditya Birla Sun Life Value Fund",
-            "amc": "Aditya",
-            "netCr": -30
-          },
-          {
-            "fund": "Aditya Birla Sun Life Large Cap Fund",
-            "amc": "Aditya",
-            "netCr": -26
-          },
-          {
-            "fund": "NJ Flexi Cap Fund",
-            "amc": "NJ",
-            "netCr": -1
-          },
-          {
-            "fund": "UTI Quant Fund",
-            "amc": "UTI",
-            "netCr": 0
           }
         ]
       },
@@ -2377,8 +2387,8 @@
       {
         "company": "Multi Commodity Exchange of India Limited",
         "fincode": "INE745G01043",
-        "netCr": 219,
-        "pctOutstanding": 0.27,
+        "netCr": 223,
+        "pctOutstanding": 0.28,
         "amcs": [
           "Motilal Oswal",
           "Axis",
@@ -2607,6 +2617,64 @@
         ]
       },
       {
+        "company": "Bosch Limited",
+        "fincode": "INE323A01026",
+        "netCr": 144,
+        "pctOutstanding": 0.11,
+        "amcs": [
+          "SBI",
+          "Axis",
+          "Helios"
+        ],
+        "schemes": [
+          {
+            "fund": "SBI ELSS Tax Saver Fund",
+            "amc": "SBI",
+            "netCr": 49
+          },
+          {
+            "fund": "Axis Midcap Fund",
+            "amc": "Axis",
+            "netCr": 42
+          },
+          {
+            "fund": "Helios Mid Cap Fund",
+            "amc": "Helios",
+            "netCr": 20
+          },
+          {
+            "fund": "Capitalmind Flexi Cap Fund",
+            "amc": "Capitalmind",
+            "netCr": 14
+          },
+          {
+            "fund": "UTI - Transportation and Logistics Fund",
+            "amc": "UTI",
+            "netCr": 13
+          },
+          {
+            "fund": "SBI MNC Fund",
+            "amc": "SBI",
+            "netCr": 9
+          },
+          {
+            "fund": "Helios Large & Mid Cap Fund",
+            "amc": "Helios",
+            "netCr": 4
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          },
+          {
+            "fund": "NJ ELSS Tax Saver Fund",
+            "amc": "NJ",
+            "netCr": 0
+          }
+        ]
+      },
+      {
         "company": "Petronet LNG Ltd.",
         "fincode": "INE347G01014",
         "netCr": 134,
@@ -2638,54 +2706,54 @@
         ]
       },
       {
-        "company": "Bosch Limited",
-        "fincode": "INE323A01026",
-        "netCr": 131,
-        "pctOutstanding": 0.1,
+        "company": "RBL Bank Limited",
+        "fincode": "INE976G01028",
+        "netCr": 129,
+        "pctOutstanding": 0.22,
         "amcs": [
-          "SBI",
+          "Motilal Oswal",
           "Axis",
-          "Helios"
+          "Capitalmind"
         ],
         "schemes": [
           {
-            "fund": "SBI ELSS Tax Saver Fund",
-            "amc": "SBI",
-            "netCr": 49
+            "fund": "Motilal Oswal Flexicap Fund",
+            "amc": "Motilal Oswal",
+            "netCr": 76
           },
           {
             "fund": "Axis Midcap Fund",
             "amc": "Axis",
-            "netCr": 42
+            "netCr": 35
           },
           {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 20
+            "fund": "Axis Multicap Fund",
+            "amc": "Axis",
+            "netCr": 27
           },
           {
-            "fund": "UTI - Transportation and Logistics Fund",
-            "amc": "UTI",
+            "fund": "Capitalmind Flexi Cap Fund",
+            "amc": "Capitalmind",
             "netCr": 13
           },
           {
-            "fund": "SBI MNC Fund",
-            "amc": "SBI",
-            "netCr": 9
+            "fund": "Axis Value Fund",
+            "amc": "Axis",
+            "netCr": 6
           },
           {
-            "fund": "Helios Large & Mid Cap Fund",
-            "amc": "Helios",
+            "fund": "Axis Large & Mid Cap Fund",
+            "amc": "Axis",
             "netCr": 4
           },
           {
-            "fund": "PPFAS Parag Parikh Large Cap Fund",
-            "amc": "PPFAS",
-            "netCr": 0
+            "fund": "Motilal Oswal Innovation Opportunities Fund",
+            "amc": "Motilal Oswal",
+            "netCr": 2
           },
           {
-            "fund": "NJ ELSS Tax Saver Fund",
-            "amc": "NJ",
+            "fund": "SBI Nifty Small Cap 250 ETF",
+            "amc": "SBI",
             "netCr": 0
           }
         ]
@@ -2799,64 +2867,6 @@
         ]
       },
       {
-        "company": "Marico Limited",
-        "fincode": "INE196A01026",
-        "netCr": 124,
-        "pctOutstanding": null,
-        "amcs": [
-          "Axis",
-          "SBI",
-          "UTI"
-        ],
-        "schemes": [
-          {
-            "fund": "Axis Midcap Fund",
-            "amc": "Axis",
-            "netCr": 64
-          },
-          {
-            "fund": "Axis ELSS Tax Saver Fund",
-            "amc": "Axis",
-            "netCr": 38
-          },
-          {
-            "fund": "SBI Quant Fund",
-            "amc": "SBI",
-            "netCr": 13
-          },
-          {
-            "fund": "Axis Business Cycles Fund",
-            "amc": "Axis",
-            "netCr": 11
-          },
-          {
-            "fund": "UTI Quant Fund",
-            "amc": "UTI",
-            "netCr": 2
-          },
-          {
-            "fund": "SBI Nifty Midcap 150 Momentum 50 ETF",
-            "amc": "SBI",
-            "netCr": 0
-          },
-          {
-            "fund": "NJ ELSS Tax Saver Fund",
-            "amc": "NJ",
-            "netCr": 0
-          },
-          {
-            "fund": "UTI Nifty Midcap 150 Index Fund",
-            "amc": "UTI",
-            "netCr": 0
-          },
-          {
-            "fund": "UTI Nifty Midcap 150 Exchange Traded Fund",
-            "amc": "UTI",
-            "netCr": 0
-          }
-        ]
-      },
-      {
         "company": "Hero MotoCorp Limited",
         "fincode": "INE158A01026",
         "netCr": 120,
@@ -2908,54 +2918,6 @@
         ]
       },
       {
-        "company": "RBL Bank Limited",
-        "fincode": "INE976G01028",
-        "netCr": 116,
-        "pctOutstanding": 0.2,
-        "amcs": [
-          "Motilal Oswal",
-          "Axis",
-          "SBI"
-        ],
-        "schemes": [
-          {
-            "fund": "Motilal Oswal Flexicap Fund",
-            "amc": "Motilal Oswal",
-            "netCr": 76
-          },
-          {
-            "fund": "Axis Midcap Fund",
-            "amc": "Axis",
-            "netCr": 35
-          },
-          {
-            "fund": "Axis Multicap Fund",
-            "amc": "Axis",
-            "netCr": 27
-          },
-          {
-            "fund": "Axis Value Fund",
-            "amc": "Axis",
-            "netCr": 6
-          },
-          {
-            "fund": "Axis Large & Mid Cap Fund",
-            "amc": "Axis",
-            "netCr": 4
-          },
-          {
-            "fund": "Motilal Oswal Innovation Opportunities Fund",
-            "amc": "Motilal Oswal",
-            "netCr": 2
-          },
-          {
-            "fund": "SBI Nifty Small Cap 250 ETF",
-            "amc": "SBI",
-            "netCr": 0
-          }
-        ]
-      },
-      {
         "company": "Container Corporation of India Ltd.",
         "fincode": "INE111A01025",
         "netCr": 114,
@@ -2985,6 +2947,64 @@
             "fund": "Mahindra Manulife Value Fund",
             "amc": "Mahindra Manulife",
             "netCr": 2
+          },
+          {
+            "fund": "UTI Nifty Midcap 150 Index Fund",
+            "amc": "UTI",
+            "netCr": 0
+          },
+          {
+            "fund": "UTI Nifty Midcap 150 Exchange Traded Fund",
+            "amc": "UTI",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Marico Limited",
+        "fincode": "INE196A01026",
+        "netCr": 113,
+        "pctOutstanding": null,
+        "amcs": [
+          "Axis",
+          "SBI",
+          "UTI"
+        ],
+        "schemes": [
+          {
+            "fund": "Axis Midcap Fund",
+            "amc": "Axis",
+            "netCr": 64
+          },
+          {
+            "fund": "Axis ELSS Tax Saver Fund",
+            "amc": "Axis",
+            "netCr": 38
+          },
+          {
+            "fund": "SBI Quant Fund",
+            "amc": "SBI",
+            "netCr": 13
+          },
+          {
+            "fund": "Axis Business Cycles Fund",
+            "amc": "Axis",
+            "netCr": 11
+          },
+          {
+            "fund": "UTI Quant Fund",
+            "amc": "UTI",
+            "netCr": 2
+          },
+          {
+            "fund": "SBI Nifty Midcap 150 Momentum 50 ETF",
+            "amc": "SBI",
+            "netCr": 0
+          },
+          {
+            "fund": "NJ ELSS Tax Saver Fund",
+            "amc": "NJ",
+            "netCr": 0
           },
           {
             "fund": "UTI Nifty Midcap 150 Index Fund",
@@ -5579,9 +5599,9 @@
       {
         "sector": "Pharmaceuticals & Biotechnology",
         "direction": "up",
-        "pctCur": 6.54,
-        "pctPrev": 6.31,
-        "changePp": 0.23,
+        "pctCur": 6.55,
+        "pctPrev": 6.32,
+        "changePp": 0.24,
         "stocks": [
           {
             "company": "Gland Pharma Limited",
@@ -5774,15 +5794,15 @@
             "fund": "Mahindra Manulife Multi Cap Fund",
             "amc": "Mahindra Manulife",
             "netCr": 106,
-            "valueChgCr": 102
+            "valueChgCr": 98
           }
         ]
       },
       {
         "sector": "IT - Software",
         "direction": "down",
-        "pctCur": 5.14,
-        "pctPrev": 5.57,
+        "pctCur": 5.13,
+        "pctPrev": 5.56,
         "changePp": -0.43,
         "stocks": [
           {
@@ -6031,7 +6051,7 @@
           },
           {
             "company": "Bajaj Auto Limited",
-            "netCr": -250,
+            "netCr": -248,
             "amcs": [
               "SBI",
               "Motilal Oswal",
