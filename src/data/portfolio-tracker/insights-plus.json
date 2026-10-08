@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-10-07T23:58:44.918Z",
+    "generatedAt": "2026-10-08T00:05:53.428Z",
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -391,7 +391,7 @@
     "windowMonths": 3,
     "period": "3Y",
     "universe": 40,
-    "medianFlowPct": 0,
+    "medianFlowPct": 0.8,
     "quadrants": {
       "winning": {
         "count": 12,
@@ -402,18 +402,31 @@
             "classification": "Equity : Large & Mid Cap",
             "percentile": 66.7,
             "quartile": "Q2",
-            "perfReturn": 12.7,
+            "perfReturn": 12.4,
             "bookGrowthPct": 1,
-            "navReturnPct": -3.4,
-            "impliedFlowPct": 4.3,
+            "navReturnPct": -4.2,
+            "impliedFlowPct": 5.2,
             "bookCr": 6094,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Aditya Birla SL Flexi Cap Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Flexi Cap",
+            "percentile": 76.7,
+            "quartile": "Q1",
+            "perfReturn": 13.2,
+            "bookGrowthPct": 4,
+            "navReturnPct": 0.1,
+            "impliedFlowPct": 4,
+            "bookCr": 27387,
             "monthsBack": 3
           },
           {
             "fund": "UTI Healthcare Fund",
             "amc": "UTI",
             "classification": "Equity : Sectoral - Pharma",
-            "percentile": 77.8,
+            "percentile": 88.9,
             "quartile": "Q1",
             "perfReturn": 21.8,
             "bookGrowthPct": 8.3,
@@ -423,68 +436,16 @@
             "monthsBack": 3
           },
           {
-            "fund": "Aditya Birla SL Flexi Cap Fund",
-            "amc": "Aditya Birla Sun Life",
-            "classification": "Equity : Flexi Cap",
-            "percentile": 76.7,
-            "quartile": "Q1",
-            "perfReturn": 13.4,
-            "bookGrowthPct": 4,
-            "navReturnPct": 0.7,
-            "impliedFlowPct": 3.3,
-            "bookCr": 27387,
-            "monthsBack": 3
-          },
-          {
             "fund": "Aditya Birla SL Value Fund",
             "amc": "Aditya Birla Sun Life",
             "classification": "Equity : Value / Contra",
             "percentile": 66.7,
             "quartile": "Q2",
-            "perfReturn": 12.3,
+            "perfReturn": 12.2,
             "bookGrowthPct": 2.4,
-            "navReturnPct": -0.2,
-            "impliedFlowPct": 2.6,
+            "navReturnPct": -0.7,
+            "impliedFlowPct": 3.1,
             "bookCr": 6509,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Aditya Birla SL PSU Equity Fund",
-            "amc": "Aditya Birla Sun Life",
-            "classification": "Equity : Thematic",
-            "percentile": 75,
-            "quartile": "Q1",
-            "perfReturn": 16.4,
-            "bookGrowthPct": -4.2,
-            "navReturnPct": -6.3,
-            "impliedFlowPct": 2.1,
-            "bookCr": 5633,
-            "monthsBack": 3
-          },
-          {
-            "fund": "the Quantum ELSS Tax Saver Fund",
-            "amc": "Quantum",
-            "classification": "Equity : ELSS",
-            "percentile": 58.3,
-            "quartile": "Q2",
-            "perfReturn": 7.4,
-            "bookGrowthPct": -3.2,
-            "navReturnPct": -5.1,
-            "impliedFlowPct": 2,
-            "bookCr": 188,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Aditya Birla SL Dividend Yield Fund",
-            "amc": "Aditya Birla Sun Life",
-            "classification": "Equity : Thematic - Dividend Yield",
-            "percentile": 66.7,
-            "quartile": "Q2",
-            "perfReturn": 10.1,
-            "bookGrowthPct": -2.4,
-            "navReturnPct": -4.4,
-            "impliedFlowPct": 2,
-            "bookCr": 1318,
             "monthsBack": 3
           },
           {
@@ -493,17 +454,56 @@
             "classification": "Equity : Thematic - Consumption",
             "percentile": 60,
             "quartile": "Q2",
-            "perfReturn": 7.8,
+            "perfReturn": 7.5,
             "bookGrowthPct": -1.4,
-            "navReturnPct": -3.3,
-            "impliedFlowPct": 1.9,
+            "navReturnPct": -4.1,
+            "impliedFlowPct": 2.8,
             "bookCr": 665,
+            "monthsBack": 3
+          },
+          {
+            "fund": "the Quantum ELSS Tax Saver Fund",
+            "amc": "Quantum",
+            "classification": "Equity : ELSS",
+            "percentile": 58.3,
+            "quartile": "Q2",
+            "perfReturn": 7.2,
+            "bookGrowthPct": -3.2,
+            "navReturnPct": -5.6,
+            "impliedFlowPct": 2.4,
+            "bookCr": 188,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Aditya Birla SL PSU Equity Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Thematic",
+            "percentile": 72.7,
+            "quartile": "Q2",
+            "perfReturn": 16.3,
+            "bookGrowthPct": -4.2,
+            "navReturnPct": -6.6,
+            "impliedFlowPct": 2.4,
+            "bookCr": 5633,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "classification": "Equity : Flexi Cap",
+            "percentile": 65.1,
+            "quartile": "Q2",
+            "perfReturn": 11.6,
+            "bookGrowthPct": 0.1,
+            "navReturnPct": -1.4,
+            "impliedFlowPct": 1.6,
+            "bookCr": 122176,
             "monthsBack": 3
           }
         ]
       },
       "coasting": {
-        "count": 10,
+        "count": 8,
         "rows": [
           {
             "fund": "UTI Nifty Midcap 150 Quality 50 Index Fund",
@@ -511,10 +511,10 @@
             "classification": "Equity : Mid Cap",
             "percentile": 2.8,
             "quartile": "Q4",
-            "perfReturn": 7,
+            "perfReturn": 6.8,
             "bookGrowthPct": 1.9,
-            "navReturnPct": -5.5,
-            "impliedFlowPct": 7.3,
+            "navReturnPct": -5.9,
+            "impliedFlowPct": 7.8,
             "bookCr": 249,
             "monthsBack": 3
           },
@@ -524,10 +524,10 @@
             "classification": "Equity : Mid Cap",
             "percentile": 30.6,
             "quartile": "Q3",
-            "perfReturn": 13.1,
+            "perfReturn": 12.8,
             "bookGrowthPct": -0.9,
-            "navReturnPct": -4.4,
-            "impliedFlowPct": 3.5,
+            "navReturnPct": -5,
+            "impliedFlowPct": 4.1,
             "bookCr": 468,
             "monthsBack": 3
           },
@@ -537,10 +537,10 @@
             "classification": "Equity : Value / Contra",
             "percentile": 16.7,
             "quartile": "Q4",
-            "perfReturn": 7.5,
+            "perfReturn": 7.3,
             "bookGrowthPct": -3,
-            "navReturnPct": -5.1,
-            "impliedFlowPct": 2.1,
+            "navReturnPct": -5.6,
+            "impliedFlowPct": 2.6,
             "bookCr": 1003,
             "monthsBack": 3
           },
@@ -550,36 +550,36 @@
             "classification": "Equity : Sectoral - Pharma",
             "percentile": 33.3,
             "quartile": "Q3",
-            "perfReturn": 18.9,
+            "perfReturn": 18.7,
             "bookGrowthPct": 6.7,
-            "navReturnPct": 4.8,
-            "impliedFlowPct": 1.9,
+            "navReturnPct": 4.3,
+            "impliedFlowPct": 2.4,
             "bookCr": 1055,
             "monthsBack": 3
           },
           {
-            "fund": "Aditya Birla SL Small Cap Fund",
-            "amc": "Aditya Birla Sun Life",
-            "classification": "Equity : Small Cap",
-            "percentile": 48.2,
-            "quartile": "Q3",
-            "perfReturn": 13.8,
-            "bookGrowthPct": 6.1,
-            "navReturnPct": 4.3,
-            "impliedFlowPct": 1.8,
-            "bookCr": 5836,
+            "fund": "UTI Infrastructure Fund",
+            "amc": "UTI",
+            "classification": "Equity : Sectoral - Infrastructure",
+            "percentile": 23.5,
+            "quartile": "Q4",
+            "perfReturn": 11.1,
+            "bookGrowthPct": -4.8,
+            "navReturnPct": -6,
+            "impliedFlowPct": 1.2,
+            "bookCr": 1997,
             "monthsBack": 3
           },
           {
             "fund": "Aditya Birla SL Midcap Fund",
             "amc": "Aditya Birla Sun Life",
             "classification": "Equity : Mid Cap",
-            "percentile": 33.3,
+            "percentile": 36.1,
             "quartile": "Q3",
             "perfReturn": 13.1,
             "bookGrowthPct": -1,
-            "navReturnPct": -1.8,
-            "impliedFlowPct": 0.9,
+            "navReturnPct": -2,
+            "impliedFlowPct": 1,
             "bookCr": 6391,
             "monthsBack": 3
           },
@@ -587,12 +587,12 @@
             "fund": "Parag Parikh ELSS Tax Saver Fund",
             "amc": "PPFAS",
             "classification": "Equity : Tax Saving (ELSS)",
-            "percentile": 14.3,
+            "percentile": 17.9,
             "quartile": "Q4",
-            "perfReturn": 6.9,
+            "perfReturn": 6.7,
             "bookGrowthPct": -3.5,
-            "navReturnPct": -4.1,
-            "impliedFlowPct": 0.5,
+            "navReturnPct": -4.4,
+            "impliedFlowPct": 0.9,
             "bookCr": 5229,
             "monthsBack": 3
           },
@@ -602,17 +602,17 @@
             "classification": "Equity : Small Cap",
             "percentile": 29.6,
             "quartile": "Q3",
-            "perfReturn": 11.8,
+            "perfReturn": 11.7,
             "bookGrowthPct": -1,
-            "navReturnPct": -1.4,
-            "impliedFlowPct": 0.5,
+            "navReturnPct": -1.8,
+            "impliedFlowPct": 0.8,
             "bookCr": 4931,
             "monthsBack": 3
           }
         ]
       },
       "falling": {
-        "count": 15,
+        "count": 16,
         "rows": [
           {
             "fund": "Aditya Birla SL Digital India Fund",
@@ -620,10 +620,10 @@
             "classification": "Equity : Sectoral - Technology",
             "percentile": 33.3,
             "quartile": "Q3",
-            "perfReturn": 2.5,
+            "perfReturn": 2.4,
             "bookGrowthPct": -0.1,
-            "navReturnPct": 5.6,
-            "impliedFlowPct": -5.7,
+            "navReturnPct": 6,
+            "impliedFlowPct": -6.1,
             "bookCr": 3311,
             "monthsBack": 3
           },
@@ -633,11 +633,24 @@
             "classification": "Equity : Flexi Cap",
             "percentile": 9.3,
             "quartile": "Q4",
-            "perfReturn": 6.8,
+            "perfReturn": 6.6,
             "bookGrowthPct": -1.7,
-            "navReturnPct": 2,
-            "impliedFlowPct": -3.7,
+            "navReturnPct": 1.6,
+            "impliedFlowPct": -3.3,
             "bookCr": 21875,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Aditya Birla SL Banking & Financial Services Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Sectoral - Financial Services",
+            "percentile": 7.7,
+            "quartile": "Q4",
+            "perfReturn": 7.7,
+            "bookGrowthPct": -7,
+            "navReturnPct": -4.8,
+            "impliedFlowPct": -2.2,
+            "bookCr": 3369,
             "monthsBack": 3
           },
           {
@@ -646,11 +659,24 @@
             "classification": "Equity : Thematic - Consumption",
             "percentile": 26.7,
             "quartile": "Q3",
-            "perfReturn": 6.8,
+            "perfReturn": 6.6,
             "bookGrowthPct": -4.8,
-            "navReturnPct": -2.1,
-            "impliedFlowPct": -2.8,
+            "navReturnPct": -2.6,
+            "impliedFlowPct": -2.2,
             "bookCr": 5645,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Aditya Birla SL Business Cycle Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Thematic",
+            "percentile": 31.8,
+            "quartile": "Q3",
+            "perfReturn": 10.8,
+            "bookGrowthPct": -0.8,
+            "navReturnPct": 1.4,
+            "impliedFlowPct": -2.2,
+            "bookCr": 1687,
             "monthsBack": 3
           },
           {
@@ -659,10 +685,10 @@
             "classification": "Equity : Thematic",
             "percentile": 18.2,
             "quartile": "Q4",
-            "perfReturn": 8.8,
+            "perfReturn": 8.6,
             "bookGrowthPct": -4.7,
-            "navReturnPct": -2.1,
-            "impliedFlowPct": -2.6,
+            "navReturnPct": -2.6,
+            "impliedFlowPct": -2.1,
             "bookCr": 534,
             "monthsBack": 3
           },
@@ -672,67 +698,41 @@
             "classification": "Equity : Large Cap",
             "percentile": 9.7,
             "quartile": "Q4",
-            "perfReturn": 5.6,
+            "perfReturn": 5.4,
             "bookGrowthPct": -5.3,
-            "navReturnPct": -2.8,
-            "impliedFlowPct": -2.4,
+            "navReturnPct": -3.3,
+            "impliedFlowPct": -2,
             "bookCr": 10983,
             "monthsBack": 3
           },
           {
-            "fund": "UTI Focused Fund",
-            "amc": "UTI",
-            "classification": "Equity : Focused",
-            "percentile": 19.2,
-            "quartile": "Q4",
-            "perfReturn": 7.8,
-            "bookGrowthPct": -7,
-            "navReturnPct": -4.7,
-            "impliedFlowPct": -2.3,
-            "bookCr": 2262,
-            "monthsBack": 1
-          },
-          {
-            "fund": "Aditya Birla SL Banking & Financial Services Fund",
+            "fund": "Aditya Birla SL MNC Fund",
             "amc": "Aditya Birla Sun Life",
-            "classification": "Equity : Sectoral - Financial Services",
-            "percentile": 7.7,
+            "classification": "Equity : Thematic - MNC",
+            "percentile": 20,
             "quartile": "Q4",
-            "perfReturn": 7.6,
-            "bookGrowthPct": -7,
-            "navReturnPct": -4.9,
-            "impliedFlowPct": -2.1,
-            "bookCr": 3369,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Aditya Birla SL ELSS Tax Saver Fund",
-            "amc": "Aditya Birla Sun Life",
-            "classification": "Equity : Tax Saving (ELSS)",
-            "percentile": 46.4,
-            "quartile": "Q3",
-            "perfReturn": 9.1,
-            "bookGrowthPct": -6,
-            "navReturnPct": -4.1,
-            "impliedFlowPct": -1.8,
-            "bookCr": 13382,
+            "perfReturn": 4.7,
+            "bookGrowthPct": -6.5,
+            "navReturnPct": -4.5,
+            "impliedFlowPct": -2,
+            "bookCr": 2993,
             "monthsBack": 3
           }
         ]
       },
       "undiscovered": {
-        "count": 3,
+        "count": 4,
         "rows": [
           {
             "fund": "Aditya Birla SL Focused Fund",
             "amc": "Aditya Birla Sun Life",
             "classification": "Equity : Focused",
-            "percentile": 57.7,
+            "percentile": 53.9,
             "quartile": "Q2",
-            "perfReturn": 11,
+            "perfReturn": 10.6,
             "bookGrowthPct": -6,
-            "navReturnPct": -1.5,
-            "impliedFlowPct": -4.5,
+            "navReturnPct": -2.6,
+            "impliedFlowPct": -3.5,
             "bookCr": 6959,
             "monthsBack": 3
           },
@@ -742,10 +742,10 @@
             "classification": "Equity : Thematic - MNC",
             "percentile": 80,
             "quartile": "Q1",
-            "perfReturn": 7.1,
+            "perfReturn": 6.9,
             "bookGrowthPct": -5,
-            "navReturnPct": -2.2,
-            "impliedFlowPct": -2.8,
+            "navReturnPct": -2.8,
+            "impliedFlowPct": -2.3,
             "bookCr": 2452,
             "monthsBack": 3
           },
@@ -755,11 +755,24 @@
             "classification": "Equity : Sectoral - Financial Services",
             "percentile": 69.2,
             "quartile": "Q2",
-            "perfReturn": 10.9,
+            "perfReturn": 10.8,
             "bookGrowthPct": -5.1,
-            "navReturnPct": -2.8,
-            "impliedFlowPct": -2.3,
+            "navReturnPct": -3,
+            "impliedFlowPct": -2.1,
             "bookCr": 1322,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Smallcap 50 Index Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Small Cap",
+            "percentile": 81.5,
+            "quartile": "Q1",
+            "perfReturn": 17.1,
+            "bookGrowthPct": 4,
+            "navReturnPct": 4.3,
+            "impliedFlowPct": -0.3,
+            "bookCr": 348,
             "monthsBack": 3
           }
         ]
@@ -767,40 +780,40 @@
     }
   },
   "persistence": {
-    "asOf": "2026-10-06",
+    "asOf": "2026-10-07",
     "priorWindow": {
-      "from": "2020-10-06",
-      "to": "2023-10-06"
+      "from": "2020-10-07",
+      "to": "2023-10-07"
     },
     "recentWindow": {
-      "from": "2023-10-06",
-      "to": "2026-10-06"
+      "from": "2023-10-07",
+      "to": "2026-10-07"
     },
     "cohorts": 19,
     "funds": 537,
     "minCohort": 8,
     "matrix": [
       [
-        47,
-        30,
-        34,
+        43,
+        35,
+        33,
         28
       ],
       [
-        29,
-        39,
-        37,
-        26
-      ],
-      [
+        30,
         35,
         39,
-        33,
-        30
+        27
       ],
       [
-        28,
-        23,
+        37,
+        39,
+        32,
+        29
+      ],
+      [
+        29,
+        22,
         33,
         46
       ]
@@ -811,56 +824,56 @@
       137,
       130
     ],
-    "q1StayPct": 33.8,
-    "q1ToBottomHalfPct": 44.6,
+    "q1StayPct": 30.9,
+    "q1ToBottomHalfPct": 43.9,
     "topStayers": [
       {
         "fund": "SBI Healthcare Opp Fund",
         "classification": "Equity : Sectoral - Pharma",
-        "prior": 16.8,
+        "prior": 16.4,
         "recent": 23.1
-      },
-      {
-        "fund": "SBI Healthcare Opp Fund",
-        "classification": "Equity : Sectoral - Pharma",
-        "prior": 15.5,
-        "recent": 21.9
       },
       {
         "fund": "Motilal Oswal Large & Midcap Fund",
         "classification": "Equity : Large & Mid Cap",
-        "prior": 30.7,
+        "prior": 30.6,
         "recent": 21.5
       },
       {
         "fund": "Motilal Oswal Large & Midcap Fund",
         "classification": "Equity : Large & Mid Cap",
-        "prior": 28.7,
+        "prior": 28.6,
         "recent": 20.1
       },
       {
         "fund": "Edelweiss Mid Cap Fund",
         "classification": "Equity : Mid Cap",
-        "prior": 32.1,
-        "recent": 19.8
+        "prior": 32.4,
+        "recent": 19.7
       },
       {
         "fund": "DSP India T.I.G.E.R Fund",
         "classification": "Equity : Sectoral - Infrastructure",
-        "prior": 42,
-        "recent": 19.5
+        "prior": 42.1,
+        "recent": 19.3
       },
       {
         "fund": "ICICI Pru Retirement Fund-Pure Equity Plan",
         "classification": "Equity : Flexi Cap",
         "prior": 30.8,
-        "recent": 19.2
+        "recent": 18.9
       },
       {
         "fund": "Bank of India Flexi Cap Fund",
         "classification": "Equity : Flexi Cap",
-        "prior": 28.9,
-        "recent": 18.9
+        "prior": 29,
+        "recent": 18.7
+      },
+      {
+        "fund": "Motilal Oswal Midcap Fund",
+        "classification": "Equity : Mid Cap",
+        "prior": 37.5,
+        "recent": 18.3
       }
     ]
   }
