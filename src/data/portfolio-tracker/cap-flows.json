@@ -2,9 +2,9 @@
   "meta": {
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
-    "generatedAt": "2026-10-08T07:30:09.155Z",
+    "generatedAt": "2026-10-08T07:51:32.889Z",
     "universe": "Active equity schemes only (excludes ETFs, index, international and hybrid funds)",
-    "activeEquityFunds": 84,
+    "activeEquityFunds": 86,
     "metric": "Net Rs Cr bought/sold = change in aggregate shares held x current implied price. Excludes corporate actions (split/bonus). pctOutstanding = net shares traded ÷ company shares outstanding x 100 (null until the screener feed covers the fincode).",
     "topN": 20
   },
@@ -113,7 +113,7 @@
       {
         "company": "Divi's Laboratories Limited",
         "fincode": "INE361B01024",
-        "netCr": 489,
+        "netCr": 490,
         "pctOutstanding": null,
         "amcs": [
           "Motilal Oswal",
@@ -177,8 +177,8 @@
             "netCr": 3
           },
           {
-            "fund": "PPFAS Parag Parikh Large Cap Fund",
-            "amc": "PPFAS",
+            "fund": "Shriram Flexi Cap Fund",
+            "amc": "Shriram",
             "netCr": 0
           }
         ]
@@ -408,7 +408,8 @@
         "pctOutstanding": null,
         "amcs": [
           "Aditya",
-          "PPFAS"
+          "PPFAS",
+          "Shriram"
         ],
         "schemes": [
           {
@@ -424,6 +425,11 @@
           {
             "fund": "PPFAS Parag Parikh Large Cap Fund",
             "amc": "PPFAS",
+            "netCr": 0
+          },
+          {
+            "fund": "Shriram ELSS Tax Saver Fund",
+            "amc": "Shriram",
             "netCr": 0
           }
         ]
@@ -944,11 +950,12 @@
       {
         "company": "InterGlobe Aviation Limited",
         "fincode": "INE646L01027",
-        "netCr": 350,
+        "netCr": 351,
         "pctOutstanding": 0.19,
         "amcs": [
           "Motilal Oswal",
-          "UTI"
+          "UTI",
+          "Shriram"
         ],
         "schemes": [
           {
@@ -980,13 +987,23 @@
             "fund": "UTI - Infrastructure Fund",
             "amc": "UTI",
             "netCr": -6
+          },
+          {
+            "fund": "Shriram Flexi Cap Fund",
+            "amc": "Shriram",
+            "netCr": -1
+          },
+          {
+            "fund": "Shriram ELSS Tax Saver Fund",
+            "amc": "Shriram",
+            "netCr": 0
           }
         ]
       },
       {
         "company": "Sun Pharmaceutical Industries Limited",
         "fincode": "INE044A01036",
-        "netCr": 246,
+        "netCr": 245,
         "pctOutstanding": 0.06,
         "amcs": [
           "Aditya",
@@ -1122,7 +1139,7 @@
         ]
       },
       {
-        "company": "Bharat Petroleum Corporation Limited",
+        "company": "Bharat Petroleum Corporation Ltd.",
         "fincode": "INE029A01011",
         "netCr": 127,
         "pctOutstanding": null,
@@ -1514,12 +1531,12 @@
       {
         "company": "Torrent Pharmaceuticals Ltd.",
         "fincode": "INE685A01028",
-        "netCr": 56,
+        "netCr": 57,
         "pctOutstanding": 0.03,
         "amcs": [
           "Aditya",
           "Helios",
-          "UTI"
+          "Shriram"
         ],
         "schemes": [
           {
@@ -1536,6 +1553,16 @@
             "fund": "UTI - Flexi Cap Fund",
             "amc": "UTI",
             "netCr": -2
+          },
+          {
+            "fund": "Shriram Flexi Cap Fund",
+            "amc": "Shriram",
+            "netCr": -1
+          },
+          {
+            "fund": "Shriram ELSS Tax Saver Fund",
+            "amc": "Shriram",
+            "netCr": -1
           }
         ]
       },
@@ -4412,7 +4439,7 @@
         "stocks": [
           {
             "company": "Divi's Laboratories Limited",
-            "netCr": 489,
+            "netCr": 490,
             "amcs": [
               "Motilal Oswal",
               "Mahindra Manulife",
@@ -4484,7 +4511,8 @@
             "netCr": 179,
             "amcs": [
               "Aditya",
-              "PPFAS"
+              "PPFAS",
+              "Shriram"
             ],
             "schemes": [
               {
@@ -4502,6 +4530,12 @@
               {
                 "fund": "PPFAS Parag Parikh Large Cap Fund",
                 "amc": "PPFAS",
+                "netCr": 0,
+                "valueChgCr": 0
+              },
+              {
+                "fund": "Shriram ELSS Tax Saver Fund",
+                "amc": "Shriram",
                 "netCr": 0,
                 "valueChgCr": 0
               }
@@ -4743,7 +4777,7 @@
             ]
           },
           {
-            "company": "Persistent Systems Ltd",
+            "company": "Persistent Systems Ltd.",
             "netCr": -45,
             "amcs": [
               "Motilal Oswal",
@@ -4948,7 +4982,7 @@
             ]
           },
           {
-            "company": "Eicher Motors Limited",
+            "company": "Eicher Motors Ltd.",
             "netCr": -8,
             "amcs": [
               "Mahindra Manulife",

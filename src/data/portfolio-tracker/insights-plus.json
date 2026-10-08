@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-10-08T07:30:14.042Z",
+    "generatedAt": "2026-10-08T07:51:35.568Z",
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -9,13 +9,13 @@
   "convictionLedger": {
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
-    "funds": 84,
-    "amcs": 7,
+    "funds": 86,
+    "amcs": 8,
     "quadrants": {
       "new": {
-        "totalCr": 2536,
-        "positions": 60,
-        "companies": 53,
+        "totalCr": 2538,
+        "positions": 61,
+        "companies": 54,
         "byTier": {
           "large": {
             "valueCr": 431,
@@ -23,9 +23,9 @@
             "companies": 5
           },
           "mid": {
-            "valueCr": 551,
-            "positions": 20,
-            "companies": 19
+            "valueCr": 553,
+            "positions": 21,
+            "companies": 20
           },
           "small": {
             "valueCr": 1554,
@@ -156,18 +156,18 @@
         ]
       },
       "decreased": {
-        "totalCr": 11249,
-        "positions": 365,
+        "totalCr": 11254,
+        "positions": 369,
         "companies": 275,
         "byTier": {
           "large": {
-            "valueCr": 4939,
-            "positions": 113,
+            "valueCr": 4941,
+            "positions": 115,
             "companies": 70
           },
           "mid": {
-            "valueCr": 4697,
-            "positions": 150,
+            "valueCr": 4700,
+            "positions": 152,
             "companies": 111
           },
           "small": {
@@ -228,14 +228,14 @@
         ]
       },
       "exited": {
-        "totalCr": 1045,
-        "positions": 39,
-        "companies": 39,
+        "totalCr": 1052,
+        "positions": 43,
+        "companies": 43,
         "byTier": {
           "large": {
-            "valueCr": 372,
-            "positions": 7,
-            "companies": 7
+            "valueCr": 375,
+            "positions": 9,
+            "companies": 9
           },
           "mid": {
             "valueCr": 383,
@@ -243,9 +243,9 @@
             "companies": 17
           },
           "small": {
-            "valueCr": 290,
-            "positions": 15,
-            "companies": 15
+            "valueCr": 294,
+            "positions": 17,
+            "companies": 17
           }
         },
         "top": [
@@ -264,7 +264,7 @@
             ]
           },
           {
-            "company": "EMAMI",
+            "company": "Emami",
             "valueCr": 113,
             "amcs": [
               "Aditya Birla Sun Life"
@@ -432,6 +432,18 @@
         "topSeller": "UTI"
       },
       {
+        "company": "Reliance Industries",
+        "tier": "large",
+        "buyers": 3,
+        "sellers": 2,
+        "buyCr": 113,
+        "sellCr": 63,
+        "netCr": 49,
+        "grossCr": 176,
+        "topBuyer": "Aditya Birla Sun Life",
+        "topSeller": "PPFAS"
+      },
+      {
         "company": "Titan Company",
         "tier": "large",
         "buyers": 2,
@@ -466,18 +478,6 @@
         "grossCr": 149,
         "topBuyer": "Helios",
         "topSeller": "Mahindra"
-      },
-      {
-        "company": "Infosys",
-        "tier": "large",
-        "buyers": 2,
-        "sellers": 2,
-        "buyCr": 22,
-        "sellCr": 111,
-        "netCr": -89,
-        "grossCr": 133,
-        "topBuyer": "UTI",
-        "topSeller": "Aditya Birla Sun Life"
       }
     ]
   },
@@ -557,8 +557,8 @@
     "windowLabel": "Jun-26 → Sep-26",
     "windowMonths": 3,
     "period": "3Y",
-    "universe": 55,
-    "medianFlowPct": 0.2,
+    "universe": 57,
+    "medianFlowPct": 0,
     "quadrants": {
       "winning": {
         "count": 17,
@@ -670,7 +670,7 @@
         ]
       },
       "coasting": {
-        "count": 11,
+        "count": 12,
         "rows": [
           {
             "fund": "UTI Nifty Midcap 150 Quality 50 Index Fund",
@@ -779,7 +779,7 @@
         ]
       },
       "falling": {
-        "count": 18,
+        "count": 19,
         "rows": [
           {
             "fund": "Aditya Birla SL Digital India Fund",
@@ -834,6 +834,32 @@
             "monthsBack": 3
           },
           {
+            "fund": "Shriram Flexi Cap Fund",
+            "amc": "Shriram",
+            "classification": "Equity : Flexi Cap",
+            "percentile": 2.3,
+            "quartile": "Q4",
+            "perfReturn": 4.4,
+            "bookGrowthPct": -10,
+            "navReturnPct": -5.4,
+            "impliedFlowPct": -4.6,
+            "bookCr": 116,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Shriram ELSS Tax Saver Fund",
+            "amc": "Shriram",
+            "classification": "Equity : ELSS",
+            "percentile": 25,
+            "quartile": "Q3",
+            "perfReturn": 4.5,
+            "bookGrowthPct": -8.6,
+            "navReturnPct": -5.1,
+            "impliedFlowPct": -3.5,
+            "bookCr": 42,
+            "monthsBack": 3
+          },
+          {
             "fund": "UTI Flexi Cap Fund",
             "amc": "UTI",
             "classification": "Equity : Flexi Cap",
@@ -857,32 +883,6 @@
             "navReturnPct": -4.8,
             "impliedFlowPct": -2.2,
             "bookCr": 3369,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Aditya Birla SL Consumption Fund",
-            "amc": "Aditya Birla Sun Life",
-            "classification": "Equity : Thematic - Consumption",
-            "percentile": 26.7,
-            "quartile": "Q3",
-            "perfReturn": 6.6,
-            "bookGrowthPct": -4.8,
-            "navReturnPct": -2.6,
-            "impliedFlowPct": -2.2,
-            "bookCr": 5645,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Aditya Birla SL Business Cycle Fund",
-            "amc": "Aditya Birla Sun Life",
-            "classification": "Equity : Thematic",
-            "percentile": 31.8,
-            "quartile": "Q3",
-            "perfReturn": 10.8,
-            "bookGrowthPct": -0.8,
-            "navReturnPct": 1.4,
-            "impliedFlowPct": -2.2,
-            "bookCr": 1687,
             "monthsBack": 3
           }
         ]
