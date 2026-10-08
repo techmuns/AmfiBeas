@@ -50,7 +50,7 @@ const lic=await publicDisclosures('lic',month,async(url,options)=>{
   return Buffer.from('<a href="/equity.xlsx">Monthly Portfolio Equity as on August 31, 2026</a><a href="/debt.xlsx">Monthly Portfolio Debt as on August 31, 2026</a>');
 });
 assert.equal(lic.length,2);
-await assert.rejects(publicDisclosures('sundaram',month,async()=>reply([{GROUP_NAME:'Old report',PORTFOLIO_PATH:'/Downloads_Pdf/Portfolio_Archives/2026/Jul/Equity/Fund.xlsx'}])),/month mismatch/);
+await assert.rejects(publicDisclosures('sundaram',month,async()=>reply([{GROUP_NAME:'Old report',PORTFOLIO_PATH:'/Downloads_Pdf/Portfolio_Archives/2026/Jul/Equity/Fund.xlsx'}])),error=>error.code==='SOURCE_PERIOD_NOT_LISTED'&&error.listedMonths[0]==='2026-07');
 const angel=await publicDisclosures('angel-one',month,async()=>Buffer.from('<a href="https://cms.angelonemf.com/amc-cms/wp-content/uploads/formidable/20/Monthly-Portfolio-August-2026-Angel-One-Fund.xlsx">Download</a><a href="https://cms.angelonemf.com/Monthly-Portfolio-July-2026-Old.xlsx">Download</a>'));
 assert.equal(angel.length,1);assert.equal(angel[0].text,'Angel One Fund');
 const axis=await publicDisclosures('axis',month,async()=>reply({data:{documentList:[{documentName:'Monthly Portfolio 31-08-2026',docuementURL:'https://www.axismf.com/portfolio.xlsx'},{documentName:'Weekly Portfolios - Income+Arb - 28Aug26',docuementURL:'https://www.axismf.com/weekly.xlsx'}]}}),{axisPublicToken:'Bearer abc123'});

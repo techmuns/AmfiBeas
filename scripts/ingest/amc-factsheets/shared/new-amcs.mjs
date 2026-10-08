@@ -54,7 +54,7 @@ export async function newAmcDisclosures(slug,month,read,{anchorFiles}) {
     if(groups.length!==1||groups[0].slug!=='/portfolio-holdings')throw Error('Monthly catalogue missing');
     const monthly=groups[0].download_category_level_2s.filter(v=>/^Monthly$/i.test(v.name));
     if(!monthly.length)return [];
-    if(monthly.length!==1||monthly[0].slug!=='/monthly')throw Error('Invalid disclosure index');
+    if(monthly.length!==1||!['/monthly','monthly'].includes(monthly[0].slug))throw Error('Invalid disclosure index');
     const base=new URL('/forms-downloads/portfolio-holdings/monthly',page),links=[],ids=new Set();let total=null,pages=1;
     for(let p=1;p<=pages;p++) {
       const url=new URL(base);if(p>1)url.searchParams.set('page',String(p));
@@ -67,7 +67,7 @@ export async function newAmcDisclosures(slug,month,read,{anchorFiles}) {
         if(!item.id||ids.has(item.id))throw Error('Repeated disclosure page');ids.add(item.id);
         if(!/\bMonthly\b/i.test(item.name||'')||!monthEndLabel(item.name,month))continue;
         if(!/^\/uploads\/[^/]+\.xlsx?$/i.test(item.attachment?.url||''))throw Error('Monthly workbook missing');
-        links.push({url:new URL(item.attachment.url,page).href,text:item.name.replace(/^Monthly\s*-\s*/i,'').replace(/\s+\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]+\s+20\d{2}$/,'')});
+        links.push({url:new URL(item.attachment.url,page).href,text:item.name.replace(/^Monthly\s*-\s*(?:Portfolio\s+)?/i,'').replace(/\s+\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]+\s+20\d{2}$/,'')});
       }
       if(ids.size>total||!downloads.length&&total>0)throw Error('Incomplete disclosure index');
     }

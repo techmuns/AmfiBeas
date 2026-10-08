@@ -78,6 +78,26 @@ download page. Coverage must remain partial until those gaps are resolved.
 
 ## Verification
 
+Candidate reports must carry the actual month-end workbook date before any saved
+observations can be replaced. Excel percentage cell formats establish fractional
+weights before rounding; plain numeric weight cells remain percentage points.
+Known CCIL repo/cash-only reports require the dated scheme heading, recognised
+instrument sections and reconciled totals before certifying no Indian holdings.
+September regression fixtures retain genuine published bytes or exact catalogue
+fragments, with source URLs and SHA-256 hashes in `shared/fixtures/provenance.json`.
+Validated catalogues with no target-period files report `target-period-not-listed`;
+transport failures and access refusals never establish publication absence.
+The dated [source check comparison](mf-source-checks-2026-10-08.csv) records the
+published baseline, unmodified isolated replay and repaired isolated replay for
+all 57 AMCs. These are local verification results; they do not update the feed.
+
+Monarch's new monthly category accepts its published slash/no-slash spelling on
+the same fixed official route. Its overnight workbook's scheme index must match
+every real sheet and the exact heading before it can be treated as ancillary.
+Numeric repo contract identifiers require an explicit reverse-repo/TREPS label,
+the named repo section, and no ISIN or share quantity. Unknown contracts or
+extra securities remain validation failures.
+
 `npm run test:holdings` covers public catalogue pagination, month rollover,
 per-file resumption, refusals, exact identities, verified empty reports, source
 isolation, process timeouts, source clocks, directory growth/failure and manifest

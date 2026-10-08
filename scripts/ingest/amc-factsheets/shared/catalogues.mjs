@@ -1,3 +1,4 @@
+import {periodNotListed} from './source-errors.mjs';
 // Official catalogues whose current public download UI supersedes legacy routes.
 import {NEW_AMC_PAGES,NEW_AMC_HOSTS,newAmcDisclosures} from './new-amcs.mjs';
 import {previousMonth} from './dates.mjs';
@@ -46,7 +47,9 @@ export async function catalogueDisclosures(slug,month,read,{anchorFiles,includeH
       const label=link.text.replace(/\s+/g,' ').trim(),match=wanted.exec(label);
       if(!match)return [];
       const url=new URL(link.url),file=decodeURIComponent(url.pathname.split('/').pop());
-      if(url.origin!=='https://files.hdfcfund.com'||!url.pathname.startsWith('/s3fs-public/')||file!==label)throw Error('Monthly disclosure file mismatch');
+      // HTML labels collapse whitespace; the official filename can contain two
+      // spaces. Compare those display forms, preserving the exact versioned URL.
+      if(url.origin!=='https://files.hdfcfund.com'||!url.pathname.startsWith('/s3fs-public/')||file.replace(/\s+/g,' ').trim()!==label)throw Error('Monthly disclosure file mismatch');
       return [{url:url.href,text:'HDFC '+match[1]}];
     });
   }
@@ -115,6 +118,7 @@ export async function catalogueDisclosures(slug,month,read,{anchorFiles,includeH
     const response=await read(page,{body:JSON.stringify(['monthly-portfolio-disclosure',{year:`FI${fy}-${fy+1}`,month:name,date:'$undefined'},'MF']),contentType:'text/plain;charset=UTF-8',headers:{accept:'text/x-component','next-action':action,origin:new URL(page).origin,referer:page,'next-router-state-tree':'%5B%22%22%2C%7B%22children%22%3A%5B%22(mf)%22%2C%7B%22children%22%3A%5B%22(public)%22%2C%7B%22children%22%3A%5B%22statutory-disclosure%22%2C%7B%22children%22%3A%5B%5B%22l1Id%22%2C%22disclosures%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%5B%22l2Id%22%2C%22monthly-portfolio-disclosure%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22__PAGE__%22%2C%7B%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%2Ctrue%5D'}});
     const line=response.toString('utf8').split('\n').find(l=>/^1:\{/.test(l));
     const data=line&&JSON.parse(line.slice(2)),pagination=data?.meta?.pagination;
+    if(Array.isArray(data?.data)&&!data.data.length&&pagination?.page===1&&pagination.pageCount===0&&pagination.total===0)throw periodNotListed(month);
     if(!Array.isArray(data?.data)||pagination?.page!==1||pagination?.pageCount!==1||pagination.total!==data.data.length)throw Error('Incomplete disclosure index');
     return data.data.filter(d=>!/^JioBlackRock Mutual Fund-Monthly-Portfolio-/i.test(d.title||'')).map(d=>{
       if(d.docType!=='file'||!new RegExp(`-Monthly-Portfolio-${end}-${String(num).padStart(2,'0')}-${year}$`,'i').test(d.title||''))throw Error('Disclosure month mismatch');
@@ -144,6 +148,7 @@ export async function catalogueDisclosures(slug,month,read,{anchorFiles,includeH
     const fy=num>=4?year:year-1;
     const data=await json(settings.rest_url+'nv/v1/documents',form({financial_year:`${fy}-${fy+1}`,value:name,category,type:'Monthly',order:'DESC'},{'WP-NONCE':settings.nonce}));
     if(data.success!==true||!Array.isArray(data.data))throw Error('Invalid disclosure index');
+    if(!data.data.length)throw periodNotListed(month);
     return data.data.flatMap(d=>{
       if(!new RegExp(`${end}(?:st|nd|rd|th)? ${name} ${year}$`,'i').test(d.title||''))throw Error('Disclosure index month mismatch');
       const files=Array.isArray(d.url)?d.url.map(f=>f.link):[d.url];

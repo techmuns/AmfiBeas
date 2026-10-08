@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {publicDisclosures} from './public-disclosures.mjs';
 const month='2026-08',json=value=>Buffer.from(JSON.stringify(value)),html=value=>Buffer.from(value);
@@ -65,3 +66,7 @@ for(const [slug,host] of [['tata','https://betacms.tatamutualfund.com'],['edelwe
 
 const zerodha=await publicDisclosures('zerodha',month,async()=>html(JSON.stringify({files:[{name:'ZOVER - Monthly Portfolio August 2026',url:'https://assets.zerodhafundhouse.com/statutory-reports/portfolio-disclosures/ZOVER - Monthly Portfolio August 2026.xlsx'},{name:'ZOVER - Half-Yearly Portfolio August 2026',url:'https://assets.zerodhafundhouse.com/statutory-reports/portfolio-disclosures/half.xlsx'}]})));
 assert.equal(zerodha.length,1);assert.match(zerodha[0].url,/ZOVER%20/);
+
+const genuineEmpty=fs.readFileSync(new URL('./fixtures/jio-september-empty.rsc',import.meta.url));
+await assert.rejects(publicDisclosures('jio-blackrock','2026-09',async(url,options)=>options?genuineEmpty:jioReader()(url,options)),error=>error.code==='SOURCE_PERIOD_NOT_LISTED'&&error.targetMonth==='2026-09');
+console.log('PASS genuine Jio target-period absence: complete zero-row pagination, preserved older snapshots, distinguished from malformed catalogue');

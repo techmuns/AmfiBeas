@@ -95,14 +95,14 @@ export const AMC_FACTSHEET_SOURCES: AmcFactsheetSource[] = [
   {
     amc: "HDFC",
     slug: "hdfc",
-    sourceUrl: "https://www.hdfcfund.com/mutual-funds/factsheets",
+    sourceUrl: "https://www.hdfcfund.com/statutory-disclosure/portfolio/monthly-portfolio",
     kind: "mixed",
     access: "browser",
     status: "pilot",
     notes:
-      "HARD. 403 'Access Denied' (Akamai) even to a real browser WITH stealth (webdriver spoof, " +
-      "automation flags off, en-IN). Recon2 could not get past it. Options: undetected-chromedriver / a " +
-      "residential-proxy fetch, or source HDFC's monthly portfolio from an alternate host (e.g. its CDN).",
+      "Use the official monthly portfolio catalogue and its published files.hdfcfund.com links. " +
+      "Standard Chromium can wait for catalogue hydration. A refused page or download remains " +
+      "unavailable; do not use stealth clients, challenge bypasses or proxy rotation.",
   },
   {
     amc: "Kotak",

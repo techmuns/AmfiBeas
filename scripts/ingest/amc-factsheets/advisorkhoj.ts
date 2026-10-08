@@ -292,6 +292,7 @@ export function downloadFirstParsable(
  * to ~100). Only then do we multiply by 100.
  */
 export function normalizeSchemePct(scheme: AmcScheme): AmcScheme {
+  if (scheme.pctUnit === "percentage-points") return scheme;
   let sum = 0;
   let max = 0;
   for (const h of scheme.holdings) {

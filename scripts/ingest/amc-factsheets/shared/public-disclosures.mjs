@@ -4,7 +4,7 @@ import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {monthKey,previousMonth} from './dates.mjs';
 import {CATALOGUE_PAGES,CATALOGUE_HOSTS,catalogueDisclosures} from './catalogues.mjs';
-import {sourceFailure} from './source-errors.mjs';
+import {sourceFailure,periodNotListed} from './source-errors.mjs';
 const run=promisify(execFile);
 const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
 export const PUBLIC_PAGES={
@@ -207,7 +207,10 @@ export async function publicDisclosures(slug,month,read,{axisPublicToken,include
       if(!/\/Portfolio_Archives\//.test(item.PORTFOLIO_PATH))throw Error('Unknown portfolio path');
       links.push({url:new URL(item.PORTFOLIO_PATH,page).href,text:item.GROUP_NAME});
     }
-    if(links.some(l=>!new RegExp(`/Portfolio_Archives/${year}/${name.slice(0,3)}/`,'i').test(new URL(l.url).pathname)))throw Error('Disclosure index month mismatch');
+    const dated=links.map(link=>{const m=/\/Portfolio_Archives\/(20\d{2})\/([A-Za-z]{3})\//i.exec(new URL(link.url).pathname);return {...link,disclosureMonth:m?monthKey(`${m[2]}-${m[1]}`):null};});
+    if(!dated.length||dated.some(l=>!l.disclosureMonth))throw Error('Disclosure index month mismatch');
+    links=dated.filter(l=>l.disclosureMonth===month);
+    if(!links.length)throw periodNotListed(month,[...new Set(dated.map(l=>l.disclosureMonth))]);
   } else if(slug==='angel-one') {
     links=anchorFiles(await html(page),page).filter(l=>new RegExp(`/Monthly-Portfolio-${name}-${year}-`,'i').test(new URL(l.url).pathname));
     links=links.map(l=>({...l,text:decodeURIComponent(new URL(l.url).pathname.split('/').pop()).replace(new RegExp(`^Monthly-Portfolio-${name}-${year}-`,'i'),'').replace(/\.xlsx?$/i,'').replace(/-/g,' ')}));
@@ -243,10 +246,10 @@ export function schemeNameResolver(snapshot) {
 // Some gold, overnight and overseas-only reports contain no Indian shares or units,
 // so the equity parser correctly returns no positions. Verify that exact case
 // without treating an arbitrary empty/malformed workbook as an empty portfolio.
-const emptySections=new Set(`equity & equity related|listed/awaiting listing on stock exchanges|listed/awaiting listing on stock exchange|listed/awaiting listing on the stock exchanges|listed/awaited listed on stock exchanges|unlisted|preference shares|debt instruments|privately placed/unlisted|unlisted/privately placed|securitised debt|securitised debt instruments|securitized debt instruments|others|money market instruments|tri party repo (treps)/reverse repo|treps/reverse repo instrument|treps/reverse repo|treps/reverse repo investments|international exchange traded funds|international mutual fund units|other current assets/(liabilities)|international equity shares|reit|derivatives|index/stock futures|index/stock options|exchange traded commodity derivatives|commodity futures|commodity option|commercial paper|commercial papers|cd-certificate of deposits|treasury bills|units of an alternative investment fund (aif)|fixed deposits|mutual fund unit|mutual fund units|units of infrastructure investment trust|tri party repo (treps)|other receivables (payables)|overseas security|preference/right shares|warrants|derivative|govt security|certificate of deposits|reverserepo/treps|investments in foreign securities - units of mutual funds|deposits with commercial banks|share application money pending allotment|foreign securities and/or overseas etf|real estate investment trust|infrastructure investment trust|central government securities|state government securities|bills re- discounting|mutual fund units/exchange traded funds|short term deposits|term deposits placed as margins|alternative investment funds|foreign mutual fund units|fixed deposit|exchange traded funds|cdmdf_aif|strips|margin amount for derivative positions|foreign securities/overseas etfs|foreign securities and/or overseas etfs|reverse repo/treps|commodities and commodities related|listed on commodity exchange (quantity in lots)`.split('|'));
+const emptySections=new Set(`real est inv trust|infra inv trust|preference share|treps|reverse repo instrument|cash & cash equivalents|equity & equity related|listed/awaiting listing on stock exchanges|listed/awaiting listing on stock exchange|listed/awaiting listing on the stock exchanges|listed/awaited listed on stock exchanges|unlisted|preference shares|debt instruments|privately placed/unlisted|unlisted/privately placed|securitised debt|securitised debt instruments|securitized debt instruments|others|money market instruments|tri party repo (treps)/reverse repo|treps/reverse repo instrument|treps/reverse repo|treps/reverse repo investments|international exchange traded funds|international mutual fund units|other current assets/(liabilities)|international equity shares|reit|derivatives|index/stock futures|index/stock options|exchange traded commodity derivatives|commodity futures|commodity option|commercial paper|commercial papers|cd-certificate of deposits|treasury bills|units of an alternative investment fund (aif)|fixed deposits|mutual fund unit|mutual fund units|units of infrastructure investment trust|tri party repo (treps)|other receivables (payables)|overseas security|preference/right shares|warrants|derivative|govt security|certificate of deposits|reverserepo/treps|investments in foreign securities - units of mutual funds|deposits with commercial banks|share application money pending allotment|foreign securities and/or overseas etf|real estate investment trust|infrastructure investment trust|central government securities|state government securities|bills re- discounting|mutual fund units/exchange traded funds|short term deposits|term deposits placed as margins|alternative investment funds|foreign mutual fund units|fixed deposit|exchange traded funds|cdmdf_aif|strips|margin amount for derivative positions|foreign securities/overseas etfs|foreign securities and/or overseas etfs|reverse repo/treps|commodities and commodities related|listed on commodity exchange (quantity in lots)`.split('|'));
 export function verifiedNonIndianRows(rows,name,month) {
   if(!/\b(?:gold (?:etf|exchange traded fund)|silver etf|overnight fund|1d rate liquid etf|global.*(?:\bfof|fund of fund)|HSBC (?:Brazil Fund|Global Emerging Markets Fund|Asia Pacific.*Yield ?Fund)|Navi .*US Specific Equity Passive FoF|Bandhan US.*(?:FOF|fund of fund)|Invesco India - Invesco .*Fund of Fund|PGIM INDIA .*FUND OF FUND|S&P 500.*ETF|NYSE FANG.*ETF|Hang Seng.*ETF)\b/i.test(name||''))return false;
-  const heading=rows.slice(0,15).flat().map(v=>String(v??'')).join(' ').replace(/[-,]/g,' ').replace(/\s+/g,' ');
+  const heading=rows.slice(0,15).flat().map(v=>String(v??'')).join(' ').replace(/[-,.]/g,' ').replace(/\s+/g,' ');
   const [year,num]=month.split('-').map(Number),end=new Date(Date.UTC(year,num,0)).getUTCDate(),mon=months[num-1];
   const dates=[...heading.matchAll(/(?:as on|as of|month ended|period ended)\s+(\d{1,2}\s+[A-Za-z]+\s+20\d{2}|[A-Za-z]+\s+\d{1,2}\s+20\d{2})/gi)];
   const numericDates=[...heading.matchAll(/(?:as on|as of|month ended|period ended)\s+(\d{1,2})[./ ](\d{1,2})[./ ](20\d{2})\b/gi)];
@@ -268,11 +271,17 @@ export function verifiedNonIndianRows(rows,name,month) {
     const emptyValue=v=>blank(v)||v===0||/^NIL$/i.test(String(v).trim());
     if(!label&&!id&&blank(row[pct])&&amounts.every(i=>blank(row[i])))continue;
     const section=label.replace(/^\(?[a-z]\)\s*/i,'').toLowerCase().replace(/\s*\/\s*/g,'/').replace(/\s+/g,' ');
-    if(!id&&emptyValue(row[pct])&&amounts.every(i=>emptyValue(row[i]))&&(emptySections.has(section)||['government securities/sdl','treps/reverse repo investments/corporate debt repo','cash & cash equivalents'].includes(section))){currentSection=section;continue;}
+    if(!id&&emptyValue(row[pct])&&amounts.every(i=>emptyValue(row[i]))&&(emptySections.has(section)||['government securities/sdl','treps/reverse repo investments','treps/reverse repo investments/corporate debt repo','cash & cash equivalents'].includes(section))){currentSection=section;continue;}
     if(!blank(row[pct])&&!/^NIL$/i.test(String(row[pct]).trim())&&!(row[pct]==='$'&&/^(?:Cash Margin - CCIL|sub\s*total)$/i.test(label))&&(typeof row[pct]!=='number'||!Number.isFinite(row[pct])))return false;
     if(/^(?:sub\s*total|grand[ _]total(?:\s*\(aum\))?|total(?: for (?:money market instruments|equity & equity related|debt instruments))?|(?:NCA-)?net current assets(?: \(including cash & bank balances\))?|TREPS\/Reverse Repo\/Net Current Assets\/Cash\/Cash Equivalent|total net assets as on \d{1,2}-[A-Za-z]+-20\d{2}|cash and other net current assets|cash margin - CCIL|net receivables?\s*\/\s*\(?payables?\)?|clearing corporation of india (?:limited|ltd\.?))$/i.test(label))continue;
     if(/^TREPS(?:\s+\d{2}-[A-Za-z]{3}-20\d{2}\s+DEPO\s+\d+)?$/i.test(label))continue;
     if(/^Triparty Repo(?: TRP_\d{6})?$/i.test(label))continue;
+    // Overnight repo rows can place a contract code immediately before the
+    // instrument column. Accept only the disclosed repo type, with no ISIN or
+    // share quantity, inside the explicitly named repo section.
+    const quantity=cols.findIndex(v=>/quantity/i.test(String(v||'')));
+    if(instrument>0&&/^\d{10}$/.test(String(row[instrument-1]||'').trim())&&!id&&quantity>=0&&blank(row[quantity])&&currentSection==='treps/reverse repo investments'&&/^(?:\d+(?:\.\d+)?% Reverse Repo|TREPS)$/i.test(label))continue;
+    if(/^The Clearing Corporation of India Ltd\. \d{2}-[A-Za-z]{3}-20\d{2}$/i.test(label)&&!id&&['treps','reverse repo instrument'].includes(currentSection))continue;
     if(label==='CCIL'&&!id&&currentSection==='treps/reverse repo investments/corporate debt repo')continue;
     if(/^(?:\(?[a-z]\)\s*)?(?:gold(?: 1 kg bar \(995 fineness\)| (?:995|999) purity| 995 Finnese| - mumbai)?|silver)$/i.test(label))continue;
     if(/^(?:GOLD \.995 1KG BAR(?: - Mumbai)?|GOLD 999 100GM BAR|SILVER 999 1KG BAR)$/i.test(label))continue;
@@ -330,6 +339,18 @@ export function parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedW
     const ancillary=n=>{
       if(/^(?:Notes|Disclaimer)$/i.test(n))return true;
       const rows=XLSX.utils.sheet_to_json(book.Sheets[n],{header:1,blankrows:false,defval:null,raw:true});
+      if(slug==='monarch'&&/^Index$/i.test(n)) {
+        const entries=rows.map(r=>r.filter(v=>v!==null&&v!==undefined&&v!=='').map(v=>String(v).trim())),header=entries.findIndex(r=>r.join('|')==='Scheme Code|Scheme Short code|Scheme Name');
+        const schemes=header>=0?entries.slice(header+1):[],codes=new Set(schemes.map(r=>r[1]));
+        // An index is ancillary only when every listed scheme identifies its
+        // real sheet and heading. Unknown rows, hidden securities or omitted
+        // scheme sheets remain failures.
+        return entries[0]?.join('|')==='Index'&&header===1&&schemes.length>0&&codes.size===schemes.length&&schemes.length===book.SheetNames.length-1&&schemes.every(r=>{
+          if(r.length!==3||!book.Sheets[r[1]])return false;
+          const sheetRows=XLSX.utils.sheet_to_json(book.Sheets[r[1]],{header:1,blankrows:true,defval:null,raw:true}),table=sheetRows.findIndex(row=>row.some(v=>/^ISIN$/i.test(String(v||''))));
+          return table>0&&sheetRows.slice(0,table).flat().filter(v=>baseName(v)===baseName(r[2])).length===1;
+        });
+      }
       return rows.slice(0,3).some(r=>r.some(v=>String(v||'')==='Top 10 holdings by issuer'))&&rows.slice(0,4).some(r=>r.some(v=>String(v||'')==='Issuer Name'))&&!rows.flat().some(v=>/\bIN[EF][A-Z0-9]{9}\b/i.test(String(v||'')));
     };
     const candidates=book.SheetNames.filter(n=>!ancillary(n));

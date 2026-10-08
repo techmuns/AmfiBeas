@@ -21,17 +21,26 @@ const MONTH_NUM: Record<string, number> = Object.fromEntries(MON3.map((m, i) => 
 
 interface CurlOpts { method?: "GET" | "POST"; body?: string; headers?: Record<string, string> }
 function curl(url: string, opts: CurlOpts = {}): string | null {
-  // -g/--globoff: don't treat [ ] { } in URLs (Strapi filter syntax) as globs.
-  const args = ["-fsL", "-g", "--max-time", "90", "-A", UA];
-  for (const [k, v] of Object.entries(opts.headers ?? {})) args.push("-H", `${k}: ${v}`);
-  if (opts.body != null) args.push("--data-raw", opts.body); // presence of data → POST
-  args.push(url);
-  try {
-    return execFileSync("curl", args, { maxBuffer: 64 * 1024 * 1024 }).toString("utf8");
-  } catch {
-    return null;
+  const parsed=new URL(url);
+  if(parsed.protocol!=="https:"||parsed.username||parsed.password)return null;
+  const args=["--fail","--location","--silent","--show-error","--globoff","--proto","=https","--proto-redir","=https","--max-redirs","3","--connect-timeout","10","--max-time","25","--max-filesize","8000000","--write-out","%{stderr}\n%{http_code}","-A",UA];
+  for(const [k,v] of Object.entries(opts.headers??{}))args.push("-H",`${k}: ${v}`);
+  if(opts.body!=null)args.push("--data-raw",opts.body);
+  let transportCode: number | null=null;
+  for(let attempt=0;attempt<3;attempt++) {
+    try{return execFileSync("curl",[...args,url],{maxBuffer:8_000_000,timeout:30000,stdio:["ignore","pipe","pipe"]}).toString("utf8");}
+    catch(error) {
+      const e=error as {stderr?:Buffer;status?:number},status=Number(/(\d{3})\s*$/.exec(String(e.stderr||""))?.[1]);
+      if([404,410].includes(status))return null;
+      if(status&&![408,500,502,503,504].includes(status))throw Object.assign(Error("Public source HTTP failure"),{code:"SOURCE_HTTP",status});
+      if(![408,500,502,503,504].includes(status)&&![5,6,7,18,28,35,52,55,56].includes(e.status||0))return null;
+      transportCode=e.status||null;
+      if(attempt<2)Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,500*2**attempt);
+    }
   }
+  throw Object.assign(Error("Public source transport failure"),{code:"SOURCE_TRANSPORT",transportCode});
 }
+
 /** Does this URL actually serve a file? Templated month URLs MUST be probed
  *  before we accept that month: a builder that always returns a URL makes the
  *  month loop "resolve" on the current month every time, so the month that IS
@@ -306,15 +315,20 @@ function jmCleanName(title: string): string {
     .replace(/\s*-?\s*[A-Za-z]{3,9}\.?\s*\d{1,2},?\s*\d{4}\s*$/, "")
     .trim();
 }
+export function jmDisclosurePeriod(title: string): string | null {
+  const date = /(?:-|\s)\s*([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:,\s*|\s+)(20\d{2})\s*$/.exec(title);
+  if (!/^Monthly\s+Portfolio\b/i.test(title) || !date) return null;
+  const m = MONTH_NUM[date[1].slice(0,3).toLowerCase()];
+  if (!m || Number(date[2]) !== new Date(Date.UTC(Number(date[3]),m,0)).getUTCDate()) return null;
+  return `${date[3]}-${String(m).padStart(2,"0")}`;
+}
 function jmHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
   const out = new Map<string, HarvestedLink[]>();
   for (const it of jmMonthlyItems()) {
     if ((it.FileEXT || "").toLowerCase() !== ".xlsx" || !it.FileName || !it.DocumentDate) continue;
-    // DocumentDate is the upload month = data month + 1.
-    let y = +it.DocumentDate.slice(0, 4), m = +it.DocumentDate.slice(5, 7) - 1;
-    if (m === 0) { m = 12; y--; }
-    const ym = `${y}-${String(m).padStart(2, "0")}`;
-    if (!inWin(ym, now, back)) continue;
+    // Upload timestamps cannot establish the portfolio reporting period.
+    const ym = jmDisclosurePeriod(it.Title || "");
+    if (!ym || !inWin(ym, now, back)) continue;
     const url = "https://www.jmfinancialmf.com/" + it.FileName.split("/").map(encodeURIComponent).join("/");
     if (!out.has(ym)) out.set(ym, []);
     out.get(ym)!.push({ url, text: jmCleanName(it.Title || "") });
@@ -783,13 +797,12 @@ function oneHistory(now: Date, back: number): Map<string, HarvestedLink[]> {
 // as Arbitrage/Multi-Asset launched later).
 const CM_PAGE = "https://capitalmindmf.com/statutory-disclosures.html";
 const CM_ORIGIN = "https://capitalmindmf.com";
-function cmRows(): Map<string, HarvestedLink[]> {
+export function capitalmindMonthlyRows(html: string | null): Map<string, HarvestedLink[]> {
   const out = new Map<string, HarvestedLink[]>();
-  const html = curl(CM_PAGE, { headers: { referer: `${CM_ORIGIN}/` } });
   if (!html) return out;
   for (const m of html.matchAll(/<span class="fs-16">([^<]+)<\/span>\s*<a\s+href="(\/uploads\/[^"]+\.xlsx?)"/g)) {
     const f = m[2].toLowerCase();
-    if (!f.includes("portfolio") || f.includes("fortnight") || f.includes("half")) continue;
+    if (!/_monthly_portfolio_disclosure_/i.test(f)) continue;
     const lm = /^([A-Za-z]+)\s+(\d{4})$/.exec(m[1].trim()); // strict "Month YYYY" → monthly only
     if (!lm) continue;
     const mo = MONTH_NUM[lm[1].slice(0, 3).toLowerCase()];
@@ -800,6 +813,9 @@ function cmRows(): Map<string, HarvestedLink[]> {
     if (!out.get(ym)!.some((l) => l.url === url)) out.get(ym)!.push({ url, text: "" });
   }
   return out;
+}
+function cmRows(): Map<string, HarvestedLink[]> {
+  return capitalmindMonthlyRows(curl(CM_PAGE, {headers: {referer: `${CM_ORIGIN}/`}}));
 }
 function discoverCm(now: Date): HarvestedLink[] {
   const all = cmRows();
@@ -1567,6 +1583,6 @@ export function jsonApiAmc(slug: string, opts: AmcParseOptions, now: Date): Json
   // URL names the disclosure month authoritatively. Fill in schemes whose sheet
   // carries no usable as-on date (UTI, Zerodha and JM print none), which is what
   // used to leave those AMCs labelled off a mis-read maturity date.
-  stampAsOfFromLinks(schemes, links, now);
+  if (!opts.strictHoldings) stampAsOfFromLinks(schemes, links, now);
   return { ...result, usedUrl: cfg.page };
 }

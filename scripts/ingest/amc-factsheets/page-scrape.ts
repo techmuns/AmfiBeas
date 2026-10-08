@@ -30,32 +30,30 @@ export interface PageScrapeConfig {
   referer?: string;
 }
 
-export function curlText(url: string, referer?: string): string | null {
-  try {
-    const args = ["-fsL", "--max-time", "60", "-A", UA];
-    if (referer) args.push("-H", `Referer: ${referer}`);
-    return execFileSync("curl", [...args, url], { maxBuffer: 64 * 1024 * 1024 }).toString("utf8");
-  } catch {
-    return null;
+// Bounded public reads. Retry transient transport/5xx failures only; an access
+// refusal ends this source pass and never triggers an identity/proxy change.
+function legacyCurl(url: string, referer: string | undefined, binary: boolean): Buffer | null {
+  const safe = url.replace(/%(?![0-9A-Fa-f]{2})/g, "%25").replace(/ /g, "%20");
+  const parsed = new URL(safe);
+  if (parsed.protocol !== "https:" || parsed.username || parsed.password) return null;
+  const args = ["--fail", "--location", "--silent", "--show-error", "--globoff", "--proto", "=https", "--proto-redir", "=https", "--max-redirs", "3", "--connect-timeout", "10", "--max-time", "30", "--max-filesize", binary ? "25000000" : "8000000", "--write-out", "%{stderr}\n%{http_code}", "-A", UA];
+  if (referer) args.push("-H", `Referer: ${referer}`);
+  for (let attempt=0;attempt<3;attempt++) {
+    try {
+      const out=execFileSync("curl",[...args,safe],{maxBuffer:binary?25_000_000:8_000_000,timeout:35000,stdio:["ignore","pipe","pipe"]});
+      return binary && out.length<=500 ? null : out;
+    } catch (error) {
+      const e=error as {stderr?:Buffer;status?:number};
+      const status=Number(/(\d{3})\s*$/.exec(String(e.stderr||""))?.[1]);
+      if ([401,403,429].includes(status)) throw Object.assign(Error("Source refused access"),{code:"SOURCE_HTTP",status});
+      if (!([408,500,502,503,504].includes(status)||[5,6,7,18,28,35,52,55,56].includes(e.status||0)))return null;
+      if(attempt<2)Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,500*2**attempt);
+    }
   }
+  return null;
 }
-
-export function curlBuffer(url: string, referer?: string): Buffer | null {
-  try {
-    // -g/--globoff: don't treat [ ] { } in a filename as curl globs (we no
-    // longer percent-encode them, unlike the old encodeURI path).
-    const args = ["-fsL", "-g", "--max-time", "120", "-A", UA];
-    if (referer) args.push("-H", `Referer: ${referer}`);
-    // Encode literal spaces + any lone '%' (not already part of a %XX escape)
-    // without double-encoding: Tata ships %20-encoded filenames (encodeURI would
-    // turn %20 into %2520 → 404), Zerodha ships literal spaces. This handles both.
-    const safe = url.replace(/%(?![0-9A-Fa-f]{2})/g, "%25").replace(/ /g, "%20");
-    const out = execFileSync("curl", [...args, safe], { maxBuffer: 256 * 1024 * 1024 });
-    return out.length > 500 ? out : null;
-  } catch {
-    return null;
-  }
-}
+export function curlText(url: string, referer?: string): string | null {return legacyCurl(url,referer,false)?.toString("utf8")||null;}
+export function curlBuffer(url: string, referer?: string): Buffer | null {return legacyCurl(url,referer,true);}
 
 function decodeHtml(s: string): string {
   return s
@@ -108,7 +106,13 @@ export function downloadAndParse(links: HarvestedLink[], opts: AmcParseOptions, 
   let completedFiles = 0;
   const fileFailures: {url: string; reason: string}[] = [];
   for (const l of byFile.values()) {
-    const buf = read(l.url, referer);
+    let buf: Buffer | null;
+    try {buf=read(l.url,referer);} catch(error) {
+      const status=(error as {status?:number}).status;
+      if(![401,403,429].includes(status||0))throw error;
+      for(const pending of [...byFile.values()].slice(completedFiles+fileFailures.length))fileFailures.push({url:pending.url,reason:`Source access refused (HTTP ${status})`});
+      break;
+    }
     if (!buf) {fileFailures.push({url:l.url,reason:"Disclosure download failed"});continue;}
     const head = buf.subarray(0, 64).toString("latin1").trimStart().toLowerCase();
     if (head.startsWith("<!doctype") || head.startsWith("<html")) {fileFailures.push({url:l.url,reason:"Unexpected HTML"});continue;} // walled/HTML
@@ -124,6 +128,7 @@ export function downloadAndParse(links: HarvestedLink[], opts: AmcParseOptions, 
     }
     if (parsed.length) completedFiles++;else fileFailures.push({url:l.url,reason:"Workbook holdings unverified"});
     for (const sc of parsed.map(normalizeSchemePct)) {
+      sc.sourceUrl = l.url;
       // Single-scheme workbooks (one file per fund: JM, Canara) whose header the
       // generic parser can't read leave the scheme name as a column label ("Name
       // of Instrument"), a stray code ("IN", "ET"), or the document banner
@@ -193,7 +198,7 @@ export function pageScrapeAmc(cfg: PageScrapeConfig, opts: AmcParseOptions, now:
     const result = downloadAndParse(picked, opts, cfg.referer ?? pageUrl);
     const { schemes } = result;
     if (schemes.length > 0) {
-      stampAsOfFromFilename(schemes, picked);
+      if (!opts.strictHoldings) stampAsOfFromFilename(schemes, picked);
       return { ...result, usedUrl: pageUrl };
     }
   }
