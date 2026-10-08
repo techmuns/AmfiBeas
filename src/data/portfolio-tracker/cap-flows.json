@@ -2,9 +2,9 @@
   "meta": {
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
-    "generatedAt": "2026-10-08T08:57:14.541Z",
+    "generatedAt": "2026-10-08T09:21:55.591Z",
     "universe": "Active equity schemes only (excludes ETFs, index, international and hybrid funds)",
-    "activeEquityFunds": 86,
+    "activeEquityFunds": 93,
     "metric": "Net Rs Cr bought/sold = change in aggregate shares held x current implied price. Excludes corporate actions (split/bonus). pctOutstanding = net shares traded ÷ company shares outstanding x 100 (null until the screener feed covers the fincode).",
     "topN": 20
   },
@@ -45,7 +45,7 @@
       {
         "company": "HDFC Bank Limited",
         "fincode": "INE040A01034",
-        "netCr": 703,
+        "netCr": 680,
         "pctOutstanding": 0.07,
         "amcs": [
           "Aditya",
@@ -223,8 +223,8 @@
       {
         "company": "Trent Limited",
         "fincode": "INE849A01020",
-        "netCr": 366,
-        "pctOutstanding": 0.27,
+        "netCr": 358,
+        "pctOutstanding": 0.26,
         "amcs": [
           "Aditya",
           "UTI",
@@ -302,14 +302,14 @@
         ]
       },
       {
-        "company": "Kotak Mahindra Bank Ltd",
+        "company": "Kotak Mahindra Bank Limited",
         "fincode": "INE237A01036",
-        "netCr": 314,
-        "pctOutstanding": 0.08,
+        "netCr": 321,
+        "pctOutstanding": 0.09,
         "amcs": [
           "Helios",
           "Aditya",
-          "PPFAS"
+          "JM"
         ],
         "schemes": [
           {
@@ -333,6 +333,11 @@
             "netCr": 19
           },
           {
+            "fund": "JM Large and Midcap Fund",
+            "amc": "JM",
+            "netCr": 7
+          },
+          {
             "fund": "UTI Multi Cap Fund",
             "amc": "UTI",
             "netCr": 6
@@ -345,7 +350,7 @@
         ]
       },
       {
-        "company": "Dr Reddys Laboratories Limited",
+        "company": "Dr. Reddy's Laboratories Limited",
         "fincode": "INE089A01031",
         "netCr": 237,
         "pctOutstanding": null,
@@ -441,7 +446,8 @@
         "pctOutstanding": 0.05,
         "amcs": [
           "PPFAS",
-          "UTI"
+          "UTI",
+          "JM"
         ],
         "schemes": [
           {
@@ -463,6 +469,11 @@
             "fund": "PPFAS Parag Parikh Large Cap Fund",
             "amc": "PPFAS",
             "netCr": 1
+          },
+          {
+            "fund": "JM ELSS - Tax Saver Fund",
+            "amc": "JM",
+            "netCr": 0
           }
         ]
       },
@@ -655,7 +666,7 @@
       {
         "company": "GE Vernova T&D India Limited",
         "fincode": "INE200A01026",
-        "netCr": 89,
+        "netCr": 92,
         "pctOutstanding": 0.09,
         "amcs": [
           "Motilal Oswal",
@@ -682,6 +693,11 @@
             "fund": "Aditya Birla Sun Life Mnc Fund",
             "amc": "Aditya",
             "netCr": 4
+          },
+          {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": 3
           },
           {
             "fund": "Helios Mid Cap Fund",
@@ -711,9 +727,9 @@
         ]
       },
       {
-        "company": "Billionbrains Garage Ventures Ltd",
+        "company": "Billionbrains Garage Ventures Ltd.",
         "fincode": "INE0HOQ01053",
-        "netCr": 84,
+        "netCr": 85,
         "pctOutstanding": 0.08,
         "amcs": [
           "Motilal Oswal",
@@ -757,6 +773,11 @@
             "netCr": 1
           },
           {
+            "fund": "JM Large and Midcap Fund",
+            "amc": "JM",
+            "netCr": 1
+          },
+          {
             "fund": "UTI Nifty Midcap 150 Index Fund",
             "amc": "UTI",
             "netCr": 0
@@ -765,6 +786,49 @@
             "fund": "UTI Nifty Midcap 150 Exchange Traded Fund",
             "amc": "UTI",
             "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Vodafone Idea Limited",
+        "fincode": "INE669E01016",
+        "netCr": 83,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya",
+          "JM",
+          "Motilal Oswal"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": 36
+          },
+          {
+            "fund": "Aditya Birla Sun Life Digital India Fund",
+            "amc": "Aditya",
+            "netCr": 22
+          },
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": 12
+          },
+          {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": 12
+          },
+          {
+            "fund": "Motilal Oswal BSE Midcap 150 Momentum 30 Index Fund",
+            "amc": "Motilal Oswal",
+            "netCr": 2
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 2
           }
         ]
       },
@@ -801,72 +865,65 @@
         ]
       },
       {
-        "company": "Vodafone Idea Limited",
-        "fincode": "INE669E01016",
-        "netCr": 70,
-        "pctOutstanding": null,
+        "company": "Reliance Industries Limited",
+        "fincode": "INE002A01018",
+        "netCr": 62,
+        "pctOutstanding": 0,
         "amcs": [
           "Aditya",
-          "Motilal Oswal",
-          "PPFAS"
+          "UTI",
+          "JM"
         ],
         "schemes": [
           {
-            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "fund": "Aditya Birla Sun Life Focused Fund",
             "amc": "Aditya",
             "netCr": 36
           },
           {
-            "fund": "Aditya Birla Sun Life Digital India Fund",
-            "amc": "Aditya",
-            "netCr": 22
-          },
-          {
-            "fund": "Aditya Birla Sun Life Small Cap Fund",
-            "amc": "Aditya",
-            "netCr": 12
-          },
-          {
-            "fund": "Motilal Oswal BSE Midcap 150 Momentum 30 Index Fund",
-            "amc": "Motilal Oswal",
-            "netCr": 2
-          },
-          {
-            "fund": "PPFAS Parag Parikh Large Cap Fund",
-            "amc": "PPFAS",
-            "netCr": 2
-          }
-        ]
-      },
-      {
-        "company": "Life Insurance Corporation of India",
-        "fincode": "INE0J1Y01017",
-        "netCr": 63,
-        "pctOutstanding": 0.01,
-        "amcs": [
-          "Aditya",
-          "Mahindra Manulife"
-        ],
-        "schemes": [
-          {
             "fund": "Aditya Birla Sun Life Value Fund",
             "amc": "Aditya",
-            "netCr": 64
+            "netCr": 20
+          },
+          {
+            "fund": "UTI - Large Cap Fund",
+            "amc": "UTI",
+            "netCr": 17
+          },
+          {
+            "fund": "Aditya Birla Sun Life Conglomerate Fund",
+            "amc": "Aditya",
+            "netCr": 16
+          },
+          {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": 13
           },
           {
             "fund": "Mahindra Manulife Value Fund",
             "amc": "Mahindra Manulife",
-            "netCr": 12
+            "netCr": 8
           },
           {
-            "fund": "UTI Nifty Midcap 150 Index Fund",
+            "fund": "UTI Large & Mid Cap Fund",
             "amc": "UTI",
-            "netCr": 0
+            "netCr": 8
           },
           {
-            "fund": "UTI Nifty Midcap 150 Exchange Traded Fund",
+            "fund": "UTI - Infrastructure Fund",
             "amc": "UTI",
-            "netCr": 0
+            "netCr": 8
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 3
+          },
+          {
+            "fund": "UTI Quant Fund",
+            "amc": "UTI",
+            "netCr": 1
           }
         ]
       }
@@ -913,11 +970,12 @@
       {
         "company": "UltraTech Cement Limited",
         "fincode": "INE481G01011",
-        "netCr": 468,
+        "netCr": 472,
         "pctOutstanding": 0.15,
         "amcs": [
           "Aditya",
-          "PPFAS"
+          "PPFAS",
+          "JM"
         ],
         "schemes": [
           {
@@ -944,6 +1002,11 @@
             "fund": "Aditya Birla Sun Life Business Cycle Fund",
             "amc": "Aditya",
             "netCr": -18
+          },
+          {
+            "fund": "JM Large and Midcap Fund",
+            "amc": "JM",
+            "netCr": -4
           }
         ]
       },
@@ -1003,7 +1066,7 @@
       {
         "company": "Sun Pharmaceutical Industries Limited",
         "fincode": "INE044A01036",
-        "netCr": 245,
+        "netCr": 246,
         "pctOutstanding": 0.06,
         "amcs": [
           "Aditya",
@@ -1013,7 +1076,7 @@
           {
             "fund": "Aditya Birla Sun Life Flexi Cap Fund",
             "amc": "Aditya",
-            "netCr": -191
+            "netCr": -192
           },
           {
             "fund": "Aditya Birla Sun Life Value Fund",
@@ -1098,12 +1161,12 @@
       {
         "company": "Axis Bank Limited",
         "fincode": "INE238A01034",
-        "netCr": 150,
-        "pctOutstanding": 0.04,
+        "netCr": 197,
+        "pctOutstanding": 0.06,
         "amcs": [
           "Aditya",
           "Helios",
-          "UTI"
+          "JM"
         ],
         "schemes": [
           {
@@ -1115,6 +1178,11 @@
             "fund": "Helios Flexi Cap Fund",
             "amc": "Helios",
             "netCr": -55
+          },
+          {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": -47
           },
           {
             "fund": "Aditya Birla Sun Life Value Fund",
@@ -1213,13 +1281,62 @@
         ]
       },
       {
+        "company": "Infosys Limited",
+        "fincode": "INE009A01021",
+        "netCr": 121,
+        "pctOutstanding": 0.03,
+        "amcs": [
+          "Aditya",
+          "Mahindra Manulife",
+          "JM"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Focused Fund",
+            "amc": "Aditya",
+            "netCr": -39
+          },
+          {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": -29
+          },
+          {
+            "fund": "Aditya Birla Sun Life ELSS Tax Saver Fund",
+            "amc": "Aditya",
+            "netCr": -27
+          },
+          {
+            "fund": "Mahindra Manulife Business Cycle Fund",
+            "amc": "Mahindra Manulife",
+            "netCr": -24
+          },
+          {
+            "fund": "Mahindra Manulife Focused Fund",
+            "amc": "Mahindra Manulife",
+            "netCr": -18
+          },
+          {
+            "fund": "Mahindra Manulife Value Fund",
+            "amc": "Mahindra Manulife",
+            "netCr": -4
+          },
+          {
+            "fund": "JM Value Fund",
+            "amc": "JM",
+            "netCr": -3
+          }
+        ]
+      },
+      {
         "company": "Hindustan Aeronautics Limited",
         "fincode": "INE066F01020",
-        "netCr": 114,
+        "netCr": 115,
         "pctOutstanding": 0.04,
         "amcs": [
           "UTI",
-          "PPFAS"
+          "PPFAS",
+          "JM"
         ],
         "schemes": [
           {
@@ -1241,11 +1358,16 @@
             "fund": "UTI ELSS Tax Saver Fund",
             "amc": "UTI",
             "netCr": -10
+          },
+          {
+            "fund": "JM Value Fund",
+            "amc": "JM",
+            "netCr": -1
           }
         ]
       },
       {
-        "company": "LTM Ltd.",
+        "company": "LTM Limited",
         "fincode": "INE214T01019",
         "netCr": 111,
         "pctOutstanding": null,
@@ -1315,47 +1437,10 @@
         ]
       },
       {
-        "company": "Infosys Limited",
-        "fincode": "INE009A01021",
-        "netCr": 89,
-        "pctOutstanding": 0.02,
-        "amcs": [
-          "Aditya",
-          "Mahindra Manulife"
-        ],
-        "schemes": [
-          {
-            "fund": "Aditya Birla Sun Life Focused Fund",
-            "amc": "Aditya",
-            "netCr": -39
-          },
-          {
-            "fund": "Aditya Birla Sun Life ELSS Tax Saver Fund",
-            "amc": "Aditya",
-            "netCr": -27
-          },
-          {
-            "fund": "Mahindra Manulife Business Cycle Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": -24
-          },
-          {
-            "fund": "Mahindra Manulife Focused Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": -18
-          },
-          {
-            "fund": "Mahindra Manulife Value Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": -4
-          }
-        ]
-      },
-      {
         "company": "Maruti Suzuki India Limited",
         "fincode": "INE585B01010",
-        "netCr": 87,
-        "pctOutstanding": 0.03,
+        "netCr": 82,
+        "pctOutstanding": 0.02,
         "amcs": [
           "UTI",
           "Mahindra Manulife"
@@ -1379,9 +1464,52 @@
         ]
       },
       {
+        "company": "NTPC Limited",
+        "fincode": "INE733E01010",
+        "netCr": 68,
+        "pctOutstanding": 0.02,
+        "amcs": [
+          "Helios",
+          "Mahindra Manulife",
+          "JM"
+        ],
+        "schemes": [
+          {
+            "fund": "Helios Flexi Cap Fund",
+            "amc": "Helios",
+            "netCr": -80
+          },
+          {
+            "fund": "Mahindra Manulife Focused Fund",
+            "amc": "Mahindra Manulife",
+            "netCr": -58
+          },
+          {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": -13
+          },
+          {
+            "fund": "Helios Large & Mid Cap Fund",
+            "amc": "Helios",
+            "netCr": -10
+          },
+          {
+            "fund": "JM Large Cap Fund",
+            "amc": "JM",
+            "netCr": -5
+          },
+          {
+            "fund": "JM Value Fund",
+            "amc": "JM",
+            "netCr": -5
+          }
+        ]
+      },
+      {
         "company": "Polycab India Limited",
         "fincode": "INE455K01017",
-        "netCr": 67,
+        "netCr": 66,
         "pctOutstanding": null,
         "amcs": [
           "UTI",
@@ -1465,38 +1593,6 @@
         ]
       },
       {
-        "company": "Apollo Hospitals Enterprise Ltd.",
-        "fincode": "INE437A01024",
-        "netCr": 63,
-        "pctOutstanding": 0.05,
-        "amcs": [
-          "Aditya",
-          "Motilal Oswal"
-        ],
-        "schemes": [
-          {
-            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
-            "amc": "Aditya",
-            "netCr": -23
-          },
-          {
-            "fund": "Aditya Birla Sun Life Large Cap Fund",
-            "amc": "Aditya",
-            "netCr": -23
-          },
-          {
-            "fund": "Motilal Oswal Focused Fund",
-            "amc": "Motilal Oswal",
-            "netCr": -17
-          },
-          {
-            "fund": "Aditya Birla Sun Life Value Fund",
-            "amc": "Aditya",
-            "netCr": -4
-          }
-        ]
-      },
-      {
         "company": "Coal India Limited",
         "fincode": "INE522F01014",
         "netCr": 60,
@@ -1531,7 +1627,7 @@
       {
         "company": "Torrent Pharmaceuticals Ltd.",
         "fincode": "INE685A01028",
-        "netCr": 57,
+        "netCr": 58,
         "pctOutstanding": 0.03,
         "amcs": [
           "Aditya",
@@ -1560,6 +1656,11 @@
             "netCr": -1
           },
           {
+            "fund": "JM Large Cap Fund",
+            "amc": "JM",
+            "netCr": -1
+          },
+          {
             "fund": "Shriram ELSS Tax Saver Fund",
             "amc": "Shriram",
             "netCr": -1
@@ -1567,55 +1668,76 @@
         ]
       },
       {
-        "company": "NTPC Limited",
-        "fincode": "INE733E01010",
-        "netCr": 46,
-        "pctOutstanding": 0.01,
+        "company": "Tech Mahindra Limited",
+        "fincode": "INE669C01036",
+        "netCr": 57,
+        "pctOutstanding": 0.04,
         "amcs": [
-          "Helios",
-          "Mahindra Manulife"
-        ],
-        "schemes": [
-          {
-            "fund": "Helios Flexi Cap Fund",
-            "amc": "Helios",
-            "netCr": -80
-          },
-          {
-            "fund": "Mahindra Manulife Focused Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": -58
-          },
-          {
-            "fund": "Helios Large & Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": -10
-          }
-        ]
-      },
-      {
-        "company": "Adani Enterprises Limited",
-        "fincode": "INE423A01024",
-        "netCr": 43,
-        "pctOutstanding": 0.01,
-        "amcs": [
-          "Mahindra Manulife",
+          "JM",
+          "Aditya",
           "UTI"
         ],
         "schemes": [
           {
-            "fund": "Mahindra Manulife Multi Cap Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": -42
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": -34
+          },
+          {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": -30
+          },
+          {
+            "fund": "Aditya Birla Sun Life Conglomerate Fund",
+            "amc": "Aditya",
+            "netCr": -14
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
+            "amc": "Aditya",
+            "netCr": -11
           },
           {
             "fund": "UTI - Large Cap Fund",
             "amc": "UTI",
+            "netCr": -3
+          },
+          {
+            "fund": "JM Value Fund",
+            "amc": "JM",
+            "netCr": -1
+          }
+        ]
+      },
+      {
+        "company": "Apollo Hospitals Enterprise Ltd.",
+        "fincode": "INE437A01024",
+        "netCr": 55,
+        "pctOutstanding": 0.05,
+        "amcs": [
+          "Aditya",
+          "Motilal Oswal"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": -23
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": -23
+          },
+          {
+            "fund": "Motilal Oswal Focused Fund",
+            "amc": "Motilal Oswal",
             "netCr": -17
           },
           {
-            "fund": "UTI Value Fund",
-            "amc": "UTI",
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
             "netCr": -4
           }
         ]
@@ -1627,12 +1749,12 @@
       {
         "company": "Lenskart Solutions Limited",
         "fincode": "INE956O01016",
-        "netCr": 255,
-        "pctOutstanding": 0.22,
+        "netCr": 301,
+        "pctOutstanding": 0.26,
         "amcs": [
           "Motilal Oswal",
           "Mahindra Manulife",
-          "UTI"
+          "JM"
         ],
         "schemes": [
           {
@@ -1646,9 +1768,19 @@
             "netCr": 71
           },
           {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": 37
+          },
+          {
             "fund": "UTI - Flexi Cap Fund",
             "amc": "UTI",
             "netCr": 12
+          },
+          {
+            "fund": "JM Mid cap Fund",
+            "amc": "JM",
+            "netCr": 9
           },
           {
             "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
@@ -1726,10 +1858,11 @@
       {
         "company": "Blue Star Limited",
         "fincode": "INE472A01039",
-        "netCr": 195,
+        "netCr": 221,
         "pctOutstanding": null,
         "amcs": [
           "UTI",
+          "JM",
           "Motilal Oswal"
         ],
         "schemes": [
@@ -1744,9 +1877,19 @@
             "netCr": 54
           },
           {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": 24
+          },
+          {
             "fund": "Motilal Oswal Manufacturing Fund",
             "amc": "Motilal Oswal",
             "netCr": 16
+          },
+          {
+            "fund": "JM Small Cap Fund",
+            "amc": "JM",
+            "netCr": 1
           },
           {
             "fund": "UTI Nifty Midcap 150 Index Fund",
@@ -1804,6 +1947,59 @@
             "fund": "PPFAS Parag Parikh Flexi Cap Fund",
             "amc": "PPFAS",
             "netCr": 173
+          },
+          {
+            "fund": "UTI Nifty Midcap 150 Index Fund",
+            "amc": "UTI",
+            "netCr": 0
+          },
+          {
+            "fund": "UTI Nifty Midcap 150 Exchange Traded Fund",
+            "amc": "UTI",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Mankind Pharma Ltd.",
+        "fincode": "INE634S01028",
+        "netCr": 133,
+        "pctOutstanding": 0.13,
+        "amcs": [
+          "Aditya",
+          "JM",
+          "Motilal Oswal"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": 74
+          },
+          {
+            "fund": "Aditya Birla Sun Life ELSS Tax Saver Fund",
+            "amc": "Aditya",
+            "netCr": 20
+          },
+          {
+            "fund": "JM Mid cap Fund",
+            "amc": "JM",
+            "netCr": 18
+          },
+          {
+            "fund": "Motilal Oswal Manufacturing Fund",
+            "amc": "Motilal Oswal",
+            "netCr": 16
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": 11
+          },
+          {
+            "fund": "Aditya Birla Sun Life Consumption Fund",
+            "amc": "Aditya",
+            "netCr": 4
           },
           {
             "fund": "UTI Nifty Midcap 150 Index Fund",
@@ -1889,54 +2085,6 @@
           {
             "fund": "Mahindra Manulife Consumption Fund",
             "amc": "Mahindra Manulife",
-            "netCr": 4
-          },
-          {
-            "fund": "UTI Nifty Midcap 150 Index Fund",
-            "amc": "UTI",
-            "netCr": 0
-          },
-          {
-            "fund": "UTI Nifty Midcap 150 Exchange Traded Fund",
-            "amc": "UTI",
-            "netCr": 0
-          }
-        ]
-      },
-      {
-        "company": "Mankind Pharma Ltd.",
-        "fincode": "INE634S01028",
-        "netCr": 115,
-        "pctOutstanding": 0.11,
-        "amcs": [
-          "Aditya",
-          "Motilal Oswal",
-          "UTI"
-        ],
-        "schemes": [
-          {
-            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
-            "amc": "Aditya",
-            "netCr": 74
-          },
-          {
-            "fund": "Aditya Birla Sun Life ELSS Tax Saver Fund",
-            "amc": "Aditya",
-            "netCr": 20
-          },
-          {
-            "fund": "Motilal Oswal Manufacturing Fund",
-            "amc": "Motilal Oswal",
-            "netCr": 16
-          },
-          {
-            "fund": "Aditya Birla Sun Life Large Cap Fund",
-            "amc": "Aditya",
-            "netCr": 11
-          },
-          {
-            "fund": "Aditya Birla Sun Life Consumption Fund",
-            "amc": "Aditya",
             "netCr": 4
           },
           {
@@ -2184,30 +2332,9 @@
         ]
       },
       {
-        "company": "Kalpataru Projects International Ltd.",
-        "fincode": "INE220B01022",
-        "netCr": 89,
-        "pctOutstanding": null,
-        "amcs": [
-          "Aditya"
-        ],
-        "schemes": [
-          {
-            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
-            "amc": "Aditya",
-            "netCr": 84
-          },
-          {
-            "fund": "Aditya Birla Sun Life Infrastructure Fund",
-            "amc": "Aditya",
-            "netCr": 5
-          }
-        ]
-      },
-      {
         "company": "Acutaas Chemicals Limited",
         "fincode": "INE00FF01025",
-        "netCr": 88,
+        "netCr": 87,
         "pctOutstanding": null,
         "amcs": [
           "Mahindra Manulife",
@@ -2258,13 +2385,35 @@
         ]
       },
       {
+        "company": "Kalpataru Projects International Ltd.",
+        "fincode": "INE220B01022",
+        "netCr": 85,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": 84
+          },
+          {
+            "fund": "Aditya Birla Sun Life Infrastructure Fund",
+            "amc": "Aditya",
+            "netCr": 5
+          }
+        ]
+      },
+      {
         "company": "IDFC First Bank Limited",
         "fincode": "INE092T01019",
-        "netCr": 84,
+        "netCr": 85,
         "pctOutstanding": null,
         "amcs": [
           "Motilal Oswal",
-          "UTI"
+          "UTI",
+          "JM"
         ],
         "schemes": [
           {
@@ -2276,6 +2425,11 @@
             "fund": "UTI - Mid Cap Fund",
             "amc": "UTI",
             "netCr": 6
+          },
+          {
+            "fund": "JM Large and Midcap Fund",
+            "amc": "JM",
+            "netCr": 1
           },
           {
             "fund": "UTI Nifty Midcap 150 Index Fund",
@@ -2600,12 +2754,12 @@
       {
         "company": "Neuland Laboratories Limited",
         "fincode": "INE794A01010",
-        "netCr": 166,
+        "netCr": 168,
         "pctOutstanding": null,
         "amcs": [
           "Mahindra Manulife",
-          "Aditya",
-          "Motilal Oswal"
+          "JM",
+          "Aditya"
         ],
         "schemes": [
           {
@@ -2617,6 +2771,11 @@
             "fund": "Mahindra Manulife Multi Cap Fund",
             "amc": "Mahindra Manulife",
             "netCr": -78
+          },
+          {
+            "fund": "JM Small Cap Fund",
+            "amc": "JM",
+            "netCr": -2
           },
           {
             "fund": "Mahindra Manulife ELSS Tax Saver Fund",
@@ -2636,9 +2795,51 @@
         ]
       },
       {
+        "company": "One 97 Communications Limited",
+        "fincode": "INE982J01020",
+        "netCr": 157,
+        "pctOutstanding": 0.15,
+        "amcs": [
+          "Motilal Oswal",
+          "JM"
+        ],
+        "schemes": [
+          {
+            "fund": "Motilal Oswal Midcap Fund",
+            "amc": "Motilal Oswal",
+            "netCr": -309
+          },
+          {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": -36
+          },
+          {
+            "fund": "UTI Innovation Fund",
+            "amc": "UTI",
+            "netCr": -13
+          },
+          {
+            "fund": "Motilal Oswal Digital India Fund",
+            "amc": "Motilal Oswal",
+            "netCr": -10
+          },
+          {
+            "fund": "Motilal Oswal Consumption Fund",
+            "amc": "Motilal Oswal",
+            "netCr": -7
+          },
+          {
+            "fund": "Motilal Oswal Nifty Midcap 150 Momentum 50 ETF",
+            "amc": "Motilal Oswal",
+            "netCr": 0
+          }
+        ]
+      },
+      {
         "company": "Glenmark Pharmaceuticals Limited",
         "fincode": "INE935A01035",
-        "netCr": 146,
+        "netCr": 143,
         "pctOutstanding": null,
         "amcs": [
           "UTI",
@@ -2759,45 +2960,9 @@
         ]
       },
       {
-        "company": "One 97 Communications Limited",
-        "fincode": "INE982J01020",
-        "netCr": 121,
-        "pctOutstanding": 0.12,
-        "amcs": [
-          "Motilal Oswal"
-        ],
-        "schemes": [
-          {
-            "fund": "Motilal Oswal Midcap Fund",
-            "amc": "Motilal Oswal",
-            "netCr": -308
-          },
-          {
-            "fund": "UTI Innovation Fund",
-            "amc": "UTI",
-            "netCr": -13
-          },
-          {
-            "fund": "Motilal Oswal Digital India Fund",
-            "amc": "Motilal Oswal",
-            "netCr": -10
-          },
-          {
-            "fund": "Motilal Oswal Consumption Fund",
-            "amc": "Motilal Oswal",
-            "netCr": -7
-          },
-          {
-            "fund": "Motilal Oswal Nifty Midcap 150 Momentum 50 ETF",
-            "amc": "Motilal Oswal",
-            "netCr": 0
-          }
-        ]
-      },
-      {
         "company": "Tube Investments of India Ltd.",
         "fincode": "INE974X01010",
-        "netCr": 115,
+        "netCr": 116,
         "pctOutstanding": 0.26,
         "amcs": [
           "Aditya",
@@ -2824,6 +2989,11 @@
             "fund": "Aditya Birla Sun Life Conglomerate Fund",
             "amc": "Aditya",
             "netCr": -3
+          },
+          {
+            "fund": "JM Mid cap Fund",
+            "amc": "JM",
+            "netCr": -1
           },
           {
             "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
@@ -2913,6 +3083,79 @@
         ]
       },
       {
+        "company": "Coforge Limited",
+        "fincode": "INE591G01025",
+        "netCr": 100,
+        "pctOutstanding": 0.13,
+        "amcs": [
+          "JM",
+          "UTI",
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": -56
+          },
+          {
+            "fund": "UTI ELSS Tax Saver Fund",
+            "amc": "UTI",
+            "netCr": -42
+          },
+          {
+            "fund": "JM Mid cap Fund",
+            "amc": "JM",
+            "netCr": -29
+          },
+          {
+            "fund": "Aditya Birla Sun Life Digital India Fund",
+            "amc": "Aditya",
+            "netCr": -12
+          },
+          {
+            "fund": "UTI Focused Fund",
+            "amc": "UTI",
+            "netCr": -11
+          },
+          {
+            "fund": "Mahindra Manulife Value Fund",
+            "amc": "Mahindra Manulife",
+            "netCr": -10
+          },
+          {
+            "fund": "JM Large and Midcap Fund",
+            "amc": "JM",
+            "netCr": -9
+          },
+          {
+            "fund": "UTI - Mid Cap Fund",
+            "amc": "UTI",
+            "netCr": -8
+          },
+          {
+            "fund": "JM Large Cap Fund",
+            "amc": "JM",
+            "netCr": -7
+          },
+          {
+            "fund": "JM ELSS - Tax Saver Fund",
+            "amc": "JM",
+            "netCr": -5
+          },
+          {
+            "fund": "UTI - Flexi Cap Fund",
+            "amc": "UTI",
+            "netCr": -4
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          }
+        ]
+      },
+      {
         "company": "INFO-EDGE (INDIA) LTD.",
         "fincode": "INE663F01032",
         "netCr": 94,
@@ -2951,7 +3194,7 @@
         ]
       },
       {
-        "company": "AU Small Finance Bank Ltd.",
+        "company": "AU Small Finance Bank Limited",
         "fincode": "INE949L01017",
         "netCr": 92,
         "pctOutstanding": 0.12,
@@ -3121,6 +3364,44 @@
         ]
       },
       {
+        "company": "Hero MotoCorp Limited",
+        "fincode": "INE158A01026",
+        "netCr": 86,
+        "pctOutstanding": 0.08,
+        "amcs": [
+          "JM",
+          "UTI",
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "UTI - Mid Cap Fund",
+            "amc": "UTI",
+            "netCr": -56
+          },
+          {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": -47
+          },
+          {
+            "fund": "UTI - Dividend Yield Fund",
+            "amc": "UTI",
+            "netCr": -3
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          },
+          {
+            "fund": "UTI Nifty Midcap 150 Quality 50 Index Fund",
+            "amc": "UTI",
+            "netCr": 0
+          }
+        ]
+      },
+      {
         "company": "Premier Energies Limited",
         "fincode": "INE0BS701011",
         "netCr": 85,
@@ -3138,85 +3419,6 @@
             "fund": "Motilal Oswal Focused Fund",
             "amc": "Motilal Oswal",
             "netCr": -14
-          }
-        ]
-      },
-      {
-        "company": "Anthem Biosciences Limited",
-        "fincode": "INE0CZ201020",
-        "netCr": 63,
-        "pctOutstanding": 0.13,
-        "amcs": [
-          "UTI",
-          "Mahindra Manulife"
-        ],
-        "schemes": [
-          {
-            "fund": "UTI - Mid Cap Fund",
-            "amc": "UTI",
-            "netCr": -33
-          },
-          {
-            "fund": "UTI - Healthcare Fund",
-            "amc": "UTI",
-            "netCr": -10
-          },
-          {
-            "fund": "Mahindra Manulife Business Cycle Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": -8
-          },
-          {
-            "fund": "Mahindra Manulife Mid Cap Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": -7
-          },
-          {
-            "fund": "Mahindra Manulife Value Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": -4
-          }
-        ]
-      },
-      {
-        "company": "Bank of Maharashtra",
-        "fincode": "INE457A01014",
-        "netCr": 61,
-        "pctOutstanding": null,
-        "amcs": [
-          "Aditya",
-          "Mahindra Manulife"
-        ],
-        "schemes": [
-          {
-            "fund": "Aditya Birla Sun Life Quant Fund",
-            "amc": "Aditya",
-            "netCr": -43
-          },
-          {
-            "fund": "Mahindra Manulife Small Cap Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": -10
-          },
-          {
-            "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
-            "amc": "Aditya",
-            "netCr": -9
-          },
-          {
-            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
-            "amc": "Aditya",
-            "netCr": 0
-          },
-          {
-            "fund": "Motilal Oswal Nifty Midcap 150 Momentum 50 ETF",
-            "amc": "Motilal Oswal",
-            "netCr": 0
-          },
-          {
-            "fund": "UTI Nifty Midcap 150 Quality 50 Index Fund",
-            "amc": "UTI",
-            "netCr": 0
           }
         ]
       }
@@ -3312,10 +3514,11 @@
       {
         "company": "ESDS Software Solution Ltd",
         "fincode": "INE0DRI01029",
-        "netCr": 216,
+        "netCr": 217,
         "pctOutstanding": null,
         "amcs": [
-          "Motilal Oswal"
+          "Motilal Oswal",
+          "JM"
         ],
         "schemes": [
           {
@@ -3342,6 +3545,16 @@
             "fund": "Motilal Oswal Manufacturing Fund",
             "amc": "Motilal Oswal",
             "netCr": 1
+          },
+          {
+            "fund": "JM Small Cap Fund",
+            "amc": "JM",
+            "netCr": 0
+          },
+          {
+            "fund": "JM Mid cap Fund",
+            "amc": "JM",
+            "netCr": 0
           }
         ]
       },
@@ -3385,10 +3598,11 @@
       {
         "company": "Sansera Engineering Limited",
         "fincode": "INE953O01021",
-        "netCr": 136,
+        "netCr": 137,
         "pctOutstanding": 0.51,
         "amcs": [
-          "Motilal Oswal"
+          "Motilal Oswal",
+          "JM"
         ],
         "schemes": [
           {
@@ -3410,6 +3624,64 @@
             "fund": "Motilal Oswal Nifty Smallcap 250 ETF",
             "amc": "Motilal Oswal",
             "netCr": 2
+          },
+          {
+            "fund": "JM Large and Midcap Fund",
+            "amc": "JM",
+            "netCr": 0
+          },
+          {
+            "fund": "JM Small Cap Fund",
+            "amc": "JM",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Pine Labs Limited",
+        "fincode": "INE15B701018",
+        "netCr": 118,
+        "pctOutstanding": 0.61,
+        "amcs": [
+          "Helios",
+          "JM",
+          "Motilal Oswal"
+        ],
+        "schemes": [
+          {
+            "fund": "Helios Flexi Cap Fund",
+            "amc": "Helios",
+            "netCr": 39
+          },
+          {
+            "fund": "Helios Mid Cap Fund",
+            "amc": "Helios",
+            "netCr": 26
+          },
+          {
+            "fund": "Helios Small Cap Fund",
+            "amc": "Helios",
+            "netCr": 24
+          },
+          {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": 22
+          },
+          {
+            "fund": "JM Small Cap Fund",
+            "amc": "JM",
+            "netCr": 4
+          },
+          {
+            "fund": "JM Value Fund",
+            "amc": "JM",
+            "netCr": 2
+          },
+          {
+            "fund": "Motilal Oswal Nifty Smallcap 250 ETF",
+            "amc": "Motilal Oswal",
+            "netCr": 1
           }
         ]
       },
@@ -3472,34 +3744,45 @@
         ]
       },
       {
-        "company": "Pine Labs Ltd.",
-        "fincode": "INE15B701018",
-        "netCr": 91,
-        "pctOutstanding": 0.47,
+        "company": "Graphite India Limited",
+        "fincode": "INE371A01025",
+        "netCr": 79,
+        "pctOutstanding": null,
         "amcs": [
-          "Helios",
-          "Motilal Oswal"
+          "Mahindra Manulife",
+          "JM",
+          "UTI"
         ],
         "schemes": [
           {
-            "fund": "Helios Flexi Cap Fund",
-            "amc": "Helios",
-            "netCr": 40
+            "fund": "Mahindra Manulife Small Cap Fund",
+            "amc": "Mahindra Manulife",
+            "netCr": 34
           },
           {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 26
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": 17
           },
           {
-            "fund": "Helios Small Cap Fund",
-            "amc": "Helios",
-            "netCr": 25
+            "fund": "Mahindra Manulife Business Cycle Fund",
+            "amc": "Mahindra Manulife",
+            "netCr": 11
           },
           {
-            "fund": "Motilal Oswal Nifty Smallcap 250 ETF",
-            "amc": "Motilal Oswal",
-            "netCr": 1
+            "fund": "JM Small Cap Fund",
+            "amc": "JM",
+            "netCr": 8
+          },
+          {
+            "fund": "UTI - MNC Fund",
+            "amc": "UTI",
+            "netCr": 6
+          },
+          {
+            "fund": "JM Large and Midcap Fund",
+            "amc": "JM",
+            "netCr": 4
           }
         ]
       },
@@ -3568,7 +3851,33 @@
         ]
       },
       {
-        "company": "Cohance Lifesciences Ltd.",
+        "company": "Hero Motors Limited",
+        "fincode": "INE012G01022",
+        "netCr": 60,
+        "pctOutstanding": null,
+        "amcs": [
+          "JM"
+        ],
+        "schemes": [
+          {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": 44
+          },
+          {
+            "fund": "JM Small Cap Fund",
+            "amc": "JM",
+            "netCr": 9
+          },
+          {
+            "fund": "JM Value Fund",
+            "amc": "JM",
+            "netCr": 7
+          }
+        ]
+      },
+      {
+        "company": "Cohance Lifesciences Limited",
         "fincode": "INE03QK01018",
         "netCr": 52,
         "pctOutstanding": 0.32,
@@ -3620,33 +3929,6 @@
         ]
       },
       {
-        "company": "Graphite India Limited",
-        "fincode": "INE371A01025",
-        "netCr": 50,
-        "pctOutstanding": null,
-        "amcs": [
-          "Mahindra Manulife",
-          "UTI"
-        ],
-        "schemes": [
-          {
-            "fund": "Mahindra Manulife Small Cap Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": 34
-          },
-          {
-            "fund": "Mahindra Manulife Business Cycle Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": 11
-          },
-          {
-            "fund": "UTI - MNC Fund",
-            "amc": "UTI",
-            "netCr": 6
-          }
-        ]
-      },
-      {
         "company": "Archean Chemical Industries Limited",
         "fincode": "INE128X01021",
         "netCr": 48,
@@ -3679,6 +3961,28 @@
         ]
       },
       {
+        "company": "Wheels India Ltd.",
+        "fincode": "INE715A01015",
+        "netCr": 46,
+        "pctOutstanding": null,
+        "amcs": [
+          "Aditya",
+          "JM"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": 41
+          },
+          {
+            "fund": "JM Small Cap Fund",
+            "amc": "JM",
+            "netCr": 5
+          }
+        ]
+      },
+      {
         "company": "Finolex Cables Limited",
         "fincode": "INE235A01022",
         "netCr": 45,
@@ -3702,7 +4006,7 @@
       {
         "company": "Syrma SGS Technology Ltd",
         "fincode": "INE0DYJ01015",
-        "netCr": 44,
+        "netCr": 43,
         "pctOutstanding": 0.13,
         "amcs": [
           "Motilal Oswal"
@@ -3711,49 +4015,17 @@
           {
             "fund": "Motilal Oswal Innovation Opportunities Fund",
             "amc": "Motilal Oswal",
-            "netCr": 32
+            "netCr": 33
           },
           {
             "fund": "Motilal Oswal Multi Cap Fund",
             "amc": "Motilal Oswal",
-            "netCr": 8
+            "netCr": 9
           },
           {
             "fund": "Motilal Oswal Focused Fund",
             "amc": "Motilal Oswal",
             "netCr": 3
-          }
-        ]
-      },
-      {
-        "company": "Wheels India Ltd.",
-        "fincode": "INE715A01015",
-        "netCr": 41,
-        "pctOutstanding": null,
-        "amcs": [
-          "Aditya"
-        ],
-        "schemes": [
-          {
-            "fund": "Aditya Birla Sun Life Small Cap Fund",
-            "amc": "Aditya",
-            "netCr": 41
-          }
-        ]
-      },
-      {
-        "company": "P N Gadgil Jewellers Limited",
-        "fincode": "INE953R01016",
-        "netCr": 39,
-        "pctOutstanding": 0.48,
-        "amcs": [
-          "Mahindra Manulife"
-        ],
-        "schemes": [
-          {
-            "fund": "Mahindra Manulife Multi Cap Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": 56
           }
         ]
       }
@@ -3856,7 +4128,8 @@
         "netCr": 70,
         "pctOutstanding": null,
         "amcs": [
-          "UTI"
+          "UTI",
+          "JM"
         ],
         "schemes": [
           {
@@ -3873,6 +4146,11 @@
             "fund": "UTI ELSS Tax Saver Fund",
             "amc": "UTI",
             "netCr": -11
+          },
+          {
+            "fund": "JM Value Fund",
+            "amc": "JM",
+            "netCr": -1
           },
           {
             "fund": "UTI Multi Cap Fund",
@@ -4050,16 +4328,22 @@
       {
         "company": "Metropolis Healthcare Ltd.",
         "fincode": "INE112L01020",
-        "netCr": 34,
+        "netCr": 36,
         "pctOutstanding": null,
         "amcs": [
-          "UTI"
+          "UTI",
+          "JM"
         ],
         "schemes": [
           {
             "fund": "UTI - Large Cap Fund",
             "amc": "UTI",
             "netCr": -39
+          },
+          {
+            "fund": "JM Small Cap Fund",
+            "amc": "JM",
+            "netCr": -2
           }
         ]
       },
@@ -4096,6 +4380,60 @@
         ]
       },
       {
+        "company": "ICRA Limited",
+        "fincode": "INE725G01011",
+        "netCr": 30,
+        "pctOutstanding": null,
+        "amcs": [
+          "JM",
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": -16
+          },
+          {
+            "fund": "Aditya Birla Sun Life Mnc Fund",
+            "amc": "Aditya",
+            "netCr": -14
+          }
+        ]
+      },
+      {
+        "company": "TD Power Systems Ltd.",
+        "fincode": "INE419M01035",
+        "netCr": 29,
+        "pctOutstanding": 0.12,
+        "amcs": [
+          "UTI",
+          "JM"
+        ],
+        "schemes": [
+          {
+            "fund": "UTI Small Cap Fund",
+            "amc": "UTI",
+            "netCr": -36
+          },
+          {
+            "fund": "Motilal Oswal Manufacturing Fund",
+            "amc": "Motilal Oswal",
+            "netCr": -1
+          },
+          {
+            "fund": "JM Value Fund",
+            "amc": "JM",
+            "netCr": -1
+          },
+          {
+            "fund": "JM Small Cap Fund",
+            "amc": "JM",
+            "netCr": 0
+          }
+        ]
+      },
+      {
         "company": "INDO-MIM Ltd.",
         "fincode": "INE084101034",
         "netCr": 27,
@@ -4119,27 +4457,6 @@
             "fund": "Aditya Birla Sun Life Infrastructure Fund",
             "amc": "Aditya",
             "netCr": -6
-          }
-        ]
-      },
-      {
-        "company": "TD Power Systems Ltd.",
-        "fincode": "INE419M01035",
-        "netCr": 27,
-        "pctOutstanding": 0.12,
-        "amcs": [
-          "UTI"
-        ],
-        "schemes": [
-          {
-            "fund": "UTI Small Cap Fund",
-            "amc": "UTI",
-            "netCr": -36
-          },
-          {
-            "fund": "Motilal Oswal Manufacturing Fund",
-            "amc": "Motilal Oswal",
-            "netCr": -1
           }
         ]
       },
@@ -4187,7 +4504,7 @@
         ]
       },
       {
-        "company": "Rolex Rings Ltd.",
+        "company": "Rolex Rings Limited",
         "fincode": "INE645S01024",
         "netCr": 22,
         "pctOutstanding": null,
@@ -4203,7 +4520,7 @@
         ]
       },
       {
-        "company": "MARKSANS PHARMA LTD.",
+        "company": "Marksans Pharma Limited",
         "fincode": "INE750C01026",
         "netCr": 21,
         "pctOutstanding": null,
@@ -4214,7 +4531,7 @@
           {
             "fund": "UTI Large & Mid Cap Fund",
             "amc": "UTI",
-            "netCr": -17
+            "netCr": -18
           },
           {
             "fund": "UTI Multi Cap Fund",
@@ -4249,33 +4566,6 @@
             "netCr": 0
           }
         ]
-      },
-      {
-        "company": "SPR Auto Technologies Ltd",
-        "fincode": "INE526E01018",
-        "netCr": 21,
-        "pctOutstanding": 0.1,
-        "amcs": [
-          "Motilal Oswal",
-          "Mahindra Manulife"
-        ],
-        "schemes": [
-          {
-            "fund": "Motilal Oswal Large Cap Fund",
-            "amc": "Motilal Oswal",
-            "netCr": -18
-          },
-          {
-            "fund": "Mahindra Manulife Value Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": -4
-          },
-          {
-            "fund": "Mahindra Manulife Manufacturing Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": -3
-          }
-        ]
       }
     ]
   },
@@ -4286,9 +4576,9 @@
       {
         "sector": "Realty",
         "direction": "up",
-        "pctCur": 2.68,
-        "pctPrev": 2.21,
-        "changePp": 0.48,
+        "pctCur": 2.66,
+        "pctPrev": 2.18,
+        "changePp": 0.47,
         "stocks": [
           {
             "company": "DLF Limited",
@@ -4321,6 +4611,41 @@
                 "amc": "PPFAS",
                 "netCr": 0,
                 "valueChgCr": 0
+              }
+            ]
+          },
+          {
+            "company": "Lodha Developers Limited",
+            "netCr": 40,
+            "amcs": [
+              "JM",
+              "Aditya",
+              "UTI"
+            ],
+            "schemes": [
+              {
+                "fund": "JM Flexi cap Fund",
+                "amc": "JM",
+                "netCr": 33,
+                "valueChgCr": 33
+              },
+              {
+                "fund": "JM Large Cap Fund",
+                "amc": "JM",
+                "netCr": 4,
+                "valueChgCr": 4
+              },
+              {
+                "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+                "amc": "Aditya",
+                "netCr": 4,
+                "valueChgCr": 4
+              },
+              {
+                "fund": "UTI Nifty Midcap 150 Index Fund",
+                "amc": "UTI",
+                "netCr": 1,
+                "valueChgCr": 1
               }
             ]
           },
@@ -4368,33 +4693,6 @@
                 "valueChgCr": 11
               }
             ]
-          },
-          {
-            "company": "Oberoi Realty Ltd.",
-            "netCr": 4,
-            "amcs": [
-              "Helios"
-            ],
-            "schemes": [
-              {
-                "fund": "Helios Mid Cap Fund",
-                "amc": "Helios",
-                "netCr": 28,
-                "valueChgCr": 28
-              },
-              {
-                "fund": "UTI Nifty Midcap 150 Index Fund",
-                "amc": "UTI",
-                "netCr": 0,
-                "valueChgCr": 0
-              },
-              {
-                "fund": "UTI Nifty Midcap 150 Exchange Traded Fund",
-                "amc": "UTI",
-                "netCr": 0,
-                "valueChgCr": 0
-              }
-            ]
           }
         ],
         "schemes": [
@@ -4417,16 +4715,16 @@
             "valueChgCr": 35
           },
           {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": 33,
+            "valueChgCr": 33
+          },
+          {
             "fund": "UTI Multi Cap Fund",
             "amc": "UTI",
             "netCr": 20,
             "valueChgCr": 20
-          },
-          {
-            "fund": "Motilal Oswal Business Cycle Fund",
-            "amc": "Motilal Oswal",
-            "netCr": 17,
-            "valueChgCr": 15
           }
         ]
       },
@@ -4435,7 +4733,7 @@
         "direction": "up",
         "pctCur": 5.83,
         "pctPrev": 5.48,
-        "changePp": 0.35,
+        "changePp": 0.36,
         "stocks": [
           {
             "company": "Divi's Laboratories Limited",
@@ -4473,7 +4771,7 @@
             ]
           },
           {
-            "company": "Dr Reddys Laboratories Limited",
+            "company": "Dr. Reddy's Laboratories Limited",
             "netCr": 237,
             "amcs": [
               "UTI",
@@ -4543,11 +4841,11 @@
           },
           {
             "company": "Mankind Pharma Ltd.",
-            "netCr": 115,
+            "netCr": 133,
             "amcs": [
               "Aditya",
-              "Motilal Oswal",
-              "UTI"
+              "JM",
+              "Motilal Oswal"
             ],
             "schemes": [
               {
@@ -4563,16 +4861,16 @@
                 "valueChgCr": 24
               },
               {
+                "fund": "JM Mid cap Fund",
+                "amc": "JM",
+                "netCr": 18,
+                "valueChgCr": 19
+              },
+              {
                 "fund": "Motilal Oswal Manufacturing Fund",
                 "amc": "Motilal Oswal",
                 "netCr": 16,
                 "valueChgCr": 16
-              },
-              {
-                "fund": "Aditya Birla Sun Life Large Cap Fund",
-                "amc": "Aditya",
-                "netCr": 11,
-                "valueChgCr": 24
               }
             ]
           },
@@ -4647,12 +4945,47 @@
       {
         "sector": "IT - Software",
         "direction": "down",
-        "pctCur": 7.53,
-        "pctPrev": 8.15,
-        "changePp": -0.62,
+        "pctCur": 7.45,
+        "pctPrev": 8.11,
+        "changePp": -0.66,
         "stocks": [
           {
-            "company": "LTM Ltd.",
+            "company": "Infosys Limited",
+            "netCr": -121,
+            "amcs": [
+              "Aditya",
+              "Mahindra Manulife",
+              "JM"
+            ],
+            "schemes": [
+              {
+                "fund": "Aditya Birla Sun Life Focused Fund",
+                "amc": "Aditya",
+                "netCr": -39,
+                "valueChgCr": -72
+              },
+              {
+                "fund": "JM Flexi cap Fund",
+                "amc": "JM",
+                "netCr": -29,
+                "valueChgCr": -43
+              },
+              {
+                "fund": "Aditya Birla Sun Life ELSS Tax Saver Fund",
+                "amc": "Aditya",
+                "netCr": -27,
+                "valueChgCr": -64
+              },
+              {
+                "fund": "Mahindra Manulife Business Cycle Fund",
+                "amc": "Mahindra Manulife",
+                "netCr": -24,
+                "valueChgCr": -29
+              }
+            ]
+          },
+          {
+            "company": "LTM Limited",
             "netCr": -111,
             "amcs": [
               "Aditya",
@@ -4708,36 +5041,37 @@
             ]
           },
           {
-            "company": "Infosys Limited",
-            "netCr": -89,
+            "company": "Coforge Limited",
+            "netCr": -100,
             "amcs": [
-              "Aditya",
-              "Mahindra Manulife"
+              "JM",
+              "UTI",
+              "Aditya"
             ],
             "schemes": [
               {
-                "fund": "Aditya Birla Sun Life Focused Fund",
+                "fund": "JM Flexi cap Fund",
+                "amc": "JM",
+                "netCr": -56,
+                "valueChgCr": -65
+              },
+              {
+                "fund": "UTI ELSS Tax Saver Fund",
+                "amc": "UTI",
+                "netCr": -42,
+                "valueChgCr": -49
+              },
+              {
+                "fund": "JM Mid cap Fund",
+                "amc": "JM",
+                "netCr": -29,
+                "valueChgCr": -34
+              },
+              {
+                "fund": "Aditya Birla Sun Life Digital India Fund",
                 "amc": "Aditya",
-                "netCr": -39,
-                "valueChgCr": -72
-              },
-              {
-                "fund": "Aditya Birla Sun Life ELSS Tax Saver Fund",
-                "amc": "Aditya",
-                "netCr": -27,
-                "valueChgCr": -64
-              },
-              {
-                "fund": "Mahindra Manulife Business Cycle Fund",
-                "amc": "Mahindra Manulife",
-                "netCr": -24,
-                "valueChgCr": -29
-              },
-              {
-                "fund": "Mahindra Manulife Focused Fund",
-                "amc": "Mahindra Manulife",
-                "netCr": -18,
-                "valueChgCr": -25
+                "netCr": -12,
+                "valueChgCr": -34
               }
             ]
           },
@@ -4775,43 +5109,15 @@
                 "valueChgCr": -15
               }
             ]
-          },
-          {
-            "company": "Persistent Systems Ltd.",
-            "netCr": -45,
-            "amcs": [
-              "Motilal Oswal",
-              "Aditya"
-            ],
-            "schemes": [
-              {
-                "fund": "Motilal Oswal Multi Cap Fund",
-                "amc": "Motilal Oswal",
-                "netCr": -67,
-                "valueChgCr": -73
-              },
-              {
-                "fund": "Aditya Birla Sun Life Digital India Fund",
-                "amc": "Aditya",
-                "netCr": -16,
-                "valueChgCr": -24
-              },
-              {
-                "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
-                "amc": "Aditya",
-                "netCr": 0,
-                "valueChgCr": -1
-              },
-              {
-                "fund": "UTI Nifty Midcap 150 Quality 50 Index Fund",
-                "amc": "UTI",
-                "netCr": 0,
-                "valueChgCr": -1
-              }
-            ]
           }
         ],
         "schemes": [
+          {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": -138,
+            "valueChgCr": -186
+          },
           {
             "fund": "Aditya Birla Sun Life Digital India Fund",
             "amc": "Aditya",
@@ -4835,21 +5141,15 @@
             "amc": "UTI",
             "netCr": -65,
             "valueChgCr": -114
-          },
-          {
-            "fund": "Mahindra Manulife Multi Cap Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": -40,
-            "valueChgCr": -67
           }
         ]
       },
       {
         "sector": "Automobiles",
         "direction": "down",
-        "pctCur": 5.34,
-        "pctPrev": 5.76,
-        "changePp": -0.42,
+        "pctCur": 5.3,
+        "pctPrev": 5.75,
+        "changePp": -0.44,
         "stocks": [
           {
             "company": "Ather Energy Ltd.",
@@ -4885,8 +5185,43 @@
             ]
           },
           {
+            "company": "Hero MotoCorp Limited",
+            "netCr": -86,
+            "amcs": [
+              "JM",
+              "UTI",
+              "Aditya"
+            ],
+            "schemes": [
+              {
+                "fund": "UTI - Mid Cap Fund",
+                "amc": "UTI",
+                "netCr": -56,
+                "valueChgCr": -68
+              },
+              {
+                "fund": "JM Flexi cap Fund",
+                "amc": "JM",
+                "netCr": -47,
+                "valueChgCr": -49
+              },
+              {
+                "fund": "UTI - Dividend Yield Fund",
+                "amc": "UTI",
+                "netCr": -3,
+                "valueChgCr": -5
+              },
+              {
+                "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+                "amc": "Aditya",
+                "netCr": 0,
+                "valueChgCr": 0
+              }
+            ]
+          },
+          {
             "company": "Maruti Suzuki India Limited",
-            "netCr": -87,
+            "netCr": -82,
             "amcs": [
               "UTI",
               "Mahindra Manulife"
@@ -4913,36 +5248,31 @@
             ]
           },
           {
-            "company": "Hero MotoCorp Limited",
-            "netCr": -39,
+            "company": "Eicher Motors Ltd.",
+            "netCr": -40,
             "amcs": [
-              "UTI",
-              "Aditya"
+              "JM",
+              "Mahindra Manulife",
+              "UTI"
             ],
             "schemes": [
               {
-                "fund": "UTI - Mid Cap Fund",
-                "amc": "UTI",
-                "netCr": -56,
-                "valueChgCr": -68
+                "fund": "JM Flexi cap Fund",
+                "amc": "JM",
+                "netCr": -31,
+                "valueChgCr": -35
               },
               {
-                "fund": "UTI - Dividend Yield Fund",
+                "fund": "Mahindra Manulife Large Cap Fund",
+                "amc": "Mahindra Manulife",
+                "netCr": -5,
+                "valueChgCr": -6
+              },
+              {
+                "fund": "UTI Quant Fund",
                 "amc": "UTI",
-                "netCr": -3,
+                "netCr": -4,
                 "valueChgCr": -5
-              },
-              {
-                "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
-                "amc": "Aditya",
-                "netCr": 0,
-                "valueChgCr": 0
-              },
-              {
-                "fund": "UTI Nifty Midcap 150 Quality 50 Index Fund",
-                "amc": "UTI",
-                "netCr": 0,
-                "valueChgCr": 0
               }
             ]
           },
@@ -4980,28 +5310,6 @@
                 "valueChgCr": -3
               }
             ]
-          },
-          {
-            "company": "Eicher Motors Ltd.",
-            "netCr": -8,
-            "amcs": [
-              "Mahindra Manulife",
-              "UTI"
-            ],
-            "schemes": [
-              {
-                "fund": "Mahindra Manulife Large Cap Fund",
-                "amc": "Mahindra Manulife",
-                "netCr": -5,
-                "valueChgCr": -6
-              },
-              {
-                "fund": "UTI Quant Fund",
-                "amc": "UTI",
-                "netCr": -4,
-                "valueChgCr": -5
-              }
-            ]
           }
         ],
         "schemes": [
@@ -5018,6 +5326,12 @@
             "valueChgCr": -273
           },
           {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": -107,
+            "valueChgCr": -138
+          },
+          {
             "fund": "Mahindra Manulife Multi Cap Fund",
             "amc": "Mahindra Manulife",
             "netCr": -67,
@@ -5028,12 +5342,6 @@
             "amc": "UTI",
             "netCr": -56,
             "valueChgCr": -68
-          },
-          {
-            "fund": "Aditya Birla Sun Life Multi-cap Fund",
-            "amc": "Aditya",
-            "netCr": -50,
-            "valueChgCr": -96
           }
         ]
       }
