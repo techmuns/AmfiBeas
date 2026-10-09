@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-10-09T04:19:26.096Z",
+    "generatedAt": "2026-10-09T04:35:31.645Z",
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -9,34 +9,34 @@
   "convictionLedger": {
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
-    "funds": 205,
-    "amcs": 18,
+    "funds": 208,
+    "amcs": 19,
     "quadrants": {
       "new": {
-        "totalCr": 5588,
-        "positions": 136,
-        "companies": 103,
+        "totalCr": 5797,
+        "positions": 143,
+        "companies": 106,
         "byTier": {
           "large": {
-            "valueCr": 825,
-            "positions": 16,
+            "valueCr": 839,
+            "positions": 17,
             "companies": 14
           },
           "mid": {
-            "valueCr": 1071,
-            "positions": 40,
-            "companies": 36
+            "valueCr": 1153,
+            "positions": 42,
+            "companies": 37
           },
           "small": {
-            "valueCr": 3692,
-            "positions": 80,
-            "companies": 53
+            "valueCr": 3806,
+            "positions": 84,
+            "companies": 55
           }
         },
         "top": [
           {
             "company": "National Stock Exchange Of India",
-            "valueCr": 768,
+            "valueCr": 772,
             "amcs": [
               "Axis",
               "Aditya Birla Sun Life",
@@ -52,9 +52,10 @@
           },
           {
             "company": "Kotak Mahindra Bank",
-            "valueCr": 287,
+            "valueCr": 300,
             "amcs": [
-              "Helios"
+              "Helios",
+              "Abakkus"
             ]
           },
           {
@@ -74,40 +75,40 @@
             ]
           },
           {
-            "company": "Hero Motors",
-            "valueCr": 192,
+            "company": "Elevate Campuses",
+            "valueCr": 199,
             "amcs": [
-              "ICICI Prudential",
-              "JM Financial"
+              "SBI",
+              "Abakkus"
             ]
           }
         ]
       },
       "increased": {
-        "totalCr": 45080,
-        "positions": 894,
-        "companies": 469,
+        "totalCr": 46499,
+        "positions": 983,
+        "companies": 496,
         "byTier": {
           "large": {
-            "valueCr": 22972,
-            "positions": 263,
-            "companies": 92
+            "valueCr": 23347,
+            "positions": 280,
+            "companies": 93
           },
           "mid": {
-            "valueCr": 15966,
-            "positions": 358,
-            "companies": 171
+            "valueCr": 16458,
+            "positions": 389,
+            "companies": 174
           },
           "small": {
-            "valueCr": 6143,
-            "positions": 273,
-            "companies": 206
+            "valueCr": 6694,
+            "positions": 314,
+            "companies": 229
           }
         },
         "top": [
           {
             "company": "DLF",
-            "valueCr": 2411,
+            "valueCr": 2427,
             "amcs": [
               "PPFAS",
               "Franklin Templeton",
@@ -162,23 +163,23 @@
         ]
       },
       "decreased": {
-        "totalCr": 39913,
-        "positions": 907,
+        "totalCr": 40042,
+        "positions": 910,
         "companies": 468,
         "byTier": {
           "large": {
-            "valueCr": 19603,
-            "positions": 279,
+            "valueCr": 19653,
+            "positions": 280,
             "companies": 90
           },
           "mid": {
-            "valueCr": 14292,
-            "positions": 341,
+            "valueCr": 14368,
+            "positions": 342,
             "companies": 167
           },
           "small": {
-            "valueCr": 6019,
-            "positions": 287,
+            "valueCr": 6021,
+            "positions": 288,
             "companies": 211
           }
         },
@@ -212,7 +213,7 @@
           },
           {
             "company": "Hero MotoCorp",
-            "valueCr": 671,
+            "valueCr": 672,
             "amcs": [
               "ICICI Prudential",
               "JM Financial",
@@ -240,14 +241,14 @@
         ]
       },
       "exited": {
-        "totalCr": 2173,
-        "positions": 95,
-        "companies": 88,
+        "totalCr": 2193,
+        "positions": 97,
+        "companies": 90,
         "byTier": {
           "large": {
-            "valueCr": 773,
-            "positions": 25,
-            "companies": 21
+            "valueCr": 777,
+            "positions": 26,
+            "companies": 22
           },
           "mid": {
             "valueCr": 891,
@@ -255,9 +256,9 @@
             "companies": 34
           },
           "small": {
-            "valueCr": 509,
-            "positions": 34,
-            "companies": 33
+            "valueCr": 525,
+            "positions": 35,
+            "companies": 34
           }
         },
         "top": [
@@ -277,7 +278,7 @@
           },
           {
             "company": "Lupin",
-            "valueCr": 121,
+            "valueCr": 120,
             "amcs": [
               "ICICI Prudential"
             ]
@@ -314,24 +315,36 @@
       {
         "company": "State Bank of India",
         "tier": "large",
-        "buyers": 5,
+        "buyers": 6,
         "sellers": 7,
-        "buyCr": 288,
+        "buyCr": 325,
         "sellCr": 1698,
-        "netCr": -1411,
-        "grossCr": 1986,
+        "netCr": -1373,
+        "grossCr": 2023,
         "topBuyer": "Franklin Templeton",
+        "topSeller": "SBI"
+      },
+      {
+        "company": "ICICI Bank",
+        "tier": "large",
+        "buyers": 6,
+        "sellers": 6,
+        "buyCr": 129,
+        "sellCr": 653,
+        "netCr": -524,
+        "grossCr": 783,
+        "topBuyer": "Helios",
         "topSeller": "SBI"
       },
       {
         "company": "HDFC Bank",
         "tier": "large",
-        "buyers": 5,
+        "buyers": 6,
         "sellers": 5,
-        "buyCr": 761,
+        "buyCr": 808,
         "sellCr": 998,
-        "netCr": -237,
-        "grossCr": 1759,
+        "netCr": -190,
+        "grossCr": 1805,
         "topBuyer": "Aditya Birla Sun Life",
         "topSeller": "Franklin Templeton"
       },
@@ -360,15 +373,15 @@
         "topSeller": "ICICI Prudential"
       },
       {
-        "company": "ICICI Bank",
+        "company": "Divi's Laboratories",
         "tier": "large",
-        "buyers": 5,
-        "sellers": 6,
-        "buyCr": 111,
-        "sellCr": 653,
-        "netCr": -542,
-        "grossCr": 764,
-        "topBuyer": "Helios",
+        "buyers": 6,
+        "sellers": 5,
+        "buyCr": 586,
+        "sellCr": 464,
+        "netCr": 122,
+        "grossCr": 1051,
+        "topBuyer": "Motilal Oswal",
         "topSeller": "SBI"
       },
       {
@@ -386,12 +399,12 @@
       {
         "company": "Kotak Mahindra Bank",
         "tier": "large",
-        "buyers": 5,
+        "buyers": 6,
         "sellers": 4,
-        "buyCr": 1450,
+        "buyCr": 1464,
         "sellCr": 149,
-        "netCr": 1301,
-        "grossCr": 1600,
+        "netCr": 1314,
+        "grossCr": 1613,
         "topBuyer": "SBI",
         "topSeller": "Franklin Templeton"
       },
@@ -402,7 +415,7 @@
         "sellers": 4,
         "buyCr": 1292,
         "sellCr": 173,
-        "netCr": 1119,
+        "netCr": 1118,
         "grossCr": 1465,
         "topBuyer": "SBI",
         "topSeller": "PPFAS"
@@ -432,26 +445,14 @@
         "topSeller": "Aditya Birla Sun Life"
       },
       {
-        "company": "Divi's Laboratories",
-        "tier": "large",
-        "buyers": 6,
-        "sellers": 4,
-        "buyCr": 586,
-        "sellCr": 414,
-        "netCr": 173,
-        "grossCr": 1000,
-        "topBuyer": "Motilal Oswal",
-        "topSeller": "SBI"
-      },
-      {
         "company": "One 97 Communications",
         "tier": "mid",
-        "buyers": 5,
+        "buyers": 6,
         "sellers": 4,
-        "buyCr": 437,
+        "buyCr": 438,
         "sellCr": 506,
-        "netCr": -70,
-        "grossCr": 943,
+        "netCr": -68,
+        "grossCr": 945,
         "topBuyer": "Franklin Templeton",
         "topSeller": "Motilal Oswal"
       },
@@ -468,28 +469,28 @@
         "topSeller": "ICICI Prudential"
       },
       {
-        "company": "Reliance Industries",
+        "company": "NTPC",
         "tier": "large",
-        "buyers": 7,
-        "sellers": 4,
-        "buyCr": 529,
-        "sellCr": 114,
-        "netCr": 416,
-        "grossCr": 643,
+        "buyers": 4,
+        "sellers": 5,
+        "buyCr": 363,
+        "sellCr": 386,
+        "netCr": -23,
+        "grossCr": 749,
         "topBuyer": "SBI",
-        "topSeller": "PPFAS"
+        "topSeller": "ICICI Prudential"
       },
       {
-        "company": "BSE",
+        "company": "Reliance Industries",
         "tier": "large",
-        "buyers": 6,
+        "buyers": 8,
         "sellers": 4,
-        "buyCr": 330,
-        "sellCr": 266,
-        "netCr": 64,
-        "grossCr": 597,
-        "topBuyer": "Motilal Oswal",
-        "topSeller": "SBI"
+        "buyCr": 544,
+        "sellCr": 114,
+        "netCr": 430,
+        "grossCr": 657,
+        "topBuyer": "SBI",
+        "topSeller": "PPFAS"
       }
     ]
   },
@@ -497,7 +498,7 @@
     "month": "Sep-26",
     "monthPrev": "Aug-26",
     "minBookCr": 500,
-    "medianTurnoverPct": 2.73,
+    "medianTurnoverPct": 2.67,
     "rows": [
       {
         "amc": "Taurus",
@@ -510,7 +511,7 @@
       },
       {
         "amc": "JM Financial",
-        "turnoverPct": 7.47,
+        "turnoverPct": 7.46,
         "buyCr": 695,
         "sellCr": 680,
         "bookCr": 8904,
@@ -521,7 +522,7 @@
         "amc": "Mahindra",
         "turnoverPct": 4.79,
         "buyCr": 2057,
-        "sellCr": 1359,
+        "sellCr": 1358,
         "bookCr": 27914,
         "schemes": 12,
         "holdings": 282
@@ -537,8 +538,8 @@
       },
       {
         "amc": "Helios",
-        "turnoverPct": 4.12,
-        "buyCr": 1526,
+        "turnoverPct": 4.11,
+        "buyCr": 1525,
         "sellCr": 578,
         "bookCr": 14240,
         "schemes": 4,
@@ -547,8 +548,8 @@
       {
         "amc": "UTI",
         "turnoverPct": 3.04,
-        "buyCr": 2821,
-        "sellCr": 3242,
+        "buyCr": 2822,
+        "sellCr": 3246,
         "bookCr": 89725,
         "schemes": 21,
         "holdings": 411
@@ -556,17 +557,17 @@
       {
         "amc": "SBI",
         "turnoverPct": 2.75,
-        "buyCr": 11122,
-        "sellCr": 10504,
+        "buyCr": 11121,
+        "sellCr": 10502,
         "bookCr": 371847,
         "schemes": 25,
         "holdings": 561
       },
       {
         "amc": "ICICI Prudential",
-        "turnoverPct": 2.73,
-        "buyCr": 12577,
-        "sellCr": 8813,
+        "turnoverPct": 2.72,
+        "buyCr": 12575,
+        "sellCr": 8810,
         "bookCr": 315899,
         "schemes": 29,
         "holdings": 634
@@ -574,7 +575,7 @@
       {
         "amc": "Aditya Birla Sun Life",
         "turnoverPct": 2.67,
-        "buyCr": 4164,
+        "buyCr": 4165,
         "sellCr": 3819,
         "bookCr": 139235,
         "schemes": 24,
@@ -592,7 +593,7 @@
       {
         "amc": "Motilal Oswal",
         "turnoverPct": 2.51,
-        "buyCr": 3784,
+        "buyCr": 3783,
         "sellCr": 2489,
         "bookCr": 96968,
         "schemes": 17,
@@ -608,8 +609,17 @@
         "holdings": 319
       },
       {
+        "amc": "Abakkus",
+        "turnoverPct": 1.49,
+        "buyCr": 1628,
+        "sellCr": 154,
+        "bookCr": 10850,
+        "schemes": 3,
+        "holdings": 125
+      },
+      {
         "amc": "NJ",
-        "turnoverPct": 0.66,
+        "turnoverPct": 0.65,
         "buyCr": 30,
         "sellCr": 19,
         "bookCr": 2847,
@@ -619,7 +629,7 @@
       {
         "amc": "PPFAS",
         "turnoverPct": 0.53,
-        "buyCr": 3696,
+        "buyCr": 3700,
         "sellCr": 686,
         "bookCr": 128268,
         "schemes": 3,
