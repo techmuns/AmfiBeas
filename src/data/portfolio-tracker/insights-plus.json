@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-10-09T14:26:36.454Z",
+    "generatedAt": "2026-10-09T14:53:58.781Z",
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -9,13 +9,13 @@
   "convictionLedger": {
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
-    "funds": 369,
-    "amcs": 34,
+    "funds": 373,
+    "amcs": 35,
     "quadrants": {
       "new": {
-        "totalCr": 9880,
-        "positions": 274,
-        "companies": 169,
+        "totalCr": 10194,
+        "positions": 278,
+        "companies": 171,
         "byTier": {
           "large": {
             "valueCr": 1085,
@@ -23,20 +23,20 @@
             "companies": 27
           },
           "mid": {
-            "valueCr": 1923,
-            "positions": 79,
-            "companies": 59
+            "valueCr": 1987,
+            "positions": 80,
+            "companies": 60
           },
           "small": {
-            "valueCr": 6872,
-            "positions": 160,
-            "companies": 83
+            "valueCr": 7121,
+            "positions": 163,
+            "companies": 84
           }
         },
         "top": [
           {
             "company": "National Stock Exchange Of India",
-            "valueCr": 1478,
+            "valueCr": 1579,
             "amcs": [
               "Invesco",
               "Nippon India",
@@ -86,30 +86,30 @@
         ]
       },
       "increased": {
-        "totalCr": 77282,
-        "positions": 1846,
-        "companies": 637,
+        "totalCr": 78005,
+        "positions": 1891,
+        "companies": 639,
         "byTier": {
           "large": {
-            "valueCr": 33648,
-            "positions": 490,
+            "valueCr": 33830,
+            "positions": 505,
             "companies": 94
           },
           "mid": {
-            "valueCr": 30873,
-            "positions": 765,
+            "valueCr": 31080,
+            "positions": 780,
             "companies": 207
           },
           "small": {
-            "valueCr": 12762,
-            "positions": 591,
-            "companies": 336
+            "valueCr": 13094,
+            "positions": 606,
+            "companies": 338
           }
         },
         "top": [
           {
             "company": "HDFC Bank",
-            "valueCr": 2469,
+            "valueCr": 2470,
             "amcs": [
               "Nippon India",
               "Bandhan",
@@ -118,7 +118,7 @@
           },
           {
             "company": "DLF",
-            "valueCr": 2466,
+            "valueCr": 2468,
             "amcs": [
               "PPFAS",
               "Franklin Templeton",
@@ -127,7 +127,7 @@
           },
           {
             "company": "Gland Pharma",
-            "valueCr": 1968,
+            "valueCr": 1970,
             "amcs": [
               "Kotak Mahindra",
               "Axis",
@@ -154,7 +154,7 @@
           },
           {
             "company": "Swiggy",
-            "valueCr": 1355,
+            "valueCr": 1365,
             "amcs": [
               "SBI",
               "Bandhan",
@@ -164,30 +164,30 @@
         ]
       },
       "decreased": {
-        "totalCr": 63306,
-        "positions": 1613,
-        "companies": 582,
+        "totalCr": 63721,
+        "positions": 1640,
+        "companies": 586,
         "byTier": {
           "large": {
-            "valueCr": 30578,
-            "positions": 492,
+            "valueCr": 30657,
+            "positions": 499,
             "companies": 95
           },
           "mid": {
-            "valueCr": 23626,
-            "positions": 625,
+            "valueCr": 23825,
+            "positions": 635,
             "companies": 195
           },
           "small": {
-            "valueCr": 9102,
-            "positions": 496,
-            "companies": 292
+            "valueCr": 9239,
+            "positions": 506,
+            "companies": 296
           }
         },
         "top": [
           {
             "company": "State Bank of India",
-            "valueCr": 1977,
+            "valueCr": 1989,
             "amcs": [
               "SBI",
               "Nippon India",
@@ -196,7 +196,7 @@
           },
           {
             "company": "L&T Finance",
-            "valueCr": 1852,
+            "valueCr": 1853,
             "amcs": [
               "Kotak Mahindra",
               "Axis",
@@ -223,7 +223,7 @@
           },
           {
             "company": "Eternal",
-            "valueCr": 1021,
+            "valueCr": 1025,
             "amcs": [
               "Bandhan",
               "Franklin Templeton",
@@ -242,9 +242,9 @@
         ]
       },
       "exited": {
-        "totalCr": 3365,
-        "positions": 197,
-        "companies": 155,
+        "totalCr": 3445,
+        "positions": 199,
+        "companies": 156,
         "byTier": {
           "large": {
             "valueCr": 1212,
@@ -252,14 +252,14 @@
             "companies": 35
           },
           "mid": {
-            "valueCr": 1322,
+            "valueCr": 1323,
             "positions": 75,
             "companies": 58
           },
           "small": {
-            "valueCr": 830,
-            "positions": 64,
-            "companies": 62
+            "valueCr": 910,
+            "positions": 66,
+            "companies": 63
           }
         },
         "top": [
@@ -318,28 +318,40 @@
     "monthPrev": "Aug-26",
     "rows": [
       {
+        "company": "State Bank of India",
+        "tier": "large",
+        "buyers": 11,
+        "sellers": 11,
+        "buyCr": 415,
+        "sellCr": 1989,
+        "netCr": -1574,
+        "grossCr": 2404,
+        "topBuyer": "Franklin Templeton",
+        "topSeller": "SBI"
+      },
+      {
         "company": "HDFC Bank",
         "tier": "large",
         "buyers": 12,
         "sellers": 10,
-        "buyCr": 2469,
+        "buyCr": 2470,
         "sellCr": 1056,
-        "netCr": 1413,
-        "grossCr": 3524,
+        "netCr": 1414,
+        "grossCr": 3525,
         "topBuyer": "Nippon India",
         "topSeller": "Franklin Templeton"
       },
       {
-        "company": "State Bank of India",
+        "company": "Reliance Industries",
         "tier": "large",
-        "buyers": 11,
-        "sellers": 10,
-        "buyCr": 415,
-        "sellCr": 1977,
-        "netCr": -1562,
-        "grossCr": 2392,
-        "topBuyer": "Franklin Templeton",
-        "topSeller": "SBI"
+        "buyers": 12,
+        "sellers": 9,
+        "buyCr": 711,
+        "sellCr": 421,
+        "netCr": 290,
+        "grossCr": 1132,
+        "topBuyer": "SBI",
+        "topSeller": "Nippon India"
       },
       {
         "company": "Kotak Mahindra Bank",
@@ -368,12 +380,12 @@
       {
         "company": "ICICI Bank",
         "tier": "large",
-        "buyers": 15,
+        "buyers": 16,
         "sellers": 8,
-        "buyCr": 598,
+        "buyCr": 618,
         "sellCr": 883,
-        "netCr": -284,
-        "grossCr": 1481,
+        "netCr": -265,
+        "grossCr": 1501,
         "topBuyer": "Invesco",
         "topSeller": "SBI"
       },
@@ -385,7 +397,7 @@
         "buyCr": 461,
         "sellCr": 932,
         "netCr": -471,
-        "grossCr": 1393,
+        "grossCr": 1394,
         "topBuyer": "SBI",
         "topSeller": "Kotak Mahindra"
       },
@@ -402,28 +414,52 @@
         "topSeller": "Franklin Templeton"
       },
       {
+        "company": "Solar Industries India",
+        "tier": "large",
+        "buyers": 9,
+        "sellers": 8,
+        "buyCr": 990,
+        "sellCr": 281,
+        "netCr": 709,
+        "grossCr": 1271,
+        "topBuyer": "Motilal Oswal",
+        "topSeller": "Helios"
+      },
+      {
+        "company": "BSE",
+        "tier": "large",
+        "buyers": 8,
+        "sellers": 12,
+        "buyCr": 393,
+        "sellCr": 830,
+        "netCr": -437,
+        "grossCr": 1222,
+        "topBuyer": "Motilal Oswal",
+        "topSeller": "Kotak Mahindra"
+      },
+      {
         "company": "Shriram Finance",
         "tier": "large",
-        "buyers": 11,
+        "buyers": 12,
         "sellers": 8,
-        "buyCr": 655,
+        "buyCr": 662,
         "sellCr": 558,
-        "netCr": 97,
-        "grossCr": 1213,
+        "netCr": 104,
+        "grossCr": 1219,
         "topBuyer": "ICICI Prudential",
         "topSeller": "Axis"
       },
       {
-        "company": "Reliance Industries",
+        "company": "Cummins India",
         "tier": "large",
-        "buyers": 12,
+        "buyers": 8,
         "sellers": 8,
-        "buyCr": 711,
-        "sellCr": 414,
-        "netCr": 297,
-        "grossCr": 1125,
-        "topBuyer": "SBI",
-        "topSeller": "Nippon India"
+        "buyCr": 456,
+        "sellCr": 604,
+        "netCr": -149,
+        "grossCr": 1060,
+        "topBuyer": "ICICI Prudential",
+        "topSeller": "Kotak Mahindra"
       },
       {
         "company": "One 97 Communications",
@@ -440,62 +476,26 @@
       {
         "company": "Bajaj Finance",
         "tier": "large",
-        "buyers": 9,
+        "buyers": 10,
         "sellers": 7,
-        "buyCr": 1341,
+        "buyCr": 1352,
         "sellCr": 302,
-        "netCr": 1040,
-        "grossCr": 1643,
+        "netCr": 1051,
+        "grossCr": 1654,
         "topBuyer": "SBI",
         "topSeller": "PPFAS"
       },
       {
         "company": "Mahindra & Mahindra",
         "tier": "large",
-        "buyers": 7,
+        "buyers": 8,
         "sellers": 7,
-        "buyCr": 715,
-        "sellCr": 537,
-        "netCr": 178,
-        "grossCr": 1253,
+        "buyCr": 727,
+        "sellCr": 538,
+        "netCr": 189,
+        "grossCr": 1264,
         "topBuyer": "PPFAS",
         "topSeller": "Nippon India"
-      },
-      {
-        "company": "Solar Industries India",
-        "tier": "large",
-        "buyers": 9,
-        "sellers": 7,
-        "buyCr": 990,
-        "sellCr": 261,
-        "netCr": 729,
-        "grossCr": 1251,
-        "topBuyer": "Motilal Oswal",
-        "topSeller": "Helios"
-      },
-      {
-        "company": "Hindustan Aeronautics",
-        "tier": "large",
-        "buyers": 7,
-        "sellers": 7,
-        "buyCr": 680,
-        "sellCr": 551,
-        "netCr": 129,
-        "grossCr": 1230,
-        "topBuyer": "SBI",
-        "topSeller": "ICICI Prudential"
-      },
-      {
-        "company": "BSE",
-        "tier": "large",
-        "buyers": 7,
-        "sellers": 12,
-        "buyCr": 353,
-        "sellCr": 830,
-        "netCr": -476,
-        "grossCr": 1183,
-        "topBuyer": "Motilal Oswal",
-        "topSeller": "Kotak Mahindra"
       }
     ]
   },
@@ -503,7 +503,7 @@
     "month": "Sep-26",
     "monthPrev": "Aug-26",
     "minBookCr": 500,
-    "medianTurnoverPct": 2.75,
+    "medianTurnoverPct": 2.76,
     "rows": [
       {
         "amc": "Samco",
@@ -516,8 +516,8 @@
       },
       {
         "amc": "Trust",
-        "turnoverPct": 11.98,
-        "buyCr": 1385,
+        "turnoverPct": 11.99,
+        "buyCr": 1386,
         "sellCr": 744,
         "bookCr": 6452,
         "schemes": 5,
@@ -525,16 +525,16 @@
       },
       {
         "amc": "Jio BlackRock",
-        "turnoverPct": 11.25,
+        "turnoverPct": 11.26,
         "buyCr": 500,
-        "sellCr": 440,
+        "sellCr": 441,
         "bookCr": 3844,
         "schemes": 4,
         "holdings": 473
       },
       {
         "amc": "Taurus",
-        "turnoverPct": 8.11,
+        "turnoverPct": 8.12,
         "buyCr": 61,
         "sellCr": 52,
         "bookCr": 639,
@@ -562,17 +562,17 @@
       {
         "amc": "Mahindra",
         "turnoverPct": 4.81,
-        "buyCr": 2064,
-        "sellCr": 1364,
+        "buyCr": 2065,
+        "sellCr": 1365,
         "bookCr": 27914,
         "schemes": 12,
         "holdings": 282
       },
       {
         "amc": "Bandhan",
-        "turnoverPct": 4.49,
-        "buyCr": 6674,
-        "sellCr": 4054,
+        "turnoverPct": 4.5,
+        "buyCr": 6677,
+        "sellCr": 4056,
         "bookCr": 89952,
         "schemes": 17,
         "holdings": 702
@@ -580,8 +580,8 @@
       {
         "amc": "Franklin Templeton",
         "turnoverPct": 4.33,
-        "buyCr": 4362,
-        "sellCr": 4016,
+        "buyCr": 4363,
+        "sellCr": 4017,
         "bookCr": 90293,
         "schemes": 14,
         "holdings": 296
@@ -589,7 +589,7 @@
       {
         "amc": "Helios",
         "turnoverPct": 4.17,
-        "buyCr": 1536,
+        "buyCr": 1537,
         "sellCr": 585,
         "bookCr": 14240,
         "schemes": 4,
@@ -597,7 +597,7 @@
       },
       {
         "amc": "Zerodha",
-        "turnoverPct": 3.46,
+        "turnoverPct": 3.47,
         "buyCr": 176,
         "sellCr": 77,
         "bookCr": 2211,
@@ -608,7 +608,7 @@
         "amc": "ITI",
         "turnoverPct": 3.33,
         "buyCr": 517,
-        "sellCr": 331,
+        "sellCr": 332,
         "bookCr": 9868,
         "schemes": 8,
         "holdings": 256
@@ -616,8 +616,8 @@
       {
         "amc": "UTI",
         "turnoverPct": 3.06,
-        "buyCr": 2840,
-        "sellCr": 3260,
+        "buyCr": 2841,
+        "sellCr": 3261,
         "bookCr": 89725,
         "schemes": 21,
         "holdings": 411
@@ -625,8 +625,8 @@
       {
         "amc": "Kotak Mahindra",
         "turnoverPct": 2.99,
-        "buyCr": 7715,
-        "sellCr": 7496,
+        "buyCr": 7718,
+        "sellCr": 7498,
         "bookCr": 245048,
         "schemes": 29,
         "holdings": 580
@@ -634,17 +634,17 @@
       {
         "amc": "SBI",
         "turnoverPct": 2.77,
-        "buyCr": 11213,
-        "sellCr": 10565,
+        "buyCr": 11215,
+        "sellCr": 10567,
         "bookCr": 371847,
         "schemes": 25,
         "holdings": 561
       },
       {
         "amc": "ICICI Prudential",
-        "turnoverPct": 2.75,
-        "buyCr": 12638,
-        "sellCr": 8907,
+        "turnoverPct": 2.76,
+        "buyCr": 12640,
+        "sellCr": 8909,
         "bookCr": 315899,
         "schemes": 29,
         "holdings": 634
@@ -652,11 +652,20 @@
       {
         "amc": "Aditya Birla Sun Life",
         "turnoverPct": 2.7,
-        "buyCr": 4189,
-        "sellCr": 3859,
+        "buyCr": 4190,
+        "sellCr": 3860,
         "bookCr": 139235,
         "schemes": 24,
         "holdings": 466
+      },
+      {
+        "amc": "Mirae Asset",
+        "turnoverPct": 2.7,
+        "buyCr": 1012,
+        "sellCr": 480,
+        "bookCr": 17603,
+        "schemes": 4,
+        "holdings": 182
       },
       {
         "amc": "Baroda BNP Paribas",
@@ -670,7 +679,7 @@
       {
         "amc": "Motilal Oswal",
         "turnoverPct": 2.58,
-        "buyCr": 3817,
+        "buyCr": 3819,
         "sellCr": 2559,
         "bookCr": 96968,
         "schemes": 17,
@@ -697,8 +706,8 @@
       {
         "amc": "Nippon India",
         "turnoverPct": 1.79,
-        "buyCr": 8278,
-        "sellCr": 5682,
+        "buyCr": 8279,
+        "sellCr": 5683,
         "bookCr": 311579,
         "schemes": 16,
         "holdings": 446
@@ -706,8 +715,8 @@
       {
         "amc": "Axis",
         "turnoverPct": 1.73,
-        "buyCr": 3232,
-        "sellCr": 5138,
+        "buyCr": 3233,
+        "sellCr": 5139,
         "bookCr": 180806,
         "schemes": 17,
         "holdings": 319
@@ -724,7 +733,7 @@
       {
         "amc": "DSP",
         "turnoverPct": 1.43,
-        "buyCr": 2254,
+        "buyCr": 2255,
         "sellCr": 1585,
         "bookCr": 107782,
         "schemes": 22,
@@ -733,7 +742,7 @@
       {
         "amc": "Invesco",
         "turnoverPct": 1.24,
-        "buyCr": 4341,
+        "buyCr": 4342,
         "sellCr": 1123,
         "bookCr": 89394,
         "schemes": 15,
@@ -751,7 +760,7 @@
       {
         "amc": "PPFAS",
         "turnoverPct": 0.52,
-        "buyCr": 3743,
+        "buyCr": 3744,
         "sellCr": 681,
         "bookCr": 128268,
         "schemes": 3,
@@ -782,11 +791,11 @@
     "windowLabel": "Jun-26 → Sep-26",
     "windowMonths": 3,
     "period": "3Y",
-    "universe": 239,
+    "universe": 242,
     "medianFlowPct": 0.1,
     "quadrants": {
       "winning": {
-        "count": 80,
+        "count": 81,
         "rows": [
           {
             "fund": "DSP Value Fund",
@@ -895,7 +904,7 @@
         ]
       },
       "coasting": {
-        "count": 40,
+        "count": 41,
         "rows": [
           {
             "fund": "DSP Healthcare Fund",
@@ -976,6 +985,19 @@
             "monthsBack": 3
           },
           {
+            "fund": "Mirae Asset Multicap Fund",
+            "amc": "Mirae Asset",
+            "classification": "Equity : Multi Cap",
+            "percentile": 31.8,
+            "quartile": "Q3",
+            "perfReturn": 10.9,
+            "bookGrowthPct": 2.5,
+            "navReturnPct": -2.1,
+            "impliedFlowPct": 4.6,
+            "bookCr": 5352,
+            "monthsBack": 3
+          },
+          {
             "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
             "amc": "Aditya Birla Sun Life",
             "classification": "Equity : Mid Cap",
@@ -987,24 +1009,11 @@
             "impliedFlowPct": 4.1,
             "bookCr": 468,
             "monthsBack": 3
-          },
-          {
-            "fund": "DSP Flexi Cap Fund",
-            "amc": "DSP",
-            "classification": "Equity : Flexi Cap",
-            "percentile": 34.9,
-            "quartile": "Q3",
-            "perfReturn": 8.5,
-            "bookGrowthPct": 0.1,
-            "navReturnPct": -3.7,
-            "impliedFlowPct": 3.8,
-            "bookCr": 11333,
-            "monthsBack": 3
           }
         ]
       },
       "falling": {
-        "count": 79,
+        "count": 80,
         "rows": [
           {
             "fund": "Baroda BNP Paribas Focused Fund",
