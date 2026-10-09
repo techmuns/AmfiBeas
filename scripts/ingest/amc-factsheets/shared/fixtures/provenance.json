@@ -175,6 +175,20 @@
       "url": "https://www.licmf.com/downloads/consolidated-portfolio-files",
       "sha256": "f25669dca0f9b7d62fc50af2589498d74a20478241eabd3be89565ab0913e608",
       "extraction": "Unchanged public response/workbook bytes"
+    },
+    {
+      "file": "unifi-media-2026-10-09.json",
+      "url": "https://unifimf.com/wp-json/wp/v2/media?search=MP-Unifi&per_page=100&page=1&orderby=date&order=desc&_fields=source_url",
+      "observedAt": "2026-10-09T04:06:13.136659+00:00",
+      "sha256": "245ffd94bce8dc133dbf9094390fce8dd7f70cf57f3cc04adaf564c7b4885991",
+      "extraction": "Unchanged public JSON response bytes"
+    },
+    {
+      "file": "unifi-media-2026-10-09.headers",
+      "url": "https://unifimf.com/wp-json/wp/v2/media?search=MP-Unifi&per_page=100&page=1&orderby=date&order=desc&_fields=source_url",
+      "observedAt": "2026-10-09T04:06:13.136659+00:00",
+      "sha256": "ebc74f136f522355bc04e4b5210414add20491bf5dd766db48835a31ddf41859",
+      "extraction": "Exact HTTP status, content-type and WordPress inventory header lines; unrelated headers omitted"
     }
   ]
 }

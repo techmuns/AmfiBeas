@@ -6,6 +6,7 @@ import type {AmcScheme} from '../types';
 import {parsePublicWorkbook,publicDisclosures} from './public-disclosures.mjs';
 import {parseQuantumWorkbook} from './quantum.mjs';
 import {assertValidCandidate} from './manifest.mjs';
+import {unifiMonth} from '../json-api';
 const root=new URL('./fixtures/',import.meta.url),read=(file:string)=>fs.readFileSync(new URL(file,root));
 const month='2026-09',opts={pctScale:1,valueToCr:100,strictHoldings:true};
 const periodAbsent=(target:string,listed?:string)=>(e:unknown)=>e instanceof Error&&'code' in e&&e.code==='SOURCE_PERIOD_NOT_LISTED'&&'targetMonth' in e&&e.targetMonth===target&&(!listed||'listedMonths' in e&&Array.isArray(e.listedMonths)&&e.listedMonths.includes(listed));
@@ -18,6 +19,19 @@ const readBajaj=async(_url:string,options?:{body:string})=>{
   return read('bajaj-monthly-years.json');
 };
 async function verify() {
+  const unifi=JSON.parse(read('unifi-media-2026-10-09.json').toString());
+  const headers=read('unifi-media-2026-10-09.headers').toString();
+  assert.equal(unifi.length,36);assert.match(headers,/X-WP-Total: 36/);assert.match(headers,/X-WP-TotalPages: 1/);
+  const unifiPages:number[]=[];
+  const files=unifiMonth(2026,9,page=>{unifiPages.push(page);assert.equal(page,1,'Do not request the documented out-of-range HTTP 400 page');return unifi;});
+  assert.equal(files.length,3);assert.deepEqual(unifiPages,[1]);
+  assert(files.every(f=>/-30092026\.xlsx$/i.test(f.url)),'Retain exact published September filenames');
+  const full=Array.from({length:100},(_,i)=>({...unifi[i%unifi.length],source_url:unifi[i%unifi.length].source_url.replace('MP-Unifi-',`MP-Unifi-${i}-`)}));
+  assert.equal(unifiMonth(2026,9,page=>page===1?full:unifi).length,full.filter(r=>/-\d{2}092026\.xlsx?$/i.test(r.source_url)).length+3);
+  assert.throws(()=>unifiMonth(2026,9,()=>full),/Repeated/);
+  assert.throws(()=>unifiMonth(2026,9,()=>({code:'rest_post_invalid_page_number',data:{status:400}})),/Invalid/);
+  assert.throws(()=>unifiMonth(2026,9,page=>full.map(r=>({...r,source_url:r.source_url.replace('MP-Unifi-',`MP-Unifi-page${page}-`)}))),/Incomplete/);
+  console.log('PASS genuine Unifi: complete 36-record WordPress catalogue, three September files, short-page termination, full-page continuation, repeated/malformed/over-limit rejection');
   const bajaj=await publicDisclosures('bajaj-finserv',month,readBajaj);assert.equal(bajaj.length,1);assert.match(bajaj[0].url,/30-Sep2026-1\.xls$/);
   const bytes=read('bajaj-monthly-2026-09.xls');assert.equal(bytes.subarray(0,2).toString(),'PK','Published .xls file contains OOXML; parse bytes instead of assuming legacy binary format');
   const parse=(buffer:Buffer,slug:string,link:unknown):AmcScheme[]=>parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedWorkbook:parseQuantumWorkbook,opts,month,slug,identifyScheme:findSchemeName,link});

@@ -525,23 +525,31 @@ function discoverMahindra(now: Date): HarvestedLink[] {
 // Files are "MP-Unifi-<Scheme>-DDMMYYYY.xlsx". Keep the target month by the
 // filename's date suffix; the scheme name is derived from the filename. (Unifi's
 // host is Cloudflare-walled from the dev sandbox but reachable from the cron.)
-function unifiMonth(yy: number, mm: number): HarvestedLink[] {
+export function unifiMonth(yy: number, mm: number, readPage: (page: number) => unknown = page => json(`https://unifimf.com/wp-json/wp/v2/media?search=MP-Unifi&per_page=100&page=${page}&orderby=date&order=desc&_fields=source_url`)): HarvestedLink[] {
   const dateRe = new RegExp(`-\\d{2}${String(mm).padStart(2, "0")}${yy}\\.xlsx?$`, "i"); // "-30062026.xlsx"
   const links: HarvestedLink[] = [];
   const seen = new Set<string>();
-  for (let page = 1; page <= 2; page++) {
-    const items = json(`https://unifimf.com/wp-json/wp/v2/media?search=MP-Unifi&per_page=100&page=${page}&orderby=date&order=desc&_fields=source_url`);
-    if (!Array.isArray(items) || !items.length) break;
+  const catalogueUrls = new Set<string>();
+  for (let page = 1; page <= 20; page++) {
+    const items = readPage(page);
+    if (!Array.isArray(items) || items.length > 100) throw Error('Invalid Unifi media catalogue');
     for (const it of items) {
-      const url: string = it?.source_url ?? "";
+      const url: string = it?.source_url;
+      if (typeof url !== 'string' || !url || catalogueUrls.has(url)) throw Error('Repeated or invalid Unifi media page');
+      catalogueUrls.add(url);
       const base = decodeURIComponent(url.split("/").pop() ?? "");
       if (!dateRe.test(base) || seen.has(url)) continue;
       seen.add(url);
       const name = base.replace(/\.xlsx?$/i, "").replace(/^MP-/i, "").replace(/-\d{8}$/, "").replace(/-+/g, " ").trim();
       links.push({ url, text: name });
     }
+    // WordPress' per_page contract ends on a short page. Requesting another
+    // page after the genuine 36-record catalogue produces HTTP 400, not [].
+    // Full pages still require a terminal page; the bounded cap cannot certify
+    // an incomplete catalogue or silently hide a failed response.
+    if (items.length < 100) return links;
   }
-  return links;
+  throw Error('Incomplete Unifi media catalogue');
 }
 function discoverUnifi(now: Date): HarvestedLink[] {
   for (const [yy, mm] of monthsToTry(now)) { const l = unifiMonth(yy, mm); if (l.length) return l; }
