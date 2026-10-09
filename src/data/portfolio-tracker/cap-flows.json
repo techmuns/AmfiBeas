@@ -2,9 +2,9 @@
   "meta": {
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
-    "generatedAt": "2026-10-09T11:18:34.462Z",
+    "generatedAt": "2026-10-09T11:42:40.795Z",
     "universe": "Active equity schemes only (excludes ETFs, index, international and hybrid funds)",
-    "activeEquityFunds": 316,
+    "activeEquityFunds": 345,
     "metric": "Net Rs Cr bought/sold = change in aggregate shares held x current implied price. Excludes corporate actions (split/bonus). pctOutstanding = net shares traded ÷ company shares outstanding x 100 (null until the screener feed covers the fincode).",
     "topN": 20
   },
@@ -13,7 +13,7 @@
       {
         "company": "DLF Limited",
         "fincode": "INE271C01023",
-        "netCr": 2088,
+        "netCr": 2100,
         "pctOutstanding": 1.42,
         "amcs": [
           "PPFAS",
@@ -24,12 +24,12 @@
           {
             "fund": "PPFAS Parag Parikh Flexi Cap Fund",
             "amc": "PPFAS",
-            "netCr": 2321
+            "netCr": 2335
           },
           {
             "fund": "Franklin India Large Cap Fund",
             "amc": "Franklin Templeton",
-            "netCr": 56
+            "netCr": 57
           },
           {
             "fund": "Templeton India Value Fund",
@@ -74,83 +74,10 @@
         ]
       },
       {
-        "company": "Kotak Mahindra Bank Limited",
-        "fincode": "INE237A01036",
-        "netCr": 1265,
-        "pctOutstanding": 0.33,
-        "amcs": [
-          "SBI",
-          "Helios",
-          "Nippon"
-        ],
-        "schemes": [
-          {
-            "fund": "SBI Large and Midcap Fund",
-            "amc": "SBI",
-            "netCr": 501
-          },
-          {
-            "fund": "SBI Large Cap Fund",
-            "amc": "SBI",
-            "netCr": 382
-          },
-          {
-            "fund": "Helios Flexi Cap Fund",
-            "amc": "Helios",
-            "netCr": 248
-          },
-          {
-            "fund": "Nippon India Small Cap Fund",
-            "amc": "Nippon",
-            "netCr": 174
-          },
-          {
-            "fund": "ICICI Prudential Flexi Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": 156
-          },
-          {
-            "fund": "SBI Flexicap Fund",
-            "amc": "SBI",
-            "netCr": 110
-          },
-          {
-            "fund": "SBI Dividend Yield Fund",
-            "amc": "SBI",
-            "netCr": 86
-          },
-          {
-            "fund": "Axis ELSS Tax Saver Fund",
-            "amc": "Axis",
-            "netCr": 59
-          },
-          {
-            "fund": "SBI Contra Fund",
-            "amc": "SBI",
-            "netCr": 56
-          },
-          {
-            "fund": "Helios Large & Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 41
-          },
-          {
-            "fund": "Nippon India ELSS Tax Saver Fund",
-            "amc": "Nippon",
-            "netCr": 31
-          },
-          {
-            "fund": "Aditya Birla Sun Life Large Cap Fund",
-            "amc": "Aditya",
-            "netCr": 26
-          }
-        ]
-      },
-      {
         "company": "HDFC Bank Limited",
         "fincode": "INE040A01034",
-        "netCr": 1175,
-        "pctOutstanding": 0.11,
+        "netCr": 1372,
+        "pctOutstanding": 0.13,
         "amcs": [
           "Nippon",
           "Bandhan",
@@ -160,7 +87,7 @@
           {
             "fund": "Nippon India Large Cap Fund",
             "amc": "Nippon",
-            "netCr": 236
+            "netCr": 237
           },
           {
             "fund": "Mahindra Manulife Multi Cap Fund",
@@ -170,7 +97,7 @@
           {
             "fund": "Nippon India Banking & Financial Services Fund",
             "amc": "Nippon",
-            "netCr": 182
+            "netCr": 183
           },
           {
             "fund": "ICICI Prudential Value Fund",
@@ -185,7 +112,7 @@
           {
             "fund": "Bandhan Small Cap Fund",
             "amc": "Bandhan",
-            "netCr": 166
+            "netCr": 167
           },
           {
             "fund": "Helios Flexi Cap Fund",
@@ -210,19 +137,92 @@
           {
             "fund": "Nippon India Power & Infra Fund",
             "amc": "Nippon",
-            "netCr": 101
+            "netCr": 102
           },
           {
-            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "fund": "Kotak Multi Cap Fund",
+            "amc": "Kotak",
+            "netCr": 95
+          }
+        ]
+      },
+      {
+        "company": "Kotak Mahindra Bank Limited",
+        "fincode": "INE237A01036",
+        "netCr": 1268,
+        "pctOutstanding": 0.33,
+        "amcs": [
+          "SBI",
+          "Helios",
+          "Nippon"
+        ],
+        "schemes": [
+          {
+            "fund": "SBI Large and Midcap Fund",
+            "amc": "SBI",
+            "netCr": 502
+          },
+          {
+            "fund": "SBI Large Cap Fund",
+            "amc": "SBI",
+            "netCr": 382
+          },
+          {
+            "fund": "Helios Flexi Cap Fund",
+            "amc": "Helios",
+            "netCr": 248
+          },
+          {
+            "fund": "Nippon India Small Cap Fund",
+            "amc": "Nippon",
+            "netCr": 174
+          },
+          {
+            "fund": "ICICI Prudential Flexi Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": 156
+          },
+          {
+            "fund": "SBI Flexicap Fund",
+            "amc": "SBI",
+            "netCr": 111
+          },
+          {
+            "fund": "SBI Dividend Yield Fund",
+            "amc": "SBI",
+            "netCr": 86
+          },
+          {
+            "fund": "Axis ELSS Tax Saver Fund",
+            "amc": "Axis",
+            "netCr": 59
+          },
+          {
+            "fund": "SBI Contra Fund",
+            "amc": "SBI",
+            "netCr": 56
+          },
+          {
+            "fund": "Helios Large & Mid Cap Fund",
+            "amc": "Helios",
+            "netCr": 42
+          },
+          {
+            "fund": "Nippon India ELSS Tax Saver Fund",
+            "amc": "Nippon",
+            "netCr": 31
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
             "amc": "Aditya",
-            "netCr": 91
+            "netCr": 26
           }
         ]
       },
       {
         "company": "Bajaj Finance Limited",
         "fincode": "INE296A01032",
-        "netCr": 1032,
+        "netCr": 1038,
         "pctOutstanding": 0.18,
         "amcs": [
           "SBI",
@@ -233,27 +233,27 @@
           {
             "fund": "SBI Focused Fund",
             "amc": "SBI",
-            "netCr": 537
+            "netCr": 540
           },
           {
             "fund": "SBI Flexicap Fund",
             "amc": "SBI",
-            "netCr": 516
+            "netCr": 519
           },
           {
             "fund": "Franklin India Multi Cap Fund",
             "amc": "Franklin Templeton",
-            "netCr": 93
+            "netCr": 94
           },
           {
             "fund": "Axis Large Cap Fund",
             "amc": "Axis",
-            "netCr": 54
+            "netCr": 55
           },
           {
             "fund": "SBI Quality Fund",
             "amc": "SBI",
-            "netCr": 46
+            "netCr": 47
           },
           {
             "fund": "Aditya Birla Sun Life Quant Fund",
@@ -293,83 +293,10 @@
         ]
       },
       {
-        "company": "Bharti Airtel Limited",
-        "fincode": "INE397D01024",
-        "netCr": 911,
-        "pctOutstanding": 0.09,
-        "amcs": [
-          "ICICI Pru",
-          "Nippon",
-          "PPFAS"
-        ],
-        "schemes": [
-          {
-            "fund": "ICICI Prudential Flexi Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": 313
-          },
-          {
-            "fund": "Nippon India Large Cap Fund",
-            "amc": "Nippon",
-            "netCr": 247
-          },
-          {
-            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
-            "amc": "PPFAS",
-            "netCr": 208
-          },
-          {
-            "fund": "ICICI Prudential Technology Fund",
-            "amc": "ICICI Pru",
-            "netCr": 159
-          },
-          {
-            "fund": "ICICI Prudential Large Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": 113
-          },
-          {
-            "fund": "Bandhan Flexi Cap Fund",
-            "amc": "Bandhan",
-            "netCr": 35
-          },
-          {
-            "fund": "Invesco India Flexi Cap Fund",
-            "amc": "Invesco",
-            "netCr": 30
-          },
-          {
-            "fund": "ICICI Prudential Equity Minimum Variance Fund",
-            "amc": "ICICI Pru",
-            "netCr": 16
-          },
-          {
-            "fund": "UTI Focused Fund",
-            "amc": "UTI",
-            "netCr": 12
-          },
-          {
-            "fund": "Franklin India Technology Fund",
-            "amc": "Franklin Templeton",
-            "netCr": 11
-          },
-          {
-            "fund": "Bandhan Value Fund",
-            "amc": "Bandhan",
-            "netCr": 8
-          },
-          {
-            "fund": "Bandhan ELSS - Tax Saver Fund",
-            "amc": "Bandhan",
-            "netCr": 8
-          }
-        ]
-      },
-      {
         "company": "Billionbrains Garage Ventures Ltd",
         "fincode": "INE0HOQ01053",
-        "netCr": 749,
-        "pctOutstanding": 0.68,
+        "netCr": 796,
+        "pctOutstanding": 0.71,
         "amcs": [
           "SBI",
           "Invesco",
@@ -379,17 +306,17 @@
           {
             "fund": "SBI ELSS Tax Saver Fund",
             "amc": "SBI",
-            "netCr": 265
+            "netCr": 267
           },
           {
             "fund": "Invesco India Small cap Fund",
             "amc": "Invesco",
-            "netCr": 156
+            "netCr": 157
           },
           {
             "fund": "Invesco India Mid cap Fund",
             "amc": "Invesco",
-            "netCr": 154
+            "netCr": 155
           },
           {
             "fund": "SBI Banking And Financial Services Fund",
@@ -409,7 +336,12 @@
           {
             "fund": "Bandhan Large & Mid Cap Fund",
             "amc": "Bandhan",
-            "netCr": 44
+            "netCr": 45
+          },
+          {
+            "fund": "Kotak Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": 37
           },
           {
             "fund": "UTI - Mid Cap Fund",
@@ -430,18 +362,86 @@
             "fund": "Motilal Oswal Business Cycle Fund",
             "amc": "Motilal Oswal",
             "netCr": 13
+          }
+        ]
+      },
+      {
+        "company": "Solar Industries India Limited",
+        "fincode": "INE343H01029",
+        "netCr": 730,
+        "pctOutstanding": null,
+        "amcs": [
+          "Motilal Oswal",
+          "SBI",
+          "Axis"
+        ],
+        "schemes": [
+          {
+            "fund": "Motilal Oswal Large and Midcap Fund",
+            "amc": "Motilal Oswal",
+            "netCr": 446
           },
           {
-            "fund": "Invesco India Multi cap Fund",
-            "amc": "Invesco",
-            "netCr": 13
+            "fund": "SBI Flexicap Fund",
+            "amc": "SBI",
+            "netCr": 251
+          },
+          {
+            "fund": "Mahindra Manulife Small Cap Fund",
+            "amc": "Mahindra Manulife",
+            "netCr": 85
+          },
+          {
+            "fund": "SBI Quality Fund",
+            "amc": "SBI",
+            "netCr": 74
+          },
+          {
+            "fund": "Axis Large Cap Fund",
+            "amc": "Axis",
+            "netCr": 55
+          },
+          {
+            "fund": "Axis Multicap Fund",
+            "amc": "Axis",
+            "netCr": 54
+          },
+          {
+            "fund": "Motilal Oswal Innovation Opportunities Fund",
+            "amc": "Motilal Oswal",
+            "netCr": 18
+          },
+          {
+            "fund": "Axis India Manufacturing Fund",
+            "amc": "Axis",
+            "netCr": 15
+          },
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": 14
+          },
+          {
+            "fund": "UTI Quant Fund",
+            "amc": "UTI",
+            "netCr": 14
+          },
+          {
+            "fund": "JioBlackRock Flexi Cap Fund",
+            "amc": "JioBlackRock",
+            "netCr": 7
+          },
+          {
+            "fund": "Franklin India Multi-Factor Fund",
+            "amc": "Franklin Templeton",
+            "netCr": 7
           }
         ]
       },
       {
         "company": "ITC Limited",
         "fincode": "INE154A01025",
-        "netCr": 712,
+        "netCr": 715,
         "pctOutstanding": null,
         "amcs": [
           "Nippon",
@@ -457,7 +457,7 @@
           {
             "fund": "Nippon India Large Cap Fund",
             "amc": "Nippon",
-            "netCr": 120
+            "netCr": 121
           },
           {
             "fund": "Helios Flexi Cap Fund",
@@ -472,7 +472,7 @@
           {
             "fund": "Sundaram Consumption Fund",
             "amc": "Sundaram",
-            "netCr": 66
+            "netCr": 67
           },
           {
             "fund": "Nippon India Multi Cap Fund",
@@ -512,145 +512,82 @@
         ]
       },
       {
-        "company": "Solar Industries India Limited",
-        "fincode": "INE343H01029",
-        "netCr": 708,
-        "pctOutstanding": null,
+        "company": "Bharti Airtel Limited",
+        "fincode": "INE397D01024",
+        "netCr": 644,
+        "pctOutstanding": 0.06,
         "amcs": [
-          "Motilal Oswal",
-          "SBI",
-          "Axis"
-        ],
-        "schemes": [
-          {
-            "fund": "Motilal Oswal Large and Midcap Fund",
-            "amc": "Motilal Oswal",
-            "netCr": 433
-          },
-          {
-            "fund": "SBI Flexicap Fund",
-            "amc": "SBI",
-            "netCr": 244
-          },
-          {
-            "fund": "Mahindra Manulife Small Cap Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": 82
-          },
-          {
-            "fund": "SBI Quality Fund",
-            "amc": "SBI",
-            "netCr": 72
-          },
-          {
-            "fund": "Axis Large Cap Fund",
-            "amc": "Axis",
-            "netCr": 53
-          },
-          {
-            "fund": "Axis Multicap Fund",
-            "amc": "Axis",
-            "netCr": 53
-          },
-          {
-            "fund": "Motilal Oswal Innovation Opportunities Fund",
-            "amc": "Motilal Oswal",
-            "netCr": 18
-          },
-          {
-            "fund": "Axis India Manufacturing Fund",
-            "amc": "Axis",
-            "netCr": 15
-          },
-          {
-            "fund": "Aditya Birla Sun Life Quant Fund",
-            "amc": "Aditya",
-            "netCr": 14
-          },
-          {
-            "fund": "UTI Quant Fund",
-            "amc": "UTI",
-            "netCr": 13
-          },
-          {
-            "fund": "JioBlackRock Flexi Cap Fund",
-            "amc": "JioBlackRock",
-            "netCr": 7
-          },
-          {
-            "fund": "Franklin India Multi-Factor Fund",
-            "amc": "Franklin Templeton",
-            "netCr": 6
-          }
-        ]
-      },
-      {
-        "company": "Power Finance Corporation Limited",
-        "fincode": "INE134E01011",
-        "netCr": 615,
-        "pctOutstanding": 0.59,
-        "amcs": [
+          "ICICI Pru",
           "Nippon",
-          "Bandhan",
-          "Sundaram"
+          "PPFAS"
         ],
         "schemes": [
           {
-            "fund": "Nippon India Growth Mid Cap Fund",
+            "fund": "ICICI Prudential Flexi Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": 315
+          },
+          {
+            "fund": "Nippon India Large Cap Fund",
             "amc": "Nippon",
-            "netCr": 230
+            "netCr": 248
           },
           {
-            "fund": "Nippon India Multi Cap Fund",
-            "amc": "Nippon",
-            "netCr": 203
-          },
-          {
-            "fund": "Bandhan Small Cap Fund",
-            "amc": "Bandhan",
-            "netCr": 163
-          },
-          {
-            "fund": "Nippon India Power & Infra Fund",
-            "amc": "Nippon",
-            "netCr": 56
-          },
-          {
-            "fund": "Sundaram Services Fund",
-            "amc": "Sundaram",
-            "netCr": 21
-          },
-          {
-            "fund": "JioBlackRock Flexi Cap Fund",
-            "amc": "JioBlackRock",
-            "netCr": 7
-          },
-          {
-            "fund": "Taurus Large Cap Fund",
-            "amc": "Taurus",
-            "netCr": 1
-          },
-          {
-            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
             "amc": "PPFAS",
-            "netCr": 0
+            "netCr": 208
           },
           {
-            "fund": "Zerodha Nifty Large Midcap 250 Index Fund",
-            "amc": "Zerodha",
-            "netCr": 0
+            "fund": "ICICI Prudential Technology Fund",
+            "amc": "ICICI Pru",
+            "netCr": 160
           },
           {
-            "fund": "Zerodha ELSS Tax Saver Nifty Large Midcap 250 Index Fund",
-            "amc": "Zerodha",
-            "netCr": 0
+            "fund": "ICICI Prudential Large Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": 113
+          },
+          {
+            "fund": "Bandhan Flexi Cap Fund",
+            "amc": "Bandhan",
+            "netCr": 35
+          },
+          {
+            "fund": "Invesco India Flexi Cap Fund",
+            "amc": "Invesco",
+            "netCr": 30
+          },
+          {
+            "fund": "ICICI Prudential Equity Minimum Variance Fund",
+            "amc": "ICICI Pru",
+            "netCr": 17
+          },
+          {
+            "fund": "UTI Focused Fund",
+            "amc": "UTI",
+            "netCr": 12
+          },
+          {
+            "fund": "Franklin India Technology Fund",
+            "amc": "Franklin Templeton",
+            "netCr": 11
+          },
+          {
+            "fund": "Bandhan Value Fund",
+            "amc": "Bandhan",
+            "netCr": 8
+          },
+          {
+            "fund": "Bandhan ELSS - Tax Saver Fund",
+            "amc": "Bandhan",
+            "netCr": 8
           }
         ]
       },
       {
         "company": "Tata Steel Limited",
         "fincode": "INE081A01020",
-        "netCr": 551,
+        "netCr": 544,
         "pctOutstanding": 0.25,
         "amcs": [
           "Nippon",
@@ -723,7 +660,7 @@
       {
         "company": "Cipla Limited",
         "fincode": "INE059A01026",
-        "netCr": 505,
+        "netCr": 506,
         "pctOutstanding": null,
         "amcs": [
           "ICICI Pru",
@@ -734,12 +671,12 @@
           {
             "fund": "ICICI Prudential Large Cap Fund",
             "amc": "ICICI Pru",
-            "netCr": 248
+            "netCr": 249
           },
           {
             "fund": "Aditya Birla Sun Life Flexi Cap Fund",
             "amc": "Aditya",
-            "netCr": 178
+            "netCr": 179
           },
           {
             "fund": "ICICI Prudential Manufacturing Fund",
@@ -852,9 +789,82 @@
         ]
       },
       {
+        "company": "InterGlobe Aviation Limited",
+        "fincode": "INE646L01027",
+        "netCr": 419,
+        "pctOutstanding": 0.22,
+        "amcs": [
+          "ICICI Pru",
+          "SBI",
+          "Invesco"
+        ],
+        "schemes": [
+          {
+            "fund": "ICICI Prudential Large & Mid Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": 347
+          },
+          {
+            "fund": "SBI Large Cap Fund",
+            "amc": "SBI",
+            "netCr": 261
+          },
+          {
+            "fund": "Invesco India Large & Mid Cap Fund",
+            "amc": "Invesco",
+            "netCr": 110
+          },
+          {
+            "fund": "Pgim India Midcap Fund",
+            "amc": "PGIM",
+            "netCr": 95
+          },
+          {
+            "fund": "ICICI Prudential Multi Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": 80
+          },
+          {
+            "fund": "Old Bridge Focused Fund",
+            "amc": "Old Bridge",
+            "netCr": 54
+          },
+          {
+            "fund": "Axis Midcap Fund",
+            "amc": "Axis",
+            "netCr": 47
+          },
+          {
+            "fund": "Mahindra Manulife Multi Cap Fund",
+            "amc": "Mahindra Manulife",
+            "netCr": 29
+          },
+          {
+            "fund": "ICICI Prudential Business Cycle Fund",
+            "amc": "ICICI Pru",
+            "netCr": 24
+          },
+          {
+            "fund": "ICICI Prudential Quality Fund",
+            "amc": "ICICI Pru",
+            "netCr": 20
+          },
+          {
+            "fund": "Sundaram Services Fund",
+            "amc": "Sundaram",
+            "netCr": 18
+          },
+          {
+            "fund": "Axis ELSS Tax Saver Fund",
+            "amc": "Axis",
+            "netCr": 18
+          }
+        ]
+      },
+      {
         "company": "Dr. Reddy's Laboratories Limited",
         "fincode": "INE089A01031",
-        "netCr": 420,
+        "netCr": 412,
         "pctOutstanding": null,
         "amcs": [
           "UTI",
@@ -925,82 +935,9 @@
         ]
       },
       {
-        "company": "InterGlobe Aviation Limited",
-        "fincode": "INE646L01027",
-        "netCr": 418,
-        "pctOutstanding": 0.22,
-        "amcs": [
-          "ICICI Pru",
-          "SBI",
-          "Invesco"
-        ],
-        "schemes": [
-          {
-            "fund": "ICICI Prudential Large & Mid Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": 347
-          },
-          {
-            "fund": "SBI Large Cap Fund",
-            "amc": "SBI",
-            "netCr": 261
-          },
-          {
-            "fund": "Invesco India Large & Mid Cap Fund",
-            "amc": "Invesco",
-            "netCr": 109
-          },
-          {
-            "fund": "Pgim India Midcap Fund",
-            "amc": "PGIM",
-            "netCr": 95
-          },
-          {
-            "fund": "ICICI Prudential Multi Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": 80
-          },
-          {
-            "fund": "Old Bridge Focused Fund",
-            "amc": "Old Bridge",
-            "netCr": 54
-          },
-          {
-            "fund": "Axis Midcap Fund",
-            "amc": "Axis",
-            "netCr": 47
-          },
-          {
-            "fund": "Mahindra Manulife Multi Cap Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": 29
-          },
-          {
-            "fund": "ICICI Prudential Business Cycle Fund",
-            "amc": "ICICI Pru",
-            "netCr": 24
-          },
-          {
-            "fund": "ICICI Prudential Quality Fund",
-            "amc": "ICICI Pru",
-            "netCr": 20
-          },
-          {
-            "fund": "Sundaram Services Fund",
-            "amc": "Sundaram",
-            "netCr": 18
-          },
-          {
-            "fund": "Axis ELSS Tax Saver Fund",
-            "amc": "Axis",
-            "netCr": 18
-          }
-        ]
-      },
-      {
         "company": "Grasim Industries Limited",
         "fincode": "INE047A01021",
-        "netCr": 410,
+        "netCr": 402,
         "pctOutstanding": 0.2,
         "amcs": [
           "Aditya",
@@ -1032,6 +969,11 @@
             "fund": "Mahindra Manulife Large Cap Fund",
             "amc": "Mahindra Manulife",
             "netCr": 6
+          },
+          {
+            "fund": "Kotak Active Momentum Fund",
+            "amc": "Kotak",
+            "netCr": 1
           },
           {
             "fund": "Samco Large Cap Fund",
@@ -1131,7 +1073,7 @@
       {
         "company": "Reliance Industries Limited",
         "fincode": "INE002A01018",
-        "netCr": 336,
+        "netCr": 343,
         "pctOutstanding": 0.02,
         "amcs": [
           "SBI",
@@ -1202,9 +1144,82 @@
         ]
       },
       {
+        "company": "Tech Mahindra Limited",
+        "fincode": "INE669C01036",
+        "netCr": 331,
+        "pctOutstanding": 0.23,
+        "amcs": [
+          "ICICI Pru",
+          "Kotak",
+          "Bandhan"
+        ],
+        "schemes": [
+          {
+            "fund": "ICICI Prudential Large Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": 233
+          },
+          {
+            "fund": "Kotak Large Cap Fund",
+            "amc": "Kotak",
+            "netCr": 151
+          },
+          {
+            "fund": "ICICI Prudential Technology Fund",
+            "amc": "ICICI Pru",
+            "netCr": 73
+          },
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": 33
+          },
+          {
+            "fund": "Bandhan Large Cap Fund",
+            "amc": "Bandhan",
+            "netCr": 2
+          },
+          {
+            "fund": "Bandhan Innovation Fund",
+            "amc": "Bandhan",
+            "netCr": 1
+          },
+          {
+            "fund": "JM ELSS - Tax Saver Fund",
+            "amc": "JM",
+            "netCr": 0
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          },
+          {
+            "fund": "Zerodha Nifty Large Midcap 250 Index Fund",
+            "amc": "Zerodha",
+            "netCr": 0
+          },
+          {
+            "fund": "Kotak Technology Fund",
+            "amc": "Kotak",
+            "netCr": 0
+          },
+          {
+            "fund": "JioBlackRock Large Cap Fund",
+            "amc": "JioBlackRock",
+            "netCr": 0
+          },
+          {
+            "fund": "Zerodha ELSS Tax Saver Nifty Large Midcap 250 Index Fund",
+            "amc": "Zerodha",
+            "netCr": 0
+          }
+        ]
+      },
+      {
         "company": "Hindustan Zinc Limited",
         "fincode": "INE267A01025",
-        "netCr": 324,
+        "netCr": 321,
         "pctOutstanding": 0.14,
         "amcs": [
           "ICICI Pru",
@@ -1243,6 +1258,11 @@
             "netCr": 2
           },
           {
+            "fund": "Kotak Active Momentum Fund",
+            "amc": "Kotak",
+            "netCr": 1
+          },
+          {
             "fund": "Baroda BNP Paribas Business Cycle Fund",
             "amc": "Baroda BNP Paribas",
             "netCr": 0
@@ -1265,83 +1285,83 @@
         ]
       },
       {
-        "company": "Hindustan Unilever Limited",
-        "fincode": "INE030A01027",
-        "netCr": 315,
-        "pctOutstanding": null,
+        "company": "TVS Motor Company Limited",
+        "fincode": "INE494B01023",
+        "netCr": 279,
+        "pctOutstanding": 0.15,
         "amcs": [
           "Nippon",
           "ICICI Pru",
-          "Bandhan"
+          "Franklin Templeton"
         ],
         "schemes": [
           {
-            "fund": "Nippon India Small Cap Fund",
+            "fund": "Nippon India Multi Cap Fund",
             "amc": "Nippon",
-            "netCr": 299
+            "netCr": 245
           },
           {
-            "fund": "Nippon India Large Cap Fund",
-            "amc": "Nippon",
-            "netCr": 110
+            "fund": "ICICI Prudential Flexi Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": 99
           },
           {
-            "fund": "ICICI Prudential ELSS – Tax Saver Fund",
+            "fund": "ICICI Prudential Large Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": 69
+          },
+          {
+            "fund": "UTI - Flexi Cap Fund",
+            "amc": "UTI",
+            "netCr": 65
+          },
+          {
+            "fund": "Franklin India Multi Cap Fund",
+            "amc": "Franklin Templeton",
+            "netCr": 49
+          },
+          {
+            "fund": "Franklin India Dividend Yield Fund",
+            "amc": "Franklin Templeton",
+            "netCr": 44
+          },
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": 36
+          },
+          {
+            "fund": "JioBlackRock Flexi Cap Fund",
+            "amc": "JioBlackRock",
+            "netCr": 18
+          },
+          {
+            "fund": "ICICI Prudential Manufacturing Fund",
             "amc": "ICICI Pru",
             "netCr": 14
           },
           {
-            "fund": "ICICI Prudential Bharat Consumption Fund",
-            "amc": "ICICI Pru",
-            "netCr": 9
-          },
-          {
-            "fund": "Bandhan ELSS - Tax Saver Fund",
-            "amc": "Bandhan",
-            "netCr": 9
-          },
-          {
-            "fund": "ICICI Prudential Rural Opportunities Fund",
-            "amc": "ICICI Pru",
-            "netCr": 6
-          },
-          {
-            "fund": "ICICI Prudential Equity Minimum Variance Fund",
-            "amc": "ICICI Pru",
-            "netCr": 6
-          },
-          {
-            "fund": "Bandhan Multi Cap Fund",
-            "amc": "Bandhan",
-            "netCr": 3
-          },
-          {
-            "fund": "ICICI Prudential Value Fund",
-            "amc": "ICICI Pru",
-            "netCr": 3
-          },
-          {
-            "fund": "Franklin India Multi-Factor Fund",
-            "amc": "Franklin Templeton",
-            "netCr": 1
+            "fund": "Kotak Quant Fund",
+            "amc": "Kotak",
+            "netCr": 10
           },
           {
             "fund": "Bandhan Large Cap Fund",
             "amc": "Bandhan",
-            "netCr": 1
+            "netCr": 6
           },
           {
-            "fund": "PPFAS Parag Parikh Large Cap Fund",
-            "amc": "PPFAS",
-            "netCr": 1
+            "fund": "Axis Large & Mid Cap Fund",
+            "amc": "Axis",
+            "netCr": 3
           }
         ]
       },
       {
         "company": "Bharat Electronics Limited",
         "fincode": "INE263A01024",
-        "netCr": 270,
-        "pctOutstanding": 0.1,
+        "netCr": 258,
+        "pctOutstanding": 0.09,
         "amcs": [
           "ICICI Pru",
           "Franklin Templeton",
@@ -1351,12 +1371,12 @@
           {
             "fund": "ICICI Prudential Large Cap Fund",
             "amc": "ICICI Pru",
-            "netCr": 362
+            "netCr": 366
           },
           {
             "fund": "Franklin India Focused Equity Fund",
             "amc": "Franklin Templeton",
-            "netCr": 93
+            "netCr": 94
           },
           {
             "fund": "ICICI Prudential Innovation Fund",
@@ -1366,7 +1386,7 @@
           {
             "fund": "Bandhan Large & Mid Cap Fund",
             "amc": "Bandhan",
-            "netCr": 22
+            "netCr": 23
           },
           {
             "fund": "Bandhan Multi-Factor Fund",
@@ -1389,6 +1409,11 @@
             "netCr": 5
           },
           {
+            "fund": "Kotak Large Cap Fund",
+            "amc": "Kotak",
+            "netCr": 5
+          },
+          {
             "fund": "Franklin India Multi-Factor Fund",
             "amc": "Franklin Templeton",
             "netCr": 3
@@ -1402,11 +1427,6 @@
             "fund": "TRUSTMF Large & Mid Cap Fund",
             "amc": "Trust",
             "netCr": 2
-          },
-          {
-            "fund": "UTI - Infrastructure Fund",
-            "amc": "UTI",
-            "netCr": 1
           }
         ]
       }
@@ -1415,7 +1435,7 @@
       {
         "company": "Infosys Limited",
         "fincode": "INE009A01021",
-        "netCr": 1716,
+        "netCr": 1738,
         "pctOutstanding": 0.45,
         "amcs": [
           "ICICI Pru",
@@ -1431,17 +1451,17 @@
           {
             "fund": "ICICI Prudential Technology Fund",
             "amc": "ICICI Pru",
-            "netCr": -301
+            "netCr": -302
           },
           {
             "fund": "Franklin India Focused Equity Fund",
             "amc": "Franklin Templeton",
-            "netCr": -255
+            "netCr": -256
           },
           {
             "fund": "SBI MultiCap Fund",
             "amc": "SBI",
-            "netCr": -198
+            "netCr": -199
           },
           {
             "fund": "Axis Large Cap Fund",
@@ -1488,7 +1508,7 @@
       {
         "company": "State Bank of India",
         "fincode": "INE062A01020",
-        "netCr": 1553,
+        "netCr": 1568,
         "pctOutstanding": 0.18,
         "amcs": [
           "SBI",
@@ -1499,32 +1519,32 @@
           {
             "fund": "SBI Large and Midcap Fund",
             "amc": "SBI",
-            "netCr": -704
+            "netCr": -708
           },
           {
             "fund": "SBI Banking And Financial Services Fund",
             "amc": "SBI",
-            "netCr": -459
+            "netCr": -461
           },
           {
             "fund": "SBI ELSS Tax Saver Fund",
             "amc": "SBI",
-            "netCr": -285
+            "netCr": -286
           },
           {
             "fund": "Nippon India Focused Fund",
             "amc": "Nippon",
-            "netCr": -208
+            "netCr": -209
           },
           {
             "fund": "Axis Large Cap Fund",
             "amc": "Axis",
-            "netCr": -140
+            "netCr": -141
           },
           {
             "fund": "ICICI Prudential Equity Minimum Variance Fund",
             "amc": "ICICI Pru",
-            "netCr": -64
+            "netCr": -65
           },
           {
             "fund": "Aditya Birla Sun Life Quant Fund",
@@ -1559,9 +1579,82 @@
         ]
       },
       {
+        "company": "Larsen & Toubro Limited",
+        "fincode": "INE018A01030",
+        "netCr": 811,
+        "pctOutstanding": 0.16,
+        "amcs": [
+          "ICICI Pru",
+          "Nippon",
+          "SBI"
+        ],
+        "schemes": [
+          {
+            "fund": "ICICI Prudential Large Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": -146
+          },
+          {
+            "fund": "ICICI Prudential Value Fund",
+            "amc": "ICICI Pru",
+            "netCr": -108
+          },
+          {
+            "fund": "SBI Flexicap Fund",
+            "amc": "SBI",
+            "netCr": -98
+          },
+          {
+            "fund": "Nippon India Power & Infra Fund",
+            "amc": "Nippon",
+            "netCr": -84
+          },
+          {
+            "fund": "Kotak Flexi Cap Fund",
+            "amc": "Kotak",
+            "netCr": -73
+          },
+          {
+            "fund": "ICICI Prudential Equity Minimum Variance Fund",
+            "amc": "ICICI Pru",
+            "netCr": -68
+          },
+          {
+            "fund": "Axis ELSS Tax Saver Fund",
+            "amc": "Axis",
+            "netCr": -62
+          },
+          {
+            "fund": "ICICI Prudential Business Cycle Fund",
+            "amc": "ICICI Pru",
+            "netCr": -55
+          },
+          {
+            "fund": "Nippon India Vision Large & Mid Cap Fund",
+            "amc": "Nippon",
+            "netCr": -47
+          },
+          {
+            "fund": "Axis Large Cap Fund",
+            "amc": "Axis",
+            "netCr": -37
+          },
+          {
+            "fund": "Nippon India Retirement Fund - Wealth Creation Scheme",
+            "amc": "Nippon",
+            "netCr": -37
+          },
+          {
+            "fund": "JioBlackRock Flexi Cap Fund",
+            "amc": "JioBlackRock",
+            "netCr": -19
+          }
+        ]
+      },
+      {
         "company": "Eternal Limited",
         "fincode": "INE758T01015",
-        "netCr": 811,
+        "netCr": 797,
         "pctOutstanding": 0.27,
         "amcs": [
           "Bandhan",
@@ -1597,7 +1690,7 @@
           {
             "fund": "Aditya Birla Sun Life Digital India Fund",
             "amc": "Aditya",
-            "netCr": -46
+            "netCr": -47
           },
           {
             "fund": "JioBlackRock Flexi Cap Fund",
@@ -1632,82 +1725,9 @@
         ]
       },
       {
-        "company": "Larsen & Toubro Limited",
-        "fincode": "INE018A01030",
-        "netCr": 737,
-        "pctOutstanding": 0.15,
-        "amcs": [
-          "ICICI Pru",
-          "Nippon",
-          "SBI"
-        ],
-        "schemes": [
-          {
-            "fund": "ICICI Prudential Large Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": -146
-          },
-          {
-            "fund": "ICICI Prudential Value Fund",
-            "amc": "ICICI Pru",
-            "netCr": -107
-          },
-          {
-            "fund": "SBI Flexicap Fund",
-            "amc": "SBI",
-            "netCr": -98
-          },
-          {
-            "fund": "Nippon India Power & Infra Fund",
-            "amc": "Nippon",
-            "netCr": -84
-          },
-          {
-            "fund": "ICICI Prudential Equity Minimum Variance Fund",
-            "amc": "ICICI Pru",
-            "netCr": -68
-          },
-          {
-            "fund": "Axis ELSS Tax Saver Fund",
-            "amc": "Axis",
-            "netCr": -62
-          },
-          {
-            "fund": "ICICI Prudential Business Cycle Fund",
-            "amc": "ICICI Pru",
-            "netCr": -55
-          },
-          {
-            "fund": "Nippon India Vision Large & Mid Cap Fund",
-            "amc": "Nippon",
-            "netCr": -47
-          },
-          {
-            "fund": "Axis Large Cap Fund",
-            "amc": "Axis",
-            "netCr": -37
-          },
-          {
-            "fund": "Nippon India Retirement Fund - Wealth Creation Scheme",
-            "amc": "Nippon",
-            "netCr": -36
-          },
-          {
-            "fund": "JioBlackRock Flexi Cap Fund",
-            "amc": "JioBlackRock",
-            "netCr": -19
-          },
-          {
-            "fund": "Invesco India Multi cap Fund",
-            "amc": "Invesco",
-            "netCr": -19
-          }
-        ]
-      },
-      {
         "company": "Maruti Suzuki India Limited",
         "fincode": "INE585B01010",
-        "netCr": 635,
+        "netCr": 637,
         "pctOutstanding": 0.18,
         "amcs": [
           "ICICI Pru",
@@ -1718,17 +1738,17 @@
           {
             "fund": "ICICI Prudential Large & Mid Cap Fund",
             "amc": "ICICI Pru",
-            "netCr": -438
+            "netCr": -441
           },
           {
             "fund": "Nippon India Large Cap Fund",
             "amc": "Nippon",
-            "netCr": -115
+            "netCr": -116
           },
           {
             "fund": "ICICI Prudential Innovation Fund",
             "amc": "ICICI Pru",
-            "netCr": -82
+            "netCr": -83
           },
           {
             "fund": "UTI Focused Fund",
@@ -1746,6 +1766,11 @@
             "netCr": -36
           },
           {
+            "fund": "Kotak MNC Fund",
+            "amc": "Kotak",
+            "netCr": -28
+          },
+          {
             "fund": "SBI Flexicap Fund",
             "amc": "SBI",
             "netCr": -26
@@ -1758,7 +1783,7 @@
           {
             "fund": "Lic Mf Multi Cap Fund",
             "amc": "LIC MF",
-            "netCr": -25
+            "netCr": -26
           },
           {
             "fund": "SBI MNC Fund",
@@ -1769,102 +1794,102 @@
             "fund": "Franklin India Dividend Yield Fund",
             "amc": "Franklin Templeton",
             "netCr": -23
-          },
-          {
-            "fund": "Axis Consumption Fund",
-            "amc": "Axis",
-            "netCr": -16
           }
         ]
       },
       {
-        "company": "UltraTech Cement Limited",
-        "fincode": "INE481G01011",
-        "netCr": 528,
-        "pctOutstanding": 0.17,
+        "company": "Tata Consultancy Services Limited",
+        "fincode": "INE467B01029",
+        "netCr": 533,
+        "pctOutstanding": 0.08,
         "amcs": [
-          "Aditya",
-          "Invesco",
-          "Axis"
+          "Kotak",
+          "Nippon",
+          "Invesco"
         ],
         "schemes": [
           {
-            "fund": "Aditya Birla Sun Life Large Cap Fund",
-            "amc": "Aditya",
-            "netCr": -365
+            "fund": "Kotak Flexi Cap Fund",
+            "amc": "Kotak",
+            "netCr": -344
           },
           {
-            "fund": "Invesco India Contra Fund",
+            "fund": "Nippon India Multi Cap Fund",
+            "amc": "Nippon",
+            "netCr": -133
+          },
+          {
+            "fund": "Invesco India Flexi Cap Fund",
             "amc": "Invesco",
-            "netCr": -136
+            "netCr": -61
           },
           {
-            "fund": "SBI Infrastructure Fund",
-            "amc": "SBI",
-            "netCr": -85
+            "fund": "Nippon India Large Cap Fund",
+            "amc": "Nippon",
+            "netCr": -38
           },
           {
-            "fund": "Axis Flexi Cap Fund",
-            "amc": "Axis",
-            "netCr": -54
+            "fund": "Franklin India Focused Equity Fund",
+            "amc": "Franklin Templeton",
+            "netCr": -38
           },
           {
-            "fund": "Axis Large Cap Fund",
-            "amc": "Axis",
-            "netCr": -42
-          },
-          {
-            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
-            "amc": "PPFAS",
-            "netCr": -35
-          },
-          {
-            "fund": "Aditya Birla Sun Life Quant Fund",
-            "amc": "Aditya",
-            "netCr": -35
-          },
-          {
-            "fund": "ICICI Prudential Equity Minimum Variance Fund",
-            "amc": "ICICI Pru",
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
             "netCr": -32
           },
           {
-            "fund": "Aditya Birla Sun Life Multi-cap Fund",
-            "amc": "Aditya",
-            "netCr": -26
+            "fund": "Kotak Technology Fund",
+            "amc": "Kotak",
+            "netCr": -13
           },
           {
-            "fund": "ICICI Prudential Quality Fund",
+            "fund": "Baroda BNP Paribas ESG Best-in-Class Strategy Fund",
+            "amc": "Baroda BNP Paribas",
+            "netCr": -12
+          },
+          {
+            "fund": "Templeton India Value Fund",
+            "amc": "Franklin Templeton",
+            "netCr": -10
+          },
+          {
+            "fund": "ICICI Prudential Exports and Services Fund",
             "amc": "ICICI Pru",
-            "netCr": -25
+            "netCr": -6
           },
           {
-            "fund": "Bandhan Multi-Factor Fund",
-            "amc": "Bandhan",
-            "netCr": -24
+            "fund": "Axis Value Fund",
+            "amc": "Axis",
+            "netCr": -6
           },
           {
-            "fund": "Aditya Birla Sun Life Business Cycle Fund",
-            "amc": "Aditya",
-            "netCr": -18
+            "fund": "Taurus Flexi Cap Fund",
+            "amc": "Taurus",
+            "netCr": -3
           }
         ]
       },
       {
-        "company": "Britannia Industries Limited",
+        "company": "Britannia Industries Ltd.",
         "fincode": "INE216A01030",
-        "netCr": 461,
+        "netCr": 531,
         "pctOutstanding": null,
         "amcs": [
           "SBI",
-          "Axis",
-          "Baroda BNP Paribas"
+          "Kotak",
+          "Axis"
         ],
         "schemes": [
           {
             "fund": "SBI Large Cap Fund",
             "amc": "SBI",
             "netCr": -370
+          },
+          {
+            "fund": "Kotak ELSS Tax Saver Fund",
+            "amc": "Kotak",
+            "netCr": -63
           },
           {
             "fund": "Axis Large Cap Fund",
@@ -1907,26 +1932,240 @@
             "netCr": -9
           },
           {
+            "fund": "Kotak MNC Fund",
+            "amc": "Kotak",
+            "netCr": -7
+          },
+          {
             "fund": "UTI Quant Fund",
             "amc": "UTI",
             "netCr": -6
+          }
+        ]
+      },
+      {
+        "company": "UltraTech Cement Limited",
+        "fincode": "INE481G01011",
+        "netCr": 530,
+        "pctOutstanding": 0.17,
+        "amcs": [
+          "Aditya",
+          "Invesco",
+          "Axis"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": -366
           },
           {
-            "fund": "Baroda BNP Paribas Focused Fund",
-            "amc": "Baroda BNP Paribas",
-            "netCr": -1
+            "fund": "Invesco India Contra Fund",
+            "amc": "Invesco",
+            "netCr": -136
           },
           {
-            "fund": "Baroda BNP Paribas Large & Mid Cap Fund",
-            "amc": "Baroda BNP Paribas",
-            "netCr": -1
+            "fund": "SBI Infrastructure Fund",
+            "amc": "SBI",
+            "netCr": -85
+          },
+          {
+            "fund": "Axis Flexi Cap Fund",
+            "amc": "Axis",
+            "netCr": -54
+          },
+          {
+            "fund": "Axis Large Cap Fund",
+            "amc": "Axis",
+            "netCr": -42
+          },
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": -35
+          },
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": -35
+          },
+          {
+            "fund": "ICICI Prudential Equity Minimum Variance Fund",
+            "amc": "ICICI Pru",
+            "netCr": -32
+          },
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": -27
+          },
+          {
+            "fund": "ICICI Prudential Quality Fund",
+            "amc": "ICICI Pru",
+            "netCr": -25
+          },
+          {
+            "fund": "Bandhan Multi-Factor Fund",
+            "amc": "Bandhan",
+            "netCr": -24
+          },
+          {
+            "fund": "Aditya Birla Sun Life Business Cycle Fund",
+            "amc": "Aditya",
+            "netCr": -19
+          }
+        ]
+      },
+      {
+        "company": "BSE Limited",
+        "fincode": "INE118H01025",
+        "netCr": 475,
+        "pctOutstanding": 0.39,
+        "amcs": [
+          "Kotak",
+          "SBI",
+          "UTI"
+        ],
+        "schemes": [
+          {
+            "fund": "Kotak Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": -380
+          },
+          {
+            "fund": "SBI Flexicap Fund",
+            "amc": "SBI",
+            "netCr": -311
+          },
+          {
+            "fund": "UTI - Mid Cap Fund",
+            "amc": "UTI",
+            "netCr": -138
+          },
+          {
+            "fund": "SBI Quality Fund",
+            "amc": "SBI",
+            "netCr": -47
+          },
+          {
+            "fund": "Invesco India Contra Fund",
+            "amc": "Invesco",
+            "netCr": -34
+          },
+          {
+            "fund": "Invesco India Flexi Cap Fund",
+            "amc": "Invesco",
+            "netCr": -26
+          },
+          {
+            "fund": "Sundaram Mid Cap Fund",
+            "amc": "Sundaram",
+            "netCr": -19
+          },
+          {
+            "fund": "Zerodha Nifty Large Midcap 250 Index Fund",
+            "amc": "Zerodha",
+            "netCr": -16
+          },
+          {
+            "fund": "JioBlackRock Flexi Cap Fund",
+            "amc": "JioBlackRock",
+            "netCr": -15
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": -14
+          },
+          {
+            "fund": "Axis Services Opportunities Fund",
+            "amc": "Axis",
+            "netCr": -13
+          },
+          {
+            "fund": "Kotak Nifty Midcap 50 ETF",
+            "amc": "Kotak",
+            "netCr": -11
+          }
+        ]
+      },
+      {
+        "company": "Axis Bank Limited",
+        "fincode": "INE238A01034",
+        "netCr": 435,
+        "pctOutstanding": 0.12,
+        "amcs": [
+          "Kotak",
+          "Bandhan",
+          "ICICI Pru"
+        ],
+        "schemes": [
+          {
+            "fund": "Kotak Flexi Cap Fund",
+            "amc": "Kotak",
+            "netCr": -177
+          },
+          {
+            "fund": "Bandhan Large & Mid Cap Fund",
+            "amc": "Bandhan",
+            "netCr": -124
+          },
+          {
+            "fund": "ICICI Prudential Large & Mid Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": -121
+          },
+          {
+            "fund": "Franklin India Large Cap Fund",
+            "amc": "Franklin Templeton",
+            "netCr": -95
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": -83
+          },
+          {
+            "fund": "Nippon India Focused Fund",
+            "amc": "Nippon",
+            "netCr": -82
+          },
+          {
+            "fund": "Sbi Retirement Benefit Fund - Aggressive Plan",
+            "amc": "SBI",
+            "netCr": -78
+          },
+          {
+            "fund": "ICICI Prudential Equity Minimum Variance Fund",
+            "amc": "ICICI Pru",
+            "netCr": -59
+          },
+          {
+            "fund": "Helios Flexi Cap Fund",
+            "amc": "Helios",
+            "netCr": -58
+          },
+          {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": -49
+          },
+          {
+            "fund": "Franklin Build India Fund",
+            "amc": "Franklin Templeton",
+            "netCr": -29
+          },
+          {
+            "fund": "Bandhan Multi-Factor Fund",
+            "amc": "Bandhan",
+            "netCr": -25
           }
         ]
       },
       {
         "company": "Adani Enterprises Limited",
         "fincode": "INE423A01024",
-        "netCr": 339,
+        "netCr": 334,
         "pctOutstanding": 0.09,
         "amcs": [
           "SBI",
@@ -1979,8 +2218,8 @@
       {
         "company": "ICICI Bank Limited",
         "fincode": "INE090A01021",
-        "netCr": 325,
-        "pctOutstanding": 0.04,
+        "netCr": 315,
+        "pctOutstanding": 0.03,
         "amcs": [
           "SBI",
           "ICICI Pru",
@@ -2050,9 +2289,62 @@
         ]
       },
       {
+        "company": "Power Grid Corporation of India Limited",
+        "fincode": "INE752E01010",
+        "netCr": 266,
+        "pctOutstanding": 0.12,
+        "amcs": [
+          "Kotak",
+          "ICICI Pru",
+          "Baroda BNP Paribas"
+        ],
+        "schemes": [
+          {
+            "fund": "Kotak Large & Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": -173
+          },
+          {
+            "fund": "ICICI Prudential Large Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": -173
+          },
+          {
+            "fund": "Kotak ELSS Tax Saver Fund",
+            "amc": "Kotak",
+            "netCr": -60
+          },
+          {
+            "fund": "Bandhan Multi-Factor Fund",
+            "amc": "Bandhan",
+            "netCr": -23
+          },
+          {
+            "fund": "Kotak Quant Fund",
+            "amc": "Kotak",
+            "netCr": -4
+          },
+          {
+            "fund": "Baroda BNP Paribas Focused Fund",
+            "amc": "Baroda BNP Paribas",
+            "netCr": -3
+          },
+          {
+            "fund": "Sundaram Multi-Factor Fund",
+            "amc": "Sundaram",
+            "netCr": 0
+          },
+          {
+            "fund": "JioBlackRock Large Cap Fund",
+            "amc": "JioBlackRock",
+            "netCr": 0
+          }
+        ]
+      },
+      {
         "company": "GAIL (India) Limited",
         "fincode": "INE129A01019",
-        "netCr": 266,
+        "netCr": 264,
         "pctOutstanding": 0.25,
         "amcs": [
           "SBI",
@@ -2267,126 +2559,83 @@
         ]
       },
       {
-        "company": "Axis Bank Limited",
-        "fincode": "INE238A01034",
-        "netCr": 235,
-        "pctOutstanding": 0.06,
+        "company": "Apollo Hospitals Enterprise Limited",
+        "fincode": "INE437A01024",
+        "netCr": 226,
+        "pctOutstanding": 0.2,
         "amcs": [
-          "Bandhan",
-          "ICICI Pru",
+          "Axis",
+          "Kotak",
           "Aditya"
         ],
         "schemes": [
           {
-            "fund": "Bandhan Large & Mid Cap Fund",
-            "amc": "Bandhan",
-            "netCr": -124
+            "fund": "Kotak Large Cap Fund",
+            "amc": "Kotak",
+            "netCr": -147
           },
           {
-            "fund": "ICICI Prudential Large & Mid Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": -121
+            "fund": "Axis Large & Mid Cap Fund",
+            "amc": "Axis",
+            "netCr": -79
           },
           {
-            "fund": "Franklin India Large Cap Fund",
-            "amc": "Franklin Templeton",
-            "netCr": -95
-          },
-          {
-            "fund": "Aditya Birla Sun Life Large Cap Fund",
-            "amc": "Aditya",
-            "netCr": -83
-          },
-          {
-            "fund": "Nippon India Focused Fund",
-            "amc": "Nippon",
-            "netCr": -82
-          },
-          {
-            "fund": "Sbi Retirement Benefit Fund - Aggressive Plan",
-            "amc": "SBI",
-            "netCr": -78
-          },
-          {
-            "fund": "ICICI Prudential Equity Minimum Variance Fund",
-            "amc": "ICICI Pru",
-            "netCr": -59
-          },
-          {
-            "fund": "Helios Flexi Cap Fund",
-            "amc": "Helios",
-            "netCr": -58
-          },
-          {
-            "fund": "JM Flexi cap Fund",
-            "amc": "JM",
-            "netCr": -49
-          },
-          {
-            "fund": "Franklin Build India Fund",
-            "amc": "Franklin Templeton",
-            "netCr": -29
-          },
-          {
-            "fund": "Bandhan Multi-Factor Fund",
-            "amc": "Bandhan",
-            "netCr": -25
-          },
-          {
-            "fund": "Franklin India Large & Mid Cap Fund",
-            "amc": "Franklin Templeton",
-            "netCr": -24
-          }
-        ]
-      },
-      {
-        "company": "Bank of Baroda",
-        "fincode": "INE028A01039",
-        "netCr": 212,
-        "pctOutstanding": 0.18,
-        "amcs": [
-          "ICICI Pru",
-          "Axis",
-          "Invesco"
-        ],
-        "schemes": [
-          {
-            "fund": "ICICI Prudential Large Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": -217
-          },
-          {
-            "fund": "Axis Quant Fund",
+            "fund": "Axis Momentum Fund",
             "amc": "Axis",
             "netCr": -26
           },
           {
-            "fund": "Invesco India Financial Services Fund",
-            "amc": "Invesco",
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
             "netCr": -23
           },
           {
-            "fund": "UTI Quant Fund",
-            "amc": "UTI",
-            "netCr": -5
-          },
-          {
-            "fund": "Sundaram Multi-Factor Fund",
-            "amc": "Sundaram",
-            "netCr": 0
-          },
-          {
-            "fund": "Aditya Birla Sun Life Quant Fund",
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
             "amc": "Aditya",
-            "netCr": 0
+            "netCr": -23
+          },
+          {
+            "fund": "Axis Multicap Fund",
+            "amc": "Axis",
+            "netCr": -23
+          },
+          {
+            "fund": "Axis ESG Integration Strategy Fund",
+            "amc": "Axis",
+            "netCr": -20
+          },
+          {
+            "fund": "Motilal Oswal Focused Fund",
+            "amc": "Motilal Oswal",
+            "netCr": -17
+          },
+          {
+            "fund": "Bandhan Flexi Cap Fund",
+            "amc": "Bandhan",
+            "netCr": -16
+          },
+          {
+            "fund": "Sundaram Consumption Fund",
+            "amc": "Sundaram",
+            "netCr": -16
+          },
+          {
+            "fund": "Axis Focused Fund",
+            "amc": "Axis",
+            "netCr": -15
+          },
+          {
+            "fund": "Axis Consumption Fund",
+            "amc": "Axis",
+            "netCr": -7
           }
         ]
       },
       {
         "company": "Titan Company Limited",
         "fincode": "INE280A01028",
-        "netCr": 208,
-        "pctOutstanding": 0.05,
+        "netCr": 216,
+        "pctOutstanding": 0.06,
         "amcs": [
           "Nippon",
           "Motilal Oswal",
@@ -2396,7 +2645,7 @@
           {
             "fund": "Nippon India Vision Large & Mid Cap Fund",
             "amc": "Nippon",
-            "netCr": -111
+            "netCr": -110
           },
           {
             "fund": "Motilal Oswal Large and Midcap Fund",
@@ -2441,7 +2690,7 @@
           {
             "fund": "UTI Quant Fund",
             "amc": "UTI",
-            "netCr": -17
+            "netCr": -16
           },
           {
             "fund": "Sundaram Consumption Fund",
@@ -2456,87 +2705,14 @@
         ]
       },
       {
-        "company": "Bajaj Auto Limited",
-        "fincode": "INE917I01010",
-        "netCr": 195,
-        "pctOutstanding": 0.07,
-        "amcs": [
-          "SBI",
-          "Bandhan",
-          "Motilal Oswal"
-        ],
-        "schemes": [
-          {
-            "fund": "SBI Flexicap Fund",
-            "amc": "SBI",
-            "netCr": -209
-          },
-          {
-            "fund": "SBI Quality Fund",
-            "amc": "SBI",
-            "netCr": -23
-          },
-          {
-            "fund": "Bandhan Multi-Factor Fund",
-            "amc": "Bandhan",
-            "netCr": -21
-          },
-          {
-            "fund": "UTI - Large Cap Fund",
-            "amc": "UTI",
-            "netCr": -21
-          },
-          {
-            "fund": "Motilal Oswal Manufacturing Fund",
-            "amc": "Motilal Oswal",
-            "netCr": -14
-          },
-          {
-            "fund": "Bandhan Large & Mid Cap Fund",
-            "amc": "Bandhan",
-            "netCr": -9
-          },
-          {
-            "fund": "Mahindra Manulife Focused Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": -8
-          },
-          {
-            "fund": "SBI Quant Fund",
-            "amc": "SBI",
-            "netCr": -7
-          },
-          {
-            "fund": "Bandhan Large Cap Fund",
-            "amc": "Bandhan",
-            "netCr": -7
-          },
-          {
-            "fund": "Bandhan Transportation and Logistics Fund",
-            "amc": "Bandhan",
-            "netCr": -5
-          },
-          {
-            "fund": "Mahindra Manulife Consumption Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": -1
-          },
-          {
-            "fund": "NJ Flexi Cap Fund",
-            "amc": "NJ",
-            "netCr": 0
-          }
-        ]
-      },
-      {
-        "company": "Siemens Limited",
+        "company": "Siemens Ltd.",
         "fincode": "INE003A01024",
-        "netCr": 194,
+        "netCr": 201,
         "pctOutstanding": null,
         "amcs": [
           "ICICI Pru",
           "Aditya",
-          "Bandhan"
+          "Kotak"
         ],
         "schemes": [
           {
@@ -2555,154 +2731,13 @@
             "netCr": -15
           },
           {
+            "fund": "Kotak Quant Fund",
+            "amc": "Kotak",
+            "netCr": -7
+          },
+          {
             "fund": "Bandhan Infrastructure Fund",
             "amc": "Bandhan",
-            "netCr": 0
-          }
-        ]
-      },
-      {
-        "company": "Torrent Pharmaceuticals Limited",
-        "fincode": "INE685A01028",
-        "netCr": 182,
-        "pctOutstanding": 0.1,
-        "amcs": [
-          "Axis",
-          "Aditya",
-          "LIC MF"
-        ],
-        "schemes": [
-          {
-            "fund": "Axis ELSS Tax Saver Fund",
-            "amc": "Axis",
-            "netCr": -150
-          },
-          {
-            "fund": "Aditya Birla Sun Life Consumption Fund",
-            "amc": "Aditya",
-            "netCr": -55
-          },
-          {
-            "fund": "Bandhan Small Cap Fund",
-            "amc": "Bandhan",
-            "netCr": -12
-          },
-          {
-            "fund": "Lic Mf Flexi Cap Fund",
-            "amc": "LIC MF",
-            "netCr": -10
-          },
-          {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": -3
-          },
-          {
-            "fund": "Axis Small Cap Fund",
-            "amc": "Axis",
-            "netCr": -2
-          },
-          {
-            "fund": "UTI - Flexi Cap Fund",
-            "amc": "UTI",
-            "netCr": -2
-          },
-          {
-            "fund": "Pgim India Small Cap Fund",
-            "amc": "PGIM",
-            "netCr": -2
-          },
-          {
-            "fund": "Shriram Flexi Cap Fund",
-            "amc": "Shriram",
-            "netCr": -1
-          },
-          {
-            "fund": "NJ Flexi Cap Fund",
-            "amc": "NJ",
-            "netCr": -1
-          },
-          {
-            "fund": "JM Large Cap Fund",
-            "amc": "JM",
-            "netCr": -1
-          },
-          {
-            "fund": "Shriram ELSS Tax Saver Fund",
-            "amc": "Shriram",
-            "netCr": -1
-          }
-        ]
-      },
-      {
-        "company": "Tata Consultancy Services Limited",
-        "fincode": "INE467B01029",
-        "netCr": 176,
-        "pctOutstanding": 0.03,
-        "amcs": [
-          "Nippon",
-          "Invesco",
-          "JM"
-        ],
-        "schemes": [
-          {
-            "fund": "Nippon India Multi Cap Fund",
-            "amc": "Nippon",
-            "netCr": -133
-          },
-          {
-            "fund": "Invesco India Flexi Cap Fund",
-            "amc": "Invesco",
-            "netCr": -61
-          },
-          {
-            "fund": "Nippon India Large Cap Fund",
-            "amc": "Nippon",
-            "netCr": -38
-          },
-          {
-            "fund": "Franklin India Focused Equity Fund",
-            "amc": "Franklin Templeton",
-            "netCr": -38
-          },
-          {
-            "fund": "JM Flexi cap Fund",
-            "amc": "JM",
-            "netCr": -32
-          },
-          {
-            "fund": "Baroda BNP Paribas ESG Best-in-Class Strategy Fund",
-            "amc": "Baroda BNP Paribas",
-            "netCr": -12
-          },
-          {
-            "fund": "Templeton India Value Fund",
-            "amc": "Franklin Templeton",
-            "netCr": -10
-          },
-          {
-            "fund": "ICICI Prudential Exports and Services Fund",
-            "amc": "ICICI Pru",
-            "netCr": -6
-          },
-          {
-            "fund": "Axis Value Fund",
-            "amc": "Axis",
-            "netCr": -6
-          },
-          {
-            "fund": "Taurus Flexi Cap Fund",
-            "amc": "Taurus",
-            "netCr": -3
-          },
-          {
-            "fund": "Bandhan Business Cycle Fund",
-            "amc": "Bandhan",
-            "netCr": 0
-          },
-          {
-            "fund": "Sundaram Multi-Factor Fund",
-            "amc": "Sundaram",
             "netCr": 0
           }
         ]
@@ -2712,10 +2747,83 @@
   "mid": {
     "bought": [
       {
+        "company": "Gland Pharma Limited",
+        "fincode": "INE068V01023",
+        "netCr": 1913,
+        "pctOutstanding": 4.14,
+        "amcs": [
+          "Kotak",
+          "Axis",
+          "ICICI Pru"
+        ],
+        "schemes": [
+          {
+            "fund": "Kotak Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": 1028
+          },
+          {
+            "fund": "Axis Midcap Fund",
+            "amc": "Axis",
+            "netCr": 221
+          },
+          {
+            "fund": "Axis ELSS Tax Saver Fund",
+            "amc": "Axis",
+            "netCr": 140
+          },
+          {
+            "fund": "Axis Large & Mid Cap Fund",
+            "amc": "Axis",
+            "netCr": 140
+          },
+          {
+            "fund": "Axis Small Cap Fund",
+            "amc": "Axis",
+            "netCr": 94
+          },
+          {
+            "fund": "ICICI Prudential Manufacturing Fund",
+            "amc": "ICICI Pru",
+            "netCr": 67
+          },
+          {
+            "fund": "TRUSTMF Small Cap Fund",
+            "amc": "Trust",
+            "netCr": 63
+          },
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": 48
+          },
+          {
+            "fund": "ICICI Prudential Active Momentum Fund",
+            "amc": "ICICI Pru",
+            "netCr": 38
+          },
+          {
+            "fund": "Axis Multicap Fund",
+            "amc": "Axis",
+            "netCr": 36
+          },
+          {
+            "fund": "Axis India Manufacturing Fund",
+            "amc": "Axis",
+            "netCr": 18
+          },
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": 14
+          }
+        ]
+      },
+      {
         "company": "Swiggy Limited",
         "fincode": "INE00H001014",
-        "netCr": 1291,
-        "pctOutstanding": 1.94,
+        "netCr": 1280,
+        "pctOutstanding": 1.91,
         "amcs": [
           "SBI",
           "Bandhan",
@@ -2725,7 +2833,7 @@
           {
             "fund": "SBI Contra Fund",
             "amc": "SBI",
-            "netCr": 436
+            "netCr": 437
           },
           {
             "fund": "SBI Large Cap Fund",
@@ -2740,7 +2848,7 @@
           {
             "fund": "SBI Large and Midcap Fund",
             "amc": "SBI",
-            "netCr": 174
+            "netCr": 175
           },
           {
             "fund": "ICICI Prudential Large Cap Fund",
@@ -2755,12 +2863,12 @@
           {
             "fund": "SBI Innovative Opportunities Fund",
             "amc": "SBI",
-            "netCr": 48
+            "netCr": 49
           },
           {
             "fund": "Sundaram Mid Cap Fund",
             "amc": "Sundaram",
-            "netCr": 47
+            "netCr": 48
           },
           {
             "fund": "Aditya Birla Sun Life Value Fund",
@@ -2785,82 +2893,155 @@
         ]
       },
       {
-        "company": "Gland Pharma Limited",
-        "fincode": "INE068V01023",
-        "netCr": 874,
-        "pctOutstanding": 1.9,
+        "company": "Lenskart Solutions Limited",
+        "fincode": "INE956O01016",
+        "netCr": 1077,
+        "pctOutstanding": 0.95,
         "amcs": [
-          "Axis",
-          "ICICI Pru",
-          "Trust"
+          "Kotak",
+          "Motilal Oswal",
+          "Franklin Templeton"
         ],
         "schemes": [
           {
-            "fund": "Axis Midcap Fund",
-            "amc": "Axis",
-            "netCr": 220
+            "fund": "Kotak Flexi Cap Fund",
+            "amc": "Kotak",
+            "netCr": 654
           },
           {
-            "fund": "Axis ELSS Tax Saver Fund",
-            "amc": "Axis",
-            "netCr": 139
+            "fund": "Motilal Oswal Midcap Fund",
+            "amc": "Motilal Oswal",
+            "netCr": 174
           },
           {
-            "fund": "Axis Large & Mid Cap Fund",
-            "amc": "Axis",
-            "netCr": 139
+            "fund": "Franklin India Opportunities Fund",
+            "amc": "Franklin Templeton",
+            "netCr": 96
           },
           {
-            "fund": "Axis Small Cap Fund",
-            "amc": "Axis",
-            "netCr": 94
+            "fund": "Mahindra Manulife Multi Cap Fund",
+            "amc": "Mahindra Manulife",
+            "netCr": 70
           },
           {
-            "fund": "ICICI Prudential Manufacturing Fund",
-            "amc": "ICICI Pru",
-            "netCr": 67
+            "fund": "Invesco India Flexi Cap Fund",
+            "amc": "Invesco",
+            "netCr": 62
+          },
+          {
+            "fund": "Franklin India Focused Equity Fund",
+            "amc": "Franklin Templeton",
+            "netCr": 52
+          },
+          {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": 36
+          },
+          {
+            "fund": "Kotak ELSS Tax Saver Fund",
+            "amc": "Kotak",
+            "netCr": 32
           },
           {
             "fund": "TRUSTMF Small Cap Fund",
             "amc": "Trust",
-            "netCr": 63
+            "netCr": 21
           },
           {
-            "fund": "Aditya Birla Sun Life Value Fund",
+            "fund": "UTI - Flexi Cap Fund",
+            "amc": "UTI",
+            "netCr": 12
+          },
+          {
+            "fund": "JM Mid cap Fund",
+            "amc": "JM",
+            "netCr": 9
+          },
+          {
+            "fund": "Bandhan Midcap Fund",
+            "amc": "Bandhan",
+            "netCr": 8
+          }
+        ]
+      },
+      {
+        "company": "One 97 Communications Limited",
+        "fincode": "INE982J01020",
+        "netCr": 797,
+        "pctOutstanding": 0.77,
+        "amcs": [
+          "Kotak",
+          "Franklin Templeton",
+          "UTI"
+        ],
+        "schemes": [
+          {
+            "fund": "Kotak Multi Cap Fund",
+            "amc": "Kotak",
+            "netCr": 561
+          },
+          {
+            "fund": "Kotak Large & Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": 322
+          },
+          {
+            "fund": "UTI - Mid Cap Fund",
+            "amc": "UTI",
+            "netCr": 137
+          },
+          {
+            "fund": "Franklin India Opportunities Fund",
+            "amc": "Franklin Templeton",
+            "netCr": 110
+          },
+          {
+            "fund": "Nippon India Vision Large & Mid Cap Fund",
+            "amc": "Nippon",
+            "netCr": 96
+          },
+          {
+            "fund": "Franklin India Mid Cap Fund",
+            "amc": "Franklin Templeton",
+            "netCr": 81
+          },
+          {
+            "fund": "Sundaram Large and Mid Cap Fund",
+            "amc": "Sundaram",
+            "netCr": 66
+          },
+          {
+            "fund": "Aditya Birla Sun Life Digital India Fund",
             "amc": "Aditya",
-            "netCr": 47
-          },
-          {
-            "fund": "ICICI Prudential Active Momentum Fund",
-            "amc": "ICICI Pru",
             "netCr": 38
           },
           {
-            "fund": "Axis Multicap Fund",
-            "amc": "Axis",
-            "netCr": 36
+            "fund": "Franklin India Multi Cap Fund",
+            "amc": "Franklin Templeton",
+            "netCr": 35
           },
           {
-            "fund": "Axis India Manufacturing Fund",
-            "amc": "Axis",
-            "netCr": 18
+            "fund": "Franklin Build India Fund",
+            "amc": "Franklin Templeton",
+            "netCr": 27
           },
           {
-            "fund": "Aditya Birla Sun Life Small Cap Fund",
-            "amc": "Aditya",
-            "netCr": 14
+            "fund": "Kotak Special Opportunities Fund",
+            "amc": "Kotak",
+            "netCr": 16
           },
           {
-            "fund": "ICICI Prudential Quality Fund",
-            "amc": "ICICI Pru",
-            "netCr": 13
+            "fund": "Sundaram Business Cycle Fund",
+            "amc": "Sundaram",
+            "netCr": 16
           }
         ]
       },
       {
         "company": "Multi Commodity Exchange of India Limited",
         "fincode": "INE745G01043",
-        "netCr": 785,
+        "netCr": 786,
         "pctOutstanding": 0.97,
         "amcs": [
           "Nippon",
@@ -2931,9 +3112,82 @@
         ]
       },
       {
+        "company": "Aditya Infotech Limited",
+        "fincode": "INE819V01029",
+        "netCr": 759,
+        "pctOutstanding": null,
+        "amcs": [
+          "Kotak",
+          "Axis",
+          "ICICI Pru"
+        ],
+        "schemes": [
+          {
+            "fund": "Kotak Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": 219
+          },
+          {
+            "fund": "Invesco India Focused Fund",
+            "amc": "Invesco",
+            "netCr": 107
+          },
+          {
+            "fund": "Axis Midcap Fund",
+            "amc": "Axis",
+            "netCr": 55
+          },
+          {
+            "fund": "Axis Small Cap Fund",
+            "amc": "Axis",
+            "netCr": 48
+          },
+          {
+            "fund": "ICICI Prudential Large & Mid Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": 42
+          },
+          {
+            "fund": "Aditya Birla Sun Life Midcap Fund",
+            "amc": "Aditya",
+            "netCr": 40
+          },
+          {
+            "fund": "Aditya Birla Sun Life Small Cap Fund",
+            "amc": "Aditya",
+            "netCr": 32
+          },
+          {
+            "fund": "ICICI Prudential Active Momentum Fund",
+            "amc": "ICICI Pru",
+            "netCr": 32
+          },
+          {
+            "fund": "ICICI Prudential Multi Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": 31
+          },
+          {
+            "fund": "Axis India Manufacturing Fund",
+            "amc": "Axis",
+            "netCr": 26
+          },
+          {
+            "fund": "Kotak Manufacture In India Fund",
+            "amc": "Kotak",
+            "netCr": 23
+          },
+          {
+            "fund": "Axis Flexi Cap Fund",
+            "amc": "Axis",
+            "netCr": 21
+          }
+        ]
+      },
+      {
         "company": "Bharat Forge Limited",
         "fincode": "INE465A01025",
-        "netCr": 639,
+        "netCr": 637,
         "pctOutstanding": 0.71,
         "amcs": [
           "Invesco",
@@ -2944,12 +3198,12 @@
           {
             "fund": "ICICI Prudential Large & Mid Cap Fund",
             "amc": "ICICI Pru",
-            "netCr": 221
+            "netCr": 222
           },
           {
             "fund": "Invesco India Large & Mid Cap Fund",
             "amc": "Invesco",
-            "netCr": 176
+            "netCr": 177
           },
           {
             "fund": "Invesco India Mid cap Fund",
@@ -2964,12 +3218,12 @@
           {
             "fund": "Axis Large & Mid Cap Fund",
             "amc": "Axis",
-            "netCr": 61
+            "netCr": 62
           },
           {
             "fund": "ICICI Prudential Active Momentum Fund",
             "amc": "ICICI Pru",
-            "netCr": 36
+            "netCr": 37
           },
           {
             "fund": "Axis Flexi Cap Fund",
@@ -3004,83 +3258,10 @@
         ]
       },
       {
-        "company": "Lenskart Solutions Limited",
-        "fincode": "INE956O01016",
-        "netCr": 517,
-        "pctOutstanding": 0.46,
-        "amcs": [
-          "Motilal Oswal",
-          "Franklin Templeton",
-          "Mahindra Manulife"
-        ],
-        "schemes": [
-          {
-            "fund": "Motilal Oswal Midcap Fund",
-            "amc": "Motilal Oswal",
-            "netCr": 173
-          },
-          {
-            "fund": "Franklin India Opportunities Fund",
-            "amc": "Franklin Templeton",
-            "netCr": 96
-          },
-          {
-            "fund": "Mahindra Manulife Multi Cap Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": 70
-          },
-          {
-            "fund": "Invesco India Flexi Cap Fund",
-            "amc": "Invesco",
-            "netCr": 62
-          },
-          {
-            "fund": "Franklin India Focused Equity Fund",
-            "amc": "Franklin Templeton",
-            "netCr": 52
-          },
-          {
-            "fund": "JM Flexi cap Fund",
-            "amc": "JM",
-            "netCr": 36
-          },
-          {
-            "fund": "TRUSTMF Small Cap Fund",
-            "amc": "Trust",
-            "netCr": 21
-          },
-          {
-            "fund": "UTI - Flexi Cap Fund",
-            "amc": "UTI",
-            "netCr": 12
-          },
-          {
-            "fund": "JM Mid cap Fund",
-            "amc": "JM",
-            "netCr": 9
-          },
-          {
-            "fund": "Bandhan Midcap Fund",
-            "amc": "Bandhan",
-            "netCr": 8
-          },
-          {
-            "fund": "Zerodha Nifty Large Midcap 250 Index Fund",
-            "amc": "Zerodha",
-            "netCr": 5
-          },
-          {
-            "fund": "Franklin India Multi-Factor Fund",
-            "amc": "Franklin Templeton",
-            "netCr": 5
-          }
-        ]
-      },
-      {
         "company": "The Indian Hotels Company Limited",
         "fincode": "INE053A01029",
-        "netCr": 505,
-        "pctOutstanding": 0.5,
+        "netCr": 514,
+        "pctOutstanding": 0.51,
         "amcs": [
           "ICICI Pru",
           "Nippon",
@@ -3152,7 +3333,7 @@
       {
         "company": "ICICI Lombard General Insurance Company Limited",
         "fincode": "INE765G01017",
-        "netCr": 500,
+        "netCr": 501,
         "pctOutstanding": 0.65,
         "amcs": [
           "Nippon",
@@ -3223,82 +3404,82 @@
         ]
       },
       {
-        "company": "Aditya Infotech Limited",
-        "fincode": "INE819V01029",
-        "netCr": 496,
-        "pctOutstanding": null,
+        "company": "Piramal Finance Limited",
+        "fincode": "INE202B01038",
+        "netCr": 491,
+        "pctOutstanding": 1.04,
         "amcs": [
-          "Axis",
-          "ICICI Pru",
-          "Invesco"
+          "Kotak",
+          "Nippon",
+          "Bandhan"
         ],
         "schemes": [
           {
-            "fund": "Invesco India Focused Fund",
-            "amc": "Invesco",
-            "netCr": 107
+            "fund": "Kotak Flexi Cap Fund",
+            "amc": "Kotak",
+            "netCr": 217
+          },
+          {
+            "fund": "Nippon India Multi Cap Fund",
+            "amc": "Nippon",
+            "netCr": 87
+          },
+          {
+            "fund": "Mahindra Manulife Mid Cap Fund",
+            "amc": "Mahindra Manulife",
+            "netCr": 45
+          },
+          {
+            "fund": "Nippon India Banking & Financial Services Fund",
+            "amc": "Nippon",
+            "netCr": 39
+          },
+          {
+            "fund": "Bandhan Large & Mid Cap Fund",
+            "amc": "Bandhan",
+            "netCr": 38
+          },
+          {
+            "fund": "Bandhan Midcap Fund",
+            "amc": "Bandhan",
+            "netCr": 28
+          },
+          {
+            "fund": "Nippon India Vision Large & Mid Cap Fund",
+            "amc": "Nippon",
+            "netCr": 24
+          },
+          {
+            "fund": "Baroda BNP Paribas Mid Cap Fund",
+            "amc": "Baroda BNP Paribas",
+            "netCr": 18
+          },
+          {
+            "fund": "Kotak Focused Fund",
+            "amc": "Kotak",
+            "netCr": 18
+          },
+          {
+            "fund": "Zerodha Nifty Large Midcap 250 Index Fund",
+            "amc": "Zerodha",
+            "netCr": 5
           },
           {
             "fund": "Axis Midcap Fund",
             "amc": "Axis",
-            "netCr": 55
+            "netCr": 4
           },
           {
-            "fund": "Axis Small Cap Fund",
-            "amc": "Axis",
-            "netCr": 49
-          },
-          {
-            "fund": "ICICI Prudential Large & Mid Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": 42
-          },
-          {
-            "fund": "Aditya Birla Sun Life Midcap Fund",
-            "amc": "Aditya",
-            "netCr": 40
-          },
-          {
-            "fund": "Aditya Birla Sun Life Small Cap Fund",
-            "amc": "Aditya",
-            "netCr": 32
-          },
-          {
-            "fund": "ICICI Prudential Active Momentum Fund",
-            "amc": "ICICI Pru",
-            "netCr": 32
-          },
-          {
-            "fund": "ICICI Prudential Multi Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": 31
-          },
-          {
-            "fund": "Axis India Manufacturing Fund",
-            "amc": "Axis",
-            "netCr": 26
-          },
-          {
-            "fund": "Axis Flexi Cap Fund",
-            "amc": "Axis",
-            "netCr": 21
-          },
-          {
-            "fund": "ICICI Prudential Innovation Fund",
-            "amc": "ICICI Pru",
-            "netCr": 21
-          },
-          {
-            "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
-            "amc": "Aditya",
-            "netCr": 20
+            "fund": "Kotak Large & Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": 4
           }
         ]
       },
       {
         "company": "PB Fintech Limited",
         "fincode": "INE417T01026",
-        "netCr": 470,
+        "netCr": 469,
         "pctOutstanding": 0.99,
         "amcs": [
           "ICICI Pru",
@@ -3309,12 +3490,12 @@
           {
             "fund": "ICICI Prudential Large & Mid Cap Fund",
             "amc": "ICICI Pru",
-            "netCr": 365
+            "netCr": 364
           },
           {
             "fund": "ICICI Prudential Flexi Cap Fund",
             "amc": "ICICI Pru",
-            "netCr": 143
+            "netCr": 142
           },
           {
             "fund": "Nippon India Focused Fund",
@@ -3371,12 +3552,12 @@
       {
         "company": "Max Healthcare Institute Limited",
         "fincode": "INE027H01010",
-        "netCr": 337,
-        "pctOutstanding": 0.38,
+        "netCr": 422,
+        "pctOutstanding": 0.48,
         "amcs": [
           "Invesco",
           "ICICI Pru",
-          "Motilal Oswal"
+          "Kotak"
         ],
         "schemes": [
           {
@@ -3388,6 +3569,11 @@
             "fund": "ICICI Prudential Large Cap Fund",
             "amc": "ICICI Pru",
             "netCr": 189
+          },
+          {
+            "fund": "Kotak Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": 85
           },
           {
             "fund": "Invesco India Large & Mid Cap Fund",
@@ -3432,11 +3618,6 @@
           {
             "fund": "ITI Mid Cap Fund",
             "amc": "ITI",
-            "netCr": 3
-          },
-          {
-            "fund": "Motilal Oswal Business Cycle Fund",
-            "amc": "Motilal Oswal",
             "netCr": 3
           }
         ]
@@ -3483,8 +3664,18 @@
             "netCr": 0
           },
           {
+            "fund": "Kotak Nifty Midcap 150 Index Fund",
+            "amc": "Kotak",
+            "netCr": 0
+          },
+          {
             "fund": "UTI Nifty Midcap 150 Index Fund",
             "amc": "UTI",
+            "netCr": 0
+          },
+          {
+            "fund": "Kotak Nifty Midcap 150 ETF",
+            "amc": "Kotak",
             "netCr": 0
           },
           {
@@ -3497,7 +3688,7 @@
       {
         "company": "Max Financial Services Limited",
         "fincode": "INE180A01020",
-        "netCr": 315,
+        "netCr": 316,
         "pctOutstanding": 0.68,
         "amcs": [
           "Invesco",
@@ -3538,12 +3729,12 @@
           {
             "fund": "Nippon India Banking & Financial Services Fund",
             "amc": "Nippon",
-            "netCr": 13
+            "netCr": 14
           },
           {
             "fund": "Nippon India Value Fund",
             "amc": "Nippon",
-            "netCr": 13
+            "netCr": 14
           },
           {
             "fund": "Bandhan Large & Mid Cap Fund",
@@ -3568,10 +3759,83 @@
         ]
       },
       {
+        "company": "Fortis Healthcare Limited",
+        "fincode": "INE061F01013",
+        "netCr": 304,
+        "pctOutstanding": 0.54,
+        "amcs": [
+          "Kotak",
+          "Nippon",
+          "SBI"
+        ],
+        "schemes": [
+          {
+            "fund": "Kotak Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": 155
+          },
+          {
+            "fund": "Nippon India Growth Mid Cap Fund",
+            "amc": "Nippon",
+            "netCr": 109
+          },
+          {
+            "fund": "SBI Midcap Fund",
+            "amc": "SBI",
+            "netCr": 65
+          },
+          {
+            "fund": "Nippon India Retirement Fund - Wealth Creation Scheme",
+            "amc": "Nippon",
+            "netCr": 26
+          },
+          {
+            "fund": "Sundaram Services Fund",
+            "amc": "Sundaram",
+            "netCr": 19
+          },
+          {
+            "fund": "UTI Value Fund",
+            "amc": "UTI",
+            "netCr": 9
+          },
+          {
+            "fund": "Sundaram Consumption Fund",
+            "amc": "Sundaram",
+            "netCr": 9
+          },
+          {
+            "fund": "Sundaram Multi Cap Fund",
+            "amc": "Sundaram",
+            "netCr": 8
+          },
+          {
+            "fund": "Bandhan Innovation Fund",
+            "amc": "Bandhan",
+            "netCr": 8
+          },
+          {
+            "fund": "Bandhan Midcap Fund",
+            "amc": "Bandhan",
+            "netCr": 4
+          },
+          {
+            "fund": "Lic Mf Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 3
+          },
+          {
+            "fund": "ITI Mid Cap Fund",
+            "amc": "ITI",
+            "netCr": 3
+          }
+        ]
+      },
+      {
         "company": "Biocon Ltd.",
         "fincode": "INE376G01013",
-        "netCr": 300,
-        "pctOutstanding": 0.52,
+        "netCr": 298,
+        "pctOutstanding": 0.51,
         "amcs": [
           "Nippon",
           "Aditya",
@@ -3581,7 +3845,7 @@
           {
             "fund": "Nippon India Focused Fund",
             "amc": "Nippon",
-            "netCr": 121
+            "netCr": 122
           },
           {
             "fund": "Aditya Birla Sun Life Midcap Fund",
@@ -3596,7 +3860,7 @@
           {
             "fund": "ICICI Prudential ELSS – Tax Saver Fund",
             "amc": "ICICI Pru",
-            "netCr": 27
+            "netCr": 28
           },
           {
             "fund": "Bandhan Large & Mid Cap Fund",
@@ -3621,7 +3885,7 @@
           {
             "fund": "Invesco India Flexi Cap Fund",
             "amc": "Invesco",
-            "netCr": 11
+            "netCr": 12
           },
           {
             "fund": "Aditya Birla Sun Life Small Cap Fund",
@@ -3631,7 +3895,7 @@
           {
             "fund": "UTI - Healthcare Fund",
             "amc": "UTI",
-            "netCr": 4
+            "netCr": 5
           },
           {
             "fund": "Taurus Flexi Cap Fund",
@@ -3643,7 +3907,7 @@
       {
         "company": "SBI Cards and Payment Services Limited",
         "fincode": "INE018E01016",
-        "netCr": 274,
+        "netCr": 272,
         "pctOutstanding": null,
         "amcs": [
           "SBI",
@@ -3714,221 +3978,75 @@
         ]
       },
       {
-        "company": "Piramal Finance Limited",
-        "fincode": "INE202B01038",
-        "netCr": 258,
-        "pctOutstanding": 0.55,
+        "company": "United Spirits Limited",
+        "fincode": "INE854D01024",
+        "netCr": 249,
+        "pctOutstanding": null,
         "amcs": [
-          "Nippon",
-          "Bandhan",
-          "Mahindra Manulife"
+          "ICICI Pru",
+          "Aditya",
+          "Axis"
         ],
         "schemes": [
           {
-            "fund": "Nippon India Multi Cap Fund",
-            "amc": "Nippon",
-            "netCr": 86
+            "fund": "ICICI Prudential Large Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": 103
           },
           {
-            "fund": "Mahindra Manulife Mid Cap Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": 44
+            "fund": "Axis Large & Mid Cap Fund",
+            "amc": "Axis",
+            "netCr": 52
           },
           {
-            "fund": "Nippon India Banking & Financial Services Fund",
+            "fund": "Nippon India Large Cap Fund",
             "amc": "Nippon",
             "netCr": 39
           },
           {
-            "fund": "Bandhan Large & Mid Cap Fund",
-            "amc": "Bandhan",
-            "netCr": 37
+            "fund": "Abakkus Flexi Cap Fund",
+            "amc": "Abakkus",
+            "netCr": 39
+          },
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": 39
+          },
+          {
+            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
+            "amc": "Aditya",
+            "netCr": 32
+          },
+          {
+            "fund": "UTI Quant Fund",
+            "amc": "UTI",
+            "netCr": 8
           },
           {
             "fund": "Bandhan Midcap Fund",
             "amc": "Bandhan",
-            "netCr": 27
+            "netCr": 7
           },
           {
-            "fund": "Nippon India Vision Large & Mid Cap Fund",
-            "amc": "Nippon",
-            "netCr": 24
+            "fund": "Sundaram Consumption Fund",
+            "amc": "Sundaram",
+            "netCr": 7
           },
           {
-            "fund": "Baroda BNP Paribas Mid Cap Fund",
-            "amc": "Baroda BNP Paribas",
-            "netCr": 18
+            "fund": "ICICI Prudential FMCG Fund",
+            "amc": "ICICI Pru",
+            "netCr": 6
+          },
+          {
+            "fund": "Axis Multicap Fund",
+            "amc": "Axis",
+            "netCr": 5
           },
           {
             "fund": "Zerodha Nifty Large Midcap 250 Index Fund",
             "amc": "Zerodha",
             "netCr": 5
-          },
-          {
-            "fund": "Axis Midcap Fund",
-            "amc": "Axis",
-            "netCr": 4
-          },
-          {
-            "fund": "Mahindra Manulife Flexi Cap Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": 4
-          },
-          {
-            "fund": "Abakkus Large & Mid Cap Fund",
-            "amc": "Abakkus",
-            "netCr": 3
-          },
-          {
-            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
-            "amc": "Aditya",
-            "netCr": 3
-          }
-        ]
-      },
-      {
-        "company": "RBL Bank Limited",
-        "fincode": "INE976G01028",
-        "netCr": 253,
-        "pctOutstanding": 0.42,
-        "amcs": [
-          "Franklin Templeton",
-          "Motilal Oswal",
-          "Axis"
-        ],
-        "schemes": [
-          {
-            "fund": "Franklin India Focused Equity Fund",
-            "amc": "Franklin Templeton",
-            "netCr": 128
-          },
-          {
-            "fund": "Motilal Oswal Flexicap Fund",
-            "amc": "Motilal Oswal",
-            "netCr": 78
-          },
-          {
-            "fund": "Axis Midcap Fund",
-            "amc": "Axis",
-            "netCr": 36
-          },
-          {
-            "fund": "TRUSTMF Small Cap Fund",
-            "amc": "Trust",
-            "netCr": 29
-          },
-          {
-            "fund": "Axis Multicap Fund",
-            "amc": "Axis",
-            "netCr": 28
-          },
-          {
-            "fund": "Franklin India Mid Cap Fund",
-            "amc": "Franklin Templeton",
-            "netCr": 19
-          },
-          {
-            "fund": "Capitalmind Flexi Cap Fund",
-            "amc": "Capitalmind",
-            "netCr": 14
-          },
-          {
-            "fund": "TRUSTMF Multi Cap Fund",
-            "amc": "Trust",
-            "netCr": 9
-          },
-          {
-            "fund": "Axis Value Fund",
-            "amc": "Axis",
-            "netCr": 6
-          },
-          {
-            "fund": "Axis Large & Mid Cap Fund",
-            "amc": "Axis",
-            "netCr": 4
-          },
-          {
-            "fund": "Baroda BNP Paribas Business Cycle Fund",
-            "amc": "Baroda BNP Paribas",
-            "netCr": 4
-          },
-          {
-            "fund": "TRUSTMF Mid Cap Fund",
-            "amc": "Trust",
-            "netCr": 2
-          }
-        ]
-      },
-      {
-        "company": "Blue Star Limited",
-        "fincode": "INE472A01039",
-        "netCr": 249,
-        "pctOutstanding": null,
-        "amcs": [
-          "UTI",
-          "ICICI Pru",
-          "JM"
-        ],
-        "schemes": [
-          {
-            "fund": "UTI - Mid Cap Fund",
-            "amc": "UTI",
-            "netCr": 125
-          },
-          {
-            "fund": "ICICI Prudential Infrastructure Fund",
-            "amc": "ICICI Pru",
-            "netCr": 55
-          },
-          {
-            "fund": "UTI Focused Fund",
-            "amc": "UTI",
-            "netCr": 54
-          },
-          {
-            "fund": "ICICI Prudential Flexi Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": 40
-          },
-          {
-            "fund": "JM Flexi cap Fund",
-            "amc": "JM",
-            "netCr": 24
-          },
-          {
-            "fund": "Motilal Oswal Manufacturing Fund",
-            "amc": "Motilal Oswal",
-            "netCr": 16
-          },
-          {
-            "fund": "ICICI Prudential Retirement Fund - Pure Equity Plan",
-            "amc": "ICICI Pru",
-            "netCr": 7
-          },
-          {
-            "fund": "Baroda BNP Paribas Multi Cap Fund",
-            "amc": "Baroda BNP Paribas",
-            "netCr": 4
-          },
-          {
-            "fund": "Bandhan Small Cap Fund",
-            "amc": "Bandhan",
-            "netCr": 3
-          },
-          {
-            "fund": "JM Small Cap Fund",
-            "amc": "JM",
-            "netCr": 1
-          },
-          {
-            "fund": "Zerodha Nifty Midcap 150 ETF",
-            "amc": "Zerodha",
-            "netCr": 0
-          },
-          {
-            "fund": "Zerodha Nifty Large Midcap 250 Index Fund",
-            "amc": "Zerodha",
-            "netCr": 0
           }
         ]
       },
@@ -4006,79 +4124,6 @@
         ]
       },
       {
-        "company": "United Spirits Limited",
-        "fincode": "INE854D01024",
-        "netCr": 238,
-        "pctOutstanding": null,
-        "amcs": [
-          "ICICI Pru",
-          "Aditya",
-          "Axis"
-        ],
-        "schemes": [
-          {
-            "fund": "ICICI Prudential Large Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": 102
-          },
-          {
-            "fund": "Axis Large & Mid Cap Fund",
-            "amc": "Axis",
-            "netCr": 52
-          },
-          {
-            "fund": "Nippon India Large Cap Fund",
-            "amc": "Nippon",
-            "netCr": 39
-          },
-          {
-            "fund": "Abakkus Flexi Cap Fund",
-            "amc": "Abakkus",
-            "netCr": 39
-          },
-          {
-            "fund": "Aditya Birla Sun Life Quant Fund",
-            "amc": "Aditya",
-            "netCr": 38
-          },
-          {
-            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
-            "amc": "Aditya",
-            "netCr": 32
-          },
-          {
-            "fund": "UTI Quant Fund",
-            "amc": "UTI",
-            "netCr": 8
-          },
-          {
-            "fund": "Bandhan Midcap Fund",
-            "amc": "Bandhan",
-            "netCr": 7
-          },
-          {
-            "fund": "Sundaram Consumption Fund",
-            "amc": "Sundaram",
-            "netCr": 7
-          },
-          {
-            "fund": "ICICI Prudential FMCG Fund",
-            "amc": "ICICI Pru",
-            "netCr": 6
-          },
-          {
-            "fund": "Axis Multicap Fund",
-            "amc": "Axis",
-            "netCr": 5
-          },
-          {
-            "fund": "Zerodha Nifty Large Midcap 250 Index Fund",
-            "amc": "Zerodha",
-            "netCr": 5
-          }
-        ]
-      },
-      {
         "company": "Go Digit General Insurance Ltd",
         "fincode": "INE03JT01014",
         "netCr": 229,
@@ -4119,9 +4164,218 @@
     ],
     "sold": [
       {
+        "company": "L&T Finance Limited",
+        "fincode": "INE498L01015",
+        "netCr": 1599,
+        "pctOutstanding": 2.48,
+        "amcs": [
+          "Kotak",
+          "Axis",
+          "Nippon"
+        ],
+        "schemes": [
+          {
+            "fund": "Kotak Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": -1626
+          },
+          {
+            "fund": "Nippon India Value Fund",
+            "amc": "Nippon",
+            "netCr": -47
+          },
+          {
+            "fund": "Axis Midcap Fund",
+            "amc": "Axis",
+            "netCr": -45
+          },
+          {
+            "fund": "Mahindra Manulife Mid Cap Fund",
+            "amc": "Mahindra Manulife",
+            "netCr": -36
+          },
+          {
+            "fund": "SBI Quant Fund",
+            "amc": "SBI",
+            "netCr": -35
+          },
+          {
+            "fund": "Invesco India ELSS Tax Saver Fund",
+            "amc": "Invesco",
+            "netCr": -28
+          },
+          {
+            "fund": "TRUSTMF Small Cap Fund",
+            "amc": "Trust",
+            "netCr": -20
+          },
+          {
+            "fund": "Invesco India Flexi Cap Fund",
+            "amc": "Invesco",
+            "netCr": -19
+          },
+          {
+            "fund": "Axis Services Opportunities Fund",
+            "amc": "Axis",
+            "netCr": -12
+          },
+          {
+            "fund": "TRUSTMF Multi Cap Fund",
+            "amc": "Trust",
+            "netCr": -7
+          },
+          {
+            "fund": "TRUSTMF Flexi Cap Fund",
+            "amc": "Trust",
+            "netCr": -7
+          },
+          {
+            "fund": "Kotak Quant Fund",
+            "amc": "Kotak",
+            "netCr": -5
+          }
+        ]
+      },
+      {
+        "company": "PI Industries Ltd.",
+        "fincode": "INE603J01030",
+        "netCr": 664,
+        "pctOutstanding": null,
+        "amcs": [
+          "Kotak",
+          "LIC MF",
+          "Axis"
+        ],
+        "schemes": [
+          {
+            "fund": "Kotak Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": -662
+          },
+          {
+            "fund": "ICICI Prudential Exports and Services Fund",
+            "amc": "ICICI Pru",
+            "netCr": -11
+          },
+          {
+            "fund": "Axis India Manufacturing Fund",
+            "amc": "Axis",
+            "netCr": -10
+          },
+          {
+            "fund": "Sundaram Mid Cap Fund",
+            "amc": "Sundaram",
+            "netCr": -6
+          },
+          {
+            "fund": "Lic Mf Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -4
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          },
+          {
+            "fund": "JioBlackRock Nifty Midcap 150 Index Fund",
+            "amc": "JioBlackRock",
+            "netCr": 0
+          },
+          {
+            "fund": "Zerodha ELSS Tax Saver Nifty Large Midcap 250 Index Fund",
+            "amc": "Zerodha",
+            "netCr": 0
+          },
+          {
+            "fund": "Bandhan Nifty Midcap 150 Index Fund",
+            "amc": "Bandhan",
+            "netCr": 0
+          },
+          {
+            "fund": "Baroda BNP Paribas NIFTY Midcap 150 Index Fund",
+            "amc": "Baroda BNP Paribas",
+            "netCr": 0
+          },
+          {
+            "fund": "UTI Nifty Midcap 150 Quality 50 Index Fund",
+            "amc": "UTI",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Blue Star Limited",
+        "fincode": "INE472A01039",
+        "netCr": 645,
+        "pctOutstanding": null,
+        "amcs": [
+          "Kotak",
+          "Nippon",
+          "Invesco"
+        ],
+        "schemes": [
+          {
+            "fund": "Kotak Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": -711
+          },
+          {
+            "fund": "Kotak Large & Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": -207
+          },
+          {
+            "fund": "Nippon India Vision Large & Mid Cap Fund",
+            "amc": "Nippon",
+            "netCr": -22
+          },
+          {
+            "fund": "ICICI Prudential Innovation Fund",
+            "amc": "ICICI Pru",
+            "netCr": -21
+          },
+          {
+            "fund": "Bandhan Flexi Cap Fund",
+            "amc": "Bandhan",
+            "netCr": -18
+          },
+          {
+            "fund": "Invesco India Flexi Cap Fund",
+            "amc": "Invesco",
+            "netCr": -16
+          },
+          {
+            "fund": "Invesco India Consumption Fund",
+            "amc": "Invesco",
+            "netCr": -2
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
+            "amc": "Aditya",
+            "netCr": 0
+          },
+          {
+            "fund": "JioBlackRock Nifty Midcap 150 Index Fund",
+            "amc": "JioBlackRock",
+            "netCr": 0
+          },
+          {
+            "fund": "Zerodha ELSS Tax Saver Nifty Large Midcap 250 Index Fund",
+            "amc": "Zerodha",
+            "netCr": 0
+          },
+          {
+            "fund": "Bandhan Nifty Midcap 150 Index Fund",
+            "amc": "Bandhan",
+            "netCr": 0
+          }
+        ]
+      },
+      {
         "company": "Hero MotoCorp Limited",
         "fincode": "INE158A01026",
-        "netCr": 515,
+        "netCr": 521,
         "pctOutstanding": 0.51,
         "amcs": [
           "ICICI Pru",
@@ -4132,17 +4386,17 @@
           {
             "fund": "ICICI Prudential Large Cap Fund",
             "amc": "ICICI Pru",
-            "netCr": -557
+            "netCr": -565
           },
           {
             "fund": "UTI - Mid Cap Fund",
             "amc": "UTI",
-            "netCr": -55
+            "netCr": -56
           },
           {
             "fund": "JM Flexi cap Fund",
             "amc": "JM",
-            "netCr": -46
+            "netCr": -47
           },
           {
             "fund": "ICICI Prudential Manufacturing Fund",
@@ -4194,8 +4448,8 @@
       {
         "company": "Ather Energy Limited",
         "fincode": "INE0LEZ01016",
-        "netCr": 488,
-        "pctOutstanding": 0.92,
+        "netCr": 480,
+        "pctOutstanding": 0.91,
         "amcs": [
           "Motilal Oswal",
           "SBI",
@@ -4310,7 +4564,7 @@
       {
         "company": "Coforge Limited",
         "fincode": "INE591G01025",
-        "netCr": 466,
+        "netCr": 468,
         "pctOutstanding": 0.63,
         "amcs": [
           "SBI",
@@ -4381,9 +4635,82 @@
         ]
       },
       {
+        "company": "Mphasis Limited",
+        "fincode": "INE356A01018",
+        "netCr": 367,
+        "pctOutstanding": 0.92,
+        "amcs": [
+          "Kotak",
+          "ICICI Pru",
+          "UTI"
+        ],
+        "schemes": [
+          {
+            "fund": "Kotak Multi Cap Fund",
+            "amc": "Kotak",
+            "netCr": -84
+          },
+          {
+            "fund": "Kotak ELSS Tax Saver Fund",
+            "amc": "Kotak",
+            "netCr": -84
+          },
+          {
+            "fund": "Franklin India Multi Cap Fund",
+            "amc": "Franklin Templeton",
+            "netCr": -57
+          },
+          {
+            "fund": "ICICI Prudential Innovation Fund",
+            "amc": "ICICI Pru",
+            "netCr": -42
+          },
+          {
+            "fund": "UTI Large & Mid Cap Fund",
+            "amc": "UTI",
+            "netCr": -36
+          },
+          {
+            "fund": "ICICI Prudential Value Fund",
+            "amc": "ICICI Pru",
+            "netCr": -27
+          },
+          {
+            "fund": "UTI - Mid Cap Fund",
+            "amc": "UTI",
+            "netCr": -23
+          },
+          {
+            "fund": "Mahindra Manulife Large & Mid Cap Fund",
+            "amc": "Mahindra Manulife",
+            "netCr": -21
+          },
+          {
+            "fund": "Mahindra Manulife Mid Cap Fund",
+            "amc": "Mahindra Manulife",
+            "netCr": -5
+          },
+          {
+            "fund": "UTI Value Fund",
+            "amc": "UTI",
+            "netCr": -3
+          },
+          {
+            "fund": "Kotak Nifty Midcap 50 ETF",
+            "amc": "Kotak",
+            "netCr": -2
+          },
+          {
+            "fund": "ICICI Prudential Quality Fund",
+            "amc": "ICICI Pru",
+            "netCr": -1
+          }
+        ]
+      },
+      {
         "company": "IndusInd Bank Limited",
         "fincode": "INE095A01012",
-        "netCr": 342,
+        "netCr": 343,
         "pctOutstanding": null,
         "amcs": [
           "Bandhan",
@@ -4394,7 +4721,7 @@
           {
             "fund": "Bandhan Large & Mid Cap Fund",
             "amc": "Bandhan",
-            "netCr": -106
+            "netCr": -107
           },
           {
             "fund": "Motilal Oswal Large and Midcap Fund",
@@ -4404,7 +4731,7 @@
           {
             "fund": "Nippon India Flexi Cap Fund",
             "amc": "Nippon",
-            "netCr": -52
+            "netCr": -53
           },
           {
             "fund": "Axis Midcap Fund",
@@ -4444,7 +4771,7 @@
           {
             "fund": "ICICI Prudential ESG Exclusionary Strategy Fund",
             "amc": "ICICI Pru",
-            "netCr": -8
+            "netCr": -9
           },
           {
             "fund": "Baroda BNP Paribas Focused Fund",
@@ -4456,7 +4783,7 @@
       {
         "company": "Neuland Laboratories Limited",
         "fincode": "INE794A01010",
-        "netCr": 275,
+        "netCr": 272,
         "pctOutstanding": null,
         "amcs": [
           "Mahindra Manulife",
@@ -4523,6 +4850,79 @@
             "fund": "Motilal Oswal Nifty Smallcap 250 ETF",
             "amc": "Motilal Oswal",
             "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Lupin Limited",
+        "fincode": "INE326A01037",
+        "netCr": 260,
+        "pctOutstanding": 0.29,
+        "amcs": [
+          "SBI",
+          "ICICI Pru",
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "ICICI Prudential Large Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": -122
+          },
+          {
+            "fund": "SBI Large and Midcap Fund",
+            "amc": "SBI",
+            "netCr": -96
+          },
+          {
+            "fund": "SBI ELSS Tax Saver Fund",
+            "amc": "SBI",
+            "netCr": -45
+          },
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": -44
+          },
+          {
+            "fund": "Nippon India Large Cap Fund",
+            "amc": "Nippon",
+            "netCr": -39
+          },
+          {
+            "fund": "Bandhan Flexi Cap Fund",
+            "amc": "Bandhan",
+            "netCr": -18
+          },
+          {
+            "fund": "Bandhan Multi-Factor Fund",
+            "amc": "Bandhan",
+            "netCr": -9
+          },
+          {
+            "fund": "Kotak Quant Fund",
+            "amc": "Kotak",
+            "netCr": -8
+          },
+          {
+            "fund": "ITI Mid Cap Fund",
+            "amc": "ITI",
+            "netCr": -6
+          },
+          {
+            "fund": "Aditya Birla Sun Life Esg Integration Strategy Fund",
+            "amc": "Aditya",
+            "netCr": -4
+          },
+          {
+            "fund": "Samco Mid Cap Fund",
+            "amc": "Samco",
+            "netCr": -2
+          },
+          {
+            "fund": "Baroda BNP Paribas Large & Mid Cap Fund",
+            "amc": "Baroda BNP Paribas",
+            "netCr": -1
           }
         ]
       },
@@ -4600,82 +5000,9 @@
         ]
       },
       {
-        "company": "Lupin Limited",
-        "fincode": "INE326A01037",
-        "netCr": 252,
-        "pctOutstanding": 0.28,
-        "amcs": [
-          "SBI",
-          "ICICI Pru",
-          "Aditya"
-        ],
-        "schemes": [
-          {
-            "fund": "ICICI Prudential Large Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": -122
-          },
-          {
-            "fund": "SBI Large and Midcap Fund",
-            "amc": "SBI",
-            "netCr": -96
-          },
-          {
-            "fund": "SBI ELSS Tax Saver Fund",
-            "amc": "SBI",
-            "netCr": -45
-          },
-          {
-            "fund": "Aditya Birla Sun Life Quant Fund",
-            "amc": "Aditya",
-            "netCr": -44
-          },
-          {
-            "fund": "Nippon India Large Cap Fund",
-            "amc": "Nippon",
-            "netCr": -39
-          },
-          {
-            "fund": "Bandhan Flexi Cap Fund",
-            "amc": "Bandhan",
-            "netCr": -18
-          },
-          {
-            "fund": "Bandhan Multi-Factor Fund",
-            "amc": "Bandhan",
-            "netCr": -9
-          },
-          {
-            "fund": "ITI Mid Cap Fund",
-            "amc": "ITI",
-            "netCr": -6
-          },
-          {
-            "fund": "Aditya Birla Sun Life Esg Integration Strategy Fund",
-            "amc": "Aditya",
-            "netCr": -4
-          },
-          {
-            "fund": "Samco Mid Cap Fund",
-            "amc": "Samco",
-            "netCr": -2
-          },
-          {
-            "fund": "Baroda BNP Paribas Large & Mid Cap Fund",
-            "amc": "Baroda BNP Paribas",
-            "netCr": -1
-          },
-          {
-            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
-            "amc": "PPFAS",
-            "netCr": -1
-          }
-        ]
-      },
-      {
         "company": "The Federal Bank Limited",
         "fincode": "INE171A01029",
-        "netCr": 220,
+        "netCr": 228,
         "pctOutstanding": null,
         "amcs": [
           "Axis",
@@ -4734,21 +5061,21 @@
             "netCr": -8
           },
           {
+            "fund": "Kotak Quant Fund",
+            "amc": "Kotak",
+            "netCr": -8
+          },
+          {
             "fund": "Baroda BNP Paribas Business Cycle Fund",
             "amc": "Baroda BNP Paribas",
             "netCr": -7
-          },
-          {
-            "fund": "UTI ELSS Tax Saver Fund",
-            "amc": "UTI",
-            "netCr": -6
           }
         ]
       },
       {
         "company": "JSW Energy Limited",
         "fincode": "INE121E01018",
-        "netCr": 217,
+        "netCr": 212,
         "pctOutstanding": null,
         "amcs": [
           "SBI",
@@ -4819,10 +5146,156 @@
         ]
       },
       {
+        "company": "AU Small Finance Bank Limited",
+        "fincode": "INE949L01017",
+        "netCr": 212,
+        "pctOutstanding": 0.29,
+        "amcs": [
+          "SBI",
+          "Motilal Oswal",
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "SBI Flexicap Fund",
+            "amc": "SBI",
+            "netCr": -265
+          },
+          {
+            "fund": "Aditya Birla Sun Life Focused Fund",
+            "amc": "Aditya",
+            "netCr": -41
+          },
+          {
+            "fund": "Motilal Oswal Business Cycle Fund",
+            "amc": "Motilal Oswal",
+            "netCr": -41
+          },
+          {
+            "fund": "Motilal Oswal Focused Fund",
+            "amc": "Motilal Oswal",
+            "netCr": -11
+          },
+          {
+            "fund": "Kotak Quant Fund",
+            "amc": "Kotak",
+            "netCr": -7
+          },
+          {
+            "fund": "UTI Quant Fund",
+            "amc": "UTI",
+            "netCr": -4
+          },
+          {
+            "fund": "UTI - Banking and Financial Services Fund",
+            "amc": "UTI",
+            "netCr": -3
+          },
+          {
+            "fund": "Samco Mid Cap Fund",
+            "amc": "Samco",
+            "netCr": 0
+          },
+          {
+            "fund": "SBI Quant Fund",
+            "amc": "SBI",
+            "netCr": 0
+          },
+          {
+            "fund": "Sundaram Multi-Factor Fund",
+            "amc": "Sundaram",
+            "netCr": 0
+          },
+          {
+            "fund": "Motilal Oswal Nifty Midcap 150 Momentum 50 ETF",
+            "amc": "Motilal Oswal",
+            "netCr": 0
+          },
+          {
+            "fund": "Baroda BNP Paribas NIFTY Midcap 150 Index Fund",
+            "amc": "Baroda BNP Paribas",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Ashok Leyland Limited",
+        "fincode": "INE208A01029",
+        "netCr": 211,
+        "pctOutstanding": 0.24,
+        "amcs": [
+          "SBI",
+          "ICICI Pru",
+          "Bandhan"
+        ],
+        "schemes": [
+          {
+            "fund": "SBI Flexicap Fund",
+            "amc": "SBI",
+            "netCr": -198
+          },
+          {
+            "fund": "Bandhan Large & Mid Cap Fund",
+            "amc": "Bandhan",
+            "netCr": -48
+          },
+          {
+            "fund": "ICICI Prudential Large & Mid Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": -42
+          },
+          {
+            "fund": "Axis Midcap Fund",
+            "amc": "Axis",
+            "netCr": -21
+          },
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": -20
+          },
+          {
+            "fund": "Invesco India Manufacturing Fund",
+            "amc": "Invesco",
+            "netCr": -14
+          },
+          {
+            "fund": "UTI Quant Fund",
+            "amc": "UTI",
+            "netCr": -7
+          },
+          {
+            "fund": "ICICI Prudential Rural Opportunities Fund",
+            "amc": "ICICI Pru",
+            "netCr": -6
+          },
+          {
+            "fund": "Pgim India Large and Midcap Fund",
+            "amc": "PGIM",
+            "netCr": -5
+          },
+          {
+            "fund": "ICICI Prudential BSE Midcap Select ETF",
+            "amc": "ICICI Pru",
+            "netCr": -3
+          },
+          {
+            "fund": "ICICI Prudential Transportation and Logistics Fund",
+            "amc": "ICICI Pru",
+            "netCr": -3
+          },
+          {
+            "fund": "JioBlackRock Flexi Cap Fund",
+            "amc": "JioBlackRock",
+            "netCr": -1
+          }
+        ]
+      },
+      {
         "company": "Kirloskar Oil Engines Limited",
         "fincode": "INE146L01010",
-        "netCr": 216,
-        "pctOutstanding": 0.68,
+        "netCr": 207,
+        "pctOutstanding": 0.65,
         "amcs": [
           "Franklin Templeton",
           "Capitalmind",
@@ -4892,215 +5365,74 @@
         ]
       },
       {
-        "company": "Ashok Leyland Limited",
-        "fincode": "INE208A01029",
-        "netCr": 215,
-        "pctOutstanding": 0.25,
+        "company": "Apar Industries Limited",
+        "fincode": "INE372A01015",
+        "netCr": 195,
+        "pctOutstanding": 0.28,
         "amcs": [
-          "SBI",
-          "ICICI Pru",
-          "Bandhan"
+          "Kotak",
+          "Motilal Oswal",
+          "Nippon"
         ],
         "schemes": [
           {
-            "fund": "SBI Flexicap Fund",
-            "amc": "SBI",
-            "netCr": -197
+            "fund": "Kotak Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": -119
           },
           {
-            "fund": "Bandhan Large & Mid Cap Fund",
+            "fund": "Motilal Oswal ELSS Tax Saver Fund",
+            "amc": "Motilal Oswal",
+            "netCr": -33
+          },
+          {
+            "fund": "Bandhan Small Cap Fund",
             "amc": "Bandhan",
-            "netCr": -48
+            "netCr": -32
           },
           {
-            "fund": "ICICI Prudential Large & Mid Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": -42
+            "fund": "Nippon India Vision Large & Mid Cap Fund",
+            "amc": "Nippon",
+            "netCr": -26
           },
           {
-            "fund": "Axis Midcap Fund",
-            "amc": "Axis",
-            "netCr": -21
-          },
-          {
-            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
-            "amc": "PPFAS",
+            "fund": "Aditya Birla Sun Life Midcap Fund",
+            "amc": "Aditya",
             "netCr": -20
           },
           {
-            "fund": "Invesco India Manufacturing Fund",
-            "amc": "Invesco",
-            "netCr": -14
+            "fund": "Axis Focused Fund",
+            "amc": "Axis",
+            "netCr": -12
           },
           {
-            "fund": "UTI Quant Fund",
-            "amc": "UTI",
-            "netCr": -7
-          },
-          {
-            "fund": "ICICI Prudential Rural Opportunities Fund",
-            "amc": "ICICI Pru",
-            "netCr": -6
-          },
-          {
-            "fund": "Pgim India Large and Midcap Fund",
-            "amc": "PGIM",
-            "netCr": -5
-          },
-          {
-            "fund": "ICICI Prudential BSE Midcap Select ETF",
-            "amc": "ICICI Pru",
-            "netCr": -3
-          },
-          {
-            "fund": "ICICI Prudential Transportation and Logistics Fund",
-            "amc": "ICICI Pru",
-            "netCr": -3
-          },
-          {
-            "fund": "JioBlackRock Flexi Cap Fund",
-            "amc": "JioBlackRock",
-            "netCr": -1
-          }
-        ]
-      },
-      {
-        "company": "AU Small Finance Bank Limited",
-        "fincode": "INE949L01017",
-        "netCr": 206,
-        "pctOutstanding": 0.28,
-        "amcs": [
-          "SBI",
-          "Motilal Oswal",
-          "Aditya"
-        ],
-        "schemes": [
-          {
-            "fund": "SBI Flexicap Fund",
-            "amc": "SBI",
-            "netCr": -265
-          },
-          {
-            "fund": "Aditya Birla Sun Life Focused Fund",
+            "fund": "Aditya Birla Sun Life Infrastructure Fund",
             "amc": "Aditya",
-            "netCr": -41
-          },
-          {
-            "fund": "Motilal Oswal Business Cycle Fund",
-            "amc": "Motilal Oswal",
-            "netCr": -41
-          },
-          {
-            "fund": "Motilal Oswal Focused Fund",
-            "amc": "Motilal Oswal",
-            "netCr": -11
-          },
-          {
-            "fund": "UTI Quant Fund",
-            "amc": "UTI",
             "netCr": -4
           },
           {
-            "fund": "UTI - Banking and Financial Services Fund",
-            "amc": "UTI",
+            "fund": "Samco Large & Mid Cap Fund",
+            "amc": "Samco",
+            "netCr": -4
+          },
+          {
+            "fund": "Samco Active Momentum Fund",
+            "amc": "Samco",
+            "netCr": -3
+          },
+          {
+            "fund": "Samco Multi Cap Fund",
+            "amc": "Samco",
             "netCr": -3
           },
           {
             "fund": "Samco Mid Cap Fund",
             "amc": "Samco",
-            "netCr": 0
-          },
-          {
-            "fund": "SBI Quant Fund",
-            "amc": "SBI",
-            "netCr": 0
-          },
-          {
-            "fund": "Sundaram Multi-Factor Fund",
-            "amc": "Sundaram",
-            "netCr": 0
-          },
-          {
-            "fund": "Motilal Oswal Nifty Midcap 150 Momentum 50 ETF",
-            "amc": "Motilal Oswal",
-            "netCr": 0
-          },
-          {
-            "fund": "Baroda BNP Paribas NIFTY Midcap 150 Index Fund",
-            "amc": "Baroda BNP Paribas",
-            "netCr": 0
-          }
-        ]
-      },
-      {
-        "company": "Mphasis Limited",
-        "fincode": "INE356A01018",
-        "netCr": 193,
-        "pctOutstanding": 0.49,
-        "amcs": [
-          "ICICI Pru",
-          "UTI",
-          "Franklin Templeton"
-        ],
-        "schemes": [
-          {
-            "fund": "Franklin India Multi Cap Fund",
-            "amc": "Franklin Templeton",
-            "netCr": -56
-          },
-          {
-            "fund": "ICICI Prudential Innovation Fund",
-            "amc": "ICICI Pru",
-            "netCr": -41
-          },
-          {
-            "fund": "UTI Large & Mid Cap Fund",
-            "amc": "UTI",
-            "netCr": -35
-          },
-          {
-            "fund": "ICICI Prudential Value Fund",
-            "amc": "ICICI Pru",
-            "netCr": -26
-          },
-          {
-            "fund": "UTI - Mid Cap Fund",
-            "amc": "UTI",
-            "netCr": -22
-          },
-          {
-            "fund": "Mahindra Manulife Large & Mid Cap Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": -21
-          },
-          {
-            "fund": "Mahindra Manulife Mid Cap Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": -5
-          },
-          {
-            "fund": "UTI Value Fund",
-            "amc": "UTI",
-            "netCr": -3
-          },
-          {
-            "fund": "ICICI Prudential Quality Fund",
-            "amc": "ICICI Pru",
             "netCr": -1
           },
           {
-            "fund": "Bandhan Business Cycle Fund",
-            "amc": "Bandhan",
-            "netCr": 0
-          },
-          {
-            "fund": "NJ Flexi Cap Fund",
-            "amc": "NJ",
-            "netCr": 0
-          },
-          {
-            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
-            "amc": "Aditya",
+            "fund": "JM Value Fund",
+            "amc": "JM",
             "netCr": 0
           }
         ]
@@ -5108,8 +5440,8 @@
       {
         "company": "Welspun Corp Limited",
         "fincode": "INE191B01025",
-        "netCr": 190,
-        "pctOutstanding": 0.28,
+        "netCr": 185,
+        "pctOutstanding": 0.27,
         "amcs": [
           "Helios",
           "Aditya",
@@ -5179,83 +5511,10 @@
         ]
       },
       {
-        "company": "The Great Eastern Shipping Company Limited",
-        "fincode": "INE017A01032",
-        "netCr": 178,
-        "pctOutstanding": null,
-        "amcs": [
-          "PPFAS",
-          "UTI",
-          "Baroda BNP Paribas"
-        ],
-        "schemes": [
-          {
-            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
-            "amc": "PPFAS",
-            "netCr": -186
-          },
-          {
-            "fund": "Bandhan Flexi Cap Fund",
-            "amc": "Bandhan",
-            "netCr": -38
-          },
-          {
-            "fund": "UTI Value Fund",
-            "amc": "UTI",
-            "netCr": -18
-          },
-          {
-            "fund": "UTI Large & Mid Cap Fund",
-            "amc": "UTI",
-            "netCr": -16
-          },
-          {
-            "fund": "PPFAS Parag Parikh ELSS Tax Saver Fund",
-            "amc": "PPFAS",
-            "netCr": -11
-          },
-          {
-            "fund": "UTI - Dividend Yield Fund",
-            "amc": "UTI",
-            "netCr": -10
-          },
-          {
-            "fund": "Baroda BNP Paribas Small Cap Fund",
-            "amc": "Baroda BNP Paribas",
-            "netCr": -7
-          },
-          {
-            "fund": "Samco Active Momentum Fund",
-            "amc": "Samco",
-            "netCr": -2
-          },
-          {
-            "fund": "Franklin India Multi-Factor Fund",
-            "amc": "Franklin Templeton",
-            "netCr": -2
-          },
-          {
-            "fund": "NJ Flexi Cap Fund",
-            "amc": "NJ",
-            "netCr": 0
-          },
-          {
-            "fund": "JioBlackRock Nifty Smallcap 250 Index Fund",
-            "amc": "JioBlackRock",
-            "netCr": 0
-          },
-          {
-            "fund": "Motilal Oswal Nifty Smallcap 250 ETF",
-            "amc": "Motilal Oswal",
-            "netCr": 0
-          }
-        ]
-      },
-      {
         "company": "APL Apollo Tubes Limited",
         "fincode": "INE702C01027",
-        "netCr": 176,
-        "pctOutstanding": 0.3,
+        "netCr": 182,
+        "pctOutstanding": 0.31,
         "amcs": [
           "Bandhan",
           "UTI",
@@ -5295,7 +5554,7 @@
           {
             "fund": "Sundaram Mid Cap Fund",
             "amc": "Sundaram",
-            "netCr": -8
+            "netCr": -9
           },
           {
             "fund": "ICICI Prudential Conglomerate Fund",
@@ -5308,238 +5567,19 @@
             "netCr": -5
           },
           {
-            "fund": "Invesco India Manufacturing Fund",
-            "amc": "Invesco",
-            "netCr": -2
-          },
-          {
-            "fund": "Sundaram Multi-Factor Fund",
-            "amc": "Sundaram",
-            "netCr": 0
-          },
-          {
-            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
-            "amc": "Aditya",
-            "netCr": 0
-          }
-        ]
-      },
-      {
-        "company": "JSW Infrastructure Ltd",
-        "fincode": "INE880J01026",
-        "netCr": 175,
-        "pctOutstanding": 0.22,
-        "amcs": [
-          "Franklin Templeton",
-          "SBI",
-          "Nippon"
-        ],
-        "schemes": [
-          {
-            "fund": "Franklin India Large Cap Fund",
-            "amc": "Franklin Templeton",
-            "netCr": -78
-          },
-          {
-            "fund": "SBI Dividend Yield Fund",
-            "amc": "SBI",
-            "netCr": -58
-          },
-          {
-            "fund": "Nippon India Retirement Fund - Wealth Creation Scheme",
-            "amc": "Nippon",
-            "netCr": -21
-          },
-          {
-            "fund": "Franklin India Mid Cap Fund",
-            "amc": "Franklin Templeton",
-            "netCr": -18
-          },
-          {
-            "fund": "UTI Value Fund",
-            "amc": "UTI",
-            "netCr": -10
-          },
-          {
-            "fund": "Franklin India Large & Mid Cap Fund",
-            "amc": "Franklin Templeton",
-            "netCr": -10
-          },
-          {
-            "fund": "Franklin Build India Fund",
-            "amc": "Franklin Templeton",
+            "fund": "Kotak Quant Fund",
+            "amc": "Kotak",
             "netCr": -5
           },
           {
-            "fund": "Sundaram Mid Cap Fund",
-            "amc": "Sundaram",
-            "netCr": -4
-          },
-          {
-            "fund": "Bandhan Multi Cap Fund",
-            "amc": "Bandhan",
-            "netCr": -3
-          },
-          {
-            "fund": "Aditya Birla Sun Life Conglomerate Fund",
-            "amc": "Aditya",
+            "fund": "Kotak ESG Exclusionary Strategy Fund",
+            "amc": "Kotak",
             "netCr": -2
           },
           {
-            "fund": "Bandhan Transportation and Logistics Fund",
-            "amc": "Bandhan",
-            "netCr": -1
-          },
-          {
-            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
-            "amc": "Aditya",
-            "netCr": 0
-          }
-        ]
-      },
-      {
-        "company": "National Aluminium Company Limited",
-        "fincode": "INE139A01034",
-        "netCr": 174,
-        "pctOutstanding": 0.29,
-        "amcs": [
-          "Sundaram",
-          "ICICI Pru",
-          "Aditya"
-        ],
-        "schemes": [
-          {
-            "fund": "Sundaram Large and Mid Cap Fund",
-            "amc": "Sundaram",
-            "netCr": -131
-          },
-          {
-            "fund": "ICICI Prudential Large Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": -37
-          },
-          {
-            "fund": "UTI Small Cap Fund",
-            "amc": "UTI",
-            "netCr": -16
-          },
-          {
-            "fund": "Aditya Birla Sun Life Quant Fund",
-            "amc": "Aditya",
-            "netCr": -14
-          },
-          {
-            "fund": "Baroda BNP Paribas Dividend Yield Fund",
-            "amc": "Baroda BNP Paribas",
-            "netCr": -3
-          },
-          {
-            "fund": "Samco Mid Cap Fund",
-            "amc": "Samco",
-            "netCr": -1
-          },
-          {
-            "fund": "Motilal Oswal Nifty Midcap 150 Momentum 50 ETF",
-            "amc": "Motilal Oswal",
-            "netCr": 0
-          },
-          {
-            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
-            "amc": "Aditya",
-            "netCr": 0
-          },
-          {
-            "fund": "JioBlackRock Nifty Midcap 150 Index Fund",
-            "amc": "JioBlackRock",
-            "netCr": 0
-          },
-          {
-            "fund": "Zerodha ELSS Tax Saver Nifty Large Midcap 250 Index Fund",
-            "amc": "Zerodha",
-            "netCr": 0
-          },
-          {
-            "fund": "Bandhan Nifty Midcap 150 Index Fund",
-            "amc": "Bandhan",
-            "netCr": 0
-          },
-          {
-            "fund": "Baroda BNP Paribas NIFTY Midcap 150 Index Fund",
-            "amc": "Baroda BNP Paribas",
-            "netCr": 0
-          }
-        ]
-      },
-      {
-        "company": "Thermax Ltd.",
-        "fincode": "INE152A01029",
-        "netCr": 166,
-        "pctOutstanding": 0.43,
-        "amcs": [
-          "SBI",
-          "Bandhan",
-          "LIC MF"
-        ],
-        "schemes": [
-          {
-            "fund": "SBI Midcap Fund",
-            "amc": "SBI",
-            "netCr": -100
-          },
-          {
-            "fund": "SBI Focused Fund",
-            "amc": "SBI",
-            "netCr": -98
-          },
-          {
-            "fund": "SBI Innovative Opportunities Fund",
-            "amc": "SBI",
-            "netCr": -64
-          },
-          {
-            "fund": "Bandhan Large & Mid Cap Fund",
-            "amc": "Bandhan",
-            "netCr": -34
-          },
-          {
-            "fund": "Lic Mf Mid Cap Fund",
-            "amc": "LIC MF",
-            "netCr": -9
-          },
-          {
-            "fund": "JioBlackRock Flexi Cap Fund",
-            "amc": "JioBlackRock",
-            "netCr": -8
-          },
-          {
-            "fund": "TRUSTMF Mid Cap Fund",
-            "amc": "Trust",
-            "netCr": -3
-          },
-          {
-            "fund": "Samco Multi Cap Fund",
-            "amc": "Samco",
-            "netCr": -3
-          },
-          {
-            "fund": "Motilal Oswal BSE Midcap 150 Momentum 30 Index Fund",
-            "amc": "Motilal Oswal",
-            "netCr": -1
-          },
-          {
-            "fund": "Lic Mf Manufacturing Fund",
-            "amc": "LIC MF",
-            "netCr": 0
-          },
-          {
-            "fund": "Samco Mid Cap Fund",
-            "amc": "Samco",
-            "netCr": 0
-          },
-          {
-            "fund": "Sundaram Multi-Factor Fund",
-            "amc": "Sundaram",
-            "netCr": 0
+            "fund": "Invesco India Manufacturing Fund",
+            "amc": "Invesco",
+            "netCr": -2
           }
         ]
       }
@@ -5550,12 +5590,12 @@
       {
         "company": "National Stock Exchange Of India Ltd",
         "fincode": "INE721I01024",
-        "netCr": 1312,
+        "netCr": 1459,
         "pctOutstanding": null,
         "amcs": [
           "Invesco",
           "Nippon",
-          "Axis"
+          "Kotak"
         ],
         "schemes": [
           {
@@ -5576,7 +5616,12 @@
           {
             "fund": "Franklin India Large Cap Fund",
             "amc": "Franklin Templeton",
-            "netCr": 81
+            "netCr": 82
+          },
+          {
+            "fund": "Kotak Multi Cap Fund",
+            "amc": "Kotak",
+            "netCr": 78
           },
           {
             "fund": "ICICI Prudential Large Cap Fund",
@@ -5612,11 +5657,79 @@
             "fund": "UTI - Large Cap Fund",
             "amc": "UTI",
             "netCr": 41
+          }
+        ]
+      },
+      {
+        "company": "Pine Labs Limited",
+        "fincode": "INE15B701018",
+        "netCr": 984,
+        "pctOutstanding": 5.29,
+        "amcs": [
+          "Kotak",
+          "Franklin Templeton",
+          "Helios"
+        ],
+        "schemes": [
+          {
+            "fund": "Kotak Multi Cap Fund",
+            "amc": "Kotak",
+            "netCr": 408
           },
           {
-            "fund": "Franklin Build India Fund",
+            "fund": "Kotak Large & Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": 322
+          },
+          {
+            "fund": "Franklin India Focused Equity Fund",
             "amc": "Franklin Templeton",
-            "netCr": 31
+            "netCr": 103
+          },
+          {
+            "fund": "Kotak ELSS Tax Saver Fund",
+            "amc": "Kotak",
+            "netCr": 89
+          },
+          {
+            "fund": "Kotak Contra Fund",
+            "amc": "Kotak",
+            "netCr": 47
+          },
+          {
+            "fund": "Helios Flexi Cap Fund",
+            "amc": "Helios",
+            "netCr": 38
+          },
+          {
+            "fund": "Helios Mid Cap Fund",
+            "amc": "Helios",
+            "netCr": 25
+          },
+          {
+            "fund": "Kotak Banking & Financial Services Fund",
+            "amc": "Kotak",
+            "netCr": 24
+          },
+          {
+            "fund": "Helios Small Cap Fund",
+            "amc": "Helios",
+            "netCr": 23
+          },
+          {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": 21
+          },
+          {
+            "fund": "JM Small Cap Fund",
+            "amc": "JM",
+            "netCr": 4
+          },
+          {
+            "fund": "JM Value Fund",
+            "amc": "JM",
+            "netCr": 2
           }
         ]
       },
@@ -5674,6 +5787,11 @@
           {
             "fund": "Bandhan Nifty Smallcap 250 Index Fund",
             "amc": "Bandhan",
+            "netCr": 0
+          },
+          {
+            "fund": "Kotak Nifty Smallcap 250 Index Fund",
+            "amc": "Kotak",
             "netCr": 0
           },
           {
@@ -5762,6 +5880,85 @@
         ]
       },
       {
+        "company": "Avalon Technologies Limited",
+        "fincode": "INE0LCL01028",
+        "netCr": 524,
+        "pctOutstanding": 3.57,
+        "amcs": [
+          "Kotak",
+          "Trust"
+        ],
+        "schemes": [
+          {
+            "fund": "Kotak Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": 529
+          },
+          {
+            "fund": "Kotak Special Opportunities Fund",
+            "amc": "Kotak",
+            "netCr": 19
+          },
+          {
+            "fund": "TRUSTMF Small Cap Fund",
+            "amc": "Trust",
+            "netCr": 10
+          },
+          {
+            "fund": "TRUSTMF Multi Cap Fund",
+            "amc": "Trust",
+            "netCr": 2
+          },
+          {
+            "fund": "Samco Small Cap Fund",
+            "amc": "Samco",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "AXISCADES Technologies Limited",
+        "fincode": "INE555B01013",
+        "netCr": 451,
+        "pctOutstanding": null,
+        "amcs": [
+          "Kotak",
+          "Abakkus"
+        ],
+        "schemes": [
+          {
+            "fund": "Kotak Multi Cap Fund",
+            "amc": "Kotak",
+            "netCr": 198
+          },
+          {
+            "fund": "Kotak ELSS Tax Saver Fund",
+            "amc": "Kotak",
+            "netCr": 74
+          },
+          {
+            "fund": "Kotak MNC Fund",
+            "amc": "Kotak",
+            "netCr": 54
+          },
+          {
+            "fund": "Kotak Manufacture In India Fund",
+            "amc": "Kotak",
+            "netCr": 49
+          },
+          {
+            "fund": "Abakkus Small Cap Fund",
+            "amc": "Abakkus",
+            "netCr": 41
+          },
+          {
+            "fund": "Kotak Contra Fund",
+            "amc": "Kotak",
+            "netCr": 35
+          }
+        ]
+      },
+      {
         "company": "Westlife Development Ltd.",
         "fincode": "INE274F01020",
         "netCr": 390,
@@ -5780,6 +5977,79 @@
             "fund": "Nippon India Multi Cap Fund",
             "amc": "Nippon",
             "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Rentomojo Limited",
+        "fincode": "INE08T701025",
+        "netCr": 375,
+        "pctOutstanding": null,
+        "amcs": [
+          "Helios",
+          "Invesco",
+          "Kotak"
+        ],
+        "schemes": [
+          {
+            "fund": "Invesco India Flexi Cap Fund",
+            "amc": "Invesco",
+            "netCr": 58
+          },
+          {
+            "fund": "Helios Flexi Cap Fund",
+            "amc": "Helios",
+            "netCr": 45
+          },
+          {
+            "fund": "Kotak ELSS Tax Saver Fund",
+            "amc": "Kotak",
+            "netCr": 35
+          },
+          {
+            "fund": "ICICI Prudential Quality Fund",
+            "amc": "ICICI Pru",
+            "netCr": 31
+          },
+          {
+            "fund": "Motilal Oswal Small Cap Fund",
+            "amc": "Motilal Oswal",
+            "netCr": 31
+          },
+          {
+            "fund": "Bandhan Innovation Fund",
+            "amc": "Bandhan",
+            "netCr": 30
+          },
+          {
+            "fund": "Helios Small Cap Fund",
+            "amc": "Helios",
+            "netCr": 27
+          },
+          {
+            "fund": "Helios Mid Cap Fund",
+            "amc": "Helios",
+            "netCr": 22
+          },
+          {
+            "fund": "Pgim India Small Cap Fund",
+            "amc": "PGIM",
+            "netCr": 17
+          },
+          {
+            "fund": "Invesco India ELSS Tax Saver Fund",
+            "amc": "Invesco",
+            "netCr": 16
+          },
+          {
+            "fund": "Motilal Oswal Large Cap Fund",
+            "amc": "Motilal Oswal",
+            "netCr": 15
+          },
+          {
+            "fund": "ITI Flexi Cap Fund",
+            "amc": "ITI",
+            "netCr": 13
           }
         ]
       },
@@ -5857,75 +6127,28 @@
         ]
       },
       {
-        "company": "Rentomojo Limited",
-        "fincode": "INE08T701025",
-        "netCr": 323,
-        "pctOutstanding": null,
+        "company": "Molbio Diagnostics Limited",
+        "fincode": "INE869T01028",
+        "netCr": 342,
+        "pctOutstanding": 2.31,
         "amcs": [
-          "Helios",
-          "Invesco",
-          "Motilal Oswal"
+          "Kotak"
         ],
         "schemes": [
           {
-            "fund": "Invesco India Flexi Cap Fund",
-            "amc": "Invesco",
-            "netCr": 58
+            "fund": "Kotak Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": 353
           },
           {
-            "fund": "Helios Flexi Cap Fund",
-            "amc": "Helios",
-            "netCr": 45
+            "fund": "Kotak Focused Fund",
+            "amc": "Kotak",
+            "netCr": 8
           },
           {
-            "fund": "ICICI Prudential Quality Fund",
-            "amc": "ICICI Pru",
-            "netCr": 31
-          },
-          {
-            "fund": "Motilal Oswal Small Cap Fund",
-            "amc": "Motilal Oswal",
-            "netCr": 31
-          },
-          {
-            "fund": "Bandhan Innovation Fund",
-            "amc": "Bandhan",
-            "netCr": 30
-          },
-          {
-            "fund": "Helios Small Cap Fund",
-            "amc": "Helios",
-            "netCr": 27
-          },
-          {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 22
-          },
-          {
-            "fund": "Pgim India Small Cap Fund",
-            "amc": "PGIM",
-            "netCr": 17
-          },
-          {
-            "fund": "Invesco India ELSS Tax Saver Fund",
-            "amc": "Invesco",
-            "netCr": 16
-          },
-          {
-            "fund": "Motilal Oswal Large Cap Fund",
-            "amc": "Motilal Oswal",
-            "netCr": 15
-          },
-          {
-            "fund": "ITI Flexi Cap Fund",
-            "amc": "ITI",
-            "netCr": 13
-          },
-          {
-            "fund": "Invesco India Consumption Fund",
-            "amc": "Invesco",
-            "netCr": 10
+            "fund": "Kotak Large Cap Fund",
+            "amc": "Kotak",
+            "netCr": 6
           }
         ]
       },
@@ -6083,6 +6306,54 @@
         ]
       },
       {
+        "company": "Hero Motors Limited",
+        "fincode": "INE012G01022",
+        "netCr": 239,
+        "pctOutstanding": null,
+        "amcs": [
+          "ICICI Pru",
+          "JM",
+          "ITI"
+        ],
+        "schemes": [
+          {
+            "fund": "ICICI Prudential Small Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": 132
+          },
+          {
+            "fund": "JM Flexi cap Fund",
+            "amc": "JM",
+            "netCr": 44
+          },
+          {
+            "fund": "Kotak MNC Fund",
+            "amc": "Kotak",
+            "netCr": 21
+          },
+          {
+            "fund": "ITI Flexi Cap Fund",
+            "amc": "ITI",
+            "netCr": 13
+          },
+          {
+            "fund": "ITI Mid Cap Fund",
+            "amc": "ITI",
+            "netCr": 13
+          },
+          {
+            "fund": "JM Small Cap Fund",
+            "amc": "JM",
+            "netCr": 9
+          },
+          {
+            "fund": "JM Value Fund",
+            "amc": "JM",
+            "netCr": 7
+          }
+        ]
+      },
+      {
         "company": "Allied Blenders And Distillers Limited",
         "fincode": "INE552Z01027",
         "netCr": 237,
@@ -6119,52 +6390,14 @@
             "netCr": 0
           },
           {
+            "fund": "Kotak Nifty Smallcap 250 Index Fund",
+            "amc": "Kotak",
+            "netCr": 0
+          },
+          {
             "fund": "ICICI Prudential Nifty Smallcap 250 ETF",
             "amc": "ICICI Pru",
             "netCr": 0
-          }
-        ]
-      },
-      {
-        "company": "Hero Motors Limited",
-        "fincode": "INE012G01022",
-        "netCr": 217,
-        "pctOutstanding": null,
-        "amcs": [
-          "ICICI Pru",
-          "JM",
-          "ITI"
-        ],
-        "schemes": [
-          {
-            "fund": "ICICI Prudential Small Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": 132
-          },
-          {
-            "fund": "JM Flexi cap Fund",
-            "amc": "JM",
-            "netCr": 44
-          },
-          {
-            "fund": "ITI Flexi Cap Fund",
-            "amc": "ITI",
-            "netCr": 13
-          },
-          {
-            "fund": "ITI Mid Cap Fund",
-            "amc": "ITI",
-            "netCr": 13
-          },
-          {
-            "fund": "JM Small Cap Fund",
-            "amc": "JM",
-            "netCr": 9
-          },
-          {
-            "fund": "JM Value Fund",
-            "amc": "JM",
-            "netCr": 7
           }
         ]
       },
@@ -6277,6 +6510,11 @@
             "netCr": 0
           },
           {
+            "fund": "Kotak Nifty Smallcap 250 Index Fund",
+            "amc": "Kotak",
+            "netCr": 0
+          },
+          {
             "fund": "ICICI Prudential Nifty Smallcap 250 ETF",
             "amc": "ICICI Pru",
             "netCr": 0
@@ -6350,8 +6588,8 @@
             "netCr": 0
           },
           {
-            "fund": "ICICI Prudential Nifty Smallcap 250 ETF",
-            "amc": "ICICI Pru",
+            "fund": "Kotak Nifty Smallcap 250 Index Fund",
+            "amc": "Kotak",
             "netCr": 0
           }
         ]
@@ -6469,138 +6707,6 @@
             "fund": "Samco Multi Cap Fund",
             "amc": "Samco",
             "netCr": 3
-          }
-        ]
-      },
-      {
-        "company": "Lalithaa Jewellery Mart Ltd",
-        "fincode": "INE0K9O01026",
-        "netCr": 127,
-        "pctOutstanding": 0.62,
-        "amcs": [
-          "Motilal Oswal",
-          "Helios"
-        ],
-        "schemes": [
-          {
-            "fund": "Motilal Oswal Flexicap Fund",
-            "amc": "Motilal Oswal",
-            "netCr": 320
-          },
-          {
-            "fund": "Helios Flexi Cap Fund",
-            "amc": "Helios",
-            "netCr": 47
-          },
-          {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 5
-          },
-          {
-            "fund": "Helios Small Cap Fund",
-            "amc": "Helios",
-            "netCr": 4
-          }
-        ]
-      },
-      {
-        "company": "Viyash Scientific Limited",
-        "fincode": "INE807F01027",
-        "netCr": 115,
-        "pctOutstanding": 1.2,
-        "amcs": [
-          "Bandhan"
-        ],
-        "schemes": [
-          {
-            "fund": "Bandhan Large & Mid Cap Fund",
-            "amc": "Bandhan",
-            "netCr": 56
-          },
-          {
-            "fund": "Bandhan Small Cap Fund",
-            "amc": "Bandhan",
-            "netCr": 47
-          },
-          {
-            "fund": "Bandhan Midcap Fund",
-            "amc": "Bandhan",
-            "netCr": 12
-          }
-        ]
-      },
-      {
-        "company": "Purple Style Labs Ltd.",
-        "fincode": "INE0I1B01016",
-        "netCr": 112,
-        "pctOutstanding": null,
-        "amcs": [
-          "ICICI Pru"
-        ],
-        "schemes": [
-          {
-            "fund": "ICICI Prudential Flexi Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": 100
-          },
-          {
-            "fund": "ICICI Prudential Small Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": 12
-          }
-        ]
-      },
-      {
-        "company": "Five-Star Business Finance Ltd",
-        "fincode": "INE128S01021",
-        "netCr": 112,
-        "pctOutstanding": 0.77,
-        "amcs": [
-          "Franklin Templeton",
-          "JioBlackRock",
-          "Bandhan"
-        ],
-        "schemes": [
-          {
-            "fund": "Franklin India Small Cap Fund",
-            "amc": "Franklin Templeton",
-            "netCr": 94
-          },
-          {
-            "fund": "JioBlackRock Flexi Cap Fund",
-            "amc": "JioBlackRock",
-            "netCr": 8
-          },
-          {
-            "fund": "Bandhan Small Cap Fund",
-            "amc": "Bandhan",
-            "netCr": 7
-          },
-          {
-            "fund": "Motilal Oswal Small Cap Fund",
-            "amc": "Motilal Oswal",
-            "netCr": 5
-          },
-          {
-            "fund": "Baroda BNP Paribas Small Cap Fund",
-            "amc": "Baroda BNP Paribas",
-            "netCr": 3
-          },
-          {
-            "fund": "JM Small Cap Fund",
-            "amc": "JM",
-            "netCr": 0
-          },
-          {
-            "fund": "Bandhan Nifty Smallcap 250 Index Fund",
-            "amc": "Bandhan",
-            "netCr": 0
-          },
-          {
-            "fund": "ICICI Prudential Nifty Smallcap 250 ETF",
-            "amc": "ICICI Pru",
-            "netCr": 0
           }
         ]
       }
@@ -6738,6 +6844,69 @@
         ]
       },
       {
+        "company": "Aptus Value Housing Finance India Limited",
+        "fincode": "INE852O01025",
+        "netCr": 190,
+        "pctOutstanding": null,
+        "amcs": [
+          "SBI",
+          "Kotak",
+          "Axis"
+        ],
+        "schemes": [
+          {
+            "fund": "SBI Flexicap Fund",
+            "amc": "SBI",
+            "netCr": -132
+          },
+          {
+            "fund": "Kotak Contra Fund",
+            "amc": "Kotak",
+            "netCr": -40
+          },
+          {
+            "fund": "Kotak ELSS Tax Saver Fund",
+            "amc": "Kotak",
+            "netCr": -27
+          },
+          {
+            "fund": "Axis Small Cap Fund",
+            "amc": "Axis",
+            "netCr": -27
+          },
+          {
+            "fund": "Kotak Banking & Financial Services Fund",
+            "amc": "Kotak",
+            "netCr": -20
+          },
+          {
+            "fund": "Zerodha Nifty Smallcap 100 ETF",
+            "amc": "Zerodha",
+            "netCr": -1
+          },
+          {
+            "fund": "NJ Flexi Cap Fund",
+            "amc": "NJ",
+            "netCr": 0
+          },
+          {
+            "fund": "JM Value Fund",
+            "amc": "JM",
+            "netCr": 0
+          },
+          {
+            "fund": "JioBlackRock Nifty Smallcap 250 Index Fund",
+            "amc": "JioBlackRock",
+            "netCr": 0
+          },
+          {
+            "fund": "Motilal Oswal Nifty Smallcap 250 ETF",
+            "amc": "Motilal Oswal",
+            "netCr": 0
+          }
+        ]
+      },
+      {
         "company": "SKF India (Industrial) Ltd",
         "fincode": "INE2J8701016",
         "netCr": 151,
@@ -6788,8 +6957,8 @@
       {
         "company": "Manipal Health Enterprises Ltd",
         "fincode": "INE459N01021",
-        "netCr": 130,
-        "pctOutstanding": 0.14,
+        "netCr": 142,
+        "pctOutstanding": 0.16,
         "amcs": [
           "ICICI Pru",
           "Motilal Oswal",
@@ -6815,6 +6984,11 @@
             "fund": "ICICI Prudential Active Momentum Fund",
             "amc": "ICICI Pru",
             "netCr": -14
+          },
+          {
+            "fund": "Kotak Large Cap Fund",
+            "amc": "Kotak",
+            "netCr": -12
           },
           {
             "fund": "ICICI Prudential Bharat Consumption Fund",
@@ -6856,8 +7030,8 @@
       {
         "company": "Acme Solar Holdings Ltd",
         "fincode": "INE622W01025",
-        "netCr": 125,
-        "pctOutstanding": 0.42,
+        "netCr": 118,
+        "pctOutstanding": 0.39,
         "amcs": [
           "SBI",
           "Aditya",
@@ -6867,7 +7041,7 @@
           {
             "fund": "SBI Large and Midcap Fund",
             "amc": "SBI",
-            "netCr": -118
+            "netCr": -119
           },
           {
             "fund": "Aditya Birla Sun Life Infrastructure Fund",
@@ -6902,10 +7076,83 @@
         ]
       },
       {
+        "company": "PVR INOX Limited",
+        "fincode": "INE191H01014",
+        "netCr": 106,
+        "pctOutstanding": null,
+        "amcs": [
+          "ICICI Pru",
+          "Nippon",
+          "JioBlackRock"
+        ],
+        "schemes": [
+          {
+            "fund": "ICICI Prudential ELSS – Tax Saver Fund",
+            "amc": "ICICI Pru",
+            "netCr": -29
+          },
+          {
+            "fund": "JioBlackRock Flexi Cap Fund",
+            "amc": "JioBlackRock",
+            "netCr": -15
+          },
+          {
+            "fund": "Nippon India Small Cap Fund",
+            "amc": "Nippon",
+            "netCr": -11
+          },
+          {
+            "fund": "Nippon India Multi Cap Fund",
+            "amc": "Nippon",
+            "netCr": -11
+          },
+          {
+            "fund": "ICICI Prudential Small Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": -10
+          },
+          {
+            "fund": "UTI Multi Cap Fund",
+            "amc": "UTI",
+            "netCr": -10
+          },
+          {
+            "fund": "Kotak Multi Cap Fund",
+            "amc": "Kotak",
+            "netCr": -6
+          },
+          {
+            "fund": "SBI Smallcap Fund",
+            "amc": "SBI",
+            "netCr": -5
+          },
+          {
+            "fund": "Nippon India Large Cap Fund",
+            "amc": "Nippon",
+            "netCr": -3
+          },
+          {
+            "fund": "Kotak Small Cap Fund",
+            "amc": "Kotak",
+            "netCr": -3
+          },
+          {
+            "fund": "Nippon India Focused Fund",
+            "amc": "Nippon",
+            "netCr": -3
+          },
+          {
+            "fund": "UTI Value Fund",
+            "amc": "UTI",
+            "netCr": -3
+          }
+        ]
+      },
+      {
         "company": "Syrma SGS Technology Limited",
         "fincode": "INE0DYJ01015",
-        "netCr": 106,
-        "pctOutstanding": 0.33,
+        "netCr": 101,
+        "pctOutstanding": 0.31,
         "amcs": [
           "Franklin Templeton",
           "Bandhan",
@@ -6960,54 +7207,6 @@
           {
             "fund": "SBI Nifty Small Cap 250 ETF",
             "amc": "SBI",
-            "netCr": 0
-          }
-        ]
-      },
-      {
-        "company": "Aptus Value Housing Finance India Limited",
-        "fincode": "INE852O01025",
-        "netCr": 103,
-        "pctOutstanding": null,
-        "amcs": [
-          "SBI",
-          "Axis",
-          "Zerodha"
-        ],
-        "schemes": [
-          {
-            "fund": "SBI Flexicap Fund",
-            "amc": "SBI",
-            "netCr": -131
-          },
-          {
-            "fund": "Axis Small Cap Fund",
-            "amc": "Axis",
-            "netCr": -27
-          },
-          {
-            "fund": "Zerodha Nifty Smallcap 100 ETF",
-            "amc": "Zerodha",
-            "netCr": -1
-          },
-          {
-            "fund": "NJ Flexi Cap Fund",
-            "amc": "NJ",
-            "netCr": 0
-          },
-          {
-            "fund": "JM Value Fund",
-            "amc": "JM",
-            "netCr": 0
-          },
-          {
-            "fund": "JioBlackRock Nifty Smallcap 250 Index Fund",
-            "amc": "JioBlackRock",
-            "netCr": 0
-          },
-          {
-            "fund": "Motilal Oswal Nifty Smallcap 250 ETF",
-            "amc": "Motilal Oswal",
             "netCr": 0
           }
         ]
@@ -7071,87 +7270,14 @@
         ]
       },
       {
-        "company": "PVR INOX Limited",
-        "fincode": "INE191H01014",
-        "netCr": 93,
-        "pctOutstanding": null,
-        "amcs": [
-          "ICICI Pru",
-          "Nippon",
-          "JioBlackRock"
-        ],
-        "schemes": [
-          {
-            "fund": "ICICI Prudential ELSS – Tax Saver Fund",
-            "amc": "ICICI Pru",
-            "netCr": -29
-          },
-          {
-            "fund": "JioBlackRock Flexi Cap Fund",
-            "amc": "JioBlackRock",
-            "netCr": -15
-          },
-          {
-            "fund": "Nippon India Small Cap Fund",
-            "amc": "Nippon",
-            "netCr": -11
-          },
-          {
-            "fund": "Nippon India Multi Cap Fund",
-            "amc": "Nippon",
-            "netCr": -11
-          },
-          {
-            "fund": "ICICI Prudential Small Cap Fund",
-            "amc": "ICICI Pru",
-            "netCr": -10
-          },
-          {
-            "fund": "UTI Multi Cap Fund",
-            "amc": "UTI",
-            "netCr": -10
-          },
-          {
-            "fund": "SBI Smallcap Fund",
-            "amc": "SBI",
-            "netCr": -5
-          },
-          {
-            "fund": "Nippon India Large Cap Fund",
-            "amc": "Nippon",
-            "netCr": -3
-          },
-          {
-            "fund": "Nippon India Focused Fund",
-            "amc": "Nippon",
-            "netCr": -3
-          },
-          {
-            "fund": "UTI Value Fund",
-            "amc": "UTI",
-            "netCr": -3
-          },
-          {
-            "fund": "Axis ESG Integration Strategy Fund",
-            "amc": "Axis",
-            "netCr": -1
-          },
-          {
-            "fund": "Franklin India Technology Fund",
-            "amc": "Franklin Templeton",
-            "netCr": -1
-          }
-        ]
-      },
-      {
         "company": "Graphite India Limited",
         "fincode": "INE371A01025",
-        "netCr": 91,
+        "netCr": 93,
         "pctOutstanding": null,
         "amcs": [
           "SBI",
           "Bandhan",
-          "JioBlackRock"
+          "Kotak"
         ],
         "schemes": [
           {
@@ -7168,6 +7294,11 @@
             "fund": "Bandhan Value Fund",
             "amc": "Bandhan",
             "netCr": -11
+          },
+          {
+            "fund": "Kotak Services Fund",
+            "amc": "Kotak",
+            "netCr": -1
           },
           {
             "fund": "JioBlackRock Nifty Smallcap 250 Index Fund",
@@ -7263,79 +7394,6 @@
             "fund": "SBI Nifty Small Cap 250 ETF",
             "amc": "SBI",
             "netCr": 0
-          }
-        ]
-      },
-      {
-        "company": "Indo-MIM Limited",
-        "fincode": "INE084101034",
-        "netCr": 86,
-        "pctOutstanding": 0.15,
-        "amcs": [
-          "SBI",
-          "ICICI Pru",
-          "Franklin Templeton"
-        ],
-        "schemes": [
-          {
-            "fund": "ICICI Prudential Manufacturing Fund",
-            "amc": "ICICI Pru",
-            "netCr": -47
-          },
-          {
-            "fund": "SBI Midcap Fund",
-            "amc": "SBI",
-            "netCr": -37
-          },
-          {
-            "fund": "Franklin India Mid Cap Fund",
-            "amc": "Franklin Templeton",
-            "netCr": -29
-          },
-          {
-            "fund": "SBI Infrastructure Fund",
-            "amc": "SBI",
-            "netCr": -23
-          },
-          {
-            "fund": "UTI Multi Cap Fund",
-            "amc": "UTI",
-            "netCr": -14
-          },
-          {
-            "fund": "Franklin Build India Fund",
-            "amc": "Franklin Templeton",
-            "netCr": -12
-          },
-          {
-            "fund": "UTI - MNC Fund",
-            "amc": "UTI",
-            "netCr": -12
-          },
-          {
-            "fund": "Invesco India PSU Equity Fund",
-            "amc": "Invesco",
-            "netCr": -11
-          },
-          {
-            "fund": "Invesco India Infrastructure Fund",
-            "amc": "Invesco",
-            "netCr": -6
-          },
-          {
-            "fund": "Aditya Birla Sun Life Infrastructure Fund",
-            "amc": "Aditya",
-            "netCr": -6
-          },
-          {
-            "fund": "Abakkus Small Cap Fund",
-            "amc": "Abakkus",
-            "netCr": -6
-          },
-          {
-            "fund": "SBI Smallcap Fund",
-            "amc": "SBI",
-            "netCr": -3
           }
         ]
       },
@@ -7465,7 +7523,7 @@
       {
         "company": "Sagility Limited",
         "fincode": "INE0W2G01015",
-        "netCr": 71,
+        "netCr": 72,
         "pctOutstanding": 0.38,
         "amcs": [
           "Baroda BNP Paribas",
@@ -7565,7 +7623,7 @@
           {
             "fund": "Franklin India Small Cap Fund",
             "amc": "Franklin Templeton",
-            "netCr": -19
+            "netCr": -20
           },
           {
             "fund": "Bandhan Flexi Cap Fund",
@@ -7671,6 +7729,44 @@
             "netCr": 0
           }
         ]
+      },
+      {
+        "company": "Inox India Limited",
+        "fincode": "INE616N01034",
+        "netCr": 63,
+        "pctOutstanding": null,
+        "amcs": [
+          "ICICI Pru",
+          "UTI",
+          "Samco"
+        ],
+        "schemes": [
+          {
+            "fund": "ICICI Prudential Energy Opportunities Fund",
+            "amc": "ICICI Pru",
+            "netCr": -52
+          },
+          {
+            "fund": "ICICI Prudential Infrastructure Fund",
+            "amc": "ICICI Pru",
+            "netCr": -16
+          },
+          {
+            "fund": "UTI Small Cap Fund",
+            "amc": "UTI",
+            "netCr": -13
+          },
+          {
+            "fund": "Samco Active Momentum Fund",
+            "amc": "Samco",
+            "netCr": -3
+          },
+          {
+            "fund": "UTI - Infrastructure Fund",
+            "amc": "UTI",
+            "netCr": -2
+          }
+        ]
       }
     ]
   },
@@ -7681,48 +7777,48 @@
       {
         "sector": "Pharmaceuticals & Biotechnology",
         "direction": "up",
-        "pctCur": 6.53,
-        "pctPrev": 6.32,
-        "changePp": 0.21,
+        "pctCur": 6.64,
+        "pctPrev": 6.38,
+        "changePp": 0.25,
         "stocks": [
           {
             "company": "Gland Pharma Limited",
-            "netCr": 874,
+            "netCr": 1913,
             "amcs": [
+              "Kotak",
               "Axis",
-              "ICICI Pru",
-              "Trust"
+              "ICICI Pru"
             ],
             "schemes": [
               {
+                "fund": "Kotak Mid Cap Fund",
+                "amc": "Kotak",
+                "netCr": 1028,
+                "valueChgCr": 1052
+              },
+              {
                 "fund": "Axis Midcap Fund",
                 "amc": "Axis",
-                "netCr": 220,
+                "netCr": 221,
                 "valueChgCr": 209
               },
               {
                 "fund": "Axis ELSS Tax Saver Fund",
                 "amc": "Axis",
-                "netCr": 139,
+                "netCr": 140,
                 "valueChgCr": 142
               },
               {
                 "fund": "Axis Large & Mid Cap Fund",
                 "amc": "Axis",
-                "netCr": 139,
+                "netCr": 140,
                 "valueChgCr": 132
-              },
-              {
-                "fund": "Axis Small Cap Fund",
-                "amc": "Axis",
-                "netCr": 94,
-                "valueChgCr": 88
               }
             ]
           },
           {
             "company": "Cipla Limited",
-            "netCr": 505,
+            "netCr": 506,
             "amcs": [
               "ICICI Pru",
               "Aditya",
@@ -7732,13 +7828,13 @@
               {
                 "fund": "ICICI Prudential Large Cap Fund",
                 "amc": "ICICI Pru",
-                "netCr": 248,
+                "netCr": 249,
                 "valueChgCr": 253
               },
               {
                 "fund": "Aditya Birla Sun Life Flexi Cap Fund",
                 "amc": "Aditya",
-                "netCr": 178,
+                "netCr": 179,
                 "valueChgCr": 186
               },
               {
@@ -7757,7 +7853,7 @@
           },
           {
             "company": "Dr. Reddy's Laboratories Limited",
-            "netCr": 420,
+            "netCr": 412,
             "amcs": [
               "UTI",
               "Bandhan",
@@ -7792,7 +7888,7 @@
           },
           {
             "company": "Biocon Ltd.",
-            "netCr": 300,
+            "netCr": 298,
             "amcs": [
               "Nippon",
               "Aditya",
@@ -7802,7 +7898,7 @@
               {
                 "fund": "Nippon India Focused Fund",
                 "amc": "Nippon",
-                "netCr": 121,
+                "netCr": 122,
                 "valueChgCr": 125
               },
               {
@@ -7820,7 +7916,7 @@
               {
                 "fund": "ICICI Prudential ELSS – Tax Saver Fund",
                 "amc": "ICICI Pru",
-                "netCr": 27,
+                "netCr": 28,
                 "valueChgCr": 25
               }
             ]
@@ -7862,21 +7958,27 @@
         ],
         "schemes": [
           {
+            "fund": "Kotak Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": 1028,
+            "valueChgCr": 935
+          },
+          {
             "fund": "Bandhan Large & Mid Cap Fund",
             "amc": "Bandhan",
-            "netCr": 353,
+            "netCr": 358,
             "valueChgCr": 225
           },
           {
             "fund": "Axis Midcap Fund",
             "amc": "Axis",
-            "netCr": 253,
+            "netCr": 254,
             "valueChgCr": 150
           },
           {
             "fund": "Motilal Oswal Large and Midcap Fund",
             "amc": "Motilal Oswal",
-            "netCr": 221,
+            "netCr": 222,
             "valueChgCr": 219
           },
           {
@@ -7884,51 +7986,72 @@
             "amc": "SBI",
             "netCr": 178,
             "valueChgCr": 146
-          },
-          {
-            "fund": "Axis Large & Mid Cap Fund",
-            "amc": "Axis",
-            "netCr": 160,
-            "valueChgCr": 107
           }
         ]
       },
       {
-        "sector": "Realty",
+        "sector": "Industrial Manufacturing",
         "direction": "up",
-        "pctCur": 1.86,
-        "pctPrev": 1.74,
-        "changePp": 0.12,
+        "pctCur": 1.02,
+        "pctPrev": 0.86,
+        "changePp": 0.15,
         "stocks": [
           {
-            "company": "DLF Limited",
-            "netCr": 2088,
+            "company": "Aditya Infotech Limited",
+            "netCr": 759,
             "amcs": [
-              "PPFAS",
-              "Franklin Templeton",
+              "Kotak",
+              "Axis",
+              "ICICI Pru"
+            ],
+            "schemes": [
+              {
+                "fund": "Kotak Mid Cap Fund",
+                "amc": "Kotak",
+                "netCr": 219,
+                "valueChgCr": 224
+              },
+              {
+                "fund": "Invesco India Focused Fund",
+                "amc": "Invesco",
+                "netCr": 107,
+                "valueChgCr": 108
+              },
+              {
+                "fund": "Axis Midcap Fund",
+                "amc": "Axis",
+                "netCr": 55,
+                "valueChgCr": 52
+              },
+              {
+                "fund": "Axis Small Cap Fund",
+                "amc": "Axis",
+                "netCr": 48,
+                "valueChgCr": 56
+              }
+            ]
+          },
+          {
+            "company": "Dynamatic Technologies Ltd.",
+            "netCr": 70,
+            "amcs": [
               "Aditya"
             ],
             "schemes": [
               {
-                "fund": "PPFAS Parag Parikh Flexi Cap Fund",
-                "amc": "PPFAS",
-                "netCr": 2321,
-                "valueChgCr": 2187
+                "fund": "Aditya Birla Sun Life Digital India Fund",
+                "amc": "Aditya",
+                "netCr": 31,
+                "valueChgCr": 29
               },
               {
-                "fund": "Franklin India Large Cap Fund",
-                "amc": "Franklin Templeton",
-                "netCr": 56,
-                "valueChgCr": 63
+                "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
+                "amc": "Aditya",
+                "netCr": 22,
+                "valueChgCr": 23
               },
               {
-                "fund": "Templeton India Value Fund",
-                "amc": "Franklin Templeton",
-                "netCr": 18,
-                "valueChgCr": 19
-              },
-              {
-                "fund": "Aditya Birla Sun Life Value Fund",
+                "fund": "Aditya Birla Sun Life Infrastructure Fund",
                 "amc": "Aditya",
                 "netCr": 17,
                 "valueChgCr": 18
@@ -7936,176 +8059,120 @@
             ]
           },
           {
-            "company": "Elevate Campuses Ltd.",
-            "netCr": 301,
+            "company": "Spectrum Electrical Industries Ltd",
+            "netCr": 51,
             "amcs": [
-              "SBI",
-              "Bandhan",
-              "PGIM"
+              "Motilal Oswal"
             ],
             "schemes": [
               {
-                "fund": "SBI MultiCap Fund",
-                "amc": "SBI",
-                "netCr": 90,
-                "valueChgCr": 95
+                "fund": "Motilal Oswal Focused Fund",
+                "amc": "Motilal Oswal",
+                "netCr": 48,
+                "valueChgCr": 48
               },
               {
-                "fund": "Bandhan Small Cap Fund",
-                "amc": "Bandhan",
-                "netCr": 78,
-                "valueChgCr": 72
-              },
-              {
-                "fund": "Sbi Retirement Benefit Fund - Aggressive Plan",
-                "amc": "SBI",
-                "netCr": 52,
-                "valueChgCr": 53
-              },
-              {
-                "fund": "SBI Infrastructure Fund",
-                "amc": "SBI",
-                "netCr": 30,
-                "valueChgCr": 30
+                "fund": "Motilal Oswal Manufacturing Fund",
+                "amc": "Motilal Oswal",
+                "netCr": 2,
+                "valueChgCr": 3
               }
             ]
           },
           {
-            "company": "Prestige Estates Projects Limited",
-            "netCr": 228,
+            "company": "Praj Industries Ltd.",
+            "netCr": 41,
             "amcs": [
-              "Invesco",
-              "Bandhan",
-              "UTI"
-            ],
-            "schemes": [
-              {
-                "fund": "Invesco India Small cap Fund",
-                "amc": "Invesco",
-                "netCr": 108,
-                "valueChgCr": 89
-              },
-              {
-                "fund": "Invesco India Mid cap Fund",
-                "amc": "Invesco",
-                "netCr": 102,
-                "valueChgCr": 6
-              },
-              {
-                "fund": "Invesco India Large & Mid Cap Fund",
-                "amc": "Invesco",
-                "netCr": 33,
-                "valueChgCr": -24
-              },
-              {
-                "fund": "Bandhan Small Cap Fund",
-                "amc": "Bandhan",
-                "netCr": 17,
-                "valueChgCr": 0
-              }
-            ]
-          },
-          {
-            "company": "Knowledge Realty Trust",
-            "netCr": 172,
-            "amcs": [
-              "Bandhan",
-              "UTI"
-            ],
-            "schemes": [
-              {
-                "fund": "Bandhan Small Cap Fund",
-                "amc": "Bandhan",
-                "netCr": 157,
-                "valueChgCr": 159
-              },
-              {
-                "fund": "UTI Multi Cap Fund",
-                "amc": "UTI",
-                "netCr": 15,
-                "valueChgCr": 17
-              }
-            ]
-          },
-          {
-            "company": "Aditya Birla Real Estate Limited",
-            "netCr": 37,
-            "amcs": [
-              "Bandhan",
-              "Motilal Oswal",
+              "ICICI Pru",
+              "UTI",
               "Aditya"
             ],
             "schemes": [
               {
-                "fund": "Bandhan Small Cap Fund",
-                "amc": "Bandhan",
-                "netCr": 33,
-                "valueChgCr": -14
+                "fund": "ICICI Prudential Energy Opportunities Fund",
+                "amc": "ICICI Pru",
+                "netCr": 20,
+                "valueChgCr": 20
               },
               {
-                "fund": "Motilal Oswal Small Cap Fund",
-                "amc": "Motilal Oswal",
-                "netCr": 6,
-                "valueChgCr": -9
+                "fund": "ICICI Prudential Infrastructure Fund",
+                "amc": "ICICI Pru",
+                "netCr": 16,
+                "valueChgCr": 16
               },
               {
-                "fund": "Aditya Birla Sun Life Conglomerate Fund",
+                "fund": "UTI Value Fund",
+                "amc": "UTI",
+                "netCr": 5,
+                "valueChgCr": -1
+              },
+              {
+                "fund": "Aditya Birla Sun Life Value Fund",
                 "amc": "Aditya",
                 "netCr": 1,
                 "valueChgCr": -3
-              },
+              }
+            ]
+          },
+          {
+            "company": "Raymond Limited",
+            "netCr": 7,
+            "amcs": [
+              "JM"
+            ],
+            "schemes": [
               {
-                "fund": "ITI ELSS Tax Saver Fund",
-                "amc": "ITI",
-                "netCr": 1,
-                "valueChgCr": 0
+                "fund": "JM Small Cap Fund",
+                "amc": "JM",
+                "netCr": 7,
+                "valueChgCr": 7
               }
             ]
           }
         ],
         "schemes": [
           {
-            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
-            "amc": "PPFAS",
-            "netCr": 2321,
-            "valueChgCr": 2153
+            "fund": "Kotak Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": 219,
+            "valueChgCr": 224
           },
           {
-            "fund": "Bandhan Small Cap Fund",
-            "amc": "Bandhan",
-            "netCr": 326,
-            "valueChgCr": 233
+            "fund": "Kotak Large & Mid Cap Fund",
+            "amc": "Kotak",
+            "netCr": 115,
+            "valueChgCr": 198
           },
           {
-            "fund": "Invesco India Small cap Fund",
+            "fund": "Invesco India Focused Fund",
             "amc": "Invesco",
-            "netCr": 108,
-            "valueChgCr": 58
+            "netCr": 107,
+            "valueChgCr": 108
           },
           {
-            "fund": "Invesco India Mid cap Fund",
+            "fund": "ICICI Prudential Multi Cap Fund",
+            "amc": "ICICI Pru",
+            "netCr": 78,
+            "valueChgCr": 81
+          },
+          {
+            "fund": "Invesco India Contra Fund",
             "amc": "Invesco",
-            "netCr": 102,
-            "valueChgCr": 11
-          },
-          {
-            "fund": "SBI MultiCap Fund",
-            "amc": "SBI",
-            "netCr": 90,
-            "valueChgCr": 57
+            "netCr": 65,
+            "valueChgCr": 61
           }
         ]
       },
       {
         "sector": "IT - Software",
         "direction": "down",
-        "pctCur": 4.62,
-        "pctPrev": 5.09,
-        "changePp": -0.48,
+        "pctCur": 4.59,
+        "pctPrev": 5.06,
+        "changePp": -0.47,
         "stocks": [
           {
             "company": "Infosys Limited",
-            "netCr": -1716,
+            "netCr": -1738,
             "amcs": [
               "ICICI Pru",
               "Franklin Templeton",
@@ -8121,26 +8188,61 @@
               {
                 "fund": "ICICI Prudential Technology Fund",
                 "amc": "ICICI Pru",
-                "netCr": -301,
+                "netCr": -302,
                 "valueChgCr": -464
               },
               {
                 "fund": "Franklin India Focused Equity Fund",
                 "amc": "Franklin Templeton",
-                "netCr": -255,
+                "netCr": -256,
                 "valueChgCr": -294
               },
               {
                 "fund": "SBI MultiCap Fund",
                 "amc": "SBI",
-                "netCr": -198,
+                "netCr": -199,
                 "valueChgCr": -236
               }
             ]
           },
           {
+            "company": "Tata Consultancy Services Limited",
+            "netCr": -533,
+            "amcs": [
+              "Kotak",
+              "Nippon",
+              "Invesco"
+            ],
+            "schemes": [
+              {
+                "fund": "Kotak Flexi Cap Fund",
+                "amc": "Kotak",
+                "netCr": -344,
+                "valueChgCr": -429
+              },
+              {
+                "fund": "Nippon India Multi Cap Fund",
+                "amc": "Nippon",
+                "netCr": -133,
+                "valueChgCr": -259
+              },
+              {
+                "fund": "Invesco India Flexi Cap Fund",
+                "amc": "Invesco",
+                "netCr": -61,
+                "valueChgCr": -74
+              },
+              {
+                "fund": "Nippon India Large Cap Fund",
+                "amc": "Nippon",
+                "netCr": -38,
+                "valueChgCr": -320
+              }
+            ]
+          },
+          {
             "company": "Coforge Limited",
-            "netCr": -466,
+            "netCr": -468,
             "amcs": [
               "SBI",
               "JM",
@@ -8170,6 +8272,41 @@
                 "amc": "UTI",
                 "netCr": -42,
                 "valueChgCr": -49
+              }
+            ]
+          },
+          {
+            "company": "Mphasis Limited",
+            "netCr": -367,
+            "amcs": [
+              "Kotak",
+              "ICICI Pru",
+              "UTI"
+            ],
+            "schemes": [
+              {
+                "fund": "Kotak Multi Cap Fund",
+                "amc": "Kotak",
+                "netCr": -84,
+                "valueChgCr": -98
+              },
+              {
+                "fund": "Kotak ELSS Tax Saver Fund",
+                "amc": "Kotak",
+                "netCr": -84,
+                "valueChgCr": -96
+              },
+              {
+                "fund": "Franklin India Multi Cap Fund",
+                "amc": "Franklin Templeton",
+                "netCr": -57,
+                "valueChgCr": -64
+              },
+              {
+                "fund": "ICICI Prudential Innovation Fund",
+                "amc": "ICICI Pru",
+                "netCr": -42,
+                "valueChgCr": -56
               }
             ]
           },
@@ -8207,83 +8344,19 @@
                 "valueChgCr": -53
               }
             ]
-          },
-          {
-            "company": "Mphasis Limited",
-            "netCr": -193,
-            "amcs": [
-              "ICICI Pru",
-              "UTI",
-              "Franklin Templeton"
-            ],
-            "schemes": [
-              {
-                "fund": "Franklin India Multi Cap Fund",
-                "amc": "Franklin Templeton",
-                "netCr": -56,
-                "valueChgCr": -64
-              },
-              {
-                "fund": "ICICI Prudential Innovation Fund",
-                "amc": "ICICI Pru",
-                "netCr": -41,
-                "valueChgCr": -56
-              },
-              {
-                "fund": "UTI Large & Mid Cap Fund",
-                "amc": "UTI",
-                "netCr": -35,
-                "valueChgCr": -41
-              },
-              {
-                "fund": "ICICI Prudential Value Fund",
-                "amc": "ICICI Pru",
-                "netCr": -26,
-                "valueChgCr": -68
-              }
-            ]
-          },
-          {
-            "company": "Tata Consultancy Services Limited",
-            "netCr": -176,
-            "amcs": [
-              "Nippon",
-              "Invesco",
-              "JM"
-            ],
-            "schemes": [
-              {
-                "fund": "Nippon India Multi Cap Fund",
-                "amc": "Nippon",
-                "netCr": -133,
-                "valueChgCr": -259
-              },
-              {
-                "fund": "Invesco India Flexi Cap Fund",
-                "amc": "Invesco",
-                "netCr": -61,
-                "valueChgCr": -74
-              },
-              {
-                "fund": "Nippon India Large Cap Fund",
-                "amc": "Nippon",
-                "netCr": -38,
-                "valueChgCr": -320
-              },
-              {
-                "fund": "Franklin India Focused Equity Fund",
-                "amc": "Franklin Templeton",
-                "netCr": -38,
-                "valueChgCr": -128
-              }
-            ]
           }
         ],
         "schemes": [
           {
+            "fund": "Kotak Flexi Cap Fund",
+            "amc": "Kotak",
+            "netCr": -344,
+            "valueChgCr": -598
+          },
+          {
             "fund": "Franklin India Focused Equity Fund",
             "amc": "Franklin Templeton",
-            "netCr": -293,
+            "netCr": -294,
             "valueChgCr": -422
           },
           {
@@ -8295,7 +8368,7 @@
           {
             "fund": "SBI MultiCap Fund",
             "amc": "SBI",
-            "netCr": -198,
+            "netCr": -199,
             "valueChgCr": -293
           },
           {
@@ -8303,25 +8376,19 @@
             "amc": "Nippon",
             "netCr": -180,
             "valueChgCr": -575
-          },
-          {
-            "fund": "ICICI Prudential Technology Fund",
-            "amc": "ICICI Pru",
-            "netCr": -158,
-            "valueChgCr": -681
           }
         ]
       },
       {
         "sector": "Automobiles",
         "direction": "down",
-        "pctCur": 4.3,
-        "pctPrev": 4.65,
-        "changePp": -0.35,
+        "pctCur": 4.2,
+        "pctPrev": 4.52,
+        "changePp": -0.32,
         "stocks": [
           {
             "company": "Maruti Suzuki India Limited",
-            "netCr": -635,
+            "netCr": -637,
             "amcs": [
               "ICICI Pru",
               "Nippon",
@@ -8331,19 +8398,19 @@
               {
                 "fund": "ICICI Prudential Large & Mid Cap Fund",
                 "amc": "ICICI Pru",
-                "netCr": -438,
+                "netCr": -441,
                 "valueChgCr": -522
               },
               {
                 "fund": "Nippon India Large Cap Fund",
                 "amc": "Nippon",
-                "netCr": -115,
+                "netCr": -116,
                 "valueChgCr": -204
               },
               {
                 "fund": "ICICI Prudential Innovation Fund",
                 "amc": "ICICI Pru",
-                "netCr": -82,
+                "netCr": -83,
                 "valueChgCr": -118
               },
               {
@@ -8356,7 +8423,7 @@
           },
           {
             "company": "Hero MotoCorp Limited",
-            "netCr": -515,
+            "netCr": -521,
             "amcs": [
               "ICICI Pru",
               "JM",
@@ -8366,19 +8433,19 @@
               {
                 "fund": "ICICI Prudential Large Cap Fund",
                 "amc": "ICICI Pru",
-                "netCr": -557,
+                "netCr": -565,
                 "valueChgCr": -588
               },
               {
                 "fund": "UTI - Mid Cap Fund",
                 "amc": "UTI",
-                "netCr": -55,
+                "netCr": -56,
                 "valueChgCr": -68
               },
               {
                 "fund": "JM Flexi cap Fund",
                 "amc": "JM",
-                "netCr": -46,
+                "netCr": -47,
                 "valueChgCr": -49
               },
               {
@@ -8391,7 +8458,7 @@
           },
           {
             "company": "Ather Energy Limited",
-            "netCr": -488,
+            "netCr": -480,
             "amcs": [
               "Motilal Oswal",
               "SBI",
@@ -8426,7 +8493,7 @@
           },
           {
             "company": "Bajaj Auto Limited",
-            "netCr": -195,
+            "netCr": -190,
             "amcs": [
               "SBI",
               "Bandhan",
@@ -8461,7 +8528,7 @@
           },
           {
             "company": "Hyundai Motor India Ltd",
-            "netCr": -136,
+            "netCr": -76,
             "amcs": [
               "ICICI Pru",
               "Bandhan",
@@ -8499,13 +8566,13 @@
           {
             "fund": "ICICI Prudential Large & Mid Cap Fund",
             "amc": "ICICI Pru",
-            "netCr": -574,
+            "netCr": -577,
             "valueChgCr": -829
           },
           {
             "fund": "Nippon India Large Cap Fund",
             "amc": "Nippon",
-            "netCr": -253,
+            "netCr": -254,
             "valueChgCr": -567
           },
           {
@@ -8517,7 +8584,7 @@
           {
             "fund": "ICICI Prudential Large Cap Fund",
             "amc": "ICICI Pru",
-            "netCr": -217,
+            "netCr": -225,
             "valueChgCr": -773
           },
           {
