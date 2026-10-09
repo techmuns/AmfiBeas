@@ -78,6 +78,52 @@ download page. Coverage must remain partial until those gaps are resolved.
 
 ## Verification
 
+Candidate reports must carry the actual month-end workbook date before any saved
+observations can be replaced. Excel percentage cell formats establish fractional
+weights before rounding; plain numeric weight cells remain percentage points.
+Known CCIL repo/cash-only reports require the dated scheme heading, recognised
+instrument sections and reconciled totals before certifying no Indian holdings.
+September regression fixtures retain genuine published bytes or exact catalogue
+fragments, with source URLs and SHA-256 hashes in `shared/fixtures/provenance.json`.
+Validated catalogues with no target-period files report `target-period-not-listed`;
+transport failures and access refusals never establish publication absence.
+
+The isolated September replay improved published current coverage from 17/57 to
+25/57 (unmodified local replay: 18/57). Nine sources validate older complete
+periods, four remain partial and nineteen are unavailable for this attempt.
+All 52 original snapshot identities and every retained period survive; there are
+53 snapshots after the repair. A completed capture still reports partial coverage.
+
+Bajaj's new public download API uses fiscal-year options (2026-27), then its
+Monthly Portfolio category and a published month value. The September workbook
+has 25 schemes and OOXML bytes despite its .xls suffix. IL&FS's September label
+links an August-named replacement workbook: verify every parsed scheme, require
+matching identities for fortnightly reports, and select only the exact month-end
+statements. LIC's conflicting equity label/debt filename remains a validation
+failure. Structured Next catalogues and complete Wealth/Mirae pagination expose
+actual reporting periods without promoting upload dates or fortnightly data.
+Declaration-gated user interfaces remain unresolved; the dated comparison states
+what each anonymously returned public catalogue lists, without claiming that a
+fund house has not published anywhere else.
+The comparison classifies 360 ONE, Bandhan and Quant as
+`access-publication-uncertain` because their residence/declaration interfaces
+remain unresolved. AlphaGrep has the same classification because its disclosure
+webpage separately returned HTTP 502. Their returned catalogue observations are
+retained as evidence, but do not establish September publication absence. Eight
+other sources have no September entry in the checked returned catalogue; that
+observation is also limited to the route and check time.
+
+The dated [source check comparison](mf-source-checks-2026-10-08.csv) records the
+published baseline, unmodified isolated replay and repaired isolated replay for
+all 57 AMCs. These are local verification results; they do not update the feed.
+
+Monarch's new monthly category accepts its published slash/no-slash spelling on
+the same fixed official route. Its overnight workbook's scheme index must match
+every real sheet and the exact heading before it can be treated as ancillary.
+Numeric repo contract identifiers require an explicit reverse-repo/TREPS label,
+the named repo section, and no ISIN or share quantity. Unknown contracts or
+extra securities remain validation failures.
+
 `npm run test:holdings` covers public catalogue pagination, month rollover,
 per-file resumption, refusals, exact identities, verified empty reports, source
 isolation, process timeouts, source clocks, directory growth/failure and manifest

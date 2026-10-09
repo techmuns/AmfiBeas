@@ -10,10 +10,10 @@ import {reconcileSourceChecks,lastCompleteCheck} from './checks.mjs';
 import path from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {monthKey,targetMonth} from './dates.mjs';
-import {publishManifest} from './manifest.mjs';
+import {publishManifest,assertValidCandidate} from './manifest.mjs';
 import {syncDirectory} from './directory.mjs';
 import {sourceFailure} from './source-errors.mjs';
-import {HSBC_CATALOGUE,readHsbcCatalogue} from './rendered-catalogue.mjs';
+import {HSBC_CATALOGUE,readHsbcCatalogue,HDFC_CATALOGUE,readHdfcCatalogue} from './rendered-catalogue.mjs';
 const root=path.resolve(process.env.AMFIBEAS_PATH||fileURLToPath(new URL('../../../../',import.meta.url)));
 const opts={pctScale:1,valueToCr:100,strictHoldings:true},dir=path.join(root,'public/amc-holdings');
 if(!process.env.MF_SOURCE_WORKER)await syncDirectory(root);
@@ -45,11 +45,13 @@ for(const entry of index.amcs) {
   const priorCheck={slug:entry.slug,lastCompleteCheckedAt:old.lastCompleteCheckedAt||null,...JSON.parse(process.env.MF_SOURCE_PREVIOUS_CHECK||'null')},resolveNames=schemeNameResolver(old);
   priorCheck.lastCompleteCheckedAt=lastCompleteCheck(priorCheck);
   function saveResult(result,{recordCheck=true}={}) {
+    assertValidCandidate(entry.slug,result.schemes);
     const counts=new Map();for(const s of result.schemes){const m=monthKey(s.asOf);if(m&&m<=targetMonth())counts.set(m,(counts.get(m)||0)+1);}
     const month=[...counts].sort((a,b)=>b[1]-a[1]||b[0].localeCompare(a[0]))[0]?.[0];
-    if(!month)throw Error('Disclosure month unverified');
+    if(!month||result.schemes.some(s=>monthKey(s.asOf)!==month))throw Error('Disclosure month unverified');
     const existing=[{asOfMonth:old.asOfMonth,schemes:old.schemes},...(old.history||[])].filter(b=>b.schemes?.length).map(b=>({...b,checkedAt:b.checkedAt||old.fetchedAt,sourceUrl:b.sourceUrl||old.sourceUrl}));
     const schemes=resolveNames(result.schemes).map(s=>({...normalizeSchemePct(s),checkedAt:startedAt,sourceUrl:s.sourceUrl||result.usedUrl||old.sourceUrl})),oldMonth=existing.find(b=>monthKey(b.asOfMonth)===month);
+    assertValidCandidate(entry.slug,schemes);
     const names=new Set(schemes.map(s=>baseName(s.schemeName))),missing=oldMonth?.schemes.filter(s=>!names.has(baseName(s.schemeName))&&!((/^(?:mutual fund units|exchange traded fund|BRSR Score\d*$|an? open[ -]ended)/i.test(s.schemeName)||s.schemeName===s.schemeCode)&&schemes.some(next=>next.schemeCode===s.schemeCode&&!/^(?:mutual fund units|exchange traded fund)$/i.test(next.schemeName))))||[];
     const months=new Map(existing.map(b=>[monthKey(b.asOfMonth),b]));
     months.set(month,{asOfMonth:month,schemes:[...schemes,...missing.map(s=>({...s,checkedAt:s.checkedAt||oldMonth.checkedAt||old.fetchedAt,sourceUrl:s.sourceUrl||oldMonth.sourceUrl||old.sourceUrl}))],checkedAt:startedAt,sourceUrl:result.usedUrl||old.sourceUrl});
@@ -69,13 +71,14 @@ for(const entry of index.amcs) {
   try {
     if(PUBLIC_PAGES[entry.slug]) {
       const month=targetMonth(),http=publicReader(entry.slug);
-      const read=(url,options)=>entry.slug==='hsbc'&&url===HSBC_CATALOGUE?readHsbcCatalogue():http(url,options);
+      const read=(url,options)=>entry.slug==='hsbc'&&url===HSBC_CATALOGUE?readHsbcCatalogue():entry.slug==='hdfc'&&url===HDFC_CATALOGUE?readHdfcCatalogue({month}):http(url,options);
       // The upstream adapter's checked-in client token is public website config,
       // not a private API credential. Keep it in the pinned source checkout.
       const axisPublicToken=entry.slug==='axis'?/const AXIS_TOKEN\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(root,'scripts/ingest/amc-factsheets/json-api.ts'),'utf8'))?.[1]:undefined;
       const links=resumeDisclosures(await publicDisclosures(entry.slug,month,read,{axisPublicToken,includeHistory:true}),priorCheck);
       const XLSX=await import(pathToFileURL(path.join(root,'node_modules/xlsx/xlsx.mjs')).href);
       const parse=(buffer,link)=>{
+        if(entry.slug==='dsp'&&/\.zip$/i.test(new URL(link.url).pathname))return parseZip(buffer,opts);
         const schemes=parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedWorkbook:parseQuantumWorkbook,opts,month:link.disclosureMonth||month,link,slug:entry.slug,identifyScheme:findSchemeName});
         if(schemes.length===1&&/fund|etf/i.test(link.text||'')&&(/name of instrument|portfolio statement|^\s*\(|open[ -]?ended?\s+(scheme|fund)/i.test(schemes[0].schemeName)||schemes[0].schemeName.trim().length<6))schemes[0].schemeName=link.text;
         return schemes;

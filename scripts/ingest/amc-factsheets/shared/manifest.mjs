@@ -3,7 +3,7 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {atomicJson} from './source-pool.mjs';
-import {monthKey,monthLabel,targetMonth} from './dates.mjs';
+import {isMonthEnd,monthKey,monthLabel,targetMonth} from './dates.mjs';
 
 // Findings describe source evidence; neither a new commit nor a successful build
 // may turn an invalid or partial disclosure into a complete source check.
@@ -15,8 +15,9 @@ export function validationFindings(snapshot,month) {
     for(const s of bucket.schemes||[]) {
       if(!s.schemeName||names.has(s.schemeName))findings.push('duplicate-or-missing-scheme');
       names.add(s.schemeName);
-      if(monthKey(s.asOf)!==month)findings.push('date-mismatch');
+      if(!isMonthEnd(s.asOf,month))findings.push('date-mismatch');
       if(!Array.isArray(s.holdings)){findings.push('missing-holdings');continue;}
+      if(!s.holdings.length&&!s.validatedNoIndianHoldings)findings.push('unverified-empty-holdings');
       const isins=new Set();
       for(const h of s.holdings) {
         if(!/^INE[A-Z0-9]{5}10[A-Z0-9]{2}$/.test(h.isin||''))continue;
@@ -77,4 +78,14 @@ if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.ur
   const root=path.resolve(process.env.AMFIBEAS_PATH||fileURLToPath(new URL('../../../../',import.meta.url)));
   const m=publishManifest(root,{interrupted:process.env.AMC_CAPTURE_INTERRUPTED==='true'});
   console.log(`Published source manifest: ${m.coverage.current}/${m.coverage.total} current; ${m.files.length} retained snapshots`);
+}
+
+// Validate every candidate month before replacing any saved good observations.
+export function assertValidCandidate(slug,schemes) {
+  if(!schemes.length||schemes.some(s=>!monthKey(s.asOf)))throw Error('Disclosure month unverified');
+  const months=[...new Set(schemes.map(s=>monthKey(s.asOf)))];
+  for(const month of months) {
+    const findings=validationFindings({amcSlug:slug,asOfMonth:month,schemes:schemes.filter(s=>monthKey(s.asOf)===month)},month);
+    if(findings.length)throw Object.assign(Error('Workbook holdings unverified'),{code:'SOURCE_VALIDATION',findings:[...new Set(findings)]});
+  }
 }

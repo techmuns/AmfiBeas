@@ -26,9 +26,18 @@ function fixture({status=200,url=HSBC_CATALOGUE,refusal,timeout=false,content='<
 let f=fixture();assert.match((await readHsbcCatalogue(f)).toString(),/Monthly/);f.verify();
 for(const status of [401,403,429]) {
   f=fixture({refusal:{status}});await assert.rejects(readHsbcCatalogue(f),e=>e.code==='SOURCE_HTTP'&&e.status===status);f.verify();
+  f=fixture({refusal:{status},timeout:true});await assert.rejects(readHsbcCatalogue(f),e=>e.code==='SOURCE_HTTP'&&e.status===status,'An observed refusal takes precedence over a later navigation timeout');f.verify();
 }
 for(const options of [{status:503},{url:'https://other.test/'},{timeout:true},{content:''},{content:'x'.repeat(8_000_001)}]) {
   f=fixture(options);await assert.rejects(readHsbcCatalogue(f));f.verify();
 }
 f=fixture({refusal:{status:403,url:'https://unrelated.test/ad'}});await readHsbcCatalogue(f);f.verify();
 console.log('PASS rendered catalogue: fixed public URL, standard browser defaults, refused access, navigation failures, bounded content and cleanup');
+const {HDFC_CATALOGUE,readHdfcCatalogue}=await import('./rendered-catalogue.mjs');
+let waited=false,closed=0;
+const hdfcPage={on(){},async goto(url){assert.equal(url,HDFC_CATALOGUE);return{status:()=>200};},url:()=>HDFC_CATALOGUE,
+ async waitForFunction(fn,args,options){assert.equal(args.name,'September');assert.equal(args.year,'2026');assert.equal(options.timeout,15000);assert.match(fn.toString(),/Monthly HDFC/);waited=true;},
+ async content(){assert(waited,'Wait for the requested period before reading initially stale DOM');return '<a href="https://files.hdfcfund.com/2026/Monthly%20HDFC%20Value%20Fund%20-%2030%20September%202026.xlsx?VersionId=fixture">Monthly</a>';}};
+const rendered=await readHdfcCatalogue({month:'2026-09',chromium:{launch:async()=>({newContext:async()=>({newPage:async()=>hdfcPage}),close:async()=>closed++})}});
+assert.match(rendered.toString(),/VersionId=fixture/);assert.equal(closed,1);
+console.log('PASS HDFC hydration: requested period wait, fixed official catalogue and exact versioned file links');

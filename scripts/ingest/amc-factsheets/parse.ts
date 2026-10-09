@@ -36,13 +36,13 @@ function toIso(v: Cell): string | null {
   }
   const str = s(v);
   const m1 = str.match(/((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*)\s+(\d{1,2})\s*,?\s*(\d{4})/i); // May 31,2026
-  const m2 = str.match(/(\d{1,2})(?:st|nd|rd|th)?[-/\s]+((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*)[-/\s](\d{2,4})/i); // 31-May-2026
+  const m2 = str.match(/(\d{1,2})(?:st|nd|rd|th)?[-/.\s]+((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*)[-/.\s]+(\d{2,4})/i); // 31-May-2026
   const MON: Record<string, number> = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
   const mk = (y: number, mo: number, d: number) => {
     const iso = `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
     return mo >= 1 && mo <= 12 && d >= 1 && d <= 31 && new Date(Date.UTC(y, mo - 1, d)).toISOString().slice(0, 10) === iso ? iso : null;
   };
-  const numeric = str.match(/\b(\d{1,2})[/-](\d{1,2})[/-](20\d{2})\b/);
+  const numeric = str.match(/\b(\d{1,2})[./-](\d{1,2})[./-](20\d{2})\b/);
   const isoDate = str.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
   if (numeric) return mk(+numeric[3], +numeric[2], +numeric[1]);
   if (isoDate) return mk(+isoDate[1], +isoDate[2], +isoDate[3]);
@@ -258,7 +258,7 @@ function findAsOf(rows: Row[]): string | null {
         const first = toIso(`1 ${monthly[1]} ${monthly[2]}`);
         if (first) return plausibleAsOf(new Date(Date.UTC(+first.slice(0,4), +first.slice(5,7), 0)).toISOString().slice(0,10));
       }
-      if (/as on|statement as|portfolio statement/i.test(s(cell))) {
+      if (/as (?:on|of|at)|statement as|portfolio statement/i.test(s(cell))) {
         // An explicitly labelled date wins outright — but still has to be a
         // plausible month, or we fall through to keep looking.
         const iso =
@@ -279,12 +279,28 @@ function findAsOf(rows: Row[]): string | null {
 }
 
 /** Parse one scheme sheet → holdings (rows that carry an ISIN). */
-function parseScheme(name: string, rows: Row[], opts: AmcParseOptions): AmcScheme | null {
+function parseScheme(name: string, rows: Row[], opts: AmcParseOptions, sheet?: XLSX.WorkSheet): AmcScheme | null {
   const found = findColumns(rows);
   if (!found) return null;
   const { headerIdx, cols } = found;
   const holdings: AmcHolding[] = [];
   let section: string | null = null;
+  // Excel's percentage format explicitly declares fractional storage. Normalize
+  // before rounding; quantity/portfolio sums cannot establish a weight's unit.
+  const formats = new Map<string, Set<string>>();
+  const securities = new Set(rows.slice(headerIdx + 1).map(row => s(row[cols.isin]).toUpperCase().replace(/\s+/g, "")));
+  if (sheet) for (const [address, cell] of Object.entries(sheet)) {
+    if (address.startsWith("!") || XLSX.utils.decode_cell(address).c !== cols.pct || cell.t !== "n") continue;
+    const coordinate = XLSX.utils.decode_cell(address);
+    const isin = s(sheet[XLSX.utils.encode_cell({r: coordinate.r, c: cols.isin})]?.v).toUpperCase().replace(/\s+/g, "");
+    if (!ISIN_RE.test(isin) || !securities.has(isin)) continue;
+    const format = String(cell.z || "General").replace(/"[^"]*"|\\./g, "");
+    if (format !== "General") {
+      const key = `${isin}|${cell.v}`, units = formats.get(key) || new Set<string>();
+      units.add(format.includes("%") ? "fraction" : "percent");formats.set(key,units);
+    }
+  }
+
   for (let i = headerIdx + 1; i < rows.length; i++) {
     const r = rows[i];
     const isinRaw = s(r[cols.isin]).toUpperCase().replace(/\s+/g, "");
@@ -295,6 +311,10 @@ function parseScheme(name: string, rows: Row[], opts: AmcParseOptions): AmcSchem
     } // only real securities
     const value = num(r[cols.value]);
     const pct = num(r[cols.pct]);
+    const units = formats.get(`${isinRaw}|${pct}`);
+    if (units && units.size > 1 && opts.strictHoldings) throw Error("Ambiguous percentage units");
+    const unit = units?.size === 1 ? [...units][0] : null;
+    const pctScale = unit === "fraction" ? 100 : unit === "percent" ? 1 : opts.pctScale;
     // Name: usually cols.name, but some AMCs (Kotak) merge the "Name of
     // Instrument" header across cells while the value sits a column or two
     // over — fall forward to the first non-empty, non-ISIN text cell.
@@ -313,11 +333,12 @@ function parseScheme(name: string, rows: Row[], opts: AmcParseOptions): AmcSchem
       industry: cols.industry >= 0 ? s(r[cols.industry]) || null : null,
       quantity: num(r[cols.qty]),
       marketValueCr: value == null ? null : Math.round((value / opts.valueToCr) * 100) / 100,
-      pctToNav: pct == null ? null : Math.round(pct * opts.pctScale * 10000) / 10000,
+      pctToNav: pct == null ? null : Math.round(pct * pctScale * 10000) / 10000,
     });
   }
   if (holdings.length === 0) return null;
   return {
+    ...(formats.size ? { pctUnit: "percentage-points" as const } : {}),
     schemeCode: name,
     schemeName: findSchemeName(rows, name) || name,
     asOf: findAsOf(rows),
@@ -347,7 +368,7 @@ function unparsedHoldings(rows: Row[]): boolean {
 
 /** Parse a whole AMC workbook buffer → schemes. */
 export function parseAmcWorkbook(buf: ArrayBuffer | Buffer, opts: AmcParseOptions): AmcScheme[] {
-  const wb = XLSX.read(buf, { type: "buffer", cellDates: false });
+  const wb = XLSX.read(buf, { type: "buffer", cellDates: false, cellNF: true });
   const out: AmcScheme[] = [];
   for (const sheetName of wb.SheetNames) {
     if (/^index$/i.test(sheetName)) continue;
@@ -367,12 +388,12 @@ export function parseAmcWorkbook(buf: ArrayBuffer | Buffer, opts: AmcParseOption
       if (marks.length >= 2) {
         for (let k = 0; k < marks.length; k++) {
           const seg = rows.slice(marks[k].i + 1, k + 1 < marks.length ? marks[k + 1].i : rows.length);
-          const scheme = parseScheme(marks[k].name, seg, opts);
+          const scheme = parseScheme(marks[k].name, seg, opts, wb.Sheets[sheetName]);
           if (scheme) out.push(scheme);
           else if (opts.strictHoldings && unparsedHoldings(seg)) throw Error("Unparsed scheme securities");
         }
       } else {
-        const scheme = parseScheme(sheetName, rows, opts);
+        const scheme = parseScheme(sheetName, rows, opts, wb.Sheets[sheetName]);
         if (scheme) out.push(scheme);
         else if (opts.strictHoldings && unparsedHoldings(rows)) throw Error("Unparsed sheet securities");
       }

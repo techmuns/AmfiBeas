@@ -1,10 +1,13 @@
+import {periodNotListed} from './source-errors.mjs';
 // Official catalogues whose current public download UI supersedes legacy routes.
-import {NEW_AMC_PAGES,NEW_AMC_HOSTS,newAmcDisclosures} from './new-amcs.mjs';
-import {previousMonth} from './dates.mjs';
+import {NEW_AMC_PAGES,NEW_AMC_HOSTS,newAmcDisclosures,nextRecords} from './new-amcs.mjs';
+import {previousMonth,monthKey} from './dates.mjs';
 export const CATALOGUE_PAGES={
   ...NEW_AMC_PAGES,
   hdfc:'https://www.hdfcfund.com/statutory-disclosure/portfolio/monthly-portfolio',
   zerodha:'https://www.zerodhafundhouse.com/resources/disclosures',
+  'the-wealth-company':'https://www.wealthcompanyamc.in/literature-forms/portfolio-documents/monthly/',
+  dsp:'https://www.dspim.com/mandatory-disclosures/portfolio-disclosures',
   edelweiss:'https://www.edelweissmf.com/statutory/monthly-portfolio',
   tata:'https://www.tatamutualfund.com/schemes-related/portfolio',
   choice:'https://choicemf.com/disclosures/monthly-portfolio',
@@ -13,13 +16,15 @@ export const CATALOGUE_PAGES={
   hsbc:'https://www.assetmanagement.hsbc.co.in/en/mutual-funds/investor-resources/information-library',
   navi:'https://navi.com/mutual-fund/downloads/portfolio',
   'bajaj-finserv':'https://www.bajajamc.com/downloads?statutory-disclosures=',
-  alphagrep:'https://www.alphagrepmf.ai/disclosures',
+  alphagrep:'https://www.alphagrepmf.ai/disclosure',
   'il-fs-idf':'https://www.ilfsinfrafund.com/other.php',
 };
 export const CATALOGUE_HOSTS={
   ...NEW_AMC_HOSTS,
   hdfc:['https://www.hdfcfund.com','https://files.hdfcfund.com'],
   zerodha:['https://www.zerodhafundhouse.com','https://assets.zerodhafundhouse.com'],
+  'the-wealth-company':['https://www.wealthcompanyamc.in'],
+  dsp:['https://www.dspim.com'],
   edelweiss:['https://www.edelweissmf.com','https://www.advisorkhoj.com'],
   tata:['https://www.tatamutualfund.com','https://betacms.tatamutualfund.com','https://www.advisorkhoj.com'],
   choice:['https://choicemf.com','https://doc.choicemf.com'],
@@ -46,21 +51,72 @@ export async function catalogueDisclosures(slug,month,read,{anchorFiles,includeH
       const label=link.text.replace(/\s+/g,' ').trim(),match=wanted.exec(label);
       if(!match)return [];
       const url=new URL(link.url),file=decodeURIComponent(url.pathname.split('/').pop());
-      if(url.origin!=='https://files.hdfcfund.com'||!url.pathname.startsWith('/s3fs-public/')||file!==label)throw Error('Monthly disclosure file mismatch');
+      // HTML labels collapse whitespace; the official filename can contain two
+      // spaces. Compare those display forms, preserving the exact versioned URL.
+      if(url.origin!=='https://files.hdfcfund.com'||!url.pathname.startsWith('/s3fs-public/')||file.replace(/\s+/g,' ').trim()!==label)throw Error('Monthly disclosure file mismatch');
       return [{url:url.href,text:'HDFC '+match[1]}];
     });
   }
   if(slug==='zerodha') {
-    const source=(await html(page)).replace(/\\"/g,'"'),links=[];
-    for(const m of source.matchAll(/"name":"([^"<>]+)","url":"(https:[^"<>]+\.xlsx?)"/g)) {
-      if(!new RegExp(`^[A-Z0-9]+ - Monthly Portfolio ${name} ${year}$`).test(m[1]))continue;
-      const url=new URL(m[2]);
+    const records=nextRecords(await html(page)),links=[],periods=new Set();
+    for(const item of records) {
+      const label=/^[A-Z0-9]+\s*-\s*Monthly Portfolio ([A-Za-z]+) (20\d{2})$/.exec(item.name||'');if(!label)continue;
+      const period=monthKey(`${label[1].slice(0,3)}-${label[2]}`);if(!period)throw Error('Disclosure index month mismatch');
+      const url=new URL(item.url);
       if(url.origin!=='https://assets.zerodhafundhouse.com'||!url.pathname.startsWith('/statutory-reports/portfolio-disclosures/'))throw Error('Unexpected monthly file');
-      links.push({url:url.href,text:m[1]});
+      periods.add(period);if(period===month)links.push({url:url.href,text:item.name});
     }
+    if(!periods.size)throw Error('Monthly catalogue missing');
+    if(!links.length)throw periodNotListed(month,[...periods]);
     return links;
   }
-  if(slug==='edelweiss'||slug==='tata'||slug==='bajaj-finserv') {
+  if(slug==='bajaj-finserv') {
+    const source=await html(page),settings=config(source,'bajajDownloads');
+    const sections=[...source.matchAll(/<div\b[^>]*class=["']bd-accordion\s*[^"']*["'][^>]*data-section-id=["'](\d+)["'][^>]*>([\s\S]*?)(?=<div\b[^>]*class=["']bd-accordion\s|$)/g)].filter(m=>/<span\b[^>]*class=["']bd-accordion-title["'][^>]*>Monthly Portfolio<\/span>/.test(m[2]));
+    if(sections.length!==1||settings.ajaxUrl!=='https://www.bajajamc.com/wp-admin/admin-ajax.php'||!settings.nonce)throw Error('Monthly catalogue missing');
+    const section_id=sections[0][1],fy=num>=4?year:year-1,periods=[];
+    const request=async(action,params)=>{const data=await json(settings.ajaxUrl,form({action,nonce:settings.nonce,section_id,...params}));if(data.success!==true||!data.data)throw Error('Invalid disclosure index');return data.data;};
+    const years=await request('bajaj_get_filter_options',{filter_for:'years'});
+    if(!Array.isArray(years.options)||years.options.some(o=>!/^20\d{2}-\d{2}$/.test(o.value)||o.label!==o.value))throw Error('Invalid reporting-year catalogue');
+    const selected=years.options.find(o=>o.value===`${fy}-${String(fy+1).slice(-2)}`);
+    if(!selected)throw periodNotListed(month);
+    const months=await request('bajaj_get_filter_options',{filter_for:'months',year:selected.value});
+    if(!Array.isArray(months.options)||months.options.some(o=>!names.includes(o.value)||o.label!==o.value))throw Error('Invalid disclosure index');
+    for(const o of months.options){const n=names.indexOf(o.value)+1;periods.push(`${n>=4?fy:fy+1}-${String(n).padStart(2,'0')}`);}
+    if(!months.options.some(o=>o.value===name))throw periodNotListed(month,periods);
+    const data=await request('bajaj_get_downloads',{year:selected.value,month:name});
+    if(typeof data.html!=='string'||data.count!==1)throw Error('Consolidated disclosure ambiguous');
+    const label=new RegExp(`Monthly Portfolio as on ${end} (?:${name}|${name.slice(0,3)}) ${year}`,'i');
+    if(!label.test(data.html))throw Error('Disclosure index month mismatch');
+    const links=anchorFiles(data.html,page);if(links.length!==1||new URL(links[0].url).origin!=='https://media.bajajamc.com')throw Error('Monthly workbook missing');return links;
+  }
+  if(slug==='dsp') {
+    const files=anchorFiles(await html(page),page,{archives:true}).filter(l=>/\/[^/]*monthend[-_]portfolios?[-_][^/]*\.zip$/i.test(new URL(l.url).pathname));
+    if(!files.length)throw Error('Monthly catalogue missing');
+    const dated=files.map(link=>{const date=/^Portfolio Details as on ([A-Za-z]+) (\d{1,2}), (20\d{2})$/.exec(link.text),period=date&&monthKey(`${date[1].slice(0,3)}-${date[3]}`);if(!period||Number(date[2])!==new Date(Date.UTC(Number(date[3]),Number(period.slice(5)),0)).getUTCDate())throw Error('Disclosure index month mismatch');return {...link,disclosureMonth:period};});
+    const links=dated.filter(l=>l.disclosureMonth===month);if(!links.length)throw periodNotListed(month,dated.map(l=>l.disclosureMonth));
+    if(links.length!==1)throw Error('Consolidated disclosure ambiguous');return links;
+  }
+  if(slug==='the-wealth-company') {
+    const links=[],periods=new Set(),ids=new Set();let total=null,pages=1;
+    for(let p=1;p<=pages;p++) {
+      const url=new URL(page);if(p>1)url.searchParams.set('page',String(p));
+      const records=nextRecords(await html(url.href)).filter(v=>v.pagination&&Array.isArray(v.downloads));if(records.length!==1)throw Error('Invalid disclosure index');
+      const {downloads,pagination:meta}=records[0];
+      if(meta.page!==p||!Number.isSafeInteger(meta.total)||meta.total<0||!Number.isSafeInteger(meta.pageCount)||meta.pageCount<1||meta.pageCount>100||total!==null&&(meta.total!==total||meta.pageCount!==pages))throw Error('Disclosure index changed');
+      total=meta.total;pages=meta.pageCount;
+      for(const item of downloads) {
+        if(!item.id||ids.has(item.id))throw Error('Repeated disclosure page');ids.add(item.id);
+        const date=/^Monthly\s+(?:[-–]\s*)?The Wealth Company .+\s*[-–]\s*([A-Za-z]+) (\d{1,2}),\s*(20\d{2})$/.exec(item.name||''),period=date&&monthKey(`${date[1].slice(0,3)}-${date[3]}`);
+        if(!period||Number(date[2])!==new Date(Date.UTC(Number(date[3]),Number(period.slice(5)),0)).getUTCDate())throw Error('Disclosure index month mismatch');
+        periods.add(period);
+        if(period===month){if(!/^\/uploads\/[^/]+\.xlsx?$/i.test(item.attachment?.url||''))throw Error('Monthly workbook missing');links.push({url:new URL(item.attachment.url,page).href,text:item.name.replace(/^Monthly\s+(?:[-–]\s*)?/i,'').replace(/\s*[-–]\s*[A-Za-z]+ \d{1,2},\s*20\d{2}$/,'')});}
+      }
+      if(ids.size>total||!downloads.length&&total>0)throw Error('Incomplete disclosure index');
+    }
+    if(ids.size!==total)throw Error('Incomplete disclosure index');if(!links.length)throw periodNotListed(month,[...periods]);return links;
+  }
+  if(slug==='edelweiss'||slug==='tata') {
     // The public index supplies published file links; all holdings come from the
     // AMC's own allowed host and still require matching workbook dates.
     const display={tata:'Tata',edelweiss:'Edelweiss','bajaj-finserv':'Bajaj-Finserv'}[slug];
@@ -115,6 +171,7 @@ export async function catalogueDisclosures(slug,month,read,{anchorFiles,includeH
     const response=await read(page,{body:JSON.stringify(['monthly-portfolio-disclosure',{year:`FI${fy}-${fy+1}`,month:name,date:'$undefined'},'MF']),contentType:'text/plain;charset=UTF-8',headers:{accept:'text/x-component','next-action':action,origin:new URL(page).origin,referer:page,'next-router-state-tree':'%5B%22%22%2C%7B%22children%22%3A%5B%22(mf)%22%2C%7B%22children%22%3A%5B%22(public)%22%2C%7B%22children%22%3A%5B%22statutory-disclosure%22%2C%7B%22children%22%3A%5B%5B%22l1Id%22%2C%22disclosures%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%5B%22l2Id%22%2C%22monthly-portfolio-disclosure%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22__PAGE__%22%2C%7B%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%5D%7D%2Cnull%2Cnull%2Ctrue%5D'}});
     const line=response.toString('utf8').split('\n').find(l=>/^1:\{/.test(l));
     const data=line&&JSON.parse(line.slice(2)),pagination=data?.meta?.pagination;
+    if(Array.isArray(data?.data)&&!data.data.length&&pagination?.page===1&&pagination.pageCount===0&&pagination.total===0)throw periodNotListed(month);
     if(!Array.isArray(data?.data)||pagination?.page!==1||pagination?.pageCount!==1||pagination.total!==data.data.length)throw Error('Incomplete disclosure index');
     return data.data.filter(d=>!/^JioBlackRock Mutual Fund-Monthly-Portfolio-/i.test(d.title||'')).map(d=>{
       if(d.docType!=='file'||!new RegExp(`-Monthly-Portfolio-${end}-${String(num).padStart(2,'0')}-${year}$`,'i').test(d.title||''))throw Error('Disclosure month mismatch');
@@ -136,7 +193,15 @@ export async function catalogueDisclosures(slug,month,read,{anchorFiles,includeH
       return [{...link,text:decodeURIComponent(new URL(link.url).pathname.split('/').pop()).replace(/-\d{2}-[a-z]+-20\d{2}\.xlsx?$/i,'').replace(/-/g,' '),...(includeHistory?{disclosureMonth:period}:{})}];
     });
   }
-  if(slug==='il-fs-idf')return anchorFiles(await html(page),page).filter(l=>new RegExp(`/ILFS_Portfolio_TransactionReports_${name}_${year}\\.xlsx?$`,'i').test(l.url));
+  if(slug==='il-fs-idf') {
+    // September's official label points to an August-named replacement file.
+    // Preserve its exact URL and validate the actual month-end workbook sheets.
+    const files=anchorFiles(await html(page),page).filter(l=>/\/ILFS_Portfolio_TransactionReports_[^/]+\.xlsx?$/i.test(new URL(l.url).pathname));
+    if(!files.length)throw Error('Monthly catalogue missing');
+    const dated=files.map(l=>{const date=/^([A-Za-z]+)\s*-?\s*(20\d{2})\s*-\s*Portfolio\b/i.exec(l.text);if(!date)throw Error('Disclosure index month mismatch');return {...l,disclosureMonth:monthKey(`${date[1].slice(0,3)}-${date[2]}`)};});
+    const links=dated.filter(l=>l.disclosureMonth===month);if(!links.length)throw periodNotListed(month,dated.map(l=>l.disclosureMonth));
+    if(links.length!==1)throw Error('Consolidated disclosure ambiguous');return links;
+  }
   if(slug==='navi') {
     const source=await html(page),settings=config(source,'navi_property');
     const category=/<[^>]*data-item="portfolio_portfolio-monthly"[^>]*data-category="(\d+)"/i.exec(source)?.[1];
@@ -144,6 +209,7 @@ export async function catalogueDisclosures(slug,month,read,{anchorFiles,includeH
     const fy=num>=4?year:year-1;
     const data=await json(settings.rest_url+'nv/v1/documents',form({financial_year:`${fy}-${fy+1}`,value:name,category,type:'Monthly',order:'DESC'},{'WP-NONCE':settings.nonce}));
     if(data.success!==true||!Array.isArray(data.data))throw Error('Invalid disclosure index');
+    if(!data.data.length)throw periodNotListed(month);
     return data.data.flatMap(d=>{
       if(!new RegExp(`${end}(?:st|nd|rd|th)? ${name} ${year}$`,'i').test(d.title||''))throw Error('Disclosure index month mismatch');
       const files=Array.isArray(d.url)?d.url.map(f=>f.link):[d.url];
@@ -154,17 +220,18 @@ export async function catalogueDisclosures(slug,month,read,{anchorFiles,includeH
   if(slug==='alphagrep') {
     const data=await json('https://www.alphagrepmf.ai/assets/documents/files.json');
     if(!Array.isArray(data.monthly))throw Error('Invalid disclosure index');
-    return data.monthly.flatMap(s=>{
+    const periods=new Set();const links=data.monthly.flatMap(s=>{
       if(!s.schemeName||!Array.isArray(s.financialYears))throw Error('Invalid scheme catalogue');
       return s.financialYears.flatMap(fy=>{
         if(!Array.isArray(fy.documents))throw Error('Invalid reporting-year catalogue');
-        return fy.documents.filter(d=>d.fileName===`${name}_${year}`).map(d=>{
+        return fy.documents.filter(d=>{const date=/^([A-Za-z]+)_(20\d{2})$/.exec(d.fileName||''),period=date&&monthKey(`${date[1].slice(0,3)}-${date[2]}`);if(!period)throw Error('Disclosure index month mismatch');periods.add(period);return period===month;}).map(d=>{
           for(const part of [s.folderName,fy.yearFolder,d.fileName])if(!/^[a-z0-9_-]+$/i.test(part||''))throw Error('Invalid disclosure path');
           // Same path composition as the site's Monthly > scheme > year download.
           return {url:`https://www.alphagrepmf.ai/assets/documents/${s.folderName}/monthly/${fy.yearFolder}/${d.fileName}.xls`,text:s.schemeName};
         });
       });
     });
+    if(!links.length)throw periodNotListed(month,[...periods]);return links;
   }
   throw Error('Unknown catalogue');
 }

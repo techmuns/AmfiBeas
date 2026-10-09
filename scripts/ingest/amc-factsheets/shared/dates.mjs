@@ -8,3 +8,9 @@ export function previousMonth(month) {
 }
 export const targetMonth=(now=Date.now())=>previousMonth(new Date(now).toISOString().slice(0,7));
 export const monthLabel=month=>month?`${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(month.slice(5))-1]}-${month.slice(2,4)}`:null;
+
+export function isMonthEnd(value,month=monthKey(value)) {
+  if(!month||!/^20\d\d-\d\d-\d\d$/.test(value||""))return false;
+  const end=new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5,7)),0)).toISOString().slice(0,10);
+  return value===end;
+}

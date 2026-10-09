@@ -24,6 +24,9 @@ export interface AmcScheme {
   /** The AMC's own scheme code / short code (sheet identity). */
   schemeCode: string;
   schemeName: string;
+  sourceUrl?: string;
+  /** Weight units established by workbook number formatting before rounding. */
+  pctUnit?: "percentage-points";
   /** Portfolio-statement "as on" date, ISO (YYYY-MM-DD). */
   asOf: string | null;
   holdings: AmcHolding[];

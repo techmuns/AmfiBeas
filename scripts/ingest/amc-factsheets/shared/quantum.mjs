@@ -1,4 +1,4 @@
-import {monthKey} from './dates.mjs';
+import {monthKey,isMonthEnd} from './dates.mjs';
 
 export const QUANTUM_PAGE='https://www.quantumamc.com/portfolio/combined/-1/1/0/0';
 // This is the public monthly-disclosure API used by Quantum's own page. Its
@@ -43,7 +43,7 @@ export function parseQuantumWorkbook(buffer,{XLSX,parseAmcWorkbook,opts,month}) 
   // Most reports contain no appendix. Avoid rebuilding every cell and ZIP for
   // those files, retaining the original workbook's format and numeric values.
   const schemes=parseAmcWorkbook(changed?XLSX.write(workbook,{type:'buffer',bookType:'xlsx'}):buffer,opts);
-  if(!schemes.length||schemes.some(s=>monthKey(s.asOf)!==month))throw Error('Disclosure month unverified');
+  if(!schemes.length||schemes.some(s=>!isMonthEnd(s.asOf,month)))throw Error('Disclosure month unverified');
   // A changed appendix heading must fail visibly instead of reintroducing
   // look-through shares. Review any future FoF layout that reports direct equity.
   if(schemes.some(s=>/\bfof\b|funds?\s+of\s+funds?/i.test(s.schemeName||'')&&s.holdings.some(h=>/^INE/.test(h.isin||''))))throw Error('Ambiguous FoF ownership');

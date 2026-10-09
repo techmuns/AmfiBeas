@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {publicDisclosures} from './public-disclosures.mjs';
 const month='2026-08',json=value=>Buffer.from(JSON.stringify(value)),html=value=>Buffer.from(value);
@@ -44,10 +45,10 @@ await assert.rejects(publicDisclosures('navi',month,naviReader('2026-2027','Port
 const alphaData={monthly:[{schemeName:'AlphaGrep Fund',folderName:'fund',financialYears:[{yearFolder:'2026_27',documents:[{fileName:'August_2026'},{fileName:'July_2026'}]}]}]};
 const alpha=await publicDisclosures('alphagrep',month,async()=>json(alphaData));
 assert.equal(alpha.length,1);assert.match(alpha[0].url,/fund\/monthly\/2026_27\/August_2026.xls$/);
-await assert.rejects(publicDisclosures('alphagrep','2026-06',async()=>json(alphaData)),/unavailable/);
+await assert.rejects(publicDisclosures('alphagrep','2026-06',async()=>json(alphaData)),e=>e.code==='SOURCE_PERIOD_NOT_LISTED');
 const badAlpha=structuredClone(alphaData);badAlpha.monthly[0].folderName='../fund';
 await assert.rejects(publicDisclosures('alphagrep',month,async()=>json(badAlpha)),/path/);
-const ilfs=await publicDisclosures('il-fs-idf',month,async()=>html('<a href="/ILFS_Portfolio_TransactionReports_August_2026.xlsx">August</a><a href="/ILFS_Portfolio_TransactionReports_July_2026.xlsx">July</a>'));
+const ilfs=await publicDisclosures('il-fs-idf',month,async()=>html('<a href="/ILFS_Portfolio_TransactionReports_August_2026.xlsx">August -2026- Portfolio - NAV</a><a href="/ILFS_Portfolio_TransactionReports_July_2026.xlsx">July 2026- Portfolio - NAV</a>'));
 assert.equal(ilfs.length,1);
 console.log('PASS seven official catalogues: pagination, missing pages, duplicate files, reporting periods, fiscal-year rollover, published action discovery and allowed file paths');
 
@@ -57,11 +58,15 @@ await assert.rejects(publicDisclosures('choice','2026-09',async()=>json(choiceDa
 choiceData.body.data[0].reports[0].file_path='https://unexpected.test/report.xlsx';
 await assert.rejects(publicDisclosures('choice',month,async()=>json(choiceData)),/file/);
 
-for(const [slug,host] of [['tata','https://betacms.tatamutualfund.com'],['edelweiss','https://www.edelweissmf.com'],['bajaj-finserv','https://media.bajajamc.com']]) {
+for(const [slug,host] of [['tata','https://betacms.tatamutualfund.com'],['edelweiss','https://www.edelweissmf.com']]) {
  const reader=async()=>html(`<a href="${host}/aug.xlsx">Monthly Portfolio Disclosure - August 2026</a><a href="${host}/jul.xlsx">Monthly Portfolio Disclosure - July 2026</a>`);
  assert.equal((await publicDisclosures(slug,month,reader)).length,1);
  await assert.rejects(publicDisclosures(slug,'2026-07',async()=>html('<a href="https://unexpected.test/jul.xlsx">Monthly Portfolio Disclosure - July 2026</a>')),/unavailable/);
 }
 
-const zerodha=await publicDisclosures('zerodha',month,async()=>html(JSON.stringify({files:[{name:'ZOVER - Monthly Portfolio August 2026',url:'https://assets.zerodhafundhouse.com/statutory-reports/portfolio-disclosures/ZOVER - Monthly Portfolio August 2026.xlsx'},{name:'ZOVER - Half-Yearly Portfolio August 2026',url:'https://assets.zerodhafundhouse.com/statutory-reports/portfolio-disclosures/half.xlsx'}]})));
+const zerodha=await publicDisclosures('zerodha',month,async()=>html('<script id="__NEXT_DATA__">'+JSON.stringify({files:[{name:'ZOVER - Monthly Portfolio August 2026',url:'https://assets.zerodhafundhouse.com/statutory-reports/portfolio-disclosures/ZOVER - Monthly Portfolio August 2026.xlsx'},{name:'ZOVER - Half-Yearly Portfolio August 2026',url:'https://assets.zerodhafundhouse.com/statutory-reports/portfolio-disclosures/half.xlsx'}]})+'</script>'));
 assert.equal(zerodha.length,1);assert.match(zerodha[0].url,/ZOVER%20/);
+
+const genuineEmpty=fs.readFileSync(new URL('./fixtures/jio-september-empty.rsc',import.meta.url));
+await assert.rejects(publicDisclosures('jio-blackrock','2026-09',async(url,options)=>options?genuineEmpty:jioReader()(url,options)),error=>error.code==='SOURCE_PERIOD_NOT_LISTED'&&error.targetMonth==='2026-09');
+console.log('PASS genuine Jio target-period absence: complete zero-row pagination, preserved older snapshots, distinguished from malformed catalogue');
