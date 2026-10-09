@@ -2,9 +2,9 @@
   "meta": {
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
-    "generatedAt": "2026-10-09T15:36:39.529Z",
+    "generatedAt": "2026-10-09T15:58:25.358Z",
     "universe": "Active equity schemes only (excludes ETFs, index, international and hybrid funds)",
-    "activeEquityFunds": 380,
+    "activeEquityFunds": 385,
     "metric": "Net Rs Cr bought/sold = change in aggregate shares held x current implied price. Excludes corporate actions (split/bonus). pctOutstanding = net shares traded ÷ company shares outstanding x 100 (null until the screener feed covers the fincode).",
     "topN": 20
   },
@@ -24,7 +24,7 @@
           {
             "fund": "PPFAS Parag Parikh Flexi Cap Fund",
             "amc": "PPFAS",
-            "netCr": 2343
+            "netCr": 2344
           },
           {
             "fund": "Franklin India Large Cap Fund",
@@ -77,8 +77,8 @@
             "netCr": 0
           },
           {
-            "fund": "Zerodha ELSS Tax Saver Nifty Large Midcap 250 Index Fund",
-            "amc": "Zerodha",
+            "fund": "Mirae Asset Nifty500 Multicap 50:25:25 ETF",
+            "amc": "Mirae",
             "netCr": 0
           }
         ]
@@ -159,7 +159,7 @@
       {
         "company": "Bajaj Finance Limited",
         "fincode": "INE296A01032",
-        "netCr": 1345,
+        "netCr": 1346,
         "pctOutstanding": 0.24,
         "amcs": [
           "SBI",
@@ -449,7 +449,7 @@
         ]
       },
       {
-        "company": "Tata Steel Limited",
+        "company": "Tata Steel Ltd.",
         "fincode": "INE081A01020",
         "netCr": 754,
         "pctOutstanding": 0.34,
@@ -797,6 +797,11 @@
             "netCr": 0
           },
           {
+            "fund": "Mirae Asset Nifty500 Multicap 50:25:25 ETF",
+            "amc": "Mirae",
+            "netCr": 0
+          },
+          {
             "fund": "Zerodha ELSS Tax Saver Nifty Large Midcap 250 Index Fund",
             "amc": "Zerodha",
             "netCr": 0
@@ -1084,6 +1089,11 @@
             "netCr": 0
           },
           {
+            "fund": "Mirae Asset Nifty500 Multicap 50:25:25 ETF",
+            "amc": "Mirae",
+            "netCr": 0
+          },
+          {
             "fund": "Zerodha ELSS Tax Saver Nifty Large Midcap 250 Index Fund",
             "amc": "Zerodha",
             "netCr": 0
@@ -1222,6 +1232,11 @@
           {
             "fund": "Zerodha Nifty Large Midcap 250 Index Fund",
             "amc": "Zerodha",
+            "netCr": 0
+          },
+          {
+            "fund": "Mirae Asset Nifty500 Multicap 50:25:25 ETF",
+            "amc": "Mirae",
             "netCr": 0
           },
           {
@@ -2404,7 +2419,7 @@
       {
         "company": "Adani Enterprises Limited",
         "fincode": "INE423A01024",
-        "netCr": 334,
+        "netCr": 333,
         "pctOutstanding": 0.09,
         "amcs": [
           "SBI",
@@ -2687,9 +2702,67 @@
         ]
       },
       {
+        "company": "Bajaj Finserv Limited",
+        "fincode": "INE918I01026",
+        "netCr": 258,
+        "pctOutstanding": 0.1,
+        "amcs": [
+          "Nippon",
+          "SBI",
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "Nippon India Focused Fund",
+            "amc": "Nippon",
+            "netCr": -252
+          },
+          {
+            "fund": "SBI Focused Fund",
+            "amc": "SBI",
+            "netCr": -111
+          },
+          {
+            "fund": "Nippon India Innovation Fund",
+            "amc": "Nippon",
+            "netCr": -65
+          },
+          {
+            "fund": "Nippon India Banking & Financial Services Fund",
+            "amc": "Nippon",
+            "netCr": -46
+          },
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": -14
+          },
+          {
+            "fund": "JioBlackRock Flexi Cap Fund",
+            "amc": "JioBlackRock",
+            "netCr": -12
+          },
+          {
+            "fund": "Bandhan Business Cycle Fund",
+            "amc": "Bandhan",
+            "netCr": -2
+          },
+          {
+            "fund": "Sundaram Multi-Factor Fund",
+            "amc": "Sundaram",
+            "netCr": 0
+          },
+          {
+            "fund": "JioBlackRock Large Cap Fund",
+            "amc": "JioBlackRock",
+            "netCr": 0
+          }
+        ]
+      },
+      {
         "company": "Titan Company Limited",
         "fincode": "INE280A01028",
-        "netCr": 258,
+        "netCr": 257,
         "pctOutstanding": 0.07,
         "amcs": [
           "Nippon",
@@ -2756,64 +2829,6 @@
             "fund": "Sundaram Consumption Fund",
             "amc": "Sundaram",
             "netCr": -14
-          }
-        ]
-      },
-      {
-        "company": "Bajaj Finserv Limited",
-        "fincode": "INE918I01026",
-        "netCr": 258,
-        "pctOutstanding": 0.1,
-        "amcs": [
-          "Nippon",
-          "SBI",
-          "PPFAS"
-        ],
-        "schemes": [
-          {
-            "fund": "Nippon India Focused Fund",
-            "amc": "Nippon",
-            "netCr": -252
-          },
-          {
-            "fund": "SBI Focused Fund",
-            "amc": "SBI",
-            "netCr": -111
-          },
-          {
-            "fund": "Nippon India Innovation Fund",
-            "amc": "Nippon",
-            "netCr": -65
-          },
-          {
-            "fund": "Nippon India Banking & Financial Services Fund",
-            "amc": "Nippon",
-            "netCr": -46
-          },
-          {
-            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
-            "amc": "PPFAS",
-            "netCr": -14
-          },
-          {
-            "fund": "JioBlackRock Flexi Cap Fund",
-            "amc": "JioBlackRock",
-            "netCr": -12
-          },
-          {
-            "fund": "Bandhan Business Cycle Fund",
-            "amc": "Bandhan",
-            "netCr": -2
-          },
-          {
-            "fund": "Sundaram Multi-Factor Fund",
-            "amc": "Sundaram",
-            "netCr": 0
-          },
-          {
-            "fund": "JioBlackRock Large Cap Fund",
-            "amc": "JioBlackRock",
-            "netCr": 0
           }
         ]
       }
@@ -3116,7 +3131,7 @@
       {
         "company": "Multi Commodity Exchange of India Limited",
         "fincode": "INE745G01043",
-        "netCr": 580,
+        "netCr": 581,
         "pctOutstanding": 0.72,
         "amcs": [
           "Nippon",
@@ -3335,7 +3350,7 @@
       {
         "company": "Piramal Finance Limited",
         "fincode": "INE202B01038",
-        "netCr": 492,
+        "netCr": 491,
         "pctOutstanding": 1.04,
         "amcs": [
           "Kotak",
@@ -3608,6 +3623,11 @@
             "netCr": 0
           },
           {
+            "fund": "Mirae Asset Nifty500 Multicap 50:25:25 ETF",
+            "amc": "Mirae",
+            "netCr": 0
+          },
+          {
             "fund": "DSP Nifty Midcap 150 Index Fund",
             "amc": "DSP",
             "netCr": 0
@@ -3616,18 +3636,13 @@
             "fund": "Kotak Nifty Midcap 150 ETF",
             "amc": "Kotak",
             "netCr": 0
-          },
-          {
-            "fund": "UTI Nifty Midcap 150 Exchange Traded Fund",
-            "amc": "UTI",
-            "netCr": 0
           }
         ]
       },
       {
         "company": "Meesho Ltd",
         "fincode": "INE0VDM01015",
-        "netCr": 324,
+        "netCr": 323,
         "pctOutstanding": 0.32,
         "amcs": [
           "Motilal Oswal",
@@ -3773,7 +3788,7 @@
       {
         "company": "One 97 Communications Limited",
         "fincode": "INE982J01020",
-        "netCr": 309,
+        "netCr": 311,
         "pctOutstanding": 0.3,
         "amcs": [
           "Kotak",
@@ -3846,8 +3861,8 @@
       {
         "company": "Bharat Forge Limited",
         "fincode": "INE465A01025",
-        "netCr": 308,
-        "pctOutstanding": 0.34,
+        "netCr": 310,
+        "pctOutstanding": 0.35,
         "amcs": [
           "Invesco",
           "ICICI Pru",
@@ -3919,8 +3934,8 @@
       {
         "company": "Biocon Ltd.",
         "fincode": "INE376G01013",
-        "netCr": 299,
-        "pctOutstanding": 0.52,
+        "netCr": 298,
+        "pctOutstanding": 0.51,
         "amcs": [
           "Nippon",
           "Aditya",
@@ -3992,7 +4007,7 @@
       {
         "company": "Fortis Healthcare Limited",
         "fincode": "INE061F01013",
-        "netCr": 293,
+        "netCr": 291,
         "pctOutstanding": 0.52,
         "amcs": [
           "Kotak",
@@ -4758,6 +4773,16 @@
             "netCr": 0
           },
           {
+            "fund": "Mirae Asset Nifty Smallcap 250 ETF",
+            "amc": "Mirae",
+            "netCr": 0
+          },
+          {
+            "fund": "Mirae Asset Nifty500 Multicap 50:25:25 ETF",
+            "amc": "Mirae",
+            "netCr": 0
+          },
+          {
             "fund": "DSP Nifty Smallcap 250 Index Fund",
             "amc": "DSP",
             "netCr": 0
@@ -5142,7 +5167,7 @@
       {
         "company": "The Federal Bank Limited",
         "fincode": "INE171A01029",
-        "netCr": 244,
+        "netCr": 243,
         "pctOutstanding": null,
         "amcs": [
           "Axis",
@@ -5288,8 +5313,8 @@
       {
         "company": "AU Small Finance Bank Limited",
         "fincode": "INE949L01017",
-        "netCr": 225,
-        "pctOutstanding": 0.31,
+        "netCr": 224,
+        "pctOutstanding": 0.3,
         "amcs": [
           "SBI",
           "Motilal Oswal",
@@ -5434,7 +5459,7 @@
       {
         "company": "Ashok Leyland Limited",
         "fincode": "INE208A01029",
-        "netCr": 211,
+        "netCr": 210,
         "pctOutstanding": 0.24,
         "amcs": [
           "SBI",
@@ -5578,79 +5603,6 @@
         ]
       },
       {
-        "company": "APL Apollo Tubes Limited",
-        "fincode": "INE702C01027",
-        "netCr": 196,
-        "pctOutstanding": 0.33,
-        "amcs": [
-          "Bandhan",
-          "UTI",
-          "Mahindra Manulife"
-        ],
-        "schemes": [
-          {
-            "fund": "Bandhan Large & Mid Cap Fund",
-            "amc": "Bandhan",
-            "netCr": -102
-          },
-          {
-            "fund": "UTI - Mid Cap Fund",
-            "amc": "UTI",
-            "netCr": -53
-          },
-          {
-            "fund": "Mahindra Manulife Multi Cap Fund",
-            "amc": "Mahindra Manulife",
-            "netCr": -27
-          },
-          {
-            "fund": "Sundaram Multi Cap Fund",
-            "amc": "Sundaram",
-            "netCr": -16
-          },
-          {
-            "fund": "DSP Quant Fund",
-            "amc": "DSP",
-            "netCr": -13
-          },
-          {
-            "fund": "Aditya Birla Sun Life Multi-cap Fund",
-            "amc": "Aditya",
-            "netCr": -11
-          },
-          {
-            "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
-            "amc": "Aditya",
-            "netCr": -10
-          },
-          {
-            "fund": "Sundaram Mid Cap Fund",
-            "amc": "Sundaram",
-            "netCr": -8
-          },
-          {
-            "fund": "ICICI Prudential Conglomerate Fund",
-            "amc": "ICICI Pru",
-            "netCr": -8
-          },
-          {
-            "fund": "UTI Quant Fund",
-            "amc": "UTI",
-            "netCr": -5
-          },
-          {
-            "fund": "Kotak Quant Fund",
-            "amc": "Kotak",
-            "netCr": -5
-          },
-          {
-            "fund": "Kotak ESG Exclusionary Strategy Fund",
-            "amc": "Kotak",
-            "netCr": -2
-          }
-        ]
-      },
-      {
         "company": "Apar Industries Limited",
         "fincode": "INE372A01015",
         "netCr": 195,
@@ -5720,6 +5672,79 @@
             "fund": "JM Value Fund",
             "amc": "JM",
             "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "APL Apollo Tubes Limited",
+        "fincode": "INE702C01027",
+        "netCr": 192,
+        "pctOutstanding": 0.33,
+        "amcs": [
+          "Bandhan",
+          "UTI",
+          "Mahindra Manulife"
+        ],
+        "schemes": [
+          {
+            "fund": "Bandhan Large & Mid Cap Fund",
+            "amc": "Bandhan",
+            "netCr": -102
+          },
+          {
+            "fund": "UTI - Mid Cap Fund",
+            "amc": "UTI",
+            "netCr": -53
+          },
+          {
+            "fund": "Mahindra Manulife Multi Cap Fund",
+            "amc": "Mahindra Manulife",
+            "netCr": -27
+          },
+          {
+            "fund": "Sundaram Multi Cap Fund",
+            "amc": "Sundaram",
+            "netCr": -16
+          },
+          {
+            "fund": "DSP Quant Fund",
+            "amc": "DSP",
+            "netCr": -13
+          },
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": -11
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
+            "amc": "Aditya",
+            "netCr": -10
+          },
+          {
+            "fund": "Sundaram Mid Cap Fund",
+            "amc": "Sundaram",
+            "netCr": -8
+          },
+          {
+            "fund": "ICICI Prudential Conglomerate Fund",
+            "amc": "ICICI Pru",
+            "netCr": -8
+          },
+          {
+            "fund": "UTI Quant Fund",
+            "amc": "UTI",
+            "netCr": -5
+          },
+          {
+            "fund": "Kotak Quant Fund",
+            "amc": "Kotak",
+            "netCr": -5
+          },
+          {
+            "fund": "Kotak ESG Exclusionary Strategy Fund",
+            "amc": "Kotak",
+            "netCr": -2
           }
         ]
       }
@@ -6969,18 +6994,18 @@
             "netCr": 0
           },
           {
+            "fund": "Mirae Asset Nifty Smallcap 250 ETF",
+            "amc": "Mirae",
+            "netCr": 0
+          },
+          {
+            "fund": "Mirae Asset Nifty500 Multicap 50:25:25 ETF",
+            "amc": "Mirae",
+            "netCr": 0
+          },
+          {
             "fund": "DSP Nifty Smallcap 250 Index Fund",
             "amc": "DSP",
-            "netCr": 0
-          },
-          {
-            "fund": "DSP Nifty Smallcap 250 ETF",
-            "amc": "DSP",
-            "netCr": 0
-          },
-          {
-            "fund": "SBI Nifty Small Cap 250 ETF",
-            "amc": "SBI",
             "netCr": 0
           }
         ]
@@ -7110,12 +7135,12 @@
             "netCr": 0
           },
           {
-            "fund": "DSP Nifty Smallcap 250 ETF",
-            "amc": "DSP",
+            "fund": "Mirae Asset Nifty Smallcap 250 ETF",
+            "amc": "Mirae",
             "netCr": 0
           },
           {
-            "fund": "DSP Nifty Smallcap 250 Index Fund",
+            "fund": "DSP Nifty Smallcap 250 ETF",
             "amc": "DSP",
             "netCr": 0
           }
@@ -7160,6 +7185,16 @@
           {
             "fund": "Motilal Oswal Nifty Smallcap 250 ETF",
             "amc": "Motilal Oswal",
+            "netCr": 0
+          },
+          {
+            "fund": "Mirae Asset Nifty Smallcap 250 ETF",
+            "amc": "Mirae",
+            "netCr": 0
+          },
+          {
+            "fund": "Mirae Asset Nifty500 Multicap 50:25:25 ETF",
+            "amc": "Mirae",
             "netCr": 0
           },
           {
@@ -7342,18 +7377,18 @@
             "netCr": 0
           },
           {
+            "fund": "Mirae Asset Nifty Smallcap 250 ETF",
+            "amc": "Mirae",
+            "netCr": 0
+          },
+          {
+            "fund": "Mirae Asset Nifty500 Multicap 50:25:25 ETF",
+            "amc": "Mirae",
+            "netCr": 0
+          },
+          {
             "fund": "DSP Nifty Smallcap 250 Index Fund",
             "amc": "DSP",
-            "netCr": 0
-          },
-          {
-            "fund": "DSP Nifty Smallcap 250 ETF",
-            "amc": "DSP",
-            "netCr": 0
-          },
-          {
-            "fund": "SBI Nifty Small Cap 250 ETF",
-            "amc": "SBI",
             "netCr": 0
           }
         ]
@@ -7397,6 +7432,16 @@
           {
             "fund": "Motilal Oswal Nifty Smallcap 250 ETF",
             "amc": "Motilal Oswal",
+            "netCr": 0
+          },
+          {
+            "fund": "Mirae Asset Nifty Smallcap 250 ETF",
+            "amc": "Mirae",
+            "netCr": 0
+          },
+          {
+            "fund": "Mirae Asset Nifty500 Multicap 50:25:25 ETF",
+            "amc": "Mirae",
             "netCr": 0
           },
           {
@@ -7490,6 +7535,16 @@
             "netCr": 0
           },
           {
+            "fund": "Mirae Asset Nifty Smallcap 250 ETF",
+            "amc": "Mirae",
+            "netCr": 0
+          },
+          {
+            "fund": "Mirae Asset Nifty500 Multicap 50:25:25 ETF",
+            "amc": "Mirae",
+            "netCr": 0
+          },
+          {
             "fund": "DSP Nifty Smallcap 250 Index Fund",
             "amc": "DSP",
             "netCr": 0
@@ -7553,8 +7608,18 @@
             "netCr": 0
           },
           {
+            "fund": "Mirae Asset Nifty Smallcap 250 ETF",
+            "amc": "Mirae",
+            "netCr": 0
+          },
+          {
             "fund": "DSP Nifty Smallcap 250 ETF",
             "amc": "DSP",
+            "netCr": 0
+          },
+          {
+            "fund": "Mirae Asset Nifty500 Multicap 50:25:25 ETF",
+            "amc": "Mirae",
             "netCr": 0
           },
           {
@@ -7567,7 +7632,7 @@
       {
         "company": "Sansera Engineering Limited",
         "fincode": "INE953O01021",
-        "netCr": 83,
+        "netCr": 82,
         "pctOutstanding": 0.31,
         "amcs": [
           "DSP",
@@ -7716,6 +7781,16 @@
             "netCr": 0
           },
           {
+            "fund": "Mirae Asset Nifty Smallcap 250 ETF",
+            "amc": "Mirae",
+            "netCr": 0
+          },
+          {
+            "fund": "Mirae Asset Nifty500 Multicap 50:25:25 ETF",
+            "amc": "Mirae",
+            "netCr": 0
+          },
+          {
             "fund": "DSP Nifty Smallcap 250 ETF",
             "amc": "DSP",
             "netCr": 0
@@ -7789,13 +7864,13 @@
             "netCr": 0
           },
           {
-            "fund": "DSP Nifty Smallcap 250 Index Fund",
-            "amc": "DSP",
+            "fund": "Mirae Asset Nifty Smallcap 250 ETF",
+            "amc": "Mirae",
             "netCr": 0
           },
           {
-            "fund": "DSP Nifty Smallcap 250 ETF",
-            "amc": "DSP",
+            "fund": "Mirae Asset Nifty500 Multicap 50:25:25 ETF",
+            "amc": "Mirae",
             "netCr": 0
           }
         ]
@@ -7862,13 +7937,13 @@
             "netCr": 0
           },
           {
-            "fund": "DSP Nifty Smallcap 250 Index Fund",
-            "amc": "DSP",
+            "fund": "Mirae Asset Nifty Smallcap 250 ETF",
+            "amc": "Mirae",
             "netCr": 0
           },
           {
-            "fund": "DSP Nifty Smallcap 250 ETF",
-            "amc": "DSP",
+            "fund": "Mirae Asset Nifty500 Multicap 50:25:25 ETF",
+            "amc": "Mirae",
             "netCr": 0
           }
         ]
@@ -8160,7 +8235,7 @@
           },
           {
             "company": "Biocon Ltd.",
-            "netCr": 299,
+            "netCr": 298,
             "amcs": [
               "Nippon",
               "Aditya",
