@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-10-11T23:26:05.991Z",
+    "generatedAt": "2026-10-11T23:32:03.993Z",
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -810,21 +810,21 @@
     "windowMonths": 3,
     "period": "3Y",
     "universe": 255,
-    "medianFlowPct": 0,
+    "medianFlowPct": 1,
     "quadrants": {
       "winning": {
-        "count": 83,
+        "count": 87,
         "rows": [
           {
             "fund": "DSP Value Fund",
             "amc": "DSP",
             "classification": "Equity : Value / Contra",
-            "percentile": 88.9,
+            "percentile": 83.3,
             "quartile": "Q1",
-            "perfReturn": 14.7,
+            "perfReturn": 13.9,
             "bookGrowthPct": 27.4,
-            "navReturnPct": -2.8,
-            "impliedFlowPct": 30.1,
+            "navReturnPct": -4.8,
+            "impliedFlowPct": 32.2,
             "bookCr": 1724,
             "monthsBack": 3
           },
@@ -834,11 +834,24 @@
             "classification": "Equity : Small Cap",
             "percentile": 77.8,
             "quartile": "Q1",
-            "perfReturn": 16.9,
+            "perfReturn": 17,
             "bookGrowthPct": 24.3,
-            "navReturnPct": 4.1,
-            "impliedFlowPct": 20.1,
+            "navReturnPct": 2.2,
+            "impliedFlowPct": 22.1,
             "bookCr": 256,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Bandhan Small Cap Fund",
+            "amc": "Bandhan",
+            "classification": "Equity : Small Cap",
+            "percentile": 100,
+            "quartile": "Q1",
+            "perfReturn": 21.5,
+            "bookGrowthPct": 19.4,
+            "navReturnPct": 2.2,
+            "impliedFlowPct": 17.2,
+            "bookCr": 31201,
             "monthsBack": 3
           },
           {
@@ -849,22 +862,9 @@
             "quartile": "Q2",
             "perfReturn": 15.8,
             "bookGrowthPct": 16.2,
-            "navReturnPct": 0.3,
-            "impliedFlowPct": 15.9,
+            "navReturnPct": -0.8,
+            "impliedFlowPct": 17,
             "bookCr": 2454,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Bandhan Small Cap Fund",
-            "amc": "Bandhan",
-            "classification": "Equity : Small Cap",
-            "percentile": 96.3,
-            "quartile": "Q1",
-            "perfReturn": 21.3,
-            "bookGrowthPct": 19.4,
-            "navReturnPct": 3.7,
-            "impliedFlowPct": 15.7,
-            "bookCr": 31201,
             "monthsBack": 3
           },
           {
@@ -873,10 +873,10 @@
             "classification": "Equity : Large Cap",
             "percentile": 100,
             "quartile": "Q1",
-            "perfReturn": 13.2,
+            "perfReturn": 13.1,
             "bookGrowthPct": 22.9,
-            "navReturnPct": 7.7,
-            "impliedFlowPct": 15.2,
+            "navReturnPct": 6.5,
+            "impliedFlowPct": 16.4,
             "bookCr": 61,
             "monthsBack": 3
           },
@@ -884,12 +884,12 @@
             "fund": "Kotak Pioneer Fund",
             "amc": "Kotak Mahindra",
             "classification": "Equity : Thematic",
-            "percentile": 97.7,
+            "percentile": 93.2,
             "quartile": "Q1",
-            "perfReturn": 18.9,
+            "perfReturn": 17.9,
             "bookGrowthPct": 18,
-            "navReturnPct": 4.3,
-            "impliedFlowPct": 13.7,
+            "navReturnPct": 1.9,
+            "impliedFlowPct": 16.1,
             "bookCr": 3317,
             "monthsBack": 3
           },
@@ -901,28 +901,28 @@
             "quartile": "Q1",
             "perfReturn": 17.3,
             "bookGrowthPct": 8.1,
-            "navReturnPct": -3.6,
-            "impliedFlowPct": 11.7,
+            "navReturnPct": -4.8,
+            "impliedFlowPct": 12.9,
             "bookCr": 2017,
             "monthsBack": 3
           },
           {
-            "fund": "Kotak Business Cycle Fund",
-            "amc": "Kotak Mahindra",
+            "fund": "ICICI Pru Commodities Fund",
+            "amc": "ICICI Prudential",
             "classification": "Equity : Thematic",
-            "percentile": 56.8,
+            "percentile": 50,
             "quartile": "Q2",
-            "perfReturn": 14,
-            "bookGrowthPct": 12.3,
-            "navReturnPct": 1,
-            "impliedFlowPct": 11.3,
-            "bookCr": 3368,
+            "perfReturn": 13,
+            "bookGrowthPct": 5.7,
+            "navReturnPct": -7,
+            "impliedFlowPct": 12.7,
+            "bookCr": 3711,
             "monthsBack": 3
           }
         ]
       },
       "coasting": {
-        "count": 45,
+        "count": 44,
         "rows": [
           {
             "fund": "DSP Healthcare Fund",
@@ -930,24 +930,11 @@
             "classification": "Equity : Sectoral - Pharma",
             "percentile": 44.4,
             "quartile": "Q3",
-            "perfReturn": 19.6,
+            "perfReturn": 19.1,
             "bookGrowthPct": 17.8,
-            "navReturnPct": 8.3,
-            "impliedFlowPct": 9.6,
+            "navReturnPct": 6.7,
+            "impliedFlowPct": 11.1,
             "bookCr": 3148,
-            "monthsBack": 3
-          },
-          {
-            "fund": "ICICI Pru Exports & Services Fund",
-            "amc": "ICICI Prudential",
-            "classification": "Equity : Thematic",
-            "percentile": 47.7,
-            "quartile": "Q3",
-            "perfReturn": 13.1,
-            "bookGrowthPct": 6.6,
-            "navReturnPct": -1.3,
-            "impliedFlowPct": 8,
-            "bookCr": 1383,
             "monthsBack": 3
           },
           {
@@ -958,9 +945,35 @@
             "quartile": "Q4",
             "perfReturn": 6.8,
             "bookGrowthPct": 1.9,
-            "navReturnPct": -5.9,
-            "impliedFlowPct": 7.8,
+            "navReturnPct": -6.9,
+            "impliedFlowPct": 8.8,
             "bookCr": 249,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Kotak Small Cap Fund",
+            "amc": "Kotak Mahindra",
+            "classification": "Equity : Small Cap",
+            "percentile": 25.9,
+            "quartile": "Q3",
+            "perfReturn": 10.6,
+            "bookGrowthPct": 7.9,
+            "navReturnPct": 0,
+            "impliedFlowPct": 7.9,
+            "bookCr": 18930,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Baroda BNP Paribas Mid Cap Fund",
+            "amc": "Baroda BNP Paribas",
+            "classification": "Equity : Mid Cap",
+            "percentile": 47.2,
+            "quartile": "Q3",
+            "perfReturn": 13.7,
+            "bookGrowthPct": 1.2,
+            "navReturnPct": -6,
+            "impliedFlowPct": 7.3,
+            "bookCr": 2471,
             "monthsBack": 3
           },
           {
@@ -971,35 +984,9 @@
             "quartile": "Q4",
             "perfReturn": -4.6,
             "bookGrowthPct": -1.3,
-            "navReturnPct": -8,
-            "impliedFlowPct": 6.7,
+            "navReturnPct": -8.2,
+            "impliedFlowPct": 6.9,
             "bookCr": 1450,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Kotak Small Cap Fund",
-            "amc": "Kotak Mahindra",
-            "classification": "Equity : Small Cap",
-            "percentile": 25.9,
-            "quartile": "Q3",
-            "perfReturn": 10.7,
-            "bookGrowthPct": 7.9,
-            "navReturnPct": 1.6,
-            "impliedFlowPct": 6.3,
-            "bookCr": 18930,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Baroda BNP Paribas Mid Cap Fund",
-            "amc": "Baroda BNP Paribas",
-            "classification": "Equity : Mid Cap",
-            "percentile": 44.4,
-            "quartile": "Q3",
-            "perfReturn": 13.8,
-            "bookGrowthPct": 1.2,
-            "navReturnPct": -4.7,
-            "impliedFlowPct": 6,
-            "bookCr": 2471,
             "monthsBack": 3
           },
           {
@@ -1008,10 +995,10 @@
             "classification": "Equity : Multi Cap",
             "percentile": 31.8,
             "quartile": "Q3",
-            "perfReturn": 10.9,
+            "perfReturn": 10.8,
             "bookGrowthPct": 2.5,
-            "navReturnPct": -2.1,
-            "impliedFlowPct": 4.6,
+            "navReturnPct": -3.5,
+            "impliedFlowPct": 6,
             "bookCr": 5352,
             "monthsBack": 3
           },
@@ -1019,30 +1006,43 @@
             "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
             "amc": "Aditya Birla Sun Life",
             "classification": "Equity : Mid Cap",
-            "percentile": 30.6,
+            "percentile": 33.3,
             "quartile": "Q3",
-            "perfReturn": 12.8,
+            "perfReturn": 13,
             "bookGrowthPct": -0.9,
-            "navReturnPct": -5,
-            "impliedFlowPct": 4.1,
+            "navReturnPct": -6,
+            "impliedFlowPct": 5.1,
             "bookCr": 468,
+            "monthsBack": 3
+          },
+          {
+            "fund": "SBI Multicap Fund",
+            "amc": "SBI",
+            "classification": "Equity : Multi Cap",
+            "percentile": 36.4,
+            "quartile": "Q3",
+            "perfReturn": 11,
+            "bookGrowthPct": 1.7,
+            "navReturnPct": -3.4,
+            "impliedFlowPct": 5,
+            "bookCr": 23262,
             "monthsBack": 3
           }
         ]
       },
       "falling": {
-        "count": 84,
+        "count": 81,
         "rows": [
           {
             "fund": "Baroda BNP Paribas Focused Fund",
             "amc": "Baroda BNP Paribas",
             "classification": "Equity : Focused",
-            "percentile": 3.9,
+            "percentile": 7.7,
             "quartile": "Q4",
-            "perfReturn": 5.6,
+            "perfReturn": 5.8,
             "bookGrowthPct": -19.9,
-            "navReturnPct": -4.9,
-            "impliedFlowPct": -15,
+            "navReturnPct": -5.5,
+            "impliedFlowPct": -14.4,
             "bookCr": 506,
             "monthsBack": 3
           },
@@ -1054,8 +1054,8 @@
             "quartile": "Q4",
             "perfReturn": 6.1,
             "bookGrowthPct": -11.2,
-            "navReturnPct": 2.7,
-            "impliedFlowPct": -13.8,
+            "navReturnPct": 1.3,
+            "impliedFlowPct": -12.5,
             "bookCr": 5733,
             "monthsBack": 3
           },
@@ -1065,10 +1065,10 @@
             "classification": "Equity : Large Cap",
             "percentile": 45.2,
             "quartile": "Q3",
-            "perfReturn": 7.7,
+            "perfReturn": 7.8,
             "bookGrowthPct": -14.1,
-            "navReturnPct": -3,
-            "impliedFlowPct": -11.1,
+            "navReturnPct": -4,
+            "impliedFlowPct": -10.1,
             "bookCr": 341,
             "monthsBack": 3
           },
@@ -1076,12 +1076,12 @@
             "fund": "LIC MF Flexi Cap Fund",
             "amc": "LIC",
             "classification": "Equity : Flexi Cap",
-            "percentile": 44.2,
+            "percentile": 41.9,
             "quartile": "Q3",
-            "perfReturn": 8.9,
+            "perfReturn": 8.8,
             "bookGrowthPct": -10.3,
-            "navReturnPct": -0.7,
-            "impliedFlowPct": -9.7,
+            "navReturnPct": -2.1,
+            "impliedFlowPct": -8.3,
             "bookCr": 993,
             "monthsBack": 3
           },
@@ -1089,26 +1089,13 @@
             "fund": "Axis ESG Integration Strategy Fund",
             "amc": "Axis",
             "classification": "Equity : Thematic",
-            "percentile": 13.6,
+            "percentile": 11.4,
             "quartile": "Q4",
-            "perfReturn": 7,
+            "perfReturn": 6.8,
             "bookGrowthPct": -12.8,
-            "navReturnPct": -3.3,
-            "impliedFlowPct": -9.5,
+            "navReturnPct": -4.6,
+            "impliedFlowPct": -8.2,
             "bookCr": 880,
-            "monthsBack": 3
-          },
-          {
-            "fund": "SBI Small Cap Fund",
-            "amc": "SBI",
-            "classification": "Equity : Small Cap",
-            "percentile": 7.4,
-            "quartile": "Q4",
-            "perfReturn": 10.1,
-            "bookGrowthPct": -6.4,
-            "navReturnPct": 2.7,
-            "impliedFlowPct": -9.1,
-            "bookCr": 35344,
             "monthsBack": 3
           },
           {
@@ -1117,24 +1104,37 @@
             "classification": "Equity : Value / Contra",
             "percentile": 11.1,
             "quartile": "Q4",
-            "perfReturn": 7,
+            "perfReturn": 7.2,
             "bookGrowthPct": -14.9,
-            "navReturnPct": -6.7,
-            "impliedFlowPct": -8.2,
+            "navReturnPct": -7.1,
+            "impliedFlowPct": -7.8,
             "bookCr": 1705,
             "monthsBack": 3
           },
           {
-            "fund": "Lic Mf Mid Cap Fund",
-            "amc": "LIC",
-            "classification": "Equity : Mid Cap",
-            "percentile": 47.2,
+            "fund": "SBI Small Cap Fund",
+            "amc": "SBI",
+            "classification": "Equity : Small Cap",
+            "percentile": 14.8,
+            "quartile": "Q4",
+            "perfReturn": 10,
+            "bookGrowthPct": -6.4,
+            "navReturnPct": 1,
+            "impliedFlowPct": -7.4,
+            "bookCr": 35344,
+            "monthsBack": 3
+          },
+          {
+            "fund": "ICICI Pru Business Cycle Fund",
+            "amc": "ICICI Prudential",
+            "classification": "Equity : Thematic",
+            "percentile": 47.7,
             "quartile": "Q3",
-            "perfReturn": 13.9,
-            "bookGrowthPct": -9.5,
-            "navReturnPct": -1.8,
-            "impliedFlowPct": -7.7,
-            "bookCr": 349,
+            "perfReturn": 13,
+            "bookGrowthPct": -13.1,
+            "navReturnPct": -6.4,
+            "impliedFlowPct": -6.7,
+            "bookCr": 12996,
             "monthsBack": 3
           }
         ]
@@ -1150,48 +1150,22 @@
             "quartile": "Q2",
             "perfReturn": 14.5,
             "bookGrowthPct": -4.2,
-            "navReturnPct": 8.8,
-            "impliedFlowPct": -13,
+            "navReturnPct": 7,
+            "impliedFlowPct": -11.2,
             "bookCr": 599,
             "monthsBack": 3
           },
           {
-            "fund": "ICICI Pru Business Cycle Fund",
+            "fund": "ICICI Pru Technology Fund",
             "amc": "ICICI Prudential",
-            "classification": "Equity : Thematic",
+            "classification": "Equity : Sectoral - Technology",
             "percentile": 50,
             "quartile": "Q2",
-            "perfReturn": 13.2,
-            "bookGrowthPct": -13.1,
-            "navReturnPct": -5.2,
-            "impliedFlowPct": -7.9,
-            "bookCr": 12996,
-            "monthsBack": 3
-          },
-          {
-            "fund": "LIC MF Small Cap Fund",
-            "amc": "LIC",
-            "classification": "Equity : Small Cap",
-            "percentile": 70.4,
-            "quartile": "Q2",
-            "perfReturn": 16.2,
-            "bookGrowthPct": 0.3,
-            "navReturnPct": 5.3,
-            "impliedFlowPct": -4.9,
-            "bookCr": 792,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Mahindra Manulife Consumption Fund",
-            "amc": "Mahindra",
-            "classification": "Equity : Thematic - Consumption",
-            "percentile": 53.3,
-            "quartile": "Q2",
-            "perfReturn": 7.1,
-            "bookGrowthPct": -7.6,
-            "navReturnPct": -3.2,
-            "impliedFlowPct": -4.5,
-            "bookCr": 446,
+            "perfReturn": 4.1,
+            "bookGrowthPct": -0.9,
+            "navReturnPct": 3.7,
+            "impliedFlowPct": -4.6,
+            "bookCr": 11575,
             "monthsBack": 3
           },
           {
@@ -1200,37 +1174,50 @@
             "classification": "Equity : Focused",
             "percentile": 57.7,
             "quartile": "Q2",
-            "perfReturn": 10.6,
+            "perfReturn": 10.8,
             "bookGrowthPct": -7,
-            "navReturnPct": -2.6,
-            "impliedFlowPct": -4.4,
+            "navReturnPct": -3.1,
+            "impliedFlowPct": -3.8,
             "bookCr": 2217,
             "monthsBack": 3
           },
           {
-            "fund": "Invesco India ELSS Tax Saver Fund",
-            "amc": "Invesco",
-            "classification": "Equity : Tax Saving (ELSS)",
-            "percentile": 64.3,
-            "quartile": "Q2",
-            "perfReturn": 10.2,
-            "bookGrowthPct": -3.1,
-            "navReturnPct": 1,
-            "impliedFlowPct": -4.2,
-            "bookCr": 2554,
+            "fund": "SBI Banking & Financial Services Fund",
+            "amc": "SBI",
+            "classification": "Equity : Sectoral - Financial Services",
+            "percentile": 84.6,
+            "quartile": "Q1",
+            "perfReturn": 14,
+            "bookGrowthPct": -8,
+            "navReturnPct": -4.7,
+            "impliedFlowPct": -3.3,
+            "bookCr": 9660,
             "monthsBack": 3
           },
           {
-            "fund": "ICICI Pru Technology Fund",
-            "amc": "ICICI Prudential",
-            "classification": "Equity : Sectoral - Technology",
-            "percentile": 66.7,
+            "fund": "LIC MF Small Cap Fund",
+            "amc": "LIC",
+            "classification": "Equity : Small Cap",
+            "percentile": 70.4,
             "quartile": "Q2",
-            "perfReturn": 3.8,
-            "bookGrowthPct": -0.9,
-            "navReturnPct": 2.9,
-            "impliedFlowPct": -3.8,
-            "bookCr": 11575,
+            "perfReturn": 16,
+            "bookGrowthPct": 0.3,
+            "navReturnPct": 3.2,
+            "impliedFlowPct": -2.9,
+            "bookCr": 792,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Aditya Birla SL Focused Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Focused",
+            "percentile": 53.9,
+            "quartile": "Q2",
+            "perfReturn": 10.7,
+            "bookGrowthPct": -6,
+            "navReturnPct": -3.1,
+            "impliedFlowPct": -2.9,
+            "bookCr": 6959,
             "monthsBack": 3
           },
           {
@@ -1241,9 +1228,22 @@
             "quartile": "Q1",
             "perfReturn": 15.3,
             "bookGrowthPct": -3.7,
-            "navReturnPct": 0.1,
-            "impliedFlowPct": -3.8,
+            "navReturnPct": -0.9,
+            "impliedFlowPct": -2.8,
             "bookCr": 2045,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Invesco India ELSS Tax Saver Fund",
+            "amc": "Invesco",
+            "classification": "Equity : Tax Saving (ELSS)",
+            "percentile": 64.3,
+            "quartile": "Q2",
+            "perfReturn": 10,
+            "bookGrowthPct": -3.1,
+            "navReturnPct": -0.4,
+            "impliedFlowPct": -2.7,
+            "bookCr": 2554,
             "monthsBack": 3
           }
         ]
@@ -1251,14 +1251,14 @@
     }
   },
   "persistence": {
-    "asOf": "2026-10-07",
+    "asOf": "2026-10-09",
     "priorWindow": {
-      "from": "2020-10-07",
-      "to": "2023-10-07"
+      "from": "2020-10-09",
+      "to": "2023-10-09"
     },
     "recentWindow": {
-      "from": "2023-10-07",
-      "to": "2026-10-07"
+      "from": "2023-10-09",
+      "to": "2026-10-09"
     },
     "cohorts": 19,
     "funds": 537,
@@ -1271,22 +1271,22 @@
         28
       ],
       [
-        30,
+        31,
+        38,
         35,
-        39,
         27
       ],
       [
-        37,
-        39,
-        32,
-        29
+        36,
+        36,
+        35,
+        30
       ],
       [
         29,
         22,
-        33,
-        46
+        34,
+        45
       ]
     ],
     "rowTotals": [
@@ -1301,50 +1301,50 @@
       {
         "fund": "SBI Healthcare Opp Fund",
         "classification": "Equity : Sectoral - Pharma",
-        "prior": 16.4,
-        "recent": 23.1
+        "prior": 16,
+        "recent": 22.7
+      },
+      {
+        "fund": "SBI Healthcare Opp Fund",
+        "classification": "Equity : Sectoral - Pharma",
+        "prior": 14.8,
+        "recent": 21.4
       },
       {
         "fund": "Motilal Oswal Large & Midcap Fund",
         "classification": "Equity : Large & Mid Cap",
-        "prior": 30.6,
-        "recent": 21.5
-      },
-      {
-        "fund": "Motilal Oswal Large & Midcap Fund",
-        "classification": "Equity : Large & Mid Cap",
-        "prior": 28.6,
-        "recent": 20.1
+        "prior": 30.2,
+        "recent": 21
       },
       {
         "fund": "Edelweiss Mid Cap Fund",
         "classification": "Equity : Mid Cap",
-        "prior": 32.4,
+        "prior": 32.1,
         "recent": 19.7
+      },
+      {
+        "fund": "Motilal Oswal Large & Midcap Fund",
+        "classification": "Equity : Large & Mid Cap",
+        "prior": 28.1,
+        "recent": 19.6
       },
       {
         "fund": "DSP India T.I.G.E.R Fund",
         "classification": "Equity : Sectoral - Infrastructure",
-        "prior": 42.1,
-        "recent": 19.3
+        "prior": 41.1,
+        "recent": 19
       },
       {
         "fund": "ICICI Pru Retirement Fund-Pure Equity Plan",
         "classification": "Equity : Flexi Cap",
-        "prior": 30.8,
+        "prior": 29.2,
         "recent": 18.9
       },
       {
         "fund": "Bank of India Flexi Cap Fund",
         "classification": "Equity : Flexi Cap",
-        "prior": 29,
+        "prior": 28.2,
         "recent": 18.7
-      },
-      {
-        "fund": "Motilal Oswal Midcap Fund",
-        "classification": "Equity : Mid Cap",
-        "prior": 37.5,
-        "recent": 18.3
       }
     ]
   }
