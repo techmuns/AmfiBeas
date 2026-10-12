@@ -253,7 +253,11 @@ function findAsOf(rows: Row[]): string | null {
   for (let i = 0; i < limit; i++) {
     for (let j = 0; j < rows[i].length; j++) {
       const cell = rows[i][j];
-      const monthly = /^monthly portfolio statement of .+ for ([A-Za-z]+) (20\d{2})$/i.exec(s(cell));
+      // Zerodha's September Nifty 50 ETF report omits "for" in this exact
+      // monthly statement heading. The heading establishes the reporting month;
+      // a filename, a holding maturity or an arbitrary month mention does not.
+      const monthly = /^monthly portfolio statement of .+ for ([A-Za-z]+) (20\d{2})$/i.exec(s(cell)) ||
+        /^monthly portfolio statement of zerodha .+ (?:etf|fund) ([A-Za-z]+) (20\d{2})$/i.exec(s(cell));
       if (monthly) {
         const first = toIso(`1 ${monthly[1]} ${monthly[2]}`);
         if (first) return plausibleAsOf(new Date(Date.UTC(+first.slice(0,4), +first.slice(5,7), 0)).toISOString().slice(0,10));
