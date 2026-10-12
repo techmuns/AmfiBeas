@@ -293,15 +293,16 @@ export function verifiedNonIndianRows(rows,name,month) {
     const emptyValue=v=>blank(v)||v===0||/^NIL$/i.test(String(v).trim());
     if(!label&&!id&&blank(row[pct])&&amounts.every(i=>blank(row[i])))continue;
     const section=label.replace(/^\(?[a-z]\)\s*/i,'').toLowerCase().replace(/\s*\/\s*/g,'/').replace(/\s+/g,' ');
-    if(!id&&emptyValue(row[pct])&&amounts.every(i=>emptyValue(row[i]))&&(emptySections.has(section)||['government securities/sdl','treps/reverse repo investments','treps/reverse repo investments/corporate debt repo','cash & cash equivalents'].includes(section))){currentSection=section;continue;}
-    if(!blank(row[pct])&&!/^NIL$/i.test(String(row[pct]).trim())&&!(row[pct]==='$'&&/^(?:Cash Margin - CCIL|sub\s*total)$/i.test(label))&&(typeof row[pct]!=='number'||!Number.isFinite(row[pct])))return false;
+    if(!id&&emptyValue(row[pct])&&amounts.every(i=>emptyValue(row[i]))&&(emptySections.has(section)||['government securities/sdl','treps/reverse repo investments','treps/reverse repo instrument','treps/reverse repo investments/corporate debt repo','cash & cash equivalents'].includes(section))){currentSection=section;continue;}
+    const quantity=cols.findIndex(v=>/quantity/i.test(String(v||'')));
+    const repoSubtotal=baseName(name)==='bandhan gold etf'&&label==='Total'&&!id&&quantity>=0&&blank(row[quantity])&&currentSection==='treps/reverse repo instrument';
+    if(!blank(row[pct])&&!/^NIL$/i.test(String(row[pct]).trim())&&!(row[pct]==='$'&&(/^(?:Cash Margin - CCIL|sub\s*total)$/i.test(label)||repoSubtotal))&&(typeof row[pct]!=='number'||!Number.isFinite(row[pct])))return false;
     if(/^(?:sub\s*total|grand[ _]total(?:\s*\(aum\))?|total(?: for (?:money market instruments|equity & equity related|debt instruments))?|(?:NCA-)?net current assets(?: \(including cash & bank balances\))?|TREPS\/Reverse Repo\/Net Current Assets\/Cash\/Cash Equivalent|total net assets as on \d{1,2}-[A-Za-z]+-20\d{2}|cash and other net current assets|cash margin - CCIL|net receivables?\s*\/\s*\(?payables?\)?|clearing corporation of india (?:limited|ltd\.?))$/i.test(label))continue;
     if(/^TREPS(?:\s+\d{2}-[A-Za-z]{3}-20\d{2}\s+DEPO\s+\d+)?$/i.test(label))continue;
     if(/^Triparty Repo(?: TRP_\d{6})?$/i.test(label))continue;
     // Overnight repo rows can place a contract code immediately before the
     // instrument column. Accept only the disclosed repo type, with no ISIN or
     // share quantity, inside the explicitly named repo section.
-    const quantity=cols.findIndex(v=>/quantity/i.test(String(v||'')));
     if(instrument>0&&/^\d{10}$/.test(String(row[instrument-1]||'').trim())&&!id&&quantity>=0&&blank(row[quantity])&&currentSection==='treps/reverse repo investments'&&/^(?:\d+(?:\.\d+)?% Reverse Repo|TREPS)$/i.test(label))continue;
     if(/^The Clearing Corporation of India Ltd\. \d{2}-[A-Za-z]{3}-20\d{2}$/i.test(label)&&!id&&['treps','reverse repo instrument'].includes(currentSection))continue;
     if(label==='CCIL'&&!id&&currentSection==='treps/reverse repo investments/corporate debt repo')continue;
@@ -333,6 +334,10 @@ export function parsePublicWorkbook(buffer,{XLSX,parseAmcWorkbook,parseVerifiedW
     // The generic monthly validator rejects mixed reporting days before the
     // IL&FS-specific selection can run. Parse its complete inventory first.
     let schemes=slug==='il-fs-idf'?parseAmcWorkbook(buffer,opts):parseVerifiedWorkbook(buffer,{XLSX,parseAmcWorkbook,opts,month});
+    // A successful equity parse can return zero schemes for a commodity-only
+    // workbook. It still needs the same dated, whole-document empty verification
+    // as a thrown parse; an empty array alone never certifies an empty portfolio.
+    if(!schemes.length)throw Error('No Indian portfolio schemes parsed');
     // IL&FS publishes both fortnightly and month-end portfolios in one workbook.
     // Every named fortnightly scheme must have a matching month-end report.
     if(slug==='il-fs-idf') {

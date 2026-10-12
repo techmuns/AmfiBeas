@@ -44,6 +44,12 @@ for(const label of ['Portfolio as on 31st August 2026','Portfolio as on 31/08/20
  const [s]=parse('Fund',[['Example Index Fund'],['Inception 22-Feb-2026'],[label],header,holding]);assert.equal(s.asOf,'2026-08-31',label);
 }
 
+const [zerodha]=parse('Fund',[['ZERODHA MUTUAL FUND'],['MONTHLY PORTFOLIO STATEMENT OF ZERODHA NIFTY 50 ETF SEPTEMBER 2026'],header,holding]);
+assert.equal(zerodha.schemeName,'ZERODHA NIFTY 50 ETF');assert.equal(zerodha.asOf,'2026-09-30');
+for(const label of ['MONTHLY PORTFOLIO STATEMENT OF EXAMPLE NIFTY 50 ETF SEPTEMBER 2026','MONTHLY PORTFOLIO STATEMENT OF ZERODHA NIFTY 50 ETF SMARCH 2026','ZERODHA NIFTY 50 ETF SEPTEMBER 2026']) {
+ const [s]=parse('Fund',[['Example Index Fund'],[label],header,holding]);assert.equal(s.asOf,null,label);
+}
+
 const [undated]=parse("Fund",[["Example Hybrid Fund"],["Inception 22-Feb-2026"],header,["Bond maturing 23-Jan-2026","INE040A01034","Debt",46265,200,40]]);
 assert.equal(undated.asOf,null,"A holding maturity, quantity or inception date is not the reporting date");
 stampAsOfFromLinks([undated],[{url:"https://example.test/Portfolio_August_2026.xlsx"}],new Date("2026-09-20"));

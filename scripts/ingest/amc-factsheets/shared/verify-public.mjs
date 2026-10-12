@@ -109,6 +109,23 @@ assert.equal(parsePublicWorkbook(null,ilfsOpts).length,2);
 assert.throws(()=>parsePublicWorkbook(null,{...ilfsOpts,parseAmcWorkbook:()=>ilfsSchemes.slice(0,-1)}),/Incomplete/);
 const fakeBook={read:()=>({SheetNames:['One'],Sheets:{One:cashRows}}),utils:{sheet_to_json:s=>s}};
 const zero=parsePublicWorkbook(Buffer.alloc(0),{XLSX:fakeBook,parseAmcWorkbook:()=>[],parseVerifiedWorkbook:()=>{throw Error('No Indian positions');},opts:{},month,link:{text:'quant Overnight Fund'}})[0];
+assert.deepEqual(parsePublicWorkbook(Buffer.alloc(0),{XLSX:fakeBook,parseAmcWorkbook:()=>[],parseVerifiedWorkbook:()=>[],opts:{},month,link:{text:'quant Overnight Fund'}})[0],zero,'An empty successful equity parse still verifies every row and the reporting date');
+const goldRows=[['IDF316','Portfolio Statement as on September 30,2026'],[null,'Bandhan Gold ETF'],[],
+ [null,'Name of the Instrument','ISIN','Industry / Rating','Quantity','Market/Fair Value ( Rs. in Lacs)','% to NAV'],
+ [null,'Gold'],['GOLD100','GOLD .995 1KG BAR - Mumbai','DBXXXGOLD100',null,122,18008.79,.9655],
+ ['GOLD101','GOLD 999 100GM BAR - Mumbai','DBXXXGOLD101',null,6,88.93,.0048],
+ [null,'Total',null,null,null,18097.72,.9703],[null,'Money Market Instruments'],[null,'TREPS / Reverse Repo Instrument'],
+ ['TRP_011026','Triparty Repo TRP_011026',null,null,null,5.86,.0003],[null,'Total',null,null,null,5.86,'$'],
+ [null,'OTHERS'],[null,'Cash Margin - CCIL',null,null,null,.06,'$'],[null,'Subtotal',null,null,null,.06,'$'],
+ [null,'Net Current Assets',null,null,null,549.16,.0294],[null,'Grand Total',null,null,null,18652.8,1]];
+const goldBook={read:()=>({SheetNames:['IDF316'],Sheets:{IDF316:goldRows}}),utils:{sheet_to_json:s=>s}};
+const gold=parsePublicWorkbook(null,{XLSX:goldBook,parseVerifiedWorkbook:()=>[],month:'2026-09',link:{text:'Bandhan Gold ETF'}})[0];
+assert.equal(gold.asOf,'2026-09-30');assert.equal(gold.validatedNoIndianHoldings,true);assert.deepEqual(gold.holdings,[]);
+for(const rows of [goldRows.map(r=>r[1]==='Total'&&r[6]==='$'?[...r.slice(0,4),1,...r.slice(5)]:r),
+ [...goldRows.slice(0,-1),[null,'Unclassified issuer','INE090A01021',null,10,100,.01],goldRows.at(-1)],
+ goldRows.map(r=>r[1]==='Grand Total'?[...r.slice(0,6),.9]:r)])assert(!verifiedNonIndianRows(rows,'Bandhan Gold ETF','2026-09'));
+assert(!verifiedNonIndianRows(goldRows,'Bandhan Gold ETF','2026-08'));
+assert(!verifiedNonIndianRows(goldRows,'Unknown Fund','2026-09'));
 assert.equal(zero.validatedNoIndianHoldings,true);
 const axisBook={read:()=>({SheetNames:['AXISASD'],Sheets:{AXISASD:[['AXISASD','Axis Income Plus Arbitrage Omni FOF']]}}),utils:{sheet_to_json:s=>s}};
 const named=parsePublicWorkbook(Buffer.alloc(0),{XLSX:axisBook,parseAmcWorkbook:()=>[],parseVerifiedWorkbook:()=>[{schemeCode:'AXISASD',schemeName:'Mutual Fund Units'}],month,link:{}})[0];
