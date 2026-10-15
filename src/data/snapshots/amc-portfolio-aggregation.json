@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-09-15T23:38:56.959Z",
+    "generatedAt": "2026-10-15T23:44:48.395Z",
     "source": "RupeeVest Mutual Fund Portfolio Tracker",
     "notes": "AMC-level aggregation of per-fund equity holdings. Cash % = AUM-weighted (100 − Σequity holding weights) across the AMC's active-equity funds. Concentration % = AUM-weighted Top-10 / Top-25 stock contribution as % of the AMC's total active-equity AUM in the latest reported month. Active-equity universe excludes ETFs, Index Funds, International, and all hybrid / debt schemes.",
     "months": [
@@ -11,9 +11,10 @@
       "May-26",
       "Jun-26",
       "Jul-26",
-      "Aug-26"
+      "Aug-26",
+      "Sep-26"
     ],
-    "latestMonth": "Aug-26",
+    "latestMonth": "Sep-26",
     "amcSlugsIncluded": [
       "absl",
       "axis",
@@ -43,43 +44,48 @@
     {
       "amcSlug": "hdfc",
       "byMonth": {
+        "Sep-26": {
+          "cashPct": 5.048880050635962,
+          "aumCr": 441741.4000000001,
+          "fundCount": 23
+        },
         "Aug-26": {
-          "cashPct": 4.715190638394232,
+          "cashPct": 4.715190638394225,
           "aumCr": 464612.5999999999,
           "fundCount": 23
         },
         "Jul-26": {
-          "cashPct": 5.114685367885597,
+          "cashPct": 5.114685367885603,
           "aumCr": 456251.9000000001,
           "fundCount": 23
         },
         "Jun-26": {
-          "cashPct": 5.504636641340752,
+          "cashPct": 5.5046366413407535,
           "aumCr": 441116.5000000001,
           "fundCount": 23
         },
         "May-26": {
-          "cashPct": 5.824612659065298,
+          "cashPct": 5.824612659065292,
           "aumCr": 425037.7,
           "fundCount": 23
         },
         "Apr-26": {
-          "cashPct": 5.75971811079424,
+          "cashPct": 5.7597181107942435,
           "aumCr": 420204.0999999999,
           "fundCount": 23
         },
         "Mar-26": {
-          "cashPct": 5.726434169528583,
+          "cashPct": 5.726434169528576,
           "aumCr": 379963.1,
           "fundCount": 23
         },
         "Feb-26": {
-          "cashPct": 5.625949193544943,
+          "cashPct": 5.625949193544938,
           "aumCr": 423123.4,
           "fundCount": 23
         },
         "Jan-26": {
-          "cashPct": 7.644411493128962,
+          "cashPct": 7.644411493128965,
           "aumCr": 415222.0000000001,
           "fundCount": 23
         }
@@ -88,43 +94,48 @@
     {
       "amcSlug": "nippon",
       "byMonth": {
+        "Sep-26": {
+          "cashPct": 1.4491856019122875,
+          "aumCr": 315936.4,
+          "fundCount": 15
+        },
         "Aug-26": {
-          "cashPct": 1.5653890125785308,
+          "cashPct": 1.5653890125785341,
           "aumCr": 329633.29999999993,
           "fundCount": 15
         },
         "Jul-26": {
-          "cashPct": 1.8197823509427438,
+          "cashPct": 1.819782350942746,
           "aumCr": 323194.5999999999,
           "fundCount": 15
         },
         "Jun-26": {
-          "cashPct": 1.9900121058486717,
+          "cashPct": 1.9900121058486735,
           "aumCr": 318110.7,
           "fundCount": 15
         },
         "May-26": {
-          "cashPct": 1.5367715342393977,
+          "cashPct": 1.536771534239403,
           "aumCr": 307756.4,
           "fundCount": 15
         },
         "Apr-26": {
-          "cashPct": 2.0689016907270203,
+          "cashPct": 2.0689016907270186,
           "aumCr": 303029.4,
           "fundCount": 15
         },
         "Mar-26": {
-          "cashPct": 2.804055646772388,
+          "cashPct": 2.804055646772383,
           "aumCr": 266398.20000000007,
           "fundCount": 15
         },
         "Feb-26": {
-          "cashPct": 1.7897976101525246,
+          "cashPct": 1.789797610152521,
           "aumCr": 294303.29999999993,
           "fundCount": 15
         },
         "Jan-26": {
-          "cashPct": 1.9081222644856661,
+          "cashPct": 1.9081222644856695,
           "aumCr": 285458.19999999995,
           "fundCount": 15
         }
@@ -133,13 +144,18 @@
     {
       "amcSlug": "icici-pru",
       "byMonth": {
+        "Sep-26": {
+          "cashPct": 3.8189173384550923,
+          "aumCr": 407047.7999999999,
+          "fundCount": 33
+        },
         "Aug-26": {
-          "cashPct": 3.8702890578398974,
+          "cashPct": 3.870289057839896,
           "aumCr": 427329.6999999999,
           "fundCount": 33
         },
         "Jul-26": {
-          "cashPct": 4.85913223337293,
+          "cashPct": 4.859132233372929,
           "aumCr": 424148.6,
           "fundCount": 33
         },
@@ -149,27 +165,27 @@
           "fundCount": 33
         },
         "May-26": {
-          "cashPct": 4.485788066700817,
+          "cashPct": 4.485788066700822,
           "aumCr": 401830.1999999999,
           "fundCount": 33
         },
         "Apr-26": {
-          "cashPct": 5.49171227004515,
+          "cashPct": 5.491712270045153,
           "aumCr": 399257.7,
           "fundCount": 33
         },
         "Mar-26": {
-          "cashPct": 4.64055515182889,
+          "cashPct": 4.640555151828889,
           "aumCr": 365483.7999999999,
           "fundCount": 33
         },
         "Feb-26": {
-          "cashPct": 5.524134871138325,
+          "cashPct": 5.524134871138321,
           "aumCr": 400701.0000000001,
           "fundCount": 33
         },
         "Jan-26": {
-          "cashPct": 5.006014327998146,
+          "cashPct": 5.0060143279981455,
           "aumCr": 396943.1000000002,
           "fundCount": 33
         }
@@ -178,43 +194,48 @@
     {
       "amcSlug": "kotak",
       "byMonth": {
+        "Sep-26": {
+          "cashPct": 2.2185349914902277,
+          "aumCr": 240371.30000000002,
+          "fundCount": 22
+        },
         "Aug-26": {
-          "cashPct": 2.770103614496971,
+          "cashPct": 2.7701036144969713,
           "aumCr": 252281.29999999996,
           "fundCount": 22
         },
         "Jul-26": {
-          "cashPct": 1.9139096254690877,
+          "cashPct": 1.9139096254690828,
           "aumCr": 246761.99999999994,
           "fundCount": 22
         },
         "Jun-26": {
-          "cashPct": 2.19815662413479,
+          "cashPct": 2.1981566241347994,
           "aumCr": 241348.4999999999,
           "fundCount": 22
         },
         "May-26": {
-          "cashPct": 2.4942534660963966,
+          "cashPct": 2.494253466096394,
           "aumCr": 232394,
           "fundCount": 22
         },
         "Apr-26": {
-          "cashPct": 2.047715481586018,
+          "cashPct": 2.04771548158601,
           "aumCr": 230172.7999999999,
           "fundCount": 22
         },
         "Mar-26": {
-          "cashPct": 2.5911177210287444,
+          "cashPct": 2.591117721028738,
           "aumCr": 205011.7999999999,
           "fundCount": 22
         },
         "Feb-26": {
-          "cashPct": 2.3437616896066813,
+          "cashPct": 2.343761689606682,
           "aumCr": 228450.80000000002,
           "fundCount": 22
         },
         "Jan-26": {
-          "cashPct": 1.8422109624778717,
+          "cashPct": 1.8422109624778737,
           "aumCr": 221477.3,
           "fundCount": 21
         }
@@ -223,8 +244,13 @@
     {
       "amcSlug": "sbi",
       "byMonth": {
+        "Sep-26": {
+          "cashPct": 5.5821768344981955,
+          "aumCr": 270606.7,
+          "fundCount": 17
+        },
         "Aug-26": {
-          "cashPct": 5.186193924434592,
+          "cashPct": 5.186193924434591,
           "aumCr": 282462.6000000001,
           "fundCount": 17
         },
@@ -234,32 +260,32 @@
           "fundCount": 17
         },
         "Jun-26": {
-          "cashPct": 4.322973823824545,
+          "cashPct": 4.322973823824539,
           "aumCr": 272763.30000000005,
           "fundCount": 17
         },
         "May-26": {
-          "cashPct": 5.670315409528948,
+          "cashPct": 5.6703154095289445,
           "aumCr": 265163.19999999995,
           "fundCount": 17
         },
         "Apr-26": {
-          "cashPct": 6.604234910950332,
+          "cashPct": 6.604234910950333,
           "aumCr": 264206.5,
           "fundCount": 17
         },
         "Mar-26": {
-          "cashPct": 7.1863639351074475,
+          "cashPct": 7.186363935107447,
           "aumCr": 235835.99999999997,
           "fundCount": 17
         },
         "Feb-26": {
-          "cashPct": 7.793224321099703,
+          "cashPct": 7.7932243210997,
           "aumCr": 262759.5,
           "fundCount": 17
         },
         "Jan-26": {
-          "cashPct": 5.985511481133972,
+          "cashPct": 5.985511481133971,
           "aumCr": 257065.2,
           "fundCount": 16
         }
@@ -268,43 +294,48 @@
     {
       "amcSlug": "mirae",
       "byMonth": {
+        "Sep-26": {
+          "cashPct": 1.4689373800545291,
+          "aumCr": 154653.59999999998,
+          "fundCount": 11
+        },
         "Aug-26": {
-          "cashPct": 1.1860722112491962,
+          "cashPct": 1.1860722112491906,
           "aumCr": 164545.00000000003,
           "fundCount": 11
         },
         "Jul-26": {
-          "cashPct": 1.8440015757402375,
+          "cashPct": 1.8440015757402333,
           "aumCr": 162844.09999999998,
           "fundCount": 11
         },
         "Jun-26": {
-          "cashPct": 1.1038204335688582,
+          "cashPct": 1.1038204335688555,
           "aumCr": 159084.30000000002,
           "fundCount": 11
         },
         "May-26": {
-          "cashPct": 1.1637625534492404,
+          "cashPct": 1.1637625534492448,
           "aumCr": 154539.19999999998,
           "fundCount": 11
         },
         "Apr-26": {
-          "cashPct": 1.049704061102628,
+          "cashPct": 1.04970406110262,
           "aumCr": 153433.69999999998,
           "fundCount": 11
         },
         "Mar-26": {
-          "cashPct": 1.3897020073153592,
+          "cashPct": 1.3897020073153608,
           "aumCr": 138503.4,
           "fundCount": 11
         },
         "Feb-26": {
-          "cashPct": 1.245513774886476,
+          "cashPct": 1.2455137748864857,
           "aumCr": 155747.2,
           "fundCount": 11
         },
         "Jan-26": {
-          "cashPct": 1.1393623089925706,
+          "cashPct": 1.139362308992575,
           "aumCr": 154228.30000000005,
           "fundCount": 11
         }
@@ -313,9 +344,14 @@
     {
       "amcSlug": "axis",
       "byMonth": {
+        "Sep-26": {
+          "cashPct": 6.667600215901087,
+          "aumCr": 192866.1,
+          "fundCount": 17
+        },
         "Aug-26": {
-          "cashPct": 5.208380548319202,
-          "aumCr": 203717.10000000003,
+          "cashPct": 5.208380548319204,
+          "aumCr": 203717.1,
           "fundCount": 17
         },
         "Jul-26": {
@@ -324,32 +360,32 @@
           "fundCount": 17
         },
         "Jun-26": {
-          "cashPct": 6.359101759905921,
+          "cashPct": 6.359101759905923,
           "aumCr": 194891.1,
           "fundCount": 17
         },
         "May-26": {
-          "cashPct": 6.857230963234244,
+          "cashPct": 6.857230963234241,
           "aumCr": 188180.60000000003,
           "fundCount": 17
         },
         "Apr-26": {
-          "cashPct": 7.632167058518777,
+          "cashPct": 7.632167058518776,
           "aumCr": 187613.30000000005,
           "fundCount": 17
         },
         "Mar-26": {
-          "cashPct": 9.56589980373735,
+          "cashPct": 9.565899803737347,
           "aumCr": 170078.19999999998,
           "fundCount": 17
         },
         "Feb-26": {
-          "cashPct": 7.948190549301574,
+          "cashPct": 7.948190549301572,
           "aumCr": 190447.30000000002,
           "fundCount": 17
         },
         "Jan-26": {
-          "cashPct": 7.800386215867525,
+          "cashPct": 7.800386215867527,
           "aumCr": 187731.80000000002,
           "fundCount": 17
         }
@@ -358,13 +394,18 @@
     {
       "amcSlug": "absl",
       "byMonth": {
+        "Sep-26": {
+          "cashPct": 2.2935029758328405,
+          "aumCr": 126485.6,
+          "fundCount": 23
+        },
         "Aug-26": {
-          "cashPct": 2.213791685115025,
+          "cashPct": 2.213791685115018,
           "aumCr": 133255.00000000003,
           "fundCount": 23
         },
         "Jul-26": {
-          "cashPct": 2.5441004569626067,
+          "cashPct": 2.544100456962613,
           "aumCr": 130995.4,
           "fundCount": 23
         },
@@ -374,22 +415,22 @@
           "fundCount": 23
         },
         "May-26": {
-          "cashPct": 2.123209056692367,
+          "cashPct": 2.123209056692372,
           "aumCr": 124367.7,
           "fundCount": 23
         },
         "Apr-26": {
-          "cashPct": 2.5031996875330274,
+          "cashPct": 2.5031996875330336,
           "aumCr": 123917.1,
           "fundCount": 23
         },
         "Mar-26": {
-          "cashPct": 2.0164021997605985,
-          "aumCr": 111775.79999999999,
+          "cashPct": 2.016402199760601,
+          "aumCr": 111775.79999999997,
           "fundCount": 23
         },
         "Feb-26": {
-          "cashPct": 2.5293005280213525,
+          "cashPct": 2.529300528021354,
           "aumCr": 124729.79999999999,
           "fundCount": 23
         },
@@ -403,13 +444,18 @@
     {
       "amcSlug": "dsp",
       "byMonth": {
+        "Sep-26": {
+          "cashPct": 6.383339461357183,
+          "aumCr": 104819,
+          "fundCount": 14
+        },
         "Aug-26": {
-          "cashPct": 6.123940032107154,
+          "cashPct": 6.123940032107157,
           "aumCr": 110068.89999999998,
           "fundCount": 14
         },
         "Jul-26": {
-          "cashPct": 6.460175041264874,
+          "cashPct": 6.4601750412648755,
           "aumCr": 107294.7,
           "fundCount": 14
         },
@@ -419,27 +465,27 @@
           "fundCount": 14
         },
         "May-26": {
-          "cashPct": 7.404991064326003,
+          "cashPct": 7.404991064326005,
           "aumCr": 101447.3,
           "fundCount": 14
         },
         "Apr-26": {
-          "cashPct": 7.3718789829263125,
+          "cashPct": 7.371878982926309,
           "aumCr": 100177.6,
           "fundCount": 14
         },
         "Mar-26": {
-          "cashPct": 5.294382570909179,
+          "cashPct": 5.294382570909183,
           "aumCr": 89611.10000000002,
           "fundCount": 14
         },
         "Feb-26": {
-          "cashPct": 5.053296085516419,
+          "cashPct": 5.053296085516429,
           "aumCr": 99629.99999999999,
           "fundCount": 14
         },
         "Jan-26": {
-          "cashPct": 4.439932720523172,
+          "cashPct": 4.439932720523176,
           "aumCr": 97191.6,
           "fundCount": 14
         }
@@ -448,8 +494,13 @@
     {
       "amcSlug": "uti",
       "byMonth": {
+        "Sep-26": {
+          "cashPct": 4.21634311983223,
+          "aumCr": 35000.6,
+          "fundCount": 11
+        },
         "Aug-26": {
-          "cashPct": 3.748675787851349,
+          "cashPct": 3.748675787851345,
           "aumCr": 36983.5,
           "fundCount": 11
         },
@@ -459,32 +510,32 @@
           "fundCount": 11
         },
         "Jun-26": {
-          "cashPct": 3.758767010848572,
+          "cashPct": 3.7587670108485693,
           "aumCr": 35940.3,
           "fundCount": 11
         },
         "May-26": {
-          "cashPct": 4.15125507089263,
+          "cashPct": 4.151255070892634,
           "aumCr": 35053,
           "fundCount": 11
         },
         "Apr-26": {
-          "cashPct": 3.7017379799220094,
+          "cashPct": 3.701737979922011,
           "aumCr": 35182.8,
           "fundCount": 11
         },
         "Mar-26": {
-          "cashPct": 3.8384031761424056,
+          "cashPct": 3.8384031761424082,
           "aumCr": 31761.8,
           "fundCount": 11
         },
         "Feb-26": {
-          "cashPct": 3.798613354721374,
+          "cashPct": 3.7986133547213785,
           "aumCr": 35409.2,
           "fundCount": 11
         },
         "Jan-26": {
-          "cashPct": 3.9011606492253375,
+          "cashPct": 3.90116064922533,
           "aumCr": 35543.9,
           "fundCount": 11
         }
@@ -494,21 +545,21 @@
   "concentration": [
     {
       "amcSlug": "hdfc",
-      "month": "Aug-26",
-      "totalAumCr": 464612.5999999999,
+      "month": "Sep-26",
+      "totalAumCr": 441741.4000000001,
       "fundCount": 23,
-      "top10PctOfTotal": 23.71700311614451,
-      "top25PctOfTotal": 39.41713918003947,
+      "top10PctOfTotal": 23.67855807492799,
+      "top25PctOfTotal": 38.832671479286276,
       "top10Names": [
         "ICICI Bank Ltd.",
         "HDFC Bank Ltd.",
         "Axis Bank Ltd.",
         "Kotak Mahindra Bank Limited",
         "Eternal Limited",
-        "State Bank of India",
         "Bharti Airtel Ltd.",
-        "Maruti Suzuki India Limited",
+        "State Bank of India",
         "InterGlobe Aviation Ltd.",
+        "Maruti Suzuki India Limited",
         "Reliance Industries Ltd."
       ],
       "top25Names": [
@@ -517,35 +568,35 @@
         "Axis Bank Ltd.",
         "Kotak Mahindra Bank Limited",
         "Eternal Limited",
-        "State Bank of India",
         "Bharti Airtel Ltd.",
-        "Maruti Suzuki India Limited",
+        "State Bank of India",
         "InterGlobe Aviation Ltd.",
+        "Maruti Suzuki India Limited",
         "Reliance Industries Ltd.",
         "Larsen and Toubro Ltd.",
-        "Eicher Motors Ltd.",
         "SBI Life Insurance Company Ltd.",
-        "The Federal Bank Ltd.",
+        "Eicher Motors Ltd.",
         "HCL Technologies Ltd.",
+        "The Federal Bank Ltd.",
         "Bosch Limited",
         "Au Small Finance Bank Ltd.",
         "Max Financial Services Ltd.",
-        "PB Fintech Limited",
         "Vishal Mega Mart Limited",
-        "Indian Bank",
-        "United Spirits Limited",
         "Ipca Laboratories Ltd.",
+        "Indian Bank",
+        "Cipla Ltd.",
+        "United Spirits Limited",
         "Hyundai Motor India Limited",
         "Balkrishna Industries Ltd."
       ]
     },
     {
       "amcSlug": "nippon",
-      "month": "Aug-26",
-      "totalAumCr": 329633.29999999993,
+      "month": "Sep-26",
+      "totalAumCr": 315936.4,
       "fundCount": 15,
-      "top10PctOfTotal": 20.631022781982285,
-      "top25PctOfTotal": 33.914164054420475,
+      "top10PctOfTotal": 20.205470696000837,
+      "top25PctOfTotal": 33.094925146326915,
       "top10Names": [
         "HDFC Bank Limited",
         "ICICI Bank Limited",
@@ -553,8 +604,8 @@
         "State Bank of India",
         "Reliance Industries Limited",
         "Infosys Limited",
-        "Samvardhana Motherson International Limited",
         "Eternal Limited",
+        "Samvardhana Motherson International Limited",
         "Larsen & Toubro Limited",
         "NTPC Limited"
       ],
@@ -565,45 +616,45 @@
         "State Bank of India",
         "Reliance Industries Limited",
         "Infosys Limited",
-        "Samvardhana Motherson International Limited",
         "Eternal Limited",
+        "Samvardhana Motherson International Limited",
         "Larsen & Toubro Limited",
         "NTPC Limited",
-        "Bharat Heavy Electricals Limited",
-        "Mahindra & Mahindra Limited",
         "Multi Commodity Exchange of India Limited",
+        "Bharat Heavy Electricals Limited",
+        "Sun Pharmaceutical Industries Limited",
         "GE Vernova T&D India Limited",
         "Bajaj Finance Limited",
-        "Sun Pharmaceutical Industries Limited",
-        "Tata Consultancy Services Limited",
-        "Dixon Technologies (India) Limited",
+        "Mahindra & Mahindra Limited",
         "Swiggy Limited",
-        "Trent Limited",
+        "Avenue Supermarts Limited",
         "AU Small Finance Bank Limited",
+        "Kotak Mahindra Bank Limited",
+        "NTPC Green Energy Limited",
+        "Trent Limited",
+        "Hindustan Unilever Limited",
         "Divi's Laboratories Limited",
-        "Jubilant Foodworks Limited",
-        "Max Financial Services Limited",
-        "Info Edge (India) Limited"
+        "Tata Consultancy Services Limited"
       ]
     },
     {
       "amcSlug": "icici-pru",
-      "month": "Aug-26",
-      "totalAumCr": 427329.6999999999,
+      "month": "Sep-26",
+      "totalAumCr": 407047.7999999999,
       "fundCount": 33,
-      "top10PctOfTotal": 29.477824866841694,
-      "top25PctOfTotal": 46.69171761288768,
+      "top10PctOfTotal": 28.616080081995293,
+      "top25PctOfTotal": 46.226395983469274,
       "top10Names": [
         "ICICI Bank Ltd.",
         "HDFC Bank Ltd.",
         "Reliance Industries Ltd.",
         "Axis Bank Ltd.",
         "Bharti Airtel Ltd.",
-        "Infosys Ltd.",
-        "Maruti Suzuki India Ltd.",
         "Sun Pharmaceutical Industries Ltd.",
+        "Life Insurance Corporation of India",
+        "Infosys Ltd.",
         "Larsen & Toubro Ltd.",
-        "Life Insurance Corporation of India"
+        "Maruti Suzuki India Ltd."
       ],
       "top25Names": [
         "ICICI Bank Ltd.",
@@ -611,176 +662,176 @@
         "Reliance Industries Ltd.",
         "Axis Bank Ltd.",
         "Bharti Airtel Ltd.",
-        "Infosys Ltd.",
-        "Maruti Suzuki India Ltd.",
         "Sun Pharmaceutical Industries Ltd.",
-        "Larsen & Toubro Ltd.",
         "Life Insurance Corporation of India",
-        "Mahindra & Mahindra Ltd.",
+        "Infosys Ltd.",
+        "Larsen & Toubro Ltd.",
+        "Maruti Suzuki India Ltd.",
         "Ultratech Cement Ltd.",
+        "Mahindra & Mahindra Ltd.",
+        "Interglobe Aviation Ltd.",
         "Kotak Mahindra Bank Ltd.",
         "NTPC Ltd.",
-        "Interglobe Aviation Ltd.",
         "TVS Motor Company Ltd.",
-        "SBI Life Insurance Company Ltd.",
-        "State Bank Of India",
         "Dr. Reddy's Laboratories Ltd.",
+        "SBI Life Insurance Company Ltd.",
         "Hindustan Unilever Ltd.",
         "HDFC Life Insurance Company Ltd.",
-        "Tata Motors Ltd.",
+        "State Bank Of India",
         "ITC Ltd.",
+        "Tata Steel Ltd.",
         "Avenue Supermarts Ltd.",
-        "Tata Steel Ltd."
+        "Tata Motors Ltd."
       ]
     },
     {
       "amcSlug": "kotak",
-      "month": "Aug-26",
-      "totalAumCr": 252281.29999999996,
+      "month": "Sep-26",
+      "totalAumCr": 240371.30000000002,
       "fundCount": 22,
-      "top10PctOfTotal": 20.41708075073341,
-      "top25PctOfTotal": 38.02774057371673,
+      "top10PctOfTotal": 20.18377060822153,
+      "top25PctOfTotal": 37.247504115507965,
       "top10Names": [
         "HDFC BANK LTD.",
         "ETERNAL LIMITED",
         "ICICI BANK LTD.",
-        "STATE BANK OF INDIA.",
         "Bharat Electronics Ltd.",
-        "Larsen and Toubro Ltd.",
+        "STATE BANK OF INDIA.",
         "Solar Industries India Limited",
-        "BHARTI AIRTEL LTD.",
+        "Larsen and Toubro Ltd.",
         "Jindal Steel & Power Ltd",
-        "AXIS BANK LTD."
+        "BHARTI AIRTEL LTD.",
+        "SRF LTD."
       ],
       "top25Names": [
         "HDFC BANK LTD.",
         "ETERNAL LIMITED",
         "ICICI BANK LTD.",
-        "STATE BANK OF INDIA.",
         "Bharat Electronics Ltd.",
-        "Larsen and Toubro Ltd.",
+        "STATE BANK OF INDIA.",
         "Solar Industries India Limited",
-        "BHARTI AIRTEL LTD.",
+        "Larsen and Toubro Ltd.",
         "Jindal Steel & Power Ltd",
-        "AXIS BANK LTD.",
-        "Maruti Suzuki India Limited",
+        "BHARTI AIRTEL LTD.",
         "SRF LTD.",
         "Hero MotoCorp Ltd.",
+        "AXIS BANK LTD.",
+        "Maruti Suzuki India Limited",
+        "IPCA Laboratories Ltd.",
         "Fortis Healthcare India Ltd",
         "SUN PHARMACEUTICAL INDUSTRIES LTD.",
         "BHARAT FORGE LTD.",
-        "IPCA Laboratories Ltd.",
-        "Mphasis Ltd",
         "Ultratech Cement Ltd.",
-        "SHRIRAM FINANCE LIMITED",
-        "ASTER DM HEALTHCARE LTD",
-        "RELIANCE INDUSTRIES LTD.",
-        "VISHAL MEGA MART LIMITED",
         "Inter Globe Aviation Ltd",
-        "INDUSIND BANK LTD."
+        "INDO-MIM LTD",
+        "RELIANCE INDUSTRIES LTD.",
+        "ASTER DM HEALTHCARE LTD",
+        "VISHAL MEGA MART LIMITED",
+        "Schaeffler India Ltd",
+        "Mphasis Ltd"
       ]
     },
     {
       "amcSlug": "sbi",
-      "month": "Aug-26",
-      "totalAumCr": 282462.6000000001,
+      "month": "Sep-26",
+      "totalAumCr": 270606.7,
       "fundCount": 17,
-      "top10PctOfTotal": 22.64366757935386,
-      "top25PctOfTotal": 38.00109652392917,
+      "top10PctOfTotal": 22.76857721556783,
+      "top25PctOfTotal": 38.10857264805341,
       "top10Names": [
         "ICICI Bank Ltd.",
         "HDFC Bank Ltd.",
-        "State Bank of India",
         "Kotak Mahindra Bank Ltd.",
         "Bajaj Finance Ltd.",
+        "State Bank of India",
         "Divi's Laboratories Ltd.",
-        "Larsen & Toubro Ltd.",
         "Bharti Airtel Ltd.",
+        "Larsen & Toubro Ltd.",
         "Alphabet Inc.",
-        "Life Insurance Corporation of India"
+        "Sona Blw Precision Forgings Ltd."
       ],
       "top25Names": [
         "ICICI Bank Ltd.",
         "HDFC Bank Ltd.",
-        "State Bank of India",
         "Kotak Mahindra Bank Ltd.",
         "Bajaj Finance Ltd.",
+        "State Bank of India",
         "Divi's Laboratories Ltd.",
-        "Larsen & Toubro Ltd.",
         "Bharti Airtel Ltd.",
+        "Larsen & Toubro Ltd.",
         "Alphabet Inc.",
-        "Life Insurance Corporation of India",
+        "Sona Blw Precision Forgings Ltd.",
         "Adani Enterprises Ltd.",
         "Muthoot Finance Ltd.",
         "Reliance Industries Ltd.",
-        "Sona Blw Precision Forgings Ltd.",
-        "Adani Energy Solutions Ltd.",
+        "Life Insurance Corporation of India",
         "Adani Power Ltd.",
-        "Asian Paints Ltd.",
         "Solar Industries India Ltd.",
+        "Adani Energy Solutions Ltd.",
         "Torrent Power Ltd.",
         "Axis Bank Ltd.",
+        "Asian Paints Ltd.",
         "Samvardhana Motherson International Ltd.",
-        "Ather Energy Ltd.",
-        "Thermax Ltd.",
+        "Tata Motors Ltd.",
+        "Urban Company Ltd.",
         "Eicher Motors Ltd.",
-        "Infosys Ltd."
+        "Shree Cement Ltd."
       ]
     },
     {
       "amcSlug": "mirae",
-      "month": "Aug-26",
-      "totalAumCr": 164545.00000000003,
+      "month": "Sep-26",
+      "totalAumCr": 154653.59999999998,
       "fundCount": 11,
-      "top10PctOfTotal": 29.60177616457504,
-      "top25PctOfTotal": 49.09745657418942,
+      "top10PctOfTotal": 29.74912269743479,
+      "top25PctOfTotal": 48.24249250583239,
       "top10Names": [
         "HDFC Bank Ltd.",
         "ICICI Bank Ltd.",
+        "Bharti Airtel Ltd.",
         "Reliance Industries Ltd.",
         "Axis Bank Ltd.",
-        "Bharti Airtel Ltd.",
-        "State Bank of India",
         "Laurus Labs Ltd.",
+        "State Bank of India",
         "Infosys Ltd.",
-        "PB Fintech Ltd.",
-        "Maruti Suzuki India Ltd."
+        "Maruti Suzuki India Ltd.",
+        "Larsen & Toubro Ltd."
       ],
       "top25Names": [
         "HDFC Bank Ltd.",
         "ICICI Bank Ltd.",
+        "Bharti Airtel Ltd.",
         "Reliance Industries Ltd.",
         "Axis Bank Ltd.",
-        "Bharti Airtel Ltd.",
-        "State Bank of India",
         "Laurus Labs Ltd.",
+        "State Bank of India",
         "Infosys Ltd.",
-        "PB Fintech Ltd.",
         "Maruti Suzuki India Ltd.",
         "Larsen & Toubro Ltd.",
-        "IndusInd Bank Ltd.",
-        "Mahindra & Mahindra Ltd.",
         "Steel Authority of India Ltd.",
+        "Mahindra & Mahindra Ltd.",
         "Delhivery Ltd.",
-        "One 97 Communications Ltd.",
-        "Sun Pharmaceutical Industries Ltd.",
-        "Tata Consultancy Services Ltd.",
         "Eternal Ltd.",
+        "Sun Pharmaceutical Industries Ltd.",
         "SBI Life Insurance Co. Ltd.",
-        "ITC Ltd.",
+        "Hero MotoCorp Ltd.",
+        "IndusInd Bank Ltd.",
         "Swiggy Ltd.",
+        "ITC Ltd.",
+        "Lupin Ltd.",
+        "One 97 Communications Ltd.",
         "Tata Communications Ltd.",
-        "Vedanta Aluminium Metal Ltd. A",
-        "Hero MotoCorp Ltd."
+        "Narayana Hrudayalaya Ltd.",
+        "HDB Financial Services Ltd."
       ]
     },
     {
       "amcSlug": "axis",
-      "month": "Aug-26",
-      "totalAumCr": 203717.10000000003,
+      "month": "Sep-26",
+      "totalAumCr": 192866.1,
       "fundCount": 17,
-      "top10PctOfTotal": 23.596312827936384,
-      "top25PctOfTotal": 41.617710977625336,
+      "top10PctOfTotal": 23.437778800940137,
+      "top25PctOfTotal": 40.37383589443662,
       "top10Names": [
         "ICICI Bank Limited",
         "HDFC Bank Limited",
@@ -791,7 +842,7 @@
         "Apar Industries Limited",
         "Axis Bank Limited",
         "Divi's Laboratories Limited",
-        "PB Fintech Limited"
+        "InterGlobe Aviation Limited"
       ],
       "top25Names": [
         "ICICI Bank Limited",
@@ -803,42 +854,42 @@
         "Apar Industries Limited",
         "Axis Bank Limited",
         "Divi's Laboratories Limited",
-        "PB Fintech Limited",
-        "Cholamandalam Investment and Finance Company Ltd",
-        "State Bank of India",
-        "TVS Motor Company Limited",
         "InterGlobe Aviation Limited",
+        "Cholamandalam Investment and Finance Company Ltd",
         "Reliance Industries Limited",
+        "TVS Motor Company Limited",
+        "The Indian Hotels Company Limited",
+        "State Bank of India",
+        "Sona BLW Precision Forgings Limited",
         "Larsen & Toubro Limited",
         "Titan Company Limited",
         "The Federal Bank Limited",
-        "Sona BLW Precision Forgings Limited",
-        "The Indian Hotels Company Limited",
+        "Solar Industries India Limited",
         "Torrent Pharmaceuticals Limited",
-        "Apollo Hospitals Enterprise Limited",
-        "Pidilite Industries Limited",
-        "Fortis Healthcare Limited",
-        "Cummins India Limited"
+        "GE Vernova T&D India Limited",
+        "Cummins India Limited",
+        "Sun Pharmaceutical Industries Limited",
+        "PB Fintech Limited"
       ]
     },
     {
       "amcSlug": "absl",
-      "month": "Aug-26",
-      "totalAumCr": 133255.00000000003,
+      "month": "Sep-26",
+      "totalAumCr": 126485.6,
       "fundCount": 23,
-      "top10PctOfTotal": 23.92658179430415,
-      "top25PctOfTotal": 40.22447138944129,
+      "top10PctOfTotal": 23.670519584838118,
+      "top25PctOfTotal": 40.07299699728665,
       "top10Names": [
         "ICICI Bank Limited",
         "HDFC Bank Limited",
         "State Bank of India",
         "Reliance Industries Limited",
         "Eternal Limited",
-        "Infosys Limited",
         "Bharti Airtel Limited",
-        "Axis Bank Limited",
         "Kotak Mahindra Bank Limited",
-        "Mahindra & Mahindra Limited"
+        "Axis Bank Limited",
+        "Infosys Limited",
+        "Shriram Finance Ltd"
       ],
       "top25Names": [
         "ICICI Bank Limited",
@@ -846,46 +897,46 @@
         "State Bank of India",
         "Reliance Industries Limited",
         "Eternal Limited",
-        "Infosys Limited",
         "Bharti Airtel Limited",
-        "Axis Bank Limited",
         "Kotak Mahindra Bank Limited",
-        "Mahindra & Mahindra Limited",
+        "Axis Bank Limited",
+        "Infosys Limited",
         "Shriram Finance Ltd",
+        "Mahindra & Mahindra Limited",
         "Larsen & Toubro Limited",
         "United Spirits Limited",
         "Tech Mahindra Limited",
         "SBI Life Insurance Company Limited",
+        "Trent Limited",
         "Hindalco Industries Limited",
+        "MEESHO LTD",
         "Persistent Systems Limited",
-        "Jindal Steel & Power Limited",
         "Sona BLW Precision Forgings Limited",
         "Lenskart Solutions Ltd",
+        "Jindal Steel & Power Limited",
+        "NTPC Limited",
         "The Federal Bank Limited",
-        "MEESHO LTD",
-        "Trent Limited",
-        "HCL Technologies Limited",
-        "NTPC Limited"
+        "HCL Technologies Limited"
       ]
     },
     {
       "amcSlug": "dsp",
-      "month": "Aug-26",
-      "totalAumCr": 110068.89999999998,
+      "month": "Sep-26",
+      "totalAumCr": 104819,
       "fundCount": 14,
-      "top10PctOfTotal": 23.219052257267954,
-      "top25PctOfTotal": 38.54789619047706,
+      "top10PctOfTotal": 23.043158864328035,
+      "top25PctOfTotal": 38.39307266812315,
       "top10Names": [
         "ICICI Bank Limited",
         "HDFC Bank Limited",
         "Axis Bank Limited",
         "Bharti Airtel Limited",
         "IPCA Laboratories Limited",
-        "State Bank of India",
         "Max Financial Services Limited",
+        "State Bank of India",
         "Coforge Limited",
-        "Reliance Industries Limited",
-        "Mahindra & Mahindra Limited"
+        "Kirloskar Oil Engines Limited",
+        "Reliance Industries Limited"
       ],
       "top25Names": [
         "ICICI Bank Limited",
@@ -893,42 +944,42 @@
         "Axis Bank Limited",
         "Bharti Airtel Limited",
         "IPCA Laboratories Limited",
-        "State Bank of India",
         "Max Financial Services Limited",
+        "State Bank of India",
         "Coforge Limited",
-        "Reliance Industries Limited",
-        "Mahindra & Mahindra Limited",
-        "Kotak Mahindra Bank Limited",
         "Kirloskar Oil Engines Limited",
-        "Cipla Limited",
+        "Reliance Industries Limited",
+        "Kotak Mahindra Bank Limited",
+        "Mahindra & Mahindra Limited",
         "NTPC Limited",
-        "Coromandel International Limited",
+        "Cipla Limited",
+        "Lumax Auto Technologies Limited",
         "Jindal Steel Limited",
+        "Coromandel International Limited",
         "Bharat Petroleum Corporation Limited",
         "Larsen & Toubro Limited",
-        "Fortis Healthcare Limited",
-        "Lumax Auto Technologies Limited",
-        "Infosys Limited",
         "The Phoenix Mills Limited",
         "Alkem Laboratories Limited",
-        "Eternal Limited",
-        "SBI Life Insurance Company Limited"
+        "Infosys Limited",
+        "Fortis Healthcare Limited",
+        "SBI Life Insurance Company Limited",
+        "Bharat Forge Limited"
       ]
     },
     {
       "amcSlug": "uti",
-      "month": "Aug-26",
-      "totalAumCr": 36983.5,
+      "month": "Sep-26",
+      "totalAumCr": 35000.6,
       "fundCount": 11,
-      "top10PctOfTotal": 27.52352100260928,
-      "top25PctOfTotal": 41.906864736977305,
+      "top10PctOfTotal": 27.574745804357644,
+      "top25PctOfTotal": 42.19579370067942,
       "top10Names": [
         "HDFC BANK LIMITED",
         "ICICI BANK LTD",
         "BHARTI AIRTEL LTD.",
         "RELIANCE INDUSTRIES LTD.",
-        "STATE BANK OF INDIA",
         "KOTAK MAHINDRA BANK LTD.",
+        "STATE BANK OF INDIA",
         "INFOSYS LTD.",
         "MAHINDRA & MAHINDRA LTD.",
         "AXIS BANK LTD.",
@@ -939,73 +990,73 @@
         "ICICI BANK LTD",
         "BHARTI AIRTEL LTD.",
         "RELIANCE INDUSTRIES LTD.",
-        "STATE BANK OF INDIA",
         "KOTAK MAHINDRA BANK LTD.",
+        "STATE BANK OF INDIA",
         "INFOSYS LTD.",
         "MAHINDRA & MAHINDRA LTD.",
         "AXIS BANK LTD.",
         "LARSEN & TOUBRO LTD.",
-        "MARUTI SUZUKI INDIA LTD.",
-        "INFO-EDGE (INDIA) LTD.",
         "POWER GRID CORPORATION OF INDI",
-        "ETERNAL LIMITED",
-        "TECH MAHINDRA LTD.",
         "ITC LTD.",
+        "INFO-EDGE (INDIA) LTD.",
+        "TECH MAHINDRA LTD.",
+        "MARUTI SUZUKI INDIA LTD.",
+        "ETERNAL LIMITED",
         "PHOENIX MILLS LTD",
-        "HERO MOTOCORP LTD.",
         "COAL INDIA LTD.",
+        "HERO MOTOCORP LTD.",
         "GREAT EASTERN SHIPPING CO. LTD",
-        "BAJAJ FINANCE LTD.",
         "AJANTA PHARMA LTD.",
-        "CROMPTON GREAVES CONSUMER ELEC",
-        "MPHASIS LTD",
-        "INDUSIND BANK"
+        "OIL & NATURAL GAS CORPORATION",
+        "AUROBINDO PHARMA LTD.",
+        "BAJAJ FINANCE LTD.",
+        "CROMPTON GREAVES CONSUMER ELEC"
       ]
     },
     {
       "amcSlug": "industry",
-      "month": "Aug-26",
-      "totalAumCr": 2404889,
+      "month": "Sep-26",
+      "totalAumCr": 2289528.5,
       "fundCount": 186,
-      "top10PctOfTotal": 14.668610426094512,
-      "top25PctOfTotal": 23.023246600986578,
+      "top10PctOfTotal": 14.636623421372569,
+      "top25PctOfTotal": 22.691692997925117,
       "top10Names": [
         "ICICI Bank Ltd.",
         "HDFC Bank Ltd.",
-        "State Bank of India",
         "Axis Bank Ltd.",
-        "ICICI Bank Limited",
+        "State Bank of India",
         "HDFC Bank Limited",
+        "ICICI Bank Limited",
         "Bharti Airtel Ltd.",
         "Reliance Industries Ltd.",
         "Eternal Limited",
-        "Axis Bank Limited"
+        "Kotak Mahindra Bank Limited"
       ],
       "top25Names": [
         "ICICI Bank Ltd.",
         "HDFC Bank Ltd.",
-        "State Bank of India",
         "Axis Bank Ltd.",
-        "ICICI Bank Limited",
+        "State Bank of India",
         "HDFC Bank Limited",
+        "ICICI Bank Limited",
         "Bharti Airtel Ltd.",
         "Reliance Industries Ltd.",
         "Eternal Limited",
-        "Axis Bank Limited",
         "Kotak Mahindra Bank Limited",
-        "Infosys Ltd.",
+        "Axis Bank Limited",
+        "Kotak Mahindra Bank Ltd.",
         "Larsen & Toubro Ltd.",
         "Sun Pharmaceutical Industries Ltd.",
-        "Kotak Mahindra Bank Ltd.",
-        "Infosys Limited",
+        "Infosys Ltd.",
         "Life Insurance Corporation of India",
-        "Maruti Suzuki India Limited",
+        "Infosys Limited",
         "Reliance Industries Limited",
         "Mahindra & Mahindra Ltd.",
-        "Maruti Suzuki India Ltd.",
+        "Maruti Suzuki India Limited",
         "Bharat Electronics Ltd.",
-        "Mahindra & Mahindra Limited",
-        "Eicher Motors Ltd.",
+        "Maruti Suzuki India Ltd.",
+        "Ultratech Cement Ltd.",
+        "Bharti Airtel Limited",
         "SBI Life Insurance Company Ltd."
       ]
     }
