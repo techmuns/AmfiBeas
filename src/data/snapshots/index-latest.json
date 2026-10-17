@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-16T19:48:58.266Z",
+  "generatedAt": "2026-10-17T19:00:56.458Z",
   "source": "NSE daily index close CSV",
   "feedDate": "2026-10-16",
   "indices": [
@@ -14,11 +14,18 @@
   "provenance": {
     "attempts": [
       {
+        "date": "2026-10-18",
+        "url": "https://archives.nseindia.com/content/indices/ind_close_all_18102026.csv",
+        "status": 404,
+        "bytes": 3537,
+        "outcome": "HTTP 404 (bytes=3537)"
+      },
+      {
         "date": "2026-10-17",
         "url": "https://archives.nseindia.com/content/indices/ind_close_all_17102026.csv",
         "status": 404,
-        "bytes": 3533,
-        "outcome": "HTTP 404 (bytes=3533)"
+        "bytes": 3537,
+        "outcome": "HTTP 404 (bytes=3537)"
       },
       {
         "date": "2026-10-16",
