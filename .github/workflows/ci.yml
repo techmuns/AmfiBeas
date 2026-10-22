@@ -25,6 +25,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Verify source recovery without network or dispatch
+        run: node scripts/verify-amc-recovery.mjs
       - run: npm ci
       - run: npm run test:holdings
       - name: Identify changed source readers
