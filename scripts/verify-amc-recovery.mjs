@@ -37,4 +37,6 @@ await assert.rejects(recoverAmcCapture({...opts,repository:'other/repo'}));
 const workflow=readFileSync(new URL('../.github/workflows/amc-capture-recovery.yml',import.meta.url),'utf8');
 assert.match(workflow,/ref: main/);assert.match(workflow,/actions: write/);assert.match(workflow,/head_repository.full_name == github.repository/);
 assert(!/secrets\.|wrangler|cancel-in-progress: true/.test(workflow));
+assert.match(workflow,/timeout-minutes: 20/);assert.match(workflow,/node scripts\/continue-amc-recovery.mjs --apply/);
+await import('./verify-amc-continuation.mjs');
 console.log('PASS repository-owned AMC recovery: missing schedules, partial runs, benchmark separation, every active status, failed/ambiguous requests and fixed main-branch scope');

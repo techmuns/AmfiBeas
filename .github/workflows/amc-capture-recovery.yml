@@ -8,6 +8,7 @@ on:
     paths:
       - '.github/workflows/amc-capture-recovery.yml'
       - 'scripts/recover-amc-capture.mjs'
+      - 'scripts/continue-amc-recovery.mjs'
   schedule:
     - cron: '1,6,11,16,21,26,31,36,41,46,51,56 * * * *'
   workflow_run:
@@ -34,7 +35,7 @@ jobs:
   recover:
     if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-22.04
-    timeout-minutes: 3
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
         with:
@@ -47,4 +48,4 @@ jobs:
       - name: Recover missed monthly source capture
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: node scripts/recover-amc-capture.mjs --apply
+        run: node scripts/continue-amc-recovery.mjs --apply
