@@ -1,0 +1,50 @@
+name: AMC capture recovery
+
+# Extra opportunities when GitHub drops/delays the collector's cron. This job
+# checks often, but cannot dispatch within fifteen minutes of a completed capture.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/amc-capture-recovery.yml'
+      - 'scripts/recover-amc-capture.mjs'
+  schedule:
+    - cron: '1,6,11,16,21,26,31,36,41,46,51,56 * * * *'
+  workflow_run:
+    workflows:
+      - Deploy
+      - AMC monthly portfolio fetch
+      - NAV daily refresh (mf-data forward)
+      - NAV history forward refresh (daily)
+      - NIFTY 500 latest snapshot (daily)
+      - Shares outstanding (cap-flows %)
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: amc-capture-recovery
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          persist-credentials: false
+          sparse-checkout: scripts
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Recover missed monthly source capture
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/recover-amc-capture.mjs --apply
