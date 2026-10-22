@@ -12,8 +12,9 @@ export function amcRecoveryDecision(runs,now=Date.now()) {
     .sort((a,b)=>time(b.created_at,now)-time(a.created_at,now))[0];
   if(!latest)return {due:true,reason:'no-monthly-run'};
   time(latest.created_at,now);
-  const due=now-time(latest.updated_at,now)>=15*60000;
-  return {due,reason:due?'overdue':'recent-run',run:latest.id};
+  const nextCheckAt=time(latest.updated_at,now)+15*60000;
+  const due=now>=nextCheckAt;
+  return {due,reason:due?'overdue':'recent-run',run:latest.id,nextCheckAt:new Date(nextCheckAt).toISOString()};
 }
 export async function recoverAmcCapture({repository=REPO,token,fetcher=fetch,now=Date.now(),apply=false}={}) {
   if(repository!==REPO||!token)throw failure('configuration');

@@ -11,6 +11,23 @@ and on merges changing the shared collector. GitHub scheduling and source respon
 times can extend this interval; this is not an instant-publication guarantee.
 The existing monthly benchmark refresh stays separate from normal holdings runs.
 
+The repository-owned recovery observer queues one explicit `workflow_dispatch`
+successor before checking the collector, then observes for at most twelve minutes
+on the existing standard public Actions runner. Its concurrency group permits
+one active observer and one pending successor; an arriving cron/event observer
+can replace the pending one. Every observer follows the same continuation path.
+This avoids relying on a bot-started collector's completion event to start another
+workflow, or on GitHub delivering every cron slot. The successor reads actual run
+state: all active collector statuses block dispatch, and a completed collector
+must be at least fifteen minutes old before another monthly capture can start.
+An uncertain dispatch is never retried within that observer, and its remaining
+observation window provides a backoff before the successor checks actual state.
+Only this repository's two fixed workflows on `main` can be dispatched; no new
+token, external scheduler, storage service or runner class is used. Existing cron
+and completion events remain fallback opportunities if a continuation request
+fails. GitHub availability and queueing can still delay checks, which remain
+visibly overdue rather than receiving a synthetic freshness timestamp.
+
 Four isolated AMC readers run concurrently with a two-minute limit each. One
 blocked source cannot prevent other sources from completing. Completed workbook
 files are checkpointed, and the next run starts at the saved unfinished file.
