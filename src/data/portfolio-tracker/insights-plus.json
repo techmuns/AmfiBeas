@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-10-24T22:03:55.623Z",
+    "generatedAt": "2026-10-24T22:20:43.373Z",
     "monthCur": "Sep-26",
     "monthPrev": "Aug-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -810,10 +810,10 @@
     "windowMonths": 3,
     "period": "3Y",
     "universe": 256,
-    "medianFlowPct": 4.1,
+    "medianFlowPct": 4.3,
     "quadrants": {
       "winning": {
-        "count": 88,
+        "count": 87,
         "rows": [
           {
             "fund": "DSP Value Fund",
@@ -894,6 +894,19 @@
             "monthsBack": 3
           },
           {
+            "fund": "ICICI Pru Commodities Fund",
+            "amc": "ICICI Prudential",
+            "classification": "Equity : Thematic",
+            "percentile": 55.6,
+            "quartile": "Q2",
+            "perfReturn": 12.4,
+            "bookGrowthPct": 5.7,
+            "navReturnPct": -11.4,
+            "impliedFlowPct": 17.1,
+            "bookCr": 3711,
+            "monthsBack": 3
+          },
+          {
             "fund": "Invesco India Smallcap Fund",
             "amc": "Invesco",
             "classification": "Equity : Small Cap",
@@ -905,25 +918,25 @@
             "impliedFlowPct": 16.5,
             "bookCr": 15954,
             "monthsBack": 1
-          },
-          {
-            "fund": "Invesco India Large & Mid Cap Fund",
-            "amc": "Invesco",
-            "classification": "Equity : Large & Mid Cap",
-            "percentile": 100,
-            "quartile": "Q1",
-            "perfReturn": 18.3,
-            "bookGrowthPct": 9.6,
-            "navReturnPct": -6.8,
-            "impliedFlowPct": 16.4,
-            "bookCr": 12138,
-            "monthsBack": 3
           }
         ]
       },
       "coasting": {
         "count": 41,
         "rows": [
+          {
+            "fund": "DSP Healthcare Fund",
+            "amc": "DSP",
+            "classification": "Equity : Sectoral - Pharma",
+            "percentile": 44.4,
+            "quartile": "Q3",
+            "perfReturn": 18.1,
+            "bookGrowthPct": 17.8,
+            "navReturnPct": 4,
+            "impliedFlowPct": 13.9,
+            "bookCr": 3148,
+            "monthsBack": 3
+          },
           {
             "fund": "Kotak Small Cap Fund",
             "amc": "Kotak Mahindra",
@@ -935,19 +948,6 @@
             "navReturnPct": -5.6,
             "impliedFlowPct": 13.5,
             "bookCr": 18930,
-            "monthsBack": 3
-          },
-          {
-            "fund": "DSP Healthcare Fund",
-            "amc": "DSP",
-            "classification": "Equity : Sectoral - Pharma",
-            "percentile": 44.4,
-            "quartile": "Q3",
-            "perfReturn": 17.7,
-            "bookGrowthPct": 17.8,
-            "navReturnPct": 4.3,
-            "impliedFlowPct": 13.5,
-            "bookCr": 3148,
             "monthsBack": 3
           },
           {
@@ -1047,19 +1047,6 @@
             "monthsBack": 3
           },
           {
-            "fund": "Aditya Birla SL Digital India Fund",
-            "amc": "Aditya Birla Sun Life",
-            "classification": "Equity : Sectoral - Technology",
-            "percentile": 16.7,
-            "quartile": "Q4",
-            "perfReturn": 4.1,
-            "bookGrowthPct": -0.1,
-            "navReturnPct": 10.9,
-            "impliedFlowPct": -11,
-            "bookCr": 3311,
-            "monthsBack": 3
-          },
-          {
             "fund": "Mirae Asset Focused Fund",
             "amc": "Mirae Asset",
             "classification": "Equity : Focused",
@@ -1070,6 +1057,19 @@
             "navReturnPct": -0.8,
             "impliedFlowPct": -10.3,
             "bookCr": 5733,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Aditya Birla SL Digital India Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Sectoral - Technology",
+            "percentile": 16.7,
+            "quartile": "Q4",
+            "perfReturn": 4.6,
+            "bookGrowthPct": -0.1,
+            "navReturnPct": 10,
+            "impliedFlowPct": -10,
+            "bookCr": 3311,
             "monthsBack": 3
           },
           {
@@ -1140,7 +1140,7 @@
         ]
       },
       "undiscovered": {
-        "count": 43,
+        "count": 44,
         "rows": [
           {
             "fund": "ICICI Pru Technology Fund",
@@ -1148,10 +1148,10 @@
             "classification": "Equity : Sectoral - Technology",
             "percentile": 50,
             "quartile": "Q2",
-            "perfReturn": 6.7,
+            "perfReturn": 6.9,
             "bookGrowthPct": -0.9,
-            "navReturnPct": 10,
-            "impliedFlowPct": -11,
+            "navReturnPct": 8.5,
+            "impliedFlowPct": -9.4,
             "bookCr": 11575,
             "monthsBack": 3
           },
@@ -1159,26 +1159,13 @@
             "fund": "ICICI Pru Business Cycle Fund",
             "amc": "ICICI Prudential",
             "classification": "Equity : Thematic",
-            "percentile": 57.8,
+            "percentile": 62.2,
             "quartile": "Q2",
-            "perfReturn": 12.3,
+            "perfReturn": 12.5,
             "bookGrowthPct": -13.1,
-            "navReturnPct": -7.5,
-            "impliedFlowPct": -5.6,
+            "navReturnPct": -8.2,
+            "impliedFlowPct": -4.9,
             "bookCr": 12996,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Franklin India Technology Fund",
-            "amc": "Franklin Templeton",
-            "classification": "Equity : Sectoral - Technology",
-            "percentile": 100,
-            "quartile": "Q1",
-            "perfReturn": 9.1,
-            "bookGrowthPct": 3.7,
-            "navReturnPct": 8.2,
-            "impliedFlowPct": -4.5,
-            "bookCr": 1229,
             "monthsBack": 3
           },
           {
@@ -1192,6 +1179,19 @@
             "navReturnPct": -9.4,
             "impliedFlowPct": -3.8,
             "bookCr": 1885,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Franklin India Technology Fund",
+            "amc": "Franklin Templeton",
+            "classification": "Equity : Sectoral - Technology",
+            "percentile": 100,
+            "quartile": "Q1",
+            "perfReturn": 9.8,
+            "bookGrowthPct": 3.7,
+            "navReturnPct": 7.5,
+            "impliedFlowPct": -3.8,
+            "bookCr": 1229,
             "monthsBack": 3
           },
           {
@@ -1265,16 +1265,16 @@
     "minCohort": 8,
     "matrix": [
       [
-        49,
-        32,
+        50,
+        30,
         35,
-        25
+        26
       ],
       [
+        31,
+        36,
         33,
-        33,
-        33,
-        32
+        31
       ],
       [
         31,
@@ -1283,8 +1283,8 @@
         26
       ],
       [
-        28,
-        20,
+        29,
+        19,
         35,
         47
       ]
@@ -1295,8 +1295,8 @@
       139,
       130
     ],
-    "q1StayPct": 34.8,
-    "q1ToBottomHalfPct": 42.6,
+    "q1StayPct": 35.5,
+    "q1ToBottomHalfPct": 43.3,
     "topStayers": [
       {
         "fund": "SBI Healthcare Opp Fund",
