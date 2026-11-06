@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-11-06T13:34:58.260Z",
+    "generatedAt": "2026-11-06T13:57:36.204Z",
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -9,23 +9,23 @@
   "convictionLedger": {
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
-    "funds": 17,
-    "amcs": 3,
+    "funds": 21,
+    "amcs": 4,
     "quadrants": {
       "new": {
-        "totalCr": 321,
-        "positions": 18,
-        "companies": 18,
+        "totalCr": 325,
+        "positions": 20,
+        "companies": 20,
         "byTier": {
           "large": {
-            "valueCr": 9,
-            "positions": 1,
-            "companies": 1
+            "valueCr": 11,
+            "positions": 2,
+            "companies": 2
           },
           "mid": {
-            "valueCr": 97,
-            "positions": 6,
-            "companies": 6
+            "valueCr": 99,
+            "positions": 7,
+            "companies": 7
           },
           "small": {
             "valueCr": 214,
@@ -79,19 +79,19 @@
         ]
       },
       "increased": {
-        "totalCr": 1689,
-        "positions": 112,
-        "companies": 100,
+        "totalCr": 1698,
+        "positions": 117,
+        "companies": 104,
         "byTier": {
           "large": {
-            "valueCr": 766,
-            "positions": 32,
-            "companies": 28
+            "valueCr": 769,
+            "positions": 34,
+            "companies": 30
           },
           "mid": {
-            "valueCr": 604,
-            "positions": 49,
-            "companies": 41
+            "valueCr": 610,
+            "positions": 52,
+            "companies": 43
           },
           "small": {
             "valueCr": 318,
@@ -117,11 +117,12 @@
             ]
           },
           {
-            "company": "Multi Commodity Exchange Of India",
-            "valueCr": 56,
+            "company": "Multi Commodity Exchange of India",
+            "valueCr": 59,
             "amcs": [
               "Helios",
-              "LIC"
+              "LIC",
+              "Taurus"
             ]
           },
           {
@@ -148,24 +149,24 @@
         ]
       },
       "decreased": {
-        "totalCr": 924,
-        "positions": 57,
-        "companies": 57,
+        "totalCr": 932,
+        "positions": 61,
+        "companies": 61,
         "byTier": {
           "large": {
-            "valueCr": 431,
-            "positions": 25,
-            "companies": 25
+            "valueCr": 432,
+            "positions": 26,
+            "companies": 26
           },
           "mid": {
-            "valueCr": 401,
-            "positions": 17,
-            "companies": 17
+            "valueCr": 403,
+            "positions": 18,
+            "companies": 18
           },
           "small": {
-            "valueCr": 92,
-            "positions": 15,
-            "companies": 15
+            "valueCr": 97,
+            "positions": 17,
+            "companies": 17
           }
         },
         "top": [
@@ -214,7 +215,7 @@
         ]
       },
       "exited": {
-        "totalCr": 300,
+        "totalCr": 292,
         "positions": 21,
         "companies": 21,
         "byTier": {
@@ -224,12 +225,12 @@
             "companies": 4
           },
           "mid": {
-            "valueCr": 147,
+            "valueCr": 145,
             "positions": 9,
             "companies": 9
           },
           "small": {
-            "valueCr": 77,
+            "valueCr": 71,
             "positions": 8,
             "companies": 8
           }
@@ -251,14 +252,14 @@
           },
           {
             "company": "Park Medi World",
-            "valueCr": 29,
+            "valueCr": 23,
             "amcs": [
               "Helios"
             ]
           },
           {
             "company": "Bharat Dynamics",
-            "valueCr": 24,
+            "valueCr": 22,
             "amcs": [
               "LIC"
             ]
@@ -290,13 +291,13 @@
     "month": "Oct-26",
     "monthPrev": "Sep-26",
     "minBookCr": 500,
-    "medianTurnoverPct": 3.75,
+    "medianTurnoverPct": 2.32,
     "rows": [
       {
         "amc": "LIC",
-        "turnoverPct": 10.82,
+        "turnoverPct": 10.8,
         "buyCr": 1210,
-        "sellCr": 1144,
+        "sellCr": 1141,
         "bookCr": 10448,
         "schemes": 9,
         "holdings": 188
@@ -311,10 +312,19 @@
         "holdings": 93
       },
       {
+        "amc": "Taurus",
+        "turnoverPct": 2.32,
+        "buyCr": 20,
+        "sellCr": 15,
+        "bookCr": 628,
+        "schemes": 4,
+        "holdings": 90
+      },
+      {
         "amc": "Helios",
-        "turnoverPct": 0.2,
+        "turnoverPct": 0.16,
         "buyCr": 713,
-        "sellCr": 29,
+        "sellCr": 23,
         "bookCr": 14647,
         "schemes": 4,
         "holdings": 150
@@ -326,12 +336,25 @@
     "windowLabel": "Jul-26 → Oct-26",
     "windowMonths": 3,
     "period": "3Y",
-    "universe": 11,
+    "universe": 15,
     "medianFlowPct": -0.9,
     "quadrants": {
       "winning": {
-        "count": 4,
+        "count": 5,
         "rows": [
+          {
+            "fund": "Taurus Large Cap Fund",
+            "amc": "Taurus",
+            "classification": "Equity : Large Cap",
+            "percentile": 100,
+            "quartile": "Q1",
+            "perfReturn": 15.6,
+            "bookGrowthPct": 12.9,
+            "navReturnPct": 4.8,
+            "impliedFlowPct": 8.1,
+            "bookCr": 63,
+            "monthsBack": 3
+          },
           {
             "fund": "the Quantum ELSS Tax Saver Fund",
             "amc": "Quantum",
@@ -387,8 +410,21 @@
         ]
       },
       "coasting": {
-        "count": 2,
+        "count": 3,
         "rows": [
+          {
+            "fund": "Taurus Mid Cap Fund",
+            "amc": "Taurus",
+            "classification": "Equity : Mid Cap",
+            "percentile": 11.1,
+            "quartile": "Q4",
+            "perfReturn": 10.2,
+            "bookGrowthPct": 2.1,
+            "navReturnPct": -0.6,
+            "impliedFlowPct": 2.8,
+            "bookCr": 130,
+            "monthsBack": 3
+          },
           {
             "fund": "Quantum Value Fund",
             "amc": "Quantum",
@@ -488,8 +524,35 @@
         ]
       },
       "undiscovered": {
-        "count": 0,
-        "rows": []
+        "count": 2,
+        "rows": [
+          {
+            "fund": "Taurus Elss Tax Saver Fund",
+            "amc": "Taurus",
+            "classification": "Equity : ELSS",
+            "percentile": 66.7,
+            "quartile": "Q2",
+            "perfReturn": 11.3,
+            "bookGrowthPct": -7.5,
+            "navReturnPct": 0.2,
+            "impliedFlowPct": -7.7,
+            "bookCr": 66,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Taurus Flexi Cap Fund",
+            "amc": "Taurus",
+            "classification": "Equity : Flexi Cap",
+            "percentile": 62.8,
+            "quartile": "Q2",
+            "perfReturn": 12.8,
+            "bookGrowthPct": 1.3,
+            "navReturnPct": 2.6,
+            "impliedFlowPct": -1.3,
+            "bookCr": 369,
+            "monthsBack": 3
+          }
+        ]
       }
     }
   },

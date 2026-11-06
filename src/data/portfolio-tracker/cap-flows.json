@@ -2,9 +2,9 @@
   "meta": {
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
-    "generatedAt": "2026-11-06T13:34:54.164Z",
+    "generatedAt": "2026-11-06T13:57:31.168Z",
     "universe": "Active equity schemes only (excludes ETFs, index, international and hybrid funds)",
-    "activeEquityFunds": 17,
+    "activeEquityFunds": 21,
     "metric": "Net Rs Cr bought/sold = change in aggregate shares held x current implied price. Excludes corporate actions (split/bonus). pctOutstanding = net shares traded ÷ company shares outstanding x 100 (null until the screener feed covers the fincode).",
     "topN": 20
   },
@@ -127,7 +127,8 @@
         "netCr": 43,
         "pctOutstanding": 0,
         "amcs": [
-          "Helios"
+          "Helios",
+          "Taurus"
         ],
         "schemes": [
           {
@@ -139,6 +140,11 @@
             "fund": "Helios Large & Mid Cap Fund",
             "amc": "Helios",
             "netCr": 7
+          },
+          {
+            "fund": "Taurus Large Cap Fund",
+            "amc": "Taurus",
+            "netCr": 1
           }
         ]
       },
@@ -192,10 +198,11 @@
       {
         "company": "Shriram Finance Ltd.",
         "fincode": "INE721A01047",
-        "netCr": 38,
+        "netCr": 39,
         "pctOutstanding": null,
         "amcs": [
-          "LIC MF"
+          "LIC MF",
+          "Taurus"
         ],
         "schemes": [
           {
@@ -216,6 +223,11 @@
           {
             "fund": "Lic Mf Dividend Yield Fund",
             "amc": "LIC MF",
+            "netCr": 1
+          },
+          {
+            "fund": "Taurus Large Cap Fund",
+            "amc": "Taurus",
             "netCr": 1
           }
         ]
@@ -390,13 +402,14 @@
         ]
       },
       {
-        "company": "GE Vernova T&D India Limited",
+        "company": "GE Vernova T&D India Ltd.",
         "fincode": "INE200A01026",
         "netCr": 22,
         "pctOutstanding": 0.02,
         "amcs": [
           "Helios",
-          "LIC MF"
+          "LIC MF",
+          "Taurus"
         ],
         "schemes": [
           {
@@ -418,6 +431,44 @@
             "fund": "Helios Mid Cap Fund",
             "amc": "Helios",
             "netCr": 2
+          },
+          {
+            "fund": "Taurus Mid Cap Fund",
+            "amc": "Taurus",
+            "netCr": 1
+          }
+        ]
+      },
+      {
+        "company": "Ultratech Cement Ltd.",
+        "fincode": "INE481G01011",
+        "netCr": 18,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "LIC MF",
+          "Taurus",
+          "the"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Dividend Yield Fund",
+            "amc": "LIC MF",
+            "netCr": 16
+          },
+          {
+            "fund": "Taurus Flexi Cap Fund",
+            "amc": "Taurus",
+            "netCr": 2
+          },
+          {
+            "fund": "Taurus Large Cap Fund",
+            "amc": "Taurus",
+            "netCr": 0
+          },
+          {
+            "fund": "the Quantum Flexi Cap Fund",
+            "amc": "the",
+            "netCr": 0
           }
         ]
       },
@@ -460,28 +511,6 @@
             "fund": "the Quantum ELSS Tax Saver Fund",
             "amc": "the",
             "netCr": 4
-          },
-          {
-            "fund": "the Quantum Flexi Cap Fund",
-            "amc": "the",
-            "netCr": 0
-          }
-        ]
-      },
-      {
-        "company": "Ultratech Cement Ltd.",
-        "fincode": "INE481G01011",
-        "netCr": 16,
-        "pctOutstanding": 0,
-        "amcs": [
-          "LIC MF",
-          "the"
-        ],
-        "schemes": [
-          {
-            "fund": "Lic Mf Dividend Yield Fund",
-            "amc": "LIC MF",
-            "netCr": 16
           },
           {
             "fund": "the Quantum Flexi Cap Fund",
@@ -571,7 +600,8 @@
         "netCr": 38,
         "pctOutstanding": null,
         "amcs": [
-          "LIC MF"
+          "LIC MF",
+          "Taurus"
         ],
         "schemes": [
           {
@@ -583,6 +613,11 @@
             "fund": "Lic Mf Large & Mid Cap Fund",
             "amc": "LIC MF",
             "netCr": -17
+          },
+          {
+            "fund": "Taurus Large Cap Fund",
+            "amc": "Taurus",
+            "netCr": 0
           }
         ]
       },
@@ -610,23 +645,29 @@
       {
         "company": "Tata Consultancy Services Ltd.",
         "fincode": "INE467B01029",
-        "netCr": 21,
+        "netCr": 22,
         "pctOutstanding": 0,
         "amcs": [
-          "LIC MF"
+          "LIC MF",
+          "Taurus"
         ],
         "schemes": [
           {
             "fund": "Lic Mf Dividend Yield Fund",
             "amc": "LIC MF",
             "netCr": -21
+          },
+          {
+            "fund": "Taurus Large Cap Fund",
+            "amc": "Taurus",
+            "netCr": -1
           }
         ]
       },
       {
         "company": "HDFC Bank Ltd.",
         "fincode": "INE040A01034",
-        "netCr": 18,
+        "netCr": 17,
         "pctOutstanding": 0,
         "amcs": [
           "LIC MF"
@@ -642,7 +683,7 @@
       {
         "company": "Tata Steel Ltd.",
         "fincode": "INE081A01020",
-        "netCr": 17,
+        "netCr": 16,
         "pctOutstanding": 0.01,
         "amcs": [
           "LIC MF",
@@ -746,6 +787,28 @@
         ]
       },
       {
+        "company": "Grasim Industries Ltd.",
+        "fincode": "INE047A01021",
+        "netCr": 12,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "LIC MF",
+          "Taurus"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Dividend Yield Fund",
+            "amc": "LIC MF",
+            "netCr": -11
+          },
+          {
+            "fund": "Taurus Large Cap Fund",
+            "amc": "Taurus",
+            "netCr": -1
+          }
+        ]
+      },
+      {
         "company": "ITC Ltd.",
         "fincode": "INE154A01025",
         "netCr": 11,
@@ -756,22 +819,6 @@
         "schemes": [
           {
             "fund": "Lic Mf ELSS Tax Saver Fund",
-            "amc": "LIC MF",
-            "netCr": -11
-          }
-        ]
-      },
-      {
-        "company": "Grasim Industries Ltd.",
-        "fincode": "INE047A01021",
-        "netCr": 11,
-        "pctOutstanding": 0.01,
-        "amcs": [
-          "LIC MF"
-        ],
-        "schemes": [
-          {
-            "fund": "Lic Mf Dividend Yield Fund",
             "amc": "LIC MF",
             "netCr": -11
           }
@@ -833,7 +880,7 @@
       {
         "company": "Kotak Mahindra Bank Ltd.",
         "fincode": "INE237A01036",
-        "netCr": 4,
+        "netCr": 3,
         "pctOutstanding": 0,
         "amcs": [
           "the"
@@ -922,11 +969,12 @@
       {
         "company": "Multi Commodity Exchange Of India Ltd.",
         "fincode": "INE745G01043",
-        "netCr": 56,
+        "netCr": 59,
         "pctOutstanding": 0.07,
         "amcs": [
           "Helios",
-          "LIC MF"
+          "LIC MF",
+          "Taurus"
         ],
         "schemes": [
           {
@@ -948,6 +996,16 @@
             "fund": "Helios Large & Mid Cap Fund",
             "amc": "Helios",
             "netCr": 4
+          },
+          {
+            "fund": "Taurus Flexi Cap Fund",
+            "amc": "Taurus",
+            "netCr": 2
+          },
+          {
+            "fund": "Taurus Mid Cap Fund",
+            "amc": "Taurus",
+            "netCr": 2
           },
           {
             "fund": "Lic Mf Dividend Yield Fund",
@@ -1273,7 +1331,7 @@
       {
         "company": "Persistent Systems Ltd.",
         "fincode": "INE262H01021",
-        "netCr": 16,
+        "netCr": 15,
         "pctOutstanding": 0.02,
         "amcs": [
           "LIC MF"
@@ -1407,8 +1465,8 @@
       {
         "company": "PB Fintech Ltd.",
         "fincode": "INE417T01026",
-        "netCr": 56,
-        "pctOutstanding": 0.13,
+        "netCr": 55,
+        "pctOutstanding": 0.12,
         "amcs": [
           "LIC MF"
         ],
@@ -1496,6 +1554,27 @@
             "fund": "Lic Mf Multi Cap Fund",
             "amc": "LIC MF",
             "netCr": -28
+          }
+        ]
+      },
+      {
+        "company": "Bharat Dynamics Ltd.",
+        "fincode": "INE171Z01026",
+        "netCr": 22,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Manufacturing Fund",
+            "amc": "LIC MF",
+            "netCr": -11
+          },
+          {
+            "fund": "Lic Mf Large Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -11
           }
         ]
       },
@@ -2130,6 +2209,27 @@
     ],
     "sold": [
       {
+        "company": "Park Medi World Ltd.",
+        "fincode": "INE119201023",
+        "netCr": 23,
+        "pctOutstanding": null,
+        "amcs": [
+          "Helios"
+        ],
+        "schemes": [
+          {
+            "fund": "Helios Small Cap Fund",
+            "amc": "Helios",
+            "netCr": -13
+          },
+          {
+            "fund": "Helios Mid Cap Fund",
+            "amc": "Helios",
+            "netCr": -11
+          }
+        ]
+      },
+      {
         "company": "Carraro India Ltd.",
         "fincode": "INE0V7W01012",
         "netCr": 13,
@@ -2321,6 +2421,32 @@
         ]
       },
       {
+        "company": "Xtranet Technologies Ltd.",
+        "fincode": "INE0NG701011",
+        "netCr": 3,
+        "pctOutstanding": null,
+        "amcs": [
+          "Taurus"
+        ],
+        "schemes": [
+          {
+            "fund": "Taurus Mid Cap Fund",
+            "amc": "Taurus",
+            "netCr": -1
+          },
+          {
+            "fund": "Taurus Flexi Cap Fund",
+            "amc": "Taurus",
+            "netCr": -1
+          },
+          {
+            "fund": "Taurus Elss Tax Saver Fund",
+            "amc": "Taurus",
+            "netCr": -1
+          }
+        ]
+      },
+      {
         "company": "Campus Activewear Ltd.",
         "fincode": "INE278Y01022",
         "netCr": 3,
@@ -2349,6 +2475,22 @@
             "fund": "Lic Mf Multi Cap Fund",
             "amc": "LIC MF",
             "netCr": -5
+          }
+        ]
+      },
+      {
+        "company": "Regaal Resources Ltd.",
+        "fincode": "INE0MHO01029",
+        "netCr": 2,
+        "pctOutstanding": null,
+        "amcs": [
+          "Taurus"
+        ],
+        "schemes": [
+          {
+            "fund": "Taurus Flexi Cap Fund",
+            "amc": "Taurus",
+            "netCr": -2
           }
         ]
       },
@@ -2393,9 +2535,9 @@
       {
         "sector": "Banks",
         "direction": "up",
-        "pctCur": 13.14,
-        "pctPrev": 12.5,
-        "changePp": 0.64,
+        "pctCur": 13.24,
+        "pctPrev": 12.59,
+        "changePp": 0.65,
         "stocks": [
           {
             "company": "ICICI Bank Ltd.",
@@ -2571,9 +2713,9 @@
       {
         "sector": "IT - Software",
         "direction": "up",
-        "pctCur": 3.75,
-        "pctPrev": 3.33,
-        "changePp": 0.42,
+        "pctCur": 3.83,
+        "pctPrev": 3.4,
+        "changePp": 0.43,
         "stocks": [
           {
             "company": "Coforge Ltd.",
@@ -2605,7 +2747,7 @@
           },
           {
             "company": "Persistent Systems Ltd.",
-            "netCr": 16,
+            "netCr": 15,
             "amcs": [
               "LIC MF"
             ],
@@ -2630,6 +2772,21 @@
                 "amc": "LIC MF",
                 "netCr": 2,
                 "valueChgCr": 1
+              }
+            ]
+          },
+          {
+            "company": "Mphasis Ltd.",
+            "netCr": 1,
+            "amcs": [
+              "Taurus"
+            ],
+            "schemes": [
+              {
+                "fund": "Taurus Mid Cap Fund",
+                "amc": "Taurus",
+                "netCr": 1,
+                "valueChgCr": 2
               }
             ]
           }
@@ -2670,9 +2827,9 @@
       {
         "sector": "Retailing",
         "direction": "down",
-        "pctCur": 5.59,
-        "pctPrev": 6.11,
-        "changePp": -0.53,
+        "pctCur": 5.46,
+        "pctPrev": 5.97,
+        "changePp": -0.51,
         "stocks": [
           {
             "company": "Trent Ltd.",
@@ -2777,9 +2934,9 @@
       {
         "sector": "Auto Components",
         "direction": "down",
-        "pctCur": 4.33,
-        "pctPrev": 4.76,
-        "changePp": -0.43,
+        "pctCur": 4.24,
+        "pctPrev": 4.65,
+        "changePp": -0.41,
         "stocks": [
           {
             "company": "UNO Minda Ltd.",
