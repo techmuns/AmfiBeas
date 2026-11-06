@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-11-06T08:27:48.894Z",
+    "generatedAt": "2026-11-06T08:49:50.122Z",
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -9,13 +9,13 @@
   "convictionLedger": {
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
-    "funds": 4,
-    "amcs": 1,
+    "funds": 8,
+    "amcs": 2,
     "quadrants": {
       "new": {
-        "totalCr": 29,
-        "positions": 4,
-        "companies": 4,
+        "totalCr": 228,
+        "positions": 9,
+        "companies": 9,
         "byTier": {
           "large": {
             "valueCr": 0,
@@ -23,17 +23,38 @@
             "companies": 0
           },
           "mid": {
-            "valueCr": 20,
-            "positions": 1,
-            "companies": 1
+            "valueCr": 68,
+            "positions": 2,
+            "companies": 2
           },
           "small": {
-            "valueCr": 9,
-            "positions": 3,
-            "companies": 3
+            "valueCr": 160,
+            "positions": 7,
+            "companies": 7
           }
         },
         "top": [
+          {
+            "company": "Zetwerk Manufacturing Businesses",
+            "valueCr": 79,
+            "amcs": [
+              "Helios"
+            ]
+          },
+          {
+            "company": "PVR Inox",
+            "valueCr": 51,
+            "amcs": [
+              "Helios"
+            ]
+          },
+          {
+            "company": "Aurobindo Pharma",
+            "valueCr": 48,
+            "amcs": [
+              "Helios"
+            ]
+          },
           {
             "company": "Godrej Consumer Products",
             "valueCr": 20,
@@ -42,90 +63,83 @@
             ]
           },
           {
-            "company": "Nitin Spinners",
-            "valueCr": 3,
+            "company": "Jio Platforms",
+            "valueCr": 13,
             "amcs": [
-              "Quantum"
+              "Helios"
             ]
           },
           {
-            "company": "TTK Prestige",
-            "valueCr": 3,
+            "company": "Tonbo Imaging India",
+            "valueCr": 7,
             "amcs": [
-              "Quantum"
-            ]
-          },
-          {
-            "company": "Dalmia Bharat Sugar and Industries",
-            "valueCr": 3,
-            "amcs": [
-              "Quantum"
+              "Helios"
             ]
           }
         ]
       },
       "increased": {
-        "totalCr": 62,
-        "positions": 6,
-        "companies": 6,
+        "totalCr": 579,
+        "positions": 38,
+        "companies": 38,
         "byTier": {
           "large": {
-            "valueCr": 35,
-            "positions": 3,
-            "companies": 3
+            "valueCr": 310,
+            "positions": 11,
+            "companies": 11
           },
           "mid": {
-            "valueCr": 1,
-            "positions": 1,
-            "companies": 1
+            "valueCr": 163,
+            "positions": 15,
+            "companies": 15
           },
           "small": {
-            "valueCr": 26,
-            "positions": 2,
-            "companies": 2
+            "valueCr": 107,
+            "positions": 12,
+            "companies": 12
           }
         },
         "top": [
           {
-            "company": "Computer Age Management Services",
-            "valueCr": 24,
+            "company": "ICICI Bank",
+            "valueCr": 69,
             "amcs": [
-              "Quantum"
+              "Helios"
             ]
           },
           {
-            "company": "Maruti Suzuki India",
-            "valueCr": 24,
+            "company": "Bharti Airtel",
+            "valueCr": 49,
             "amcs": [
-              "Quantum"
+              "Helios"
             ]
           },
           {
-            "company": "Mahindra & Mahindra",
-            "valueCr": 9,
+            "company": "Multi Commodity Exchange of India",
+            "valueCr": 45,
             "amcs": [
-              "Quantum"
+              "Helios"
             ]
           },
           {
-            "company": "Mold-Tek Packaging",
-            "valueCr": 2,
+            "company": "Bharat Heavy Electricals",
+            "valueCr": 43,
             "amcs": [
-              "Quantum"
+              "Helios"
             ]
           },
           {
-            "company": "Axis Bank",
-            "valueCr": 1,
+            "company": "The Indian Hotels Company",
+            "valueCr": 34,
             "amcs": [
-              "Quantum"
+              "Helios"
             ]
           },
           {
-            "company": "Star Health And Allied Insurance Company",
-            "valueCr": 1,
+            "company": "Siemens Energy India",
+            "valueCr": 33,
             "amcs": [
-              "Quantum"
+              "Helios"
             ]
           }
         ]
@@ -197,9 +211,9 @@
         ]
       },
       "exited": {
-        "totalCr": 13,
-        "positions": 4,
-        "companies": 4,
+        "totalCr": 42,
+        "positions": 5,
+        "companies": 5,
         "byTier": {
           "large": {
             "valueCr": 5,
@@ -212,12 +226,19 @@
             "companies": 0
           },
           "small": {
-            "valueCr": 8,
-            "positions": 3,
-            "companies": 3
+            "valueCr": 36,
+            "positions": 4,
+            "companies": 4
           }
         },
         "top": [
+          {
+            "company": "Park Medi World",
+            "valueCr": 29,
+            "amcs": [
+              "Helios"
+            ]
+          },
           {
             "company": "Tata Steel",
             "valueCr": 5,
@@ -259,7 +280,7 @@
     "month": "Oct-26",
     "monthPrev": "Sep-26",
     "minBookCr": 500,
-    "medianTurnoverPct": 3.84,
+    "medianTurnoverPct": 0.2,
     "rows": [
       {
         "amc": "Quantum",
@@ -269,6 +290,15 @@
         "bookCr": 1514,
         "schemes": 4,
         "holdings": 93
+      },
+      {
+        "amc": "Helios",
+        "turnoverPct": 0.2,
+        "buyCr": 716,
+        "sellCr": 29,
+        "bookCr": 14647,
+        "schemes": 4,
+        "holdings": 150
       }
     ]
   },
