@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-11-06T00:49:50.590Z",
+    "generatedAt": "2026-11-06T00:55:18.300Z",
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -278,7 +278,7 @@
     "windowMonths": 3,
     "period": "3Y",
     "universe": 3,
-    "medianFlowPct": 4.5,
+    "medianFlowPct": 2.5,
     "quadrants": {
       "winning": {
         "count": 1,
@@ -289,10 +289,10 @@
             "classification": "Equity : ELSS",
             "percentile": 58.3,
             "quartile": "Q2",
-            "perfReturn": 9.1,
+            "perfReturn": 9.9,
             "bookGrowthPct": -0.5,
-            "navReturnPct": -5,
-            "impliedFlowPct": 4.5,
+            "navReturnPct": -2.9,
+            "impliedFlowPct": 2.5,
             "bookCr": 195,
             "monthsBack": 3
           }
@@ -307,10 +307,10 @@
             "classification": "Equity : Value / Contra",
             "percentile": 16.7,
             "quartile": "Q4",
-            "perfReturn": 9.2,
+            "perfReturn": 10,
             "bookGrowthPct": -0.4,
-            "navReturnPct": -5,
-            "impliedFlowPct": 4.6,
+            "navReturnPct": -2.9,
+            "impliedFlowPct": 2.5,
             "bookCr": 1041,
             "monthsBack": 3
           }
@@ -325,10 +325,10 @@
             "classification": "Equity : Small Cap",
             "percentile": 10.3,
             "quartile": "Q4",
-            "perfReturn": 8.8,
+            "perfReturn": 9.1,
             "bookGrowthPct": -5.5,
-            "navReturnPct": -5.6,
-            "impliedFlowPct": 0,
+            "navReturnPct": -4.7,
+            "impliedFlowPct": -0.9,
             "bookCr": 226,
             "monthsBack": 3
           }
@@ -341,36 +341,36 @@
     }
   },
   "persistence": {
-    "asOf": "2026-11-04",
+    "asOf": "2026-11-05",
     "priorWindow": {
-      "from": "2020-11-04",
-      "to": "2023-11-04"
+      "from": "2020-11-05",
+      "to": "2023-11-05"
     },
     "recentWindow": {
-      "from": "2023-11-04",
-      "to": "2026-11-04"
+      "from": "2023-11-05",
+      "to": "2026-11-05"
     },
     "cohorts": 19,
     "funds": 543,
     "minCohort": 8,
     "matrix": [
       [
-        45,
-        35,
-        34,
-        27
-      ],
-      [
+        47,
+        33,
         31,
-        33,
-        33,
-        35
+        30
       ],
       [
+        32,
+        32,
+        34,
+        34
+      ],
+      [
+        35,
+        41,
         38,
-        38,
-        36,
-        27
+        25
       ],
       [
         27,
@@ -385,7 +385,7 @@
       139,
       131
     ],
-    "q1StayPct": 31.9,
+    "q1StayPct": 33.3,
     "q1ToBottomHalfPct": 43.3,
     "topStayers": [
       {
@@ -398,43 +398,43 @@
         "fund": "Motilal Oswal Large & Midcap Fund",
         "classification": "Equity : Large & Mid Cap",
         "prior": 28.7,
-        "recent": 21.8
+        "recent": 21.6
+      },
+      {
+        "fund": "SBI PSU Fund",
+        "classification": "Equity : Thematic",
+        "prior": 35.3,
+        "recent": 20.5
       },
       {
         "fund": "Motilal Oswal Large & Midcap Fund",
         "classification": "Equity : Large & Mid Cap",
         "prior": 26.7,
-        "recent": 20.5
-      },
-      {
-        "fund": "SBI PSU Fund",
-        "classification": "Equity : Thematic",
-        "prior": 36.3,
         "recent": 20.3
       },
       {
         "fund": "ICICI Pru Retirement Fund-Pure Equity Plan",
         "classification": "Equity : Flexi Cap",
-        "prior": 28.9,
-        "recent": 20.2
+        "prior": 28.8,
+        "recent": 20
       },
       {
         "fund": "Edelweiss Mid Cap Fund",
         "classification": "Equity : Mid Cap",
-        "prior": 31.4,
-        "recent": 19.5
+        "prior": 31,
+        "recent": 19.9
+      },
+      {
+        "fund": "Motilal Oswal ELSS Tax Saver Fund",
+        "classification": "Equity : Tax Saving (ELSS)",
+        "prior": 25.1,
+        "recent": 19.9
       },
       {
         "fund": "Aditya Birla SL PSU Equity Fund",
         "classification": "Equity : Thematic",
-        "prior": 41,
-        "recent": 19.1
-      },
-      {
-        "fund": "SBI PSU Fund",
-        "classification": "Equity : Thematic",
-        "prior": 34.9,
-        "recent": 19
+        "prior": 39.6,
+        "recent": 19.3
       }
     ]
   }
