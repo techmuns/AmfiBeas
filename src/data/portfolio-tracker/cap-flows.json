@@ -2,21 +2,22 @@
   "meta": {
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
-    "generatedAt": "2026-11-06T08:49:47.180Z",
+    "generatedAt": "2026-11-06T09:13:43.511Z",
     "universe": "Active equity schemes only (excludes ETFs, index, international and hybrid funds)",
-    "activeEquityFunds": 8,
+    "activeEquityFunds": 17,
     "metric": "Net Rs Cr bought/sold = change in aggregate shares held x current implied price. Excludes corporate actions (split/bonus). pctOutstanding = net shares traded ÷ company shares outstanding x 100 (null until the screener feed covers the fincode).",
     "topN": 20
   },
   "large": {
     "bought": [
       {
-        "company": "ICICI Bank Ltd*",
+        "company": "ICICI Bank Ltd.",
         "fincode": "INE090A01021",
-        "netCr": 68,
+        "netCr": 70,
         "pctOutstanding": 0.01,
         "amcs": [
-          "Helios"
+          "Helios",
+          "LIC MF"
         ],
         "schemes": [
           {
@@ -30,6 +31,11 @@
             "netCr": 7
           },
           {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 2
+          },
+          {
             "fund": "the Quantum Flexi Cap Fund",
             "amc": "the",
             "netCr": 1
@@ -37,9 +43,88 @@
         ]
       },
       {
-        "company": "Bharti Airtel Ltd*",
-        "fincode": "INE397D01024",
+        "company": "Bajaj Finance Ltd.",
+        "fincode": "INE296A01032",
         "netCr": 49,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 45
+          },
+          {
+            "fund": "Lic Mf Large Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 3
+          }
+        ]
+      },
+      {
+        "company": "Eternal Ltd.",
+        "fincode": "INE758T01015",
+        "netCr": 44,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "LIC MF",
+          "Helios"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 14
+          },
+          {
+            "fund": "Helios Flexi Cap Fund",
+            "amc": "Helios",
+            "netCr": 12
+          },
+          {
+            "fund": "Lic Mf Multi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 11
+          },
+          {
+            "fund": "Helios Large & Mid Cap Fund",
+            "amc": "Helios",
+            "netCr": 4
+          },
+          {
+            "fund": "Lic Mf ELSS Tax Saver Fund",
+            "amc": "LIC MF",
+            "netCr": 3
+          }
+        ]
+      },
+      {
+        "company": "InterGlobe Aviation Ltd.",
+        "fincode": "INE646L01027",
+        "netCr": 44,
+        "pctOutstanding": 0.02,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 37
+          },
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 8
+          }
+        ]
+      },
+      {
+        "company": "Bharti Airtel Ltd.",
+        "fincode": "INE397D01024",
+        "netCr": 43,
         "pctOutstanding": 0,
         "amcs": [
           "Helios"
@@ -79,6 +164,100 @@
         ]
       },
       {
+        "company": "Torrent Pharmaceuticals Ltd.",
+        "fincode": "INE685A01028",
+        "netCr": 41,
+        "pctOutstanding": 0.02,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 24
+          },
+          {
+            "fund": "Lic Mf Dividend Yield Fund",
+            "amc": "LIC MF",
+            "netCr": 12
+          },
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 5
+          }
+        ]
+      },
+      {
+        "company": "Shriram Finance Ltd.",
+        "fincode": "INE721A01047",
+        "netCr": 38,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 24
+          },
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 9
+          },
+          {
+            "fund": "Lic Mf Large Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 5
+          },
+          {
+            "fund": "Lic Mf Dividend Yield Fund",
+            "amc": "LIC MF",
+            "netCr": 1
+          }
+        ]
+      },
+      {
+        "company": "Titan Company Ltd.",
+        "fincode": "INE280A01028",
+        "netCr": 37,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Multi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 27
+          },
+          {
+            "fund": "Lic Mf Large Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 10
+          }
+        ]
+      },
+      {
+        "company": "Apollo Hospitals Enterprise Ltd.",
+        "fincode": "INE437A01024",
+        "netCr": 33,
+        "pctOutstanding": 0.03,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 33
+          }
+        ]
+      },
+      {
         "company": "Siemens Energy India Ltd.",
         "fincode": "INE1NPP01017",
         "netCr": 33,
@@ -90,7 +269,7 @@
           {
             "fund": "Helios Flexi Cap Fund",
             "amc": "Helios",
-            "netCr": 25
+            "netCr": 24
           },
           {
             "fund": "Helios Mid Cap Fund",
@@ -116,28 +295,76 @@
         ]
       },
       {
-        "company": "Maruti Suzuki India Ltd",
-        "fincode": "INE585B01010",
-        "netCr": 24,
+        "company": "NTPC Ltd.",
+        "fincode": "INE733E01010",
+        "netCr": 30,
         "pctOutstanding": 0.01,
         "amcs": [
+          "LIC MF",
           "the"
         ],
         "schemes": [
           {
-            "fund": "the Quantum Value Fund",
-            "amc": "the",
-            "netCr": 20
-          },
-          {
-            "fund": "the Quantum ELSS Tax Saver Fund",
-            "amc": "the",
-            "netCr": 4
+            "fund": "Lic Mf Multi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 30
           },
           {
             "fund": "the Quantum Flexi Cap Fund",
             "amc": "the",
             "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Bajaj Auto Ltd.",
+        "fincode": "INE917I01010",
+        "netCr": 25,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Manufacturing Fund",
+            "amc": "LIC MF",
+            "netCr": 20
+          },
+          {
+            "fund": "Lic Mf Dividend Yield Fund",
+            "amc": "LIC MF",
+            "netCr": 4
+          },
+          {
+            "fund": "Lic Mf Large Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 2
+          }
+        ]
+      },
+      {
+        "company": "Hitachi Energy India Ltd.",
+        "fincode": "INE07Y701011",
+        "netCr": 24,
+        "pctOutstanding": 0.02,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Manufacturing Fund",
+            "amc": "LIC MF",
+            "netCr": 9
+          },
+          {
+            "fund": "Lic Mf Large Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 8
+          },
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 7
           }
         ]
       },
@@ -163,39 +390,29 @@
         ]
       },
       {
-        "company": "Eternal Ltd.",
-        "fincode": "INE758T01015",
-        "netCr": 16,
-        "pctOutstanding": 0,
-        "amcs": [
-          "Helios"
-        ],
-        "schemes": [
-          {
-            "fund": "Helios Flexi Cap Fund",
-            "amc": "Helios",
-            "netCr": 12
-          },
-          {
-            "fund": "Helios Large & Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 4
-          }
-        ]
-      },
-      {
-        "company": "GE Vernova T&D India Ltd.",
+        "company": "GE Vernova T&D India Limited",
         "fincode": "INE200A01026",
-        "netCr": 11,
-        "pctOutstanding": 0.01,
+        "netCr": 22,
+        "pctOutstanding": 0.02,
         "amcs": [
-          "Helios"
+          "Helios",
+          "LIC MF"
         ],
         "schemes": [
           {
             "fund": "Helios Small Cap Fund",
             "amc": "Helios",
             "netCr": 9
+          },
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 8
+          },
+          {
+            "fund": "Lic Mf Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 3
           },
           {
             "fund": "Helios Mid Cap Fund",
@@ -205,9 +422,30 @@
         ]
       },
       {
-        "company": "Mahindra & Mahindra Ltd",
-        "fincode": "INE101A01026",
-        "netCr": 9,
+        "company": "Eicher Motors Ltd.",
+        "fincode": "INE066A01021",
+        "netCr": 17,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 14
+          },
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 2
+          }
+        ]
+      },
+      {
+        "company": "Maruti Suzuki India Ltd.",
+        "fincode": "INE585B01010",
+        "netCr": 16,
         "pctOutstanding": 0,
         "amcs": [
           "the"
@@ -216,12 +454,12 @@
           {
             "fund": "the Quantum Value Fund",
             "amc": "the",
-            "netCr": 8
+            "netCr": 20
           },
           {
             "fund": "the Quantum ELSS Tax Saver Fund",
             "amc": "the",
-            "netCr": 1
+            "netCr": 4
           },
           {
             "fund": "the Quantum Flexi Cap Fund",
@@ -231,18 +469,19 @@
         ]
       },
       {
-        "company": "Axis Bank Ltd*",
-        "fincode": "INE238A01034",
-        "netCr": 1,
+        "company": "Ultratech Cement Ltd.",
+        "fincode": "INE481G01011",
+        "netCr": 16,
         "pctOutstanding": 0,
         "amcs": [
+          "LIC MF",
           "the"
         ],
         "schemes": [
           {
-            "fund": "the Quantum Small Cap Fund",
-            "amc": "the",
-            "netCr": 1
+            "fund": "Lic Mf Dividend Yield Fund",
+            "amc": "LIC MF",
+            "netCr": 16
           },
           {
             "fund": "the Quantum Flexi Cap Fund",
@@ -253,6 +492,180 @@
       }
     ],
     "sold": [
+      {
+        "company": "Trent Ltd.",
+        "fincode": "INE849A01020",
+        "netCr": 92,
+        "pctOutstanding": 0.06,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -75
+          },
+          {
+            "fund": "Lic Mf Large Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -13
+          },
+          {
+            "fund": "Lic Mf ELSS Tax Saver Fund",
+            "amc": "LIC MF",
+            "netCr": -5
+          }
+        ]
+      },
+      {
+        "company": "Tata Motors Passenger Vehicles Ltd.",
+        "fincode": "INE155A01022",
+        "netCr": 44,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Manufacturing Fund",
+            "amc": "LIC MF",
+            "netCr": -27
+          },
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -10
+          },
+          {
+            "fund": "Lic Mf Dividend Yield Fund",
+            "amc": "LIC MF",
+            "netCr": -7
+          }
+        ]
+      },
+      {
+        "company": "Sun Pharmaceutical Industries Ltd.",
+        "fincode": "INE044A01036",
+        "netCr": 39,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -23
+          },
+          {
+            "fund": "Lic Mf Manufacturing Fund",
+            "amc": "LIC MF",
+            "netCr": -16
+          }
+        ]
+      },
+      {
+        "company": "Divi's Laboratories Ltd.",
+        "fincode": "INE361B01024",
+        "netCr": 38,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -21
+          },
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -17
+          }
+        ]
+      },
+      {
+        "company": "Pidilite Industries Ltd.",
+        "fincode": "INE318A01026",
+        "netCr": 37,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -27
+          },
+          {
+            "fund": "Lic Mf Large Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -9
+          }
+        ]
+      },
+      {
+        "company": "Tata Consultancy Services Ltd.",
+        "fincode": "INE467B01029",
+        "netCr": 21,
+        "pctOutstanding": 0,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Dividend Yield Fund",
+            "amc": "LIC MF",
+            "netCr": -21
+          }
+        ]
+      },
+      {
+        "company": "HDFC Bank Ltd.",
+        "fincode": "INE040A01034",
+        "netCr": 18,
+        "pctOutstanding": 0,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf ELSS Tax Saver Fund",
+            "amc": "LIC MF",
+            "netCr": -18
+          }
+        ]
+      },
+      {
+        "company": "Tata Steel Ltd.",
+        "fincode": "INE081A01020",
+        "netCr": 17,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "LIC MF",
+          "the"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -12
+          },
+          {
+            "fund": "the Quantum Value Fund",
+            "amc": "the",
+            "netCr": -4
+          },
+          {
+            "fund": "the Quantum ELSS Tax Saver Fund",
+            "amc": "the",
+            "netCr": -1
+          }
+        ]
+      },
       {
         "company": "Tech Mahindra Ltd",
         "fincode": "INE669C01036",
@@ -271,6 +684,96 @@
             "fund": "the Quantum ELSS Tax Saver Fund",
             "amc": "the",
             "netCr": -2
+          }
+        ]
+      },
+      {
+        "company": "Hindustan Unilever Ltd.",
+        "fincode": "INE030A01027",
+        "netCr": 14,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf ELSS Tax Saver Fund",
+            "amc": "LIC MF",
+            "netCr": -11
+          },
+          {
+            "fund": "Lic Mf Manufacturing Fund",
+            "amc": "LIC MF",
+            "netCr": -3
+          }
+        ]
+      },
+      {
+        "company": "Cipla Ltd*",
+        "fincode": "INE059A01026",
+        "netCr": 13,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Manufacturing Fund",
+            "amc": "LIC MF",
+            "netCr": -13
+          }
+        ]
+      },
+      {
+        "company": "Mahindra & Mahindra Ltd.",
+        "fincode": "INE101A01026",
+        "netCr": 12,
+        "pctOutstanding": 0,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Multi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -27
+          },
+          {
+            "fund": "Lic Mf Manufacturing Fund",
+            "amc": "LIC MF",
+            "netCr": -9
+          }
+        ]
+      },
+      {
+        "company": "ITC Ltd.",
+        "fincode": "INE154A01025",
+        "netCr": 11,
+        "pctOutstanding": 0,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf ELSS Tax Saver Fund",
+            "amc": "LIC MF",
+            "netCr": -11
+          }
+        ]
+      },
+      {
+        "company": "Grasim Industries Ltd.",
+        "fincode": "INE047A01021",
+        "netCr": 11,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Dividend Yield Fund",
+            "amc": "LIC MF",
+            "netCr": -11
           }
         ]
       },
@@ -296,7 +799,39 @@
         ]
       },
       {
-        "company": "Kotak Mahindra Bank Ltd*",
+        "company": "Indus Towers Ltd.",
+        "fincode": "INE121J01017",
+        "netCr": 7,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf ELSS Tax Saver Fund",
+            "amc": "LIC MF",
+            "netCr": -7
+          }
+        ]
+      },
+      {
+        "company": "SBI Life Insurance Company Ltd.",
+        "fincode": "INE123W01016",
+        "netCr": 6,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -6
+          }
+        ]
+      },
+      {
+        "company": "Kotak Mahindra Bank Ltd.",
         "fincode": "INE237A01036",
         "netCr": 4,
         "pctOutstanding": 0,
@@ -338,60 +873,18 @@
         ]
       },
       {
-        "company": "Dr. Reddy''s Laboratories Ltd*",
-        "fincode": "INE089A01031",
-        "netCr": 1,
-        "pctOutstanding": null,
-        "amcs": [
-          "the"
-        ],
-        "schemes": [
-          {
-            "fund": "the Quantum Value Fund",
-            "amc": "the",
-            "netCr": -1
-          },
-          {
-            "fund": "the Quantum ELSS Tax Saver Fund",
-            "amc": "the",
-            "netCr": 0
-          }
-        ]
-      },
-      {
-        "company": "Wipro Ltd",
-        "fincode": "INE075A01022",
-        "netCr": 1,
+        "company": "Tata Power Company Ltd.",
+        "fincode": "INE245A01021",
+        "netCr": 2,
         "pctOutstanding": 0,
         "amcs": [
-          "the"
+          "LIC MF"
         ],
         "schemes": [
           {
-            "fund": "the Quantum Value Fund",
-            "amc": "the",
-            "netCr": -1
-          }
-        ]
-      },
-      {
-        "company": "Bajaj Auto Ltd",
-        "fincode": "INE917I01010",
-        "netCr": 1,
-        "pctOutstanding": 0,
-        "amcs": [
-          "the"
-        ],
-        "schemes": [
-          {
-            "fund": "the Quantum Value Fund",
-            "amc": "the",
-            "netCr": -1
-          },
-          {
-            "fund": "the Quantum ELSS Tax Saver Fund",
-            "amc": "the",
-            "netCr": 0
+            "fund": "Lic Mf Manufacturing Fund",
+            "amc": "LIC MF",
+            "netCr": -2
           }
         ]
       }
@@ -400,33 +893,40 @@
   "mid": {
     "bought": [
       {
-        "company": "Aurobindo Pharma Ltd.",
-        "fincode": "INE406A01037",
-        "netCr": 48,
+        "company": "Sona BLW Precision Forgings Ltd.",
+        "fincode": "INE073K01018",
+        "netCr": 81,
         "pctOutstanding": null,
         "amcs": [
+          "LIC MF",
           "Helios"
         ],
         "schemes": [
           {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 43
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 66
           },
           {
-            "fund": "Helios Large & Mid Cap Fund",
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 9
+          },
+          {
+            "fund": "Helios Mid Cap Fund",
             "amc": "Helios",
             "netCr": 6
           }
         ]
       },
       {
-        "company": "Multi Commodity Exchange of India Ltd.",
+        "company": "Multi Commodity Exchange Of India Ltd.",
         "fincode": "INE745G01043",
-        "netCr": 45,
-        "pctOutstanding": 0.06,
+        "netCr": 56,
+        "pctOutstanding": 0.07,
         "amcs": [
-          "Helios"
+          "Helios",
+          "LIC MF"
         ],
         "schemes": [
           {
@@ -440,6 +940,102 @@
             "netCr": 16
           },
           {
+            "fund": "Lic Mf ELSS Tax Saver Fund",
+            "amc": "LIC MF",
+            "netCr": 9
+          },
+          {
+            "fund": "Helios Large & Mid Cap Fund",
+            "amc": "Helios",
+            "netCr": 4
+          },
+          {
+            "fund": "Lic Mf Dividend Yield Fund",
+            "amc": "LIC MF",
+            "netCr": 2
+          }
+        ]
+      },
+      {
+        "company": "Aurobindo Pharma Ltd.",
+        "fincode": "INE406A01037",
+        "netCr": 54,
+        "pctOutstanding": null,
+        "amcs": [
+          "Helios",
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Helios Mid Cap Fund",
+            "amc": "Helios",
+            "netCr": 42
+          },
+          {
+            "fund": "Lic Mf Manufacturing Fund",
+            "amc": "LIC MF",
+            "netCr": 7
+          },
+          {
+            "fund": "Helios Large & Mid Cap Fund",
+            "amc": "Helios",
+            "netCr": 6
+          }
+        ]
+      },
+      {
+        "company": "AU Small Finance Bank Ltd.",
+        "fincode": "INE949L01017",
+        "netCr": 42,
+        "pctOutstanding": 0.07,
+        "amcs": [
+          "LIC MF",
+          "Helios"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 27
+          },
+          {
+            "fund": "Helios Mid Cap Fund",
+            "amc": "Helios",
+            "netCr": 9
+          },
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 4
+          },
+          {
+            "fund": "Lic Mf Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 2
+          }
+        ]
+      },
+      {
+        "company": "Coforge Ltd.",
+        "fincode": "INE591G01025",
+        "netCr": 37,
+        "pctOutstanding": 0.04,
+        "amcs": [
+          "LIC MF",
+          "Helios"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 22
+          },
+          {
+            "fund": "Helios Mid Cap Fund",
+            "amc": "Helios",
+            "netCr": 11
+          },
+          {
             "fund": "Helios Large & Mid Cap Fund",
             "amc": "Helios",
             "netCr": 4
@@ -447,9 +1043,31 @@
         ]
       },
       {
+        "company": "Motilal Oswal Financial Services Ltd.",
+        "fincode": "INE338I01027",
+        "netCr": 34,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF",
+          "Helios"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 28
+          },
+          {
+            "fund": "Helios Small Cap Fund",
+            "amc": "Helios",
+            "netCr": 6
+          }
+        ]
+      },
+      {
         "company": "The Indian Hotels Company Ltd.",
         "fincode": "INE053A01029",
-        "netCr": 34,
+        "netCr": 32,
         "pctOutstanding": 0.03,
         "amcs": [
           "Helios"
@@ -464,6 +1082,106 @@
             "fund": "Helios Flexi Cap Fund",
             "amc": "Helios",
             "netCr": 13
+          }
+        ]
+      },
+      {
+        "company": "Gujarat Fluorochemicals Ltd.",
+        "fincode": "INE09N301011",
+        "netCr": 26,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 21
+          },
+          {
+            "fund": "Lic Mf Manufacturing Fund",
+            "amc": "LIC MF",
+            "netCr": 3
+          },
+          {
+            "fund": "Lic Mf Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 2
+          }
+        ]
+      },
+      {
+        "company": "Jindal Stainless Ltd.",
+        "fincode": "INE220G01021",
+        "netCr": 24,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf ELSS Tax Saver Fund",
+            "amc": "LIC MF",
+            "netCr": 12
+          },
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 10
+          },
+          {
+            "fund": "Lic Mf Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 2
+          }
+        ]
+      },
+      {
+        "company": "Ather Energy Ltd.",
+        "fincode": "INE0LEZ01016",
+        "netCr": 24,
+        "pctOutstanding": 0.03,
+        "amcs": [
+          "Helios",
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Helios Mid Cap Fund",
+            "amc": "Helios",
+            "netCr": 15
+          },
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 9
+          }
+        ]
+      },
+      {
+        "company": "Aditya Birla Capital Ltd.",
+        "fincode": "INE674K01013",
+        "netCr": 21,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 9
+          },
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 7
+          },
+          {
+            "fund": "Lic Mf Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 5
           }
         ]
       },
@@ -489,152 +1207,46 @@
         ]
       },
       {
-        "company": "Coforge Ltd.",
-        "fincode": "INE591G01025",
-        "netCr": 15,
-        "pctOutstanding": 0.02,
+        "company": "Nippon Life India Asset Management Ltd.",
+        "fincode": "INE298J01013",
+        "netCr": 19,
+        "pctOutstanding": null,
         "amcs": [
-          "Helios"
+          "LIC MF"
         ],
         "schemes": [
           {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 11
+            "fund": "Lic Mf Large Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 13
           },
           {
-            "fund": "Helios Large & Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 4
-          }
-        ]
-      },
-      {
-        "company": "Ather Energy Ltd.",
-        "fincode": "INE0LEZ01016",
-        "netCr": 15,
-        "pctOutstanding": 0.02,
-        "amcs": [
-          "Helios"
-        ],
-        "schemes": [
-          {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 15
-          }
-        ]
-      },
-      {
-        "company": "One 97 Communications Ltd.",
-        "fincode": "INE982J01020",
-        "netCr": 10,
-        "pctOutstanding": 0.01,
-        "amcs": [
-          "Helios"
-        ],
-        "schemes": [
-          {
-            "fund": "Helios Small Cap Fund",
-            "amc": "Helios",
-            "netCr": 6
-          },
-          {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 4
-          }
-        ]
-      },
-      {
-        "company": "AU Small Finance Bank Ltd.",
-        "fincode": "INE949L01017",
-        "netCr": 9,
-        "pctOutstanding": 0.01,
-        "amcs": [
-          "Helios"
-        ],
-        "schemes": [
-          {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 9
-          }
-        ]
-      },
-      {
-        "company": "Sona Blw Precision Forgings Ltd.",
-        "fincode": "INE073K01018",
-        "netCr": 7,
-        "pctOutstanding": null,
-        "amcs": [
-          "Helios"
-        ],
-        "schemes": [
-          {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 7
-          }
-        ]
-      },
-      {
-        "company": "Motilal Oswal Financial Services Ltd.",
-        "fincode": "INE338I01027",
-        "netCr": 6,
-        "pctOutstanding": null,
-        "amcs": [
-          "Helios"
-        ],
-        "schemes": [
-          {
-            "fund": "Helios Small Cap Fund",
-            "amc": "Helios",
-            "netCr": 6
-          }
-        ]
-      },
-      {
-        "company": "ITC Hotels Ltd.",
-        "fincode": "INE379A01028",
-        "netCr": 5,
-        "pctOutstanding": null,
-        "amcs": [
-          "Helios"
-        ],
-        "schemes": [
-          {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 5
-          }
-        ]
-      },
-      {
-        "company": "Bosch Ltd.",
-        "fincode": "INE323A01026",
-        "netCr": 4,
-        "pctOutstanding": 0,
-        "amcs": [
-          "Helios"
-        ],
-        "schemes": [
-          {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 4
+            "fund": "Lic Mf ELSS Tax Saver Fund",
+            "amc": "LIC MF",
+            "netCr": 13
           }
         ]
       },
       {
         "company": "Radico Khaitan Ltd.",
         "fincode": "INE944F01028",
-        "netCr": 4,
-        "pctOutstanding": 0.01,
+        "netCr": 17,
+        "pctOutstanding": 0.03,
         "amcs": [
+          "LIC MF",
           "Helios"
         ],
         "schemes": [
+          {
+            "fund": "Lic Mf Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 8
+          },
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 5
+          },
           {
             "fund": "Helios Mid Cap Fund",
             "amc": "Helios",
@@ -643,81 +1255,442 @@
         ]
       },
       {
-        "company": "360 ONE WAM Ltd.",
-        "fincode": "INE466L01038",
-        "netCr": 3,
-        "pctOutstanding": 0.01,
+        "company": "LG Electronics India Ltd.",
+        "fincode": "INE324D01010",
+        "netCr": 17,
+        "pctOutstanding": 0.02,
         "amcs": [
-          "Helios"
+          "LIC MF"
         ],
         "schemes": [
           {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 3
+            "fund": "Lic Mf Manufacturing Fund",
+            "amc": "LIC MF",
+            "netCr": 17
           }
         ]
       },
       {
-        "company": "Schaeffler India Ltd.",
-        "fincode": "INE513A01022",
-        "netCr": 3,
+        "company": "Persistent Systems Ltd.",
+        "fincode": "INE262H01021",
+        "netCr": 16,
+        "pctOutstanding": 0.02,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 16
+          }
+        ]
+      },
+      {
+        "company": "JSW Infrastructure Ltd.",
+        "fincode": "INE880J01026",
+        "netCr": 14,
+        "pctOutstanding": 0.02,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 10
+          },
+          {
+            "fund": "Lic Mf Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 4
+          }
+        ]
+      },
+      {
+        "company": "Endurance Technologies Ltd.",
+        "fincode": "INE913H01037",
+        "netCr": 13,
         "pctOutstanding": null,
         "amcs": [
-          "Helios"
+          "LIC MF"
         ],
         "schemes": [
           {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 3
-          }
-        ]
-      },
-      {
-        "company": "APL Apollo Tubes Ltd.",
-        "fincode": "INE702C01027",
-        "netCr": 2,
-        "pctOutstanding": 0,
-        "amcs": [
-          "Helios"
-        ],
-        "schemes": [
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 11
+          },
           {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
+            "fund": "Lic Mf Mid Cap Fund",
+            "amc": "LIC MF",
             "netCr": 2
           }
         ]
       },
       {
-        "company": "Star Health And Allied Insurance Company Ltd",
-        "fincode": "INE575P01011",
-        "netCr": 1,
-        "pctOutstanding": 0,
+        "company": "Triveni Turbine Ltd.",
+        "fincode": "INE152M01016",
+        "netCr": 13,
+        "pctOutstanding": null,
         "amcs": [
-          "the"
+          "LIC MF"
         ],
         "schemes": [
           {
-            "fund": "the Quantum Small Cap Fund",
-            "amc": "the",
-            "netCr": 1
-          },
+            "fund": "Lic Mf Large Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 13
+          }
+        ]
+      },
+      {
+        "company": "Karur Vysya Bank Ltd.",
+        "fincode": "INE036D01028",
+        "netCr": 12,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
           {
-            "fund": "the Quantum Flexi Cap Fund",
-            "amc": "the",
-            "netCr": 0
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 12
           }
         ]
       }
     ],
     "sold": [
       {
+        "company": "UNO Minda Ltd.",
+        "fincode": "INE405E01023",
+        "netCr": 83,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -63
+          },
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -19
+          }
+        ]
+      },
+      {
+        "company": "Marico Ltd.",
+        "fincode": "INE196A01026",
+        "netCr": 83,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -83
+          },
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -15
+          }
+        ]
+      },
+      {
+        "company": "PB Fintech Ltd.",
+        "fincode": "INE417T01026",
+        "netCr": 56,
+        "pctOutstanding": 0.13,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -50
+          },
+          {
+            "fund": "Lic Mf Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -6
+          }
+        ]
+      },
+      {
+        "company": "Oil India Ltd.",
+        "fincode": "INE274J01014",
+        "netCr": 33,
+        "pctOutstanding": 0.05,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Multi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -33
+          }
+        ]
+      },
+      {
+        "company": "Schaeffler India Ltd.",
+        "fincode": "INE513A01022",
+        "netCr": 29,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -49
+          },
+          {
+            "fund": "Lic Mf Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -6
+          }
+        ]
+      },
+      {
+        "company": "Abbott India Ltd.",
+        "fincode": "INE358A01014",
+        "netCr": 28,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf ELSS Tax Saver Fund",
+            "amc": "LIC MF",
+            "netCr": -18
+          },
+          {
+            "fund": "Lic Mf Manufacturing Fund",
+            "amc": "LIC MF",
+            "netCr": -10
+          }
+        ]
+      },
+      {
+        "company": "Coromandel International Ltd.",
+        "fincode": "INE169A01031",
+        "netCr": 28,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Multi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -28
+          }
+        ]
+      },
+      {
+        "company": "Apar Industries Ltd.",
+        "fincode": "INE372A01015",
+        "netCr": 19,
+        "pctOutstanding": 0.03,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -19
+          }
+        ]
+      },
+      {
+        "company": "Kirloskar Oil Engines Ltd.",
+        "fincode": "INE146L01010",
+        "netCr": 15,
+        "pctOutstanding": 0.06,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf ELSS Tax Saver Fund",
+            "amc": "LIC MF",
+            "netCr": -15
+          }
+        ]
+      },
+      {
+        "company": "Gujarat Energy Ltd",
+        "fincode": "INE844O01030",
+        "netCr": 12,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF",
+          "the"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Dividend Yield Fund",
+            "amc": "LIC MF",
+            "netCr": -7
+          },
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -5
+          },
+          {
+            "fund": "the Quantum ELSS Tax Saver Fund",
+            "amc": "the",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Bharti Hexacom Ltd.",
+        "fincode": "INE343G01021",
+        "netCr": 8,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Multi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -8
+          }
+        ]
+      },
+      {
+        "company": "Gillette India Ltd.",
+        "fincode": "INE322A01010",
+        "netCr": 8,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -8
+          }
+        ]
+      },
+      {
+        "company": "Cholamandalam Financial Holdings Ltd.",
+        "fincode": "INE149A01033",
+        "netCr": 7,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Dividend Yield Fund",
+            "amc": "LIC MF",
+            "netCr": -7
+          }
+        ]
+      },
+      {
+        "company": "Sundaram Finance Ltd.",
+        "fincode": "INE660A01013",
+        "netCr": 7,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Dividend Yield Fund",
+            "amc": "LIC MF",
+            "netCr": -7
+          }
+        ]
+      },
+      {
+        "company": "Lenskart Solutions Ltd.",
+        "fincode": "INE956O01016",
+        "netCr": 7,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Multi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -7
+          }
+        ]
+      },
+      {
+        "company": "APL Apollo Tubes Ltd.",
+        "fincode": "INE702C01027",
+        "netCr": 5,
+        "pctOutstanding": 0.01,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -7
+          }
+        ]
+      },
+      {
+        "company": "Info Edge (India) Ltd.",
+        "fincode": "INE663F01032",
+        "netCr": 3,
+        "pctOutstanding": 0,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -3
+          }
+        ]
+      },
+      {
+        "company": "Exide Industries Ltd",
+        "fincode": "INE302A01020",
+        "netCr": 2,
+        "pctOutstanding": null,
+        "amcs": [
+          "the"
+        ],
+        "schemes": [
+          {
+            "fund": "the Quantum Value Fund",
+            "amc": "the",
+            "netCr": -2
+          }
+        ]
+      },
+      {
         "company": "IndusInd Bank Ltd",
         "fincode": "INE095A01012",
-        "netCr": 4,
-        "pctOutstanding": 0.01,
+        "netCr": 2,
+        "pctOutstanding": 0,
         "amcs": [
           "the"
         ],
@@ -736,22 +1709,6 @@
             "fund": "the Quantum ELSS Tax Saver Fund",
             "amc": "the",
             "netCr": 0
-          }
-        ]
-      },
-      {
-        "company": "Exide Industries Ltd",
-        "fincode": "INE302A01020",
-        "netCr": 2,
-        "pctOutstanding": null,
-        "amcs": [
-          "the"
-        ],
-        "schemes": [
-          {
-            "fund": "the Quantum Value Fund",
-            "amc": "the",
-            "netCr": -2
           }
         ]
       }
@@ -813,6 +1770,53 @@
         ]
       },
       {
+        "company": "INDO-MIM Ltd.",
+        "fincode": "INE084101034",
+        "netCr": 35,
+        "pctOutstanding": 0.06,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Multi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 43
+          }
+        ]
+      },
+      {
+        "company": "Ujjivan Small Finance Bank Ltd.",
+        "fincode": "INE551W01018",
+        "netCr": 28,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 9
+          },
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 6
+          },
+          {
+            "fund": "Lic Mf Dividend Yield Fund",
+            "amc": "LIC MF",
+            "netCr": 6
+          },
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 6
+          }
+        ]
+      },
+      {
         "company": "Honasa Consumer Ltd.",
         "fincode": "INE0J5401028",
         "netCr": 25,
@@ -855,6 +1859,132 @@
         ]
       },
       {
+        "company": "City Union Bank Ltd.",
+        "fincode": "INE491A01021",
+        "netCr": 22,
+        "pctOutstanding": 0.11,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 14
+          },
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 8
+          }
+        ]
+      },
+      {
+        "company": "Arvind Ltd.",
+        "fincode": "INE034A01011",
+        "netCr": 21,
+        "pctOutstanding": 0.17,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Multi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 17
+          },
+          {
+            "fund": "Lic Mf Manufacturing Fund",
+            "amc": "LIC MF",
+            "netCr": 5
+          }
+        ]
+      },
+      {
+        "company": "Cohance Lifesciences Ltd.",
+        "fincode": "INE03QK01018",
+        "netCr": 20,
+        "pctOutstanding": 0.12,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 15
+          },
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 5
+          }
+        ]
+      },
+      {
+        "company": "FSN E-Commerce Ventures Ltd.",
+        "fincode": "INE388Y01029",
+        "netCr": 17,
+        "pctOutstanding": 0.02,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 14
+          },
+          {
+            "fund": "Lic Mf Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 2
+          }
+        ]
+      },
+      {
+        "company": "CarTrade Tech Ltd.",
+        "fincode": "INE290S01011",
+        "netCr": 17,
+        "pctOutstanding": 0.17,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 11
+          },
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 6
+          }
+        ]
+      },
+      {
+        "company": "S.J.S. Enterprises Ltd.",
+        "fincode": "INE284S01014",
+        "netCr": 17,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 16
+          },
+          {
+            "fund": "Lic Mf Multi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 1
+          }
+        ]
+      },
+      {
         "company": "Gokaldas Exports Ltd.",
         "fincode": "INE887G01027",
         "netCr": 16,
@@ -876,6 +2006,59 @@
         ]
       },
       {
+        "company": "MRS Bectors Food Specialities Ltd.",
+        "fincode": "INE495P01020",
+        "netCr": 15,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Multi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 8
+          },
+          {
+            "fund": "Lic Mf Manufacturing Fund",
+            "amc": "LIC MF",
+            "netCr": 7
+          }
+        ]
+      },
+      {
+        "company": "Nuvoco Vistas Corporation Ltd",
+        "fincode": "INE118D01016",
+        "netCr": 13,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf ELSS Tax Saver Fund",
+            "amc": "LIC MF",
+            "netCr": 14
+          }
+        ]
+      },
+      {
+        "company": "Rainbow Children's Medicare Ltd.",
+        "fincode": "INE961O01016",
+        "netCr": 13,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 13
+          }
+        ]
+      },
+      {
         "company": "Jio Platforms Ltd.",
         "fincode": "INE0BJO01010",
         "netCr": 13,
@@ -888,6 +2071,22 @@
             "fund": "Helios Large & Mid Cap Fund",
             "amc": "Helios",
             "netCr": 13
+          }
+        ]
+      },
+      {
+        "company": "Ethos Ltd.",
+        "fincode": "INE04TZ01018",
+        "netCr": 11,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Multi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 11
           }
         ]
       },
@@ -927,213 +2126,261 @@
             "netCr": 4
           }
         ]
-      },
-      {
-        "company": "Tonbo Imaging India Ltd.",
-        "fincode": "INE0LDG01026",
-        "netCr": 7,
-        "pctOutstanding": null,
-        "amcs": [
-          "Helios"
-        ],
-        "schemes": [
-          {
-            "fund": "Helios Small Cap Fund",
-            "amc": "Helios",
-            "netCr": 7
-          }
-        ]
-      },
-      {
-        "company": "AceVector Ltd.",
-        "fincode": "INE580P01029",
-        "netCr": 6,
-        "pctOutstanding": null,
-        "amcs": [
-          "Helios"
-        ],
-        "schemes": [
-          {
-            "fund": "Helios Small Cap Fund",
-            "amc": "Helios",
-            "netCr": 4
-          },
-          {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 2
-          }
-        ]
-      },
-      {
-        "company": "Mahindra Logistics Ltd.",
-        "fincode": "INE766P01016",
-        "netCr": 6,
-        "pctOutstanding": null,
-        "amcs": [
-          "Helios"
-        ],
-        "schemes": [
-          {
-            "fund": "Helios Small Cap Fund",
-            "amc": "Helios",
-            "netCr": 6
-          }
-        ]
-      },
-      {
-        "company": "Syrma SGS Technology Ltd.",
-        "fincode": "INE0DYJ01015",
-        "netCr": 4,
-        "pctOutstanding": 0.01,
-        "amcs": [
-          "Helios"
-        ],
-        "schemes": [
-          {
-            "fund": "Helios Small Cap Fund",
-            "amc": "Helios",
-            "netCr": 4
-          }
-        ]
-      },
-      {
-        "company": "TTK Prestige Ltd",
-        "fincode": "INE690A01028",
-        "netCr": 3,
-        "pctOutstanding": null,
-        "amcs": [
-          "the"
-        ],
-        "schemes": [
-          {
-            "fund": "the Quantum Value Fund",
-            "amc": "the",
-            "netCr": 2
-          },
-          {
-            "fund": "the Quantum ELSS Tax Saver Fund",
-            "amc": "the",
-            "netCr": 1
-          }
-        ]
-      },
-      {
-        "company": "Nitin Spinners Ltd",
-        "fincode": "INE229H01012",
-        "netCr": 3,
-        "pctOutstanding": null,
-        "amcs": [
-          "the"
-        ],
-        "schemes": [
-          {
-            "fund": "the Quantum Small Cap Fund",
-            "amc": "the",
-            "netCr": 3
-          }
-        ]
-      },
-      {
-        "company": "Dalmia Bharat Sugar and Industries Ltd",
-        "fincode": "INE495A01022",
-        "netCr": 3,
-        "pctOutstanding": null,
-        "amcs": [
-          "the"
-        ],
-        "schemes": [
-          {
-            "fund": "the Quantum Small Cap Fund",
-            "amc": "the",
-            "netCr": 3
-          }
-        ]
-      },
-      {
-        "company": "Pine Labs Ltd.",
-        "fincode": "INE15B701018",
-        "netCr": 3,
-        "pctOutstanding": 0.02,
-        "amcs": [
-          "Helios"
-        ],
-        "schemes": [
-          {
-            "fund": "Helios Small Cap Fund",
-            "amc": "Helios",
-            "netCr": 3
-          }
-        ]
-      },
-      {
-        "company": "Mold-Tek Packaging Ltd",
-        "fincode": "INE893J01029",
-        "netCr": 2,
-        "pctOutstanding": null,
-        "amcs": [
-          "the"
-        ],
-        "schemes": [
-          {
-            "fund": "the Quantum Small Cap Fund",
-            "amc": "the",
-            "netCr": 2
-          }
-        ]
-      },
-      {
-        "company": "Action Construction Equipment Ltd.",
-        "fincode": "INE731H01025",
-        "netCr": 2,
-        "pctOutstanding": null,
-        "amcs": [
-          "Helios"
-        ],
-        "schemes": [
-          {
-            "fund": "Helios Small Cap Fund",
-            "amc": "Helios",
-            "netCr": 2
-          }
-        ]
-      },
-      {
-        "company": "ASK Automotive Ltd.",
-        "fincode": "INE491J01022",
-        "netCr": 1,
-        "pctOutstanding": null,
-        "amcs": [
-          "Helios"
-        ],
-        "schemes": [
-          {
-            "fund": "Helios Small Cap Fund",
-            "amc": "Helios",
-            "netCr": 1
-          }
-        ]
       }
     ],
     "sold": [
       {
-        "company": "Nuvoco Vistas Corporation Ltd",
-        "fincode": "INE118D01016",
-        "netCr": 1,
+        "company": "Carraro India Ltd.",
+        "fincode": "INE0V7W01012",
+        "netCr": 13,
         "pctOutstanding": null,
         "amcs": [
-          "the"
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -10
+          },
+          {
+            "fund": "Lic Mf Multi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -3
+          }
+        ]
+      },
+      {
+        "company": "Gabriel India Ltd.",
+        "fincode": "INE524A01029",
+        "netCr": 13,
+        "pctOutstanding": 0.06,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Manufacturing Fund",
+            "amc": "LIC MF",
+            "netCr": -13
+          }
+        ]
+      },
+      {
+        "company": "Arvind Fashions Ltd.",
+        "fincode": "INE955V01021",
+        "netCr": 11,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -12
+          }
+        ]
+      },
+      {
+        "company": "Saregama India Ltd.",
+        "fincode": "INE979A01025",
+        "netCr": 10,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Dividend Yield Fund",
+            "amc": "LIC MF",
+            "netCr": -10
+          }
+        ]
+      },
+      {
+        "company": "Avalon Technologies Ltd.",
+        "fincode": "INE0LCL01028",
+        "netCr": 9,
+        "pctOutstanding": 0.07,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Multi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -9
+          }
+        ]
+      },
+      {
+        "company": "Shakti Pumps (India) Ltd.",
+        "fincode": "INE908D01010",
+        "netCr": 8,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -6
+          },
+          {
+            "fund": "Lic Mf Multi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -2
+          }
+        ]
+      },
+      {
+        "company": "Bikaji Foods International Ltd.",
+        "fincode": "INE00E101023",
+        "netCr": 7,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -7
+          }
+        ]
+      },
+      {
+        "company": "Kennametal India Ltd.",
+        "fincode": "INE717A01029",
+        "netCr": 6,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Manufacturing Fund",
+            "amc": "LIC MF",
+            "netCr": -6
+          }
+        ]
+      },
+      {
+        "company": "GSPL Transmission Ltd",
+        "fincode": "INE1TUG01013",
+        "netCr": 4,
+        "pctOutstanding": null,
+        "amcs": [
+          "the",
+          "LIC MF"
         ],
         "schemes": [
           {
             "fund": "the Quantum Value Fund",
             "amc": "the",
+            "netCr": -2
+          },
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
             "netCr": -1
           },
           {
             "fund": "the Quantum ELSS Tax Saver Fund",
             "amc": "the",
             "netCr": 0
+          },
+          {
+            "fund": "the Quantum Small Cap Fund",
+            "amc": "the",
+            "netCr": 0
+          },
+          {
+            "fund": "Lic Mf Dividend Yield Fund",
+            "amc": "LIC MF",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Bharat Bijlee Ltd.",
+        "fincode": "INE464A01036",
+        "netCr": 4,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Dividend Yield Fund",
+            "amc": "LIC MF",
+            "netCr": -4
+          }
+        ]
+      },
+      {
+        "company": "Campus Activewear Ltd.",
+        "fincode": "INE278Y01022",
+        "netCr": 3,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -6
+          }
+        ]
+      },
+      {
+        "company": "Dr Agarwal's Health Care Ltd.",
+        "fincode": "INE943P01029",
+        "netCr": 2,
+        "pctOutstanding": 0.02,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Multi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -5
+          }
+        ]
+      },
+      {
+        "company": "Vidya Wires Ltd.",
+        "fincode": "INE14UN01029",
+        "netCr": 2,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -2
+          }
+        ]
+      },
+      {
+        "company": "SP Apparels Ltd.",
+        "fincode": "INE212I01016",
+        "netCr": 1,
+        "pctOutstanding": null,
+        "amcs": [
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -1
           }
         ]
       }
@@ -1144,149 +2391,146 @@
     "monthPrev": "Sep-26",
     "rows": [
       {
-        "sector": "Automobiles",
+        "sector": "Banks",
         "direction": "up",
-        "pctCur": 3.01,
-        "pctPrev": 2.42,
-        "changePp": 0.6,
+        "pctCur": 13.14,
+        "pctPrev": 12.5,
+        "changePp": 0.64,
         "stocks": [
           {
-            "company": "Maruti Suzuki India Ltd",
-            "netCr": 24,
+            "company": "ICICI Bank Ltd.",
+            "netCr": 70,
             "amcs": [
-              "the"
-            ],
-            "schemes": [
-              {
-                "fund": "the Quantum Value Fund",
-                "amc": "the",
-                "netCr": 20,
-                "valueChgCr": 21
-              },
-              {
-                "fund": "the Quantum ELSS Tax Saver Fund",
-                "amc": "the",
-                "netCr": 4,
-                "valueChgCr": 4
-              },
-              {
-                "fund": "the Quantum Flexi Cap Fund",
-                "amc": "the",
-                "netCr": 0,
-                "valueChgCr": 0
-              }
-            ]
-          },
-          {
-            "company": "Ather Energy Ltd.",
-            "netCr": 15,
-            "amcs": [
-              "Helios"
-            ],
-            "schemes": [
-              {
-                "fund": "Helios Mid Cap Fund",
-                "amc": "Helios",
-                "netCr": 15,
-                "valueChgCr": 25
-              }
-            ]
-          },
-          {
-            "company": "Mahindra & Mahindra Ltd",
-            "netCr": 9,
-            "amcs": [
-              "the"
-            ],
-            "schemes": [
-              {
-                "fund": "the Quantum Value Fund",
-                "amc": "the",
-                "netCr": 8,
-                "valueChgCr": 8
-              },
-              {
-                "fund": "the Quantum ELSS Tax Saver Fund",
-                "amc": "the",
-                "netCr": 1,
-                "valueChgCr": 1
-              },
-              {
-                "fund": "the Quantum Flexi Cap Fund",
-                "amc": "the",
-                "netCr": 0,
-                "valueChgCr": 0
-              }
-            ]
-          }
-        ],
-        "schemes": [
-          {
-            "fund": "the Quantum Value Fund",
-            "amc": "the",
-            "netCr": 27,
-            "valueChgCr": 27
-          },
-          {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 15,
-            "valueChgCr": 25
-          },
-          {
-            "fund": "the Quantum ELSS Tax Saver Fund",
-            "amc": "the",
-            "netCr": 5,
-            "valueChgCr": 5
-          },
-          {
-            "fund": "the Quantum Flexi Cap Fund",
-            "amc": "the",
-            "netCr": 0,
-            "valueChgCr": 0
-          }
-        ]
-      },
-      {
-        "sector": "Telecom - Services",
-        "direction": "up",
-        "pctCur": 1.89,
-        "pctPrev": 1.36,
-        "changePp": 0.53,
-        "stocks": [
-          {
-            "company": "Bharti Airtel Ltd*",
-            "netCr": 49,
-            "amcs": [
-              "Helios"
+              "Helios",
+              "LIC MF"
             ],
             "schemes": [
               {
                 "fund": "Helios Flexi Cap Fund",
                 "amc": "Helios",
-                "netCr": 42,
-                "valueChgCr": 57
+                "netCr": 62,
+                "valueChgCr": 82
               },
               {
                 "fund": "Helios Large & Mid Cap Fund",
                 "amc": "Helios",
                 "netCr": 7,
-                "valueChgCr": 9
+                "valueChgCr": 10
+              },
+              {
+                "fund": "Lic Mf Flexi Cap Fund",
+                "amc": "LIC MF",
+                "netCr": 2,
+                "valueChgCr": 6
+              },
+              {
+                "fund": "the Quantum Flexi Cap Fund",
+                "amc": "the",
+                "netCr": 1,
+                "valueChgCr": 1
               }
             ]
           },
           {
-            "company": "Jio Platforms Ltd.",
-            "netCr": 13,
+            "company": "AU Small Finance Bank Ltd.",
+            "netCr": 42,
             "amcs": [
+              "LIC MF",
               "Helios"
             ],
             "schemes": [
               {
-                "fund": "Helios Large & Mid Cap Fund",
+                "fund": "Lic Mf Large & Mid Cap Fund",
+                "amc": "LIC MF",
+                "netCr": 27,
+                "valueChgCr": 10
+              },
+              {
+                "fund": "Helios Mid Cap Fund",
                 "amc": "Helios",
-                "netCr": 13,
-                "valueChgCr": 13
+                "netCr": 9,
+                "valueChgCr": 6
+              },
+              {
+                "fund": "Lic Mf Flexi Cap Fund",
+                "amc": "LIC MF",
+                "netCr": 4,
+                "valueChgCr": 1
+              },
+              {
+                "fund": "Lic Mf Mid Cap Fund",
+                "amc": "LIC MF",
+                "netCr": 2,
+                "valueChgCr": 0
+              }
+            ]
+          },
+          {
+            "company": "Ujjivan Small Finance Bank Ltd.",
+            "netCr": 28,
+            "amcs": [
+              "LIC MF"
+            ],
+            "schemes": [
+              {
+                "fund": "Lic Mf Large Cap Fund",
+                "amc": "LIC MF",
+                "netCr": 9,
+                "valueChgCr": 7
+              },
+              {
+                "fund": "Lic Mf Flexi Cap Fund",
+                "amc": "LIC MF",
+                "netCr": 6,
+                "valueChgCr": 2
+              },
+              {
+                "fund": "Lic Mf Dividend Yield Fund",
+                "amc": "LIC MF",
+                "netCr": 6,
+                "valueChgCr": 5
+              },
+              {
+                "fund": "Lic Mf Small Cap Fund",
+                "amc": "LIC MF",
+                "netCr": 6,
+                "valueChgCr": 2
+              }
+            ]
+          },
+          {
+            "company": "City Union Bank Ltd.",
+            "netCr": 22,
+            "amcs": [
+              "LIC MF"
+            ],
+            "schemes": [
+              {
+                "fund": "Lic Mf Large & Mid Cap Fund",
+                "amc": "LIC MF",
+                "netCr": 14,
+                "valueChgCr": 11
+              },
+              {
+                "fund": "Lic Mf Small Cap Fund",
+                "amc": "LIC MF",
+                "netCr": 8,
+                "valueChgCr": 6
+              }
+            ]
+          },
+          {
+            "company": "Karur Vysya Bank Ltd.",
+            "netCr": 12,
+            "amcs": [
+              "LIC MF"
+            ],
+            "schemes": [
+              {
+                "fund": "Lic Mf Large & Mid Cap Fund",
+                "amc": "LIC MF",
+                "netCr": 12,
+                "valueChgCr": 20
               }
             ]
           }
@@ -1295,34 +2539,362 @@
           {
             "fund": "Helios Flexi Cap Fund",
             "amc": "Helios",
-            "netCr": 42,
-            "valueChgCr": 57
+            "netCr": 62,
+            "valueChgCr": 102
+          },
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 53,
+            "valueChgCr": 40
+          },
+          {
+            "fund": "Lic Mf Large Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 19,
+            "valueChgCr": 22
+          },
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 13,
+            "valueChgCr": 9
+          },
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 12,
+            "valueChgCr": 8
+          }
+        ]
+      },
+      {
+        "sector": "IT - Software",
+        "direction": "up",
+        "pctCur": 3.75,
+        "pctPrev": 3.33,
+        "changePp": 0.42,
+        "stocks": [
+          {
+            "company": "Coforge Ltd.",
+            "netCr": 37,
+            "amcs": [
+              "LIC MF",
+              "Helios"
+            ],
+            "schemes": [
+              {
+                "fund": "Lic Mf Flexi Cap Fund",
+                "amc": "LIC MF",
+                "netCr": 22,
+                "valueChgCr": 27
+              },
+              {
+                "fund": "Helios Mid Cap Fund",
+                "amc": "Helios",
+                "netCr": 11,
+                "valueChgCr": 23
+              },
+              {
+                "fund": "Helios Large & Mid Cap Fund",
+                "amc": "Helios",
+                "netCr": 4,
+                "valueChgCr": 10
+              }
+            ]
+          },
+          {
+            "company": "Persistent Systems Ltd.",
+            "netCr": 16,
+            "amcs": [
+              "LIC MF"
+            ],
+            "schemes": [
+              {
+                "fund": "Lic Mf Large & Mid Cap Fund",
+                "amc": "LIC MF",
+                "netCr": 16,
+                "valueChgCr": 33
+              }
+            ]
+          },
+          {
+            "company": "Rategain Travel Technologies Ltd.",
+            "netCr": 2,
+            "amcs": [
+              "LIC MF"
+            ],
+            "schemes": [
+              {
+                "fund": "Lic Mf ELSS Tax Saver Fund",
+                "amc": "LIC MF",
+                "netCr": 2,
+                "valueChgCr": 1
+              }
+            ]
+          }
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Flexi Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 22,
+            "valueChgCr": 27
+          },
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": 16,
+            "valueChgCr": 33
+          },
+          {
+            "fund": "Helios Mid Cap Fund",
+            "amc": "Helios",
+            "netCr": 11,
+            "valueChgCr": 23
           },
           {
             "fund": "Helios Large & Mid Cap Fund",
             "amc": "Helios",
-            "netCr": 20,
-            "valueChgCr": 22
+            "netCr": 4,
+            "valueChgCr": 10
+          },
+          {
+            "fund": "Lic Mf ELSS Tax Saver Fund",
+            "amc": "LIC MF",
+            "netCr": 2,
+            "valueChgCr": 4
           }
         ]
       },
       {
         "sector": "Retailing",
         "direction": "down",
-        "pctCur": 5.47,
-        "pctPrev": 6.15,
-        "changePp": -0.68,
-        "stocks": [],
-        "schemes": []
+        "pctCur": 5.59,
+        "pctPrev": 6.11,
+        "changePp": -0.53,
+        "stocks": [
+          {
+            "company": "Trent Ltd.",
+            "netCr": -92,
+            "amcs": [
+              "LIC MF"
+            ],
+            "schemes": [
+              {
+                "fund": "Lic Mf Large & Mid Cap Fund",
+                "amc": "LIC MF",
+                "netCr": -75,
+                "valueChgCr": -65
+              },
+              {
+                "fund": "Lic Mf Large Cap Fund",
+                "amc": "LIC MF",
+                "netCr": -13,
+                "valueChgCr": -8
+              },
+              {
+                "fund": "Lic Mf ELSS Tax Saver Fund",
+                "amc": "LIC MF",
+                "netCr": -5,
+                "valueChgCr": -2
+              }
+            ]
+          },
+          {
+            "company": "Arvind Fashions Ltd.",
+            "netCr": -11,
+            "amcs": [
+              "LIC MF"
+            ],
+            "schemes": [
+              {
+                "fund": "Lic Mf Small Cap Fund",
+                "amc": "LIC MF",
+                "netCr": -12,
+                "valueChgCr": -14
+              }
+            ]
+          },
+          {
+            "company": "Lenskart Solutions Ltd.",
+            "netCr": -7,
+            "amcs": [
+              "LIC MF"
+            ],
+            "schemes": [
+              {
+                "fund": "Lic Mf Multi Cap Fund",
+                "amc": "LIC MF",
+                "netCr": -7,
+                "valueChgCr": -7
+              }
+            ]
+          },
+          {
+            "company": "Info Edge (India) Ltd.",
+            "netCr": -3,
+            "amcs": [
+              "LIC MF"
+            ],
+            "schemes": [
+              {
+                "fund": "Lic Mf Mid Cap Fund",
+                "amc": "LIC MF",
+                "netCr": -3,
+                "valueChgCr": -3
+              }
+            ]
+          }
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -54,
+            "valueChgCr": -58
+          },
+          {
+            "fund": "Lic Mf Large Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -13,
+            "valueChgCr": -4
+          },
+          {
+            "fund": "Lic Mf ELSS Tax Saver Fund",
+            "amc": "LIC MF",
+            "netCr": -2,
+            "valueChgCr": 2
+          },
+          {
+            "fund": "Lic Mf Small Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -2,
+            "valueChgCr": -8
+          }
+        ]
       },
       {
-        "sector": "Finance",
+        "sector": "Auto Components",
         "direction": "down",
-        "pctCur": 7.12,
-        "pctPrev": 7.79,
-        "changePp": -0.67,
-        "stocks": [],
-        "schemes": []
+        "pctCur": 4.33,
+        "pctPrev": 4.76,
+        "changePp": -0.43,
+        "stocks": [
+          {
+            "company": "UNO Minda Ltd.",
+            "netCr": -83,
+            "amcs": [
+              "LIC MF"
+            ],
+            "schemes": [
+              {
+                "fund": "Lic Mf Large & Mid Cap Fund",
+                "amc": "LIC MF",
+                "netCr": -63,
+                "valueChgCr": -69
+              },
+              {
+                "fund": "Lic Mf Flexi Cap Fund",
+                "amc": "LIC MF",
+                "netCr": -19,
+                "valueChgCr": -20
+              }
+            ]
+          },
+          {
+            "company": "Schaeffler India Ltd.",
+            "netCr": -29,
+            "amcs": [
+              "LIC MF"
+            ],
+            "schemes": [
+              {
+                "fund": "Lic Mf Large & Mid Cap Fund",
+                "amc": "LIC MF",
+                "netCr": -49,
+                "valueChgCr": -54
+              },
+              {
+                "fund": "Lic Mf Mid Cap Fund",
+                "amc": "LIC MF",
+                "netCr": -6,
+                "valueChgCr": -6
+              }
+            ]
+          },
+          {
+            "company": "Carraro India Ltd.",
+            "netCr": -13,
+            "amcs": [
+              "LIC MF"
+            ],
+            "schemes": [
+              {
+                "fund": "Lic Mf Small Cap Fund",
+                "amc": "LIC MF",
+                "netCr": -10,
+                "valueChgCr": -11
+              },
+              {
+                "fund": "Lic Mf Multi Cap Fund",
+                "amc": "LIC MF",
+                "netCr": -3,
+                "valueChgCr": -4
+              }
+            ]
+          },
+          {
+            "company": "Gabriel India Ltd.",
+            "netCr": -13,
+            "amcs": [
+              "LIC MF"
+            ],
+            "schemes": [
+              {
+                "fund": "Lic Mf Manufacturing Fund",
+                "amc": "LIC MF",
+                "netCr": -13,
+                "valueChgCr": -12
+              }
+            ]
+          },
+          {
+            "company": "Exide Industries Ltd",
+            "netCr": -2,
+            "amcs": [
+              "the"
+            ],
+            "schemes": [
+              {
+                "fund": "the Quantum Value Fund",
+                "amc": "the",
+                "netCr": -2,
+                "valueChgCr": -8
+              }
+            ]
+          }
+        ],
+        "schemes": [
+          {
+            "fund": "Lic Mf Large & Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -47,
+            "valueChgCr": -57
+          },
+          {
+            "fund": "Lic Mf Mid Cap Fund",
+            "amc": "LIC MF",
+            "netCr": -3,
+            "valueChgCr": -5
+          },
+          {
+            "fund": "the Quantum Value Fund",
+            "amc": "the",
+            "netCr": -2,
+            "valueChgCr": -8
+          }
+        ]
       }
     ]
   }
