@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-11-06T23:50:39.754Z",
+    "generatedAt": "2026-11-07T00:02:50.944Z",
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -337,7 +337,7 @@
     "windowMonths": 3,
     "period": "3Y",
     "universe": 15,
-    "medianFlowPct": -0.9,
+    "medianFlowPct": -0.3,
     "quadrants": {
       "winning": {
         "count": 5,
@@ -348,11 +348,24 @@
             "classification": "Equity : Large Cap",
             "percentile": 100,
             "quartile": "Q1",
-            "perfReturn": 15.6,
+            "perfReturn": 15.9,
             "bookGrowthPct": 12.9,
-            "navReturnPct": 4.8,
-            "impliedFlowPct": 8.1,
+            "navReturnPct": 6.1,
+            "impliedFlowPct": 6.7,
             "bookCr": 63,
+            "monthsBack": 3
+          },
+          {
+            "fund": "LIC MF Multi Cap Fund",
+            "amc": "LIC",
+            "classification": "Equity : Multi Cap",
+            "percentile": 82.6,
+            "quartile": "Q1",
+            "perfReturn": 16.2,
+            "bookGrowthPct": 0.8,
+            "navReturnPct": -0.5,
+            "impliedFlowPct": 1.3,
+            "bookCr": 2050,
             "monthsBack": 3
           },
           {
@@ -361,24 +374,24 @@
             "classification": "Equity : ELSS",
             "percentile": 58.3,
             "quartile": "Q2",
-            "perfReturn": 9.9,
+            "perfReturn": 10.1,
             "bookGrowthPct": -0.5,
-            "navReturnPct": -2.9,
-            "impliedFlowPct": 2.5,
+            "navReturnPct": -1.6,
+            "impliedFlowPct": 1.1,
             "bookCr": 195,
             "monthsBack": 3
           },
           {
-            "fund": "LIC MF Multi Cap Fund",
+            "fund": "LIC MF Small Cap Fund",
             "amc": "LIC",
-            "classification": "Equity : Multi Cap",
-            "percentile": 87,
-            "quartile": "Q1",
-            "perfReturn": 16.6,
-            "bookGrowthPct": 0.8,
-            "navReturnPct": -0.4,
-            "impliedFlowPct": 1.3,
-            "bookCr": 2050,
+            "classification": "Equity : Small Cap",
+            "percentile": 72.4,
+            "quartile": "Q2",
+            "perfReturn": 15.4,
+            "bookGrowthPct": 1.6,
+            "navReturnPct": 1,
+            "impliedFlowPct": 0.6,
+            "bookCr": 742,
             "monthsBack": 3
           },
           {
@@ -387,24 +400,11 @@
             "classification": "Equity : Thematic - Dividend Yield",
             "percentile": 100,
             "quartile": "Q1",
-            "perfReturn": 17.8,
+            "perfReturn": 17.5,
             "bookGrowthPct": -1,
-            "navReturnPct": -1.7,
-            "impliedFlowPct": 0.7,
+            "navReturnPct": -1.4,
+            "impliedFlowPct": 0.4,
             "bookCr": 692,
-            "monthsBack": 3
-          },
-          {
-            "fund": "LIC MF Small Cap Fund",
-            "amc": "LIC",
-            "classification": "Equity : Small Cap",
-            "percentile": 69,
-            "quartile": "Q2",
-            "perfReturn": 15.9,
-            "bookGrowthPct": 1.6,
-            "navReturnPct": 1.4,
-            "impliedFlowPct": 0.2,
-            "bookCr": 742,
             "monthsBack": 3
           }
         ]
@@ -418,10 +418,10 @@
             "classification": "Equity : Mid Cap",
             "percentile": 11.1,
             "quartile": "Q4",
-            "perfReturn": 10.2,
+            "perfReturn": 9.9,
             "bookGrowthPct": 2.1,
             "navReturnPct": -0.6,
-            "impliedFlowPct": 2.8,
+            "impliedFlowPct": 2.7,
             "bookCr": 130,
             "monthsBack": 3
           },
@@ -429,12 +429,12 @@
             "fund": "Quantum Value Fund",
             "amc": "Quantum",
             "classification": "Equity : Value / Contra",
-            "percentile": 16.7,
+            "percentile": 22.2,
             "quartile": "Q4",
-            "perfReturn": 10,
+            "perfReturn": 10.2,
             "bookGrowthPct": -0.4,
-            "navReturnPct": -2.9,
-            "impliedFlowPct": 2.5,
+            "navReturnPct": -1.6,
+            "impliedFlowPct": 1.2,
             "bookCr": 1041,
             "monthsBack": 3
           },
@@ -444,10 +444,10 @@
             "classification": "Equity : Small Cap",
             "percentile": 10.3,
             "quartile": "Q4",
-            "perfReturn": 9.1,
+            "perfReturn": 8.9,
             "bookGrowthPct": -5.5,
-            "navReturnPct": -4.7,
-            "impliedFlowPct": -0.9,
+            "navReturnPct": -5.3,
+            "impliedFlowPct": -0.3,
             "bookCr": 226,
             "monthsBack": 3
           }
@@ -462,10 +462,10 @@
             "classification": "Equity : Large Cap",
             "percentile": 12.9,
             "quartile": "Q4",
-            "perfReturn": 8.7,
+            "perfReturn": 9,
             "bookGrowthPct": -7.5,
-            "navReturnPct": -1.2,
-            "impliedFlowPct": -6.3,
+            "navReturnPct": 0.3,
+            "impliedFlowPct": -7.8,
             "bookCr": 1260,
             "monthsBack": 3
           },
@@ -475,10 +475,10 @@
             "classification": "Equity : Tax Saving (ELSS)",
             "percentile": 21.4,
             "quartile": "Q4",
-            "perfReturn": 9.3,
+            "perfReturn": 9.2,
             "bookGrowthPct": -8.7,
-            "navReturnPct": -2.7,
-            "impliedFlowPct": -6.1,
+            "navReturnPct": -1.9,
+            "impliedFlowPct": -6.8,
             "bookCr": 923,
             "monthsBack": 3
           },
@@ -486,12 +486,12 @@
             "fund": "LIC MF Large & Midcap Fund",
             "amc": "LIC",
             "classification": "Equity : Large & Mid Cap",
-            "percentile": 29.2,
-            "quartile": "Q3",
-            "perfReturn": 12.3,
+            "percentile": 20.8,
+            "quartile": "Q4",
+            "perfReturn": 11.9,
             "bookGrowthPct": -9.4,
-            "navReturnPct": -3.6,
-            "impliedFlowPct": -5.8,
+            "navReturnPct": -3.7,
+            "impliedFlowPct": -5.7,
             "bookCr": 2805,
             "monthsBack": 3
           },
@@ -499,12 +499,12 @@
             "fund": "Lic Mf Mid Cap Fund",
             "amc": "LIC",
             "classification": "Equity : Mid Cap",
-            "percentile": 41.7,
+            "percentile": 36.1,
             "quartile": "Q3",
-            "perfReturn": 14.4,
+            "perfReturn": 13.9,
             "bookGrowthPct": -7.8,
-            "navReturnPct": -2.2,
-            "impliedFlowPct": -5.5,
+            "navReturnPct": -2.8,
+            "impliedFlowPct": -5,
             "bookCr": 337,
             "monthsBack": 3
           },
@@ -514,10 +514,10 @@
             "classification": "Equity : Flexi Cap",
             "percentile": 32.6,
             "quartile": "Q3",
-            "perfReturn": 10.8,
+            "perfReturn": 10.6,
             "bookGrowthPct": -5.6,
-            "navReturnPct": -2.8,
-            "impliedFlowPct": -2.8,
+            "navReturnPct": -2.5,
+            "impliedFlowPct": -3.1,
             "bookCr": 985,
             "monthsBack": 3
           }
@@ -532,10 +532,10 @@
             "classification": "Equity : ELSS",
             "percentile": 66.7,
             "quartile": "Q2",
-            "perfReturn": 11.3,
+            "perfReturn": 11.5,
             "bookGrowthPct": -7.5,
-            "navReturnPct": 0.2,
-            "impliedFlowPct": -7.7,
+            "navReturnPct": 1.3,
+            "impliedFlowPct": -8.8,
             "bookCr": 66,
             "monthsBack": 3
           },
@@ -545,10 +545,10 @@
             "classification": "Equity : Flexi Cap",
             "percentile": 62.8,
             "quartile": "Q2",
-            "perfReturn": 12.8,
+            "perfReturn": 13,
             "bookGrowthPct": 1.3,
-            "navReturnPct": 2.6,
-            "impliedFlowPct": -1.3,
+            "navReturnPct": 3.9,
+            "impliedFlowPct": -2.6,
             "bookCr": 369,
             "monthsBack": 3
           }
@@ -557,41 +557,41 @@
     }
   },
   "persistence": {
-    "asOf": "2026-11-05",
+    "asOf": "2026-11-06",
     "priorWindow": {
-      "from": "2020-11-05",
-      "to": "2023-11-05"
+      "from": "2020-11-06",
+      "to": "2023-11-06"
     },
     "recentWindow": {
-      "from": "2023-11-05",
-      "to": "2026-11-05"
+      "from": "2023-11-06",
+      "to": "2026-11-06"
     },
     "cohorts": 19,
     "funds": 543,
     "minCohort": 8,
     "matrix": [
       [
-        47,
-        33,
+        45,
         31,
-        30
+        37,
+        28
       ],
       [
-        32,
-        32,
+        33,
+        31,
         34,
         34
       ],
       [
-        35,
+        36,
         41,
-        38,
-        25
+        35,
+        27
       ],
       [
         27,
-        26,
-        36,
+        29,
+        33,
         42
       ]
     ],
@@ -601,56 +601,56 @@
       139,
       131
     ],
-    "q1StayPct": 33.3,
-    "q1ToBottomHalfPct": 43.3,
+    "q1StayPct": 31.9,
+    "q1ToBottomHalfPct": 46.1,
     "topStayers": [
       {
         "fund": "SBI Healthcare Opp Fund",
         "classification": "Equity : Sectoral - Pharma",
-        "prior": 16.7,
-        "recent": 25.2
+        "prior": 16.9,
+        "recent": 25.3
       },
       {
         "fund": "Motilal Oswal Large & Midcap Fund",
         "classification": "Equity : Large & Mid Cap",
-        "prior": 28.7,
-        "recent": 21.6
+        "prior": 28.4,
+        "recent": 21.5
       },
       {
         "fund": "SBI PSU Fund",
         "classification": "Equity : Thematic",
-        "prior": 35.3,
-        "recent": 20.5
-      },
-      {
-        "fund": "Motilal Oswal Large & Midcap Fund",
-        "classification": "Equity : Large & Mid Cap",
-        "prior": 26.7,
-        "recent": 20.3
+        "prior": 35.2,
+        "recent": 20.6
       },
       {
         "fund": "ICICI Pru Retirement Fund-Pure Equity Plan",
         "classification": "Equity : Flexi Cap",
-        "prior": 28.8,
-        "recent": 20
+        "prior": 28.7,
+        "recent": 20.2
+      },
+      {
+        "fund": "Motilal Oswal Large & Midcap Fund",
+        "classification": "Equity : Large & Mid Cap",
+        "prior": 26.4,
+        "recent": 20.1
       },
       {
         "fund": "Edelweiss Mid Cap Fund",
         "classification": "Equity : Mid Cap",
-        "prior": 31,
-        "recent": 19.9
+        "prior": 30.7,
+        "recent": 19.8
       },
       {
         "fund": "Motilal Oswal ELSS Tax Saver Fund",
         "classification": "Equity : Tax Saving (ELSS)",
-        "prior": 25.1,
-        "recent": 19.9
+        "prior": 24.9,
+        "recent": 19.7
       },
       {
         "fund": "Aditya Birla SL PSU Equity Fund",
         "classification": "Equity : Thematic",
         "prior": 39.6,
-        "recent": 19.3
+        "recent": 19.5
       }
     ]
   }
