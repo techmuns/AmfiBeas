@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-11-07T15:44:19.236Z",
+    "generatedAt": "2026-11-07T16:05:42.350Z",
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -9,37 +9,46 @@
   "convictionLedger": {
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
-    "funds": 50,
-    "amcs": 6,
+    "funds": 74,
+    "amcs": 7,
     "quadrants": {
       "new": {
-        "totalCr": 1852,
-        "positions": 42,
-        "companies": 38,
+        "totalCr": 2957,
+        "positions": 52,
+        "companies": 44,
         "byTier": {
           "large": {
-            "valueCr": 117,
+            "valueCr": 116,
             "positions": 5,
             "companies": 5
           },
           "mid": {
-            "valueCr": 394,
-            "positions": 9,
-            "companies": 9
+            "valueCr": 414,
+            "positions": 11,
+            "companies": 11
           },
           "small": {
-            "valueCr": 1341,
-            "positions": 28,
-            "companies": 24
+            "valueCr": 2426,
+            "positions": 36,
+            "companies": 28
           }
         },
         "top": [
           {
             "company": "Jio Platforms",
-            "valueCr": 542,
+            "valueCr": 1077,
             "amcs": [
               "SBI",
+              "Aditya Birla Sun Life",
               "Helios"
+            ]
+          },
+          {
+            "company": "Bonfiglioli Transmissions",
+            "valueCr": 296,
+            "amcs": [
+              "SBI",
+              "Aditya Birla Sun Life"
             ]
           },
           {
@@ -50,62 +59,57 @@
             ]
           },
           {
-            "company": "Zetwerk Manufacturing Businesses",
-            "valueCr": 165,
+            "company": "JSW Dulux",
+            "valueCr": 221,
             "amcs": [
-              "SBI",
-              "Helios"
+              "Aditya Birla Sun Life"
             ]
           },
           {
-            "company": "Bonfiglioli Transmissions",
-            "valueCr": 151,
+            "company": "Zetwerk Manufacturing Businesses",
+            "valueCr": 202,
             "amcs": [
-              "SBI"
+              "SBI",
+              "Helios",
+              "Aditya Birla Sun Life"
             ]
           },
           {
             "company": "Tonbo Imaging India",
-            "valueCr": 103,
+            "valueCr": 121,
             "amcs": [
               "SBI",
+              "Aditya Birla Sun Life",
               "Helios"
-            ]
-          },
-          {
-            "company": "Paras Healthcare",
-            "valueCr": 73,
-            "amcs": [
-              "SBI"
             ]
           }
         ]
       },
       "increased": {
-        "totalCr": 11209,
-        "positions": 223,
-        "companies": 182,
+        "totalCr": 14468,
+        "positions": 329,
+        "companies": 246,
         "byTier": {
           "large": {
-            "valueCr": 6611,
-            "positions": 72,
-            "companies": 56
+            "valueCr": 8240,
+            "positions": 104,
+            "companies": 71
           },
           "mid": {
-            "valueCr": 3039,
-            "positions": 89,
-            "companies": 68
+            "valueCr": 4160,
+            "positions": 133,
+            "companies": 94
           },
           "small": {
-            "valueCr": 1559,
-            "positions": 62,
-            "companies": 58
+            "valueCr": 2068,
+            "positions": 92,
+            "companies": 81
           }
         },
         "top": [
           {
             "company": "Bharti Airtel",
-            "valueCr": 853,
+            "valueCr": 867,
             "amcs": [
               "SBI",
               "Helios",
@@ -114,22 +118,31 @@
           },
           {
             "company": "Hindustan Aeronautics",
-            "valueCr": 795,
+            "valueCr": 796,
             "amcs": [
               "SBI",
               "LIC"
             ]
           },
           {
+            "company": "Persistent Systems",
+            "valueCr": 578,
+            "amcs": [
+              "SBI",
+              "Aditya Birla Sun Life",
+              "LIC"
+            ]
+          },
+          {
             "company": "Infosys",
-            "valueCr": 476,
+            "valueCr": 477,
             "amcs": [
               "SBI"
             ]
           },
           {
             "company": "Tata Consultancy Services",
-            "valueCr": 413,
+            "valueCr": 407,
             "amcs": [
               "SBI"
             ]
@@ -140,42 +153,34 @@
             "amcs": [
               "SBI"
             ]
-          },
-          {
-            "company": "Persistent Systems",
-            "valueCr": 378,
-            "amcs": [
-              "SBI",
-              "LIC"
-            ]
           }
         ]
       },
       "decreased": {
-        "totalCr": 12665,
-        "positions": 185,
-        "companies": 164,
+        "totalCr": 17179,
+        "positions": 298,
+        "companies": 239,
         "byTier": {
           "large": {
-            "valueCr": 8054,
-            "positions": 74,
-            "companies": 58
+            "valueCr": 10553,
+            "positions": 101,
+            "companies": 68
           },
           "mid": {
-            "valueCr": 3629,
-            "positions": 67,
-            "companies": 63
+            "valueCr": 4825,
+            "positions": 114,
+            "companies": 92
           },
           "small": {
-            "valueCr": 982,
-            "positions": 44,
-            "companies": 43
+            "valueCr": 1801,
+            "positions": 83,
+            "companies": 79
           }
         },
         "top": [
           {
             "company": "Bajaj Finance",
-            "valueCr": 719,
+            "valueCr": 733,
             "amcs": [
               "SBI",
               "Jio BlackRock"
@@ -183,16 +188,33 @@
           },
           {
             "company": "Bajaj Auto",
-            "valueCr": 633,
+            "valueCr": 668,
             "amcs": [
               "SBI",
+              "Aditya Birla Sun Life",
               "Quantum"
             ]
           },
           {
             "company": "Life Insurance Corporation of India",
-            "valueCr": 598,
+            "valueCr": 604,
             "amcs": [
+              "SBI"
+            ]
+          },
+          {
+            "company": "Jindal Steel",
+            "valueCr": 576,
+            "amcs": [
+              "SBI",
+              "Aditya Birla Sun Life"
+            ]
+          },
+          {
+            "company": "Reliance Industries",
+            "valueCr": 495,
+            "amcs": [
+              "Aditya Birla Sun Life",
               "SBI"
             ]
           },
@@ -202,43 +224,28 @@
             "amcs": [
               "SBI"
             ]
-          },
-          {
-            "company": "Jindal Steel",
-            "valueCr": 476,
-            "amcs": [
-              "SBI"
-            ]
-          },
-          {
-            "company": "Hindustan Unilever",
-            "valueCr": 459,
-            "amcs": [
-              "SBI",
-              "LIC"
-            ]
           }
         ]
       },
       "exited": {
-        "totalCr": 686,
-        "positions": 29,
-        "companies": 29,
+        "totalCr": 1056,
+        "positions": 33,
+        "companies": 33,
         "byTier": {
           "large": {
-            "valueCr": 446,
+            "valueCr": 448,
             "positions": 10,
             "companies": 10
           },
           "mid": {
-            "valueCr": 169,
-            "positions": 11,
-            "companies": 11
+            "valueCr": 217,
+            "positions": 13,
+            "companies": 13
           },
           "small": {
-            "valueCr": 72,
-            "positions": 8,
-            "companies": 8
+            "valueCr": 392,
+            "positions": 10,
+            "companies": 10
           }
         },
         "top": [
@@ -250,8 +257,15 @@
             ]
           },
           {
+            "company": "JSW Dulux",
+            "valueCr": 304,
+            "amcs": [
+              "Aditya Birla Sun Life"
+            ]
+          },
+          {
             "company": "Hindalco Industries",
-            "valueCr": 50,
+            "valueCr": 52,
             "amcs": [
               "LIC"
             ]
@@ -264,24 +278,17 @@
             ]
           },
           {
+            "company": "Motherson Sumi Wiring India",
+            "valueCr": 30,
+            "amcs": [
+              "Aditya Birla Sun Life"
+            ]
+          },
+          {
             "company": "Park Medi World",
             "valueCr": 23,
             "amcs": [
               "Helios"
-            ]
-          },
-          {
-            "company": "Bharat Dynamics",
-            "valueCr": 22,
-            "amcs": [
-              "LIC"
-            ]
-          },
-          {
-            "company": "VA Tech Wabag",
-            "valueCr": 20,
-            "amcs": [
-              "LIC"
             ]
           }
         ]
@@ -291,35 +298,132 @@
   "contested": {
     "month": "Oct-26",
     "monthPrev": "Sep-26",
-    "rows": []
+    "rows": [
+      {
+        "company": "Bharti Airtel",
+        "tier": "large",
+        "buyers": 3,
+        "sellers": 2,
+        "buyCr": 867,
+        "sellCr": 421,
+        "netCr": 446,
+        "grossCr": 1288,
+        "topBuyer": "SBI",
+        "topSeller": "Aditya Birla Sun Life"
+      },
+      {
+        "company": "Kotak Mahindra Bank",
+        "tier": "large",
+        "buyers": 2,
+        "sellers": 3,
+        "buyCr": 269,
+        "sellCr": 382,
+        "netCr": -114,
+        "grossCr": 651,
+        "topBuyer": "Aditya Birla Sun Life",
+        "topSeller": "SBI"
+      },
+      {
+        "company": "One 97 Communications",
+        "tier": "mid",
+        "buyers": 2,
+        "sellers": 2,
+        "buyCr": 79,
+        "sellCr": 416,
+        "netCr": -337,
+        "grossCr": 494,
+        "topBuyer": "Aditya Birla Sun Life",
+        "topSeller": "SBI"
+      },
+      {
+        "company": "ITC",
+        "tier": "large",
+        "buyers": 2,
+        "sellers": 2,
+        "buyCr": 370,
+        "sellCr": 21,
+        "netCr": 349,
+        "grossCr": 391,
+        "topBuyer": "SBI",
+        "topSeller": "Jio BlackRock"
+      },
+      {
+        "company": "Axis Bank",
+        "tier": "large",
+        "buyers": 3,
+        "sellers": 2,
+        "buyCr": 137,
+        "sellCr": 132,
+        "netCr": 6,
+        "grossCr": 269,
+        "topBuyer": "SBI",
+        "topSeller": "Aditya Birla Sun Life"
+      },
+      {
+        "company": "Coforge",
+        "tier": "mid",
+        "buyers": 3,
+        "sellers": 2,
+        "buyCr": 138,
+        "sellCr": 36,
+        "netCr": 102,
+        "grossCr": 174,
+        "topBuyer": "SBI",
+        "topSeller": "Aditya Birla Sun Life"
+      },
+      {
+        "company": "ICICI Bank",
+        "tier": "large",
+        "buyers": 2,
+        "sellers": 2,
+        "buyCr": 68,
+        "sellCr": 79,
+        "netCr": -11,
+        "grossCr": 147,
+        "topBuyer": "Helios",
+        "topSeller": "Aditya Birla Sun Life"
+      },
+      {
+        "company": "Ultratech Cement",
+        "tier": "large",
+        "buyers": 2,
+        "sellers": 2,
+        "buyCr": 18,
+        "sellCr": 60,
+        "netCr": -42,
+        "grossCr": 77,
+        "topBuyer": "LIC",
+        "topSeller": "Jio BlackRock"
+      }
+    ]
   },
   "churn": {
     "month": "Oct-26",
     "monthPrev": "Sep-26",
     "minBookCr": 500,
-    "medianTurnoverPct": 2.9,
+    "medianTurnoverPct": 3.09,
     "rows": [
       {
         "amc": "LIC",
-        "turnoverPct": 10.61,
-        "buyCr": 1158,
-        "sellCr": 1122,
+        "turnoverPct": 10.64,
+        "buyCr": 1192,
+        "sellCr": 1125,
         "bookCr": 10448,
         "schemes": 9,
         "holdings": 188
       },
       {
         "amc": "Jio BlackRock",
-        "turnoverPct": 10.22,
-        "buyCr": 467,
-        "sellCr": 392,
+        "turnoverPct": 10.24,
+        "buyCr": 470,
+        "sellCr": 393,
         "bookCr": 3828,
         "schemes": 4,
         "holdings": 475
       },
       {
         "amc": "Quantum",
-        "turnoverPct": 3.67,
+        "turnoverPct": 3.68,
         "buyCr": 95,
         "sellCr": 55,
         "bookCr": 1514,
@@ -327,10 +431,19 @@
         "holdings": 93
       },
       {
+        "amc": "Aditya Birla Sun Life",
+        "turnoverPct": 3.09,
+        "buyCr": 4271,
+        "sellCr": 4840,
+        "bookCr": 137290,
+        "schemes": 24,
+        "holdings": 472
+      },
+      {
         "amc": "SBI",
-        "turnoverPct": 2.9,
-        "buyCr": 10663,
-        "sellCr": 11762,
+        "turnoverPct": 2.92,
+        "buyCr": 10723,
+        "sellCr": 11819,
         "bookCr": 362836,
         "schemes": 25,
         "holdings": 571
@@ -347,7 +460,7 @@
       {
         "amc": "Helios",
         "turnoverPct": 0.16,
-        "buyCr": 696,
+        "buyCr": 698,
         "sellCr": 23,
         "bookCr": 14647,
         "schemes": 4,
@@ -360,11 +473,11 @@
     "windowLabel": "Jul-26 → Oct-26",
     "windowMonths": 3,
     "period": "3Y",
-    "universe": 32,
-    "medianFlowPct": -3.2,
+    "universe": 53,
+    "medianFlowPct": -3.6,
     "quadrants": {
       "winning": {
-        "count": 8,
+        "count": 14,
         "rows": [
           {
             "fund": "Taurus Large Cap Fund",
@@ -377,6 +490,19 @@
             "navReturnPct": 6.1,
             "impliedFlowPct": 6.7,
             "bookCr": 63,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Aditya Birla SL Small Cap Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Small Cap",
+            "percentile": 58.6,
+            "quartile": "Q2",
+            "perfReturn": 13.3,
+            "bookGrowthPct": 0.5,
+            "navReturnPct": -1,
+            "impliedFlowPct": 1.5,
+            "bookCr": 5618,
             "monthsBack": 3
           },
           {
@@ -432,6 +558,19 @@
             "monthsBack": 3
           },
           {
+            "fund": "Aditya Birla SL Flexi Cap Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Flexi Cap",
+            "percentile": 79.1,
+            "quartile": "Q1",
+            "perfReturn": 15.6,
+            "bookGrowthPct": 0.4,
+            "navReturnPct": 0.2,
+            "impliedFlowPct": 0.2,
+            "bookCr": 27564,
+            "monthsBack": 3
+          },
+          {
             "fund": "SBI Focused Fund",
             "amc": "SBI",
             "classification": "Equity : Focused",
@@ -443,38 +582,25 @@
             "impliedFlowPct": -0.9,
             "bookCr": 41239,
             "monthsBack": 3
-          },
-          {
-            "fund": "SBI MNC Fund",
-            "amc": "SBI",
-            "classification": "Equity : Thematic - MNC",
-            "percentile": 60,
-            "quartile": "Q2",
-            "perfReturn": 6.4,
-            "bookGrowthPct": -5.1,
-            "navReturnPct": -2.8,
-            "impliedFlowPct": -2.3,
-            "bookCr": 5980,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Taurus Flexi Cap Fund",
-            "amc": "Taurus",
-            "classification": "Equity : Flexi Cap",
-            "percentile": 62.8,
-            "quartile": "Q2",
-            "perfReturn": 13,
-            "bookGrowthPct": 1.3,
-            "navReturnPct": 3.9,
-            "impliedFlowPct": -2.6,
-            "bookCr": 369,
-            "monthsBack": 3
           }
         ]
       },
       "coasting": {
-        "count": 8,
+        "count": 13,
         "rows": [
+          {
+            "fund": "Aditya Birla SL Pharma & Healthcare Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Sectoral - Pharma",
+            "percentile": 33.3,
+            "quartile": "Q3",
+            "perfReturn": 20.1,
+            "bookGrowthPct": 3.2,
+            "navReturnPct": 0.3,
+            "impliedFlowPct": 2.9,
+            "bookCr": 1082,
+            "monthsBack": 3
+          },
           {
             "fund": "Taurus Mid Cap Fund",
             "amc": "Taurus",
@@ -554,35 +680,22 @@
             "monthsBack": 3
           },
           {
-            "fund": "LIC MF Flexi Cap Fund",
-            "amc": "LIC",
-            "classification": "Equity : Flexi Cap",
-            "percentile": 32.6,
-            "quartile": "Q3",
-            "perfReturn": 10.6,
-            "bookGrowthPct": -5.6,
-            "navReturnPct": -2.5,
-            "impliedFlowPct": -3.1,
-            "bookCr": 985,
-            "monthsBack": 3
-          },
-          {
-            "fund": "SBI Flexicap Fund",
-            "amc": "SBI",
-            "classification": "Equity : Flexi Cap",
-            "percentile": 11.6,
+            "fund": "Aditya Birla SL Midcap Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Mid Cap",
+            "percentile": 22.2,
             "quartile": "Q4",
-            "perfReturn": 8.8,
-            "bookGrowthPct": -3.3,
-            "navReturnPct": -0.1,
-            "impliedFlowPct": -3.2,
-            "bookCr": 20464,
+            "perfReturn": 13.2,
+            "bookGrowthPct": -6.6,
+            "navReturnPct": -4.3,
+            "impliedFlowPct": -2.3,
+            "bookCr": 6160,
             "monthsBack": 3
           }
         ]
       },
       "falling": {
-        "count": 10,
+        "count": 16,
         "rows": [
           {
             "fund": "LIC MF Large Cap Fund",
@@ -595,6 +708,19 @@
             "navReturnPct": 0.3,
             "impliedFlowPct": -7.8,
             "bookCr": 1260,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Aditya Birla SL Digital India Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Sectoral - Technology",
+            "percentile": 16.7,
+            "quartile": "Q4",
+            "perfReturn": 5,
+            "bookGrowthPct": -7.5,
+            "navReturnPct": 0.2,
+            "impliedFlowPct": -7.8,
+            "bookCr": 3428,
             "monthsBack": 3
           },
           {
@@ -624,6 +750,32 @@
             "monthsBack": 3
           },
           {
+            "fund": "Aditya Birla SL Consumption Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Thematic - Consumption",
+            "percentile": 33.3,
+            "quartile": "Q3",
+            "perfReturn": 8.6,
+            "bookGrowthPct": -9,
+            "navReturnPct": -2.1,
+            "impliedFlowPct": -6.8,
+            "bookCr": 5542,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Aditya Birla SL ESG Integration Strategy Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Thematic",
+            "percentile": 31.1,
+            "quartile": "Q3",
+            "perfReturn": 11.6,
+            "bookGrowthPct": -7.5,
+            "navReturnPct": -0.7,
+            "impliedFlowPct": -6.8,
+            "bookCr": 529,
+            "monthsBack": 3
+          },
+          {
             "fund": "SBI ESG Exclusionary Strategy Fund",
             "amc": "SBI",
             "classification": "Equity : Thematic",
@@ -637,61 +789,22 @@
             "monthsBack": 3
           },
           {
-            "fund": "SBI Contra Fund",
-            "amc": "SBI",
-            "classification": "Equity : Value / Contra",
-            "percentile": 27.8,
-            "quartile": "Q3",
-            "perfReturn": 10.9,
-            "bookGrowthPct": -8.4,
-            "navReturnPct": -2.3,
-            "impliedFlowPct": -6.1,
-            "bookCr": 38926,
-            "monthsBack": 3
-          },
-          {
-            "fund": "LIC MF Large & Midcap Fund",
-            "amc": "LIC",
-            "classification": "Equity : Large & Mid Cap",
-            "percentile": 20.8,
+            "fund": "Aditya Birla SL Banking & Financial Services Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Sectoral - Financial Services",
+            "percentile": 7.7,
             "quartile": "Q4",
-            "perfReturn": 11.9,
-            "bookGrowthPct": -9.4,
-            "navReturnPct": -3.7,
-            "impliedFlowPct": -5.7,
-            "bookCr": 2805,
-            "monthsBack": 3
-          },
-          {
-            "fund": "SBI Large Cap Fund",
-            "amc": "SBI",
-            "classification": "Equity : Large Cap",
-            "percentile": 32.3,
-            "quartile": "Q3",
             "perfReturn": 10.3,
-            "bookGrowthPct": -5.6,
-            "navReturnPct": -0.6,
-            "impliedFlowPct": -5,
-            "bookCr": 51431,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Lic Mf Mid Cap Fund",
-            "amc": "LIC",
-            "classification": "Equity : Mid Cap",
-            "percentile": 36.1,
-            "quartile": "Q3",
-            "perfReturn": 13.9,
             "bookGrowthPct": -7.8,
-            "navReturnPct": -2.8,
-            "impliedFlowPct": -5,
-            "bookCr": 337,
+            "navReturnPct": -1.7,
+            "impliedFlowPct": -6.1,
+            "bookCr": 3272,
             "monthsBack": 3
           }
         ]
       },
       "undiscovered": {
-        "count": 6,
+        "count": 10,
         "rows": [
           {
             "fund": "SBI Dividend Yield Fund",
@@ -704,6 +817,19 @@
             "navReturnPct": -2,
             "impliedFlowPct": -11.7,
             "bookCr": 7403,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Aditya Birla SL Focused Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Focused",
+            "percentile": 73.1,
+            "quartile": "Q2",
+            "perfReturn": 14.2,
+            "bookGrowthPct": -8.5,
+            "navReturnPct": 0.8,
+            "impliedFlowPct": -9.3,
+            "bookCr": 6991,
             "monthsBack": 3
           },
           {
@@ -733,42 +859,55 @@
             "monthsBack": 3
           },
           {
-            "fund": "SBI Banking & Financial Services Fund",
-            "amc": "SBI",
-            "classification": "Equity : Sectoral - Financial Services",
-            "percentile": 92.3,
-            "quartile": "Q1",
-            "perfReturn": 16,
-            "bookGrowthPct": -2.4,
-            "navReturnPct": 1.2,
-            "impliedFlowPct": -3.6,
-            "bookCr": 9637,
+            "fund": "Aditya Birla SL Dividend Yield Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Thematic - Dividend Yield",
+            "percentile": 55.6,
+            "quartile": "Q2",
+            "perfReturn": 10.9,
+            "bookGrowthPct": -10.1,
+            "navReturnPct": -3.5,
+            "impliedFlowPct": -6.5,
+            "bookCr": 1235,
             "monthsBack": 3
           },
           {
-            "fund": "SBI PSU Fund",
-            "amc": "SBI",
-            "classification": "Equity : Thematic",
-            "percentile": 97.8,
-            "quartile": "Q1",
-            "perfReturn": 19.4,
-            "bookGrowthPct": -6.4,
-            "navReturnPct": -2.9,
-            "impliedFlowPct": -3.5,
-            "bookCr": 6131,
-            "monthsBack": 3
-          },
-          {
-            "fund": "SBI ELSS Tax Saver Fund",
-            "amc": "SBI",
+            "fund": "Aditya Birla SL ELSS Tax Saver Fund",
+            "amc": "Aditya Birla Sun Life",
             "classification": "Equity : Tax Saving (ELSS)",
-            "percentile": 82.1,
+            "percentile": 60.7,
+            "quartile": "Q2",
+            "perfReturn": 11.9,
+            "bookGrowthPct": -8.1,
+            "navReturnPct": -1.7,
+            "impliedFlowPct": -6.5,
+            "bookCr": 13229,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Aditya Birla SL Infrastructure Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Sectoral - Infrastructure",
+            "percentile": 76.5,
             "quartile": "Q1",
-            "perfReturn": 14.1,
+            "perfReturn": 16.5,
             "bookGrowthPct": -5.6,
+            "navReturnPct": -0.7,
+            "impliedFlowPct": -4.9,
+            "bookCr": 1115,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Aditya Birla SL Value Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Value / Contra",
+            "percentile": 50,
+            "quartile": "Q2",
+            "perfReturn": 12.7,
+            "bookGrowthPct": -7.2,
             "navReturnPct": -2.3,
-            "impliedFlowPct": -3.3,
-            "bookCr": 29218,
+            "impliedFlowPct": -4.9,
+            "bookCr": 6069,
             "monthsBack": 3
           }
         ]
