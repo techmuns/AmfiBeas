@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-11-07T23:13:27.417Z",
+    "generatedAt": "2026-11-07T23:32:16.730Z",
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -474,7 +474,7 @@
     "windowMonths": 3,
     "period": "3Y",
     "universe": 53,
-    "medianFlowPct": -3.6,
+    "medianFlowPct": -3.7,
     "quadrants": {
       "winning": {
         "count": 14,
@@ -576,10 +576,10 @@
             "classification": "Equity : Focused",
             "percentile": 84.6,
             "quartile": "Q1",
-            "perfReturn": 15.8,
+            "perfReturn": 15.7,
             "bookGrowthPct": -0.9,
-            "navReturnPct": 0,
-            "impliedFlowPct": -0.9,
+            "navReturnPct": 0.6,
+            "impliedFlowPct": -1.6,
             "bookCr": 41239,
             "monthsBack": 3
           }
@@ -695,7 +695,7 @@
         ]
       },
       "falling": {
-        "count": 16,
+        "count": 17,
         "rows": [
           {
             "fund": "LIC MF Large Cap Fund",
@@ -716,10 +716,10 @@
             "classification": "Equity : Sectoral - Technology",
             "percentile": 16.7,
             "quartile": "Q4",
-            "perfReturn": 5,
+            "perfReturn": 4.8,
             "bookGrowthPct": -7.5,
             "navReturnPct": 0.2,
-            "impliedFlowPct": -7.8,
+            "impliedFlowPct": -7.7,
             "bookCr": 3428,
             "monthsBack": 3
           },
@@ -747,6 +747,19 @@
             "navReturnPct": -1.9,
             "impliedFlowPct": -6.8,
             "bookCr": 923,
+            "monthsBack": 3
+          },
+          {
+            "fund": "SBI Contra Fund",
+            "amc": "SBI",
+            "classification": "Equity : Value / Contra",
+            "percentile": 27.8,
+            "quartile": "Q3",
+            "perfReturn": 10.8,
+            "bookGrowthPct": -8.4,
+            "navReturnPct": -1.5,
+            "impliedFlowPct": -6.8,
+            "bookCr": 38926,
             "monthsBack": 3
           },
           {
@@ -787,24 +800,11 @@
             "impliedFlowPct": -6.3,
             "bookCr": 4960,
             "monthsBack": 3
-          },
-          {
-            "fund": "Aditya Birla SL Banking & Financial Services Fund",
-            "amc": "Aditya Birla Sun Life",
-            "classification": "Equity : Sectoral - Financial Services",
-            "percentile": 7.7,
-            "quartile": "Q4",
-            "perfReturn": 10.3,
-            "bookGrowthPct": -7.8,
-            "navReturnPct": -1.7,
-            "impliedFlowPct": -6.1,
-            "bookCr": 3272,
-            "monthsBack": 3
           }
         ]
       },
       "undiscovered": {
-        "count": 10,
+        "count": 9,
         "rows": [
           {
             "fund": "SBI Dividend Yield Fund",
@@ -849,26 +849,13 @@
             "fund": "SBI Comma Fund",
             "amc": "SBI",
             "classification": "Equity : Thematic",
-            "percentile": 57.8,
+            "percentile": 60,
             "quartile": "Q2",
             "perfReturn": 14.6,
             "bookGrowthPct": -10.5,
             "navReturnPct": -2.5,
             "impliedFlowPct": -8.1,
             "bookCr": 1040,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Aditya Birla SL Dividend Yield Fund",
-            "amc": "Aditya Birla Sun Life",
-            "classification": "Equity : Thematic - Dividend Yield",
-            "percentile": 55.6,
-            "quartile": "Q2",
-            "perfReturn": 10.9,
-            "bookGrowthPct": -10.1,
-            "navReturnPct": -3.5,
-            "impliedFlowPct": -6.5,
-            "bookCr": 1235,
             "monthsBack": 3
           },
           {
@@ -909,6 +896,19 @@
             "impliedFlowPct": -4.9,
             "bookCr": 6069,
             "monthsBack": 3
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Smallcap 50 Index Fund",
+            "amc": "Aditya Birla Sun Life",
+            "classification": "Equity : Small Cap",
+            "percentile": 82.8,
+            "quartile": "Q1",
+            "perfReturn": 15.7,
+            "bookGrowthPct": -6.5,
+            "navReturnPct": -1.7,
+            "impliedFlowPct": -4.8,
+            "bookCr": 325,
+            "monthsBack": 3
           }
         ]
       }
@@ -930,20 +930,20 @@
     "matrix": [
       [
         45,
-        31,
-        37,
+        33,
+        35,
         28
       ],
       [
         33,
-        31,
-        34,
+        30,
+        35,
         34
       ],
       [
         36,
-        41,
-        35,
+        40,
+        36,
         27
       ],
       [
@@ -960,7 +960,7 @@
       131
     ],
     "q1StayPct": 31.9,
-    "q1ToBottomHalfPct": 46.1,
+    "q1ToBottomHalfPct": 44.7,
     "topStayers": [
       {
         "fund": "SBI Healthcare Opp Fund",
