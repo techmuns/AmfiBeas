@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-11-09T10:12:44.990Z",
+    "generatedAt": "2026-11-09T10:35:44.045Z",
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -9,52 +9,61 @@
   "convictionLedger": {
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
-    "funds": 146,
-    "amcs": 18,
+    "funds": 179,
+    "amcs": 21,
     "quadrants": {
       "new": {
-        "totalCr": 5878,
-        "positions": 136,
-        "companies": 101,
+        "totalCr": 8380,
+        "positions": 177,
+        "companies": 126,
         "byTier": {
           "large": {
-            "valueCr": 690,
-            "positions": 18,
-            "companies": 16
+            "valueCr": 955,
+            "positions": 23,
+            "companies": 20
           },
           "mid": {
-            "valueCr": 1033,
-            "positions": 37,
-            "companies": 36
+            "valueCr": 1344,
+            "positions": 44,
+            "companies": 41
           },
           "small": {
-            "valueCr": 4155,
-            "positions": 81,
-            "companies": 49
+            "valueCr": 6082,
+            "positions": 110,
+            "companies": 65
           }
         },
         "top": [
           {
             "company": "Jio Platforms",
-            "valueCr": 1385,
+            "valueCr": 1731,
             "amcs": [
               "SBI",
               "Aditya Birla Sun Life",
-              "ICICI Prudential"
+              "Nippon India"
             ]
           },
           {
             "company": "JSW Dulux",
-            "valueCr": 626,
+            "valueCr": 862,
             "amcs": [
               "ICICI Prudential",
-              "Aditya Birla Sun Life",
-              "PGIM India"
+              "Nippon India",
+              "Aditya Birla Sun Life"
+            ]
+          },
+          {
+            "company": "Bonfiglioli Transmissions",
+            "valueCr": 569,
+            "amcs": [
+              "Nippon India",
+              "SBI",
+              "Aditya Birla Sun Life"
             ]
           },
           {
             "company": "Zetwerk Manufacturing Businesses",
-            "valueCr": 492,
+            "valueCr": 511,
             "amcs": [
               "ICICI Prudential",
               "SBI",
@@ -62,65 +71,57 @@
             ]
           },
           {
-            "company": "Bonfiglioli Transmissions",
+            "company": "Tonbo Imaging India",
             "valueCr": 348,
             "amcs": [
+              "Nippon India",
               "SBI",
-              "Aditya Birla Sun Life",
               "ICICI Prudential"
             ]
           },
           {
             "company": "Max Healthcare Institute",
-            "valueCr": 262,
+            "valueCr": 264,
             "amcs": [
               "SBI"
-            ]
-          },
-          {
-            "company": "BSE",
-            "valueCr": 248,
-            "amcs": [
-              "Mahindra",
-              "Trust"
             ]
           }
         ]
       },
       "increased": {
-        "totalCr": 32749,
-        "positions": 831,
-        "companies": 426,
+        "totalCr": 41163,
+        "positions": 1069,
+        "companies": 498,
         "byTier": {
           "large": {
-            "valueCr": 17352,
-            "positions": 249,
-            "companies": 86
+            "valueCr": 20854,
+            "positions": 307,
+            "companies": 92
           },
           "mid": {
-            "valueCr": 10535,
-            "positions": 319,
-            "companies": 149
+            "valueCr": 13887,
+            "positions": 415,
+            "companies": 169
           },
           "small": {
-            "valueCr": 4862,
-            "positions": 263,
-            "companies": 191
+            "valueCr": 6421,
+            "positions": 347,
+            "companies": 237
           }
         },
         "top": [
           {
             "company": "ITC",
-            "valueCr": 1617,
+            "valueCr": 2347,
             "amcs": [
               "ICICI Prudential",
-              "SBI",
-              "Aditya Birla Sun Life"
+              "Nippon India",
+              "SBI"
             ]
           },
           {
             "company": "DLF",
-            "valueCr": 1154,
+            "valueCr": 1156,
             "amcs": [
               "PPFAS",
               "Abakkus"
@@ -128,7 +129,7 @@
           },
           {
             "company": "Bharti Airtel",
-            "valueCr": 946,
+            "valueCr": 954,
             "amcs": [
               "SBI",
               "PGIM India",
@@ -136,8 +137,17 @@
             ]
           },
           {
+            "company": "Kotak Mahindra Bank",
+            "valueCr": 818,
+            "amcs": [
+              "Nippon India",
+              "Aditya Birla Sun Life",
+              "Mahindra"
+            ]
+          },
+          {
             "company": "Mahindra & Mahindra",
-            "valueCr": 803,
+            "valueCr": 809,
             "amcs": [
               "ICICI Prudential",
               "PPFAS",
@@ -146,67 +156,67 @@
           },
           {
             "company": "Hindustan Aeronautics",
-            "valueCr": 799,
+            "valueCr": 804,
             "amcs": [
               "SBI",
               "LIC",
               "Mahindra"
             ]
-          },
-          {
-            "company": "Persistent Systems",
-            "valueCr": 755,
-            "amcs": [
-              "SBI",
-              "Aditya Birla Sun Life",
-              "Trust"
-            ]
           }
         ]
       },
       "decreased": {
-        "totalCr": 30705,
-        "positions": 666,
-        "companies": 407,
+        "totalCr": 37834,
+        "positions": 813,
+        "companies": 447,
         "byTier": {
           "large": {
-            "valueCr": 18070,
-            "positions": 194,
-            "companies": 81
+            "valueCr": 22952,
+            "positions": 246,
+            "companies": 87
           },
           "mid": {
-            "valueCr": 9284,
-            "positions": 245,
-            "companies": 144
+            "valueCr": 10665,
+            "positions": 290,
+            "companies": 153
           },
           "small": {
-            "valueCr": 3350,
-            "positions": 227,
-            "companies": 182
+            "valueCr": 4218,
+            "positions": 277,
+            "companies": 207
           }
         },
         "top": [
           {
             "company": "Infosys",
-            "valueCr": 1363,
+            "valueCr": 1585,
             "amcs": [
               "ICICI Prudential",
               "Aditya Birla Sun Life",
-              "Mahindra"
+              "Nippon India"
+            ]
+          },
+          {
+            "company": "ICICI Bank",
+            "valueCr": 1311,
+            "amcs": [
+              "Nippon India",
+              "ICICI Prudential",
+              "Aditya Birla Sun Life"
             ]
           },
           {
             "company": "Bharti Airtel",
-            "valueCr": 1134,
+            "valueCr": 1230,
             "amcs": [
               "ICICI Prudential",
               "Aditya Birla Sun Life",
-              "JM Financial"
+              "Nippon India"
             ]
           },
           {
             "company": "Larsen & Toubro",
-            "valueCr": 987,
+            "valueCr": 1027,
             "amcs": [
               "ICICI Prudential",
               "SBI",
@@ -214,63 +224,54 @@
             ]
           },
           {
+            "company": "State Bank of India",
+            "valueCr": 1018,
+            "amcs": [
+              "Nippon India",
+              "SBI",
+              "Aditya Birla Sun Life"
+            ]
+          },
+          {
             "company": "Kotak Mahindra Bank",
-            "valueCr": 920,
+            "valueCr": 926,
             "amcs": [
               "ICICI Prudential",
               "SBI",
               "Quantum"
             ]
-          },
-          {
-            "company": "Bajaj Finance",
-            "valueCr": 752,
-            "amcs": [
-              "SBI",
-              "Trust",
-              "Jio BlackRock"
-            ]
-          },
-          {
-            "company": "Bajaj Auto",
-            "valueCr": 741,
-            "amcs": [
-              "SBI",
-              "ICICI Prudential",
-              "Aditya Birla Sun Life"
-            ]
           }
         ]
       },
       "exited": {
-        "totalCr": 2862,
-        "positions": 121,
-        "companies": 112,
+        "totalCr": 3901,
+        "positions": 157,
+        "companies": 135,
         "byTier": {
           "large": {
-            "valueCr": 904,
-            "positions": 30,
-            "companies": 29
+            "valueCr": 1127,
+            "positions": 37,
+            "companies": 33
           },
           "mid": {
-            "valueCr": 785,
-            "positions": 45,
-            "companies": 39
+            "valueCr": 997,
+            "positions": 51,
+            "companies": 42
           },
           "small": {
-            "valueCr": 1173,
-            "positions": 46,
-            "companies": 44
+            "valueCr": 1777,
+            "positions": 69,
+            "companies": 60
           }
         },
         "top": [
           {
             "company": "JSW Dulux",
-            "valueCr": 772,
+            "valueCr": 1050,
             "amcs": [
               "ICICI Prudential",
               "Aditya Birla Sun Life",
-              "PGIM India"
+              "Nippon India"
             ]
           },
           {
@@ -281,8 +282,17 @@
             ]
           },
           {
+            "company": "Hitachi Energy India",
+            "valueCr": 228,
+            "amcs": [
+              "Nippon India",
+              "PGIM India",
+              "Trust"
+            ]
+          },
+          {
             "company": "APL Apollo Tubes",
-            "valueCr": 108,
+            "valueCr": 109,
             "amcs": [
               "PGIM India",
               "Trust",
@@ -291,24 +301,17 @@
           },
           {
             "company": "Power Grid Corporation of India",
-            "valueCr": 71,
-            "amcs": [
-              "PGIM India"
-            ]
-          },
-          {
-            "company": "The Phoenix Mills",
-            "valueCr": 70,
-            "amcs": [
-              "PGIM India"
-            ]
-          },
-          {
-            "company": "Hitachi Energy India",
-            "valueCr": 64,
+            "valueCr": 80,
             "amcs": [
               "PGIM India",
-              "Trust"
+              "ITI"
+            ]
+          },
+          {
+            "company": "Krishna Institute Of Medical Sciences",
+            "valueCr": 77,
+            "amcs": [
+              "Bank of India"
             ]
           }
         ]
@@ -322,182 +325,182 @@
       {
         "company": "Bharti Airtel",
         "tier": "large",
-        "buyers": 6,
-        "sellers": 5,
-        "buyCr": 946,
-        "sellCr": 1134,
-        "netCr": -188,
-        "grossCr": 2081,
+        "buyers": 7,
+        "sellers": 6,
+        "buyCr": 954,
+        "sellCr": 1230,
+        "netCr": -276,
+        "grossCr": 2184,
         "topBuyer": "SBI",
         "topSeller": "ICICI Prudential"
       },
       {
         "company": "Larsen & Toubro",
         "tier": "large",
-        "buyers": 5,
-        "sellers": 5,
-        "buyCr": 64,
-        "sellCr": 996,
-        "netCr": -932,
-        "grossCr": 1061,
-        "topBuyer": "Aditya Birla Sun Life",
+        "buyers": 6,
+        "sellers": 6,
+        "buyCr": 172,
+        "sellCr": 1036,
+        "netCr": -864,
+        "grossCr": 1208,
+        "topBuyer": "Bank of India",
         "topSeller": "ICICI Prudential"
       },
       {
         "company": "Axis Bank",
         "tier": "large",
-        "buyers": 6,
-        "sellers": 5,
-        "buyCr": 141,
-        "sellCr": 436,
-        "netCr": -295,
-        "grossCr": 577,
+        "buyers": 7,
+        "sellers": 6,
+        "buyCr": 147,
+        "sellCr": 522,
+        "netCr": -375,
+        "grossCr": 669,
         "topBuyer": "SBI",
         "topSeller": "ICICI Prudential"
       },
       {
         "company": "Infosys",
         "tier": "large",
-        "buyers": 4,
-        "sellers": 4,
-        "buyCr": 479,
-        "sellCr": 1363,
-        "netCr": -884,
-        "grossCr": 1843,
+        "buyers": 5,
+        "sellers": 5,
+        "buyCr": 492,
+        "sellCr": 1585,
+        "netCr": -1094,
+        "grossCr": 2077,
         "topBuyer": "SBI",
         "topSeller": "ICICI Prudential"
       },
       {
-        "company": "Kotak Mahindra Bank",
-        "tier": "large",
-        "buyers": 7,
-        "sellers": 4,
-        "buyCr": 356,
-        "sellCr": 920,
-        "netCr": -564,
-        "grossCr": 1276,
-        "topBuyer": "Aditya Birla Sun Life",
-        "topSeller": "ICICI Prudential"
-      },
-      {
-        "company": "Mahindra & Mahindra",
-        "tier": "large",
-        "buyers": 4,
-        "sellers": 4,
-        "buyCr": 803,
-        "sellCr": 63,
-        "netCr": 740,
-        "grossCr": 865,
-        "topBuyer": "ICICI Prudential",
-        "topSeller": "SBI"
-      },
-      {
         "company": "HDFC Bank",
         "tier": "large",
-        "buyers": 6,
-        "sellers": 4,
-        "buyCr": 349,
-        "sellCr": 411,
-        "netCr": -62,
-        "grossCr": 760,
-        "topBuyer": "Aditya Birla Sun Life",
+        "buyers": 8,
+        "sellers": 5,
+        "buyCr": 750,
+        "sellCr": 416,
+        "netCr": 334,
+        "grossCr": 1167,
+        "topBuyer": "Nippon India",
         "topSeller": "SBI"
-      },
-      {
-        "company": "Maruti Suzuki India",
-        "tier": "large",
-        "buyers": 4,
-        "sellers": 4,
-        "buyCr": 442,
-        "sellCr": 309,
-        "netCr": 134,
-        "grossCr": 751,
-        "topBuyer": "PPFAS",
-        "topSeller": "ICICI Prudential"
       },
       {
         "company": "Eternal",
         "tier": "large",
+        "buyers": 8,
+        "sellers": 5,
+        "buyCr": 626,
+        "sellCr": 375,
+        "netCr": 251,
+        "grossCr": 1002,
+        "topBuyer": "SBI",
+        "topSeller": "ICICI Prudential"
+      },
+      {
+        "company": "Coforge",
+        "tier": "mid",
         "buyers": 6,
-        "sellers": 4,
-        "buyCr": 362,
-        "sellCr": 372,
-        "netCr": -10,
-        "grossCr": 734,
+        "sellers": 5,
+        "buyCr": 216,
+        "sellCr": 258,
+        "netCr": -42,
+        "grossCr": 474,
         "topBuyer": "SBI",
         "topSeller": "ICICI Prudential"
       },
       {
         "company": "Apollo Hospitals Enterprise",
         "tier": "large",
-        "buyers": 4,
-        "sellers": 4,
-        "buyCr": 95,
-        "sellCr": 264,
-        "netCr": -168,
-        "grossCr": 359,
+        "buyers": 6,
+        "sellers": 5,
+        "buyCr": 134,
+        "sellCr": 293,
+        "netCr": -159,
+        "grossCr": 427,
         "topBuyer": "ICICI Prudential",
         "topSeller": "SBI"
       },
       {
-        "company": "NTPC",
-        "tier": "large",
-        "buyers": 4,
-        "sellers": 4,
-        "buyCr": 94,
-        "sellCr": 136,
-        "netCr": -42,
-        "grossCr": 230,
-        "topBuyer": "ICICI Prudential",
-        "topSeller": "Aditya Birla Sun Life"
+        "company": "Sona Blw Precision Forgings",
+        "tier": "mid",
+        "buyers": 5,
+        "sellers": 5,
+        "buyCr": 192,
+        "sellCr": 184,
+        "netCr": 8,
+        "grossCr": 376,
+        "topBuyer": "PGIM India",
+        "topSeller": "ICICI Prudential"
       },
       {
         "company": "ITC",
         "tier": "large",
-        "buyers": 5,
-        "sellers": 3,
-        "buyCr": 1617,
-        "sellCr": 23,
-        "netCr": 1594,
-        "grossCr": 1639,
+        "buyers": 7,
+        "sellers": 4,
+        "buyCr": 2347,
+        "sellCr": 35,
+        "netCr": 2312,
+        "grossCr": 2383,
         "topBuyer": "ICICI Prudential",
-        "topSeller": "Jio BlackRock"
+        "topSeller": "Bank of India"
       },
       {
-        "company": "Bajaj Finance",
+        "company": "Kotak Mahindra Bank",
         "tier": "large",
-        "buyers": 4,
-        "sellers": 3,
-        "buyCr": 222,
-        "sellCr": 752,
-        "netCr": -531,
-        "grossCr": 974,
-        "topBuyer": "Mahindra",
-        "topSeller": "SBI"
+        "buyers": 10,
+        "sellers": 4,
+        "buyCr": 831,
+        "sellCr": 926,
+        "netCr": -95,
+        "grossCr": 1757,
+        "topBuyer": "Nippon India",
+        "topSeller": "ICICI Prudential"
+      },
+      {
+        "company": "ICICI Bank",
+        "tier": "large",
+        "buyers": 10,
+        "sellers": 4,
+        "buyCr": 351,
+        "sellCr": 1311,
+        "netCr": -959,
+        "grossCr": 1662,
+        "topBuyer": "Old Bridge",
+        "topSeller": "Nippon India"
       },
       {
         "company": "Tata Consultancy Services",
         "tier": "large",
-        "buyers": 3,
-        "sellers": 3,
-        "buyCr": 450,
-        "sellCr": 503,
-        "netCr": -53,
-        "grossCr": 954,
+        "buyers": 5,
+        "sellers": 4,
+        "buyCr": 466,
+        "sellCr": 722,
+        "netCr": -256,
+        "grossCr": 1188,
         "topBuyer": "SBI",
         "topSeller": "ICICI Prudential"
       },
       {
-        "company": "One 97 Communications",
-        "tier": "mid",
-        "buyers": 7,
-        "sellers": 3,
-        "buyCr": 519,
-        "sellCr": 433,
-        "netCr": 86,
-        "grossCr": 952,
-        "topBuyer": "ICICI Prudential",
-        "topSeller": "SBI"
+        "company": "State Bank of India",
+        "tier": "large",
+        "buyers": 6,
+        "sellers": 4,
+        "buyCr": 115,
+        "sellCr": 1018,
+        "netCr": -904,
+        "grossCr": 1133,
+        "topBuyer": "Bank of India",
+        "topSeller": "Nippon India"
+      },
+      {
+        "company": "Reliance Industries",
+        "tier": "large",
+        "buyers": 9,
+        "sellers": 4,
+        "buyCr": 411,
+        "sellCr": 605,
+        "netCr": -193,
+        "grossCr": 1016,
+        "topBuyer": "Mahindra",
+        "topSeller": "Aditya Birla Sun Life"
       }
     ]
   },
@@ -505,66 +508,84 @@
     "month": "Oct-26",
     "monthPrev": "Sep-26",
     "minBookCr": 500,
-    "medianTurnoverPct": 3.29,
+    "medianTurnoverPct": 3.33,
     "rows": [
       {
         "amc": "Trust",
-        "turnoverPct": 13.6,
-        "buyCr": 1389,
-        "sellCr": 897,
+        "turnoverPct": 13.67,
+        "buyCr": 1395,
+        "sellCr": 903,
         "bookCr": 6750,
         "schemes": 5,
         "holdings": 134
       },
       {
         "amc": "LIC",
-        "turnoverPct": 10.64,
-        "buyCr": 1195,
-        "sellCr": 1125,
+        "turnoverPct": 10.68,
+        "buyCr": 1199,
+        "sellCr": 1129,
         "bookCr": 10448,
         "schemes": 9,
         "holdings": 188
       },
       {
         "amc": "Jio BlackRock",
-        "turnoverPct": 10.16,
-        "buyCr": 467,
-        "sellCr": 390,
+        "turnoverPct": 10.21,
+        "buyCr": 468,
+        "sellCr": 392,
         "bookCr": 3828,
         "schemes": 4,
         "holdings": 475
       },
       {
         "amc": "PGIM India",
-        "turnoverPct": 9.17,
-        "buyCr": 1859,
-        "sellCr": 1805,
+        "turnoverPct": 9.22,
+        "buyCr": 1868,
+        "sellCr": 1813,
         "bookCr": 19493,
         "schemes": 7,
         "holdings": 187
       },
       {
+        "amc": "Bank of India",
+        "turnoverPct": 7.98,
+        "buyCr": 2493,
+        "sellCr": 817,
+        "bookCr": 10537,
+        "schemes": 9,
+        "holdings": 213
+      },
+      {
         "amc": "Mahindra",
-        "turnoverPct": 6.04,
-        "buyCr": 2349,
-        "sellCr": 1678,
+        "turnoverPct": 6.07,
+        "buyCr": 2362,
+        "sellCr": 1686,
         "bookCr": 27634,
         "schemes": 12,
         "holdings": 279
       },
       {
         "amc": "JM Financial",
-        "turnoverPct": 5.96,
-        "buyCr": 519,
-        "sellCr": 544,
+        "turnoverPct": 5.99,
+        "buyCr": 522,
+        "sellCr": 545,
         "bookCr": 8509,
         "schemes": 7,
         "holdings": 259
       },
       {
+        "amc": "ITI",
+        "turnoverPct": 5.06,
+        "buyCr": 689,
+        "sellCr": 495,
+        "bookCr": 9667,
+        "schemes": 8,
+        "holdings": 245
+      },
+      {
         "amc": "Quantum",
-        "turnoverPct": 3.68,
-        "buyCr": 94,
+        "turnoverPct": 3.69,
+        "buyCr": 95,
         "sellCr": 55,
         "bookCr": 1514,
         "schemes": 4,
@@ -572,36 +593,36 @@
       },
       {
         "amc": "Old Bridge",
-        "turnoverPct": 3.29,
-        "buyCr": 355,
-        "sellCr": 149,
+        "turnoverPct": 3.33,
+        "buyCr": 357,
+        "sellCr": 150,
         "bookCr": 4497,
         "schemes": 2,
         "holdings": 48
       },
       {
         "amc": "ICICI Prudential",
-        "turnoverPct": 3.16,
-        "buyCr": 10691,
-        "sellCr": 9936,
+        "turnoverPct": 3.18,
+        "buyCr": 10737,
+        "sellCr": 9991,
         "bookCr": 312620,
         "schemes": 29,
         "holdings": 648
       },
       {
         "amc": "Aditya Birla Sun Life",
-        "turnoverPct": 3.09,
-        "buyCr": 4274,
-        "sellCr": 4823,
+        "turnoverPct": 3.11,
+        "buyCr": 4299,
+        "sellCr": 4844,
         "bookCr": 137290,
         "schemes": 24,
         "holdings": 472
       },
       {
         "amc": "SBI",
-        "turnoverPct": 2.91,
-        "buyCr": 10700,
-        "sellCr": 11878,
+        "turnoverPct": 2.93,
+        "buyCr": 10767,
+        "sellCr": 11938,
         "bookCr": 362836,
         "schemes": 25,
         "holdings": 571
@@ -616,9 +637,18 @@
         "holdings": 90
       },
       {
+        "amc": "Nippon India",
+        "turnoverPct": 2.18,
+        "buyCr": 7551,
+        "sellCr": 6704,
+        "bookCr": 303040,
+        "schemes": 16,
+        "holdings": 454
+      },
+      {
         "amc": "Abakkus",
         "turnoverPct": 0.46,
-        "buyCr": 1084,
+        "buyCr": 1090,
         "sellCr": 51,
         "bookCr": 11421,
         "schemes": 3,
@@ -627,7 +657,7 @@
       {
         "amc": "Helios",
         "turnoverPct": 0.16,
-        "buyCr": 697,
+        "buyCr": 700,
         "sellCr": 23,
         "bookCr": 14647,
         "schemes": 4,
@@ -636,7 +666,7 @@
       {
         "amc": "PPFAS",
         "turnoverPct": 0.11,
-        "buyCr": 2881,
+        "buyCr": 2894,
         "sellCr": 141,
         "bookCr": 133327,
         "schemes": 3,
@@ -649,12 +679,38 @@
     "windowLabel": "Jul-26 → Oct-26",
     "windowMonths": 3,
     "period": "3Y",
-    "universe": 97,
-    "medianFlowPct": -4,
+    "universe": 127,
+    "medianFlowPct": -3.7,
     "quadrants": {
       "winning": {
-        "count": 31,
+        "count": 44,
         "rows": [
+          {
+            "fund": "Bank of India Small Cap Fund",
+            "amc": "Bank of India",
+            "classification": "Equity : Small Cap",
+            "percentile": 89.7,
+            "quartile": "Q1",
+            "perfReturn": 17.3,
+            "bookGrowthPct": 44.8,
+            "navReturnPct": 0.4,
+            "impliedFlowPct": 44.3,
+            "bookCr": 3520,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Bank of India Flexi Cap Fund",
+            "amc": "Bank of India",
+            "classification": "Equity : Flexi Cap",
+            "percentile": 95.4,
+            "quartile": "Q1",
+            "perfReturn": 17.3,
+            "bookGrowthPct": 20.6,
+            "navReturnPct": -0.2,
+            "impliedFlowPct": 20.8,
+            "bookCr": 3034,
+            "monthsBack": 3
+          },
           {
             "fund": "Mahindra Manulife Multi Cap Fund",
             "amc": "Mahindra",
@@ -666,6 +722,32 @@
             "navReturnPct": 0.3,
             "impliedFlowPct": 11.4,
             "bookCr": 7265,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Bank of India Multi Cap Fund",
+            "amc": "Bank of India",
+            "classification": "Equity : Multi Cap",
+            "percentile": 87,
+            "quartile": "Q1",
+            "perfReturn": 16.4,
+            "bookGrowthPct": 10,
+            "navReturnPct": 0.1,
+            "impliedFlowPct": 10,
+            "bookCr": 1264,
+            "monthsBack": 3
+          },
+          {
+            "fund": "ITI Flexi Cap Fund",
+            "amc": "ITI",
+            "classification": "Equity : Flexi Cap",
+            "percentile": 97.7,
+            "quartile": "Q1",
+            "perfReturn": 17.9,
+            "bookGrowthPct": 11.8,
+            "navReturnPct": 2.9,
+            "impliedFlowPct": 8.9,
+            "bookCr": 1520,
             "monthsBack": 3
           },
           {
@@ -695,74 +777,22 @@
             "monthsBack": 3
           },
           {
-            "fund": "ICICI Pru Retirement Fund-Pure Equity Plan",
-            "amc": "ICICI Prudential",
-            "classification": "Equity : Flexi Cap",
-            "percentile": 100,
-            "quartile": "Q1",
-            "perfReturn": 18.5,
-            "bookGrowthPct": -1.7,
-            "navReturnPct": -3.2,
-            "impliedFlowPct": 1.6,
-            "bookCr": 1933,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Aditya Birla SL Small Cap Fund",
-            "amc": "Aditya Birla Sun Life",
+            "fund": "ITI Small Cap Fund",
+            "amc": "ITI",
             "classification": "Equity : Small Cap",
-            "percentile": 58.6,
-            "quartile": "Q2",
-            "perfReturn": 13.3,
-            "bookGrowthPct": 0.5,
-            "navReturnPct": -1,
-            "impliedFlowPct": 1.5,
-            "bookCr": 5618,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Parag Parikh Flexi Cap Fund",
-            "amc": "PPFAS",
-            "classification": "Equity : Flexi Cap",
-            "percentile": 60.5,
-            "quartile": "Q2",
-            "perfReturn": 12.9,
-            "bookGrowthPct": 1.6,
-            "navReturnPct": 0.2,
-            "impliedFlowPct": 1.4,
-            "bookCr": 127201,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Mahindra Manulife Mid Cap Fund",
-            "amc": "Mahindra",
-            "classification": "Equity : Mid Cap",
-            "percentile": 55.6,
-            "quartile": "Q2",
-            "perfReturn": 14.8,
-            "bookGrowthPct": -5.5,
-            "navReturnPct": -6.9,
-            "impliedFlowPct": 1.4,
-            "bookCr": 4769,
-            "monthsBack": 3
-          },
-          {
-            "fund": "LIC MF Multi Cap Fund",
-            "amc": "LIC",
-            "classification": "Equity : Multi Cap",
-            "percentile": 82.6,
+            "percentile": 93.1,
             "quartile": "Q1",
-            "perfReturn": 16.2,
-            "bookGrowthPct": 0.8,
-            "navReturnPct": -0.5,
-            "impliedFlowPct": 1.3,
-            "bookCr": 2050,
+            "perfReturn": 19.8,
+            "bookGrowthPct": 3.1,
+            "navReturnPct": -1.1,
+            "impliedFlowPct": 4.2,
+            "bookCr": 3417,
             "monthsBack": 3
           }
         ]
       },
       "coasting": {
-        "count": 18,
+        "count": 21,
         "rows": [
           {
             "fund": "Aditya Birla SL Pharma & Healthcare Fund",
@@ -817,6 +847,32 @@
             "monthsBack": 3
           },
           {
+            "fund": "Bank Of India Large & Mid Cap Fund",
+            "amc": "Bank of India",
+            "classification": "Equity : Mid Cap",
+            "percentile": 25,
+            "quartile": "Q3",
+            "perfReturn": 13.2,
+            "bookGrowthPct": 0.7,
+            "navReturnPct": 0.2,
+            "impliedFlowPct": 0.5,
+            "bookCr": 495,
+            "monthsBack": 2
+          },
+          {
+            "fund": "Nippon India Pharma Fund",
+            "amc": "Nippon India",
+            "classification": "Equity : Sectoral - Pharma",
+            "percentile": 22.2,
+            "quartile": "Q4",
+            "perfReturn": 17.9,
+            "bookGrowthPct": 0.2,
+            "navReturnPct": 0.3,
+            "impliedFlowPct": 0,
+            "bookCr": 9051,
+            "monthsBack": 3
+          },
+          {
             "fund": "the Quantum Small Cap Fund",
             "amc": "Quantum",
             "classification": "Equity : Small Cap",
@@ -830,48 +886,22 @@
             "monthsBack": 3
           },
           {
-            "fund": "SBI Midcap Fund",
-            "amc": "SBI",
+            "fund": "Bank Of India MID CAP TAX FUND Series 2",
+            "amc": "Bank of India",
             "classification": "Equity : Mid Cap",
-            "percentile": 5.6,
-            "quartile": "Q4",
-            "perfReturn": 8.9,
-            "bookGrowthPct": -7.4,
-            "navReturnPct": -6.3,
-            "impliedFlowPct": -1.1,
-            "bookCr": 21677,
-            "monthsBack": 3
-          },
-          {
-            "fund": "SBI Retirement Benefit Fund-Aggressive Plan",
-            "amc": "SBI",
-            "classification": "Equity : Flexi Cap",
-            "percentile": 14,
-            "quartile": "Q4",
-            "perfReturn": 9,
-            "bookGrowthPct": -1.4,
-            "navReturnPct": 0.2,
-            "impliedFlowPct": -1.7,
-            "bookCr": 2964,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Aditya Birla SL Midcap Fund",
-            "amc": "Aditya Birla Sun Life",
-            "classification": "Equity : Mid Cap",
-            "percentile": 22.2,
-            "quartile": "Q4",
-            "perfReturn": 13.2,
-            "bookGrowthPct": -6.6,
-            "navReturnPct": -4.3,
-            "impliedFlowPct": -2.3,
-            "bookCr": 6160,
+            "percentile": 33.3,
+            "quartile": "Q3",
+            "perfReturn": 13.7,
+            "bookGrowthPct": -0.1,
+            "navReturnPct": 0.3,
+            "impliedFlowPct": -0.4,
+            "bookCr": 31,
             "monthsBack": 3
           }
         ]
       },
       "falling": {
-        "count": 30,
+        "count": 40,
         "rows": [
           {
             "fund": "Mahindra Manulife Consumption Fund",
@@ -980,7 +1010,7 @@
         ]
       },
       "undiscovered": {
-        "count": 18,
+        "count": 22,
         "rows": [
           {
             "fund": "SBI Dividend Yield Fund",
