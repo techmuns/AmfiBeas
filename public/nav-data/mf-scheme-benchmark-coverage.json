@@ -1,21 +1,21 @@
 {
-  "generatedAt": "2026-11-07T23:31:50.451Z",
+  "generatedAt": "2026-11-09T17:30:37.180Z",
   "universeAsOfDate": "2026-11-06",
   "totalApiSchemeRows": 3439,
   "totalUnderlyingSchemes": 1771,
   "officialMapped": 114,
-  "officialNameOnly": 107,
-  "unmapped": 1550,
+  "officialNameOnly": 100,
+  "unmapped": 1557,
   "returnAvailable": 114,
   "returnUnavailable": 1657,
   "benchmarkHistoryInsufficient": 0,
-  "staleSource": 15,
-  "coveragePct": 12.48,
+  "staleSource": 13,
+  "coveragePct": 12.08,
   "rows": {
-    "officialMapped": 199,
-    "officialNameOnly": 200,
-    "unmapped": 3040,
-    "returnAvailable": 199
+    "officialMapped": 200,
+    "officialNameOnly": 185,
+    "unmapped": 3054,
+    "returnAvailable": 200
   },
   "byAmc": [
     {
@@ -323,6 +323,14 @@
       "pct": 1.35
     },
     {
+      "amc": "LIC Mutual Fund",
+      "total": 42,
+      "officialMapped": 3,
+      "officialNameOnly": 5,
+      "unmapped": 34,
+      "pct": 19.05
+    },
+    {
       "amc": "Canara Robeco Mutual Fund",
       "total": 26,
       "officialMapped": 3,
@@ -339,28 +347,36 @@
       "pct": 20
     },
     {
-      "amc": "LIC Mutual Fund",
-      "total": 42,
-      "officialMapped": 3,
-      "officialNameOnly": 6,
-      "unmapped": 33,
-      "pct": 21.43
-    },
-    {
-      "amc": "HSBC Mutual Fund",
-      "total": 36,
-      "officialMapped": 5,
-      "officialNameOnly": 3,
-      "unmapped": 28,
-      "pct": 22.22
-    },
-    {
       "amc": "Helios Mutual Fund",
       "total": 7,
       "officialMapped": 2,
       "officialNameOnly": 0,
       "unmapped": 5,
       "pct": 28.57
+    },
+    {
+      "amc": "PPFAS Mutual Fund",
+      "total": 7,
+      "officialMapped": 2,
+      "officialNameOnly": 0,
+      "unmapped": 5,
+      "pct": 28.57
+    },
+    {
+      "amc": "HSBC Mutual Fund",
+      "total": 36,
+      "officialMapped": 5,
+      "officialNameOnly": 6,
+      "unmapped": 25,
+      "pct": 30.56
+    },
+    {
+      "amc": "Aditya Birla Sun Life Mutual Fund",
+      "total": 79,
+      "officialMapped": 3,
+      "officialNameOnly": 23,
+      "unmapped": 53,
+      "pct": 32.91
     },
     {
       "amc": "Quantum Mutual Fund",
@@ -382,17 +398,9 @@
       "amc": "Nippon India Mutual Fund",
       "total": 95,
       "officialMapped": 22,
-      "officialNameOnly": 13,
-      "unmapped": 60,
-      "pct": 36.84
-    },
-    {
-      "amc": "Aditya Birla Sun Life Mutual Fund",
-      "total": 79,
-      "officialMapped": 3,
-      "officialNameOnly": 27,
-      "unmapped": 49,
-      "pct": 37.97
+      "officialNameOnly": 10,
+      "unmapped": 63,
+      "pct": 33.68
     },
     {
       "amc": "DSP Mutual Fund",
@@ -401,14 +409,6 @@
       "officialNameOnly": 17,
       "unmapped": 36,
       "pct": 51.35
-    },
-    {
-      "amc": "PPFAS Mutual Fund",
-      "total": 7,
-      "officialMapped": 2,
-      "officialNameOnly": 2,
-      "unmapped": 3,
-      "pct": 57.14
     },
     {
       "amc": "Kotak Mahindra Mutual Fund",
@@ -426,6 +426,14 @@
       "officialMapped": 0,
       "officialNameOnly": 0,
       "unmapped": 35,
+      "pct": 0
+    },
+    {
+      "classification": "Debt : Money Market",
+      "total": 18,
+      "officialMapped": 0,
+      "officialNameOnly": 0,
+      "unmapped": 18,
       "pct": 0
     },
     {
@@ -501,14 +509,6 @@
       "pct": 2.86
     },
     {
-      "classification": "Equity : Tax Saving (ELSS)",
-      "total": 28,
-      "officialMapped": 1,
-      "officialNameOnly": 0,
-      "unmapped": 27,
-      "pct": 3.57
-    },
-    {
       "classification": "Debt : Overnight",
       "total": 27,
       "officialMapped": 0,
@@ -539,14 +539,6 @@
       "officialNameOnly": 0,
       "unmapped": 18,
       "pct": 5.26
-    },
-    {
-      "classification": "Debt : Money Market",
-      "total": 18,
-      "officialMapped": 0,
-      "officialNameOnly": 1,
-      "unmapped": 17,
-      "pct": 5.56
     },
     {
       "classification": "(unclassified)",
@@ -597,6 +589,22 @@
       "pct": 6.67
     },
     {
+      "classification": "Equity : Tax Saving (ELSS)",
+      "total": 28,
+      "officialMapped": 2,
+      "officialNameOnly": 0,
+      "unmapped": 26,
+      "pct": 7.14
+    },
+    {
+      "classification": "Debt",
+      "total": 146,
+      "officialMapped": 1,
+      "officialNameOnly": 10,
+      "unmapped": 135,
+      "pct": 7.53
+    },
+    {
       "classification": "Debt : Short Duration",
       "total": 13,
       "officialMapped": 0,
@@ -621,12 +629,12 @@
       "pct": 8.33
     },
     {
-      "classification": "Debt",
-      "total": 146,
-      "officialMapped": 1,
-      "officialNameOnly": 12,
-      "unmapped": 133,
-      "pct": 8.9
+      "classification": "Equity : Large Cap",
+      "total": 35,
+      "officialMapped": 3,
+      "officialNameOnly": 0,
+      "unmapped": 32,
+      "pct": 8.57
     },
     {
       "classification": "FoFs : Overseas",
@@ -669,12 +677,28 @@
       "pct": 10
     },
     {
-      "classification": "Debt : Ultra Short Duration",
-      "total": 19,
+      "classification": "Hybrid : Conservative Hybrid",
+      "total": 10,
       "officialMapped": 0,
-      "officialNameOnly": 2,
-      "unmapped": 17,
-      "pct": 10.53
+      "officialNameOnly": 1,
+      "unmapped": 9,
+      "pct": 10
+    },
+    {
+      "classification": "Debt : Liquid",
+      "total": 39,
+      "officialMapped": 0,
+      "officialNameOnly": 4,
+      "unmapped": 35,
+      "pct": 10.26
+    },
+    {
+      "classification": "Equity : Large & Mid Cap",
+      "total": 29,
+      "officialMapped": 3,
+      "officialNameOnly": 0,
+      "unmapped": 26,
+      "pct": 10.34
     },
     {
       "classification": "Equity : Sectoral - Infrastructure",
@@ -699,14 +723,6 @@
       "officialNameOnly": 1,
       "unmapped": 8,
       "pct": 11.11
-    },
-    {
-      "classification": "Equity : Large Cap",
-      "total": 35,
-      "officialMapped": 4,
-      "officialNameOnly": 0,
-      "unmapped": 31,
-      "pct": 11.43
     },
     {
       "classification": "Equity : Sectoral - Financial Services",
@@ -741,14 +757,6 @@
       "pct": 12.5
     },
     {
-      "classification": "Debt : Liquid",
-      "total": 39,
-      "officialMapped": 0,
-      "officialNameOnly": 5,
-      "unmapped": 34,
-      "pct": 12.82
-    },
-    {
       "classification": "Equity : Thematic",
       "total": 91,
       "officialMapped": 10,
@@ -757,20 +765,20 @@
       "pct": 13.19
     },
     {
-      "classification": "Equity : Large & Mid Cap",
-      "total": 29,
-      "officialMapped": 3,
+      "classification": "Debt : Floater",
+      "total": 7,
+      "officialMapped": 0,
       "officialNameOnly": 1,
-      "unmapped": 25,
-      "pct": 13.79
+      "unmapped": 6,
+      "pct": 14.29
     },
     {
-      "classification": "Metal : ETFs",
-      "total": 25,
+      "classification": "Debt : Ultra Short Duration",
+      "total": 19,
       "officialMapped": 0,
-      "officialNameOnly": 4,
-      "unmapped": 21,
-      "pct": 16
+      "officialNameOnly": 3,
+      "unmapped": 16,
+      "pct": 15.79
     },
     {
       "classification": "Equity : Mid Cap",
@@ -789,6 +797,14 @@
       "pct": 16.67
     },
     {
+      "classification": "Equity : Index Funds",
+      "total": 68,
+      "officialMapped": 8,
+      "officialNameOnly": 4,
+      "unmapped": 56,
+      "pct": 17.65
+    },
+    {
       "classification": "Debt : Banking & PSU",
       "total": 11,
       "officialMapped": 0,
@@ -805,19 +821,11 @@
       "pct": 18.18
     },
     {
-      "classification": "Equity : Index Funds",
-      "total": 68,
-      "officialMapped": 8,
-      "officialNameOnly": 5,
-      "unmapped": 55,
-      "pct": 19.12
-    },
-    {
-      "classification": "Hybrid : Conservative Hybrid",
-      "total": 10,
+      "classification": "Metal : ETFs",
+      "total": 25,
       "officialMapped": 0,
-      "officialNameOnly": 2,
-      "unmapped": 8,
+      "officialNameOnly": 5,
+      "unmapped": 20,
       "pct": 20
     },
     {
@@ -831,10 +839,10 @@
     {
       "classification": "Equity : ETFs",
       "total": 176,
-      "officialMapped": 29,
+      "officialMapped": 28,
       "officialNameOnly": 9,
-      "unmapped": 138,
-      "pct": 21.59
+      "unmapped": 139,
+      "pct": 21.02
     },
     {
       "classification": "Debt : Low Duration",
@@ -847,8 +855,8 @@
     {
       "classification": "Equity : Index",
       "total": 157,
-      "officialMapped": 23,
-      "officialNameOnly": 19,
+      "officialMapped": 24,
+      "officialNameOnly": 18,
       "unmapped": 115,
       "pct": 26.75
     },
@@ -859,24 +867,16 @@
       "officialNameOnly": 6,
       "unmapped": 15,
       "pct": 28.57
-    },
-    {
-      "classification": "Debt : Floater",
-      "total": 7,
-      "officialMapped": 0,
-      "officialNameOnly": 2,
-      "unmapped": 5,
-      "pct": 28.57
     }
   ],
   "byProvider": [
     {
       "key": "NSE Indices",
-      "count": 134
+      "count": 133
     },
     {
       "key": "CRISIL",
-      "count": 11
+      "count": 8
     },
     {
       "key": "BSE (Asia Index)",
@@ -898,19 +898,15 @@
   "byCanonicalKey": [
     {
       "key": "NIFTY_50",
-      "count": 15
+      "count": 14
     },
     {
       "key": "NIFTY_500",
-      "count": 13
-    },
-    {
-      "key": "NIFTY_IT",
-      "count": 5
+      "count": 14
     },
     {
       "key": "NIFTY_MIDCAP_150",
-      "count": 5
+      "count": 6
     },
     {
       "key": "NIFTY_NEXT_50",
@@ -933,11 +929,15 @@
       "count": 4
     },
     {
-      "key": "NIFTY_INDIA_CONSUMPTION",
+      "key": "NIFTY_INDIA_MANUFACTURING",
       "count": 4
     },
     {
-      "key": "NIFTY_INDIA_MANUFACTURING",
+      "key": "NIFTY_IT",
+      "count": 4
+    },
+    {
+      "key": "NIFTY_PSU_BANK",
       "count": 4
     },
     {
@@ -953,19 +953,19 @@
       "count": 3
     },
     {
+      "key": "NIFTY_50_ARBITRAGE",
+      "count": 3
+    },
+    {
       "key": "NIFTY_FINANCIAL_SERVICES",
       "count": 3
     },
     {
+      "key": "NIFTY_INDIA_CONSUMPTION",
+      "count": 3
+    },
+    {
       "key": "NIFTY_LARGEMIDCAP_250",
-      "count": 3
-    },
-    {
-      "key": "NIFTY_LOW_DURATION_DEBT",
-      "count": 3
-    },
-    {
-      "key": "NIFTY_PSU_BANK",
       "count": 3
     },
     {
@@ -1001,10 +1001,6 @@
       "count": 2
     },
     {
-      "key": "NIFTY_50_ARBITRAGE",
-      "count": 2
-    },
-    {
       "key": "NIFTY_50_EQUAL_WEIGHT",
       "count": 2
     },
@@ -1018,10 +1014,6 @@
     },
     {
       "key": "NIFTY_ALPHA_50",
-      "count": 2
-    },
-    {
-      "key": "NIFTY_AUTO",
       "count": 2
     },
     {
@@ -1049,15 +1041,15 @@
       "count": 2
     },
     {
+      "key": "NIFTY_REALTY",
+      "count": 2
+    },
+    {
       "key": "NIFTY_SHORT_DURATION_DEBT",
       "count": 2
     },
     {
       "key": "BSE_TOP_10_BANKS",
-      "count": 1
-    },
-    {
-      "key": "CRISIL_10_YEAR_GILT",
       "count": 1
     },
     {
@@ -1077,19 +1069,11 @@
       "count": 1
     },
     {
-      "key": "CRISIL_MONEY_MARKET",
-      "count": 1
-    },
-    {
       "key": "CRISIL_SHORT_DURATION_DEBT",
       "count": 1
     },
     {
       "key": "CRISIL_SHORT_TERM_DEBT_HYBRID_75_25",
-      "count": 1
-    },
-    {
-      "key": "CRISIL_ULTRA_SHORT_DURATION_DEBT",
       "count": 1
     },
     {
@@ -1114,6 +1098,10 @@
     },
     {
       "key": "NIFTY_ALL_DURATION_GSEC",
+      "count": 1
+    },
+    {
+      "key": "NIFTY_AUTO",
       "count": 1
     },
     {
@@ -1153,15 +1141,15 @@
       "count": 1
     },
     {
+      "key": "NIFTY_LOW_DURATION_DEBT",
+      "count": 1
+    },
+    {
       "key": "NIFTY_MIDCAP_100",
       "count": 1
     },
     {
       "key": "NIFTY_PHARMA",
-      "count": 1
-    },
-    {
-      "key": "NIFTY_REALTY",
       "count": 1
     },
     {
@@ -1180,15 +1168,15 @@
   "unsupportedBenchmarkFamilies": [
     {
       "key": "(unresolved index name)",
-      "count": 59
+      "count": 56
     },
     {
       "key": "NSE Indices",
-      "count": 20
+      "count": 19
     },
     {
       "key": "CRISIL",
-      "count": 11
+      "count": 8
     },
     {
       "key": "BSE (Asia Index)",
@@ -1207,7 +1195,7 @@
       "count": 1
     }
   ],
-  "proxyDisagreements": 13,
+  "proxyDisagreements": 12,
   "proxyDisagreementList": [
     {
       "schemeName": "Aditya Birla SL Conglomerate Fund",
@@ -1350,18 +1338,6 @@
       "schemeCodes": [
         "48083",
         "48083-D"
-      ]
-    },
-    {
-      "schemeName": "Parag Parikh Large Cap Fund",
-      "amc": "PPFAS Mutual Fund",
-      "classification": "Equity : Large Cap",
-      "officialBenchmarkName": "NIFTY 50",
-      "officialBenchmarkKey": "NIFTY_50",
-      "categoryProxyBenchmarkKey": "NIFTY_100",
-      "schemeCodes": [
-        "50488",
-        "50488-D"
       ]
     }
   ]
