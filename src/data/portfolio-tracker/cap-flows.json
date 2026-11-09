@@ -2,9 +2,9 @@
   "meta": {
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
-    "generatedAt": "2026-11-09T02:58:17.812Z",
+    "generatedAt": "2026-11-09T03:19:24.876Z",
     "universe": "Active equity schemes only (excludes ETFs, index, international and hybrid funds)",
-    "activeEquityFunds": 74,
+    "activeEquityFunds": 76,
     "metric": "Net Rs Cr bought/sold = change in aggregate shares held x current implied price. Excludes corporate actions (split/bonus). pctOutstanding = net shares traded ÷ company shares outstanding x 100 (null until the screener feed covers the fincode).",
     "topN": 20
   },
@@ -215,7 +215,7 @@
       {
         "company": "Tata Consultancy Services Ltd.",
         "fincode": "INE467B01029",
-        "netCr": 333,
+        "netCr": 332,
         "pctOutstanding": 0.04,
         "amcs": [
           "SBI"
@@ -510,7 +510,7 @@
         "company": "Muthoot Finance Ltd.",
         "fincode": "INE414G01012",
         "netCr": 153,
-        "pctOutstanding": 0.19,
+        "pctOutstanding": 0.18,
         "amcs": [
           "SBI"
         ],
@@ -595,7 +595,7 @@
       {
         "company": "Infosys Ltd.",
         "fincode": "INE009A01021",
-        "netCr": 101,
+        "netCr": 100,
         "pctOutstanding": 0.02,
         "amcs": [
           "SBI",
@@ -1063,7 +1063,7 @@
       {
         "company": "Larsen & Toubro Ltd.",
         "fincode": "INE018A01030",
-        "netCr": 334,
+        "netCr": 332,
         "pctOutstanding": 0.06,
         "amcs": [
           "SBI"
@@ -1094,7 +1094,7 @@
       {
         "company": "HDFC Bank Ltd.",
         "fincode": "INE040A01034",
-        "netCr": 320,
+        "netCr": 321,
         "pctOutstanding": 0.03,
         "amcs": [
           "SBI",
@@ -1131,6 +1131,16 @@
             "fund": "SBI Quant Fund",
             "amc": "SBI",
             "netCr": -6
+          },
+          {
+            "fund": "Shriram Flexi Cap Fund",
+            "amc": "Shriram",
+            "netCr": -1
+          },
+          {
+            "fund": "Shriram ELSS Tax Saver Fund",
+            "amc": "Shriram",
+            "netCr": 0
           }
         ]
       },
@@ -1356,7 +1366,7 @@
       {
         "company": "Apollo Hospitals Enterprise Ltd.",
         "fincode": "INE437A01024",
-        "netCr": 199,
+        "netCr": 198,
         "pctOutstanding": 0.17,
         "amcs": [
           "SBI"
@@ -1836,8 +1846,18 @@
             "netCr": 4
           },
           {
+            "fund": "Shriram Flexi Cap Fund",
+            "amc": "Shriram",
+            "netCr": 0
+          },
+          {
             "fund": "JioBlackRock Nifty Midcap 150 Index Fund",
             "amc": "JioBlackRock",
+            "netCr": 0
+          },
+          {
+            "fund": "Shriram ELSS Tax Saver Fund",
+            "amc": "Shriram",
             "netCr": 0
           }
         ]
@@ -3956,7 +3976,7 @@
           },
           {
             "company": "Tata Consultancy Services Ltd.",
-            "netCr": 333,
+            "netCr": 332,
             "amcs": [
               "SBI"
             ],
@@ -4006,7 +4026,7 @@
           },
           {
             "company": "Infosys Ltd.",
-            "netCr": 101,
+            "netCr": 100,
             "amcs": [
               "SBI",
               "the",

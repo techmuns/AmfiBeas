@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-11-09T02:58:21.880Z",
+    "generatedAt": "2026-11-09T03:19:29.615Z",
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -9,13 +9,13 @@
   "convictionLedger": {
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
-    "funds": 74,
-    "amcs": 7,
+    "funds": 76,
+    "amcs": 8,
     "quadrants": {
       "new": {
-        "totalCr": 2957,
-        "positions": 52,
-        "companies": 44,
+        "totalCr": 2958,
+        "positions": 53,
+        "companies": 45,
         "byTier": {
           "large": {
             "valueCr": 116,
@@ -28,9 +28,9 @@
             "companies": 11
           },
           "small": {
-            "valueCr": 2426,
-            "positions": 36,
-            "companies": 28
+            "valueCr": 2428,
+            "positions": 37,
+            "companies": 29
           }
         },
         "top": [
@@ -86,13 +86,13 @@
         ]
       },
       "increased": {
-        "totalCr": 14468,
-        "positions": 329,
+        "totalCr": 14470,
+        "positions": 330,
         "companies": 246,
         "byTier": {
           "large": {
-            "valueCr": 8240,
-            "positions": 104,
+            "valueCr": 8242,
+            "positions": 105,
             "companies": 71
           },
           "mid": {
@@ -157,13 +157,13 @@
         ]
       },
       "decreased": {
-        "totalCr": 17179,
-        "positions": 298,
+        "totalCr": 17181,
+        "positions": 299,
         "companies": 239,
         "byTier": {
           "large": {
-            "valueCr": 10553,
-            "positions": 101,
+            "valueCr": 10555,
+            "positions": 102,
             "companies": 68
           },
           "mid": {
@@ -473,8 +473,8 @@
     "windowLabel": "Jul-26 → Oct-26",
     "windowMonths": 3,
     "period": "3Y",
-    "universe": 53,
-    "medianFlowPct": -3.7,
+    "universe": 55,
+    "medianFlowPct": -3.8,
     "quadrants": {
       "winning": {
         "count": 14,
@@ -586,7 +586,7 @@
         ]
       },
       "coasting": {
-        "count": 13,
+        "count": 14,
         "rows": [
           {
             "fund": "Aditya Birla SL Pharma & Healthcare Fund",
@@ -695,8 +695,21 @@
         ]
       },
       "falling": {
-        "count": 17,
+        "count": 18,
         "rows": [
+          {
+            "fund": "Shriram Flexi Cap Fund",
+            "amc": "Shriram",
+            "classification": "Equity : Flexi Cap",
+            "percentile": 2.3,
+            "quartile": "Q4",
+            "perfReturn": 6.3,
+            "bookGrowthPct": -11.4,
+            "navReturnPct": -2.6,
+            "impliedFlowPct": -8.9,
+            "bookCr": 117,
+            "monthsBack": 3
+          },
           {
             "fund": "LIC MF Large Cap Fund",
             "amc": "LIC",
@@ -721,6 +734,19 @@
             "navReturnPct": 0.2,
             "impliedFlowPct": -7.7,
             "bookCr": 3428,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Shriram ELSS Tax Saver Fund",
+            "amc": "Shriram",
+            "classification": "Equity : ELSS",
+            "percentile": 33.3,
+            "quartile": "Q3",
+            "perfReturn": 6.7,
+            "bookGrowthPct": -9.8,
+            "navReturnPct": -2.4,
+            "impliedFlowPct": -7.4,
+            "bookCr": 43,
             "monthsBack": 3
           },
           {
@@ -773,32 +799,6 @@
             "navReturnPct": -2.1,
             "impliedFlowPct": -6.8,
             "bookCr": 5542,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Aditya Birla SL ESG Integration Strategy Fund",
-            "amc": "Aditya Birla Sun Life",
-            "classification": "Equity : Thematic",
-            "percentile": 31.1,
-            "quartile": "Q3",
-            "perfReturn": 11.6,
-            "bookGrowthPct": -7.5,
-            "navReturnPct": -0.7,
-            "impliedFlowPct": -6.8,
-            "bookCr": 529,
-            "monthsBack": 3
-          },
-          {
-            "fund": "SBI ESG Exclusionary Strategy Fund",
-            "amc": "SBI",
-            "classification": "Equity : Thematic",
-            "percentile": 20,
-            "quartile": "Q4",
-            "perfReturn": 10.3,
-            "bookGrowthPct": -7,
-            "navReturnPct": -0.6,
-            "impliedFlowPct": -6.3,
-            "bookCr": 4960,
             "monthsBack": 3
           }
         ]
