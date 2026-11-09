@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-11-09T05:07:02.770Z",
+    "generatedAt": "2026-11-09T05:28:22.594Z",
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -9,28 +9,28 @@
   "convictionLedger": {
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
-    "funds": 82,
-    "amcs": 10,
+    "funds": 83,
+    "amcs": 11,
     "quadrants": {
       "new": {
-        "totalCr": 3006,
-        "positions": 58,
-        "companies": 47,
+        "totalCr": 3128,
+        "positions": 67,
+        "companies": 54,
         "byTier": {
           "large": {
-            "valueCr": 123,
-            "positions": 6,
-            "companies": 6
+            "valueCr": 150,
+            "positions": 8,
+            "companies": 8
           },
           "mid": {
-            "valueCr": 421,
-            "positions": 12,
-            "companies": 12
+            "valueCr": 478,
+            "positions": 16,
+            "companies": 16
           },
           "small": {
-            "valueCr": 2462,
-            "positions": 40,
-            "companies": 29
+            "valueCr": 2501,
+            "positions": 43,
+            "companies": 30
           }
         },
         "top": [
@@ -87,9 +87,9 @@
         ]
       },
       "increased": {
-        "totalCr": 18185,
-        "positions": 433,
-        "companies": 296,
+        "totalCr": 18194,
+        "positions": 438,
+        "companies": 298,
         "byTier": {
           "large": {
             "valueCr": 10690,
@@ -97,14 +97,14 @@
             "companies": 75
           },
           "mid": {
-            "valueCr": 4772,
-            "positions": 160,
-            "companies": 106
+            "valueCr": 4779,
+            "positions": 164,
+            "companies": 107
           },
           "small": {
-            "valueCr": 2723,
-            "positions": 133,
-            "companies": 115
+            "valueCr": 2726,
+            "positions": 134,
+            "companies": 116
           }
         },
         "top": [
@@ -162,8 +162,8 @@
         ]
       },
       "decreased": {
-        "totalCr": 17243,
-        "positions": 306,
+        "totalCr": 17255,
+        "positions": 307,
         "companies": 242,
         "byTier": {
           "large": {
@@ -172,8 +172,8 @@
             "companies": 70
           },
           "mid": {
-            "valueCr": 4816,
-            "positions": 115,
+            "valueCr": 4828,
+            "positions": 116,
             "companies": 93
           },
           "small": {
@@ -233,19 +233,19 @@
         ]
       },
       "exited": {
-        "totalCr": 1097,
-        "positions": 37,
-        "companies": 37,
+        "totalCr": 1197,
+        "positions": 46,
+        "companies": 45,
         "byTier": {
           "large": {
-            "valueCr": 447,
-            "positions": 10,
-            "companies": 10
+            "valueCr": 512,
+            "positions": 15,
+            "companies": 15
           },
           "mid": {
-            "valueCr": 222,
-            "positions": 14,
-            "companies": 14
+            "valueCr": 256,
+            "positions": 18,
+            "companies": 17
           },
           "small": {
             "valueCr": 429,
@@ -277,9 +277,10 @@
           },
           {
             "company": "Oracle Financial Services Software",
-            "valueCr": 39,
+            "valueCr": 40,
             "amcs": [
-              "LIC"
+              "LIC",
+              "Capitalmind"
             ]
           },
           {
@@ -307,12 +308,12 @@
       {
         "company": "Kotak Mahindra Bank",
         "tier": "large",
-        "buyers": 4,
+        "buyers": 5,
         "sellers": 3,
-        "buyCr": 267,
+        "buyCr": 280,
         "sellCr": 374,
-        "netCr": -107,
-        "grossCr": 641,
+        "netCr": -94,
+        "grossCr": 654,
         "topBuyer": "Aditya Birla Sun Life",
         "topSeller": "SBI"
       },
@@ -425,6 +426,18 @@
         "topSeller": "Jio BlackRock"
       },
       {
+        "company": "Apollo Hospitals Enterprise",
+        "tier": "large",
+        "buyers": 2,
+        "sellers": 2,
+        "buyCr": 45,
+        "sellCr": 256,
+        "netCr": -212,
+        "grossCr": 301,
+        "topBuyer": "LIC",
+        "topSeller": "SBI"
+      },
+      {
         "company": "Tata Steel",
         "tier": "large",
         "buyers": 2,
@@ -471,18 +484,6 @@
         "grossCr": 174,
         "topBuyer": "SBI",
         "topSeller": "Aditya Birla Sun Life"
-      },
-      {
-        "company": "ICICI Bank",
-        "tier": "large",
-        "buyers": 4,
-        "sellers": 2,
-        "buyCr": 91,
-        "sellCr": 77,
-        "netCr": 13,
-        "grossCr": 168,
-        "topBuyer": "Helios",
-        "topSeller": "Aditya Birla Sun Life"
       }
     ]
   },
@@ -523,7 +524,7 @@
         "amc": "Aditya Birla Sun Life",
         "turnoverPct": 3.08,
         "buyCr": 4254,
-        "sellCr": 4804,
+        "sellCr": 4805,
         "bookCr": 137290,
         "schemes": 24,
         "holdings": 472
@@ -531,8 +532,8 @@
       {
         "amc": "SBI",
         "turnoverPct": 2.89,
-        "buyCr": 10624,
-        "sellCr": 11779,
+        "buyCr": 10625,
+        "sellCr": 11780,
         "bookCr": 362836,
         "schemes": 25,
         "holdings": 571
