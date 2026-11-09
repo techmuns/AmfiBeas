@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-11-09T04:45:18.208Z",
+    "generatedAt": "2026-11-09T05:07:02.770Z",
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -9,27 +9,27 @@
   "convictionLedger": {
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
-    "funds": 79,
-    "amcs": 9,
+    "funds": 82,
+    "amcs": 10,
     "quadrants": {
       "new": {
-        "totalCr": 2954,
-        "positions": 53,
-        "companies": 45,
+        "totalCr": 3006,
+        "positions": 58,
+        "companies": 47,
         "byTier": {
           "large": {
-            "valueCr": 116,
-            "positions": 5,
-            "companies": 5
+            "valueCr": 123,
+            "positions": 6,
+            "companies": 6
           },
           "mid": {
-            "valueCr": 410,
-            "positions": 11,
-            "companies": 11
+            "valueCr": 421,
+            "positions": 12,
+            "companies": 12
           },
           "small": {
-            "valueCr": 2428,
-            "positions": 37,
+            "valueCr": 2462,
+            "positions": 40,
             "companies": 29
           }
         },
@@ -45,10 +45,11 @@
           },
           {
             "company": "Bonfiglioli Transmissions",
-            "valueCr": 296,
+            "valueCr": 302,
             "amcs": [
               "SBI",
-              "Aditya Birla Sun Life"
+              "Aditya Birla Sun Life",
+              "Abakkus"
             ]
           },
           {
@@ -67,7 +68,7 @@
           },
           {
             "company": "Zetwerk Manufacturing Businesses",
-            "valueCr": 202,
+            "valueCr": 218,
             "amcs": [
               "SBI",
               "Helios",
@@ -86,32 +87,33 @@
         ]
       },
       "increased": {
-        "totalCr": 17163,
-        "positions": 355,
-        "companies": 256,
+        "totalCr": 18185,
+        "positions": 433,
+        "companies": 296,
         "byTier": {
           "large": {
-            "valueCr": 10433,
-            "positions": 122,
-            "companies": 73
+            "valueCr": 10690,
+            "positions": 140,
+            "companies": 75
           },
           "mid": {
-            "valueCr": 4489,
-            "positions": 135,
-            "companies": 96
+            "valueCr": 4772,
+            "positions": 160,
+            "companies": 106
           },
           "small": {
-            "valueCr": 2241,
-            "positions": 98,
-            "companies": 87
+            "valueCr": 2723,
+            "positions": 133,
+            "companies": 115
           }
         },
         "top": [
           {
             "company": "DLF",
-            "valueCr": 1129,
+            "valueCr": 1137,
             "amcs": [
-              "PPFAS"
+              "PPFAS",
+              "Abakkus"
             ]
           },
           {
@@ -133,10 +135,11 @@
           },
           {
             "company": "Indus Towers",
-            "valueCr": 708,
+            "valueCr": 725,
             "amcs": [
               "SBI",
-              "PPFAS"
+              "PPFAS",
+              "Abakkus"
             ]
           },
           {
@@ -159,22 +162,22 @@
         ]
       },
       "decreased": {
-        "totalCr": 17234,
-        "positions": 304,
-        "companies": 241,
+        "totalCr": 17243,
+        "positions": 306,
+        "companies": 242,
         "byTier": {
           "large": {
-            "valueCr": 10621,
-            "positions": 107,
+            "valueCr": 10629,
+            "positions": 108,
             "companies": 70
           },
           "mid": {
             "valueCr": 4816,
-            "positions": 114,
-            "companies": 92
+            "positions": 115,
+            "companies": 93
           },
           "small": {
-            "valueCr": 1797,
+            "valueCr": 1798,
             "positions": 83,
             "companies": 79
           }
@@ -190,7 +193,7 @@
           },
           {
             "company": "Bajaj Auto",
-            "valueCr": 668,
+            "valueCr": 669,
             "amcs": [
               "SBI",
               "Aditya Birla Sun Life",
@@ -230,9 +233,9 @@
         ]
       },
       "exited": {
-        "totalCr": 1055,
-        "positions": 33,
-        "companies": 33,
+        "totalCr": 1097,
+        "positions": 37,
+        "companies": 37,
         "byTier": {
           "large": {
             "valueCr": 447,
@@ -240,14 +243,14 @@
             "companies": 10
           },
           "mid": {
-            "valueCr": 217,
-            "positions": 13,
-            "companies": 13
+            "valueCr": 222,
+            "positions": 14,
+            "companies": 14
           },
           "small": {
-            "valueCr": 392,
-            "positions": 10,
-            "companies": 10
+            "valueCr": 429,
+            "positions": 13,
+            "companies": 13
           }
         },
         "top": [
@@ -287,10 +290,10 @@
             ]
           },
           {
-            "company": "Park Medi World",
-            "valueCr": 23,
+            "company": "Jindal Saw",
+            "valueCr": 27,
             "amcs": [
-              "Helios"
+              "Abakkus"
             ]
           }
         ]
@@ -304,13 +307,37 @@
       {
         "company": "Kotak Mahindra Bank",
         "tier": "large",
+        "buyers": 4,
+        "sellers": 3,
+        "buyCr": 267,
+        "sellCr": 374,
+        "netCr": -107,
+        "grossCr": 641,
+        "topBuyer": "Aditya Birla Sun Life",
+        "topSeller": "SBI"
+      },
+      {
+        "company": "HDFC Bank",
+        "tier": "large",
+        "buyers": 3,
+        "sellers": 4,
+        "buyCr": 129,
+        "sellCr": 405,
+        "netCr": -277,
+        "grossCr": 534,
+        "topBuyer": "Aditya Birla Sun Life",
+        "topSeller": "SBI"
+      },
+      {
+        "company": "State Bank of India",
+        "tier": "large",
         "buyers": 3,
         "sellers": 3,
-        "buyCr": 264,
-        "sellCr": 374,
-        "netCr": -110,
-        "grossCr": 638,
-        "topBuyer": "Aditya Birla Sun Life",
+        "buyCr": 30,
+        "sellCr": 257,
+        "netCr": -227,
+        "grossCr": 288,
+        "topBuyer": "Jio BlackRock",
         "topSeller": "SBI"
       },
       {
@@ -338,39 +365,39 @@
         "topSeller": "SBI"
       },
       {
-        "company": "HDFC Bank",
-        "tier": "large",
-        "buyers": 2,
-        "sellers": 4,
-        "buyCr": 97,
-        "sellCr": 405,
-        "netCr": -308,
-        "grossCr": 502,
-        "topBuyer": "Aditya Birla Sun Life",
-        "topSeller": "SBI"
-      },
-      {
         "company": "Reliance Industries",
         "tier": "large",
-        "buyers": 2,
+        "buyers": 3,
         "sellers": 2,
-        "buyCr": 4,
+        "buyCr": 12,
         "sellCr": 493,
-        "netCr": -489,
-        "grossCr": 497,
-        "topBuyer": "PPFAS",
+        "netCr": -481,
+        "grossCr": 506,
+        "topBuyer": "Abakkus",
         "topSeller": "Aditya Birla Sun Life"
       },
       {
         "company": "One 97 Communications",
         "tier": "mid",
+        "buyers": 3,
+        "sellers": 2,
+        "buyCr": 81,
+        "sellCr": 416,
+        "netCr": -335,
+        "grossCr": 496,
+        "topBuyer": "Aditya Birla Sun Life",
+        "topSeller": "SBI"
+      },
+      {
+        "company": "Cummins India",
+        "tier": "large",
         "buyers": 2,
         "sellers": 2,
-        "buyCr": 79,
-        "sellCr": 416,
-        "netCr": -337,
-        "grossCr": 494,
-        "topBuyer": "Aditya Birla Sun Life",
+        "buyCr": 32,
+        "sellCr": 411,
+        "netCr": -379,
+        "grossCr": 444,
+        "topBuyer": "Helios",
         "topSeller": "SBI"
       },
       {
@@ -398,15 +425,15 @@
         "topSeller": "Jio BlackRock"
       },
       {
-        "company": "State Bank of India",
+        "company": "Tata Steel",
         "tier": "large",
         "buyers": 2,
-        "sellers": 3,
-        "buyCr": 17,
-        "sellCr": 257,
-        "netCr": -240,
-        "grossCr": 274,
-        "topBuyer": "Jio BlackRock",
+        "sellers": 4,
+        "buyCr": 45,
+        "sellCr": 234,
+        "netCr": -189,
+        "grossCr": 279,
+        "topBuyer": "Abakkus",
         "topSeller": "SBI"
       },
       {
@@ -419,6 +446,18 @@
         "netCr": 7,
         "grossCr": 262,
         "topBuyer": "SBI",
+        "topSeller": "Aditya Birla Sun Life"
+      },
+      {
+        "company": "NTPC",
+        "tier": "large",
+        "buyers": 2,
+        "sellers": 3,
+        "buyCr": 55,
+        "sellCr": 128,
+        "netCr": -73,
+        "grossCr": 183,
+        "topBuyer": "LIC",
         "topSeller": "Aditya Birla Sun Life"
       },
       {
@@ -436,38 +475,14 @@
       {
         "company": "ICICI Bank",
         "tier": "large",
-        "buyers": 3,
+        "buyers": 4,
         "sellers": 2,
-        "buyCr": 71,
+        "buyCr": 91,
         "sellCr": 77,
-        "netCr": -6,
-        "grossCr": 148,
+        "netCr": 13,
+        "grossCr": 168,
         "topBuyer": "Helios",
         "topSeller": "Aditya Birla Sun Life"
-      },
-      {
-        "company": "Ultratech Cement",
-        "tier": "large",
-        "buyers": 2,
-        "sellers": 2,
-        "buyCr": 18,
-        "sellCr": 59,
-        "netCr": -42,
-        "grossCr": 77,
-        "topBuyer": "LIC",
-        "topSeller": "Jio BlackRock"
-      },
-      {
-        "company": "Eicher Motors",
-        "tier": "large",
-        "buyers": 2,
-        "sellers": 2,
-        "buyCr": 34,
-        "sellCr": 15,
-        "netCr": 19,
-        "grossCr": 50,
-        "topBuyer": "Aditya Birla Sun Life",
-        "topSeller": "PPFAS"
       }
     ]
   },
@@ -479,17 +494,17 @@
     "rows": [
       {
         "amc": "LIC",
-        "turnoverPct": 10.59,
-        "buyCr": 1191,
-        "sellCr": 1119,
+        "turnoverPct": 10.58,
+        "buyCr": 1190,
+        "sellCr": 1118,
         "bookCr": 10448,
         "schemes": 9,
         "holdings": 188
       },
       {
         "amc": "Jio BlackRock",
-        "turnoverPct": 10.09,
-        "buyCr": 469,
+        "turnoverPct": 10.08,
+        "buyCr": 468,
         "sellCr": 387,
         "bookCr": 3828,
         "schemes": 4,
@@ -507,8 +522,8 @@
       {
         "amc": "Aditya Birla Sun Life",
         "turnoverPct": 3.08,
-        "buyCr": 4255,
-        "sellCr": 4806,
+        "buyCr": 4254,
+        "sellCr": 4804,
         "bookCr": 137290,
         "schemes": 24,
         "holdings": 472
@@ -516,8 +531,8 @@
       {
         "amc": "SBI",
         "turnoverPct": 2.89,
-        "buyCr": 10625,
-        "sellCr": 11777,
+        "buyCr": 10624,
+        "sellCr": 11779,
         "bookCr": 362836,
         "schemes": 25,
         "holdings": 571
@@ -532,6 +547,15 @@
         "holdings": 90
       },
       {
+        "amc": "Abakkus",
+        "turnoverPct": 0.46,
+        "buyCr": 1079,
+        "sellCr": 51,
+        "bookCr": 11421,
+        "schemes": 3,
+        "holdings": 126
+      },
+      {
         "amc": "Helios",
         "turnoverPct": 0.16,
         "buyCr": 696,
@@ -543,7 +567,7 @@
       {
         "amc": "PPFAS",
         "turnoverPct": 0.11,
-        "buyCr": 2835,
+        "buyCr": 2839,
         "sellCr": 140,
         "bookCr": 133327,
         "schemes": 3,
