@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-11-09T04:23:17.608Z",
+    "generatedAt": "2026-11-09T04:45:18.208Z",
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -9,11 +9,11 @@
   "convictionLedger": {
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
-    "funds": 76,
-    "amcs": 8,
+    "funds": 79,
+    "amcs": 9,
     "quadrants": {
       "new": {
-        "totalCr": 2958,
+        "totalCr": 2954,
         "positions": 53,
         "companies": 45,
         "byTier": {
@@ -23,7 +23,7 @@
             "companies": 5
           },
           "mid": {
-            "valueCr": 414,
+            "valueCr": 410,
             "positions": 11,
             "companies": 11
           },
@@ -86,30 +86,37 @@
         ]
       },
       "increased": {
-        "totalCr": 14470,
-        "positions": 330,
-        "companies": 246,
+        "totalCr": 17163,
+        "positions": 355,
+        "companies": 256,
         "byTier": {
           "large": {
-            "valueCr": 8242,
-            "positions": 105,
-            "companies": 71
+            "valueCr": 10433,
+            "positions": 122,
+            "companies": 73
           },
           "mid": {
-            "valueCr": 4160,
-            "positions": 133,
-            "companies": 94
+            "valueCr": 4489,
+            "positions": 135,
+            "companies": 96
           },
           "small": {
-            "valueCr": 2068,
-            "positions": 92,
-            "companies": 81
+            "valueCr": 2241,
+            "positions": 98,
+            "companies": 87
           }
         },
         "top": [
           {
+            "company": "DLF",
+            "valueCr": 1129,
+            "amcs": [
+              "PPFAS"
+            ]
+          },
+          {
             "company": "Bharti Airtel",
-            "valueCr": 867,
+            "valueCr": 853,
             "amcs": [
               "SBI",
               "Helios",
@@ -118,10 +125,18 @@
           },
           {
             "company": "Hindustan Aeronautics",
-            "valueCr": 796,
+            "valueCr": 793,
             "amcs": [
               "SBI",
               "LIC"
+            ]
+          },
+          {
+            "company": "Indus Towers",
+            "valueCr": 708,
+            "amcs": [
+              "SBI",
+              "PPFAS"
             ]
           },
           {
@@ -135,44 +150,31 @@
           },
           {
             "company": "Infosys",
-            "valueCr": 477,
+            "valueCr": 459,
             "amcs": [
-              "SBI"
-            ]
-          },
-          {
-            "company": "Tata Consultancy Services",
-            "valueCr": 407,
-            "amcs": [
-              "SBI"
-            ]
-          },
-          {
-            "company": "Indus Towers",
-            "valueCr": 385,
-            "amcs": [
-              "SBI"
+              "SBI",
+              "PPFAS"
             ]
           }
         ]
       },
       "decreased": {
-        "totalCr": 17181,
-        "positions": 299,
-        "companies": 239,
+        "totalCr": 17234,
+        "positions": 304,
+        "companies": 241,
         "byTier": {
           "large": {
-            "valueCr": 10555,
-            "positions": 102,
-            "companies": 68
+            "valueCr": 10621,
+            "positions": 107,
+            "companies": 70
           },
           "mid": {
-            "valueCr": 4825,
+            "valueCr": 4816,
             "positions": 114,
             "companies": 92
           },
           "small": {
-            "valueCr": 1801,
+            "valueCr": 1797,
             "positions": 83,
             "companies": 79
           }
@@ -212,7 +214,7 @@
           },
           {
             "company": "Reliance Industries",
-            "valueCr": 495,
+            "valueCr": 493,
             "amcs": [
               "Aditya Birla Sun Life",
               "SBI"
@@ -228,12 +230,12 @@
         ]
       },
       "exited": {
-        "totalCr": 1056,
+        "totalCr": 1055,
         "positions": 33,
         "companies": 33,
         "byTier": {
           "large": {
-            "valueCr": 448,
+            "valueCr": 447,
             "positions": 10,
             "companies": 10
           },
@@ -300,28 +302,64 @@
     "monthPrev": "Sep-26",
     "rows": [
       {
-        "company": "Bharti Airtel",
+        "company": "Kotak Mahindra Bank",
         "tier": "large",
         "buyers": 3,
+        "sellers": 3,
+        "buyCr": 264,
+        "sellCr": 374,
+        "netCr": -110,
+        "grossCr": 638,
+        "topBuyer": "Aditya Birla Sun Life",
+        "topSeller": "SBI"
+      },
+      {
+        "company": "Bharti Airtel",
+        "tier": "large",
+        "buyers": 4,
         "sellers": 2,
-        "buyCr": 867,
-        "sellCr": 421,
-        "netCr": 446,
-        "grossCr": 1288,
+        "buyCr": 853,
+        "sellCr": 413,
+        "netCr": 440,
+        "grossCr": 1266,
         "topBuyer": "SBI",
         "topSeller": "Aditya Birla Sun Life"
       },
       {
-        "company": "Kotak Mahindra Bank",
+        "company": "Maruti Suzuki India",
         "tier": "large",
         "buyers": 2,
         "sellers": 3,
-        "buyCr": 269,
-        "sellCr": 382,
-        "netCr": -114,
-        "grossCr": 651,
+        "buyCr": 403,
+        "sellCr": 136,
+        "netCr": 268,
+        "grossCr": 539,
+        "topBuyer": "PPFAS",
+        "topSeller": "SBI"
+      },
+      {
+        "company": "HDFC Bank",
+        "tier": "large",
+        "buyers": 2,
+        "sellers": 4,
+        "buyCr": 97,
+        "sellCr": 405,
+        "netCr": -308,
+        "grossCr": 502,
         "topBuyer": "Aditya Birla Sun Life",
         "topSeller": "SBI"
+      },
+      {
+        "company": "Reliance Industries",
+        "tier": "large",
+        "buyers": 2,
+        "sellers": 2,
+        "buyCr": 4,
+        "sellCr": 493,
+        "netCr": -489,
+        "grossCr": 497,
+        "topBuyer": "PPFAS",
+        "topSeller": "Aditya Birla Sun Life"
       },
       {
         "company": "One 97 Communications",
@@ -336,26 +374,50 @@
         "topSeller": "SBI"
       },
       {
+        "company": "Mahindra & Mahindra",
+        "tier": "large",
+        "buyers": 2,
+        "sellers": 2,
+        "buyCr": 343,
+        "sellCr": 46,
+        "netCr": 297,
+        "grossCr": 389,
+        "topBuyer": "PPFAS",
+        "topSeller": "SBI"
+      },
+      {
         "company": "ITC",
         "tier": "large",
         "buyers": 2,
         "sellers": 2,
-        "buyCr": 370,
-        "sellCr": 21,
-        "netCr": 349,
-        "grossCr": 391,
+        "buyCr": 352,
+        "sellCr": 20,
+        "netCr": 333,
+        "grossCr": 372,
         "topBuyer": "SBI",
         "topSeller": "Jio BlackRock"
       },
       {
+        "company": "State Bank of India",
+        "tier": "large",
+        "buyers": 2,
+        "sellers": 3,
+        "buyCr": 17,
+        "sellCr": 257,
+        "netCr": -240,
+        "grossCr": 274,
+        "topBuyer": "Jio BlackRock",
+        "topSeller": "SBI"
+      },
+      {
         "company": "Axis Bank",
         "tier": "large",
-        "buyers": 3,
+        "buyers": 4,
         "sellers": 2,
-        "buyCr": 137,
-        "sellCr": 132,
-        "netCr": 6,
-        "grossCr": 269,
+        "buyCr": 134,
+        "sellCr": 128,
+        "netCr": 7,
+        "grossCr": 262,
         "topBuyer": "SBI",
         "topSeller": "Aditya Birla Sun Life"
       },
@@ -374,12 +436,12 @@
       {
         "company": "ICICI Bank",
         "tier": "large",
-        "buyers": 2,
+        "buyers": 3,
         "sellers": 2,
-        "buyCr": 68,
-        "sellCr": 79,
-        "netCr": -11,
-        "grossCr": 147,
+        "buyCr": 71,
+        "sellCr": 77,
+        "netCr": -6,
+        "grossCr": 148,
         "topBuyer": "Helios",
         "topSeller": "Aditya Birla Sun Life"
       },
@@ -389,11 +451,23 @@
         "buyers": 2,
         "sellers": 2,
         "buyCr": 18,
-        "sellCr": 60,
+        "sellCr": 59,
         "netCr": -42,
         "grossCr": 77,
         "topBuyer": "LIC",
         "topSeller": "Jio BlackRock"
+      },
+      {
+        "company": "Eicher Motors",
+        "tier": "large",
+        "buyers": 2,
+        "sellers": 2,
+        "buyCr": 34,
+        "sellCr": 15,
+        "netCr": 19,
+        "grossCr": 50,
+        "topBuyer": "Aditya Birla Sun Life",
+        "topSeller": "PPFAS"
       }
     ]
   },
@@ -401,30 +475,30 @@
     "month": "Oct-26",
     "monthPrev": "Sep-26",
     "minBookCr": 500,
-    "medianTurnoverPct": 3.09,
+    "medianTurnoverPct": 2.89,
     "rows": [
       {
         "amc": "LIC",
-        "turnoverPct": 10.64,
-        "buyCr": 1192,
-        "sellCr": 1125,
+        "turnoverPct": 10.59,
+        "buyCr": 1191,
+        "sellCr": 1119,
         "bookCr": 10448,
         "schemes": 9,
         "holdings": 188
       },
       {
         "amc": "Jio BlackRock",
-        "turnoverPct": 10.24,
-        "buyCr": 470,
-        "sellCr": 393,
+        "turnoverPct": 10.09,
+        "buyCr": 469,
+        "sellCr": 387,
         "bookCr": 3828,
         "schemes": 4,
         "holdings": 475
       },
       {
         "amc": "Quantum",
-        "turnoverPct": 3.68,
-        "buyCr": 95,
+        "turnoverPct": 3.65,
+        "buyCr": 93,
         "sellCr": 55,
         "bookCr": 1514,
         "schemes": 4,
@@ -432,25 +506,25 @@
       },
       {
         "amc": "Aditya Birla Sun Life",
-        "turnoverPct": 3.09,
-        "buyCr": 4271,
-        "sellCr": 4840,
+        "turnoverPct": 3.08,
+        "buyCr": 4255,
+        "sellCr": 4806,
         "bookCr": 137290,
         "schemes": 24,
         "holdings": 472
       },
       {
         "amc": "SBI",
-        "turnoverPct": 2.92,
-        "buyCr": 10723,
-        "sellCr": 11819,
+        "turnoverPct": 2.89,
+        "buyCr": 10625,
+        "sellCr": 11777,
         "bookCr": 362836,
         "schemes": 25,
         "holdings": 571
       },
       {
         "amc": "Taurus",
-        "turnoverPct": 2.29,
+        "turnoverPct": 2.27,
         "buyCr": 20,
         "sellCr": 14,
         "bookCr": 628,
@@ -460,11 +534,20 @@
       {
         "amc": "Helios",
         "turnoverPct": 0.16,
-        "buyCr": 698,
+        "buyCr": 696,
         "sellCr": 23,
         "bookCr": 14647,
         "schemes": 4,
         "holdings": 150
+      },
+      {
+        "amc": "PPFAS",
+        "turnoverPct": 0.11,
+        "buyCr": 2835,
+        "sellCr": 140,
+        "bookCr": 133327,
+        "schemes": 3,
+        "holdings": 131
       }
     ]
   },
@@ -473,11 +556,11 @@
     "windowLabel": "Jul-26 → Oct-26",
     "windowMonths": 3,
     "period": "3Y",
-    "universe": 55,
+    "universe": 57,
     "medianFlowPct": -3.8,
     "quadrants": {
       "winning": {
-        "count": 14,
+        "count": 15,
         "rows": [
           {
             "fund": "Taurus Large Cap Fund",
@@ -503,6 +586,19 @@
             "navReturnPct": -1,
             "impliedFlowPct": 1.5,
             "bookCr": 5618,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "classification": "Equity : Flexi Cap",
+            "percentile": 60.5,
+            "quartile": "Q2",
+            "perfReturn": 12.9,
+            "bookGrowthPct": 1.6,
+            "navReturnPct": 0.2,
+            "impliedFlowPct": 1.4,
+            "bookCr": 127201,
             "monthsBack": 3
           },
           {
@@ -568,19 +664,6 @@
             "navReturnPct": 0.2,
             "impliedFlowPct": 0.2,
             "bookCr": 27564,
-            "monthsBack": 3
-          },
-          {
-            "fund": "SBI Focused Fund",
-            "amc": "SBI",
-            "classification": "Equity : Focused",
-            "percentile": 84.6,
-            "quartile": "Q1",
-            "perfReturn": 15.7,
-            "bookGrowthPct": -0.9,
-            "navReturnPct": 0.6,
-            "impliedFlowPct": -1.6,
-            "bookCr": 41239,
             "monthsBack": 3
           }
         ]
@@ -695,7 +778,7 @@
         ]
       },
       "falling": {
-        "count": 18,
+        "count": 19,
         "rows": [
           {
             "fund": "Shriram Flexi Cap Fund",

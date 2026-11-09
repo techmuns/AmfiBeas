@@ -2,18 +2,44 @@
   "meta": {
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
-    "generatedAt": "2026-11-09T04:23:13.297Z",
+    "generatedAt": "2026-11-09T04:45:13.611Z",
     "universe": "Active equity schemes only (excludes ETFs, index, international and hybrid funds)",
-    "activeEquityFunds": 76,
+    "activeEquityFunds": 79,
     "metric": "Net Rs Cr bought/sold = change in aggregate shares held x current implied price. Excludes corporate actions (split/bonus). pctOutstanding = net shares traded ÷ company shares outstanding x 100 (null until the screener feed covers the fincode).",
     "topN": 20
   },
   "large": {
     "bought": [
       {
+        "company": "DLF Ltd.",
+        "fincode": "INE271C01023",
+        "netCr": 1038,
+        "pctOutstanding": 0.7,
+        "amcs": [
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 1114
+          },
+          {
+            "fund": "PPFAS Parag Parikh ELSS Tax Saver Fund",
+            "amc": "PPFAS",
+            "netCr": 15
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          }
+        ]
+      },
+      {
         "company": "Hindustan Aeronautics Ltd.",
         "fincode": "INE066F01020",
-        "netCr": 796,
+        "netCr": 767,
         "pctOutstanding": 0.25,
         "amcs": [
           "SBI",
@@ -23,12 +49,12 @@
           {
             "fund": "SBI Flexicap Fund",
             "amc": "SBI",
-            "netCr": 479
+            "netCr": 476
           },
           {
             "fund": "SBI PSU Fund",
             "amc": "SBI",
-            "netCr": 261
+            "netCr": 260
           },
           {
             "fund": "SBI Quality Fund",
@@ -39,63 +65,10 @@
             "fund": "Lic Mf Large & Mid Cap Fund",
             "amc": "LIC MF",
             "netCr": 15
-          }
-        ]
-      },
-      {
-        "company": "Bharti Airtel Ltd.",
-        "fincode": "INE397D01024",
-        "netCr": 447,
-        "pctOutstanding": 0.04,
-        "amcs": [
-          "SBI",
-          "Helios",
-          "JioBlackRock"
-        ],
-        "schemes": [
-          {
-            "fund": "SBI ELSS Tax Saver Fund",
-            "amc": "SBI",
-            "netCr": 455
           },
           {
-            "fund": "SBI Flexicap Fund",
-            "amc": "SBI",
-            "netCr": 310
-          },
-          {
-            "fund": "SBI Quality Fund",
-            "amc": "SBI",
-            "netCr": 46
-          },
-          {
-            "fund": "Helios Flexi Cap Fund",
-            "amc": "Helios",
-            "netCr": 40
-          },
-          {
-            "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
-            "amc": "Aditya",
-            "netCr": 14
-          },
-          {
-            "fund": "JioBlackRock Flexi Cap Fund",
-            "amc": "JioBlackRock",
-            "netCr": 10
-          },
-          {
-            "fund": "Helios Large & Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 7
-          },
-          {
-            "fund": "Taurus Large Cap Fund",
-            "amc": "Taurus",
-            "netCr": 1
-          },
-          {
-            "fund": "JioBlackRock Large Cap Fund",
-            "amc": "JioBlackRock",
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
             "netCr": 0
           }
         ]
@@ -103,17 +76,23 @@
       {
         "company": "Indus Towers Ltd.",
         "fincode": "INE121J01017",
-        "netCr": 378,
-        "pctOutstanding": 0.41,
+        "netCr": 701,
+        "pctOutstanding": 0.76,
         "amcs": [
           "SBI",
+          "PPFAS",
           "JioBlackRock"
         ],
         "schemes": [
           {
             "fund": "SBI ELSS Tax Saver Fund",
             "amc": "SBI",
-            "netCr": 352
+            "netCr": 349
+          },
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 327
           },
           {
             "fund": "SBI Quant Fund",
@@ -133,29 +112,65 @@
         ]
       },
       {
-        "company": "ITC Ltd.",
-        "fincode": "INE154A01025",
-        "netCr": 349,
-        "pctOutstanding": 0.11,
+        "company": "Bharti Airtel Ltd.",
+        "fincode": "INE397D01024",
+        "netCr": 441,
+        "pctOutstanding": 0.04,
         "amcs": [
           "SBI",
-          "Aditya"
+          "Helios",
+          "JioBlackRock"
         ],
         "schemes": [
           {
-            "fund": "SBI Large and Midcap Fund",
+            "fund": "SBI ELSS Tax Saver Fund",
             "amc": "SBI",
-            "netCr": 334
+            "netCr": 447
           },
           {
-            "fund": "Aditya Birla Sun Life Value Fund",
-            "amc": "Aditya",
-            "netCr": 19
+            "fund": "SBI Flexicap Fund",
+            "amc": "SBI",
+            "netCr": 304
           },
           {
-            "fund": "Aditya Birla Sun Life Consumption Fund",
+            "fund": "SBI Quality Fund",
+            "amc": "SBI",
+            "netCr": 45
+          },
+          {
+            "fund": "Helios Flexi Cap Fund",
+            "amc": "Helios",
+            "netCr": 39
+          },
+          {
+            "fund": "Aditya Birla Sun Life Large & Mid Cap Fund",
             "amc": "Aditya",
-            "netCr": 17
+            "netCr": 14
+          },
+          {
+            "fund": "JioBlackRock Flexi Cap Fund",
+            "amc": "JioBlackRock",
+            "netCr": 9
+          },
+          {
+            "fund": "Helios Large & Mid Cap Fund",
+            "amc": "Helios",
+            "netCr": 6
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 2
+          },
+          {
+            "fund": "Taurus Large Cap Fund",
+            "amc": "Taurus",
+            "netCr": 1
+          },
+          {
+            "fund": "JioBlackRock Large Cap Fund",
+            "amc": "JioBlackRock",
+            "netCr": 0
           }
         ]
       },
@@ -213,18 +228,110 @@
         ]
       },
       {
+        "company": "ITC Ltd.",
+        "fincode": "INE154A01025",
+        "netCr": 333,
+        "pctOutstanding": 0.11,
+        "amcs": [
+          "SBI",
+          "Aditya",
+          "PPFAS"
+        ],
+        "schemes": [
+          {
+            "fund": "SBI Large and Midcap Fund",
+            "amc": "SBI",
+            "netCr": 318
+          },
+          {
+            "fund": "Aditya Birla Sun Life Value Fund",
+            "amc": "Aditya",
+            "netCr": 18
+          },
+          {
+            "fund": "Aditya Birla Sun Life Consumption Fund",
+            "amc": "Aditya",
+            "netCr": 16
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 1
+          }
+        ]
+      },
+      {
         "company": "Tata Consultancy Services Ltd.",
         "fincode": "INE467B01029",
-        "netCr": 332,
+        "netCr": 312,
         "pctOutstanding": 0.04,
         "amcs": [
-          "SBI"
+          "SBI",
+          "PPFAS"
         ],
         "schemes": [
           {
             "fund": "SBI MultiCap Fund",
             "amc": "SBI",
-            "netCr": 474
+            "netCr": 445
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 1
+          }
+        ]
+      },
+      {
+        "company": "Mahindra & Mahindra Ltd.",
+        "fincode": "INE101A01026",
+        "netCr": 297,
+        "pctOutstanding": 0.09,
+        "amcs": [
+          "PPFAS",
+          "the",
+          "JioBlackRock"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 333
+          },
+          {
+            "fund": "Lic Mf ELSS Tax Saver Fund",
+            "amc": "LIC MF",
+            "netCr": 7
+          },
+          {
+            "fund": "the Quantum Value Fund",
+            "amc": "the",
+            "netCr": 7
+          },
+          {
+            "fund": "Lic Mf Dividend Yield Fund",
+            "amc": "LIC MF",
+            "netCr": 6
+          },
+          {
+            "fund": "the Quantum ELSS Tax Saver Fund",
+            "amc": "the",
+            "netCr": 1
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 1
+          },
+          {
+            "fund": "JioBlackRock Large Cap Fund",
+            "amc": "JioBlackRock",
+            "netCr": 0
+          },
+          {
+            "fund": "the Quantum Flexi Cap Fund",
+            "amc": "the",
+            "netCr": 0
           }
         ]
       },
@@ -263,6 +370,59 @@
             "fund": "Lic Mf Flexi Cap Fund",
             "amc": "LIC MF",
             "netCr": 5
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Maruti Suzuki India Ltd.",
+        "fincode": "INE585B01010",
+        "netCr": 268,
+        "pctOutstanding": 0.08,
+        "amcs": [
+          "PPFAS",
+          "the",
+          "Shriram"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 380
+          },
+          {
+            "fund": "the Quantum Value Fund",
+            "amc": "the",
+            "netCr": 19
+          },
+          {
+            "fund": "the Quantum ELSS Tax Saver Fund",
+            "amc": "the",
+            "netCr": 4
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 1
+          },
+          {
+            "fund": "Shriram Flexi Cap Fund",
+            "amc": "Shriram",
+            "netCr": 1
+          },
+          {
+            "fund": "Shriram ELSS Tax Saver Fund",
+            "amc": "Shriram",
+            "netCr": 0
+          },
+          {
+            "fund": "the Quantum Flexi Cap Fund",
+            "amc": "the",
+            "netCr": 0
           }
         ]
       },
@@ -270,10 +430,11 @@
         "company": "Adani Ports and Special Economic Zone Ltd.",
         "fincode": "INE742F01042",
         "netCr": 268,
-        "pctOutstanding": 0.06,
+        "pctOutstanding": 0.07,
         "amcs": [
           "SBI",
-          "Aditya"
+          "Aditya",
+          "PPFAS"
         ],
         "schemes": [
           {
@@ -285,6 +446,11 @@
             "fund": "Aditya Birla Sun Life ELSS Tax Saver Fund",
             "amc": "Aditya",
             "netCr": 91
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 1
           }
         ]
       },
@@ -295,7 +461,8 @@
         "pctOutstanding": 0.18,
         "amcs": [
           "SBI",
-          "Aditya"
+          "Aditya",
+          "PPFAS"
         ],
         "schemes": [
           {
@@ -327,6 +494,11 @@
             "fund": "Aditya Birla Sun Life Conglomerate Fund",
             "amc": "Aditya",
             "netCr": 3
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
           }
         ]
       },
@@ -376,10 +548,11 @@
       {
         "company": "Samvardhana Motherson International Ltd.",
         "fincode": "INE775A01035",
-        "netCr": 252,
+        "netCr": 253,
         "pctOutstanding": 0.16,
         "amcs": [
           "SBI",
+          "PPFAS",
           "JioBlackRock"
         ],
         "schemes": [
@@ -404,6 +577,11 @@
             "netCr": 10
           },
           {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          },
+          {
             "fund": "JioBlackRock Large Cap Fund",
             "amc": "JioBlackRock",
             "netCr": 0
@@ -413,7 +591,7 @@
       {
         "company": "Eternal Ltd.",
         "fincode": "INE758T01015",
-        "netCr": 250,
+        "netCr": 251,
         "pctOutstanding": 0.08,
         "amcs": [
           "SBI",
@@ -460,13 +638,18 @@
             "fund": "Lic Mf ELSS Tax Saver Fund",
             "amc": "LIC MF",
             "netCr": 2
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 1
           }
         ]
       },
       {
         "company": "BSE Ltd.",
         "fincode": "INE118H01025",
-        "netCr": 212,
+        "netCr": 213,
         "pctOutstanding": 0.16,
         "amcs": [
           "Aditya",
@@ -495,6 +678,11 @@
             "netCr": 14
           },
           {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 1
+          },
+          {
             "fund": "Taurus Large Cap Fund",
             "amc": "Taurus",
             "netCr": 1
@@ -512,13 +700,57 @@
         "netCr": 153,
         "pctOutstanding": 0.18,
         "amcs": [
-          "SBI"
+          "SBI",
+          "PPFAS"
         ],
         "schemes": [
           {
             "fund": "SBI Focused Fund",
             "amc": "SBI",
             "netCr": 184
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Coal India Ltd.",
+        "fincode": "INE522F01014",
+        "netCr": 147,
+        "pctOutstanding": 0.07,
+        "amcs": [
+          "PPFAS",
+          "SBI",
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 88
+          },
+          {
+            "fund": "SBI Quant Fund",
+            "amc": "SBI",
+            "netCr": 40
+          },
+          {
+            "fund": "Aditya Birla Sun Life Multi-cap Fund",
+            "amc": "Aditya",
+            "netCr": 16
+          },
+          {
+            "fund": "JioBlackRock Flexi Cap Fund",
+            "amc": "JioBlackRock",
+            "netCr": 3
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
           }
         ]
       },
@@ -530,7 +762,7 @@
         "amcs": [
           "SBI",
           "Aditya",
-          "Taurus"
+          "PPFAS"
         ],
         "schemes": [
           {
@@ -554,6 +786,11 @@
             "netCr": 12
           },
           {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
+          },
+          {
             "fund": "Taurus Large Cap Fund",
             "amc": "Taurus",
             "netCr": 0
@@ -567,7 +804,8 @@
         "pctOutstanding": null,
         "amcs": [
           "Aditya",
-          "SBI"
+          "SBI",
+          "PPFAS"
         ],
         "schemes": [
           {
@@ -589,170 +827,10 @@
             "fund": "SBI Nifty Midcap 150 Momentum 50 ETF",
             "amc": "SBI",
             "netCr": 0
-          }
-        ]
-      },
-      {
-        "company": "Infosys Ltd.",
-        "fincode": "INE009A01021",
-        "netCr": 100,
-        "pctOutstanding": 0.02,
-        "amcs": [
-          "SBI",
-          "the",
-          "JioBlackRock"
-        ],
-        "schemes": [
-          {
-            "fund": "SBI Contra Fund",
-            "amc": "SBI",
-            "netCr": 477
           },
           {
-            "fund": "the Quantum Flexi Cap Fund",
-            "amc": "the",
-            "netCr": 0
-          },
-          {
-            "fund": "JioBlackRock Large Cap Fund",
-            "amc": "JioBlackRock",
-            "netCr": 0
-          }
-        ]
-      },
-      {
-        "company": "Shriram Finance Ltd.",
-        "fincode": "INE721A01047",
-        "netCr": 94,
-        "pctOutstanding": null,
-        "amcs": [
-          "Aditya",
-          "LIC MF",
-          "Taurus"
-        ],
-        "schemes": [
-          {
-            "fund": "Aditya Birla Sun Life Flexi Cap Fund",
-            "amc": "Aditya",
-            "netCr": 47
-          },
-          {
-            "fund": "Lic Mf Large & Mid Cap Fund",
-            "amc": "LIC MF",
-            "netCr": 23
-          },
-          {
-            "fund": "Aditya Birla Sun Life Value Fund",
-            "amc": "Aditya",
-            "netCr": 12
-          },
-          {
-            "fund": "Aditya Birla Sun Life Large Cap Fund",
-            "amc": "Aditya",
-            "netCr": 9
-          },
-          {
-            "fund": "Lic Mf Flexi Cap Fund",
-            "amc": "LIC MF",
-            "netCr": 9
-          },
-          {
-            "fund": "Aditya Birla Sun Life Focused Fund",
-            "amc": "Aditya",
-            "netCr": 5
-          },
-          {
-            "fund": "Lic Mf Large Cap Fund",
-            "amc": "LIC MF",
-            "netCr": 5
-          },
-          {
-            "fund": "Aditya Birla Sun Life Mnc Fund",
-            "amc": "Aditya",
-            "netCr": 4
-          },
-          {
-            "fund": "Aditya Birla Sun Life Multi-cap Fund",
-            "amc": "Aditya",
-            "netCr": 2
-          },
-          {
-            "fund": "Lic Mf Dividend Yield Fund",
-            "amc": "LIC MF",
-            "netCr": 1
-          },
-          {
-            "fund": "Taurus Large Cap Fund",
-            "amc": "Taurus",
-            "netCr": 1
-          }
-        ]
-      },
-      {
-        "company": "Bank of Baroda",
-        "fincode": "INE028A01039",
-        "netCr": 88,
-        "pctOutstanding": 0.07,
-        "amcs": [
-          "SBI"
-        ],
-        "schemes": [
-          {
-            "fund": "SBI ELSS Tax Saver Fund",
-            "amc": "SBI",
-            "netCr": 88
-          }
-        ]
-      },
-      {
-        "company": "GE Vernova T&D India Ltd.",
-        "fincode": "INE200A01026",
-        "netCr": 86,
-        "pctOutstanding": 0.09,
-        "amcs": [
-          "Aditya",
-          "Helios",
-          "LIC MF"
-        ],
-        "schemes": [
-          {
-            "fund": "Aditya Birla Sun Life Value Fund",
-            "amc": "Aditya",
-            "netCr": 63
-          },
-          {
-            "fund": "Helios Small Cap Fund",
-            "amc": "Helios",
-            "netCr": 9
-          },
-          {
-            "fund": "Lic Mf Large & Mid Cap Fund",
-            "amc": "LIC MF",
-            "netCr": 8
-          },
-          {
-            "fund": "Lic Mf Mid Cap Fund",
-            "amc": "LIC MF",
-            "netCr": 3
-          },
-          {
-            "fund": "Helios Mid Cap Fund",
-            "amc": "Helios",
-            "netCr": 2
-          },
-          {
-            "fund": "Taurus Mid Cap Fund",
-            "amc": "Taurus",
-            "netCr": 1
-          },
-          {
-            "fund": "SBI Nifty Midcap 150 Momentum 50 ETF",
-            "amc": "SBI",
-            "netCr": 0
-          },
-          {
-            "fund": "JioBlackRock Nifty Midcap 150 Index Fund",
-            "amc": "JioBlackRock",
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
             "netCr": 0
           }
         ]
@@ -762,7 +840,7 @@
       {
         "company": "Bajaj Finance Ltd.",
         "fincode": "INE296A01032",
-        "netCr": 689,
+        "netCr": 688,
         "pctOutstanding": 0.13,
         "amcs": [
           "SBI",
@@ -921,7 +999,7 @@
       {
         "company": "Reliance Industries Ltd.",
         "fincode": "INE002A01018",
-        "netCr": 494,
+        "netCr": 489,
         "pctOutstanding": 0.03,
         "amcs": [
           "Aditya",
@@ -931,7 +1009,7 @@
           {
             "fund": "Aditya Birla Sun Life ELSS Tax Saver Fund",
             "amc": "Aditya",
-            "netCr": -166
+            "netCr": -165
           },
           {
             "fund": "Aditya Birla Sun Life Large Cap Fund",
@@ -968,7 +1046,7 @@
       {
         "company": "Hindustan Unilever Ltd.",
         "fincode": "INE030A01027",
-        "netCr": 462,
+        "netCr": 459,
         "pctOutstanding": null,
         "amcs": [
           "SBI",
@@ -978,12 +1056,12 @@
           {
             "fund": "SBI Large Cap Fund",
             "amc": "SBI",
-            "netCr": -382
+            "netCr": -381
           },
           {
             "fund": "SBI MNC Fund",
             "amc": "SBI",
-            "netCr": -66
+            "netCr": -65
           },
           {
             "fund": "Lic Mf ELSS Tax Saver Fund",
@@ -1063,7 +1141,7 @@
       {
         "company": "Larsen & Toubro Ltd.",
         "fincode": "INE018A01030",
-        "netCr": 332,
+        "netCr": 330,
         "pctOutstanding": 0.06,
         "amcs": [
           "SBI"
@@ -1094,7 +1172,7 @@
       {
         "company": "HDFC Bank Ltd.",
         "fincode": "INE040A01034",
-        "netCr": 321,
+        "netCr": 307,
         "pctOutstanding": 0.03,
         "amcs": [
           "SBI",
@@ -1105,32 +1183,32 @@
           {
             "fund": "SBI ELSS Tax Saver Fund",
             "amc": "SBI",
-            "netCr": -332
+            "netCr": -321
           },
           {
             "fund": "SBI Banking And Financial Services Fund",
             "amc": "SBI",
-            "netCr": -166
+            "netCr": -161
           },
           {
             "fund": "SBI Flexicap Fund",
             "amc": "SBI",
-            "netCr": -132
+            "netCr": -128
           },
           {
             "fund": "JioBlackRock Flexi Cap Fund",
             "amc": "JioBlackRock",
-            "netCr": -26
+            "netCr": -25
           },
           {
             "fund": "Lic Mf ELSS Tax Saver Fund",
             "amc": "LIC MF",
-            "netCr": -18
+            "netCr": -17
           },
           {
             "fund": "SBI Quant Fund",
             "amc": "SBI",
-            "netCr": -6
+            "netCr": -5
           },
           {
             "fund": "Shriram Flexi Cap Fund",
@@ -1168,7 +1246,7 @@
       {
         "company": "Tech Mahindra Ltd.",
         "fincode": "INE669C01036",
-        "netCr": 271,
+        "netCr": 270,
         "pctOutstanding": 0.16,
         "amcs": [
           "SBI",
@@ -1226,7 +1304,7 @@
       {
         "company": "Cholamandalam Investment & Finance Co. Ltd.",
         "fincode": "INE121A01024",
-        "netCr": 259,
+        "netCr": 258,
         "pctOutstanding": null,
         "amcs": [
           "Aditya",
@@ -1248,7 +1326,7 @@
       {
         "company": "State Bank of India",
         "fincode": "INE062A01020",
-        "netCr": 242,
+        "netCr": 240,
         "pctOutstanding": 0.03,
         "amcs": [
           "SBI",
@@ -1286,7 +1364,7 @@
       {
         "company": "Tata Steel Ltd.",
         "fincode": "INE081A01020",
-        "netCr": 219,
+        "netCr": 218,
         "pctOutstanding": 0.11,
         "amcs": [
           "SBI",
@@ -1297,7 +1375,7 @@
           {
             "fund": "SBI MultiCap Fund",
             "amc": "SBI",
-            "netCr": -202
+            "netCr": -201
           },
           {
             "fund": "Aditya Birla Sun Life Quant Fund",
@@ -1387,7 +1465,7 @@
       {
         "company": "Britannia Industries Ltd.",
         "fincode": "INE216A01030",
-        "netCr": 162,
+        "netCr": 161,
         "pctOutstanding": null,
         "amcs": [
           "SBI",
@@ -1446,7 +1524,7 @@
       {
         "company": "Bajaj Finserv Ltd.",
         "fincode": "INE918I01026",
-        "netCr": 132,
+        "netCr": 131,
         "pctOutstanding": 0.05,
         "amcs": [
           "SBI",
@@ -1461,7 +1539,7 @@
           {
             "fund": "SBI Innovative Opportunities Fund",
             "amc": "SBI",
-            "netCr": -41
+            "netCr": -40
           },
           {
             "fund": "JioBlackRock Flexi Cap Fund",
@@ -1616,7 +1694,8 @@
         "netCr": 262,
         "pctOutstanding": 0.32,
         "amcs": [
-          "SBI"
+          "SBI",
+          "PPFAS"
         ],
         "schemes": [
           {
@@ -1628,6 +1707,11 @@
             "fund": "SBI MultiCap Fund",
             "amc": "SBI",
             "netCr": 61
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
           }
         ]
       },
@@ -1693,6 +1777,38 @@
             "fund": "the Quantum Flexi Cap Fund",
             "amc": "the",
             "netCr": 1
+          },
+          {
+            "fund": "JioBlackRock Nifty Midcap 150 Index Fund",
+            "amc": "JioBlackRock",
+            "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Petronet LNG Ltd.",
+        "fincode": "INE347G01014",
+        "netCr": 125,
+        "pctOutstanding": null,
+        "amcs": [
+          "PPFAS",
+          "JioBlackRock"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 277
+          },
+          {
+            "fund": "SBI Quant Fund",
+            "amc": "SBI",
+            "netCr": 13
+          },
+          {
+            "fund": "PPFAS Parag Parikh ELSS Tax Saver Fund",
+            "amc": "PPFAS",
+            "netCr": 5
           },
           {
             "fund": "JioBlackRock Nifty Midcap 150 Index Fund",
@@ -1784,7 +1900,8 @@
         "pctOutstanding": 0.08,
         "amcs": [
           "SBI",
-          "Helios"
+          "Helios",
+          "PPFAS"
         ],
         "schemes": [
           {
@@ -1801,6 +1918,11 @@
             "fund": "Helios Mid Cap Fund",
             "amc": "Helios",
             "netCr": 4
+          },
+          {
+            "fund": "PPFAS Parag Parikh Large Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 0
           }
         ]
       },
@@ -2218,38 +2340,6 @@
             "netCr": 0
           }
         ]
-      },
-      {
-        "company": "Motherson Sumi Wiring India Ltd.",
-        "fincode": "INE0FS801015",
-        "netCr": 58,
-        "pctOutstanding": null,
-        "amcs": [
-          "SBI",
-          "JioBlackRock"
-        ],
-        "schemes": [
-          {
-            "fund": "SBI Midcap Fund",
-            "amc": "SBI",
-            "netCr": 78
-          },
-          {
-            "fund": "SBI Automotive Opportunities Fund",
-            "amc": "SBI",
-            "netCr": 10
-          },
-          {
-            "fund": "JioBlackRock Nifty Smallcap 250 Index Fund",
-            "amc": "JioBlackRock",
-            "netCr": 0
-          },
-          {
-            "fund": "SBI Nifty Small Cap 250 ETF",
-            "amc": "SBI",
-            "netCr": 0
-          }
-        ]
       }
     ],
     "sold": [
@@ -2447,28 +2537,6 @@
             "fund": "Aditya Birla Sun Life Quant Fund",
             "amc": "Aditya",
             "netCr": -3
-          },
-          {
-            "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
-            "amc": "Aditya",
-            "netCr": 0
-          }
-        ]
-      },
-      {
-        "company": "Petronet LNG Ltd.",
-        "fincode": "INE347G01014",
-        "netCr": 166,
-        "pctOutstanding": null,
-        "amcs": [
-          "SBI",
-          "Aditya"
-        ],
-        "schemes": [
-          {
-            "fund": "SBI Energy Opportunities Fund",
-            "amc": "SBI",
-            "netCr": -180
           },
           {
             "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
@@ -2743,32 +2811,6 @@
         ]
       },
       {
-        "company": "Delhivery Ltd.",
-        "fincode": "INE148O01028",
-        "netCr": 84,
-        "pctOutstanding": 0.31,
-        "amcs": [
-          "Aditya"
-        ],
-        "schemes": [
-          {
-            "fund": "Aditya Birla Sun Life Large Cap Fund",
-            "amc": "Aditya",
-            "netCr": -82
-          },
-          {
-            "fund": "Aditya Birla Sun Life Quant Fund",
-            "amc": "Aditya",
-            "netCr": -9
-          },
-          {
-            "fund": "Aditya Birla Sun Life Nifty Smallcap 50 Index Fund",
-            "amc": "Aditya",
-            "netCr": -1
-          }
-        ]
-      },
-      {
         "company": "NMDC Ltd.",
         "fincode": "INE584A01023",
         "netCr": 84,
@@ -2797,6 +2839,32 @@
             "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
             "amc": "Aditya",
             "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Delhivery Ltd.",
+        "fincode": "INE148O01028",
+        "netCr": 84,
+        "pctOutstanding": 0.31,
+        "amcs": [
+          "Aditya"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Large Cap Fund",
+            "amc": "Aditya",
+            "netCr": -82
+          },
+          {
+            "fund": "Aditya Birla Sun Life Quant Fund",
+            "amc": "Aditya",
+            "netCr": -9
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Smallcap 50 Index Fund",
+            "amc": "Aditya",
+            "netCr": -1
           }
         ]
       },
@@ -2892,6 +2960,38 @@
             "fund": "Aditya Birla Sun Life Nifty Midcap 150 Index Fund",
             "amc": "Aditya",
             "netCr": 0
+          }
+        ]
+      },
+      {
+        "company": "Kirloskar Oil Engines Ltd.",
+        "fincode": "INE146L01010",
+        "netCr": 60,
+        "pctOutstanding": 0.24,
+        "amcs": [
+          "Aditya",
+          "LIC MF"
+        ],
+        "schemes": [
+          {
+            "fund": "Aditya Birla Sun Life Midcap Fund",
+            "amc": "Aditya",
+            "netCr": -33
+          },
+          {
+            "fund": "Lic Mf ELSS Tax Saver Fund",
+            "amc": "LIC MF",
+            "netCr": -16
+          },
+          {
+            "fund": "Aditya Birla Sun Life Infrastructure Fund",
+            "amc": "Aditya",
+            "netCr": -11
+          },
+          {
+            "fund": "Aditya Birla Sun Life Nifty Smallcap 50 Index Fund",
+            "amc": "Aditya",
+            "netCr": -1
           }
         ]
       }
@@ -3316,6 +3416,39 @@
         ]
       },
       {
+        "company": "Mahanagar Gas Limited",
+        "fincode": "INE002S01010",
+        "netCr": 65,
+        "pctOutstanding": null,
+        "amcs": [
+          "PPFAS",
+          "JioBlackRock",
+          "SBI"
+        ],
+        "schemes": [
+          {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 99
+          },
+          {
+            "fund": "PPFAS Parag Parikh ELSS Tax Saver Fund",
+            "amc": "PPFAS",
+            "netCr": 1
+          },
+          {
+            "fund": "JioBlackRock Nifty Smallcap 250 Index Fund",
+            "amc": "JioBlackRock",
+            "netCr": 0
+          },
+          {
+            "fund": "SBI Nifty Small Cap 250 ETF",
+            "amc": "SBI",
+            "netCr": 0
+          }
+        ]
+      },
+      {
         "company": "Cemindia Projects Ltd.",
         "fincode": "INE686A01026",
         "netCr": 64,
@@ -3496,27 +3629,6 @@
             "fund": "SBI Quality Fund",
             "amc": "SBI",
             "netCr": 20
-          }
-        ]
-      },
-      {
-        "company": "HD Fire Protect Ltd.",
-        "fincode": "INE18AK01028",
-        "netCr": 47,
-        "pctOutstanding": null,
-        "amcs": [
-          "Aditya"
-        ],
-        "schemes": [
-          {
-            "fund": "Aditya Birla Sun Life Midcap Fund",
-            "amc": "Aditya",
-            "netCr": 26
-          },
-          {
-            "fund": "Aditya Birla Sun Life Infrastructure Fund",
-            "amc": "Aditya",
-            "netCr": 21
           }
         ]
       }
@@ -3782,22 +3894,6 @@
         ]
       },
       {
-        "company": "Mahanagar Gas Ltd.",
-        "fincode": "INE002S01010",
-        "netCr": 39,
-        "pctOutstanding": null,
-        "amcs": [
-          "Aditya"
-        ],
-        "schemes": [
-          {
-            "fund": "Aditya Birla Sun Life Value Fund",
-            "amc": "Aditya",
-            "netCr": -39
-          }
-        ]
-      },
-      {
         "company": "Minda Corporation Ltd.",
         "fincode": "INE842C01021",
         "netCr": 37,
@@ -3925,6 +4021,28 @@
             "netCr": -11
           }
         ]
+      },
+      {
+        "company": "Happiest Minds Technologies Ltd",
+        "fincode": "INE419U01012",
+        "netCr": 23,
+        "pctOutstanding": null,
+        "amcs": [
+          "SBI",
+          "the"
+        ],
+        "schemes": [
+          {
+            "fund": "SBI Innovative Opportunities Fund",
+            "amc": "SBI",
+            "netCr": -20
+          },
+          {
+            "fund": "the Quantum Small Cap Fund",
+            "amc": "the",
+            "netCr": -3
+          }
+        ]
       }
     ]
   },
@@ -3935,9 +4053,9 @@
       {
         "sector": "IT - Software",
         "direction": "up",
-        "pctCur": 4.77,
-        "pctPrev": 3.95,
-        "changePp": 0.82,
+        "pctCur": 6.3,
+        "pctPrev": 5.25,
+        "changePp": 1.06,
         "stocks": [
           {
             "company": "Persistent Systems Ltd.",
@@ -3976,16 +4094,23 @@
           },
           {
             "company": "Tata Consultancy Services Ltd.",
-            "netCr": 332,
+            "netCr": 312,
             "amcs": [
-              "SBI"
+              "SBI",
+              "PPFAS"
             ],
             "schemes": [
               {
                 "fund": "SBI MultiCap Fund",
                 "amc": "SBI",
-                "netCr": 474,
+                "netCr": 445,
                 "valueChgCr": 487
+              },
+              {
+                "fund": "PPFAS Parag Parikh Large Cap Fund",
+                "amc": "PPFAS",
+                "netCr": 1,
+                "valueChgCr": 4
               }
             ]
           },
@@ -4026,18 +4151,24 @@
           },
           {
             "company": "Infosys Ltd.",
-            "netCr": 100,
+            "netCr": 98,
             "amcs": [
               "SBI",
-              "the",
-              "JioBlackRock"
+              "PPFAS",
+              "the"
             ],
             "schemes": [
               {
                 "fund": "SBI Contra Fund",
                 "amc": "SBI",
-                "netCr": 477,
+                "netCr": 457,
                 "valueChgCr": 472
+              },
+              {
+                "fund": "PPFAS Parag Parikh Large Cap Fund",
+                "amc": "PPFAS",
+                "netCr": 2,
+                "valueChgCr": 6
               },
               {
                 "fund": "the Quantum Flexi Cap Fund",
@@ -4055,17 +4186,24 @@
           },
           {
             "company": "HCL Technologies Ltd.",
-            "netCr": 36,
+            "netCr": 34,
             "amcs": [
               "SBI",
+              "PPFAS",
               "the"
             ],
             "schemes": [
               {
                 "fund": "SBI Quant Fund",
                 "amc": "SBI",
-                "netCr": 45,
+                "netCr": 42,
                 "valueChgCr": 46
+              },
+              {
+                "fund": "PPFAS Parag Parikh Large Cap Fund",
+                "amc": "PPFAS",
+                "netCr": 1,
+                "valueChgCr": 2
               },
               {
                 "fund": "the Quantum Flexi Cap Fund",
@@ -4080,7 +4218,7 @@
           {
             "fund": "SBI MultiCap Fund",
             "amc": "SBI",
-            "netCr": 680,
+            "netCr": 651,
             "valueChgCr": 762
           },
           {
@@ -4090,16 +4228,16 @@
             "valueChgCr": 426
           },
           {
-            "fund": "SBI Contra Fund",
-            "amc": "SBI",
-            "netCr": 138,
-            "valueChgCr": 334
-          },
-          {
             "fund": "SBI Flexicap Fund",
             "amc": "SBI",
             "netCr": 137,
             "valueChgCr": 214
+          },
+          {
+            "fund": "SBI Contra Fund",
+            "amc": "SBI",
+            "netCr": 122,
+            "valueChgCr": 334
           },
           {
             "fund": "SBI Midcap Fund",
@@ -4112,9 +4250,9 @@
       {
         "sector": "Telecom - Services",
         "direction": "up",
-        "pctCur": 2.78,
-        "pctPrev": 2.14,
-        "changePp": 0.64,
+        "pctCur": 3.08,
+        "pctPrev": 2.43,
+        "changePp": 0.65,
         "stocks": [
           {
             "company": "Jio Platforms Ltd.",
@@ -4152,53 +4290,25 @@
             ]
           },
           {
-            "company": "Bharti Airtel Ltd.",
-            "netCr": 447,
-            "amcs": [
-              "SBI",
-              "Helios",
-              "JioBlackRock"
-            ],
-            "schemes": [
-              {
-                "fund": "SBI ELSS Tax Saver Fund",
-                "amc": "SBI",
-                "netCr": 455,
-                "valueChgCr": 561
-              },
-              {
-                "fund": "SBI Flexicap Fund",
-                "amc": "SBI",
-                "netCr": 310,
-                "valueChgCr": 370
-              },
-              {
-                "fund": "SBI Quality Fund",
-                "amc": "SBI",
-                "netCr": 46,
-                "valueChgCr": 47
-              },
-              {
-                "fund": "Helios Flexi Cap Fund",
-                "amc": "Helios",
-                "netCr": 40,
-                "valueChgCr": 57
-              }
-            ]
-          },
-          {
             "company": "Indus Towers Ltd.",
-            "netCr": 378,
+            "netCr": 701,
             "amcs": [
               "SBI",
+              "PPFAS",
               "JioBlackRock"
             ],
             "schemes": [
               {
                 "fund": "SBI ELSS Tax Saver Fund",
                 "amc": "SBI",
-                "netCr": 352,
+                "netCr": 349,
                 "valueChgCr": 371
+              },
+              {
+                "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+                "amc": "PPFAS",
+                "netCr": 327,
+                "valueChgCr": 327
               },
               {
                 "fund": "SBI Quant Fund",
@@ -4211,12 +4321,41 @@
                 "amc": "SBI",
                 "netCr": 0,
                 "valueChgCr": 0
+              }
+            ]
+          },
+          {
+            "company": "Bharti Airtel Ltd.",
+            "netCr": 441,
+            "amcs": [
+              "SBI",
+              "Helios",
+              "JioBlackRock"
+            ],
+            "schemes": [
+              {
+                "fund": "SBI ELSS Tax Saver Fund",
+                "amc": "SBI",
+                "netCr": 447,
+                "valueChgCr": 561
               },
               {
-                "fund": "JioBlackRock Nifty Midcap 150 Index Fund",
-                "amc": "JioBlackRock",
-                "netCr": 0,
-                "valueChgCr": 0
+                "fund": "SBI Flexicap Fund",
+                "amc": "SBI",
+                "netCr": 304,
+                "valueChgCr": 370
+              },
+              {
+                "fund": "SBI Quality Fund",
+                "amc": "SBI",
+                "netCr": 45,
+                "valueChgCr": 47
+              },
+              {
+                "fund": "Helios Flexi Cap Fund",
+                "amc": "Helios",
+                "netCr": 39,
+                "valueChgCr": 57
               }
             ]
           },
@@ -4225,7 +4364,8 @@
             "netCr": 130,
             "amcs": [
               "Aditya",
-              "SBI"
+              "SBI",
+              "PPFAS"
             ],
             "schemes": [
               {
@@ -4281,7 +4421,7 @@
           {
             "fund": "SBI ELSS Tax Saver Fund",
             "amc": "SBI",
-            "netCr": 711,
+            "netCr": 699,
             "valueChgCr": 846
           },
           {
@@ -4291,9 +4431,15 @@
             "valueChgCr": 633
           },
           {
+            "fund": "PPFAS Parag Parikh Flexi Cap Fund",
+            "amc": "PPFAS",
+            "netCr": 327,
+            "valueChgCr": 880
+          },
+          {
             "fund": "SBI Flexicap Fund",
             "amc": "SBI",
-            "netCr": 310,
+            "netCr": 304,
             "valueChgCr": 370
           },
           {
@@ -4301,25 +4447,19 @@
             "amc": "Aditya",
             "netCr": 168,
             "valueChgCr": 232
-          },
-          {
-            "fund": "SBI Smallcap Fund",
-            "amc": "SBI",
-            "netCr": 70,
-            "valueChgCr": 67
           }
         ]
       },
       {
         "sector": "Finance",
         "direction": "down",
-        "pctCur": 5.64,
-        "pctPrev": 6.21,
+        "pctCur": 5.77,
+        "pctPrev": 6.34,
         "changePp": -0.57,
         "stocks": [
           {
             "company": "Bajaj Finance Ltd.",
-            "netCr": -689,
+            "netCr": -688,
             "amcs": [
               "SBI",
               "JioBlackRock"
@@ -4381,7 +4521,7 @@
           },
           {
             "company": "Cholamandalam Investment & Finance Co. Ltd.",
-            "netCr": -259,
+            "netCr": -258,
             "amcs": [
               "Aditya",
               "SBI"
@@ -4431,7 +4571,7 @@
           },
           {
             "company": "Bajaj Finserv Ltd.",
-            "netCr": -132,
+            "netCr": -131,
             "amcs": [
               "SBI",
               "JioBlackRock"
@@ -4446,7 +4586,7 @@
               {
                 "fund": "SBI Innovative Opportunities Fund",
                 "amc": "SBI",
-                "netCr": -41,
+                "netCr": -40,
                 "valueChgCr": -45
               },
               {
@@ -4494,9 +4634,9 @@
       {
         "sector": "Industrial Products",
         "direction": "down",
-        "pctCur": 3.21,
-        "pctPrev": 3.59,
-        "changePp": -0.38,
+        "pctCur": 2.63,
+        "pctPrev": 2.99,
+        "changePp": -0.36,
         "stocks": [
           {
             "company": "Cummins India Ltd.",
