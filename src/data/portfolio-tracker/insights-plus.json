@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-11-11T00:21:50.922Z",
+    "generatedAt": "2026-11-11T00:30:54.813Z",
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -742,10 +742,10 @@
     "windowMonths": 3,
     "period": "3Y",
     "universe": 196,
-    "medianFlowPct": -3.9,
+    "medianFlowPct": -4.2,
     "quadrants": {
       "winning": {
-        "count": 69,
+        "count": 70,
         "rows": [
           {
             "fund": "Bank of India Small Cap Fund",
@@ -792,10 +792,10 @@
             "classification": "Equity : Value / Contra",
             "percentile": 88.9,
             "quartile": "Q1",
-            "perfReturn": 16.9,
+            "perfReturn": 16.6,
             "bookGrowthPct": 17.2,
-            "navReturnPct": 1.2,
-            "impliedFlowPct": 16.1,
+            "navReturnPct": 1.5,
+            "impliedFlowPct": 15.7,
             "bookCr": 1805,
             "monthsBack": 3
           },
@@ -854,21 +854,8 @@
         ]
       },
       "coasting": {
-        "count": 29,
+        "count": 31,
         "rows": [
-          {
-            "fund": "DSP Healthcare Fund",
-            "amc": "DSP",
-            "classification": "Equity : Sectoral - Pharma",
-            "percentile": 44.4,
-            "quartile": "Q3",
-            "perfReturn": 20.4,
-            "bookGrowthPct": 7.5,
-            "navReturnPct": 3.4,
-            "impliedFlowPct": 4.1,
-            "bookCr": 3288,
-            "monthsBack": 3
-          },
           {
             "fund": "Taurus Mid Cap Fund",
             "amc": "Taurus",
@@ -880,6 +867,19 @@
             "navReturnPct": 0,
             "impliedFlowPct": 2.1,
             "bookCr": 130,
+            "monthsBack": 3
+          },
+          {
+            "fund": "DSP Healthcare Fund",
+            "amc": "DSP",
+            "classification": "Equity : Sectoral - Pharma",
+            "percentile": 44.4,
+            "quartile": "Q3",
+            "perfReturn": 20.4,
+            "bookGrowthPct": 7.5,
+            "navReturnPct": 5.8,
+            "impliedFlowPct": 1.6,
+            "bookCr": 3288,
             "monthsBack": 3
           },
           {
@@ -896,19 +896,6 @@
             "monthsBack": 3
           },
           {
-            "fund": "Sundaram Services Fund",
-            "amc": "Sundaram",
-            "classification": "Equity : Thematic",
-            "percentile": 48.9,
-            "quartile": "Q3",
-            "perfReturn": 12.9,
-            "bookGrowthPct": -0.3,
-            "navReturnPct": -1.3,
-            "impliedFlowPct": 1,
-            "bookCr": 4877,
-            "monthsBack": 3
-          },
-          {
             "fund": "Quantum Value Fund",
             "amc": "Quantum",
             "classification": "Equity : Value / Contra",
@@ -919,6 +906,19 @@
             "navReturnPct": -1.3,
             "impliedFlowPct": 0.9,
             "bookCr": 1041,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Sundaram Services Fund",
+            "amc": "Sundaram",
+            "classification": "Equity : Thematic",
+            "percentile": 48.9,
+            "quartile": "Q3",
+            "perfReturn": 13.1,
+            "bookGrowthPct": -0.3,
+            "navReturnPct": -1.1,
+            "impliedFlowPct": 0.8,
+            "bookCr": 4877,
             "monthsBack": 3
           },
           {
@@ -963,7 +963,7 @@
         ]
       },
       "falling": {
-        "count": 62,
+        "count": 60,
         "rows": [
           {
             "fund": "Baroda BNP Paribas Focused Fund",
@@ -1072,7 +1072,7 @@
         ]
       },
       "undiscovered": {
-        "count": 36,
+        "count": 35,
         "rows": [
           {
             "fund": "SBI Dividend Yield Fund",
@@ -1093,10 +1093,10 @@
             "classification": "Equity : Thematic",
             "percentile": 66.7,
             "quartile": "Q2",
-            "perfReturn": 15.3,
+            "perfReturn": 15.2,
             "bookGrowthPct": -12.2,
-            "navReturnPct": -0.9,
-            "impliedFlowPct": -11.4,
+            "navReturnPct": -0.6,
+            "impliedFlowPct": -11.6,
             "bookCr": 12821,
             "monthsBack": 3
           },
@@ -1198,21 +1198,21 @@
     "matrix": [
       [
         47,
-        34,
-        32,
+        35,
+        31,
         28
       ],
       [
         32,
         33,
-        40,
-        27
+        41,
+        26
       ],
       [
         34,
-        43,
+        42,
         30,
-        32
+        33
       ],
       [
         28,
@@ -1228,7 +1228,7 @@
       131
     ],
     "q1StayPct": 33.3,
-    "q1ToBottomHalfPct": 42.6,
+    "q1ToBottomHalfPct": 41.8,
     "topStayers": [
       {
         "fund": "SBI Healthcare Opp Fund",
