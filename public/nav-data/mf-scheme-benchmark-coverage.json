@@ -1,21 +1,21 @@
 {
-  "generatedAt": "2026-11-12T01:52:05.554Z",
+  "generatedAt": "2026-11-12T15:59:01.927Z",
   "universeAsOfDate": "2026-11-11",
   "totalApiSchemeRows": 3439,
   "totalUnderlyingSchemes": 1771,
-  "officialMapped": 113,
-  "officialNameOnly": 102,
+  "officialMapped": 114,
+  "officialNameOnly": 101,
   "unmapped": 1556,
-  "returnAvailable": 113,
-  "returnUnavailable": 1658,
+  "returnAvailable": 114,
+  "returnUnavailable": 1657,
   "benchmarkHistoryInsufficient": 0,
   "staleSource": 13,
   "coveragePct": 12.14,
   "rows": {
-    "officialMapped": 198,
-    "officialNameOnly": 189,
+    "officialMapped": 200,
+    "officialNameOnly": 187,
     "unmapped": 3052,
-    "returnAvailable": 198
+    "returnAvailable": 200
   },
   "byAmc": [
     {
@@ -397,8 +397,8 @@
     {
       "amc": "Nippon India Mutual Fund",
       "total": 95,
-      "officialMapped": 21,
-      "officialNameOnly": 12,
+      "officialMapped": 22,
+      "officialNameOnly": 11,
       "unmapped": 62,
       "pct": 34.74
     },
@@ -693,14 +693,6 @@
       "pct": 10.26
     },
     {
-      "classification": "Equity : Large & Mid Cap",
-      "total": 29,
-      "officialMapped": 3,
-      "officialNameOnly": 0,
-      "unmapped": 26,
-      "pct": 10.34
-    },
-    {
       "classification": "Equity : Sectoral - Infrastructure",
       "total": 18,
       "officialMapped": 1,
@@ -765,6 +757,14 @@
       "pct": 13.19
     },
     {
+      "classification": "Equity : Large & Mid Cap",
+      "total": 29,
+      "officialMapped": 3,
+      "officialNameOnly": 1,
+      "unmapped": 25,
+      "pct": 13.79
+    },
+    {
       "classification": "Debt : Floater",
       "total": 7,
       "officialMapped": 0,
@@ -797,6 +797,14 @@
       "pct": 16.67
     },
     {
+      "classification": "Equity : Index Funds",
+      "total": 68,
+      "officialMapped": 8,
+      "officialNameOnly": 4,
+      "unmapped": 56,
+      "pct": 17.65
+    },
+    {
       "classification": "Debt : Banking & PSU",
       "total": 11,
       "officialMapped": 0,
@@ -811,14 +819,6 @@
       "officialNameOnly": 2,
       "unmapped": 9,
       "pct": 18.18
-    },
-    {
-      "classification": "Equity : Index Funds",
-      "total": 68,
-      "officialMapped": 8,
-      "officialNameOnly": 5,
-      "unmapped": 55,
-      "pct": 19.12
     },
     {
       "classification": "Metal : ETFs",
@@ -855,8 +855,8 @@
     {
       "classification": "Equity : Index",
       "total": 157,
-      "officialMapped": 23,
-      "officialNameOnly": 19,
+      "officialMapped": 24,
+      "officialNameOnly": 18,
       "unmapped": 115,
       "pct": 26.75
     },
@@ -872,7 +872,7 @@
   "byProvider": [
     {
       "key": "NSE Indices",
-      "count": 132
+      "count": 133
     },
     {
       "key": "CRISIL",
@@ -1041,6 +1041,10 @@
       "count": 2
     },
     {
+      "key": "NIFTY_REALTY",
+      "count": 2
+    },
+    {
       "key": "NIFTY_SHORT_DURATION_DEBT",
       "count": 2
     },
@@ -1149,10 +1153,6 @@
       "count": 1
     },
     {
-      "key": "NIFTY_REALTY",
-      "count": 1
-    },
-    {
       "key": "NIFTY_SMALLCAP_50",
       "count": 1
     },
@@ -1168,7 +1168,7 @@
   "unsupportedBenchmarkFamilies": [
     {
       "key": "(unresolved index name)",
-      "count": 58
+      "count": 57
     },
     {
       "key": "NSE Indices",
