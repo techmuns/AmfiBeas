@@ -1,21 +1,21 @@
 {
-  "generatedAt": "2026-11-12T15:59:01.927Z",
-  "universeAsOfDate": "2026-11-11",
+  "generatedAt": "2026-11-13T00:59:00.428Z",
+  "universeAsOfDate": "2026-11-12",
   "totalApiSchemeRows": 3439,
   "totalUnderlyingSchemes": 1771,
-  "officialMapped": 114,
-  "officialNameOnly": 101,
-  "unmapped": 1556,
-  "returnAvailable": 114,
-  "returnUnavailable": 1657,
+  "officialMapped": 113,
+  "officialNameOnly": 103,
+  "unmapped": 1555,
+  "returnAvailable": 113,
+  "returnUnavailable": 1658,
   "benchmarkHistoryInsufficient": 0,
   "staleSource": 13,
-  "coveragePct": 12.14,
+  "coveragePct": 12.2,
   "rows": {
-    "officialMapped": 200,
-    "officialNameOnly": 187,
-    "unmapped": 3052,
-    "returnAvailable": 200
+    "officialMapped": 198,
+    "officialNameOnly": 191,
+    "unmapped": 3050,
+    "returnAvailable": 198
   },
   "byAmc": [
     {
@@ -397,10 +397,10 @@
     {
       "amc": "Nippon India Mutual Fund",
       "total": 95,
-      "officialMapped": 22,
-      "officialNameOnly": 11,
-      "unmapped": 62,
-      "pct": 34.74
+      "officialMapped": 21,
+      "officialNameOnly": 13,
+      "unmapped": 61,
+      "pct": 35.79
     },
     {
       "amc": "DSP Mutual Fund",
@@ -797,14 +797,6 @@
       "pct": 16.67
     },
     {
-      "classification": "Equity : Index Funds",
-      "total": 68,
-      "officialMapped": 8,
-      "officialNameOnly": 4,
-      "unmapped": 56,
-      "pct": 17.65
-    },
-    {
       "classification": "Debt : Banking & PSU",
       "total": 11,
       "officialMapped": 0,
@@ -819,6 +811,14 @@
       "officialNameOnly": 2,
       "unmapped": 9,
       "pct": 18.18
+    },
+    {
+      "classification": "Equity : Index Funds",
+      "total": 68,
+      "officialMapped": 8,
+      "officialNameOnly": 5,
+      "unmapped": 55,
+      "pct": 19.12
     },
     {
       "classification": "Metal : ETFs",
@@ -855,8 +855,8 @@
     {
       "classification": "Equity : Index",
       "total": 157,
-      "officialMapped": 24,
-      "officialNameOnly": 18,
+      "officialMapped": 23,
+      "officialNameOnly": 19,
       "unmapped": 115,
       "pct": 26.75
     },
@@ -872,7 +872,7 @@
   "byProvider": [
     {
       "key": "NSE Indices",
-      "count": 133
+      "count": 132
     },
     {
       "key": "CRISIL",
@@ -1041,10 +1041,6 @@
       "count": 2
     },
     {
-      "key": "NIFTY_REALTY",
-      "count": 2
-    },
-    {
       "key": "NIFTY_SHORT_DURATION_DEBT",
       "count": 2
     },
@@ -1153,6 +1149,10 @@
       "count": 1
     },
     {
+      "key": "NIFTY_REALTY",
+      "count": 1
+    },
+    {
       "key": "NIFTY_SMALLCAP_50",
       "count": 1
     },
@@ -1168,7 +1168,7 @@
   "unsupportedBenchmarkFamilies": [
     {
       "key": "(unresolved index name)",
-      "count": 57
+      "count": 59
     },
     {
       "key": "NSE Indices",
