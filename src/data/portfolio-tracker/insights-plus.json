@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-11-14T23:42:45.257Z",
+    "generatedAt": "2026-11-14T23:46:31.605Z",
     "monthCur": "Oct-26",
     "monthPrev": "Sep-26",
     "universe": "Actively-managed equity schemes from the AMC-direct monthly disclosures (excludes ETFs, index and international funds).",
@@ -746,7 +746,7 @@
     "medianFlowPct": -5.4,
     "quadrants": {
       "winning": {
-        "count": 69,
+        "count": 68,
         "rows": [
           {
             "fund": "Bank of India Small Cap Fund",
@@ -855,7 +855,7 @@
         ]
       },
       "coasting": {
-        "count": 32,
+        "count": 33,
         "rows": [
           {
             "fund": "DSP Large & Mid Cap Fund",
@@ -884,6 +884,19 @@
             "monthsBack": 3
           },
           {
+            "fund": "DSP Healthcare Fund",
+            "amc": "DSP",
+            "classification": "Equity : Sectoral - Pharma",
+            "percentile": 44.4,
+            "quartile": "Q3",
+            "perfReturn": 20.1,
+            "bookGrowthPct": 7.5,
+            "navReturnPct": 5.7,
+            "impliedFlowPct": 1.8,
+            "bookCr": 3288,
+            "monthsBack": 3
+          },
+          {
             "fund": "Aditya Birla SL Pharma & Healthcare Fund",
             "amc": "Aditya Birla Sun Life",
             "classification": "Equity : Sectoral - Pharma",
@@ -897,19 +910,6 @@
             "monthsBack": 3
           },
           {
-            "fund": "DSP Healthcare Fund",
-            "amc": "DSP",
-            "classification": "Equity : Sectoral - Pharma",
-            "percentile": 44.4,
-            "quartile": "Q3",
-            "perfReturn": 20.2,
-            "bookGrowthPct": 7.5,
-            "navReturnPct": 5.9,
-            "impliedFlowPct": 1.6,
-            "bookCr": 3288,
-            "monthsBack": 3
-          },
-          {
             "fund": "Quantum Value Fund",
             "amc": "Quantum",
             "classification": "Equity : Value / Contra",
@@ -920,6 +920,19 @@
             "navReturnPct": -0.8,
             "impliedFlowPct": 0.4,
             "bookCr": 1041,
+            "monthsBack": 3
+          },
+          {
+            "fund": "Sundaram Services Fund",
+            "amc": "Sundaram",
+            "classification": "Equity : Thematic",
+            "percentile": 46.7,
+            "quartile": "Q3",
+            "perfReturn": 13.2,
+            "bookGrowthPct": -0.3,
+            "navReturnPct": -0.3,
+            "impliedFlowPct": 0,
+            "bookCr": 4877,
             "monthsBack": 3
           },
           {
@@ -946,19 +959,6 @@
             "navReturnPct": -0.6,
             "impliedFlowPct": -0.6,
             "bookCr": 1354,
-            "monthsBack": 3
-          },
-          {
-            "fund": "Nippon India Small Cap Fund",
-            "amc": "Nippon India",
-            "classification": "Equity : Small Cap",
-            "percentile": 48.3,
-            "quartile": "Q3",
-            "perfReturn": 12.8,
-            "bookGrowthPct": -2.5,
-            "navReturnPct": -1,
-            "impliedFlowPct": -1.6,
-            "bookCr": 74883,
             "monthsBack": 3
           }
         ]
@@ -1076,19 +1076,6 @@
         "count": 37,
         "rows": [
           {
-            "fund": "ICICI Pru Business Cycle Fund",
-            "amc": "ICICI Prudential",
-            "classification": "Equity : Thematic",
-            "percentile": 68.9,
-            "quartile": "Q2",
-            "perfReturn": 15.7,
-            "bookGrowthPct": -12.2,
-            "navReturnPct": 0.8,
-            "impliedFlowPct": -13.1,
-            "bookCr": 12821,
-            "monthsBack": 3
-          },
-          {
             "fund": "SBI Dividend Yield Fund",
             "amc": "SBI",
             "classification": "Equity : Thematic - Dividend Yield",
@@ -1099,6 +1086,19 @@
             "navReturnPct": -1,
             "impliedFlowPct": -12.6,
             "bookCr": 7403,
+            "monthsBack": 3
+          },
+          {
+            "fund": "ICICI Pru Business Cycle Fund",
+            "amc": "ICICI Prudential",
+            "classification": "Equity : Thematic",
+            "percentile": 66.7,
+            "quartile": "Q2",
+            "perfReturn": 15.4,
+            "bookGrowthPct": -12.2,
+            "navReturnPct": 0,
+            "impliedFlowPct": -12.3,
+            "bookCr": 12821,
             "monthsBack": 3
           },
           {
@@ -1184,14 +1184,14 @@
     }
   },
   "persistence": {
-    "asOf": "2026-11-13",
+    "asOf": "2026-11-14",
     "priorWindow": {
-      "from": "2020-11-13",
-      "to": "2023-11-13"
+      "from": "2020-11-14",
+      "to": "2023-11-14"
     },
     "recentWindow": {
-      "from": "2023-11-13",
-      "to": "2026-11-13"
+      "from": "2023-11-14",
+      "to": "2026-11-14"
     },
     "cohorts": 19,
     "funds": 543,
@@ -1199,14 +1199,14 @@
     "matrix": [
       [
         49,
-        29,
-        34,
+        28,
+        35,
         29
       ],
       [
         31,
-        37,
         38,
+        37,
         26
       ],
       [
@@ -1229,7 +1229,7 @@
       131
     ],
     "q1StayPct": 34.8,
-    "q1ToBottomHalfPct": 44.7,
+    "q1ToBottomHalfPct": 45.4,
     "topStayers": [
       {
         "fund": "SBI Healthcare Opp Fund",
